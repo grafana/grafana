@@ -23,17 +23,31 @@ import { joinPath, splitPath } from '../utils/path';
 type SharedFieldName = 'path' | 'comment';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: 'dashboard' | 'folder';
+  resourceType: 'dashboard' | 'folder' | 'playlist';
   canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
   repository?: RepositoryView;
   hiddenFields?: SharedFieldName[];
   allowPathEdit?: boolean;
+  /** When true, the comment field renders read-only (template enforcement). */
+  lockComment?: boolean;
+  /** The resolved, read-only commit message to display when `lockComment` is true. */
+  commitMessage?: string;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hiddenFields, allowPathEdit }) => {
+  ({
+    readOnly = false,
+    canPushToConfiguredBranch,
+    repository,
+    isNew,
+    resourceType,
+    hiddenFields,
+    allowPathEdit,
+    lockComment = false,
+    commitMessage,
+  }) => {
     const {
       control,
       register,
@@ -63,7 +77,9 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       [checkFile, repository?.name, watch]
     );
 
-    const shouldValidatePath = isNew && resourceType === 'dashboard';
+    // New resources with an editable path (dashboards, playlists) get a path-exists check so a
+    // duplicate path is caught before submit rather than only by the API.
+    const shouldValidatePath = isNew && (resourceType === 'dashboard' || resourceType === 'playlist');
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -99,14 +115,14 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const pathText =
-      resourceType === 'dashboard'
+      resourceType === 'folder'
         ? t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
-            'File path inside the repository (.json or .yaml)'
-          )
-        : t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-path',
             'Folder path inside the repository'
+          )
+        : t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-file-path',
+            'File path inside the repository (.json or .yaml)'
           );
 
     return (
@@ -255,7 +271,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           />
         )}
 
-        {/* Path — single read-only field for existing resources */}
+        {/* Path — single field (read-only for existing resources, editable + validated when new) */}
         {!hiddenFields?.includes('path') && !showFolderFilename && (
           <Field
             noMargin
@@ -264,8 +280,15 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
               pathText
             )}
+            invalid={!!errors.path}
+            error={errors?.path?.message}
           >
-            <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
+            <Input
+              id="dashboard-path"
+              type="text"
+              {...register('path', shouldValidatePath ? { validate: validatePath } : undefined)}
+              readOnly={!isNew}
+            />
           </Field>
         )}
 
@@ -275,16 +298,26 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             noMargin
             label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
           >
-            <TextArea
-              id="provisioned-resource-form-comment"
-              {...register('comment')}
-              disabled={readOnly}
-              placeholder={t(
-                'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
-                'Add a note to describe your changes (optional)'
-              )}
-              rows={5}
-            />
+            {lockComment ? (
+              <TextArea
+                id="provisioned-resource-form-comment"
+                value={commitMessage ?? ''}
+                readOnly
+                disabled={readOnly}
+                rows={5}
+              />
+            ) : (
+              <TextArea
+                id="provisioned-resource-form-comment"
+                {...register('comment')}
+                disabled={readOnly}
+                placeholder={t(
+                  'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
+                  'Add a note to describe your changes (optional)'
+                )}
+                rows={5}
+              />
+            )}
           </Field>
         )}
       </>

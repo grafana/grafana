@@ -1,6 +1,8 @@
 package navtreeimpl
 
 import (
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/navtree/navtreeimpl")
 
 type ServiceImpl struct {
 	cfg                  *setting.Cfg
@@ -76,6 +80,13 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	// The context is restored on the ReqContext return so the span doesn't leak to sibling operations.
+	ctx, span := tracer.Start(c.Req.Context(), "navtree.GetNavTree")
+	defer span.End()
+	prevReq := c.Req
+	c.Req = c.Req.WithContext(ctx)
+	defer func() { c.Req = prevReq }()
+
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 

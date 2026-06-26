@@ -50,7 +50,12 @@ function StackedItemHeader({ icon, label, identifier, headingId, isHidden = fals
       )}
       <span className={styles.headerRefId}>{identifier}</span>
       {isHidden && (
-        <Icon name="eye-slash" size="sm" aria-label={t('query-editor-next.stacked.hidden-aria-label', 'Hidden')} />
+        <Icon
+          name="eye-slash"
+          size="sm"
+          className={styles.headerHiddenIcon}
+          aria-label={t('query-editor-next.stacked.hidden-aria-label', 'Hidden')}
+        />
       )}
     </div>
   );
@@ -66,9 +71,10 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
 
   const typeConfig = useQueryEditorTypeConfig();
   const { dsSettings } = useDatasourceContext();
+  const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
-  const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings);
+  const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
   const editorType = getStackedQueryEditorType(query);
   const isExpression = editorType === QueryEditorType.Expression;
@@ -176,6 +182,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   headerRefId: css({
     ...theme.typography.code,
+  }),
+  headerHiddenIcon: css({
+    marginLeft: 'auto',
   }),
   itemBody: css({
     padding: theme.spacing(2),

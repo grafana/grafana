@@ -58,6 +58,12 @@ Keep in mind the following:
 
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
 
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
+
 ## Copy an existing dashboard from the Grafana UI
 
 You can also save a copy of dashboard directly from the Grafana UI to your provisioned folder.

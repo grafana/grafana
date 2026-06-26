@@ -14,6 +14,13 @@ fi
 OUTPUT_FILE="pkg/storage/unified/resource/app_manifests.go"
 TEMP_FILE=$(mktemp)
 
+# External app manifests: apps whose code lives in another Go module (a
+# different repo), so they are not discoverable under ./apps. One line per
+# package exposing `func LocalManifest() app.Manifest`, as: <alias> <import-path>
+EXTERNAL_MANIFESTS="
+alerting_historian github.com/grafana/alerting/apps/historian/pkg/apis
+"
+
 # Find all paths and store them
 find apps -name '*.go' 2>/dev/null | \
   xargs grep -l 'func LocalManifest() app.Manifest' 2>/dev/null | \
@@ -60,6 +67,8 @@ $AWK '{
   }
 }' "$TEMP_FILE" >> "$OUTPUT_FILE"
 
+echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t" $1 " \"" $2 "\"" }' >> "$OUTPUT_FILE"
+
 # Close imports and start function
 cat >> "$OUTPUT_FILE" << 'MIDDLE'
 )
@@ -90,6 +99,8 @@ $AWK '{
   }
 }' "$TEMP_FILE" >> "$OUTPUT_FILE"
 
+echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t\t" $1 ".LocalManifest()," }' >> "$OUTPUT_FILE"
+
 # Close function
 cat >> "$OUTPUT_FILE" << 'FOOTER'
 	}
@@ -97,5 +108,9 @@ cat >> "$OUTPUT_FILE" << 'FOOTER'
 FOOTER
 
 rm -f "$TEMP_FILE"
+
+# gofmt sorts imports by path, placing external manifests in their correct
+# position relative to the local github.com/grafana/grafana ones.
+gofmt -w "$OUTPUT_FILE"
 
 echo "Generated $OUTPUT_FILE"

@@ -21,7 +21,6 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
-  type SceneObjectState,
   SceneQueryRunner,
   SceneTimeRange,
   sceneUtils,
@@ -43,7 +42,7 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel, type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -63,7 +62,6 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
-import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -84,7 +82,6 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
-import { type DashboardEditView } from '../settings/utils';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -103,7 +100,6 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { type DashboardControls } from './DashboardControls';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -118,6 +114,7 @@ import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type LayoutParent } from './types/LayoutParent';
+import { type DashboardSceneLike, type DashboardSceneState as DashboardSceneStateBase } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -154,72 +151,12 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-interface DashboardScenePreferences {
-  defaultLayoutTemplate?: DashboardLayoutManager;
-}
+// Temp re-export, will follup with a specific circular dependency fix in separate PR
+export type DashboardSceneState = DashboardSceneStateBase;
 
-export interface DashboardSceneState extends SceneObjectState {
-  /** Dashboard-specific preferences **/
-  preferences?: DashboardScenePreferences;
-
-  /** The title */
-  title: string;
-  /** The description */
-  description?: string;
-  /** Tags */
-  tags?: string[];
-  /** Links */
-  links: DashboardLink[];
-  /** Is editable */
-  editable?: boolean;
-  /** Allows disabling grid lazy loading */
-  preload?: boolean;
-  /** A uid when saved */
-  uid?: string;
-  /** @experimental */
-  scopeMeta?: ScopeMeta;
-  /** Layout of panels */
-  body: DashboardLayoutManager;
-  /** NavToolbar actions */
-  actions?: SceneObject[];
-  /** Fixed row at the top of the canvas with for example variables and time range controls */
-  controls?: DashboardControls;
-  /** True when editing */
-  isEditing?: boolean;
-  /** True when user made a change */
-  isDirty?: boolean;
-  /** meta flags */
-  meta: Omit<DashboardMeta, 'isNew'>;
-  /** Version of the dashboard */
-  version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
-  /** Panel key to view in fullscreen */
-  viewPanel?: string;
-  /** Edit view */
-  editview?: DashboardEditView;
-  /** Edit panel */
-  editPanel?: PanelEditor;
-  /** Scene object that handles the current drawer or modal */
-  overlay?: SceneObject;
-  /** Share view */
-  shareView?: string;
-  /** Renders panels in grid and filtered */
-  panelSearch?: string;
-  /** How many panels to show per row for search results */
-  panelsPerRow?: number;
-  /** options pane */
-  editPane: DashboardEditPane;
-  /** Manages dragging/dropping of layout items */
-  layoutOrchestrator: DashboardLayoutOrchestrator;
-  /** True while default variables from datasources are being loaded */
-  defaultVariablesLoading?: boolean;
-  /** True while default links from datasources are being loaded */
-  defaultLinksLoading?: boolean;
-}
-
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent, DashboardSceneLike {
   static Component = DashboardSceneRenderer;
+  public isDashboardScene = true;
 
   /**
    * Handles url sync
@@ -366,7 +303,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ links: nonDefaultLinks });
   }
 
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
+    const wasEditing = this.state.isEditing;
+
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
@@ -378,6 +317,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(true);
 
     this._changeTracker.startTrackingChanges();
+
+    if (!wasEditing) {
+      DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
+    }
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -1009,7 +952,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
-    locationService.partial({ editview: 'settings' });
+    const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
+    locationService.partial({ editview });
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {

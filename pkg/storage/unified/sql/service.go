@@ -386,7 +386,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 
 	var snapshotStore search.RemoteIndexStore
 	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
-		snapshotStore, err = buildKVSnapshotStore(s.cfg, s.backend, s.log)
+		snapshotStore, err = BuildKVSnapshotStore(s.cfg, s.backend, s.log)
 		if err != nil {
 			return err
 		}
@@ -595,13 +595,18 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 }
 
-// buildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
+// BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
 // store and lease manager with the storage backend. The caller is
 // responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
 // function validates the remaining preconditions and fails loudly so
 // misconfiguration is caught at process start rather than at the first
 // snapshot operation.
-func buildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
+//
+// Exported so wiring paths outside this package (notably the
+// unified-kv-grpc client in pkg/extensions/storage/unified/kv) can
+// reuse the same construction and validation when they build their
+// own search options.
+func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
 	if cfg.IndexSnapshotBucketURL != "" {
 		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
 	}
@@ -624,6 +629,7 @@ func buildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, log
 	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
 		KV:               kvBackend.KV(),
 		LeaseManager:     leaseMgr,
+		ChunkSize:        int64(cfg.IndexSnapshotKVChunkSizeMiB) * 1024 * 1024,
 		ChunkConcurrency: cfg.IndexSnapshotKVChunkConcurrency,
 	})
 	if err != nil {

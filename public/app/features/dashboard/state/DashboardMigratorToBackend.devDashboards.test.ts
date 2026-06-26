@@ -64,7 +64,10 @@ describe('Dev Dashboard Backend / Frontend result comparison', () => {
     setupDevDashboardDataSources();
   });
 
-  const devDashboardInputDir = '../../../../../devenv/dev-dashboards';
+  // Read the preserved v1 corpus, not devenv/dev-dashboards: the provisioned devenv set
+  // is now v2-schema (no top-level schemaVersion) and would be skipped, silently voiding
+  // this parity check. The corpus is the v1 input the backend goldens were generated from.
+  const devDashboardInputDir = '../../../../../apps/dashboard/pkg/migration/testdata/v1_dev_dashboards';
   const devDashboardOutputDir = '../../../../../apps/dashboard/pkg/migration/testdata/dev-dashboards-output';
 
   beforeAll(() => {

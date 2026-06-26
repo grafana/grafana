@@ -6,7 +6,7 @@ import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Box, Button, IconButton, TagList, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -34,7 +34,7 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  kind: 'template_dashboard' | 'suggested_dashboard';
+  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
   showCompatibilityBadge?: boolean;
   /** State for the compatibility badge (idle, loading, success, error) */
@@ -43,6 +43,11 @@ interface Props {
   onCompatibilityCheck?: () => void;
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
+  onEdit?: () => void;
+  /** Optional tags to display at the bottom of the card */
+  tags?: string[];
+  /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
+  createdByName?: string;
 }
 
 function DashboardCardComponent({
@@ -61,9 +66,13 @@ function DashboardCardComponent({
   compatibilityState,
   onCompatibilityCheck,
   showAssistantButton,
+  onEdit,
+  tags,
+  createdByName,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+  const isCustomTemplate = kind === 'custom_dashboard_template';
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
@@ -103,13 +112,20 @@ function DashboardCardComponent({
 
   return (
     <article className={styles.card}>
-      <h3 className={styles.title}>
-        <span className={styles.titleWithInfo} role="group" aria-label={title}>
-          <span className={styles.titleText}>{title}</span>
-          {detailsButton}
-        </span>
-      </h3>
-      <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
+      {!isCustomTemplate && (
+        <h3 className={styles.title}>
+          <span className={styles.titleWithInfo} role="group" aria-label={title}>
+            <span className={styles.titleText}>{title}</span>
+            {detailsButton}
+          </span>
+        </h3>
+      )}
+      <div
+        className={cx(
+          isLogo ? styles.logoContainer : styles.thumbnailContainer,
+          isCustomTemplate && styles.customTemplateThumbnail
+        )}
+      >
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -124,6 +140,19 @@ function DashboardCardComponent({
               e.currentTarget.style.display = 'none';
             }}
           />
+        ) : isCustomTemplate ? (
+          <div className={styles.customTemplateContent}>
+            <h3 className={styles.customTemplateTitle}>
+              <span className={styles.titleText}>{title}</span>
+            </h3>
+            <p
+              data-testid="dashboard-card-description"
+              className={cx(styles.customTemplateDescription, { [styles.noDescription]: !dashboard.description })}
+            >
+              {dashboard.description ||
+                t('dashboard-library.dashboard-card.no-description', 'No description available')}
+            </p>
+          </div>
         ) : (
           <div className={styles.noImage}>
             <Trans i18nKey="dashboard-library.card.no-preview">No preview available </Trans>
@@ -150,13 +179,17 @@ function DashboardCardComponent({
             aria-label={
               kind === 'template_dashboard'
                 ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
-                : t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                : kind === 'suggested_dashboard'
+                  ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                  : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
             }
           >
             {kind === 'template_dashboard' ? (
               <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-            ) : (
+            ) : kind === 'suggested_dashboard' ? (
               <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+            ) : (
+              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
             )}
           </Button>
           {assistantAvailable && showAssistantButton && (
@@ -174,17 +207,45 @@ function DashboardCardComponent({
               <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
+          {onEdit && (
+            <Button
+              variant="secondary"
+              className={styles.overlayButton}
+              onClick={onEdit}
+              aria-label={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
+                title,
+              })}
+            >
+              <Trans i18nKey="dashboard-library.card.edit-template-button">Edit</Trans>
+            </Button>
+          )}
         </div>
       </div>
       <div className={styles.bottomSection}>
-        <div title={dashboard.description}>
-          <p
-            data-testid="dashboard-card-description"
-            className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
-          >
-            {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
+        {!isCustomTemplate && (
+          <div title={dashboard.description}>
+            <p
+              data-testid="dashboard-card-description"
+              className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
+            >
+              {dashboard.description ||
+                t('dashboard-library.dashboard-card.no-description', 'No description available')}
+            </p>
+          </div>
+        )}
+        {isCustomTemplate && createdByName && (
+          <p className={styles.createdBy}>
+            <span className={styles.createdByLabel}>
+              <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
+            </span>{' '}
+            {createdByName}
           </p>
-        </div>
+        )}
+        {tags && tags.length > 0 && (
+          <div className={styles.tagsContainer}>
+            <TagList tags={tags} className={styles.tagList} />
+          </div>
+        )}
         {hasCompatActions && (
           <div className={styles.actionsContainer}>
             {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
@@ -260,6 +321,18 @@ function getStyles(theme: GrafanaTheme2) {
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'opacity 0.15s ease',
     },
+  });
+
+  const customTemplateContent = css({
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(2),
+    pointerEvents: 'none',
   });
 
   return {
@@ -361,6 +434,47 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
+    customTemplateContent,
+    customTemplateThumbnail: css({
+      '&::after': {
+        content: 'none',
+      },
+      [`& .${thumbnailOverlay}`]: {
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+      },
+    }),
+    customTemplateTitle: css({
+      margin: 0,
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.h6.lineHeight,
+      letterSpacing: 'inherit',
+      color: theme.colors.text.primary,
+      display: '-webkit-box',
+      WebkitLineClamp: 1,
+      WebkitBoxOrient: 'vertical',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%',
+    }),
+    customTemplateDescription: css({
+      display: '-webkit-box',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      margin: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    createdBy: css({
+      margin: 0,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    createdByLabel: css({
+      fontWeight: theme.typography.fontWeightBold,
+    }),
     bottomSection: css({
       display: 'flex',
       flexDirection: 'column',
@@ -404,6 +518,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     noDescription: css({
       fontStyle: 'italic',
+    }),
+    tagsContainer: css({
+      paddingTop: theme.spacing(1),
+    }),
+    tagList: css({
+      justifyContent: 'flex-start',
     }),
     actionsContainer: css({
       display: 'flex',

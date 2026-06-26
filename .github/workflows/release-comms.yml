@@ -21,7 +21,8 @@ on:
     - 'main'
     - 'release-*.*.*'
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -32,8 +33,6 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      private_key: ${{ steps.output.outputs.delivery_bot_pem }}
-      app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -63,6 +62,9 @@ jobs:
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
+    # Security releases don't open a new patch development branch: the next branch is the
+    # incremented +security-NN created below, not a version bump.
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -73,6 +75,7 @@ jobs:
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -84,6 +87,7 @@ jobs:
     name: Create security branch (Grafana Security Mirror)
     needs: setup
     permissions:
+      contents: read
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
@@ -94,6 +98,7 @@ jobs:
     name: Create security branch (Enterprise)
     needs: setup
     permissions:
+      contents: read
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
@@ -104,6 +109,8 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_grafana
+    # No next branch is created for security releases, so there is nothing to migrate to.
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -116,6 +123,7 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_enterprise
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
