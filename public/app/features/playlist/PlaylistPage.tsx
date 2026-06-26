@@ -101,6 +101,7 @@ export const PlaylistPage = () => {
                 // Repository-managed playlists are removed by committing the deletion to git.
                 <SaveProvisionedResourceDrawer
                   resource={playlistToDelete}
+                  title={playlistToDelete.spec?.title ?? ''}
                   action="delete"
                   onDismiss={onDismissDelete}
                 />

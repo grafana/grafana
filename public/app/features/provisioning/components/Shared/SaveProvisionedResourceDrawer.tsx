@@ -46,8 +46,8 @@ type ProvisionedResource = ManagedResource & {
   apiVersion?: string;
   kind?: string;
   metadata?: { name?: string };
-  /** Committed verbatim as the file body. `title` (when present) also drives the drawer title and new-file slug. */
-  spec?: Record<string, unknown> & { title?: string };
+  /** Committed verbatim as the file body. */
+  spec?: Record<string, unknown>;
 };
 
 // New resources need a stable k8s name in the committed file (the provisioning write validates the
@@ -62,11 +62,18 @@ function getNewResourcePath(title: string, kindKey: string): string {
 interface BaseDrawerProps {
   /**
    * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
-   * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (title, routes, invalidation),
-   * its `spec` becomes the committed file (and `spec.title` the title), and for an existing resource
-   * its `metadata.annotations` resolve the repository.
+   * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (label, routes, invalidation),
+   * its `spec` becomes the committed file, and for an existing resource its `metadata.annotations`
+   * resolve the repository.
    */
   resource: ProvisionedResource;
+  /**
+   * Human-readable title for the drawer subtitle, the commit message and a new resource's file slug.
+   * Passed explicitly rather than read from `spec.title` because the title field isn't consistent
+   * across kinds (e.g. correlations and teams carry it on `spec.name`); the committed file body still
+   * comes from `resource.spec`.
+   */
+  title: string;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
@@ -270,11 +277,11 @@ function FormContent({
 
 /**
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
- * pages with no per-kind wrapper and no `kind`/`title` props. Pass the resource and the action: the
- * drawer resolves the kind from the resource's `apiVersion`+`kind` and derives the rest — the title
- * from `spec.title`, the committed file body, a new resource's name/path/annotations, the commit
- * message and the post-commit navigation. `delete` commits no body. Renders nothing if the resource
- * isn't a registered provisioning kind (pages only open it for known managed resources).
+ * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
+ * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
+ * new resource's name/path/annotations, the commit message and the post-commit navigation. `delete`
+ * commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
+ * open it for known managed resources).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
@@ -300,6 +307,7 @@ function ResourceDrawerContent({
   kind,
   resource,
   action,
+  title,
   repositoryName,
   successMessage,
   readOnlyMessage,
@@ -310,8 +318,6 @@ function ResourceDrawerContent({
 }: ResourceDrawerContentProps) {
   const isNew = action === 'create';
   const isDelete = action === 'delete';
-  // Title for the commit message, drawer subtitle and (for a new resource) the file slug.
-  const title = resource.spec?.title ?? '';
 
   // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
   const generatedName = useMemo(() => generateResourceName(), []);

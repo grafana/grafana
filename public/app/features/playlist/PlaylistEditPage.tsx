@@ -93,6 +93,7 @@ export const PlaylistEditPage = () => {
       {provisionedPlaylist && (
         <SaveProvisionedResourceDrawer
           resource={provisionedPlaylist}
+          title={provisionedPlaylist.spec?.title ?? ''}
           action="update"
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />

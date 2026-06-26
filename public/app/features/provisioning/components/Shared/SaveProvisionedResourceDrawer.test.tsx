@@ -98,6 +98,7 @@ function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
 // union), so those tests render the drawer directly rather than via this update/delete-shaped helper.
 type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
+  title?: string;
   action?: 'update' | 'delete';
   onWriteSuccess?: () => void;
   onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
@@ -105,7 +106,13 @@ type DrawerOverrides = {
 
 function setup(props: DrawerOverrides = {}) {
   return render(
-    <SaveProvisionedResourceDrawer resource={mockPlaylist} action="update" onDismiss={jest.fn()} {...props} />
+    <SaveProvisionedResourceDrawer
+      resource={mockPlaylist}
+      title={mockPlaylist.spec?.title ?? ''}
+      action="update"
+      onDismiss={jest.fn()}
+      {...props}
+    />
   );
 }
 
@@ -246,6 +253,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const { user } = render(
         <SaveProvisionedResourceDrawer
           resource={newPlaylist}
+          title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
           onDismiss={jest.fn()}
@@ -275,6 +283,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const { user } = render(
         <SaveProvisionedResourceDrawer
           resource={newPlaylist}
+          title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
           onDismiss={jest.fn()}
@@ -332,6 +341,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.
     setup({
+      title: 'X',
       resource: {
         apiVersion: 'unknown.example.com/v1',
         kind: 'Unknown',
