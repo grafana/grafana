@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
-import { selectors } from '@grafana/e2e-selectors';
 
 interface DraggableListProps<T extends { state: { key?: string; name: string } }> {
   items: T[];
