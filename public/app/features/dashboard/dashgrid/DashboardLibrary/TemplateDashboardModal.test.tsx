@@ -34,11 +34,6 @@ const mockNewLoaded = jest.spyOn(NewTemplateDashboardInteractions, 'loaded').moc
 setBackendSrv(backendSrv);
 setupMockServer();
 
-// `useDataSourceInstanceList` is async under the hood (`useAsync`). The internal fallback
-// to `getDataSourceSrv().getList()` doesn't see jest.mock for `@grafana/runtime` because
-// the runtime package imports it via relative paths inside its own package — bypassing the
-// mock. Mocking the hook directly returns data synchronously and avoids needing to manage
-// React `act(...)` for the microtask flush.
 const defaultTestDataSource = {
   name: 'Test Data Source',
   uid: 'test-data-source-uid',

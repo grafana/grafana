@@ -24,9 +24,6 @@ jest.mock('./CommunityDashboardMappingForm', () => ({
   ),
 }));
 
-// Mock the async settings hook so it returns synchronously. The real hook uses
-// `useAsync` under the hood and would trigger React `act(...)` warnings in tests that
-// assert immediately after `render(...)`.
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn(() => ({ isLoading: false, settings: undefined })),

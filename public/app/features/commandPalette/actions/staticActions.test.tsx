@@ -27,9 +27,6 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-// Mock the async list hook directly. Its fallback to `getDataSourceSrv().getList()` does
-// not see jest.mock on `@grafana/runtime` because the runtime package imports the legacy
-// service via internal relative paths.
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),

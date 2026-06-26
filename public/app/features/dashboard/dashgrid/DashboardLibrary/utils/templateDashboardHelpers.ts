@@ -9,11 +9,6 @@ import { isGnetDashboard } from './dashboardLibraryHelpers';
 
 export type AssistantSource = 'assistant_button' | 'assistant_chat';
 
-/**
- * Build the URL that opens a Grafana-provisioned template dashboard. `testDataSource` is
- * provided by the caller (typically via `useTemplateDashboardsAvailability`) so we don't
- * have to look up the test datasource a second time here.
- */
 export function getTemplateDashboardUrl(
   dashboard: PluginDashboard | GnetDashboard,
   testDataSource: DataSourceInstanceListItem | undefined,
