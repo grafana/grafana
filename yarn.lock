@@ -3044,7 +3044,7 @@ __metadata:
     react-select-event: "npm:^5.1.0"
     react-table: "npm:^7.8.0"
     react-transition-group: "npm:^4.4.5"
-    react-use: "npm:17.6.1"
+    react-use: "npm:^17.6.1"
     react-window: "npm:1.8.11"
     remark-gfm: "npm:^4.0.1"
     rimraf: "npm:6.0.1"
@@ -28031,7 +28031,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.6.1, react-use@npm:^17.3.1, react-use@npm:^17.4.0, react-use@npm:^17.5.0, react-use@npm:^17.6.0":
+"react-use@npm:17.6.1, react-use@npm:^17.3.1, react-use@npm:^17.4.0, react-use@npm:^17.5.0, react-use@npm:^17.6.0, react-use@npm:^17.6.1":
   version: 17.6.1
   resolution: "react-use@npm:17.6.1"
   dependencies:
