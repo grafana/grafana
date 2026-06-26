@@ -3063,7 +3063,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
     uplot: "npm:^1.6.32"
-    uwrap: "npm:0.1.2"
+    uwrap: "npm:^0.1.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
     react: ^18.0.0
@@ -32350,7 +32350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uwrap@npm:0.1.2":
+"uwrap@npm:^0.1.2":
   version: 0.1.2
   resolution: "uwrap@npm:0.1.2"
   checksum: 10/621d9d148d903410ef555739baca1ba84500d59a5028611bc2fca53313ffd6c9b870e25dc5cad73b41f18fe72879a3d94a6b8ebc5e141c84a94188ee1c483492
