@@ -55,9 +55,9 @@ type ConnectionFormDataBase = {
   webhookDisabled?: boolean;
 };
 
-export type GitHubConnectionFormData = ConnectionFormDataBase & GitHubConnectionConfig;
+type GitHubConnectionFormData = ConnectionFormDataBase & GitHubConnectionConfig;
 
-export type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase & GitHubEnterpriseConnectionConfig;
+type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase & GitHubEnterpriseConnectionConfig;
 
 export type ConnectionFormData = GitHubConnectionFormData & GitHubEnterpriseConnectionFormData;
 

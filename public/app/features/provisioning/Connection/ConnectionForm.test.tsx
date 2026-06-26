@@ -110,6 +110,35 @@ describe('ConnectionForm', () => {
     });
   });
 
+  describe('GitHub Enterprise', () => {
+    const createEnterpriseConnection = () =>
+      createMockConnection({
+        spec: {
+          title: 'Test GHE Connection',
+          type: 'githubEnterprise',
+          url: 'https://ghe.example.com/settings/installations/12345678',
+          githubEnterprise: {
+            appID: '123456',
+            installationID: '12345678',
+            serverUrl: 'https://ghe.example.com',
+          },
+        },
+      });
+
+    it('should render the server URL field when the connection type is githubEnterprise', () => {
+      setup({ data: createEnterpriseConnection() });
+
+      expect(screen.getByLabelText(/^Custom server URL/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Custom server URL/)).toHaveValue('https://ghe.example.com');
+    });
+
+    it('should not render the server URL field for a github connection', () => {
+      setup({ data: createMockConnection() });
+
+      expect(screen.queryByLabelText(/^Custom server URL/)).not.toBeInTheDocument();
+    });
+  });
+
   describe('Form Validation', () => {
     it('should show required error and not submit when fields are empty', async () => {
       const { user } = setup();

@@ -14,21 +14,20 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
-import { useConnectionType } from '../hooks/useConnectionType';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
-import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
-import { type ConnectionCreationResult, type WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubBasedConnectionType, type WizardFormData } from './types';
 
 interface GitHubAppFieldsProps {
+  connectionType: GitHubBasedConnectionType;
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
+export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -36,13 +35,8 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-
   const { setStepStatusInfo } = useStepStatus();
 
-  const repoType = watch('repository.type');
-  // connectionType watches repository.type and stays in sync. It's always defined here since the
-  // component only renders for GitHub-based repos; the ?? 'github' just satisfies the non-optional type.
-  const connectionType = useConnectionType() ?? 'github';
   const isGitHubEnterprise = connectionType === 'githubEnterprise';
 
   // GH app form
@@ -235,7 +229,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         </Stack>
       )}
 
-      {isGitHubBased(repoType) && githubAppMode === 'new' && (
+      {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
           <GitHubConnectionFields
             required

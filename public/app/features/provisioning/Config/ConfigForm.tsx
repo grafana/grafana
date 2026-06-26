@@ -99,7 +99,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     options: connectionOptions,
     isLoading: connectionsLoading,
     connections,
-  } = useConnectionOptions(usesGitHubApp);
+  } = useConnectionOptions(usesGitHubApp, isGitHubBased(type) ? type : undefined);
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
