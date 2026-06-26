@@ -106,7 +106,7 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.Equal(t, int64(1), atomic.LoadInt64(getCount), "single flight should dedupe concurrent resolves")
 	})
 
-	t.Run("team and user UIDs and namespaces are cached independently", func(t *testing.T) {
+	t.Run("team and user UIDs and orgs are cached independently", func(t *testing.T) {
 		ns2 := claims.NamespaceInfo{Value: "stacks-2", OrgID: 2}
 		r, getCount := newCountingResolver(t, 0,
 			iamObject(teamGVR.GroupVersion().WithKind("Team"), ns.Value, "shared-uid", 1),
@@ -122,9 +122,9 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), userID)
 
-		teamIDOtherNS, err := r.GetTeamIDByUID(context.Background(), ns2, "shared-uid")
+		teamIDOtherOrg, err := r.GetTeamIDByUID(context.Background(), ns2, "shared-uid")
 		require.NoError(t, err)
-		require.Equal(t, int64(3), teamIDOtherNS)
+		require.Equal(t, int64(3), teamIDOtherOrg)
 
 		// Re-resolving each should be served from cache.
 		_, err = r.GetTeamIDByUID(context.Background(), ns, "shared-uid")

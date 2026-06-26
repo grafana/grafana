@@ -633,9 +633,11 @@ func (r *uidToIDResolver) getDynamicClient(ctx context.Context, nsInfo types.Nam
 }
 
 func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
-	// Key by resource type so team/user UIDs can't collide, and by namespace so orgs/stacks
-	// stay isolated.
-	key := gvr.Resource + "/" + nsInfo.Value + "/" + name
+	// Key by resource type so team/user UIDs can't collide, and by org ID so tenants stay
+	// isolated. OrgID is the authoritative tenant identifier the fetch itself uses (see the
+	// service-identity context in fetchObjectID), so keying on it avoids depending on any
+	// namespace-string-to-org mapping.
+	key := fmt.Sprintf("%s/%d/%s", gvr.Resource, nsInfo.OrgID, name)
 	if v, ok := r.cache.Get(key); ok {
 		return v.(int64), nil
 	}
