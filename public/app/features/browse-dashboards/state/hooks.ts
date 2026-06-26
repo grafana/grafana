@@ -13,7 +13,12 @@ import {
   type DashboardViewItemWithUIItems,
   type UIDashboardViewItem,
 } from '../types';
-import { isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
+import {
+  isSharedWithMe,
+  isVirtualStarredFolder,
+  isVirtualTeamFolder,
+  starredFoldersEnabled,
+} from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -184,10 +189,12 @@ function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    // Add a divider after the last virtual folder (shared with me / team folders)
+    // Add a divider after the last virtual folder (shared with me / team folders / starred folders)
+    const starredOn = starredFoldersEnabled();
     const isLastVirtualFolder =
-      isVirtualTeamFolder(thisItem.item.uid) ||
-      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders);
+      isVirtualStarredFolder(thisItem.item.uid) ||
+      (isVirtualTeamFolder(thisItem.item.uid) && !starredOn) ||
+      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders && !starredOn);
 
     if (isLastVirtualFolder) {
       items.push({

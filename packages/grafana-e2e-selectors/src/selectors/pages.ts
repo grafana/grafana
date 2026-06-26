@@ -202,6 +202,11 @@ export const versionedPages = {
           },
         },
       },
+      outline: {
+        searchInput: {
+          '13.1.0': 'data-testid Dashboard Outline Search input',
+        },
+      },
     },
     DashNav: {
       nav: {

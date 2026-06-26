@@ -114,7 +114,7 @@ export const scenarios = [
     description: '',
     id: TestDataQueryType.FlakyQuery,
     name: 'Flaky Query',
-    stringInput: '5s',
+    stringInput: '',
   },
   {
     description: '',

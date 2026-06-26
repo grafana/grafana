@@ -4106,6 +4106,10 @@
             "description": "The source folder (or empty) to export",
             "type": "string"
           },
+          "generateNewFolderIDs": {
+            "description": "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
+            "type": "boolean"
+          },
           "message": {
             "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
@@ -4879,6 +4883,10 @@
       "MigrateJobOptions": {
         "type": "object",
         "properties": {
+          "generateNewFolderIDs": {
+            "description": "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+            "type": "boolean"
+          },
           "message": {
             "description": "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
             "type": "string"
@@ -5398,6 +5406,14 @@
             "description": "For git, this is the target branch",
             "type": "string"
           },
+          "branchOptions": {
+            "description": "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchOptions"
+              }
+            ]
+          },
           "commit": {
             "description": "Commit message options. Mirrors the same-named field on the repository spec.",
             "allOf": [
@@ -5414,6 +5430,14 @@
           "path": {
             "description": "For git, this is the target path",
             "type": "string"
+          },
+          "pullRequest": {
+            "description": "Pull request options. Mirrors the same-named field on the repository spec.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PullRequestOptions"
+              }
+            ]
           },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",

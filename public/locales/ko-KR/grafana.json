@@ -9837,10 +9837,16 @@
         },
         "name-limit": "한도",
         "name-mode": "모드",
+        "name-overflow": "",
         "name-placement": "배치",
         "name-values": "값",
         "name-visibility": "보이기/숨기기",
         "name-width": "너비",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "하단",
           "label-right": "오른쪽"
@@ -11155,6 +11161,8 @@
         }
       },
       "fields-section": "필드",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "로그 라인 숨기기",
       "inline-mode": "인라인 표시",
       "inline-no-scrolls": "",
@@ -11900,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "ID 제공자 그룹의 Grafana 역할에 대한 매핑 관리"
     },
     "help": {
       "title": "도움말"
@@ -14168,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "이 쿼리에 대한 데이터 소스 로딩 실패",
     "loading-datasource": "데이터 소스 로딩 중",
     "no-query-editor-component": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
