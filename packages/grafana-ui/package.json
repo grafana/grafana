@@ -107,7 +107,7 @@
     "micro-memoize": "^4.1.2",
     "monaco-editor": "^0.34.1",
     "ol": "^10.7.0",
-    "prismjs": "1.30.0",
+    "prismjs": "^1.30.0",
     "react-calendar": "^6.0.0",
     "react-colorful": "5.6.1",
     "react-custom-scrollbars-2": "4.5.0",
