@@ -9,7 +9,6 @@ import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
-import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
@@ -101,10 +100,8 @@ export const PlaylistPage = () => {
               (isManagedByRepository(playlistToDelete) ? (
                 // Repository-managed playlists are removed by committing the deletion to git.
                 <SaveProvisionedResourceDrawer
-                  kind={resourceKindInfos.playlist}
                   resource={playlistToDelete}
                   action="delete"
-                  title={playlistToDelete.spec?.title ?? ''}
                   onDismiss={onDismissDelete}
                 />
               ) : (

@@ -8,7 +8,6 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
-import { resourceKindInfos } from '../../utils/resourceKinds';
 
 import { SaveProvisionedResourceDrawer, type SaveProvisionedResourceDrawerProps } from './SaveProvisionedResourceDrawer';
 
@@ -94,10 +93,8 @@ function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
 
 function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
   const defaultProps: SaveProvisionedResourceDrawerProps = {
-    kind: resourceKindInfos.playlist,
     resource: mockPlaylist,
     action: 'update',
-    title: mockPlaylist.spec?.title ?? '',
     onDismiss: jest.fn(),
   };
   return render(<SaveProvisionedResourceDrawer {...defaultProps} {...props} />);
@@ -240,7 +237,6 @@ describe('SaveProvisionedResourceDrawer', () => {
       const { user } = setup({
         action: 'create',
         resource: newPlaylist,
-        title: 'My New Playlist',
         repositoryName: 'test-repo',
       });
 
@@ -267,7 +263,6 @@ describe('SaveProvisionedResourceDrawer', () => {
       const { user } = setup({
         action: 'create',
         resource: newPlaylist,
-        title: 'My New Playlist',
         repositoryName: 'test-repo',
       });
 

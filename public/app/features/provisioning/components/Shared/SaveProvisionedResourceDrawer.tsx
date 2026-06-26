@@ -24,7 +24,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -44,7 +44,8 @@ export type ProvisionedResource = ManagedResource & {
   apiVersion?: string;
   kind?: string;
   metadata?: { name?: string };
-  spec?: unknown;
+  /** Committed verbatim as the file body. `title` (when present) also drives the drawer title and new-file slug. */
+  spec?: Record<string, unknown> & { title?: string };
 };
 
 // New resources need a stable k8s name in the committed file (the provisioning write validates the
@@ -58,21 +59,14 @@ function getNewResourcePath(title: string, kindKey: string): string {
 
 export interface SaveProvisionedResourceDrawerProps {
   /**
-   * Registry descriptor for the kind — the only kind parameter needed. Its `key` is the resource
-   * type (commit message, branch prefix, telemetry, shared fields), its `displayName` the title noun,
-   * its `listRoute` the post-commit navigation target.
-   */
-  kind: ResourceKindInfo;
-  /**
-   * The resource to commit (`create`/`update`) or remove (`delete`). Its `apiVersion`/`kind`/`spec`
-   * form the committed file; for an existing resource its `metadata.annotations` resolve the
-   * repository, and for a new one they're synthesised from `repositoryName`.
+   * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
+   * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (title, routes, invalidation),
+   * its `spec` becomes the committed file (and `spec.title` the title), and for an existing resource
+   * its `metadata.annotations` resolve the repository (a new one's are synthesised from `repositoryName`).
    */
   resource: ProvisionedResource;
   /** Commit action: `create` writes a new file, `update` replaces it, `delete` removes it. */
   action: ProvisionedResourceAction;
-  /** Human-readable title for the commit message, drawer subtitle, and (for a new resource) the file slug. */
-  title: string;
   /** Repository to commit a new resource to. Required for `create` (a new resource has no manager annotations yet); ignored otherwise. */
   repositoryName?: string;
   /** Notification shown on a successful write to the configured branch. */
@@ -255,16 +249,30 @@ function FormContent({
 
 /**
  * Drawer for committing a repository-managed resource to git — usable directly from a resource's
- * pages (no per-kind wrapper). Pass the kind's {@link ResourceKindInfo}, the resource and the action,
- * and the drawer derives everything else: the new resource's name, file path and synthesised manager
- * annotations, the committed file body (`apiVersion`/`kind`/`metadata`/`spec`), the title, the commit
- * message and the post-commit navigation. `delete` commits no body. New kinds reuse it as-is.
+ * pages with no per-kind wrapper and no `kind`/`title` props. Pass the resource and the action: the
+ * drawer resolves the kind from the resource's `apiVersion`+`kind` and derives the rest — the title
+ * from `spec.title`, the committed file body, a new resource's name/path/annotations, the commit
+ * message and the post-commit navigation. `delete` commits no body. Renders nothing if the resource
+ * isn't a registered provisioning kind (pages only open it for known managed resources).
  */
-export function SaveProvisionedResourceDrawer({
+export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
+  // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
+  // the registry descriptor, so callers don't pass the kind separately.
+  const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
+  if (!kind) {
+    return null;
+  }
+  return <ResourceDrawerContent {...props} kind={kind} />;
+}
+
+interface ResourceDrawerContentProps extends SaveProvisionedResourceDrawerProps {
+  kind: ResourceKindInfo;
+}
+
+function ResourceDrawerContent({
   kind,
   resource,
   action,
-  title,
   repositoryName,
   successMessage,
   readOnlyMessage,
@@ -272,9 +280,11 @@ export function SaveProvisionedResourceDrawer({
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
-}: SaveProvisionedResourceDrawerProps) {
+}: ResourceDrawerContentProps) {
   const isNew = action === 'create';
   const isDelete = action === 'delete';
+  // Title for the commit message, drawer subtitle and (for a new resource) the file slug.
+  const title = resource.spec?.title ?? '';
 
   // A new resource has no k8s name yet; generate one once for the lifetime of the drawer.
   const generatedName = useMemo(() => generateResourceName(), []);

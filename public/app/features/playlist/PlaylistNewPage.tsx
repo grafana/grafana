@@ -52,10 +52,8 @@ export const PlaylistNewPage = () => {
       </Page.Contents>
       {provisionedPlaylist && selectedRepository && (
         <SaveProvisionedResourceDrawer
-          kind={resourceKindInfos.playlist}
           resource={provisionedPlaylist}
           action="create"
-          title={provisionedPlaylist.spec?.title ?? ''}
           repositoryName={selectedRepository}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
