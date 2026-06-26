@@ -3060,7 +3060,7 @@ __metadata:
     slate-react: "npm:^0.22.10"
     storybook: "npm:10.3.6"
     style-loader: "npm:4.0.0"
-    tinycolor2: "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
     uplot: "npm:1.6.32"
     uwrap: "npm:0.1.2"
