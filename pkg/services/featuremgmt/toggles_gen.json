@@ -2858,6 +2858,23 @@
     },
     {
       "metadata": {
+        "name": "iam.onlyStoreDatasourceActionSets",
+        "resourceVersion": "1782461544304",
+        "creationTimestamp": "2026-06-26T07:57:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 08:12:24.304094 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-09-17T10:54:39Z"
