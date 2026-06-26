@@ -2960,7 +2960,7 @@ __metadata:
     "@grafana/schema": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
-    "@monaco-editor/react": "npm:4.7.0"
+    "@monaco-editor/react": "npm:^4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@rc-component/cascader": "npm:1.9.0"
     "@rc-component/drawer": "npm:1.3.0"
@@ -4972,7 +4972,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.7.0":
+"@monaco-editor/react@npm:^4.7.0":
   version: 4.7.0
   resolution: "@monaco-editor/react@npm:4.7.0"
   dependencies:
