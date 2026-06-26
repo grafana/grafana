@@ -47,7 +47,8 @@ export default function HomePage() {
   });
 
   const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
-  // Same computation as the rendered extra section below, so showExtra can't drift from it.
+  // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
+  // what actually renders below.
   const extraContent = renderLimitedComponents({
     props: {},
     components: extraComponents,
@@ -60,6 +61,7 @@ export default function HomePage() {
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
+  const skeleton = <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />;
 
   return (
     <Page
@@ -73,9 +75,9 @@ export default function HomePage() {
     >
       <Page.Contents>
         {isLoadingExtensions ? (
-          <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />
+          skeleton
         ) : (
-          <Suspense fallback={<HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />}>
+          <Suspense fallback={skeleton}>
             <Stack direction="column" gap={2}>
               <HomeSection direction="column" display="flex" gap={2}>
                 {/* Assistant injects an Assistant-based prompt input when available */}
@@ -87,6 +89,7 @@ export default function HomePage() {
                 })}
                 <DashboardTabs extensionComponents={tabComponents} />
               </HomeSection>
+
               <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                 <FiringAlertsCard />
                 <IncidentsCard />

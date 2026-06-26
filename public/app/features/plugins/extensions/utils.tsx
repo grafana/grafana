@@ -106,10 +106,7 @@ export const wrapWithPluginContext = <T,>({
   // plugin was imported), render synchronously. The async variant below renders `null` for at
   // least one commit, which makes extension content pop in after the host page has painted.
   if (pluginMeta) {
-    const WrappedExtensionComponentSync = (props: T & React.JSX.IntrinsicAttributes) =>
-      renderWithContext(props, pluginMeta);
-
-    return WrappedExtensionComponentSync;
+    return (props: T & React.JSX.IntrinsicAttributes) => renderWithContext(props, pluginMeta);
   }
 
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
