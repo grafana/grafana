@@ -106,8 +106,11 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.Equal(t, int64(1), atomic.LoadInt64(getCount), "single flight should dedupe concurrent resolves")
 	})
 
-	t.Run("team and user UIDs and orgs are cached independently", func(t *testing.T) {
-		ns2 := claims.NamespaceInfo{Value: "stacks-2", OrgID: 2}
+	t.Run("team and user UIDs and namespaces are cached independently", func(t *testing.T) {
+		// ns2 is a different namespace that shares ns's OrgID (every cloud stacks-N namespace
+		// parses to OrgID 1, like "default"). Keying must use the namespace value the Get is
+		// scoped on, not OrgID, or these two tenants would collide on a single cache entry.
+		ns2 := claims.NamespaceInfo{Value: "stacks-2", OrgID: 1, StackID: 2}
 		r, getCount := newCountingResolver(t, 0,
 			iamObject(teamGVR.GroupVersion().WithKind("Team"), ns.Value, "shared-uid", 1),
 			iamObject(userGVR.GroupVersion().WithKind("User"), ns.Value, "shared-uid", 2),
@@ -122,9 +125,9 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), userID)
 
-		teamIDOtherOrg, err := r.GetTeamIDByUID(context.Background(), ns2, "shared-uid")
+		teamIDOtherNS, err := r.GetTeamIDByUID(context.Background(), ns2, "shared-uid")
 		require.NoError(t, err)
-		require.Equal(t, int64(3), teamIDOtherOrg)
+		require.Equal(t, int64(3), teamIDOtherNS)
 
 		// Re-resolving each should be served from cache.
 		_, err = r.GetTeamIDByUID(context.Background(), ns, "shared-uid")
