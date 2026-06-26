@@ -3,8 +3,8 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type ResourceKindKey } from './resourceKinds';
 
-export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-export type CommitResourceKind = ResourceKindKey;
+type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
+type CommitResourceKind = ResourceKindKey;
 type CommitResourceID = string;
 
 interface BaseCommitTemplateVars {

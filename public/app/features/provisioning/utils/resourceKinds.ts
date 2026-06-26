@@ -3,6 +3,7 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -23,7 +24,6 @@ import { getIconForKind } from 'app/features/search/service/utils';
 export const resourceKindInfos = {
   folder: {
     key: 'folder',
-    displayName: 'folder',
     group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
@@ -35,7 +35,6 @@ export const resourceKindInfos = {
   },
   dashboard: {
     key: 'dashboard',
-    displayName: 'dashboard',
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
@@ -47,7 +46,6 @@ export const resourceKindInfos = {
   },
   playlist: {
     key: 'playlist',
-    displayName: 'playlist',
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
@@ -66,7 +64,6 @@ export const resourceKindInfos = {
   },
   librarypanel: {
     key: 'librarypanel',
-    displayName: 'library panel',
     // Library panels share the dashboards API group but are keyed by their own
     // GroupResource (librarypanels.dashboard.grafana.app).
     group: DASHBOARD_API_GROUP,
@@ -115,8 +112,6 @@ export interface ResourceKindInfo {
    * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
    */
   key: ResourceKindKey;
-  /** Human-readable singular noun for this kind, shown in UI copy such as drawer titles. */
-  displayName: string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
   /** Kubernetes Kind, e.g. `Dashboard`. */
@@ -150,6 +145,25 @@ export interface ResourceKindInfo {
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+/**
+ * Localized singular noun for a kind, interpolated into UI copy such as the drawer title (e.g.
+ * "Save provisioned {{resource}}"). Kept as a `switch` rather than a registry field because i18n
+ * extraction needs literal keys/defaults, so each kind contributes one translated noun here — and
+ * the exhaustive switch makes adding a kind a compile error until its noun is provided.
+ */
+export function getResourceKindLabel(kind: ResourceKindKey): string {
+  switch (kind) {
+    case 'folder':
+      return t('provisioning.resource-kind.folder', 'folder');
+    case 'dashboard':
+      return t('provisioning.resource-kind.dashboard', 'dashboard');
+    case 'playlist':
+      return t('provisioning.resource-kind.playlist', 'playlist');
+    case 'librarypanel':
+      return t('provisioning.resource-kind.library-panel', 'library panel');
+  }
+}
 
 /**
  * Builds the in-app route to view a repository's resources of the given kind.

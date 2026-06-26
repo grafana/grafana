@@ -24,7 +24,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getKindInfoByGroupKind, getResourceKindLabel, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -40,7 +40,7 @@ type ProvisionedResourceAction = 'create' | 'update' | 'delete';
  * file and `metadata` carries the name plus, for existing resources, the manager annotations that
  * resolve the repository. Any generated client's resource (Playlist, LibraryPanel, ...) fits this.
  */
-export type ProvisionedResource = ManagedResource & {
+type ProvisionedResource = ManagedResource & {
   apiVersion?: string;
   kind?: string;
   metadata?: { name?: string };
@@ -318,15 +318,14 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  // Title derives from a shared template plus the kind's display noun, so a new kind reuses these two
-  // translations instead of adding its own "Save/Delete provisioned <kind>" strings.
+  // Title combines a shared translated template with the kind's translated noun (interpolated, so
+  // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
+  const resourceLabel = getResourceKindLabel(kind.key);
   const drawerTitle = isDelete
     ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
-        resource: kind.displayName,
+        resource: resourceLabel,
       })
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', {
-        resource: kind.displayName,
-      });
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {

@@ -9,7 +9,10 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { SaveProvisionedResourceDrawer, type SaveProvisionedResourceDrawerProps } from './SaveProvisionedResourceDrawer';
+import {
+  SaveProvisionedResourceDrawer,
+  type SaveProvisionedResourceDrawerProps,
+} from './SaveProvisionedResourceDrawer';
 
 setupProvisioningMswServer();
 
