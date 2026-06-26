@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type EmbeddedDashboardProps } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
+import { SceneObjectStateChangedEvent, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -45,7 +45,15 @@ interface RendererProps extends EmbeddedDashboardProps {
   model: DashboardScene;
 }
 
-function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
+function EmbeddedDashboardRenderer({
+  model,
+  initialState,
+  onStateChange,
+  timeRange,
+  variables,
+  hideTimeControls,
+  refreshToken,
+}: RendererProps) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
@@ -63,6 +71,10 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   }, [model]);
 
   useSubscribeToEmbeddedUrlState(onStateChange, model);
+  useControlledTimeRange(timeRange, model, isActive);
+  useControlledVariables(variables, model, isActive);
+  useControlledRefresh(refreshToken, model, isActive);
+  useControlledHideTimeControls(hideTimeControls, model, isActive);
 
   if (!isActive) {
     return null;
@@ -103,6 +115,88 @@ function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void)
 
     return () => sub.unsubscribe();
   }, [model, onStateChange]);
+}
+
+/**
+ * Drives the embedded dashboard's time range from a controlled `timeRange` prop.
+ * `onTimeRangeChange` handles the raw -> string conversion and re-evaluation internally,
+ * mirroring what the dashboard's own time picker does, so this never remounts the scene.
+ */
+function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
+  useEffect(() => {
+    if (!isActive || !timeRange) {
+      return;
+    }
+
+    sceneGraph.getTimeRange(model).onTimeRangeChange(timeRange);
+  }, [timeRange, model, isActive]);
+}
+
+/**
+ * Pushes controlled variable values into the embedded dashboard, matched by variable name.
+ * Variables that do not exist or do not support value changes are ignored.
+ */
+function useControlledVariables(
+  variables: Record<string, string | string[]> | undefined,
+  model: DashboardScene,
+  isActive: boolean
+) {
+  useEffect(() => {
+    if (!isActive || !variables) {
+      return;
+    }
+
+    for (const [name, value] of Object.entries(variables)) {
+      const variable = sceneGraph.lookupVariable(name, model);
+      if (!variable) {
+        continue;
+      }
+
+      // MultiValueVariable (query/custom/datasource) exposes changeValueTo; TextBoxVariable
+      // exposes setValue. Both publish a value-changed event that re-runs dependent queries.
+      // Constant variables have no setter (and skip url sync), so they cannot be driven.
+      if ('changeValueTo' in variable && typeof variable.changeValueTo === 'function') {
+        variable.changeValueTo(value);
+      } else if ('setValue' in variable && typeof variable.setValue === 'function') {
+        variable.setValue(value);
+      }
+    }
+  }, [variables, model, isActive]);
+}
+
+/**
+ * Triggers a data refresh whenever `refreshToken` changes, re-running queries and
+ * re-evaluating relative time ranges. The initial token value is ignored so we don't
+ * double-run queries on mount.
+ */
+function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
+  const lastToken = useRef(refreshToken);
+
+  useEffect(() => {
+    if (!isActive || refreshToken === undefined || refreshToken === lastToken.current) {
+      return;
+    }
+
+    lastToken.current = refreshToken;
+    sceneGraph.getTimeRange(model).onRefresh();
+  }, [refreshToken, model, isActive]);
+}
+
+/**
+ * Hides or shows the embedded dashboard's time picker + refresh controls from a controlled prop.
+ */
+function useControlledHideTimeControls(
+  hideTimeControls: boolean | undefined,
+  model: DashboardScene,
+  isActive: boolean
+) {
+  useEffect(() => {
+    if (!isActive || hideTimeControls === undefined) {
+      return;
+    }
+
+    model.state.controls?.setState({ hideTimeControls });
+  }, [hideTimeControls, model, isActive]);
 }
 
 function getStyles(theme: GrafanaTheme2) {
