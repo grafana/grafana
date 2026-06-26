@@ -128,7 +128,7 @@
     "slate-plain-serializer": "^0.7.13",
     "slate-react": "^0.22.10",
     "tinycolor2": "^1.6.0",
-    "uplot": "1.6.32",
+    "uplot": "^1.6.32",
     "uwrap": "0.1.2"
   },
   "devDependencies": {

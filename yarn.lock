@@ -3062,7 +3062,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
-    uplot: "npm:1.6.32"
+    uplot: "npm:^1.6.32"
     uwrap: "npm:0.1.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -32206,7 +32206,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.32":
+"uplot@npm:1.6.32, uplot@npm:^1.6.32":
   version: 1.6.32
   resolution: "uplot@npm:1.6.32"
   checksum: 10/78a4ea0cf46ee1ea2814304b3c24002d52b7e98995dfc5fe9dcf05ce4873b62d26f81f03613dbb8b63e451cbfe369e314591c4fe8113f8453860ca71b8dc7430
