@@ -22,6 +22,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 )
 
@@ -661,6 +662,73 @@ func TestNew(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, client)
 		assert.True(t, wrapTransportCalled)
+	})
+}
+
+func TestNew_HTTPProtocol(t *testing.T) {
+	settings := []Setting{{Section: "server", Key: "port", Value: "3000"}}
+
+	newHTTP2Server := func(t *testing.T, negotiatedProto *atomic.Int32) *httptest.Server {
+		t.Helper()
+		server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			negotiatedProto.Store(int32(r.ProtoMajor))
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+		}))
+		// Offer HTTP/2 via ALPN so the client's protocol preference decides the outcome.
+		server.EnableHTTP2 = true
+		server.StartTLS()
+		t.Cleanup(server.Close)
+		return server
+	}
+
+	newClient := func(t *testing.T, tlsConfig rest.TLSClientConfig, url string, enableHTTP2 bool) Service {
+		t.Helper()
+		client, err := New(Config{
+			URL:             url,
+			WrapTransport:   func(rt http.RoundTripper) http.RoundTripper { return rt },
+			TLSClientConfig: tlsConfig,
+			CacheTTL:        -1,
+			EnableHTTP2:     enableHTTP2,
+		})
+		require.NoError(t, err)
+		return client
+	}
+
+	insecure := rest.TLSClientConfig{Insecure: true}
+	ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+	t.Run("should negotiate HTTP/1.1 when HTTP/2 is not enabled", func(t *testing.T) {
+		var proto atomic.Int32
+		server := newHTTP2Server(t, &proto)
+
+		_, err := newClient(t, insecure, server.URL, false).List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), proto.Load(), "client should negotiate HTTP/1.1 by default")
+	})
+
+	t.Run("should negotiate HTTP/1.1 when HTTP/2 is disabled but caller sets h2 in NextProtos", func(t *testing.T) {
+		var proto atomic.Int32
+		server := newHTTP2Server(t, &proto)
+
+		// EnableHTTP2 is the source of truth: a caller-supplied h2 preference must
+		// not re-admit HTTP/2 while the flag is off.
+		tlsConfig := rest.TLSClientConfig{Insecure: true, NextProtos: []string{"h2", "http/1.1"}}
+		_, err := newClient(t, tlsConfig, server.URL, false).List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), proto.Load(), "EnableHTTP2=false should force HTTP/1.1 regardless of NextProtos")
+	})
+
+	t.Run("should negotiate HTTP/2 when EnableHTTP2 is set", func(t *testing.T) {
+		var proto atomic.Int32
+		server := newHTTP2Server(t, &proto)
+
+		_, err := newClient(t, insecure, server.URL, true).List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		assert.Equal(t, int32(2), proto.Load(), "client should negotiate HTTP/2 when EnableHTTP2 is set")
 	})
 }
 

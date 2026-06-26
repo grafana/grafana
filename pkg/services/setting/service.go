@@ -55,6 +55,9 @@ const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
+// DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
+const DefaultIdleConnTimeout = 30 * time.Second
+
 const (
 	ApiGroup   = "setting.grafana.app"
 	apiVersion = "v1beta1"
@@ -171,6 +174,12 @@ type Config struct {
 	CacheTTL time.Duration
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
+	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
+	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
+	// client-go default.
+	IdleConnTimeout time.Duration
+	// EnableHTTP2 allows HTTP/2 for the client connection. It is disabled by default.
+	EnableHTTP2 bool
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -526,9 +535,17 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		}
 	}
 
+	idleConnTimeout := DefaultIdleConnTimeout
+	if config.IdleConnTimeout != 0 {
+		idleConnTimeout = config.IdleConnTimeout
+	}
+
 	// Wrap with tracing middleware to propagate trace context to all outbound requests
 	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		if baseTransport, ok := rt.(*http.Transport); ok && idleConnTimeout > 0 {
+			baseTransport.IdleConnTimeout = idleConnTimeout
+		}
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return authTransport(tracingRT)
 	}
@@ -548,6 +565,13 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
+	// When HTTP/2 is disabled we restrict ALPN to HTTP/1.1 unconditionally.
+	// ALPN only applies to TLS; plain HTTP already uses HTTP/1.1.
+	tlsClientConfig := config.TLSClientConfig
+	if !config.EnableHTTP2 {
+		tlsClientConfig.NextProtos = []string{"http/1.1"}
+	}
+
 	// Create the rate limiter explicitly so we can wrap it with instrumentation
 	rateLimiter := &instrumentedRateLimiter{
 		RateLimiter: flowcontrol.NewTokenBucketRateLimiter(qps, burst),
@@ -556,7 +580,7 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 
 	restConfig := &rest.Config{
 		Host:            config.URL,
-		TLSClientConfig: config.TLSClientConfig,
+		TLSClientConfig: tlsClientConfig,
 		WrapTransport:   wrapTransport,
 		RateLimiter:     rateLimiter,
 		UserAgent:       userAgent,
