@@ -60,8 +60,9 @@ export default function renderIntoCanvas(
   // eslint-disable-next-line no-param-reassign
   canvas.height = cHeight;
   // Pixels per unit of weight. With no summary spans, weight === index and this
-  // matches the previous layout exactly.
-  const step = cHeight / totalWeight;
+  // matches the previous layout exactly. Guard the empty-trace case (totalWeight 0)
+  // so step stays finite; the draw loop below does nothing when there are no items.
+  const step = totalWeight > 0 ? cHeight / totalWeight : 0;
 
   const ctx = canvas.getContext('2d', { alpha: false });
   if (ctx) {
