@@ -218,6 +218,53 @@ describe('fieldValueColors (golden baseline)', () => {
     };
     expect(resolve(config, [1, 100])).toMatchSnapshot();
   });
+
+  it('value mapping layered over thresholds (matched -> mapping, else threshold)', () => {
+    // mirrors the "Color by field (value mappings)" gdev panel: a single 700->purple mapping
+    // plus a green threshold. Unmatched values must fall through to green, not grey (-1).
+    const config = {
+      mappings: [{ type: MappingType.ValueToText, options: { '700': { color: 'purple' } } }],
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: 0, color: 'green' }] },
+      color: { mode: FieldColorModeId.Thresholds },
+    };
+    expect(resolve(config, [100, 700, 900])).toMatchSnapshot();
+  });
+
+  it('mapping layered over multi-step thresholds', () => {
+    const config = {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
+      ],
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'red' },
+        ],
+      },
+      color: { mode: FieldColorModeId.Thresholds },
+    };
+    expect(resolve(config, [null, 10, 80])).toMatchSnapshot();
+  });
+
+  it('unmatched mapping falls through to the threshold color', () => {
+    // RegexToText is a no-op, so no value matches a mapping; all should resolve to the threshold
+    const config = {
+      mappings: [{ type: MappingType.RegexToText, options: { pattern: '/x/', result: { color: 'orange' } } }],
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: 0, color: 'green' }] },
+      color: { mode: FieldColorModeId.Thresholds },
+    };
+    expect(resolve(config, [1, 2])).toMatchSnapshot();
+  });
+
+  it('value mapping layered over a continuous gradient', () => {
+    const config = {
+      mappings: [{ type: MappingType.ValueToText, options: { '50': { color: 'purple' } } }],
+      color: { mode: FieldColorModeId.ContinuousGrYlRd },
+    };
+    // discrete=false: the gradient path leaves getOne at -1, so it can't agree with getAll
+    expect(resolve(config, [0, 50, 100], { min: 0, max: 100, discrete: false })).toMatchSnapshot();
+  });
 });
 
 // Every branch of fieldValueColors, driven through both evaluators. The slow
@@ -358,6 +405,34 @@ const PARITY_CASES: Array<{
   {
     name: 'continuous gradient',
     config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
+    values: [0, 50, 100],
+    min: 0,
+    max: 100,
+  },
+  {
+    name: 'mapping layered over thresholds',
+    config: {
+      mappings: [{ type: MappingType.ValueToText, options: { '700': { color: 'purple' } } }],
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: 0, color: 'green' }] },
+      color: { mode: FieldColorModeId.Thresholds },
+    },
+    values: [100, 700, 900],
+  },
+  {
+    name: 'unmatched mapping falls through to thresholds',
+    config: {
+      mappings: [{ type: MappingType.RegexToText, options: { pattern: '/x/', result: { color: 'orange' } } }],
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: 0, color: 'green' }] },
+      color: { mode: FieldColorModeId.Thresholds },
+    },
+    values: [1, 2],
+  },
+  {
+    name: 'mapping layered over continuous gradient',
+    config: {
+      mappings: [{ type: MappingType.ValueToText, options: { '50': { color: 'purple' } } }],
+      color: { mode: FieldColorModeId.ContinuousGrYlRd },
+    },
     values: [0, 50, 100],
     min: 0,
     max: 100,

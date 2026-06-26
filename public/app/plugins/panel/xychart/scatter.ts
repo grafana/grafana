@@ -596,85 +596,98 @@ interface ColorSpec {
   getAllOverride?: GetAllValues;
 }
 
-/** Build the value->color spec from a field config, or null when no color branch applies. */
-export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null {
-  const index: unknown[] = [];
-  const rules: Array<{ rule: ColorRule; idx: number }> = [];
-
-  // if any mappings exist, use them regardless of other settings
-  if (f.config.mappings?.length ?? 0 > 0) {
-    let mappings = f.config.mappings!;
-
-    for (let i = 0; i < mappings.length; i++) {
-      let m = mappings[i];
-
-      if (m.type === MappingType.ValueToText) {
-        for (let k in m.options) {
-          let { color } = m.options[k];
-
-          if (color != null) {
-            let rhs = f.type === FieldType.string ? k : Number(k);
-            rules.push({ rule: { kind: 'eq', rhs }, idx: index.length });
-            index.push(getHex8Color(color, theme));
-          }
-        }
-      } else if (m.options.result.color != null) {
-        let { color } = m.options.result;
-
-        if (m.type === MappingType.RangeToText) {
-          let from = m.options.from != null ? Number(m.options.from) : undefined;
-          let to = m.options.to != null ? Number(m.options.to) : undefined;
-
-          if (from !== undefined || to !== undefined) {
-            rules.push({ rule: { kind: 'range', from, to }, idx: index.length });
-            index.push(getHex8Color(color, theme));
-          }
-        } else if (m.type === MappingType.SpecialValue) {
-          let spl = m.options.match;
-          let rule: ColorRule;
-
-          if (spl === SpecialValueMatch.NaN) {
-            rule = { kind: 'isNaN' };
-          } else if (spl === SpecialValueMatch.NullAndNaN) {
-            rule = { kind: 'nullOrNaN' };
-          } else if (spl === SpecialValueMatch.True) {
-            rule = { kind: 'eqStrict', rhs: true };
-          } else if (spl === SpecialValueMatch.False) {
-            rule = { kind: 'eqStrict', rhs: false };
-          } else if (spl === SpecialValueMatch.Empty) {
-            rule = { kind: 'eqStrict', rhs: '' };
-          } else {
-            // SpecialValueMatch.Null and any other match fall back to loose null
-            rule = { kind: 'isNullLoose' };
-          }
-
-          rules.push({ rule, idx: index.length });
-          index.push(getHex8Color(color, theme));
-        } else if (m.type === MappingType.RegexToText) {
-          // TODO
-        }
-      }
-    }
-
-    // the mappings branch always installs a -1 fallback, so even a config with
-    // no usable rule (e.g. RegexToText only) resolves to -1 rather than the
-    // empty defaults below
-    return { index, rules, fallback: -1 };
+/** Mapping layer: palette colors plus rules with indices local to `colors`. Null when the field has no mappings. */
+function buildMappingLayer(
+  f: Field,
+  theme: GrafanaTheme2
+): { colors: unknown[]; rules: Array<{ rule: ColorRule; idx: number }> } | null {
+  // operator precedence preserved intentionally: an empty mappings array falls through (no layer)
+  if (!(f.config.mappings?.length ?? 0 > 0)) {
+    return null;
   }
 
+  const colors: unknown[] = [];
+  const rules: Array<{ rule: ColorRule; idx: number }> = [];
+  let mappings = f.config.mappings!;
+
+  for (let i = 0; i < mappings.length; i++) {
+    let m = mappings[i];
+
+    if (m.type === MappingType.ValueToText) {
+      for (let k in m.options) {
+        let { color } = m.options[k];
+
+        if (color != null) {
+          let rhs = f.type === FieldType.string ? k : Number(k);
+          rules.push({ rule: { kind: 'eq', rhs }, idx: colors.length });
+          colors.push(getHex8Color(color, theme));
+        }
+      }
+    } else if (m.options.result.color != null) {
+      let { color } = m.options.result;
+
+      if (m.type === MappingType.RangeToText) {
+        let from = m.options.from != null ? Number(m.options.from) : undefined;
+        let to = m.options.to != null ? Number(m.options.to) : undefined;
+
+        if (from !== undefined || to !== undefined) {
+          rules.push({ rule: { kind: 'range', from, to }, idx: colors.length });
+          colors.push(getHex8Color(color, theme));
+        }
+      } else if (m.type === MappingType.SpecialValue) {
+        let spl = m.options.match;
+        let rule: ColorRule;
+
+        if (spl === SpecialValueMatch.NaN) {
+          rule = { kind: 'isNaN' };
+        } else if (spl === SpecialValueMatch.NullAndNaN) {
+          rule = { kind: 'nullOrNaN' };
+        } else if (spl === SpecialValueMatch.True) {
+          rule = { kind: 'eqStrict', rhs: true };
+        } else if (spl === SpecialValueMatch.False) {
+          rule = { kind: 'eqStrict', rhs: false };
+        } else if (spl === SpecialValueMatch.Empty) {
+          rule = { kind: 'eqStrict', rhs: '' };
+        } else {
+          // SpecialValueMatch.Null and any other match fall back to loose null
+          rule = { kind: 'isNullLoose' };
+        }
+
+        rules.push({ rule, idx: colors.length });
+        colors.push(getHex8Color(color, theme));
+      } else if (m.type === MappingType.RegexToText) {
+        // TODO
+      }
+    }
+  }
+
+  return { colors, rules };
+}
+
+/**
+ * Resolver for the field's color mode, or null for modes scatter does not resolve by value.
+ * This mirrors the scaleFunc layer of the display processor: it is both the standalone resolver
+ * and the fallback applied when no value mapping matches.
+ */
+type ColorModeBase =
+  | { kind: 'rules'; colors: unknown[]; rules: Array<{ rule: ColorRule; idx: number }>; fallback: number }
+  | { kind: 'gradient'; colors: unknown[]; toIdxs: GetAllValues };
+
+function buildColorModeBase(f: Field, theme: GrafanaTheme2): ColorModeBase | null {
   if (f.config.color?.mode === FieldColorModeId.Thresholds) {
     if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
       let steps = f.config.thresholds.steps;
       let lasti = steps.length - 1;
+      const rules: Array<{ rule: ColorRule; idx: number }> = [];
 
       for (let i = lasti; i > 0; i--) {
         rules.push({ rule: { kind: 'gte', rhs: Number(steps[i].value) }, idx: i });
       }
 
-      return { index: steps.map((s) => getHex8Color(s.color, theme)), rules, fallback: 0 };
+      return { kind: 'rules', colors: steps.map((s) => getHex8Color(s.color, theme)), rules, fallback: 0 };
     }
 
-    // TODO: percent thresholds — falls through to the empty defaults
+    // TODO: percent thresholds
     return null;
   }
 
@@ -689,14 +702,71 @@ export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null
     }
 
     return {
-      index: gradient,
-      rules: [],
-      fallback: -1,
-      getAllOverride: (vals, min, max) => valuesToFills(vals as number[], gradient as string[], min!, max!),
+      kind: 'gradient',
+      colors: gradient,
+      toIdxs: (vals, min, max) => valuesToFills(vals as number[], gradient as string[], min!, max!),
     };
   }
 
   return null;
+}
+
+/**
+ * Build the value->color spec from a field config, or null when no color branch applies.
+ *
+ * Mappings are layered OVER the color mode, matching the display processor: a value that hits a
+ * mapping uses the mapping color, otherwise it falls through to the color-mode color (threshold
+ * step / gradient). Mappings are only exclusive (unmatched -> -1) when there is no color mode.
+ */
+export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null {
+  const mapping = buildMappingLayer(f, theme);
+  const base = buildColorModeBase(f, theme);
+
+  // no mappings: pure color-mode resolution (or nothing)
+  if (mapping == null) {
+    if (base == null) {
+      return null;
+    }
+    if (base.kind === 'gradient') {
+      return { index: base.colors, rules: [], fallback: -1, getAllOverride: base.toIdxs };
+    }
+    return { index: base.colors, rules: base.rules, fallback: base.fallback };
+  }
+
+  // mappings but no color mode: mappings win, unmatched values fall back to -1 (grey), as before
+  if (base == null) {
+    return { index: mapping.colors, rules: mapping.rules, fallback: -1 };
+  }
+
+  // mappings layered over the color mode. The combined palette is [mapping colors, base colors];
+  // base indices are shifted by the mapping count so a matched mapping wins and everything else
+  // resolves through the color mode.
+  const offset = mapping.colors.length;
+  const index = [...mapping.colors, ...base.colors];
+
+  if (base.kind === 'gradient') {
+    const tests = mapping.rules.map(({ rule, idx }) => ({ test: rulePredicate(rule), idx }));
+    const getAllOverride: GetAllValues = (vals, min, max) => {
+      const baseIdxs = base.toIdxs(vals, min, max);
+      const out = Array(vals.length);
+      for (let i = 0; i < vals.length; i++) {
+        let mapped = -1;
+        for (let r = 0; r < tests.length; r++) {
+          if (tests[r].test(vals[i])) {
+            mapped = tests[r].idx;
+            break;
+          }
+        }
+        out[i] = mapped === -1 ? offset + baseIdxs[i] : mapped;
+      }
+      return out;
+    };
+    return { index, rules: [], fallback: -1, getAllOverride };
+  }
+
+  // base.kind === 'rules' (thresholds): merge into one rule list with the base indices offset
+  const rules = [...mapping.rules, ...base.rules.map(({ rule, idx }) => ({ rule, idx: offset + idx }))];
+  return { index, rules, fallback: offset + base.fallback };
 }
 
 /** Serialize a rule to its JS condition string, matching the historical compiled form exactly. */
