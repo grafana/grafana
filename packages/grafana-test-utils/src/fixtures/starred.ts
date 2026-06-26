@@ -21,3 +21,10 @@ export const setMockStarredDashboards = (uids: string[]) => {
 };
 
 export const mockStarredDashboardsMap = new Map<string, boolean>(initialStarredDashboards.map((uid) => [uid, true]));
+
+// No folders are starred by default
+export const setupMockStarredFolders = () => {
+  mockStarredFoldersMap.clear();
+};
+
+export const mockStarredFoldersMap = new Map<string, boolean>();

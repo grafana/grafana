@@ -44,7 +44,6 @@ describe('ScopesApiClient', () => {
   beforeEach(() => {
     apiClient = new ScopesApiClient();
     config.featureToggles.useMultipleScopeNodesEndpoint = true;
-    config.featureToggles.useScopeSingleNodeEndpoint = true;
     jest.clearAllMocks();
   });
 
@@ -277,17 +276,6 @@ describe('ScopesApiClient', () => {
 
       // Validate: result matches the expected node from MOCK_NODES
       expect(result).toEqual(expectedNode);
-    });
-
-    it('should return undefined when feature toggle is disabled', async () => {
-      config.featureToggles.useScopeSingleNodeEndpoint = false;
-
-      const result = await apiClient.fetchScopeNode('applications-grafana');
-
-      expect(result).toBeUndefined();
-
-      // Restore feature toggle
-      config.featureToggles.useScopeSingleNodeEndpoint = true;
     });
 
     it('should return undefined on API error', async () => {
