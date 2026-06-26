@@ -3025,7 +3025,7 @@ __metadata:
     monaco-editor: "npm:^0.34.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.7"
-    ol: "npm:10.7.0"
+    ol: "npm:^10.7.0"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-calendar: "npm:^6.0.0"
@@ -25050,7 +25050,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol@npm:10.7.0":
+"ol@npm:10.7.0, ol@npm:^10.7.0":
   version: 10.7.0
   resolution: "ol@npm:10.7.0"
   dependencies:
