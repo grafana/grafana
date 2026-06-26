@@ -152,16 +152,18 @@ Query expressions are different for each data source. For more information, refe
    | Sort                | Select the sort order for values to be displayed in the drop-down list. The default option, **Disabled**, means that the order of options returned by your data source query is used.                                                                                                                                                                                                                                                                                                                                                   |
    | Refresh             | Select when the variable should update options:<ul><li>**On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.</li><li>**On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.</li></ul> |
    | Use static options  | (Optional) Toggle on the switch to add custom options in addition to the query results:<ul><li>Make entries in the **Value** and **Display text** fields.</li><li>Click **+ Add new option** to add another static option.</li></ul> Repeat these steps as many times as needed.                                                                                                                                                                                                                                                        |
-   | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                     |
-   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                           |
-   | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Close** to close the query variable editor dialog box.
+1. (Optional) Set [Selection options](#configure-variable-selection-options) if needed:
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All value** - Enables an option to include all variables.
+   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
+
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
 ### Query type
 
@@ -187,37 +189,36 @@ For example, if you have server names or region names that never change, then yo
 
 1. [Enter general options](#enter-general-options-for-any-variable).
 1. Click **Open variable editor**.
-1. Configure the following options:
-
-   | Option              | Description                                                                                                                                                                                                                                                                                                           |
-   | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | CSV                 | Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.                                                                                                            |
-   | JSON                | Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#multi-property-variables). |
-   | Multi-value         | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                   |
-   | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                         |
-   | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                |
+1. Configure one of the following options:
+   - **CSV** - Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#multi-property-variables).
 
 1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Apply** to close the query editor dialog box.
+1. (Optional) Set [Selection options](#configure-variable-selection-options) if needed:
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All value** - Enables an option to include all variables.
+   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
+
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
-## Add a text box variable
+## Add a textbox variable {#add-a-text-box-variable}
 
-_Text box_ variables display a free text input field with an optional default value. This is the most flexible variable, because you can enter any value. Use this type of variable if you have metrics with high cardinality or if you want to update multiple panels in a dashboard at the same time.
+_Textbox_ variables display a free text input field with an optional default value. This is the most flexible variable, because you can enter any value. Use this type of variable if you have metrics with high cardinality or if you want to update multiple panels in a dashboard at the same time.
 
 For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
 1. [Enter general options](#enter-general-options-for-any-variable).
-1. (Optional) Under the **Text options** section of the page, in the **Default value** field, enter the default value for the variable.
+1. (Optional) Under **Textbox options**, enter the default value for the variable in the **Value** field.
 
    If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
 ## Add a constant variable
 
@@ -228,34 +229,31 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 1. [Enter general options](#enter-general-options-for-any-variable).
-1. Under the **Constant options** section of the page, in the **Value** field, enter the variable value.
+1. Under **Constant options**, enter the variable value in the **Value** field.
 
    You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
 ## Add a data source variable
 
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They're useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options-for-any-variable).
-1. Configure the following options:
+1. Configure the following **Data source options**:
+   - **Type** - Select the target data source for the variable.
+   - **Name filter** - (Optional) Enter a regular expression filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 
-   | Option               | Description                                                                                                                                                                        |
-   | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Type                 | Select the target data source for the variable.                                                                                                                                    |
-   | Instance name filter | (Optional) Enter a regular expression filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances. |
-   | Multi-value          | Enables multiple values to be selected at the same time. For more information, refer to [Selection Options](#configure-variable-selection-options).                                |
-   | Allow custom values  | Enables users to add custom values to the list. For more information, refer to [Selection Options](#configure-variable-selection-options).                                         |
-   | Include All option   | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                             |
+1. (Optional) Set [Selection options](#configure-variable-selection-options) if needed:
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All value** - Enables an option to include all variables.
+   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
 
-1. Click **Preview** to test the variable.
-1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
 ## Add an interval variable
 
@@ -264,7 +262,7 @@ Use an _interval_ variable to represents time spans such as `1m`,`1h`, `1d`. You
 You can use an interval variable as a parameter to group by time (for InfluxDB), date histogram interval (for Elasticsearch), or as a summarize function parameter (for Graphite).
 
 1. [Enter general options](#enter-general-options-for-any-variable).
-1. Configure the following options:
+1. Configure the following **Interval options**:
 
    | Option       | Description                                                                                                                                                                                                                                                                                                                                                             |
    | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -273,11 +271,9 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
    | Step count   | Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps. Only displayed when you select the **Auto option** checkbox. |
    | Min interval | The minimum threshold below which the step count intervals doesn't divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments. Only displayed when you select the **Auto option** checkbox.                                                                              |
 
-1. Click **Preview** to test the variable.
-1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Exit edit**.
 
 ### Interval variable examples
 
@@ -303,7 +299,7 @@ _Switch_ variables display a switch with two configurable values representing en
 - Control boolean parameters in your data sources
 
 1. [Enter general options](#enter-general-options-for-any-variable).
-1. Configure the following options:
+1. Configure the following **Switch options**:
 
    | Option          | Description                                                                                                                                                                                                                                                                                                                              |
    | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -311,8 +307,9 @@ _Switch_ variables display a switch with two configurable values representing en
    | Enabled value   | If you selected **Custom**, configure the custom values. Enter the value that represents the enabled state (for example, "on").                                                                                                                                                                                                          |
    | Disabled value  | If you selected **Custom**, enter the value that represents the disabled state (for example, "off").                                                                                                                                                                                                                                     |
 
-1. Click **Save dashboard**.
-1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Exit edit**.
 
 ### Switch variable examples
 
@@ -387,6 +384,10 @@ If you don't want Grafana to do this automatic regular expression escaping and f
 - Turn off the **Multi-value** or **Include All option** options.
 - Use the [raw variable format](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/variable-syntax/#raw).
 
+### Include All option
+
+Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
+
 ### Custom all value
 
 This option is only visible if the **Include All option** is selected.
@@ -396,7 +397,3 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
-
-### Include All option
-
-Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
