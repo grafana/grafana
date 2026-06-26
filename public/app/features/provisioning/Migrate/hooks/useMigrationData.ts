@@ -46,6 +46,12 @@ interface State {
   data: FolderRow[];
   isLoading: boolean;
   isError: boolean;
+  /**
+   * Kinds whose list() rejected while others succeeded. The table is incomplete
+   * but still useful; callers surface this so a partial list isn't mistaken for
+   * the full set (e.g. before treating "select all" as "migrate everything").
+   */
+  failedKinds: ResourceKindInfo[];
 }
 
 interface KindResult {
@@ -148,6 +154,7 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
     data: [],
     isLoading: true,
     isError: false,
+    failedKinds: [],
   });
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -175,20 +182,26 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       const [folderOutcome, ...kindOutcomes] = outcomes;
       const folders = folderOutcome.status === 'fulfilled' ? folderOutcome.value : [];
       const results: KindResult[] = [];
+      const failedKinds: ResourceKindInfo[] = [];
       kinds.forEach((kind, index) => {
         const outcome = kindOutcomes[index];
         if (outcome.status === 'fulfilled') {
           results.push({ kind, raw: outcome.value });
+        } else {
+          failedKinds.push(kind);
         }
       });
 
-      // Only a total failure (folders and every kind rejected) trips the error
-      // fallback; any partial success still renders what loaded.
-      const everythingFailed = outcomes.every((outcome) => outcome.status === 'rejected');
+      // The folder request only supplies labels, so a folder-only success does
+      // not count as a successful enumeration. Surface the error fallback when
+      // there were kinds to load and every one of them failed; a partial success
+      // still renders what loaded (with failedKinds reported for awareness).
+      const isError = kinds.length > 0 && results.length === 0;
       setState({
-        data: everythingFailed ? [] : aggregate(folders, results),
+        data: isError ? [] : aggregate(folders, results),
         isLoading: false,
-        isError: everythingFailed,
+        isError,
+        failedKinds,
       });
     })();
     return () => {

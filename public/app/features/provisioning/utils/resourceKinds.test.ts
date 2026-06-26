@@ -274,4 +274,17 @@ describe('getMigratableKinds', () => {
     const kinds = getMigratableKinds([{ group: 'folder.grafana.app', kind: 'Folder' }]);
     expect(kinds.some((k) => k.kind === 'Folder')).toBe(false);
   });
+
+  it('honors the backend set once loaded — even dashboards are dropped when disabled or omitted', () => {
+    // Once availableResources is populated it is authoritative for every kind,
+    // including the otherwise always-available base, so an overridden
+    // [provisioning] resources config that disables or omits dashboards excludes
+    // them from the migrate UI.
+    expect(
+      getMigratableKinds([{ group: 'dashboard.grafana.app', kind: 'Dashboard', disabled: true }]).map((k) => k.kind)
+    ).toEqual([]);
+    expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
+      'Playlist',
+    ]);
+  });
 });

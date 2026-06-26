@@ -43,6 +43,7 @@ export function Migrate() {
     data: folders,
     isLoading: isFoldersLoading,
     isError: isFoldersError,
+    failedKinds,
     refetch: refetchFolders,
   } = useMigrationData(contentKinds);
   const [repos] = useRepositoryList({ watch: true });
@@ -93,13 +94,20 @@ export function Migrate() {
   // the table footer surfaces a connect action instead of a dead button.
   const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
   // `allSelected` reflects whether every migratable folder in the table is
-  // picked (drives the "Migrate all" → migrate-everything path), including any
-  // synthetic per-kind folder. The select-all checkbox itself is scoped to the
-  // search-filtered rows inside the table.
+  // picked, including any synthetic per-kind folder. The select-all checkbox
+  // itself is scoped to the search-filtered rows inside the table.
   const allSelected = folders.length > 0 && folders.every((folder) => selectedFolderUids.has(folder.uid));
-  // "Migrate all" runs the legacy migrate-everything job; a partial selection
+  // Selecting everything escalates to the stats-driven migrate-everything job —
+  // but only when the displayed list is COMPLETE. If a kind failed to enumerate
+  // (failedKinds), the table is missing rows, so "select all" must stay a
+  // selective migration of what's shown rather than silently migrating resources
+  // the user never saw. The partial-failure warning offers an explicit
+  // migrate-everything action instead.
+  const listComplete = failedKinds.length === 0;
+  const migrateAllUnmanaged = allSelected && listComplete;
+  // The migrate-everything job is stats-driven (no refs); a selective migration
   // needs at least one resolved resource ref to send.
-  const canSubmit = allSelected ? folders.length > 0 : selection.resources.length > 0;
+  const canSubmit = migrateAllUnmanaged ? folders.length > 0 : selection.resources.length > 0;
   // Stats-derived: is there anything unmanaged at all? Used for the
   // migrate-everything fallback when the resource list itself can't be loaded —
   // that job is stats-driven and doesn't need the per-folder enumeration.
@@ -155,22 +163,47 @@ export function Migrate() {
             ))}
         </Stack>
       ) : (
-        <ResourcesToMigrate
-          folders={folders}
-          selectedFolderUids={selectedFolderUids}
-          selectedResourceKeys={selectedResourceKeys}
-          onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
-          onToggleResource={(key) => setSelectedResourceKeys((prev) => toggle(prev, key))}
-          selectedCount={selection.items}
-          allSelected={allSelected}
-          onSetFoldersSelected={setFoldersSelected}
-          // Selecting everything runs the legacy "migrate all unmanaged" job;
-          // a partial selection scopes the job to the picked resources.
-          onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}
-          submitDisabled={!canSubmit}
-          canMigrate={hasWriteRepo}
-          connectAction={<ConnectRepositoryButton items={repos ?? []} />}
-        />
+        <Stack direction="column" gap={2}>
+          {failedKinds.length > 0 && (
+            <Alert
+              severity="warning"
+              title={t('provisioning.migrate.partial-error-title', 'Some resource types could not be loaded')}
+            >
+              <Stack direction="column" gap={1} alignItems="flex-start">
+                {t(
+                  'provisioning.migrate.partial-error-body',
+                  "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
+                  { kinds: failedKinds.map((kind) => kind.pluralLabel()).join(', ') }
+                )}
+                {hasUnmanaged &&
+                  (hasWriteRepo ? (
+                    <Button variant="secondary" icon="upload" onClick={() => setDrawerScope('all')}>
+                      <Trans i18nKey="provisioning.migrate.migrate-everything">Migrate everything</Trans>
+                    </Button>
+                  ) : (
+                    <ConnectRepositoryButton items={repos ?? []} />
+                  ))}
+              </Stack>
+            </Alert>
+          )}
+          <ResourcesToMigrate
+            folders={folders}
+            selectedFolderUids={selectedFolderUids}
+            selectedResourceKeys={selectedResourceKeys}
+            onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
+            onToggleResource={(key) => setSelectedResourceKeys((prev) => toggle(prev, key))}
+            selectedCount={selection.items}
+            allSelected={migrateAllUnmanaged}
+            onSetFoldersSelected={setFoldersSelected}
+            // Selecting everything runs the legacy "migrate all unmanaged" job
+            // only when the list is complete; otherwise it scopes to the picked
+            // resources so an incomplete list never migrates un-shown kinds.
+            onMigrateSelected={() => setDrawerScope(migrateAllUnmanaged ? 'all' : 'selected')}
+            submitDisabled={!canSubmit}
+            canMigrate={hasWriteRepo}
+            connectAction={<ConnectRepositoryButton items={repos ?? []} />}
+          />
+        </Stack>
       )}
 
       {drawerScope && (

@@ -220,6 +220,28 @@ describe('useMigrationData (non-folder kinds)', () => {
 
     expect(result.current.isError).toBe(false);
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
+    // The kind that failed is reported so callers can flag an incomplete list.
+    expect(result.current.failedKinds.map((k) => k.kind)).toEqual(['Playlist']);
+  });
+
+  it('reports an error when every kind fails even if the folder labels load', async () => {
+    // Folders (labels only) load, but the dashboard search fails. A folder-only
+    // success must not be treated as a successful enumeration.
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const types = new URL(request.url).searchParams.getAll('type');
+        if (types.includes('dashboard')) {
+          return HttpResponse.json({ message: 'boom' }, { status: 500 });
+        }
+        return HttpResponse.json({ totalHits: 1, hits: [{ resource: 'folders', name: 'a', title: 'a', folder: '' }] });
+      })
+    );
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toEqual([]);
   });
 
   it('reports an error only when nothing could be enumerated at all', async () => {

@@ -267,18 +267,23 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
 
 /**
  * The kinds offered for migration on this instance: every registered kind except
- * folders (the container others nest under) that is available — in the static
- * base (`alwaysAvailable`) or reported by the backend's `availableResources`. The
- * availability check is strict: a non-base kind only appears once
- * `availableResources` is populated and confirms it, so a kind the backend ships
- * disabled never shows up early. Each returned kind knows how to `list()` itself.
+ * folders (the container others nest under).
+ *
+ * Once `availableResources` is loaded the backend is authoritative for every
+ * kind: only kinds it reports active are returned, so an overridden
+ * `[provisioning] resources` config that omits or disables a kind (even
+ * dashboards) is honored. Before settings load (`availableResources` undefined)
+ * we fall back to the static base (`alwaysAvailable`, i.e. dashboards) so the
+ * common case isn't blank during the initial render. Each returned kind knows
+ * how to `list()` itself.
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
-  return allKindInfos.filter(
-    (info) =>
-      info.kind !== resourceKindInfos.folder.kind &&
-      (info.alwaysAvailable || (Boolean(availableResources) && isResourceKindAvailable(info, availableResources)))
-  );
+  return allKindInfos.filter((info) => {
+    if (info.kind === resourceKindInfos.folder.kind) {
+      return false;
+    }
+    return availableResources ? isResourceKindAvailable(info, availableResources) : info.alwaysAvailable;
+  });
 }
 
 // --- Resource enumeration -------------------------------------------------
@@ -295,10 +300,11 @@ const MAX_PAGES = 200;
 
 /**
  * The unified searcher reports a resource's immediate parent folder UID in
- * `item.location` (typed optional). Root-level resources come back as undefined,
- * empty, or the literal "general" UID — normalize all of them to undefined.
- * Must tolerate undefined: a folderless dashboard yields no location, and calling
- * .trim() on it would throw and reject the whole enumeration.
+ * `item.location`. Root-level resources come back empty or as the literal
+ * "general" UID — normalize both to undefined. Although `location` is declared as
+ * a string, a folderless resource yields it absent at runtime, so this tolerates
+ * undefined: calling .trim() on a missing location would throw and reject the
+ * whole enumeration.
  */
 export function readImmediateParent(location: string | undefined): string | undefined {
   const trimmed = location?.trim();

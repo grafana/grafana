@@ -44,7 +44,13 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 // The Migrate tab also enumerates resources from the unified searcher; return
 // an already-resolved empty list so its render is synchronous here.
 jest.mock('./Migrate/hooks/useMigrationData', () => ({
-  useMigrationData: jest.fn(() => ({ data: [], isLoading: false, isError: false, refetch: jest.fn() })),
+  useMigrationData: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    failedKinds: [],
+    refetch: jest.fn(),
+  })),
 }));
 
 // Page resolves navId against the nav index; seed the provisioning node so it
