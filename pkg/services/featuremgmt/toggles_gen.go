@@ -961,4 +961,8 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagGrafanaOnDemandDiagnostics
+	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
 )

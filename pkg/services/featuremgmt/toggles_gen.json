@@ -2502,6 +2502,22 @@
     },
     {
       "metadata": {
+        "name": "grafana.onDemandDiagnostics",
+        "resourceVersion": "1782469062023",
+        "creationTimestamp": "2026-06-26T10:14:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 10:17:42.023006 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.orgDashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",

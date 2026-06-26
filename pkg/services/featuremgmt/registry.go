@@ -3139,6 +3139,14 @@ var (
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
+		{
+			Name:        "grafana.onDemandDiagnostics",
+			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSources,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

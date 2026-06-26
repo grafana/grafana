@@ -53,6 +53,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
+  GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
@@ -331,6 +333,17 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
+};
+
+/**
+ * Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+ *
+ * **Details:**
+ * - flag key: `grafana.onDemandDiagnostics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.onDemandDiagnostics", false, options).value;
 };
 
 /**

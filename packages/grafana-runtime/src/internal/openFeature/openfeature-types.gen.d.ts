@@ -58,7 +58,8 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "table.protoRowParser"
     | "dataviz.experimentalColorSchemes"
-    | "grafana.customizableMegaMenu";
+    | "grafana.customizableMegaMenu"
+    | "grafana.onDemandDiagnostics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
