@@ -3056,7 +3056,7 @@ __metadata:
     rxjs: "npm:^7.8.2"
     sass-loader: "npm:16.0.5"
     slate: "npm:^0.47.9"
-    slate-plain-serializer: "npm:0.7.13"
+    slate-plain-serializer: "npm:^0.7.13"
     slate-react: "npm:0.22.10"
     storybook: "npm:10.3.6"
     style-loader: "npm:4.0.0"
@@ -29699,7 +29699,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-plain-serializer@npm:0.7.13, slate-plain-serializer@npm:^0.7.11":
+"slate-plain-serializer@npm:0.7.13, slate-plain-serializer@npm:^0.7.11, slate-plain-serializer@npm:^0.7.13":
   version: 0.7.13
   resolution: "slate-plain-serializer@npm:0.7.13"
   peerDependencies:
