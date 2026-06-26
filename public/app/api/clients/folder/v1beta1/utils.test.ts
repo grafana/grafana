@@ -3,7 +3,7 @@ import { type ResourceStats } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { getParsedCounts } from './utils';
 
 describe('getParsedCounts', () => {
-  it('prefers the non-fallback entry and keeps the fallback only when no other entry exists', () => {
+  it('prefers non-zero non-fallback counts, otherwise uses a non-zero sql-fallback (and normalizes legacy resource names)', () => {
     let counts: ResourceStats[] = [
       { group: 'folder.grafana.app', resource: 'folders', count: 0 },
       { group: 'dashboard.grafana.app', resource: 'dashboards', count: 0 },

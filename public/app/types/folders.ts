@@ -45,12 +45,17 @@ export type NewFolder = Pick<FolderDTO, 'title' | 'parentUid'>;
 export interface DescendantCountDTO {
   folders?: number;
   dashboards?: number;
-  library_elements?: number;
   alertrules?: number;
+  // There is this weird thing where legacy/sql-fallback values have different resource name for the panels. As the old
+  // API uses the same backend as new and just reshapes it, this will leak here.
+  library_elements?: number;
+  librarypanels?: number;
+
+  // Legacy keys that should not be actually returned anymore when unified storage is enabled but we keep it for now.
   folder?: number;
   dashboard?: number;
-  librarypanel?: number;
   alertrule?: number;
+  librarypanel?: number;
 }
 
 type DescendantResource = 'folders' | 'dashboards' | 'librarypanels' | 'alertrules';
