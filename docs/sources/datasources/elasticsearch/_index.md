@@ -94,7 +94,7 @@ preinstall_sync = elasticsearch
 
 After you have configured the Elasticsearch data source, you can:
 
-- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your Elasticsearch data.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run user-written queries against your Elasticsearch data.
 - Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/) for dynamic dashboards.
 - Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your Elasticsearch data.
