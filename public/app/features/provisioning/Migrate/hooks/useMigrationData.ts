@@ -158,23 +158,38 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const needsFolders = kinds.some((kind) => kind.folderScoped);
-        const [folders, rawResults] = await Promise.all([
-          // Folders list through the searcher and ignore dispatch.
-          needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-          Promise.all(kinds.map((kind) => kind.list({ dispatch }))),
-        ]);
-        if (cancelled) {
-          return;
-        }
-        const results = kinds.map((kind, index) => ({ kind, raw: rawResults[index] }));
-        setState({ data: aggregate(folders, results), isLoading: false, isError: false });
-      } catch (err) {
-        if (!cancelled) {
-          setState({ data: [], isLoading: false, isError: true });
-        }
+      const needsFolders = kinds.some((kind) => kind.folderScoped);
+      // Enumerate folders (for labels) and each kind independently. A single kind
+      // failing to list — an apiserver that's unavailable, a client that rejects —
+      // must not blank the whole table: keep the kinds that succeeded and only
+      // fall back to the error state when nothing could be loaded at all.
+      const outcomes = await Promise.allSettled([
+        // Folders list through the searcher and ignore dispatch.
+        needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
+        ...kinds.map((kind) => kind.list({ dispatch })),
+      ]);
+      if (cancelled) {
+        return;
       }
+
+      const [folderOutcome, ...kindOutcomes] = outcomes;
+      const folders = folderOutcome.status === 'fulfilled' ? folderOutcome.value : [];
+      const results: KindResult[] = [];
+      kinds.forEach((kind, index) => {
+        const outcome = kindOutcomes[index];
+        if (outcome.status === 'fulfilled') {
+          results.push({ kind, raw: outcome.value });
+        }
+      });
+
+      // Only a total failure (folders and every kind rejected) trips the error
+      // fallback; any partial success still renders what loaded.
+      const everythingFailed = outcomes.every((outcome) => outcome.status === 'rejected');
+      setState({
+        data: everythingFailed ? [] : aggregate(folders, results),
+        isLoading: false,
+        isError: everythingFailed,
+      });
     })();
     return () => {
       cancelled = true;

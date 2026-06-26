@@ -12,6 +12,7 @@ import {
   getMigratableKinds,
   getRepositoryRoute,
   isResourceKindAvailable,
+  readImmediateParent,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
@@ -233,6 +234,24 @@ describe('getAvailableResourceKinds', () => {
     const equivalent = { ...resourceKindInfos.dashboard };
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
+});
+
+describe('readImmediateParent', () => {
+  it('treats a missing location as root (no parent)', () => {
+    // DashboardQueryResult.location is optional — a folderless dashboard yields
+    // undefined, which must not throw.
+    expect(readImmediateParent(undefined)).toBeUndefined();
+  });
+
+  it('treats empty and the literal "general" UID as root', () => {
+    expect(readImmediateParent('')).toBeUndefined();
+    expect(readImmediateParent('   ')).toBeUndefined();
+    expect(readImmediateParent('general')).toBeUndefined();
+  });
+
+  it('returns the trimmed parent folder UID otherwise', () => {
+    expect(readImmediateParent(' team-a ')).toBe('team-a');
   });
 });
 

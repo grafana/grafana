@@ -208,4 +208,28 @@ describe('useMigrationData (non-folder kinds)', () => {
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
     expect(result.current.data.find((f) => f.title === 'Playlists')?.directResources.map((r) => r.uid)).toEqual(['p1']);
   });
+
+  it('still renders the kinds that loaded when another kind fails to list', async () => {
+    // Dashboards load fine; the playlist apiserver list errors. The table must
+    // still show the dashboard rather than blanking the whole list.
+    mockSearch([folder('a'), dashboard('d1', 'a')]);
+    server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
+  });
+
+  it('reports an error only when nothing could be enumerated at all', async () => {
+    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+    server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toEqual([]);
+  });
 });

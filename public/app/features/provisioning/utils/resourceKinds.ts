@@ -295,11 +295,13 @@ const MAX_PAGES = 200;
 
 /**
  * The unified searcher reports a resource's immediate parent folder UID in
- * `item.location`. Root-level resources come back empty or as the literal
- * "general" UID; normalize both to undefined.
+ * `item.location` (typed optional). Root-level resources come back as undefined,
+ * empty, or the literal "general" UID — normalize all of them to undefined.
+ * Must tolerate undefined: a folderless dashboard yields no location, and calling
+ * .trim() on it would throw and reject the whole enumeration.
  */
-function readImmediateParent(location: string): string | undefined {
-  const trimmed = location.trim();
+export function readImmediateParent(location: string | undefined): string | undefined {
+  const trimmed = location?.trim();
   if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
     return undefined;
   }
