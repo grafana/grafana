@@ -205,7 +205,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   }
 
   return (
-    <div ref={containerRef} className={styles.suggestionsContainer}>
+    <div ref={containerRef}>
       {loading && (
         <div className={styles.loadingBar}>
           <LoadingBar
@@ -308,11 +308,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       marginTop: theme.spacing(6),
     }),
-    suggestionsContainer: css({
-      position: 'relative',
-    }),
-    // Overlay the loading bar at the top so an in-place refresh doesn't shift
-    // layout or reset the user's scroll position.
     loadingBar: css({
       position: 'absolute',
       top: 0,
