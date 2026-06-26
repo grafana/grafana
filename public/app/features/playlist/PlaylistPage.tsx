@@ -10,18 +10,17 @@ import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/compone
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
-import { useDispatch } from 'app/types/store';
 
-import { type Playlist, playlistAPIv1, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
+import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { canWritePlaylists, searchPlaylists } from './utils';
+import { canWritePlaylists, searchPlaylists, useInvalidatePlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
-  const dispatch = useDispatch();
+  const invalidatePlaylists = useInvalidatePlaylists();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
   const { newPrURL, repoURL } = usePullRequestParam();
   const [urlParams] = useUrlParams();
@@ -107,7 +106,7 @@ export const PlaylistPage = () => {
                   resource={playlistToDelete}
                   action="delete"
                   title={playlistToDelete.spec?.title ?? ''}
-                  invalidate={() => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']))}
+                  invalidate={invalidatePlaylists}
                   onDismiss={onDismissDelete}
                 />
               ) : (

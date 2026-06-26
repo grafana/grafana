@@ -6,74 +6,16 @@ import { type Repository, type SupportedResource } from 'app/api/clients/provisi
 import { getIconForKind } from 'app/features/search/service/utils';
 
 /**
- * Tree-view labels for the provisioning *resource* kinds — the single source of truth for them.
- * Each {@link resourceKindInfos} entry's `itemType` is checked against this union (so a typo is a
- * compile error), and the full tree {@link ItemType} (these labels plus the `File` fallback) is
- * assembled from it in `../types`. Adding a kind means adding its label here next to its registry
- * entry — but no edit to `../types`.
- */
-export type ResourceItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'LibraryPanel';
-
-/**
- * Stable per-kind key identifying a provisioning resource kind across the UI: the commit-message
- * noun, branch-name prefix, telemetry, the shared edit-form fields, and each registry entry's own
- * `key` all use this. The registry below is declared `satisfies Record<ResourceKindKey,
- * ResourceKindInfo>`, so this union and {@link resourceKindInfos} stay mutually exhaustive — adding a
- * kind needs a member here and a matching entry, or it won't compile. (Explicit rather than `keyof
- * typeof resourceKindInfos` because entries reference it via `key`, which `keyof` would make circular.)
- */
-export type ResourceKindKey = 'folder' | 'dashboard' | 'playlist' | 'librarypanel';
-
-/**
- * Per-kind UI metadata for provisioning resources.
+ * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
+ * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
+ * icons, count labels, resource-ref unions).
  *
- * This is the single source of truth the UI reads from instead of scattering
- * per-kind knowledge across switch statements (item types, icons, count labels,
- * resource-ref unions). Adding a new provisioning kind should be one entry here
- * plus, if needed, enabling it on the backend so it appears in the settings
- * endpoint's `availableResources`.
- */
-export interface ResourceKindInfo {
-  /**
-   * Stable lowercase identifier — the same value as this entry's key in {@link resourceKindInfos}
-   * (e.g. `dashboard`). It's the UI-facing resource type for commit messages, branch prefixes,
-   * telemetry and the shared edit-form fields, so passing a descriptor carries its own type. A test
-   * asserts each entry's `key` matches its registry key.
-   */
-  key: ResourceKindKey;
-  /** Human-readable singular noun for this kind, shown in UI copy such as drawer titles. */
-  displayName: string;
-  /** API group, e.g. `dashboard.grafana.app`. */
-  group: string;
-  /** Kubernetes Kind, e.g. `Dashboard`. */
-  kind: string;
-  /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
-  resource: string;
-  /**
-   * Label shown for this kind in the combined files/resources tree. Constrained to
-   * {@link ResourceItemType} so a wrong label is a compile error; the full tree {@link ItemType}
-   * (in `../types`) is `ResourceItemType | 'File'`, so adding a kind needs no edit to that file.
-   */
-  itemType: ResourceItemType;
-  /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
-  icon: IconName;
-  /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
-  getRoute?: (name: string) => string;
-  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
-  listRoute: string;
-  /**
-   * Whether resources of this kind are contained in folders, and so can be scoped
-   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
-   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
-   */
-  folderScoped: boolean;
-}
-
-/**
- * Registry of provisioning resource kinds, keyed by a stable identifier.
- *
- * `satisfies` checks each entry against ResourceKindInfo without widening the
- * value type, so callers still get the concrete record back.
+ * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
+ * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here (plus, if
+ * needed, enabling it on the backend so it appears in the settings endpoint's `availableResources`) —
+ * no parallel unions to keep in sync. Entries are validated against {@link ResourceKindInfo} where
+ * `allKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
+ * the interface references the derived types, which `satisfies` would make a circular reference.
  */
 export const resourceKindInfos = {
   folder: {
@@ -136,8 +78,65 @@ export const resourceKindInfos = {
     // routing they behave like a non-foldered kind and always resolve to listRoute.
     folderScoped: false,
   },
-} satisfies Record<ResourceKindKey, ResourceKindInfo>;
+} as const;
 
+/**
+ * Stable per-kind key identifying a provisioning resource kind across the UI: the commit-message
+ * noun, branch-name prefix, telemetry, the shared edit-form fields, and each registry entry's own
+ * `key` all use this. Derived from the registry keys, so a new kind only needs its registry entry.
+ */
+export type ResourceKindKey = keyof typeof resourceKindInfos;
+
+/**
+ * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
+ * the registry's `itemType`s so the set stays in lockstep with the kinds above. The full tree
+ * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
+ * new kind needs no edit there either.
+ */
+export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+
+/**
+ * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
+ * {@link ResourceKindInfo} carries the kind's identity and tree label without a separate lookup.
+ *
+ * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
+ * across switch statements. Adding a new provisioning kind is one {@link resourceKindInfos} entry,
+ * plus (if needed) enabling it on the backend so it appears in the settings `availableResources`.
+ */
+export interface ResourceKindInfo {
+  /**
+   * Stable lowercase identifier — equals this entry's key in {@link resourceKindInfos} (e.g.
+   * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
+   * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
+   */
+  key: ResourceKindKey;
+  /** Human-readable singular noun for this kind, shown in UI copy such as drawer titles. */
+  displayName: string;
+  /** API group, e.g. `dashboard.grafana.app`. */
+  group: string;
+  /** Kubernetes Kind, e.g. `Dashboard`. */
+  kind: string;
+  /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
+  resource: string;
+  /** Label shown for this kind in the combined files/resources tree. */
+  itemType: ResourceItemType;
+  /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
+  icon: IconName;
+  /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
+  getRoute?: (name: string) => string;
+  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
+  listRoute: string;
+  /**
+   * Whether resources of this kind are contained in folders, and so can be scoped
+   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
+   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   */
+  folderScoped: boolean;
+}
+
+// Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
+// interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
+// each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
