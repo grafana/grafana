@@ -14,11 +14,13 @@ import {
 } from 'app/features/apiserver/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -83,6 +85,8 @@ interface BaseDrawerProps {
     configuredBranch?: string;
     /** The repository's base URL, for the PR banner's branch links. */
     repoUrl?: string;
+    /** The rendered pull-request title, forwarded as the `pr_title` query param for the PR banner. */
+    prTitle?: string;
   }) => void;
 }
 
@@ -161,6 +165,17 @@ function FormContent({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  // Branch (PR) workflow: pre-fill the branch from the repository's name template and lock the field
+  // when the repository enforces it; render the PR title from the title template for the PR banner.
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: watch('ref') ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const showError = (err: unknown) => {
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
@@ -181,6 +196,7 @@ function FormContent({
           repoType: repository?.type,
           configuredBranch: repository?.branch,
           repoUrl: repository?.url,
+          prTitle,
         }),
     },
   });
@@ -227,6 +243,7 @@ function FormContent({
             repository={repository}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {error && <ProvisioningAlert error={error} />}

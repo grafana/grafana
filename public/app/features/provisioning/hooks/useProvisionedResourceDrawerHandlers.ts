@@ -14,6 +14,8 @@ interface BranchSuccessData {
   configuredBranch?: string;
   /** Repository base URL, for the PR banner's branch links. */
   repoUrl?: string;
+  /** Rendered pull-request title, forwarded as the `pr_title` query param for the PR banner. */
+  prTitle?: string;
 }
 
 export interface ProvisionedResourceDrawerHandlers {
@@ -56,7 +58,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const makeOnBranchSuccess =
     (action: ResourceBranchAction) =>
-    ({ ref, urls, repoType, configuredBranch, repoUrl }: BranchSuccessData) => {
+    ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
       invalidate();
       navigate(
         buildResourceBranchRedirectUrl({
@@ -65,6 +67,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
           paramValue: urls?.newPullRequestURL,
           repoType,
           action,
+          prTitle,
           ref,
           configuredBranch,
           repoUrl: urls?.repositoryURL ?? repoUrl,
