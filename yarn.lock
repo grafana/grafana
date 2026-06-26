@@ -3034,7 +3034,7 @@ __metadata:
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:^14.3.8"
     react-element-to-jsx-string: "npm:^17.0.1"
-    react-highlight-words: "npm:0.21.0"
+    react-highlight-words: "npm:^0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-inlinesvg: "npm:4.3.0"
     react-loading-skeleton: "npm:3.5.0"
@@ -27516,7 +27516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-highlight-words@npm:0.21.0":
+"react-highlight-words@npm:0.21.0, react-highlight-words@npm:^0.21.0":
   version: 0.21.0
   resolution: "react-highlight-words@npm:0.21.0"
   dependencies:
