@@ -1105,14 +1105,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.orgDashboardTemplates",
-			Description: "Enables org-defined dashboard templates for enterprise",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{Go: true, React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "grafana.customDashboardTemplates",
 			Description: "Enables custom dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
@@ -2633,15 +2625,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "true",
-		},
-		{
-			Name:         "frontendServiceUseSettingsService",
-			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "frontendService.settingsSourceFilter",

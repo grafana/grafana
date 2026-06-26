@@ -5,51 +5,51 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ResourceStatusCard } from './ResourceStatusCard';
-import { type MigrationTotals } from './stats';
+import { type KindTotals } from './stats';
 
 interface OverviewStatCardsProps {
-  dashboards: MigrationTotals;
   /**
-   * Playlist totals, present only when the playlist kind is enabled for
-   * provisioning on this instance. When omitted, the overview stays
-   * dashboard-only and the combined "All resources" card is hidden (it would
-   * just duplicate the dashboards card).
+   * Per-kind totals, one entry per active migratable kind. Cards render
+   * generically from this, so a newly enabled kind shows up without changes
+   * here. A card with no resources self-hides (see ResourceStatusCard).
    */
-  playlists?: MigrationTotals;
+  totals: KindTotals[];
 }
 
 /**
  * The migration objective is zero unmanaged resources. The overview reports how
- * much of each migratable resource type is already managed. When more than one
- * type is enabled (e.g. dashboards + playlists), a combined "All resources" card
+ * much of each migratable kind is already managed, one card per kind. When more
+ * than one kind actually has resources, a combined "All resources" card
  * summarizes the total progress.
  */
-export function OverviewStatCards({ dashboards, playlists }: OverviewStatCardsProps) {
+export function OverviewStatCards({ totals }: OverviewStatCardsProps) {
   const styles = useStyles2(getStyles);
-  // Only worth a combined card when more than one kind actually has resources —
-  // otherwise it just duplicates the single populated card.
-  const combined: MigrationTotals | undefined =
-    playlists && dashboards.instanceTotal > 0 && playlists.instanceTotal > 0
-      ? {
-          managed: dashboards.managed + playlists.managed,
-          instanceTotal: dashboards.instanceTotal + playlists.instanceTotal,
-        }
+
+  // Only kinds that actually have resources count toward the combined card —
+  // and it's only worth showing when more than one does, otherwise it just
+  // duplicates the single populated card.
+  const populated = totals.filter((t) => t.totals.instanceTotal > 0);
+  const combined =
+    populated.length > 1
+      ? populated.reduce(
+          (acc, { totals }) => ({
+            managed: acc.managed + totals.managed,
+            instanceTotal: acc.instanceTotal + totals.instanceTotal,
+          }),
+          { managed: 0, instanceTotal: 0 }
+        )
       : undefined;
 
   return (
     <div className={styles.statCardsRow}>
-      <ResourceStatusCard
-        label={t('provisioning.migrate.dashboards', 'Dashboards')}
-        managed={dashboards.managed}
-        total={dashboards.instanceTotal}
-      />
-      {playlists && (
+      {totals.map(({ kind, totals }) => (
         <ResourceStatusCard
-          label={t('provisioning.migrate.playlists', 'Playlists')}
-          managed={playlists.managed}
-          total={playlists.instanceTotal}
+          key={`${kind.group}/${kind.kind}`}
+          label={kind.pluralLabel()}
+          managed={totals.managed}
+          total={totals.instanceTotal}
         />
-      )}
+      ))}
       {combined && (
         <ResourceStatusCard
           label={t('provisioning.migrate.all-resources', 'All resources')}

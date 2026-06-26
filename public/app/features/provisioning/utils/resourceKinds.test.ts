@@ -9,8 +9,10 @@ import {
   getKindInfoByResource,
   getKindInfoByStat,
   getKindInfoByStatGroup,
+  getMigratableKinds,
   getRepositoryRoute,
   isResourceKindAvailable,
+  readImmediateParent,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
@@ -45,7 +47,6 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
   });
-
   it('gives each entry a `key` equal to its registry key', () => {
     // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
     // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
@@ -60,6 +61,13 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
     expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
     expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
+  });
+
+  it('every kind exposes a translated plural label and a list function', () => {
+    for (const info of Object.values(resourceKindInfos)) {
+      expect(info.pluralLabel()).toBeTruthy();
+      expect(typeof info.list).toBe('function');
+    }
   });
 
   it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
@@ -252,5 +260,57 @@ describe('getAvailableResourceKinds', () => {
     const equivalent = { ...resourceKindInfos.dashboard };
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
+});
+
+describe('readImmediateParent', () => {
+  it('treats a missing location as root (no parent)', () => {
+    // DashboardQueryResult.location is optional — a folderless dashboard yields
+    // undefined, which must not throw.
+    expect(readImmediateParent(undefined)).toBeUndefined();
+  });
+
+  it('treats empty and the literal "general" UID as root', () => {
+    expect(readImmediateParent('')).toBeUndefined();
+    expect(readImmediateParent('   ')).toBeUndefined();
+    expect(readImmediateParent('general')).toBeUndefined();
+  });
+
+  it('returns the trimmed parent folder UID otherwise', () => {
+    expect(readImmediateParent(' team-a ')).toBe('team-a');
+  });
+});
+
+describe('getMigratableKinds', () => {
+  it('returns only the always-available base (dashboards) when availableResources is unset', () => {
+    // Folders are excluded (the container others nest under); playlists and
+    // library panels are gated and not in the static base.
+    expect(getMigratableKinds(undefined).map((k) => k.kind)).toEqual(['Dashboard']);
+  });
+
+  it('adds a kind once the backend reports it available', () => {
+    const kinds = getMigratableKinds([
+      { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+      { group: 'playlist.grafana.app', kind: 'Playlist' },
+    ]);
+    expect(kinds.map((k) => k.kind).sort()).toEqual(['Dashboard', 'Playlist']);
+  });
+
+  it('never includes folders, even when available', () => {
+    const kinds = getMigratableKinds([{ group: 'folder.grafana.app', kind: 'Folder' }]);
+    expect(kinds.some((k) => k.kind === 'Folder')).toBe(false);
+  });
+
+  it('honors the backend set once loaded — even dashboards are dropped when disabled or omitted', () => {
+    // Once availableResources is populated it is authoritative for every kind,
+    // including the otherwise always-available base, so an overridden
+    // [provisioning] resources config that disables or omits dashboards excludes
+    // them from the migrate UI.
+    expect(
+      getMigratableKinds([{ group: 'dashboard.grafana.app', kind: 'Dashboard', disabled: true }]).map((k) => k.kind)
+    ).toEqual([]);
+    expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
+      'Playlist',
+    ]);
   });
 });
