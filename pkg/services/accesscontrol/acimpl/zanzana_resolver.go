@@ -273,18 +273,21 @@ func teamWildcardScope() string {
 	return ac.Scope("teams", "id", "*")
 }
 
-// isUserRBACAction matches user-management actions.
+// isUserRBACAction matches user-management actions, including the org.users:* family.
 func isUserRBACAction(action string) bool {
-	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.")
+	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.") ||
+		strings.HasPrefix(action, "org.users:")
 }
 
 // userScopeKind returns the legacy RBAC scope kind for a user-management action.
 // Most user actions are server-level and scoped to global.users (users:read/write/delete and
-// users.permissions:write all grant global.users:* in the fixed roles). users.permissions:read is
-// the exception: it gates org-level permission listing (fixed:org.users:reader) and is scoped to
-// the org-level users kind.
+// users.permissions:write all grant global.users:* in the fixed roles). The org-level
+// exceptions, scoped to the users kind, are users.permissions:read (fixed:org.users:reader)
+// and the org.users:* family (fixed:org.users:reader/writer).
 func userScopeKind(action string) string {
-	if action == ac.ActionUsersPermissionsRead {
+	// users.permissions:read and the org.users:* family are org-scoped (the users kind);
+	// the remaining user-management actions are server-level (global.users).
+	if action == ac.ActionUsersPermissionsRead || strings.HasPrefix(action, "org.users:") {
 		return "users"
 	}
 	return "global.users"
