@@ -3106,6 +3106,15 @@
       "title-search-help": "Search help",
       "view-as": "View as"
     },
+    "rules-filter-sidebar": {
+      "clear-filters": "Clear filters"
+    },
+    "rules-group": {
+      "deleting": "Deleting",
+      "text-federated": "Federated",
+      "text-provisioned": "Provisioned",
+      "ungrouped": "Ungrouped"
+    },
     "rules-view-mode-selector": {
       "legacy-view-options": {
         "grouped": "Grouped",
@@ -3116,15 +3125,6 @@
         "grouped": "Grouped",
         "list": "List"
       }
-    },
-    "rules-filter-sidebar": {
-      "clear-filters": "Clear filters"
-    },
-    "rules-group": {
-      "deleting": "Deleting",
-      "text-federated": "Federated",
-      "text-provisioned": "Provisioned",
-      "ungrouped": "Ungrouped"
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
