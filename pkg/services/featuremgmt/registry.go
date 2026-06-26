@@ -2627,15 +2627,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "frontendServiceUseSettingsService",
-			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "frontendService.settingsSourceFilter",
 			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
 			Stage:        FeatureStageExperimental,
