@@ -186,7 +186,7 @@ To display the filter icons, hover your cursor over the cell that has the value 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 
-For more information about applying filters this way, refer to [Dashboard drilldown with filters](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#dashboard-drilldown-with-filters).
+For more information about applying filters this way, refer to [Dashboard drilldown with filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
@@ -207,6 +207,30 @@ This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
 
+## Nested tables
+
+{{< admonition type="note" >}}
+The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
+{{< /admonition >}}
+
+A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
+
+Click the expand icon on a row to toggle the visibility of its nested table:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="650px" alt="Table with two rows expanded showing nested sub-tables" >}}
+
+To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
+Each time you click, the sort order changes to the next option in the cycle.
+You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
+
+{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
+
+To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
+For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 ## Configuration options
 
 ### Panel options
