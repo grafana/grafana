@@ -3057,7 +3057,7 @@ __metadata:
     sass-loader: "npm:16.0.5"
     slate: "npm:^0.47.9"
     slate-plain-serializer: "npm:^0.7.13"
-    slate-react: "npm:0.22.10"
+    slate-react: "npm:^0.22.10"
     storybook: "npm:10.3.6"
     style-loader: "npm:4.0.0"
     tinycolor2: "npm:1.6.0"
@@ -29730,7 +29730,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-react@npm:0.22.10":
+"slate-react@npm:0.22.10, slate-react@npm:^0.22.10":
   version: 0.22.10
   resolution: "slate-react@npm:0.22.10"
   dependencies:
