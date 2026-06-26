@@ -50,20 +50,23 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	namespace := r.GetNamespace()
 	checkCount := len(r.GetChecks())
 
-	ctxLogger := s.logger.FromContext(ctx).New(
-		"subject", r.GetSubject(),
-		"namespace", namespace,
-		"check_count", checkCount,
-	)
-
 	defer func() {
 		duration := time.Since(start)
-		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(duration.Seconds())
-		ctxLogger.Debug("BatchCheck execution time", "duration", duration.Milliseconds())
+		s.metrics.observeRequestDuration("BatchCheck", duration.Seconds())
+		s.logger.Debug("BatchCheck execution time",
+			"duration", duration.Milliseconds(),
+			"subject", r.GetSubject(),
+			"namespace", namespace,
+			"check_count", checkCount,
+		)
 
 		// Log slow batch checks for debugging (>1s is concerning)
 		if duration > time.Second {
-			ctxLogger.Debug("slow batch check detected", "duration_ms", duration.Milliseconds())
+			s.logger.Debug("slow batch check detected",
+				"duration_ms", duration.Milliseconds(),
+				"namespace", namespace,
+				"check_count", checkCount,
+			)
 		}
 	}()
 
@@ -181,7 +184,7 @@ func (s *Server) runPhase(ctx context.Context, phaseName string, namespace strin
 		span.SetStatus(codes.Error, err.Error())
 	}
 
-	s.metrics.batchCheckPhaseDurationSeconds.WithLabelValues(phaseName).Observe(duration.Seconds())
+	s.metrics.observeBatchPhase(phaseName, duration.Seconds())
 
 	// Log slow phases for debugging (>300ms is concerning)
 	if duration > 300*time.Millisecond {

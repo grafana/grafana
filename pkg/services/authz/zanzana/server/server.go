@@ -268,20 +268,24 @@ func (s *Server) getContextuals(subject string, teams []string) (*openfgav1.Cont
 		)
 	}
 
-	seen := make(map[string]struct{})
-	var teamNames []string
-	for _, g := range teams {
-		if g == "" {
-			continue
+	// Only allocate the dedup map / sort when teams are present. The common
+	// end-user check has no teams, so this keeps that path allocation-free.
+	if len(teams) > 0 {
+		seen := make(map[string]struct{}, len(teams))
+		teamNames := make([]string, 0, len(teams))
+		for _, g := range teams {
+			if g == "" {
+				continue
+			}
+			if _, dup := seen[g]; !dup {
+				seen[g] = struct{}{}
+				teamNames = append(teamNames, g)
+			}
 		}
-		if _, dup := seen[g]; !dup {
-			seen[g] = struct{}{}
-			teamNames = append(teamNames, g)
+		sort.Strings(teamNames)
+		for _, n := range teamNames {
+			keys = append(keys, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
 		}
-	}
-	sort.Strings(teamNames)
-	for _, n := range teamNames {
-		keys = append(keys, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
 	}
 	if len(keys) == 0 {
 		return nil, nil

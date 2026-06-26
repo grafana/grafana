@@ -33,17 +33,18 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
-	ctxLogger := s.logger.FromContext(ctx).New(
-		"subject", r.GetSubject(),
-		"namespace", r.GetNamespace(),
-		"group", r.GetGroup(),
-		"resource", r.GetResource(),
-		"subresource", r.GetSubresource(),
-		"verb", r.GetVerb(),
-	)
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
-		ctxLogger.Debug("List execution time", "duration", time.Since(t).Milliseconds())
+		elapsed := time.Since(t)
+		s.metrics.observeRequestDuration("List", elapsed.Seconds())
+		s.logger.Debug("List execution time",
+			"duration", elapsed.Milliseconds(),
+			"subject", r.GetSubject(),
+			"namespace", r.GetNamespace(),
+			"group", r.GetGroup(),
+			"resource", r.GetResource(),
+			"subresource", r.GetSubresource(),
+			"verb", r.GetVerb(),
+		)
 	}(time.Now())
 
 	res, err := s.list(ctx, r)

@@ -31,12 +31,12 @@ func (s *Server) acquireSlot(method, namespace string) (release func(), err erro
 		}
 	}
 
-	s.metrics.inflightRequests.WithLabelValues(method).Inc()
+	s.metrics.incInflight(method)
 
 	var once sync.Once
 	release = func() {
 		once.Do(func() {
-			s.metrics.inflightRequests.WithLabelValues(method).Dec()
+			s.metrics.decInflight(method)
 			if nl != nil {
 				nl.Release(1)
 			}

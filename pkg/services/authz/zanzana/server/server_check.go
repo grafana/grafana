@@ -27,17 +27,20 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
-	ctxLogger := s.logger.FromContext(ctx).New(
-		"subject", r.GetSubject(),
-		"namespace", r.GetNamespace(),
-		"group", r.GetGroup(),
-		"resource", r.GetResource(),
-		"subresource", r.GetSubresource(),
-		"verb", r.GetVerb(),
-	)
 	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("Check").Observe(time.Since(t).Seconds())
-		ctxLogger.Debug("Check execution time", "duration", time.Since(t).Milliseconds())
+		elapsed := time.Since(t)
+		s.metrics.observeRequestDuration("Check", elapsed.Seconds())
+		// Avoid building a contextual logger per request; pass the fields directly
+		// so the logger is only materialized when debug logging is enabled.
+		s.logger.Debug("Check execution time",
+			"duration", elapsed.Milliseconds(),
+			"subject", r.GetSubject(),
+			"namespace", r.GetNamespace(),
+			"group", r.GetGroup(),
+			"resource", r.GetResource(),
+			"subresource", r.GetSubresource(),
+			"verb", r.GetVerb(),
+		)
 	}(time.Now())
 
 	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
