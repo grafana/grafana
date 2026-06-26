@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -74,23 +73,19 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.ManifestData) (*simple.Validator, error) {
-	gk := schema.GroupKind{Group: kind.Group(), Kind: kind.Kind()}
 	switch kind.Kind() {
 	case "AlertRule":
 		return validation.NewBuilder[*v0alpha1.AlertRule]().
-			WithOpenAPIValidation(md, gk).
 			OnWrite(alertrule.ValidateWrite(cfg)).
 			OnDelete(alertrule.ValidateDelete(cfg)).
 			Build()
 	case "RecordingRule":
 		return validation.NewBuilder[*v0alpha1.RecordingRule]().
-			WithOpenAPIValidation(md, gk).
 			OnWrite(recordingrule.ValidateWrite(cfg)).
 			OnDelete(recordingrule.ValidateDelete(cfg)).
 			Build()
 	case "RuleSequence":
 		return validation.NewBuilder[*v0alpha1.RuleSequence]().
-			WithOpenAPIValidation(md, gk).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
 			Build()
 	}
