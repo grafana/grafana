@@ -1,4 +1,4 @@
-import { type RepositorySpec, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
+import { type ConnectionSpec, type RepositorySpec, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type AlertAction } from '../Shared/ProvisioningAlert';
 import { type RepositoryFormData, type StatusInfo } from '../types';
@@ -6,6 +6,8 @@ import { type RepositoryFormData, type StatusInfo } from '../types';
 export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
 export type RepoType = RepositorySpec['type'];
+
+export type ConnectionType = ConnectionSpec['type'];
 
 export type GitHubAuthType = 'pat' | 'github-app';
 

@@ -14,9 +14,11 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { useConnectionType } from '../hooks/useConnectionType';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
@@ -38,12 +40,15 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const { setStepStatusInfo } = useStepStatus();
 
   const repoType = watch('repository.type');
-  const isGitHubEnterprise = repoType === 'githubEnterprise';
+  // connectionType watches repository.type and stays in sync. It's always defined here since the
+  // component only renders for GitHub-based repos; the ?? 'github' just satisfies the non-optional type.
+  const connectionType = useConnectionType() ?? 'github';
+  const isGitHubEnterprise = connectionType === 'githubEnterprise';
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: {
-      type: isGitHubEnterprise ? 'githubEnterprise' : 'github',
+      type: connectionType,
       title: '',
       description: '',
       appID: '',
@@ -60,7 +65,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     isLoading,
     connections: githubConnections,
     error: connectionListError,
-  } = useConnectionOptions(true, repoType);
+  } = useConnectionOptions(true, connectionType);
 
   const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
 
@@ -83,7 +88,8 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey, webhookDisabled, serverUrl } = credentialForm.getValues();
+    const { title, description, appID, installationID, privateKey, webhookDisabled, serverUrl } =
+      credentialForm.getValues();
     const spec: ConnectionSpec = isGitHubEnterprise
       ? {
           type: 'githubEnterprise',
@@ -229,11 +235,11 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         </Stack>
       )}
 
-      {githubAppMode === 'new' && (
+      {isGitHubBased(repoType) && githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
           <GitHubConnectionFields
             required
-            type={repoType}
+            type={connectionType}
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />

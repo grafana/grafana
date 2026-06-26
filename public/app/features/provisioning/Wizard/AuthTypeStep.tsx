@@ -119,7 +119,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
-      {githubAuthType === 'github-app' ? (
+      {isGitHubBasedRepo && githubAuthType === 'github-app' ? (
         <GitHubAppFields onGitHubAppSubmit={onGitHubAppSubmit} />
       ) : (
         <RepositoryTokenInput />
