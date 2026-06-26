@@ -224,10 +224,14 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 			graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
 			if graceEnabled {
+				// The token has been rotated very recently, so we don't want to rotate it again.
+				// We accomplish this by restoring its rotation time and marking it back as seen.
 				model.AuthTokenSeen = origAuthTokenSeen
 				model.RotatedAt = origRotatedAt
 			}
 		} else {
+			// The token was last rotated more than UrgentRotateTime time ago. We keep the modified rotated_at and
+			// mark it as unseen so that it will be considered as needing urgent rotation during authentication.
 			ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
