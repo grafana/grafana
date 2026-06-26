@@ -1,14 +1,15 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { dateTimeFormat, getTimeZone, getTimeZoneInfo } from '@grafana/data';
+import { dateTimeFormat, getTimeZone, getTimeZoneInfo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LinkButton } from '@grafana/ui';
+import { LinkButton, Text, useStyles2 } from '@grafana/ui';
 import { type OnCallCurrentUserEventsResponse, onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-import { SummaryCard, SummaryCardMeta, SummaryCardTitle } from './SummaryCard';
+import { SummaryCard, SummaryCardTitle } from './SummaryCard';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ON_CALL_SHIFT_DISPLAY_LIMIT = 3;
@@ -56,12 +57,11 @@ function OnCallCardInner({ pluginId, canAccess }: { pluginId: string; canAccess:
       items={displayed}
       getItemKey={(r) => r.key}
       renderItem={(r) => (
-        <>
-          <SummaryCardTitle href={canAccess ? createBridgeURL(pluginId, `/schedules/${r.scheduleId}`) : undefined}>
-            {r.scheduleName}
-          </SummaryCardTitle>
-          <SummaryCardMeta>{r.timeRange}</SummaryCardMeta>
-        </>
+        <OnCallShiftItem
+          scheduleHref={canAccess ? createBridgeURL(pluginId, `/schedules/${r.scheduleId}`) : undefined}
+          scheduleName={r.scheduleName}
+          timeRange={r.timeRange}
+        />
       )}
       footer={
         canAccess && (
@@ -73,6 +73,49 @@ function OnCallCardInner({ pluginId, canAccess }: { pluginId: string; canAccess:
     />
   );
 }
+
+function OnCallShiftItem({
+  scheduleHref,
+  scheduleName,
+  timeRange,
+}: {
+  scheduleHref?: string;
+  scheduleName: string;
+  timeRange: string;
+}) {
+  const styles = useStyles2(getOnCallShiftItemStyles);
+
+  return (
+    <div className={styles.item}>
+      <div className={styles.nameRow}>
+        <SummaryCardTitle href={scheduleHref}>{scheduleName}</SummaryCardTitle>
+      </div>
+      <div className={styles.dateRow}>
+        <Text color="secondary" variant="bodySmall" truncate>
+          {timeRange}
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+const getOnCallShiftItemStyles = (theme: GrafanaTheme2) => ({
+  item: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    minWidth: 0,
+    width: '100%',
+  }),
+  nameRow: css({
+    minWidth: 0,
+  }),
+  dateRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
+  }),
+});
 
 interface OnCallShiftRow {
   key: string;

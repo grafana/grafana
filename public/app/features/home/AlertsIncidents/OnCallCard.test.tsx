@@ -114,7 +114,9 @@ describe('OnCallCard', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
 
     // Expired, gap, and empty events contribute no rows.
-    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    const rows = screen.getAllByRole('listitem');
+    expect(rows).toHaveLength(2);
+    expect(within(rows[0]).getByText(/Jun 26/)).toBeInTheDocument();
     expect(screen.queryByText('Secondary')).not.toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Primary' })).toHaveAttribute('href', '/a/grafana-oncall-app/schedules/s1');

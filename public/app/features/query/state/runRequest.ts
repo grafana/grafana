@@ -1,5 +1,5 @@
 // Libraries
-import { isString, map as isArray } from 'lodash';
+import { isString } from 'lodash';
 import { from, merge, type Observable, of, timer } from 'rxjs';
 import { catchError, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/operators';
 
@@ -25,6 +25,7 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
+import { prometheusResponseToDataFrames } from './prometheusResponse';
 import { emitDataRequestEvent } from './queryAnalytics';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -142,9 +143,10 @@ export function runRequest(
 
   const dataObservable = callQueryMethodWithMigration(datasource, request, queryFunction).pipe(
     // Transform response packets into PanelData with merged results
-    map((packet: DataQueryResponse) => {
-      if (!isArray(packet.data)) {
-        throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
+    map((packet: unknown) => {
+      packet = normalizeResponsePacket(packet, request);
+      if (!isDataQueryResponsePacket(packet)) {
+        throw new Error(`Expected response data to be array, got ${getPacketDataType(packet)}.`);
       }
 
       // filter out responses for hidden queries
@@ -193,7 +195,34 @@ export function callQueryMethodWithMigration(
       mergeMap((migratedRequest) => callQueryMethod(datasource, migratedRequest, queryFunction))
     );
   }
+
   return callQueryMethod(datasource, request, queryFunction);
+}
+
+function normalizeResponsePacket(packet: unknown, request: DataQueryRequest): unknown {
+  if (isDataQueryResponsePacket(packet)) {
+    return packet;
+  }
+
+  const refId = request.targets[0]?.refId ?? getPacketKey(packet) ?? 'A';
+  const data = prometheusResponseToDataFrames(packet, refId);
+  return data ? { ...(isRecord(packet) ? packet : {}), data } : packet;
+}
+
+function isDataQueryResponsePacket(packet: unknown): packet is DataQueryResponse & { data: DataQueryResponseData[] } {
+  return isRecord(packet) && Array.isArray(packet.data);
+}
+
+function getPacketKey(packet: unknown): string | undefined {
+  return isRecord(packet) && typeof packet.key === 'string' ? packet.key : undefined;
+}
+
+function getPacketDataType(packet: unknown): string {
+  return isRecord(packet) ? typeof packet.data : typeof undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function callQueryMethod(

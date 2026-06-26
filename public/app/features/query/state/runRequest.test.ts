@@ -8,6 +8,7 @@ import {
   type DataSourceApi,
   DataTopic,
   dateTime,
+  FieldType,
   LoadingState,
   type PanelData,
 } from '@grafana/data';
@@ -174,6 +175,28 @@ describe('runRequest', () => {
     it('should emit single result with loading state done', () => {
       expect(ctx.wasStarted).toBe(true);
       expect(ctx.results.length).toBe(1);
+    });
+  });
+
+  runRequestScenario('After native Prometheus scalar response', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        status: 'success',
+        data: {
+          resultType: 'scalar',
+          result: [1782476666, '0'],
+        },
+      } as unknown as DataQueryResponse);
+    });
+
+    it('should convert the scalar to a dataframe', () => {
+      const series = ctx.results[0].series;
+      expect(ctx.results[0].state).toBe(LoadingState.Done);
+      expect(series).toHaveLength(1);
+      expect(series[0].refId).toBe('A');
+      expect(series[0].fields.find((field) => field.type === FieldType.time)?.values[0]).toBe(1782476666000);
+      expect(series[0].fields.find((field) => field.type === FieldType.number)?.values[0]).toBe(0);
     });
   });
 

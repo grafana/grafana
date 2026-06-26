@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { isDataFrameResponse, prometheusResponseToDataFrames } from 'app/features/query/state/prometheusResponse';
 
 // Datasources carry expr/instant/range on each target; model them on top of DataQuery so the
 // request is fully typed without importing a plugin's query type.
@@ -43,7 +44,31 @@ async function runInstantQueriesWithDataSource(
     instant: true,
     range: false,
   }));
-  const request: DataQueryRequest<InstantQueryTarget> = {
+  const result = await lastValueFrom(from(ds.query(createInstantQueryRequest(targets, range, intervalInfo))));
+
+  if (isDataFrameResponse(result) || targets.length <= 1) {
+    return queryResultToFrames(result, targets[0]?.refId ?? 'A');
+  }
+
+  // Native Prometheus responses do not carry Grafana refIds, so rerun individually only for that shape.
+  const framesByTarget = await Promise.all(
+    targets.map(async (target) => {
+      const singleResult = await lastValueFrom(
+        from(ds.query(createInstantQueryRequest([target], range, intervalInfo)))
+      );
+      return queryResultToFrames(singleResult, target.refId);
+    })
+  );
+
+  return framesByTarget.flat();
+}
+
+function createInstantQueryRequest(
+  targets: InstantQueryTarget[],
+  range: ReturnType<typeof getDefaultTimeRange>,
+  intervalInfo: ReturnType<typeof rangeUtil.calculateInterval>
+): DataQueryRequest<InstantQueryTarget> {
+  return {
     requestId: `home-overview-${generateUUID()}`,
     interval: intervalInfo.interval,
     intervalMs: intervalInfo.intervalMs,
@@ -54,9 +79,10 @@ async function runInstantQueriesWithDataSource(
     startTime: Date.now(),
     targets,
   };
+}
 
-  const result = await lastValueFrom(from(ds.query(request)));
-  return result.data ?? [];
+function queryResultToFrames(result: unknown, refId: string): DataFrame[] {
+  return isDataFrameResponse(result) ? result.data : (prometheusResponseToDataFrames(result, refId) ?? []);
 }
 
 /**
