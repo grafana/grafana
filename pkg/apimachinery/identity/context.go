@@ -180,6 +180,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"alert.rules:delete",    // accesscontrol.ActionAlertingRuleDelete — folder cascade deletes alert rules in deleted folders
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
