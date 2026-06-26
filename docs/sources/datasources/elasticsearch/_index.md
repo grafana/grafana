@@ -23,7 +23,7 @@ weight: 325
 [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/elasticsearch-intro.html) is a search and analytics engine used for a variety of use cases. The built-in Elasticsearch data source lets you query and visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events.
 
 {{< admonition type="note" >}}
-If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Service), use the [OpenSearch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) instead.
+If you use Amazon OpenSearch Service (the successor to Amazon Elasticsearch Service), use the [OpenSearch data source](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) instead.
 {{< /admonition >}}
 
 ## Key capabilities
@@ -86,5 +86,5 @@ Once you have configured the Elasticsearch data source, you can:
 
 ## Related data sources
 
-- [OpenSearch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opensearch/) - For Amazon OpenSearch Service.
+- [OpenSearch](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) - For Amazon OpenSearch Service.
 - [Loki](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) - Grafana's log aggregation system.
