@@ -149,7 +149,7 @@ func NewStorageBackend(
 			DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
 			// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-			LogCalls:                cfg.LogSQLBackendCalls,
+			LogCalls: cfg.LogSQLBackendCalls,
 		})
 	}
 

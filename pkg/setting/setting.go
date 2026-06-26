@@ -766,8 +766,8 @@ type Cfg struct {
 	EnforcedQuotaResources        []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend                bool
-	EnableSQLKVCompatibilityMode      bool
+	EnableSQLKVBackend           bool
+	EnableSQLKVCompatibilityMode bool
 	// LogSQLBackendCalls, when true, logs every call that reaches an exported
 	// method of the legacy SQL backend. Temporary smoke-test instrumentation
 	// used to confirm no production traffic still reaches sql/backend before
