@@ -11,13 +11,12 @@ import { useResourceRepositorySelection } from '../provisioning/hooks/useResourc
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getDefaultPlaylist, useInvalidatePlaylists } from './utils';
+import { getDefaultPlaylist } from './utils';
 
 export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
-  const invalidatePlaylists = useInvalidatePlaylists();
   // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
   const [selectedRepository, setSelectedRepository] = useState<string | undefined>(undefined);
   // Holds the playlist while the provisioning save drawer is open.
@@ -58,7 +57,6 @@ export const PlaylistNewPage = () => {
           action="create"
           title={provisionedPlaylist.spec?.title ?? ''}
           repositoryName={selectedRepository}
-          invalidate={invalidatePlaylists}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

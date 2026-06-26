@@ -22,7 +22,6 @@ import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
-import { useInvalidatePlaylists } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -33,7 +32,6 @@ export const PlaylistEditPage = () => {
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
-  const invalidatePlaylists = useInvalidatePlaylists();
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -98,7 +96,6 @@ export const PlaylistEditPage = () => {
           resource={provisionedPlaylist}
           action="update"
           title={provisionedPlaylist.spec?.title ?? ''}
-          invalidate={invalidatePlaylists}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

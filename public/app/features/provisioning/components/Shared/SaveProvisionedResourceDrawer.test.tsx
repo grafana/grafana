@@ -98,7 +98,6 @@ function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
     resource: mockPlaylist,
     action: 'update',
     title: mockPlaylist.spec?.title ?? '',
-    invalidate: jest.fn(),
     onDismiss: jest.fn(),
   };
   return render(<SaveProvisionedResourceDrawer {...defaultProps} {...props} />);

@@ -75,8 +75,6 @@ export interface SaveProvisionedResourceDrawerProps {
   title: string;
   /** Repository to commit a new resource to. Required for `create` (a new resource has no manager annotations yet); ignored otherwise. */
   repositoryName?: string;
-  /** Invalidates the kind's list cache after a successful commit so the change shows up there. */
-  invalidate?: () => void;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
@@ -105,7 +103,6 @@ interface FormProps {
   body?: Record<string, unknown>;
   action: ProvisionedResourceAction;
   isNew: boolean;
-  invalidate?: () => void;
   successMessage?: string;
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
@@ -122,7 +119,6 @@ function FormContent({
   body,
   action,
   isNew,
-  invalidate,
   successMessage,
   initialValues,
   repository,
@@ -147,7 +143,7 @@ function FormContent({
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
-  const { goToList, makeOnBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, invalidate ?? (() => {}));
+  const { goToList, makeOnBranchSuccess } = useProvisionedResourceDrawerHandlers(kind);
   const branchAction: ResourceBranchAction = isDelete ? 'delete' : isNew ? 'create' : 'update';
   const writeSuccess = onWriteSuccess ?? goToList;
   const branchSuccess = onBranchSuccess ?? makeOnBranchSuccess(branchAction);
@@ -270,7 +266,6 @@ export function SaveProvisionedResourceDrawer({
   action,
   title,
   repositoryName,
-  invalidate,
   successMessage,
   readOnlyMessage,
   branchPrefix,
@@ -367,7 +362,6 @@ export function SaveProvisionedResourceDrawer({
             body={body}
             action={action}
             isNew={isNew}
-            invalidate={invalidate}
             successMessage={successMessage}
             initialValues={initialValues}
             repository={repository}

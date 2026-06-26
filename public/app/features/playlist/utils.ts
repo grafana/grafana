@@ -1,10 +1,7 @@
-import { useCallback } from 'react';
-
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useDispatch } from 'app/types/store';
 
-import { type Playlist, playlistAPIv1 } from '../../api/clients/playlist/v1';
+import { type Playlist } from '../../api/clients/playlist/v1';
 import { contextSrv } from '../../core/services/context_srv';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
@@ -15,15 +12,6 @@ export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
     : contextSrv.isEditor;
-}
-
-/**
- * Returns a callback that invalidates the playlist list cache, so a change committed elsewhere (e.g.
- * the provisioned-resource drawer) shows up after navigating back to the list.
- */
-export function useInvalidatePlaylists(): () => void {
-  const dispatch = useDispatch();
-  return useCallback(() => dispatch(playlistAPIv1.util.invalidateTags(['Playlist'])), [dispatch]);
 }
 
 /** Returns a copy with the dashboards loaded */

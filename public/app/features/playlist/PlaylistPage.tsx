@@ -15,12 +15,11 @@ import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { canWritePlaylists, searchPlaylists, useInvalidatePlaylists } from './utils';
+import { canWritePlaylists, searchPlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
-  const invalidatePlaylists = useInvalidatePlaylists();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
   const { newPrURL, repoURL } = usePullRequestParam();
   const [urlParams] = useUrlParams();
@@ -106,7 +105,6 @@ export const PlaylistPage = () => {
                   resource={playlistToDelete}
                   action="delete"
                   title={playlistToDelete.spec?.title ?? ''}
-                  invalidate={invalidatePlaylists}
                   onDismiss={onDismissDelete}
                 />
               ) : (

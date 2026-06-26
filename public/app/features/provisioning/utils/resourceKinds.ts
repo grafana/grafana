@@ -1,7 +1,10 @@
+import { type UnknownAction } from '@reduxjs/toolkit';
+
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { type IconName } from '@grafana/ui';
+import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
@@ -58,6 +61,8 @@ export const resourceKindInfos = {
     // Playlists aren't folder-contained — they only have their own collection page.
     listRoute: '/playlists',
     folderScoped: false,
+    // The playlist list is fetched elsewhere; invalidate it so a committed change shows up there.
+    invalidateListTags: () => playlistAPIv1.util.invalidateTags(['Playlist']),
   },
   librarypanel: {
     key: 'librarypanel',
@@ -132,6 +137,13 @@ export interface ResourceKindInfo {
    * dashboards browse; others (e.g. playlists) only have their `listRoute`.
    */
   folderScoped: boolean;
+  /**
+   * Builds the action that invalidates this kind's list-view cache, dispatched after a successful
+   * commit so the change shows up when navigating back to the list. Optional — only kinds whose
+   * pages drive {@link SaveProvisionedResourceDrawer} need it. Defining it couples this registry to
+   * the kind's RTK Query client (the cost of keeping per-kind invalidation here rather than in a hook).
+   */
+  invalidateListTags?: () => UnknownAction;
 }
 
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the

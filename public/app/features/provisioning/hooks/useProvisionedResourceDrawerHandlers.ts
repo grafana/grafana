@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { useDispatch } from 'app/types/store';
+
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
 import { type ResourceKindInfo } from '../utils/resourceKinds';
 
@@ -32,15 +34,20 @@ export interface ProvisionedResourceDrawerHandlers {
  * Shared navigation/cache handlers for a provisioned resource's save and delete drawers.
  *
  * The redirect and list-navigation logic is identical across kinds — and across the save/delete
- * variants of one kind — differing only by the kind's `listRoute` and the commit action. Centralising
- * it here means a new kind's drawers only supply their `invalidate` thunk (kept in the caller so the
- * registry stays free of per-API-client imports) instead of re-implementing the redirect each time.
+ * variants of one kind — differing only by the kind's `listRoute` and the commit action, both read
+ * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
+ * committed change shows up on its list page.
  */
-export function useProvisionedResourceDrawerHandlers(
-  kind: ResourceKindInfo,
-  invalidate: () => void
-): ProvisionedResourceDrawerHandlers {
+export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const invalidate = () => {
+    const action = kind.invalidateListTags?.();
+    if (action) {
+      dispatch(action);
+    }
+  };
 
   const goToList = () => {
     invalidate();
