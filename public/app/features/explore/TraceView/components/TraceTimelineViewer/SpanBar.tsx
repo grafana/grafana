@@ -30,7 +30,6 @@ import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { getSummaryDurationStats } from '../utils/summary-span';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -141,8 +140,8 @@ export type Props = {
   longLabel: string;
   shortLabel: string;
   // Service::operation text revealed on hover. For summary spans it is rendered
-  // as a sibling of the stats label (not merged into it) so the stats stay a
-  // stable, stats-sized tooltip anchor.
+  // as a sibling of the stats label (not merged into it) so the stats stay
+  // permanently visible while the detail expands.
   labelDetail: string;
   criticalPath: CriticalPathSection[];
 };
@@ -178,7 +177,7 @@ function SpanBar({
   const expand = () => setExpanded(true);
   // Normal spans swap the whole label text on hover. Summary spans instead keep
   // a fixed stats label and reveal the service::operation detail as a sibling,
-  // so the stats stay a stable tooltip anchor. The detail goes before the stats
+  // so the stats stay permanently visible. The detail goes before the stats
   // when the label sits left of the bar (bar near the right edge), after it
   // otherwise, matching the long-label order used elsewhere.
   const normalLabel = expanded ? longLabel : shortLabel;
@@ -227,9 +226,7 @@ function SpanBar({
                 {' | '}
               </span>
             )}
-            <SummaryDurationStatsTooltip stats={summaryStats}>
-              <span>{shortLabel}</span>
-            </SummaryDurationStatsTooltip>
+            <span>{shortLabel}</span>
             {expanded && !detailBeforeStats && (
               <span>
                 {' | '}

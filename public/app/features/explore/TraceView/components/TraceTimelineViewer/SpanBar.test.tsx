@@ -114,7 +114,13 @@ describe('<SpanBar>', () => {
     expect(bar.style.getPropertyValue('--span-summary-color')).toBe(props.color);
   });
 
-  it('labels the bar-side duration stats in a tooltip for summary spans', async () => {
+  it('does not show a duration-stats tooltip for normal spans', async () => {
+    render(<SpanBar {...(props as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('keeps the aria-hidden summary bar free of focusable elements (guards aria-hidden-focus)', () => {
     const summarySpan = {
       ...props.span,
       aggregation: {
@@ -125,20 +131,15 @@ describe('<SpanBar>', () => {
       },
     };
     render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
-    await userEvent.hover(screen.getByText(shortLabel));
-    const tooltip = await screen.findByRole('tooltip');
-    expect(tooltip).toHaveTextContent('Min');
-    expect(tooltip).toHaveTextContent('Median');
-    expect(tooltip).toHaveTextContent('Max');
+    const wrapper = screen.getByTestId(selectors.components.TraceViewer.spanBar);
+    expect(wrapper).toHaveAttribute('aria-hidden', 'true');
+    // A focusable trigger inside this aria-hidden subtree (e.g. Grafana's Tooltip
+    // clones its child with tabIndex=0) would be keyboard-reachable while hidden
+    // from assistive tech, which axe reports as aria-hidden-focus.
+    expect(wrapper.querySelector('[tabindex]')).toBeNull();
   });
 
-  it('does not show a duration-stats tooltip for normal spans', async () => {
-    render(<SpanBar {...(props as unknown as Props)} />);
-    await userEvent.hover(screen.getByText(shortLabel));
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-  });
-
-  it('reveals the service::operation detail on hover while keeping the stats label as the tooltip anchor', async () => {
+  it('reveals the service::operation detail on hover while keeping the stats label permanently visible', async () => {
     const summarySpan = {
       ...props.span,
       aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
