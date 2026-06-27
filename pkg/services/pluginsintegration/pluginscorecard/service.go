@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -22,25 +23,36 @@ const (
 	kvNamespace      = "plugin-scorecard"
 	cacheTTL         = 7 * 24 * time.Hour
 	httpTimeout      = 30 * time.Second
+	sidecarTimeout   = 5 * time.Minute
 	scorecardAPIBase = "https://api.securityscorecards.dev/projects/"
-	// maxConcurrentScans limits simultaneous sidecar scans — the sidecar is
-	// single-threaded (CGI) and each scan takes 60-120s. Without a limit,
-	// concurrent requests queue up and all time out.
+	// maxConcurrentScans limits simultaneous sidecar scans per sidecar type.
+	// Each sidecar is single-threaded (CGI) — without a limit concurrent
+	// requests queue up and time out.
 	maxConcurrentScans = 5
 )
 
 var githubRepoRe = regexp.MustCompile(`^https://github\.com/([^/]+/[^/]+?)(?:\.git)?/?$`)
 
-// Service fetches and caches OpenSSF Scorecard results, returning them as
+// cachedResult stores raw results from all scanners so merge weights can
+// evolve without requiring a re-scan.
+type cachedResult struct {
+	Scorecard *pluginscoring.ScorecardResult   `json:"scorecard,omitempty"`
+	ESLint    []pluginscoring.ESLintFileResult `json:"eslint,omitempty"`
+	ScoredAt  time.Time                        `json:"scored_at"`
+}
+
+// Service fetches and caches scanner results, returning merged
 // pluginscoring.CatalogPluginInsights — the stable Grafana-owned scoring schema.
 type Service struct {
-	pluginStore   pluginstore.Store
-	pluginRepo    repo.Service
-	kvStore       *kvstore.NamespacedKVStore
-	sidecarURL    string
-	httpClient    *http.Client
-	scanSemaphore chan struct{}
-	log           log.Logger
+	pluginStore     pluginstore.Store
+	pluginRepo      repo.Service
+	kvStore         *kvstore.NamespacedKVStore
+	sidecarURL      string
+	eslintURL       string
+	httpClient      *http.Client
+	scanSemaphore   chan struct{}
+	eslintSemaphore chan struct{}
+	log             log.Logger
 }
 
 func ProvideService(
@@ -49,15 +61,19 @@ func ProvideService(
 	pluginRepo repo.Service,
 	kvStore kvstore.KVStore,
 ) *Service {
-	return &Service{
-		pluginStore:   pluginStore,
-		pluginRepo:    pluginRepo,
-		kvStore:       kvstore.WithNamespace(kvStore, 0, kvNamespace),
-		sidecarURL:    cfg.PluginScorecardSidecarURL,
-		httpClient:    &http.Client{Timeout: httpTimeout},
-		scanSemaphore: make(chan struct{}, maxConcurrentScans),
-		log:           log.New("plugins.scorecard"),
+	svc := &Service{
+		pluginStore:     pluginStore,
+		pluginRepo:      pluginRepo,
+		kvStore:         kvstore.WithNamespace(kvStore, 0, kvNamespace),
+		sidecarURL:      cfg.PluginScorecardSidecarURL,
+		eslintURL:       cfg.PluginESLintSidecarURL,
+		httpClient:      &http.Client{Timeout: httpTimeout},
+		scanSemaphore:   make(chan struct{}, maxConcurrentScans),
+		eslintSemaphore: make(chan struct{}, maxConcurrentScans),
+		log:             log.New("plugins.scorecard"),
 	}
+	go func() { _ = svc.Run(context.Background()) }()
+	return svc
 }
 
 // GetInsights returns scored Insights for a plugin, using kvstore cache when fresh.
@@ -69,16 +85,16 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 	cacheKey := pluginID + "@" + version
 
 	if raw, ok, err := s.kvStore.Get(ctx, cacheKey); err == nil && ok {
-		var cached pluginscoring.ScorecardResult
+		var cached cachedResult
 		if json.Unmarshal([]byte(raw), &cached) == nil && !cached.ScoredAt.IsZero() {
-			// Unavailable marker — no checks, but ScoredAt is set. Re-try after 1 hour.
-			if len(cached.Checks) == 0 && time.Since(cached.ScoredAt) < time.Hour {
+			// Unavailable marker — no scorecard checks and no ESLint. Re-try after 1 hour.
+			if cached.Scorecard == nil && len(cached.ESLint) == 0 && time.Since(cached.ScoredAt) < time.Hour {
 				unavailable := pluginscoring.UnavailableInsights(pluginID, version)
 				return &unavailable, true
 			}
 			// Real result within TTL.
-			if len(cached.Checks) > 0 && time.Since(cached.ScoredAt) < cacheTTL {
-				insights := pluginscoring.FromScorecard(pluginID, version, &cached)
+			if cached.Scorecard != nil && len(cached.Scorecard.Checks) > 0 && time.Since(cached.ScoredAt) < cacheTTL {
+				insights := pluginscoring.Merge(pluginID, version, cached.Scorecard, cached.ESLint)
 				return &insights, true
 			}
 		}
@@ -96,31 +112,58 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 		return &unavailable, true
 	}
 
-	// Trigger scan asynchronously — sidecars take 60-90s, too long to block the request.
-	// Return ScorecardScanning immediately; subsequent requests will hit the kvstore cache.
-	// The semaphore limits concurrent scans to avoid overwhelming the single-threaded sidecar.
+	// Trigger both sidecars asynchronously and concurrently.
+	// Each sidecar has its own semaphore to prevent overwhelming single-threaded CGI processes.
+	// Results are merged and written to kvstore as a single cachedResult.
 	go func() {
-		s.scanSemaphore <- struct{}{}
-		defer func() { <-s.scanSemaphore }()
-
 		bgCtx := context.Background()
-		result, err := s.fetch(bgCtx, repoPath)
-		if err != nil {
-			s.log.Warn("Failed to fetch scorecard", "plugin", pluginID, "repo", repoPath, "error", err)
-		}
-		if result == nil {
-			// Write a short-lived unavailable marker (1 hour) so we don't
-			// spin up a new goroutine on every subsequent request.
-			marker := pluginscoring.ScorecardResult{ScoredAt: time.Now().UTC()}
+		var wg sync.WaitGroup
+		var scResult *pluginscoring.ScorecardResult
+		var elResult []pluginscoring.ESLintFileResult
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.scanSemaphore <- struct{}{}
+			defer func() { <-s.scanSemaphore }()
+			r, err := s.fetch(bgCtx, repoPath)
+			if err != nil {
+				s.log.Warn("Failed to fetch scorecard", "plugin", pluginID, "repo", repoPath, "error", err)
+			}
+			scResult = r
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.eslintSemaphore <- struct{}{}
+			defer func() { <-s.eslintSemaphore }()
+			r, err := s.fetchESLint(bgCtx, repoPath)
+			if err != nil {
+				s.log.Warn("Failed to fetch ESLint results", "plugin", pluginID, "repo", repoPath, "error", err)
+			}
+			elResult = r
+		}()
+
+		wg.Wait()
+
+		if scResult == nil && len(elResult) == 0 {
+			// Write unavailable marker so we don't re-scan on every request.
+			marker := cachedResult{ScoredAt: time.Now().UTC()}
 			if raw, err := json.Marshal(marker); err == nil {
 				_ = s.kvStore.Set(bgCtx, cacheKey, string(raw))
 			}
 			return
 		}
-		result.ScoredAt = time.Now().UTC()
-		if raw, err := json.Marshal(result); err == nil {
+
+		cached := cachedResult{
+			Scorecard: scResult,
+			ESLint:    elResult,
+			ScoredAt:  time.Now().UTC(),
+		}
+		if raw, err := json.Marshal(cached); err == nil {
 			if err := s.kvStore.Set(bgCtx, cacheKey, string(raw)); err != nil {
-				s.log.Warn("Failed to cache scorecard result", "plugin", pluginID, "error", err)
+				s.log.Warn("Failed to cache scan results", "plugin", pluginID, "error", err)
 			}
 		}
 	}()
@@ -151,7 +194,11 @@ func (s *Service) refresh(ctx context.Context) {
 		if p.IsCorePlugin() {
 			continue
 		}
-		s.GetInsights(ctx, p.ID, p.Info.Version)
+		pluginID := p.ID
+		version := p.Info.Version
+		go func() {
+			s.GetInsights(ctx, pluginID, version)
+		}()
 	}
 }
 
@@ -171,10 +218,8 @@ func (s *Service) fetch(ctx context.Context, repoPath string) (*pluginscoring.Sc
 	}
 
 	s.log.Debug("Not in public Scorecard database, trying sidecar", "repo", repoPath)
-	// Use a dedicated client with a longer timeout for the sidecar — it clones the repo
-	// and runs a full scan (60-120s). The main httpClient has a 30s timeout which is
-	// too short and causes EOF errors.
-	sidecarClient := &http.Client{Timeout: 5 * time.Minute}
+	// Dedicated client — the main httpClient has a 30s timeout causing EOF on long scans.
+	sidecarClient := &http.Client{Timeout: sidecarTimeout}
 	sidecarReq, sidecarErr := http.NewRequestWithContext(context.Background(), http.MethodGet,
 		s.sidecarURL+"?repo=github.com/"+repoPath, nil)
 	if sidecarErr != nil {
@@ -234,6 +279,51 @@ func (s *Service) fetchFromURL(ctx context.Context, url string) (*pluginscoring.
 		return nil, err
 	}
 	return &result, nil
+}
+
+// fetchESLint calls the ESLint sidecar and parses its JSON output.
+// Returns nil when the sidecar is not configured, repo has no JS/TS files, or repo not found.
+func (s *Service) fetchESLint(ctx context.Context, repoPath string) ([]pluginscoring.ESLintFileResult, error) {
+	if s.eslintURL == "" {
+		return nil, nil
+	}
+
+	eslintClient := &http.Client{Timeout: sidecarTimeout}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		s.eslintURL+"?repo=github.com/"+repoPath, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := eslintClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("eslint sidecar returned HTTP %d for %s", resp.StatusCode, repoPath)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sidecar returns {"results":[],"message":"..."} when no JS/TS files found.
+	if len(body) > 0 && body[0] == '{' {
+		return nil, nil
+	}
+
+	var files []pluginscoring.ESLintFileResult
+	if err := json.Unmarshal(body, &files); err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 func (s *Service) repoURL(ctx context.Context, pluginID string) string {

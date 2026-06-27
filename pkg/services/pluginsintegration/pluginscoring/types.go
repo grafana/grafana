@@ -97,7 +97,21 @@ type ScorecardCheck struct {
 	Reason string `json:"reason"`
 }
 
-// checkMapping maps a Scorecard check name to a CWE ID, display name, and dimension.
+// ESLintFileResult mirrors a single file entry in the ESLint JSON output.
+type ESLintFileResult struct {
+	FilePath           string          `json:"filePath"`
+	Messages           []ESLintMessage `json:"messages"`
+	SuppressedMessages []ESLintMessage `json:"suppressedMessages"`
+}
+
+// ESLintMessage mirrors a single ESLint finding.
+type ESLintMessage struct {
+	RuleID   string `json:"ruleId"`
+	Severity int    `json:"severity"` // 1=warn, 2=error
+	Message  string `json:"message"`
+}
+
+// checkMapping maps a Scorecard or ESLint check name to a CWE ID, display name, and dimension.
 type checkMapping struct {
 	cwe         string
 	displayName string
@@ -129,6 +143,201 @@ var scorecardChecks = map[string]checkMapping{
 
 	// Community — maintenance health and adoption signals
 	"Maintained": {cwe: "CWE-1104", displayName: "Maintained", dimension: DimensionCommunity},
+}
+
+// eslintChecks maps ESLint rule IDs to CWE, display name, and dimension.
+// Safety: directly exploitable (code execution, XSS, data exfiltration).
+// Quality: poor defensive practices, often context-dependent.
+var eslintChecks = map[string]checkMapping{
+	// Safety
+	"security/detect-eval-with-expression":      {cwe: "CWE-95", displayName: "eval() with expression", dimension: DimensionSafety},
+	"no-new-func":                               {cwe: "CWE-95", displayName: "new Function()", dimension: DimensionSafety},
+	"no-implied-eval":                           {cwe: "CWE-95", displayName: "implied eval", dimension: DimensionSafety},
+	"security/detect-child-process":             {cwe: "CWE-78", displayName: "child_process exec", dimension: DimensionSafety},
+	"security/detect-non-literal-fs-filename":   {cwe: "CWE-22", displayName: "fs with variable path", dimension: DimensionSafety},
+	"security/detect-non-literal-require":       {cwe: "CWE-94", displayName: "require(variable)", dimension: DimensionSafety},
+	"security/detect-bidi-characters":           {cwe: "CWE-838", displayName: "bidirectional Unicode", dimension: DimensionSafety},
+	"@microsoft/sdl/no-postmessage-star-origin": {cwe: "CWE-346", displayName: "postMessage wildcard origin", dimension: DimensionSafety},
+	"@microsoft/sdl/no-inner-html":              {cwe: "CWE-79", displayName: "innerHTML assignment", dimension: DimensionSafety},
+	"@microsoft/sdl/no-document-write":          {cwe: "CWE-79", displayName: "document.write()", dimension: DimensionSafety},
+	"no-script-url":                             {cwe: "CWE-79", displayName: "javascript: URL", dimension: DimensionSafety},
+	"@microsoft/sdl/no-insecure-url":            {cwe: "CWE-319", displayName: "hardcoded http:// URL", dimension: DimensionSafety},
+	// Quality
+	"security/detect-unsafe-regex":            {cwe: "CWE-400", displayName: "unsafe regex (ReDoS)", dimension: DimensionQuality},
+	"security/detect-non-literal-regexp":      {cwe: "CWE-400", displayName: "RegExp(variable)", dimension: DimensionQuality},
+	"security/detect-buffer-noassert":         {cwe: "CWE-119", displayName: "Buffer with noAssert", dimension: DimensionQuality},
+	"security/detect-pseudoRandomBytes":       {cwe: "CWE-330", displayName: "weak random number generation", dimension: DimensionQuality},
+	"security/detect-possible-timing-attacks": {cwe: "CWE-208", displayName: "possible timing attack", dimension: DimensionQuality},
+	"security/detect-object-injection":        {cwe: "CWE-94", displayName: "object injection", dimension: DimensionQuality},
+	"security/detect-disable-mustache-escape": {cwe: "CWE-116", displayName: "mustache escaping disabled", dimension: DimensionQuality},
+}
+
+// eslintFindingScore converts an ESLint message to a 0–10 contribution score.
+// error (severity=2) → 0, warn (severity=1) → 5, suppressed → 7, clean → 10.
+func eslintFindingScore(severity int, suppressed bool) float64 {
+	if suppressed {
+		return 7
+	}
+	switch severity {
+	case 2:
+		return 0
+	case 1:
+		return 5
+	default:
+		return 10
+	}
+}
+
+// FromESLint converts ESLint JSON output into per-dimension items and sub-pool scores.
+// Returns nil maps if no findings (e.g. no JS/TS files, empty scan).
+func FromESLint(files []ESLintFileResult) (map[string][]InsightItem, map[string]float64, map[string]int) {
+	if len(files) == 0 {
+		return nil, nil, nil
+	}
+
+	items := map[string][]InsightItem{DimensionSafety: {}, DimensionQuality: {}}
+	totals := map[string]float64{DimensionSafety: 0, DimensionQuality: 0}
+	counts := map[string]int{DimensionSafety: 0, DimensionQuality: 0}
+
+	// Deduplicate findings by ruleId across files — worst severity wins.
+	type ruleState struct {
+		maxSeverity int
+		suppressed  bool
+		mapping     checkMapping
+	}
+	seen := map[string]*ruleState{}
+
+	for _, f := range files {
+		for _, m := range f.Messages {
+			if m.RuleID == "" {
+				continue
+			}
+			mapping, ok := eslintChecks[m.RuleID]
+			if !ok {
+				mapping = checkMapping{cwe: noInfoID, displayName: m.RuleID, dimension: DimensionQuality}
+			}
+			if s, exists := seen[m.RuleID]; exists {
+				if m.Severity > s.maxSeverity {
+					s.maxSeverity = m.Severity
+				}
+			} else {
+				seen[m.RuleID] = &ruleState{maxSeverity: m.Severity, mapping: mapping}
+			}
+		}
+		for _, m := range f.SuppressedMessages {
+			if m.RuleID == "" {
+				continue
+			}
+			mapping, ok := eslintChecks[m.RuleID]
+			if !ok {
+				mapping = checkMapping{cwe: noInfoID, displayName: m.RuleID, dimension: DimensionQuality}
+			}
+			if _, exists := seen[m.RuleID]; !exists {
+				seen[m.RuleID] = &ruleState{maxSeverity: 0, suppressed: true, mapping: mapping}
+			}
+		}
+	}
+
+	for _, state := range seen {
+		dim := state.mapping.dimension
+		if dim == DimensionCommunity {
+			dim = DimensionQuality
+		}
+		isSuppressedOnly := state.suppressed && state.maxSeverity == 0
+		score := eslintFindingScore(state.maxSeverity, isSuppressedOnly)
+		totals[dim] += score
+		counts[dim]++
+		if score < 10 {
+			name := state.mapping.displayName
+			if isSuppressedOnly {
+				name += " (suppressed)"
+			}
+			items[dim] = append(items[dim], InsightItem{
+				ID:    state.mapping.cwe,
+				Name:  name,
+				Level: itemLevelWarning,
+				Link:  cweRef(state.mapping.cwe),
+			})
+		}
+	}
+
+	return items, totals, counts
+}
+
+// Merge combines Scorecard and ESLint results into a single CatalogPluginInsights.
+// Weights: Safety = 50% Scorecard + 50% ESLint, Quality = 75% Scorecard + 25% ESLint.
+// If ESLint data is absent, falls back to 100% Scorecard weighting.
+func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileResult) CatalogPluginInsights {
+	// Build Scorecard sub-pools
+	scItems := map[string][]InsightItem{DimensionSafety: {}, DimensionQuality: {}, DimensionCommunity: {}}
+	scTotals := map[string]int{DimensionSafety: 0, DimensionQuality: 0, DimensionCommunity: 0}
+	scCounts := map[string]int{DimensionSafety: 0, DimensionQuality: 0, DimensionCommunity: 0}
+
+	if sc != nil {
+		for _, c := range sc.Checks {
+			m, ok := scorecardChecks[c.Name]
+			if !ok {
+				m = checkMapping{cwe: noInfoID, displayName: c.Name, dimension: DimensionQuality}
+			}
+			if c.Score >= 0 {
+				scTotals[m.dimension] += c.Score
+				scCounts[m.dimension]++
+			}
+			if c.Score < 10 {
+				scItems[m.dimension] = append(scItems[m.dimension], InsightItem{
+					ID:    m.cwe,
+					Name:  m.displayName,
+					Level: itemLevelWarning,
+					Link:  cweRef(m.cwe),
+				})
+			}
+		}
+	}
+
+	elItems, elTotals, elCounts := FromESLint(eslint)
+	hasESLint := elItems != nil
+
+	var categories []InsightCategory
+	for _, dim := range []string{DimensionSafety, DimensionQuality, DimensionCommunity} {
+		scScore := 100.0
+		if scCounts[dim] > 0 {
+			scScore = float64(scTotals[dim]) / float64(scCounts[dim]) * 10.0
+		}
+
+		allItems := append(scItems[dim], elItems[dim]...)
+
+		var finalScore float64
+		if !hasESLint || dim == DimensionCommunity {
+			finalScore = scScore
+		} else {
+			elScore := 100.0
+			if elCounts[dim] > 0 {
+				elScore = elTotals[dim] / float64(elCounts[dim]) * 10.0
+			}
+			switch dim {
+			case DimensionSafety:
+				finalScore = (scScore * 0.5) + (elScore * 0.5)
+			case DimensionQuality:
+				finalScore = (scScore * 0.75) + (elScore * 0.25)
+			}
+		}
+
+		categories = append(categories, InsightCategory{
+			Name:       dim,
+			Items:      allItems,
+			ScoreValue: finalScore,
+			ScoreLevel: scoreLevelFromValue(finalScore),
+		})
+	}
+
+	return CatalogPluginInsights{
+		Name:     pluginID,
+		Version:  version,
+		Insights: categories,
+		Conditions: []ScorecardCondition{
+			ScorecardReadyCondition(ScorecardConditionTrue, ScorecardReasonScanned),
+		},
+	}
 }
 
 // ScorecardReadyCondition builds a KRM-style Ready condition for a plugin scorecard response.
