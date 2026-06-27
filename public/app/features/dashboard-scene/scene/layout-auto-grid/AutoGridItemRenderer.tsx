@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, type ReactNode, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -79,18 +79,20 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                     {conditionalRenderingOverlay}
                   </LazyLoader>
                 ) : (
-                  <div
-                    className={cx(
-                      conditionalRenderingClass,
+                  <ResizeContainer
+                    isEditing={isEditing}
+                    conditionalRenderingClass={conditionalRenderingClass}
+                    wrapperClass={cx(
                       styles.wrapper,
                       isDragged && !isRepeat && styles.draggedWrapper,
                       isDragged && isRepeat && styles.draggedRepeatWrapper,
                       isSelected && 'dashboard-selected-element'
                     )}
+                    resizeDisabledHandleClass={styles.resizeDisabledHandle}
                   >
                     <item.Component model={item} />
                     {conditionalRenderingOverlay}
-                  </div>
+                  </ResizeContainer>
                 )
               }
             </div>
@@ -141,8 +143,50 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   );
 }
 
+/**
+ * Wraps panel content and shows a disabled resize indicator when editing.
+ */
+function ResizeContainer({
+  isEditing,
+  children,
+  conditionalRenderingClass,
+  wrapperClass,
+  resizeDisabledHandleClass,
+}: {
+  isEditing: boolean;
+  children: ReactNode;
+  conditionalRenderingClass?: string;
+  wrapperClass: string;
+  resizeDisabledHandleClass: string;
+}) {
+  return (
+    <div className={cx(conditionalRenderingClass, wrapperClass)}>
+      {children}
+      {isEditing && (
+        <Tooltip content="Panels cannot be resized in auto layout" placement="left">
+          <div className={resizeDisabledHandleClass}>
+            <Icon name="gf-interp" size="sm" />
+          </div>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
+  resizeDisabledHandle: css({
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    cursor: 'default',
+    color: theme.colors.text.disabled,
+    opacity: 0.4,
+    lineHeight: 1,
+    '&:hover': {
+      opacity: 0.7,
+    },
+  }),
   draggedWrapper: css({
     position: 'absolute',
     zIndex: 1000,
