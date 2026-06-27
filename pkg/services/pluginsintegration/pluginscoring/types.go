@@ -97,6 +97,22 @@ type ScorecardCheck struct {
 	Reason string `json:"reason"`
 }
 
+// GosecResult mirrors the top-level gosec JSON output.
+type GosecResult struct {
+	Issues []GosecIssue `json:"Issues"`
+}
+
+// GosecIssue mirrors a single gosec finding.
+type GosecIssue struct {
+	RuleID     string `json:"rule_id"`
+	Severity   string `json:"severity"`   // HIGH, MEDIUM, LOW
+	Confidence string `json:"confidence"` // HIGH, MEDIUM, LOW
+	Details    string `json:"details"`
+	File       string `json:"file"`
+	Line       string `json:"line"`
+	Nosec      bool   `json:"nosec"`
+}
+
 // ESLintFileResult mirrors a single file entry in the ESLint JSON output.
 type ESLintFileResult struct {
 	FilePath           string          `json:"filePath"`
@@ -264,10 +280,164 @@ func FromESLint(files []ESLintFileResult) (map[string][]InsightItem, map[string]
 	return items, totals, counts
 }
 
-// Merge combines Scorecard and ESLint results into a single CatalogPluginInsights.
-// Weights: Safety = 50% Scorecard + 50% ESLint, Quality = 75% Scorecard + 25% ESLint.
-// If ESLint data is absent, falls back to 100% Scorecard weighting.
-func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileResult) CatalogPluginInsights {
+// gosecChecks maps gosec rule IDs to CWE and dimension.
+// gosec only produces Safety and Quality findings — never Community.
+var gosecChecks = map[string]checkMapping{
+	// Safety — directly exploitable
+	"G101": {cwe: "CWE-798", displayName: "hardcoded credentials", dimension: DimensionSafety},
+	"G102": {cwe: "CWE-200", displayName: "bind to all interfaces", dimension: DimensionSafety},
+	"G103": {cwe: "CWE-242", displayName: "use of unsafe package", dimension: DimensionSafety},
+	"G107": {cwe: "CWE-88", displayName: "SSRF via variable URL", dimension: DimensionSafety},
+	"G201": {cwe: "CWE-89", displayName: "SQL injection via format string", dimension: DimensionSafety},
+	"G202": {cwe: "CWE-89", displayName: "SQL injection via string concat", dimension: DimensionSafety},
+	"G203": {cwe: "CWE-79", displayName: "unescaped HTML template", dimension: DimensionSafety},
+	"G204": {cwe: "CWE-78", displayName: "OS command injection", dimension: DimensionSafety},
+	"G301": {cwe: "CWE-276", displayName: "overly permissive directory", dimension: DimensionSafety},
+	"G302": {cwe: "CWE-276", displayName: "overly permissive file chmod", dimension: DimensionSafety},
+	"G303": {cwe: "CWE-377", displayName: "predictable temp file path", dimension: DimensionSafety},
+	"G304": {cwe: "CWE-22", displayName: "file path from variable", dimension: DimensionSafety},
+	"G305": {cwe: "CWE-22", displayName: "file traversal in zip extraction", dimension: DimensionSafety},
+	"G306": {cwe: "CWE-276", displayName: "overly permissive file permissions", dimension: DimensionSafety},
+	"G401": {cwe: "CWE-327", displayName: "use of weak MD5 hash", dimension: DimensionSafety},
+	"G402": {cwe: "CWE-295", displayName: "insecure TLS config", dimension: DimensionSafety},
+	"G403": {cwe: "CWE-310", displayName: "RSA key below 2048 bits", dimension: DimensionSafety},
+	"G404": {cwe: "CWE-338", displayName: "weak random source (math/rand)", dimension: DimensionSafety},
+	"G501": {cwe: "CWE-327", displayName: "import of MD5", dimension: DimensionSafety},
+	"G502": {cwe: "CWE-327", displayName: "import of DES", dimension: DimensionSafety},
+	"G503": {cwe: "CWE-327", displayName: "import of RC4", dimension: DimensionSafety},
+	"G504": {cwe: "CWE-327", displayName: "import of net/http/cgi", dimension: DimensionSafety},
+	"G505": {cwe: "CWE-327", displayName: "import of SHA1", dimension: DimensionSafety},
+	"G601": {cwe: "CWE-118", displayName: "implicit memory aliasing in loop", dimension: DimensionSafety},
+	"G602": {cwe: "CWE-119", displayName: "slice access out of bounds", dimension: DimensionSafety},
+	"G702": {cwe: "CWE-78", displayName: "OS command injection", dimension: DimensionSafety},
+	"G703": {cwe: "CWE-22", displayName: "file path from taint", dimension: DimensionSafety},
+	"G704": {cwe: "CWE-918", displayName: "SSRF via tainted URL", dimension: DimensionSafety},
+	"G705": {cwe: "CWE-79", displayName: "unescaped template data", dimension: DimensionSafety},
+	// Quality — poor defensive practices
+	"G104": {cwe: "CWE-391", displayName: "unchecked error return", dimension: DimensionQuality},
+	"G106": {cwe: "CWE-322", displayName: "use of ssh InsecureIgnoreHostKey", dimension: DimensionQuality},
+	"G108": {cwe: "CWE-200", displayName: "pprof endpoint exposed", dimension: DimensionQuality},
+	"G109": {cwe: "CWE-190", displayName: "integer overflow in strconv", dimension: DimensionQuality},
+	"G110": {cwe: "CWE-409", displayName: "decompression bomb (io.Copy)", dimension: DimensionQuality},
+	"G111": {cwe: "CWE-22", displayName: "http.Dir allows path traversal", dimension: DimensionQuality},
+	"G112": {cwe: "CWE-400", displayName: "slowloris via missing ReadHeaderTimeout", dimension: DimensionQuality},
+	"G113": {cwe: "CWE-682", displayName: "Rat.SetString overflow", dimension: DimensionQuality},
+	"G114": {cwe: "CWE-676", displayName: "use of net.Listen with 0.0.0.0", dimension: DimensionQuality},
+	"G115": {cwe: "CWE-190", displayName: "uint conversion to int may overflow", dimension: DimensionQuality},
+	"G116": {cwe: "CWE-838", displayName: "bidirectional Unicode in string", dimension: DimensionQuality},
+	"G117": {cwe: "CWE-499", displayName: "LDAP injection", dimension: DimensionQuality},
+	"G118": {cwe: "CWE-400", displayName: "missing ReadTimeout", dimension: DimensionQuality},
+	"G119": {cwe: "CWE-200", displayName: "sensitive data in network connection", dimension: DimensionQuality},
+	"G120": {cwe: "CWE-400", displayName: "missing WriteTimeout", dimension: DimensionQuality},
+}
+
+// gosecSeverityScore converts a gosec severity string to a 0–10 score.
+// HIGH → 0 (critical finding), MEDIUM → 4, LOW → 7, nosec suppressed → 8.
+func gosecSeverityScore(severity string, nosec bool) float64 {
+	if nosec {
+		return 8
+	}
+	switch severity {
+	case "HIGH":
+		return 0
+	case "MEDIUM":
+		return 4
+	case "LOW":
+		return 7
+	default:
+		return 10
+	}
+}
+
+// FromGosec converts gosec JSON output into per-dimension items and sub-pool scores.
+// Returns nil maps if there are no issues (clean scan or no Go files).
+func FromGosec(result *GosecResult) (map[string][]InsightItem, map[string]float64, map[string]int) {
+	if result == nil || len(result.Issues) == 0 {
+		return nil, nil, nil
+	}
+
+	items := map[string][]InsightItem{DimensionSafety: {}, DimensionQuality: {}}
+	totals := map[string]float64{DimensionSafety: 0, DimensionQuality: 0}
+	counts := map[string]int{DimensionSafety: 0, DimensionQuality: 0}
+
+	// Deduplicate by ruleId — worst severity wins across all occurrences.
+	type ruleState struct {
+		worstSeverity string
+		nosec         bool
+		mapping       checkMapping
+	}
+	seen := map[string]*ruleState{}
+
+	for _, issue := range result.Issues {
+		if issue.RuleID == "" {
+			continue
+		}
+		mapping, ok := gosecChecks[issue.RuleID]
+		if !ok {
+			mapping = checkMapping{cwe: noInfoID, displayName: issue.RuleID, dimension: DimensionQuality}
+		}
+		if s, exists := seen[issue.RuleID]; exists {
+			// HIGH > MEDIUM > LOW
+			if severityRank(issue.Severity) > severityRank(s.worstSeverity) {
+				s.worstSeverity = issue.Severity
+			}
+			if issue.Nosec {
+				s.nosec = true
+			}
+		} else {
+			seen[issue.RuleID] = &ruleState{
+				worstSeverity: issue.Severity,
+				nosec:         issue.Nosec,
+				mapping:       mapping,
+			}
+		}
+	}
+
+	for _, state := range seen {
+		dim := state.mapping.dimension
+		score := gosecSeverityScore(state.worstSeverity, state.nosec)
+		totals[dim] += score
+		counts[dim]++
+		if score < 10 {
+			name := state.mapping.displayName
+			if state.nosec {
+				name += " (suppressed)"
+			}
+			items[dim] = append(items[dim], InsightItem{
+				ID:    state.mapping.cwe,
+				Name:  name,
+				Level: itemLevelWarning,
+				Link:  cweRef(state.mapping.cwe),
+			})
+		}
+	}
+
+	return items, totals, counts
+}
+
+func severityRank(s string) int {
+	switch s {
+	case "HIGH":
+		return 3
+	case "MEDIUM":
+		return 2
+	case "LOW":
+		return 1
+	default:
+		return 0
+	}
+}
+
+// Merge combines Scorecard, ESLint, and gosec results into a single CatalogPluginInsights.
+//
+// Weighting within Safety and Quality dimensions:
+//   - Scorecard: 50% Safety, 75% Quality
+//   - ESLint:    25% Safety, 12.5% Quality
+//   - gosec:     25% Safety, 12.5% Quality
+//
+// If a scanner produced no data, its weight is redistributed proportionally to
+// the scanners that did produce data. Community dimension uses Scorecard only.
+func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileResult, gosec *GosecResult) CatalogPluginInsights {
 	// Build Scorecard sub-pools
 	scItems := map[string][]InsightItem{DimensionSafety: {}, DimensionQuality: {}, DimensionCommunity: {}}
 	scTotals := map[string]int{DimensionSafety: 0, DimensionQuality: 0, DimensionCommunity: 0}
@@ -295,7 +465,7 @@ func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileRes
 	}
 
 	elItems, elTotals, elCounts := FromESLint(eslint)
-	hasESLint := elItems != nil
+	goItems, goTotals, goCounts := FromGosec(gosec)
 
 	var categories []InsightCategory
 	for _, dim := range []string{DimensionSafety, DimensionQuality, DimensionCommunity} {
@@ -305,21 +475,36 @@ func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileRes
 		}
 
 		allItems := append(scItems[dim], elItems[dim]...)
+		allItems = append(allItems, goItems[dim]...)
 
 		var finalScore float64
-		if !hasESLint || dim == DimensionCommunity {
+		if dim == DimensionCommunity {
 			finalScore = scScore
 		} else {
+			// Compute available SAST scores
+			hasESLint := elItems != nil
+			hasGosec := goItems != nil
+
 			elScore := 100.0
-			if elCounts[dim] > 0 {
+			if hasESLint && elCounts[dim] > 0 {
 				elScore = elTotals[dim] / float64(elCounts[dim]) * 10.0
 			}
-			switch dim {
-			case DimensionSafety:
-				finalScore = (scScore * 0.5) + (elScore * 0.5)
-			case DimensionQuality:
-				finalScore = (scScore * 0.75) + (elScore * 0.25)
+			goScore := 100.0
+			if hasGosec && goCounts[dim] > 0 {
+				goScore = goTotals[dim] / float64(goCounts[dim]) * 10.0
 			}
+
+			// Weights: Scorecard 50%, ESLint 25%, gosec 25%.
+			// Redistribute weight from absent scanners proportionally.
+			scW, elW, goW := 0.5, 0.25, 0.25
+			if !hasESLint && !hasGosec {
+				scW, elW, goW = 1.0, 0, 0
+			} else if !hasESLint {
+				scW, elW, goW = 0.75, 0, 0.25
+			} else if !hasGosec {
+				scW, elW, goW = 0.75, 0.25, 0
+			}
+			finalScore = (scScore * scW) + (elScore * elW) + (goScore * goW)
 		}
 
 		categories = append(categories, InsightCategory{

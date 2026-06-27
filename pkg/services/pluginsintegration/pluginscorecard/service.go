@@ -38,6 +38,7 @@ var githubRepoRe = regexp.MustCompile(`^https://github\.com/([^/]+/[^/]+?)(?:\.g
 type cachedResult struct {
 	Scorecard *pluginscoring.ScorecardResult   `json:"scorecard,omitempty"`
 	ESLint    []pluginscoring.ESLintFileResult `json:"eslint,omitempty"`
+	Gosec     *pluginscoring.GosecResult       `json:"gosec,omitempty"`
 	ScoredAt  time.Time                        `json:"scored_at"`
 }
 
@@ -49,9 +50,11 @@ type Service struct {
 	kvStore         *kvstore.NamespacedKVStore
 	sidecarURL      string
 	eslintURL       string
+	gosecURL        string
 	httpClient      *http.Client
 	scanSemaphore   chan struct{}
 	eslintSemaphore chan struct{}
+	gosecSemaphore  chan struct{}
 	log             log.Logger
 }
 
@@ -67,9 +70,11 @@ func ProvideService(
 		kvStore:         kvstore.WithNamespace(kvStore, 0, kvNamespace),
 		sidecarURL:      cfg.PluginScorecardSidecarURL,
 		eslintURL:       cfg.PluginESLintSidecarURL,
+		gosecURL:        cfg.PluginGosecSidecarURL,
 		httpClient:      &http.Client{Timeout: httpTimeout},
 		scanSemaphore:   make(chan struct{}, maxConcurrentScans),
 		eslintSemaphore: make(chan struct{}, maxConcurrentScans),
+		gosecSemaphore:  make(chan struct{}, maxConcurrentScans),
 		log:             log.New("plugins.scorecard"),
 	}
 	go func() { _ = svc.Run(context.Background()) }()
@@ -94,7 +99,7 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 			}
 			// Real result within TTL.
 			if cached.Scorecard != nil && len(cached.Scorecard.Checks) > 0 && time.Since(cached.ScoredAt) < cacheTTL {
-				insights := pluginscoring.Merge(pluginID, version, cached.Scorecard, cached.ESLint)
+				insights := pluginscoring.Merge(pluginID, version, cached.Scorecard, cached.ESLint, cached.Gosec)
 				return &insights, true
 			}
 		}
@@ -120,6 +125,7 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 		var wg sync.WaitGroup
 		var scResult *pluginscoring.ScorecardResult
 		var elResult []pluginscoring.ESLintFileResult
+		var goResult *pluginscoring.GosecResult
 
 		wg.Add(1)
 		go func() {
@@ -145,9 +151,21 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 			elResult = r
 		}()
 
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.gosecSemaphore <- struct{}{}
+			defer func() { <-s.gosecSemaphore }()
+			r, err := s.fetchGosec(bgCtx, repoPath)
+			if err != nil {
+				s.log.Warn("Failed to fetch gosec results", "plugin", pluginID, "repo", repoPath, "error", err)
+			}
+			goResult = r
+		}()
+
 		wg.Wait()
 
-		if scResult == nil && len(elResult) == 0 {
+		if scResult == nil && len(elResult) == 0 && goResult == nil {
 			// Write unavailable marker so we don't re-scan on every request.
 			marker := cachedResult{ScoredAt: time.Now().UTC()}
 			if raw, err := json.Marshal(marker); err == nil {
@@ -159,6 +177,7 @@ func (s *Service) GetInsights(ctx context.Context, pluginID, version string) (*p
 		cached := cachedResult{
 			Scorecard: scResult,
 			ESLint:    elResult,
+			Gosec:     goResult,
 			ScoredAt:  time.Now().UTC(),
 		}
 		if raw, err := json.Marshal(cached); err == nil {
@@ -324,6 +343,51 @@ func (s *Service) fetchESLint(ctx context.Context, repoPath string) ([]pluginsco
 		return nil, err
 	}
 	return files, nil
+}
+
+// fetchGosec calls the gosec SAST sidecar and parses its JSON output.
+// Returns nil when the sidecar is not configured, repo has no Go files, or repo not found.
+func (s *Service) fetchGosec(ctx context.Context, repoPath string) (*pluginscoring.GosecResult, error) {
+	if s.gosecURL == "" {
+		return nil, nil
+	}
+
+	gosecClient := &http.Client{Timeout: sidecarTimeout}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		s.gosecURL+"?repo=github.com/"+repoPath, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := gosecClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("gosec sidecar returned HTTP %d for %s", resp.StatusCode, repoPath)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result pluginscoring.GosecResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	// Sidecar returns {"Issues":[],...,"message":"no Go source files found"} for non-Go repos.
+	if len(result.Issues) == 0 {
+		return nil, nil
+	}
+	return &result, nil
 }
 
 func (s *Service) repoURL(ctx context.Context, pluginID string) string {
