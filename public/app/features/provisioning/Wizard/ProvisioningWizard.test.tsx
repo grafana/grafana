@@ -49,14 +49,14 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
 
 async function navigateToConnectionStep(
   user: UserEvent,
-  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
+  type: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'local' | 'git',
   data?: {
     token?: string;
     tokenUser?: string;
     url?: string;
   }
 ) {
-  if (type === 'github') {
+  if (type === 'github' || type === 'githubEnterprise') {
     // Select PAT option (GitHub App is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
   }
@@ -64,6 +64,7 @@ async function navigateToConnectionStep(
   if (type !== 'local' && data?.token) {
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+      githubEnterprise: 'ghp_xxxxxxxxxxxxxxxxxxxx',
       gitlab: 'glpat-xxxxxxxxxxxxxxxxxxx',
       bitbucket: 'ATATTxxxxxxxxxxxxxxxx',
       git: 'token or password',
@@ -93,7 +94,7 @@ async function navigateToConnectionStep(
 
 async function fillConnectionForm(
   user: UserEvent,
-  type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
+  type: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'local' | 'git',
   data: {
     token?: string;
     tokenUser?: string;
@@ -675,6 +676,52 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Different Repository Types', () => {
+    it('should render choose auth type step initially for GitHub Enterprise', async () => {
+      setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      // GitHub Enterprise shares GitHub's auth flow: both PAT and GitHub App options
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
+    });
+
+    it('should render GitHub Enterprise-specific fields', async () => {
+      const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      // Select PAT option (GitHub App is the default)
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+
+      // Auth step fields: GHE uses the GitHub PAT placeholder and a GHE-specific URL placeholder
+      expect(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('https://your-ghe-host.com or https://<slug>.ghe.com/owner/repository')
+      ).toBeInTheDocument();
+
+      await navigateToConnectionStep(user, 'githubEnterprise', {
+        token: 'ghp_testtoken',
+        url: 'https://ghe.example.com/test/repo',
+      });
+
+      // Connection step fields (branch combobox + path combobox)
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    });
+
+    it('should skip sync step when there are no resources for GitHub Enterprise', async () => {
+      const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
+
+      await fillConnectionForm(user, 'githubEnterprise', {
+        token: 'ghp_testtoken',
+        url: 'https://ghe.example.com/test/repo',
+      });
+
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Choose additional settings/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
+    });
+
     it('should render GitLab-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
 

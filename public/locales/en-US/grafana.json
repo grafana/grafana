@@ -13254,7 +13254,7 @@
       "url-required": "Repository URL is required"
     },
     "github-enterprise": {
-      "server-url-description": "The custom server URL where your Github Enterprise is hosted.",
+      "server-url-description": "The custom server URL where your Github Enterprise is hosted",
       "server-url-label": "Custom server URL"
     },
     "gitlab": {
