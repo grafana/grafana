@@ -1151,6 +1151,110 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(dashboardFromRawJson);
   });
 
+  it('shows New folder button for folderless repos in write mode', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        target: 'folderless',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: '', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    expect(await screen.findByRole('button', { name: /new folder/i })).toBeInTheDocument();
+  });
+
+  it('does not show New folder button for non-folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show New folder button when workflow is branch', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch'],
+        target: 'folderless',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: '', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'branch',
+      },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
+  it('creates a folder when New folder is used in folderless mode', async () => {
+    let folderRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        folderRequest = { url, body };
+        return HttpResponse.json({
+          resource: {
+            upsert: {
+              metadata: { name: 'new-folder-uid' },
+              spec: { title: 'My Team' },
+            },
+          },
+        });
+      })
+    );
+
+    const { user } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        target: 'folderless',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: '', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByPlaceholderText(/folder name/i), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(folderRequest).not.toBeNull());
+    expect(decodeURIComponent(folderRequest!.url.pathname)).toContain('/repositories/test-repo/files/My Team/');
+  });
+
   it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
