@@ -134,6 +134,23 @@ type checkMapping struct {
 	dimension   string
 }
 
+// scorecardBlocklist contains Scorecard check names that are explicitly excluded
+// from scoring. Checks are blocked because they are not applicable to the Grafana
+// plugin ecosystem and would penalise every plugin equally, providing no
+// discriminating signal.
+var scorecardBlocklist = map[string]string{
+	// Packaging: OpenSSF defines this as publishing to a recognised package registry
+	// (npm, PyPI, etc.). The Grafana plugin catalog is not recognised, so this check
+	// is noisy because it always fails for every plugin regardless of quality.
+	"Packaging": "Grafana plugin catalog is not a recognised package registry by OpenSSF.",
+
+	// Fuzzing: fuzz testing is not applicable to Grafana plugins. Frontend plugins
+	// (React/TS) have no meaningful fuzz surface, and backend datasource plugins (Go)
+	// are not directly exposed to untrusted input at the plugin boundary. This check
+	// is noisy because it always fails for every plugin regardless of quality.
+	"Fuzzing": "Not applicable to the Grafana plugin architecture.",
+}
+
 // scorecardChecks is the authoritative mapping of Scorecard check names to
 // CWE IDs and scoring dimensions. Derived from the actual checks returned by
 // api.securityscorecards.dev — only map checks confirmed to exist in the API.
@@ -151,11 +168,9 @@ var scorecardChecks = map[string]checkMapping{
 	"Code-Review":        {cwe: "CWE-1357", displayName: "Code-Review", dimension: DimensionQuality},
 	"Branch-Protection":  {cwe: "CWE-1026", displayName: "Branch-Protection", dimension: DimensionQuality},
 	"SAST":               {cwe: "CWE-358", displayName: "SAST", dimension: DimensionQuality},
-	"Fuzzing":            {cwe: "CWE-1164", displayName: "Fuzzing", dimension: DimensionQuality},
 	"Security-Policy":    {cwe: "CWE-693", displayName: "Security-Policy", dimension: DimensionQuality},
 	"CII-Best-Practices": {cwe: "CWE-1059", displayName: "CII-Best-Practices", dimension: DimensionQuality},
 	"License":            {cwe: "CWE-1076", displayName: "License", dimension: DimensionQuality},
-	"Packaging":          {cwe: "CWE-1059", displayName: "Packaging", dimension: DimensionQuality},
 
 	// Community — maintenance health and adoption signals
 	"Maintained": {cwe: "CWE-1104", displayName: "Maintained", dimension: DimensionCommunity},
@@ -445,6 +460,9 @@ func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileRes
 
 	if sc != nil {
 		for _, c := range sc.Checks {
+			if _, blocked := scorecardBlocklist[c.Name]; blocked {
+				continue
+			}
 			m, ok := scorecardChecks[c.Name]
 			if !ok {
 				m = checkMapping{cwe: noInfoID, displayName: c.Name, dimension: DimensionQuality}
@@ -576,6 +594,9 @@ func FromScorecard(pluginID, version string, r *ScorecardResult) CatalogPluginIn
 	counts := map[string]int{}
 
 	for _, c := range r.Checks {
+		if _, blocked := scorecardBlocklist[c.Name]; blocked {
+			continue
+		}
 		m, ok := scorecardChecks[c.Name]
 		if !ok {
 			m = checkMapping{cwe: noInfoID, displayName: c.Name, dimension: DimensionQuality}
