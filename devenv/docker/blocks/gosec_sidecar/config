@@ -1,0 +1,4 @@
+[plugin_security]
+scorecard_sidecar_url = http://scorecard-sidecar:8080/cgi-bin/score.sh
+eslint_sidecar_url = http://eslint-sidecar:8080/cgi-bin/scan.sh
+gosec_sidecar_url = http://gosec-sidecar:8080/cgi-bin/scan.sh

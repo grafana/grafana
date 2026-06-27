@@ -199,6 +199,7 @@ type Cfg struct {
 	RendererAuthToken              string
 	PluginScorecardSidecarURL      string
 	PluginESLintSidecarURL         string
+	PluginGosecSidecarURL          string
 	RendererConcurrentRequestLimit int
 	RendererRenderKeyLifeTime      time.Duration
 	RendererDefaultImageWidth      int
@@ -2303,6 +2304,7 @@ func (cfg *Cfg) readPluginSecuritySettings(iniFile *ini.File) {
 	sec := iniFile.Section("plugin_security")
 	cfg.PluginScorecardSidecarURL = valueAsString(sec, "scorecard_sidecar_url", "")
 	cfg.PluginESLintSidecarURL = valueAsString(sec, "eslint_sidecar_url", "")
+	cfg.PluginGosecSidecarURL = valueAsString(sec, "gosec_sidecar_url", "")
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {

@@ -1,0 +1,7 @@
+  gosec-sidecar:
+    build:
+      context: ./docker/blocks/gosec_sidecar
+    ports:
+      - "8090:8080"
+    environment:
+      GITHUB_AUTH_TOKEN: ${GITHUB_AUTH_TOKEN}
