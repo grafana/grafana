@@ -184,6 +184,22 @@ describe('Check field state calculations (displayName and id)', () => {
     expect(title).toEqual('Series A Field 1');
   });
 
+  it('should not duplicate field name when it equals frame name across multiple frames', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'A-series',
+          fields: [{ name: 'A-series' }],
+        }),
+        toDataFrame({
+          name: '',
+          fields: [{ name: 'B' }],
+        }),
+      ],
+    });
+    expect(title).toEqual('A-series');
+  });
+
   it('should add field name count to name if it exists more than once and is equal to TIME_SERIES_VALUE_FIELD_NAME', () => {
     const title = checkScenario({
       frames: [

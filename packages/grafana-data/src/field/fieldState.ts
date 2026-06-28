@@ -131,7 +131,7 @@ function calculateFieldDisplayName(
     frameNameAdded = true;
   }
 
-  if (field.name && field.name !== TIME_SERIES_VALUE_FIELD_NAME) {
+  if (field.name && field.name !== TIME_SERIES_VALUE_FIELD_NAME && (!frameNameAdded || field.name !== frame?.name)) {
     parts.push(field.name);
   }
 
