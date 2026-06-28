@@ -15,14 +15,14 @@ jobs:
     steps:
       - name: 'Get vault secrets'
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
             # Vault secret paths:
             # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token
             repo_secrets: |
                 CROWDIN_TOKEN=grafana-frontend-crowdin-token:access_token
       - name: Create tasks in Crowdin
-        uses: grafana/grafana-github-actions/crowdin-create-tasks@main
+        uses: grafana/grafana-github-actions/crowdin-create-tasks@3c62d35c5a66e730186a338e45aeb8fa784e2d56 # main
         with:
           crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
           crowdin_project_id: 5
