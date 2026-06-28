@@ -34,14 +34,14 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
           # Secrets placed in the ci/repo/grafana/grafana/community_release path in Vault
           repo_secrets: |
             GRAFANABOT_FORUM_KEY=community_release:GRAFANABOT_FORUM_KEY
 
       - name: Run community-release (manually invoked)
-        uses: grafana/grafana-github-actions-go/community-release@main
+        uses: grafana/grafana-github-actions-go/community-release@f49c00e5c4585f724717bdbb003c3560a3c1d849 # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
