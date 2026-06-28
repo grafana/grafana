@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - name: Check if update branch exists
@@ -163,7 +163,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack Message
         if: steps.compare-commits.outputs.needs_update == 'true'
-        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
+        uses: grafana/shared-workflows/actions/send-slack-message@2d985e9ff08e467946216a16a3a59fab5bb9e6cf # send-slack-message/v2.0.4
         with:
           method: 'chat.postMessage'
           # send to alerting-reviews channel
