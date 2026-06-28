@@ -48,7 +48,7 @@ jobs:
         with:
           github_app: grafana-releases-oss
       - name: "Dispatch job"
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
@@ -72,7 +72,7 @@ jobs:
       - name: "Wait for success"
         # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
         # since the security-patch-actions workflow output must not be exposed.
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
