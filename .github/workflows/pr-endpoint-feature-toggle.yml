@@ -16,7 +16,7 @@ jobs:
       backend-strict: ${{ steps.changed-files.outputs.backend_strict_any_changed }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true
           fetch-depth: 0
@@ -79,7 +79,7 @@ jobs:
 
       - name: Checkout code
         if: steps.label-check.outputs.skip != 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
           sparse-checkout: .github/workflows/scripts
@@ -98,7 +98,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - name: Check job results

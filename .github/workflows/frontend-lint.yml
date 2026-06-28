@@ -20,7 +20,7 @@ jobs:
       changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
       changed-frontend-dependencies: ${{ steps.detect-changes.outputs.frontend-dependencies }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -42,7 +42,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-x64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -61,7 +61,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-x64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -92,7 +92,7 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -112,7 +112,7 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node
@@ -142,7 +142,7 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node
@@ -169,7 +169,7 @@ jobs:
     name: Verify API clients
     runs-on: ubuntu-x64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node
@@ -200,7 +200,7 @@ jobs:
     name: Verify OpenAPI specs
     runs-on: ubuntu-x64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -236,7 +236,7 @@ jobs:
     name: Verify API clients (enterprise)
     runs-on: ubuntu-x64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node
@@ -275,7 +275,7 @@ jobs:
     runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node
@@ -298,7 +298,7 @@ jobs:
     runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
         path: './pr'
@@ -320,7 +320,7 @@ jobs:
         pr_count=$(sed -n 's/.*Found \([0-9]*\) circular.*/\1/p' /tmp/pr-circular-clean.txt)
         echo "$pr_count"
     - name: Checkout main branch
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
         repository: 'grafana/grafana'
@@ -365,7 +365,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Get GitHub App token
@@ -393,7 +393,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js

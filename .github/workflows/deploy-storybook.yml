@@ -34,7 +34,7 @@ jobs:
     outputs:
       changed-frontend-packages: ${{ steps.detect-changes.outputs.frontend-packages }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
           ref: ${{ inputs.version }}

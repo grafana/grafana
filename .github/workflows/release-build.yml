@@ -46,7 +46,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - name: Set up version (Release Branches)
@@ -104,7 +104,7 @@ jobs:
         with:
           github_app: grafana-releases-oss
           permission_set: ${{ github.ref_name == 'main' && 'dispatch-downstream-main' || 'dispatch-downstream-release' }} # different branches require different permission sets
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
@@ -160,7 +160,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
@@ -220,7 +220,7 @@ jobs:
             os: darwin
             arch: arm64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/build-go
@@ -288,7 +288,7 @@ jobs:
             os: darwin
             arch: arm64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/build-targz
@@ -374,7 +374,7 @@ jobs:
             rpm: true
             allow-failure: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -445,7 +445,7 @@ jobs:
       id-token: write
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -568,7 +568,7 @@ jobs:
             arch: arm64
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -890,7 +890,7 @@ jobs:
       statuses: read
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 

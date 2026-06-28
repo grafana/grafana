@@ -86,7 +86,7 @@ jobs:
       - name: Send issue to the auto triager action
         id: auto_triage
         if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
-        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/auto-triager@f13cb92d9c932ac97c39ef88e34b7cf61e7e9d39 # main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
@@ -207,7 +207,7 @@ jobs:
 
       - name: Send issue to the auto triager action
         id: auto_triage
-        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/auto-triager@f13cb92d9c932ac97c39ef88e34b7cf61e7e9d39 # main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ matrix.issue }}
