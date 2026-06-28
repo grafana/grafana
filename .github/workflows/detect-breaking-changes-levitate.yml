@@ -28,7 +28,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           path: './pr'
           persist-credentials: false
@@ -53,7 +53,7 @@ jobs:
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: buildPr
           path: './pr/pr_built_packages.zip'
@@ -69,12 +69,12 @@ jobs:
 
     steps:
       # We need to check out the PR's branch to get actions from the same branch, so if they change in a PR this action can pick up those changes
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           path: './pr'
           persist-credentials: false
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
@@ -100,7 +100,7 @@ jobs:
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
@@ -116,7 +116,7 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
 
@@ -127,12 +127,12 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: buildBase
 
@@ -175,7 +175,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: levitate
           path: levitate/
@@ -197,17 +197,17 @@ jobs:
         with:
           github_app: grafana-pr-automation
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: levitate
 
       - name: Parsing levitate result
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         id: levitate-run
         with:
           script: |
@@ -218,7 +218,7 @@ jobs:
       # Check if label exists
       - name: Check if "levitate breaking change" label exists
         id: does-label-exist
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
@@ -312,7 +312,7 @@ jobs:
       # Add the label
       - name: Add "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -328,7 +328,7 @@ jobs:
       # Remove label (no more breaking changes)
       - name: Remove "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -346,7 +346,7 @@ jobs:
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
       - name: Add "grafana/grafana-frontend-platform" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
         continue-on-error: true
         env:
@@ -365,7 +365,7 @@ jobs:
       # Remove reviewers (no more breaking changes)
       - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
         continue-on-error: true
         env:
