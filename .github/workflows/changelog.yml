@@ -77,7 +77,7 @@ jobs:
           github_app: grafana-pr-automation
           permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v5"
+        uses: "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5"
         with:
           ref: main
           sparse-checkout: |
