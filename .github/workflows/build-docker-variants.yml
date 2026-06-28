@@ -99,9 +99,9 @@ jobs:
             artifact-name-prefix: artifacts-docker-distroless-slim
             tag-suffix: "-distroless-slim"
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+      - uses: grafana/shared-workflows/actions/dockerhub-login@ef3a62a3ca4c1a15505b4235a5a51493194da3c7 # dockerhub-login/v1.0.4
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
