@@ -23,7 +23,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.backend == 'true' }}
       frontend: ${{ steps.detect-changes.outputs.frontend }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -44,7 +44,7 @@ jobs:
     outputs:
       version: ${{ steps.output.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - name: Set up version
@@ -61,7 +61,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
@@ -82,7 +82,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/build-go
@@ -105,7 +105,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: ./.github/actions/build-targz
@@ -130,8 +130,8 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v6
+      - uses: grafana/shared-workflows/actions/dockerhub-login@c6d954f7cd9c0022018982e01268de6cb75b913c # dockerhub-login/v1.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -177,7 +177,7 @@ jobs:
       id-token: write
     runs-on: ubuntu-x64
     steps:
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
@@ -218,11 +218,11 @@ jobs:
       statuses: read
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'
@@ -233,7 +233,7 @@ jobs:
 
       - name: Get vault secrets
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
           repo_secrets: |
             METICULOUS_API_TOKEN=meticulous-ui:api-token
