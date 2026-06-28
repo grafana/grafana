@@ -39,7 +39,7 @@ jobs:
       PGVECTOR_TEST_DB: host=127.0.0.1 port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - name: Start pgvector via docker compose
