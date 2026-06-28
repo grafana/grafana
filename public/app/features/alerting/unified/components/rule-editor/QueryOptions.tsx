@@ -50,6 +50,12 @@ export const QueryOptions = ({
         }
         closeButton={true}
         placement="bottom-start"
+        onClose={() => {
+          const activeEl = document.activeElement;
+          if (activeEl instanceof HTMLElement) {
+            activeEl.blur();
+          }
+        }}
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
