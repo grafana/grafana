@@ -27,6 +27,7 @@ export function PluginPage({
       info={info}
       subTitle={subTitle}
       background={background}
+      data-testid={`${context.pluginId}-page`}
     >
       <Page.Contents>{children}</Page.Contents>
     </Page>
