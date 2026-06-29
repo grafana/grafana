@@ -24,7 +24,7 @@ For each action, define the following API call settings:
 | -------------------- | ----------------------------------------------------------------- |
 | Title                | A human-readable label for the action that's displayed in the UI. |
 | Confirmation message | A descriptive prompt to confirm or cancel the action. |
-| Connection           | Specify the URL or configured data source through which to route the action's HTTP request. |
+| Connection           | Specify the configured data source through which to route the action's HTTP request. |
 | Method               | Select from **POST**, **PUT**, or **GET**. |
 | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
 | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
