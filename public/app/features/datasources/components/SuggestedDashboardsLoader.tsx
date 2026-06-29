@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 import { TrackingProvider } from 'app/features/dashboard/dashgrid/DashboardLibrary/TrackingContext';
 import {
@@ -83,7 +83,7 @@ export const SuggestedDashboardsLoader = ({
     setFetchStatus('loading');
 
     try {
-      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      const ds = await getDataSourceInstanceSettings(datasourceUid);
       if (!ds) {
         setFetchStatus('done');
         onFetchCompletedRef.current?.(false);
@@ -157,13 +157,14 @@ export const SuggestedDashboardsLoader = ({
     (count: number) => {
       setLastPageItemCount(count);
       // Persist in the module-level cache so it survives modal close/reopen
-      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-      if (ds) {
-        const cached = dashboardCache.get(ds.type);
-        if (cached) {
-          cached.lastPageItemCount = count;
+      getDataSourceInstanceSettings(datasourceUid).then((ds) => {
+        if (ds) {
+          const cached = dashboardCache.get(ds.type);
+          if (cached) {
+            cached.lastPageItemCount = count;
+          }
         }
-      }
+      });
     },
     [datasourceUid]
   );
