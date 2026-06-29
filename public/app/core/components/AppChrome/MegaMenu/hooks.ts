@@ -166,8 +166,8 @@ export const useNavCustomization = () => {
 
   // Resolve the active item across the pinned rows and the rest in one search. A pinned section is
   // moved out of `navItems`, so searching `navItems` alone would fail to find it and walk up the
-  // parent chain to wrongly highlight Home; searching the combined list finds the (rendered) pinned
-  // node and stops there. Reference equality then highlights whichever row actually renders.
+  // parent chain to wrongly highlight an ancestor section; searching the combined list finds the
+  // (rendered) pinned node and stops there. Reference equality then highlights whichever row renders.
   const activeItem = getActiveItem([...pinnedNavItems, ...navItems], state.sectionNav.node, location.pathname);
 
   const isPinned = useCallback((url?: string) => Boolean(url && pinnedUrls.includes(url)), [pinnedUrls]);
