@@ -64,6 +64,8 @@ export async function searchDashboardVector(
   query: string,
   { limit, abortSignal }: DeepSearchOptions = {}
 ): Promise<DeepSearchPanelResult[]> {
+  // Using the BackendSrv instead of RTK here, because the API isn't officially published yet and even the open spec
+  // gen is behind feature flag.
   const response = await getBackendSrv().get<SearchAPIResponse>(
     DASHBOARD_VECTOR_SEARCH_URL,
     { query, ...(limit !== undefined && { limit }) },
