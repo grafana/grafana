@@ -222,6 +222,12 @@ linters:
   exclusions:
     generated: lax
     rules:
+      # Vendored verbatim from github.com/grafana/tempo/pkg/traceql; keep upstream style.
+      - linters:
+          - exhaustive
+          - gocyclo
+          - whitespace
+        path: pkg/extensions/teamlbac/utils/traceql/
       - linters:
           - staticcheck
         text: ST1003

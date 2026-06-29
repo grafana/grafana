@@ -564,7 +564,6 @@ import (
 	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
 	_ "github.com/grafana/schemads"
 	_ "github.com/grafana/schemads/tables"
-	_ "github.com/grafana/tempo/pkg/traceql"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	_ "github.com/hashicorp/go-hclog"
