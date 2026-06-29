@@ -36,10 +36,7 @@ export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
  * expects, reusing the live scene's metadata + access so identity and
  * permissions survive the rebuild.
  */
-function dtoFromScene(
-  scene: MutationContextScene,
-  spec: DashboardV2Spec
-): DashboardWithAccessInfo<DashboardV2Spec> {
+function dtoFromScene(scene: MutationContextScene, spec: DashboardV2Spec): DashboardWithAccessInfo<DashboardV2Spec> {
   const meta = scene.state.meta;
   return {
     kind: 'DashboardWithAccessInfo',
@@ -91,7 +88,19 @@ function resolveMetadata(scene: MutationContextScene): DashboardWithAccessInfo<D
 // Minimal structural type for the bits of DashboardScene this command touches,
 // kept local to avoid a circular import.
 type MutationContextScene = {
-  state: { meta: Record<string, unknown> & { canEdit?: boolean; canSave?: boolean; canShare?: boolean; canStar?: boolean; canDelete?: boolean; canAdmin?: boolean; slug?: string; url?: string; key?: string } };
+  state: {
+    meta: Record<string, unknown> & {
+      canEdit?: boolean;
+      canSave?: boolean;
+      canShare?: boolean;
+      canStar?: boolean;
+      canDelete?: boolean;
+      canAdmin?: boolean;
+      slug?: string;
+      url?: string;
+      key?: string;
+    };
+  };
   serializer: { metadata: unknown };
   setState: (state: unknown) => void;
 };
