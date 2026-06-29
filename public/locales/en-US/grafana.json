@@ -2664,14 +2664,21 @@
       }
     },
     "quality": {
-      "description": "These alert rules are missing a summary, description, or runbook URL. Select <strong>Edit</strong> on a rule to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically, so responders know what fired and what to do.",
+      "description": "These alert rules are missing a summary, description, or runbook URL. Select <strong>Edit</strong> on a rule to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically.",
       "edit": "Edit",
       "empty": "Every alert rule has a summary, description, and runbook URL.",
       "empty-description": "To enforce these fields across your organization, enable the requirements in <2>Alert quality settings</2>.",
       "filter": {
         "clear": "Clear filters",
+        "finding-type-count": "{{total}} missing {{label}}",
+        "finding-type-group": "Filter by finding type",
         "name-label": "Search by name",
-        "name-placeholder": "Filter by name..."
+        "name-placeholder": "Filter by name...",
+        "severity-all": "All",
+        "severity-high": "High",
+        "severity-label": "Severity",
+        "severity-low": "Low",
+        "severity-medium": "Medium"
       },
       "fix-all": "Fix all with AI",
       "fix-all-progress": "Fixing {{completed}} of {{total}}...",
@@ -2681,7 +2688,7 @@
       "fixing": "Fixing...",
       "incomplete-summary": "{{incomplete}} of {{total}} alert rules need attention",
       "missing-label": "Missing:",
-      "needs-attention": "Some alert rules are missing annotations",
+      "needs-attention": "Some alert rules are missing required details",
       "no-matches": "No incomplete alert rules match your filters.",
       "score-out-of": "{{score}} / 10",
       "score-title": "Alert quality score",

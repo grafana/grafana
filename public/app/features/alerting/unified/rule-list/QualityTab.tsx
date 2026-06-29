@@ -10,12 +10,19 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 import { type FixProgress, useFixIncompleteRules } from '../hooks/useFixIncompleteRules';
 import { type IncompleteRule, useIncompleteRules } from '../hooks/useIncompleteRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
-import { Annotation, annotationLabels } from '../utils/constants';
+import { annotationLabels } from '../utils/constants';
 import { createRelativeUrl } from '../utils/url';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { QualityFilter } from './quality/QualityFilter';
 import { filterIncompleteRules } from './quality/filterIncompleteRules';
+import {
+  type FindingTypeFilterValue,
+  type SeverityFilterValue,
+  filterFindings,
+  getFindingTypeCounts,
+  getRuleSeverity,
+} from './quality/qualityFindingFilters';
 import { useApplyDefaultQualitySearch } from './quality/useApplyDefaultQualitySearch';
 
 // A missing runbook URL leaves responders with nowhere to start, so it's treated as a
@@ -28,7 +35,7 @@ const MEDIUM_SEVERITY_WEIGHT = 0.5;
 const collator = new Intl.Collator();
 
 function isHighSeverity(rule: IncompleteRule): boolean {
-  return rule.missing.includes(Annotation.runbookURL);
+  return getRuleSeverity(rule) === 'high';
 }
 
 function ruleWeight(rule: IncompleteRule): number {
@@ -59,6 +66,8 @@ function QualityTab() {
   const [fixingUid, setFixingUid] = useState<string | undefined>(undefined);
   const { filterState } = useRulesFilter();
   const { isApplying: isApplyingDefaultSearch } = useApplyDefaultQualitySearch();
+  const [severity, setSeverity] = useState<SeverityFilterValue>('all');
+  const [findingType, setFindingType] = useState<FindingTypeFilterValue>('all');
 
   // The score reflects the whole org and stays stable while filtering; the list below
   // narrows to the rules matching the active folder / label / name filters.
@@ -67,18 +76,32 @@ function QualityTab() {
 
   const filteredRules = useMemo(() => filterIncompleteRules(flaggedRules, filterState), [flaggedRules, filterState]);
 
+  // Counts reflect the rules in scope after the folder/label/name filters but before the
+  // severity/finding-type quick filters, so each button shows how many findings are available.
+  const findingCounts = useMemo(() => getFindingTypeCounts(filteredRules), [filteredRules]);
+
+  const visibleRules = useMemo(
+    () => filterFindings(filteredRules, { severity, findingType }),
+    [filteredRules, severity, findingType]
+  );
+
   // Show the most severe rules first; ties broken by folder/group/name so the order is stable.
   const sortedRules = useMemo(
     () =>
-      [...filteredRules].sort((a, b) => {
+      [...visibleRules].sort((a, b) => {
         const diff = severityRank(b) - severityRank(a);
         if (diff !== 0) {
           return diff;
         }
         return collator.compare(`${a.folder}/${a.group}/${a.name}`, `${b.folder}/${b.group}/${b.name}`);
       }),
-    [filteredRules]
+    [visibleRules]
   );
+
+  const handleClearExtraFilters = () => {
+    setSeverity('all');
+    setFindingType('all');
+  };
 
   // The rule update mutation doesn't invalidate the Prometheus rules query backing
   // this list, so refetch it after fixing to reflect the new summaries/descriptions.
@@ -138,7 +161,14 @@ function QualityTab() {
           </EmptyState>
         ) : (
           <Stack direction="column" gap={2}>
-            <QualityFilter />
+            <QualityFilter
+              severity={severity}
+              onSeverityChange={setSeverity}
+              findingType={findingType}
+              onFindingTypeChange={setFindingType}
+              findingCounts={findingCounts}
+              onClearExtraFilters={handleClearExtraFilters}
+            />
             {sortedRules.length === 0 ? (
               <EmptyState
                 variant="not-found"
