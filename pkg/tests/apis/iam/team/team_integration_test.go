@@ -25,7 +25,7 @@ import (
 func TestIntegrationTeams(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -47,8 +47,10 @@ func TestIntegrationTeams(t *testing.T) {
 			doTeamSpecMembersTests(t, helper)
 			doTeamSpecExternalGroupsOSSTests(t, helper)
 
-			if mode < 3 {
+			if mode < rest.Mode3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+			}
+			if mode < rest.Mode4 {
 				doTeamDeleteCascadesLegacyMembersTest(t, helper)
 			}
 		})
@@ -286,9 +288,9 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// doTeamDeleteCascadesLegacyMembersTest guards F12: deleting a team must clean
-// up its legacy team_member rows. Only meaningful when legacy storage is
-// written (dual-write mode < 3), so the caller gates on mode.
+// doTeamDeleteCascadesLegacyMembersTest verifies that deleting a team cleans up
+// its legacy team_member rows. Only meaningful when legacy storage is written
+// (dual-write mode < 4), so the caller gates on mode.
 func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("delete team cascades legacy team_member rows", func(t *testing.T) {
 		ctx := context.Background()
@@ -346,7 +348,7 @@ func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHel
 
 		require.NoError(t, teamClient.Resource.Delete(ctx, teamUID, metav1.DeleteOptions{}))
 
-		require.Equal(t, 0, countMembers(), "team_member rows must be cleaned up after team delete (F12)")
+		require.Equal(t, 0, countMembers(), "team_member rows must be cleaned up after team delete")
 	})
 }
 
