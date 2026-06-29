@@ -21,8 +21,7 @@ type Props = BaseProps & MergeExclusive<{ color?: string }, { colorBy?: 'key' | 
 const AlertLabel = (props: Props) => {
   const { labelKey, value, icon, color, colorBy, size = 'md', onClick, ...rest } = props;
   const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const theColor = getColorFromProps({ color, colorBy, labelKey, value, isLight: theme.isLight, visualRefreshEnabled });
+  const theColor = getColorFromProps({ color, colorBy, labelKey, value, theme });
   const styles = useStyles2(getStyles, theColor, size);
 
   const ariaLabel = `${labelKey}: ${value}`;
@@ -69,22 +68,21 @@ const AlertLabel = (props: Props) => {
   );
 };
 
-function getAccessibleTagColor(name?: string, isLight?: boolean, visualRefreshEnabled?: boolean): string | undefined {
+function getAccessibleTagColor(name: string | undefined, theme: GrafanaTheme2): string | undefined {
   if (!name) {
     return;
   }
   const attempts = Array.from({ length: 6 }, (_, i) => name + '-'.repeat(i));
   const readableAttempt = attempts.find((attempt) => {
-    const [darkShade, lightShade] = getTagColorsFromName(attempt, visualRefreshEnabled);
-    const candidate = isLight ? lightShade : darkShade;
+    const { background } = getTagColorsFromName(attempt, theme);
     return (
-      tinycolor2.isReadable(candidate, '#000', { level: 'AA', size: 'small' }) ||
-      tinycolor2.isReadable(candidate, '#fff', { level: 'AA', size: 'small' })
+      tinycolor2.isReadable(background, '#000', { level: 'AA', size: 'small' }) ||
+      tinycolor2.isReadable(background, '#fff', { level: 'AA', size: 'small' })
     );
   });
   const chosen = readableAttempt ?? name;
-  const [darkShade, lightShade] = getTagColorsFromName(chosen, visualRefreshEnabled);
-  return isLight ? lightShade : darkShade;
+  const { background } = getTagColorsFromName(chosen, theme);
+  return background;
 }
 
 function getColorFromProps({
@@ -92,23 +90,22 @@ function getColorFromProps({
   colorBy,
   labelKey,
   value,
-  isLight,
-  visualRefreshEnabled,
-}: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'> & { isLight?: boolean; visualRefreshEnabled?: boolean }) {
+  theme,
+}: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'> & { theme: GrafanaTheme2 }) {
   if (color) {
-    return getAccessibleTagColor(color, isLight, visualRefreshEnabled);
+    return getAccessibleTagColor(color, theme);
   }
 
   if (colorBy === 'key') {
-    return getAccessibleTagColor(labelKey, isLight, visualRefreshEnabled);
+    return getAccessibleTagColor(labelKey, theme);
   }
 
   if (colorBy === 'value') {
-    return getAccessibleTagColor(value, isLight, visualRefreshEnabled);
+    return getAccessibleTagColor(value, theme);
   }
 
   if (colorBy === 'both' && labelKey && value) {
-    return getAccessibleTagColor(labelKey + value, visualRefreshEnabled);
+    return getAccessibleTagColor(labelKey + value, theme);
   }
 
   return;

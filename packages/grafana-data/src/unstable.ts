@@ -9,4 +9,4 @@
  * and be subject to the standard policies
  */
 
-export { palette } from './themes/palette_new';
+export { DEFAULT_TAG_COLORS } from './themes/createComponents';

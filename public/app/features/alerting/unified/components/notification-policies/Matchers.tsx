@@ -3,7 +3,6 @@ import { take, takeRight, uniqueId } from 'lodash';
 import { type FC } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -54,31 +53,23 @@ interface MatcherBadgeProps {
 }
 
 export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
+  const styles = useStyles2(getStyles);
 
   return <div className={styles.matcher(matcher[0]).wrapper}>{matcherFormatter[formatter](matcher)}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   matcher: (label: string) => {
-    const [darkShade, lightShade] = getTagColorsFromName(label, visualRefreshEnabled);
-    let backgroundColor = darkShade;
-    let borderColor = lightShade;
-
-    if (visualRefreshEnabled) {
-      backgroundColor = theme.isLight ? lightShade : darkShade;
-      borderColor = theme.isLight ? darkShade : lightShade;
-    }
+    const { background, text } = getTagColorsFromName(label, theme);
 
     return {
       wrapper: css({
         color: '#fff',
-        background: backgroundColor,
+        background,
         padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
         fontSize: theme.typography.bodySmall.fontSize,
 
-        border: `solid 1px ${borderColor}`,
+        border: `solid 1px ${text}`,
         borderRadius: theme.shape.borderRadius(2),
 
         // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_

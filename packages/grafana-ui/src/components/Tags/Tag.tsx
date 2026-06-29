@@ -72,15 +72,8 @@ const getSkeletonStyles = () => ({
 
 const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  let colors;
-  if (colorIndex === undefined) {
-    colors = getTagColorsFromName(name, visualRefreshEnabled);
-  } else {
-    colors = getTagColor(colorIndex, visualRefreshEnabled);
-  }
-  const [darkShade, lightShade] = colors;
-  const backgroundColor = theme.isLight ? lightShade : darkShade;
-  const textColor = theme.isLight ? darkShade : lightShade;
+  const { background, text } =
+    colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
     wrapper: css({
       appearance: 'none',
@@ -89,8 +82,8 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
-      backgroundColor: visualRefreshEnabled ? backgroundColor : darkShade,
-      color: visualRefreshEnabled ? textColor : theme.v1.palette.gray98,
+      backgroundColor: background,
+      color: text,
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',

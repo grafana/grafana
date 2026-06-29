@@ -752,6 +752,37 @@
         }
       },
       "additionalProperties": false
+    },
+    "components": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "background",
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [

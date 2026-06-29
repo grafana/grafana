@@ -1141,23 +1141,15 @@ const routePropertyToValue = (
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcher: (label: string) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    const [darkShade, lightShade] = getTagColorsFromName(label, visualRefreshEnabled);
-    let backgroundColor = darkShade;
-    let borderColor = lightShade;
-
-    if (visualRefreshEnabled) {
-      backgroundColor = theme.isLight ? lightShade : darkShade;
-      borderColor = theme.isLight ? darkShade : lightShade;
-    }
+    const { background, text } = getTagColorsFromName(label, theme);
 
     return {
       wrapper: css({
         color: '#fff',
-        background: backgroundColor,
+        background,
         padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
         fontSize: theme.typography.bodySmall.fontSize,
-        border: `solid 1px ${borderColor}`,
+        border: `solid 1px ${text}`,
         borderRadius: theme.shape.radius.default,
       }),
     };

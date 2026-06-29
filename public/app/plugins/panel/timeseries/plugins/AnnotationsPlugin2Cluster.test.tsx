@@ -1,6 +1,6 @@
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act, render, screen } from 'test/test-utils';
 import uPlot from 'uplot';
 
 import {

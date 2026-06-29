@@ -23,36 +23,28 @@ interface Props {
  * */
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
   const theme = useTheme2();
-  const isLight = theme.isLight;
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
 
   // If configured, use random colors based on name.
   // Otherwise, a default class name will be applied to the tag.
-  const tagStyle = useMemo(() => {
+  const tagColors = useMemo(() => {
     if (autoColors) {
-      const [darkShade, lightShade] = getTagColorsFromName(name, visualRefreshEnabled);
-      let backgroundColor = darkShade;
-      let borderColor = lightShade;
-      if (visualRefreshEnabled) {
-        backgroundColor = isLight ? lightShade : darkShade;
-        borderColor = isLight ? darkShade : lightShade;
-      }
-      return { backgroundColor, borderColor };
+      const { background, text } = getTagColorsFromName(name, theme);
+      return { background, text };
     }
     return undefined;
-  }, [name, autoColors, isLight, visualRefreshEnabled]);
+  }, [name, autoColors, theme]);
 
   return (
     <li
-      className={cx(styles.itemStyle, !tagStyle && styles.defaultTagColor)}
+      className={cx(styles.itemStyle, !tagColors && styles.defaultTagColor)}
       style={
-        visualRefreshEnabled
-          ? {
-              backgroundColor: tagStyle?.backgroundColor,
-              color: tagStyle?.borderColor,
-            }
-          : tagStyle
+        tagColors
+          ? visualRefreshEnabled
+            ? { backgroundColor: tagColors.background, color: tagColors.text }
+            : { backgroundColor: tagColors.background, borderColor: tagColors.text }
+          : undefined
       }
     >
       <span className={styles.nameStyle}>{name}</span>
