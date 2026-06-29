@@ -1,0 +1,264 @@
+package folders
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/dynamic"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+	k8stesting "k8s.io/client-go/testing"
+
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+// newDashboardCascade wires a cascade storage to a fake dashboard apiserver client seeded with objs.
+func newDashboardCascade(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, objs ...runtime.Object) (*cascadeDeleteStorage, *dynamicfake.FakeDynamicClient) {
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{gvr: "DashboardList"}, objs...)
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+		c := dyn.Resource(gvr)
+		return &c, nil
+	}}
+	return s, dyn
+}
+
+// fakeFolderStorage records folder deletes and label stamps; only Delete/Update are exercised.
+type fakeFolderStorage struct {
+	grafanarest.Storage
+	existing map[string]*foldersv1.Folder
+	deleted  []string
+	stamped  []string
+}
+
+func (f *fakeFolderStorage) Delete(ctx context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	fol, ok := f.existing[name]
+	if !ok {
+		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
+	}
+	delete(f.existing, name)
+	f.deleted = append(f.deleted, name)
+	return fol, false, nil
+}
+
+func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	fol, ok := f.existing[name]
+	if !ok {
+		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
+	}
+	obj, err := objInfo.UpdatedObject(ctx, fol)
+	if err != nil {
+		return nil, false, err
+	}
+	updated := obj.(*foldersv1.Folder)
+	f.existing[name] = updated
+	if updated.Labels[folderTerminatingLabel] == folderTerminatingLabelValue {
+		f.stamped = append(f.stamped, name)
+	}
+	return updated, false, nil
+}
+
+// fakeCascadeSearcher returns folder children and dashboards by folder UID, keyed off the request's
+// resource and the folder field filter.
+type fakeCascadeSearcher struct {
+	resourcepb.ResourceIndexClient
+	childrenByParent   map[string][]string
+	dashboardsByFolder map[string][]string
+}
+
+func (s *fakeCascadeSearcher) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	var names []string
+	for _, uid := range folderFilterValues(req) {
+		switch req.Options.Key.Resource {
+		case foldersv1.FolderResourceInfo.GroupVersionResource().Resource:
+			names = append(names, s.childrenByParent[uid]...)
+		case dashv1.DashboardResourceInfo.GroupVersionResource().Resource:
+			names = append(names, s.dashboardsByFolder[uid]...)
+		}
+	}
+	rows := make([]*resourcepb.ResourceTableRow, 0, len(names))
+	for _, n := range names {
+		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
+	}
+	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows}, TotalHits: int64(len(rows))}, nil
+}
+
+func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
+	if req.Options == nil {
+		return nil
+	}
+	for _, f := range req.Options.Fields {
+		if f.Key == resource.SEARCH_FIELD_FOLDER {
+			return f.Values
+		}
+	}
+	return nil
+}
+
+func newFolder(name string) *foldersv1.Folder {
+	f := &foldersv1.Folder{}
+	f.Name = name
+	return f
+}
+
+func unstructuredDashboard(namespace, name string) *unstructured.Unstructured {
+	u := &unstructured.Unstructured{}
+	u.SetGroupVersionKind(dashv1.DashboardResourceInfo.GroupVersionKind())
+	u.SetNamespace(namespace)
+	u.SetName(name)
+	return u
+}
+
+// nilDashboardClient stands in for deployments where no dashboard apiserver client is configured.
+func nilDashboardClient(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	return nil, nil
+}
+
+func ctxWithNamespace() context.Context {
+	return apirequest.WithNamespace(context.Background(), "default")
+}
+
+func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+		"root": newFolder("root"), "child": newFolder("child"), "leaf": newFolder("leaf"),
+	}}
+	searcher := &fakeCascadeSearcher{
+		childrenByParent:   map[string][]string{"root": {"child"}, "child": {"leaf"}},
+		dashboardsByFolder: map[string][]string{"child": {"dash-1"}},
+	}
+
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+
+	// Leaves are deleted before their parents, and every folder in the subtree is stamped.
+	require.Equal(t, []string{"leaf", "child", "root"}, store.deleted)
+	require.ElementsMatch(t, []string{"root", "child", "leaf"}, store.stamped)
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	_, err = dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "dashboard should be deleted")
+}
+
+func TestCascadeDelete_DeletesAllDashboardsInFolder(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1", "dash-2"}}}
+	s, dyn := newDashboardCascade(store, searcher,
+		unstructuredDashboard("default", "dash-1"), unstructuredDashboard("default", "dash-2"))
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	for _, name := range []string{"dash-1", "dash-2"} {
+		_, err := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), name, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "dashboard %s should be deleted", name)
+	}
+}
+
+func TestCascadeDelete_DashboardNotFoundTolerated(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// The index returns a dashboard absent from the apiserver (stale entry / prior partial run).
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-ghost"}}}
+	s, _ := newDashboardCascade(store, searcher)
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_DashboardClientNilSkips(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// No dashboard client configured: dashboards are skipped but the folder still cascades.
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_DashboardClientErrorAborts(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+		return nil, errors.New("boom")
+	}}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	require.Empty(t, store.deleted, "folder must not be deleted when dashboard cleanup fails")
+}
+
+func TestCascadeDelete_DashboardDeleteErrorPropagates(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	// A non-NotFound delete failure aborts the cascade.
+	dyn.PrependReactor("delete", "dashboards", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("delete failed")
+	})
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	require.Empty(t, store.deleted, "folder must not be deleted when a dashboard delete fails")
+}
+
+func TestCascadeDelete_IdempotentOnMissingChild(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// "ghost" is returned by the index but absent from storage (stale entry / prior partial run).
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"ghost"}}}
+
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_DisabledDelegates(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, false)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root"), "child": newFolder("child")}}
+	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+
+	// With the flag off only the requested folder is deleted; no cascade, no stamping.
+	require.Equal(t, []string{"root"}, store.deleted)
+	require.Empty(t, store.stamped)
+}
