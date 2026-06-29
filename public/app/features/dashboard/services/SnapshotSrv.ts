@@ -140,8 +140,12 @@ class K8sAPI implements DashboardSnapshotSrv {
       // The /dashboard subresource returns a Dashboard whose `spec` is the raw dashboard
       // payload — typed as `Unstructured` in the generated client, but always a
       // DashboardDataDTO at runtime.
+      // structuredClone unfreezes the payload: RTK Query auto-freezes responses, but
+      // downstream dashboard processing (e.g. fixThresholds in getPanelOptionsWithDefaults)
+      // mutates fields like thresholds.steps[0].value in place and would throw on a
+      // frozen object.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const dashboard = dashboardResponse.spec as unknown as DashboardDataDTO;
+      const dashboard = structuredClone(dashboardResponse.spec) as DashboardDataDTO;
 
       return {
         dashboard,
