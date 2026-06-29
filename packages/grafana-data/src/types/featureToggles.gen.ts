@@ -134,11 +134,6 @@ export interface FeatureToggles {
   */
   provisioningExport?: boolean;
   /**
-  * Start an additional https handler and write kubectl options
-  * @default false
-  */
-  grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */

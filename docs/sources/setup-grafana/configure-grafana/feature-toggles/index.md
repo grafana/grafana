@@ -111,4 +111,3 @@ The following toggles require explicitly setting Grafana's [app mode](../#app_mo
 | Feature toggle name                    | Description                                                                   |
 | -------------------------------------- | ----------------------------------------------------------------------------- |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
-| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |
