@@ -139,8 +139,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [nestedData]
   );
 
+  // nestedData is empty when the table has no rows but still carries a nested-frames transform.
+  // Guard against the missing first frame so we render an empty table instead of crashing.
   const firstRowNestedData = nestedData[0];
-  const nestedFields = firstRowNestedData.fields;
+  const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
   const nestedHasFooter = useMemo(
     () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -161,15 +163,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  const nestedRows = useNestedRows(
-    rows,
-    nestedData,
-    true,
-    nestedFramesFieldName,
-    filter,
-    sortColumns,
-    protoParserEnabled
-  );
+  // Nested frames are always compiled via the V1 parser, matching legacy behavior — the proto
+  // parser is only applied to the outer frame, never to nested rows.
+  const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -263,7 +259,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     structureRev,
   });
 
-  const hasNestedHeaders = useMemo(() => firstRowNestedData.meta?.custom?.noHeader !== true, [firstRowNestedData]);
+  const hasNestedHeaders = useMemo(() => firstRowNestedData?.meta?.custom?.noHeader !== true, [firstRowNestedData]);
   const nestedHeaderHeight = useHeaderHeight({
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,

@@ -134,6 +134,26 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
 };
 
 /**
+ * A frame carrying a __nestedFrames field but with zero rows — the shape produced when a panel
+ * returns no data yet still runs a Group to nested tables transform. There is no first nested
+ * frame to derive nested fields from, so the table must fall back to its empty state.
+ */
+const createEmptyNestedDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 0,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Column B', type: FieldType.number, values: [], config: { custom: {} } },
+        { name: '__depth', type: FieldType.number, values: [], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: [], config: { custom: {} } },
+      ],
+    })
+  );
+
+/**
  * Outer table has NO footer reducers; nested frame fields DO have footer reducers.
  * Used to verify that the nested table shows its own footer independent of the outer table.
  */
@@ -548,6 +568,18 @@ describe('TableNG', () => {
       ['N1', 'N2'].forEach((text) => {
         expect(screen.getAllByText(text)).toHaveLength(2);
       });
+    });
+
+    it('renders the empty state when there are no rows but a nested transform is present', () => {
+      // Regression: with zero rows the nested data is empty, so there is no first nested frame
+      // to read nested fields from. The table must render its empty state instead of throwing.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createEmptyNestedDataFrame()} width={800} height={600} />
+      );
+
+      expect(container.querySelector('[role="treegrid"]')).toBeInTheDocument();
+      expect(screen.getByText('No rows')).toBeInTheDocument();
+      expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
   });
 
