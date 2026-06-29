@@ -102,7 +102,8 @@ function createInlineInputTheme(theme: GrafanaTheme2, monospace: boolean): Exten
     },
     '.cm-scroller': {
       fontFamily,
-      overflowX: 'auto',
+      // Values wrap (see `lineWrapping`) rather than scrolling horizontally.
+      overflowX: 'hidden',
       overflowY: 'hidden',
       lineHeight: 'inherit',
     },
@@ -178,11 +179,11 @@ const getStyles = (theme: GrafanaTheme2, monospace: boolean) => ({
       display: 'flex',
       alignItems: 'center',
       width: '100%',
-      // Pin to the standard input height (rather than free-sizing to the line
-      // height) so this lines up with sibling `Input` fields; `alignItems`
-      // centers the single editor line within it.
+      // Float to the standard input height so a single-line value lines up with
+      // sibling `Input` fields (`alignItems` centers the editor within it), but
+      // only as a minimum: a wrapped, multi-line value grows the field downward.
       minHeight: theme.spacing(theme.components.height.md),
-      padding: theme.spacing(0, 1),
+      padding: theme.spacing(0.5, 1),
       '&:focus-within': getFocusStyles(theme),
     })
   ),
@@ -241,6 +242,10 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
     () => [
       singleLineFilter,
       stripNewlinesOnPaste,
+      // Soft-wrap a long value across visual rows. This is layout-only: it adds
+      // no newline to the doc, so `singleLineFilter` still sees one line and
+      // hard Enter stays blocked — the field grows downward instead of clipping.
+      EditorView.lineWrapping,
       // Render tooltips (the completion popup) in `document.body` so they aren't
       // clipped by, or stacked beneath, a containing modal's scroll/footer.
       tooltips({ parent: document.body }),

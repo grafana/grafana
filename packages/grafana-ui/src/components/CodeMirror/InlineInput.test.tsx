@@ -136,6 +136,14 @@ describe('CodeMirrorInlineInput', () => {
     expect(container.querySelector('.cm-lineNumbers')).toBeNull();
   });
 
+  it('soft-wraps long values instead of clipping them to one row', async () => {
+    const { container } = render(<CodeMirrorInlineInput value="x" onChange={jest.fn()} />);
+    await screen.findByRole('textbox');
+    // `EditorView.lineWrapping` marks the content with this class and sets
+    // `white-space: pre-wrap`, so a long value flows onto multiple visual rows.
+    expect(container.querySelector('.cm-content.cm-lineWrapping')).not.toBeNull();
+  });
+
   it('fires onChange with the typed value', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();

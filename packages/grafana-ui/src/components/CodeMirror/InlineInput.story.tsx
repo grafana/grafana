@@ -74,6 +74,13 @@ Basic.args = {
   placeholder: 'http://your-grafana.com/d/000000010/annotations',
 };
 
+export const LongValue = Controlled.bind({});
+LongValue.args = {
+  value:
+    'https://your-grafana.com/d/000000010/some-very-long-dashboard-slug?var-country=${__data.fields.CountryCode}&var-region=${__data.fields.Region}&from=now-6h&to=now',
+  placeholder: 'http://your-grafana.com/d/000000010/annotations',
+};
+
 export const WithVariableCompletions = Controlled.bind({});
 WithVariableCompletions.args = {
   value: 'https://example.com/d/abc?var=',
