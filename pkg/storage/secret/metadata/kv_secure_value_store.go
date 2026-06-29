@@ -289,6 +289,7 @@ func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, nam
 		break
 	}
 
+	// TODO: return created by? check sql impl
 	return latestVersion, createdAt, nil
 }
 
