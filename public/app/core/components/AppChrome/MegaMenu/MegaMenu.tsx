@@ -6,7 +6,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -156,6 +156,14 @@ export const MegaMenu = memo(
               </Text>
             </button>
           )}
+          {canCustomise && (
+            <div className={styles.feedbackFooter}>
+              {/* Placeholder — not wired up yet. */}
+              <Button variant="secondary" fill="outline" size="sm" icon="comment-alt-message">
+                {t('navigation.megamenu.feedback', 'Feedback')}
+              </Button>
+            </div>
+          )}
         </nav>
       </div>
     );
@@ -218,6 +226,15 @@ const getStyles = (theme: GrafanaTheme2) => {
         outline: `2px solid ${theme.colors.primary.main}`,
         outlineOffset: '-2px',
       },
+    }),
+    // Footer holding the feedback button while customisation is active — distinct from the
+    // full-width nav rows above it.
+    feedbackFooter: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      flexShrink: 0,
+      justifyContent: 'center',
+      padding: theme.spacing(1.5, 2),
     }),
   };
 };
