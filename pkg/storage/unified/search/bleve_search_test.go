@@ -992,3 +992,320 @@ func TestSearchPermissionFiltering(t *testing.T) {
 		checkSearchQueryWithAccess(t, index, ac, query, []string{"doc-a", "doc-b"})
 	})
 }
+
+// newTestDashboardsIndexPostRank builds a dashboards index with the
+// post-rank-authz path enabled.
+func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceIndex {
+	t.Helper()
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:            t.TempDir(),
+		FileThreshold:   threshold, // use in-memory for tests
+		PostRankAuthzFn: func() bool { return true },
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &builders.DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			Stats:            make(map[string]map[string]int64),
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(t, err)
+
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, size, info.Fields, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
+}
+
+// countingAccessClient allows access based on allowedFolders (an empty/nil map
+// allows everything) and records how many items it was asked to check, so tests
+// can assert that authorization stops early once the page is full.
+type countingAccessClient struct {
+	allowAll       bool
+	allowedFolders map[string]bool
+	checked        int
+}
+
+func (c *countingAccessClient) allow(folder string) bool {
+	if c.allowAll {
+		return true
+	}
+	return c.allowedFolders[folder]
+}
+
+func (c *countingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: c.allow(folder), Zookie: authlib.NoopZookie{}}, nil
+}
+
+func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, folder string) bool { return c.allow(folder) }, authlib.NoopZookie{}, nil
+}
+
+func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.checked += len(req.Checks)
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: c.allow(item.Folder)}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func TestSearchPostRankAuthz(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	indexDocs := func(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
+		t.Helper()
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+	}
+
+	newDoc := func(name, folder string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:    1,
+				Name:  name,
+				Title: name,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Folder: folder,
+			},
+		}
+	}
+
+	listQuery := func(limit int64) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+			},
+			Limit: limit,
+		}
+	}
+
+	searchNames := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([]string, *resourcepb.ResourceSearchResponse) {
+		t.Helper()
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace}
+		ctx := authlib.WithAuthInfo(context.Background(), requester)
+		res, err := index.Search(ctx, ac, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		names := make([]string, 0, len(res.Results.GetRows()))
+		for _, row := range res.Results.GetRows() {
+			names = append(names, row.Key.Name)
+		}
+		return names, res
+	}
+
+	t.Run("stops checking once the page is full", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// More than one BatchCheck batch (500) worth of docs, all authorized.
+		docs := make([]*resource.BulkIndexItem, 0, 700)
+		for i := 0; i < 700; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "folder-a"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		names, res := searchNames(t, index, ac, listQuery(100))
+
+		require.Len(t, names, 100, "should return exactly the requested limit")
+		// totalHits stays the unfiltered match count.
+		require.Equal(t, int64(700), res.TotalHits)
+		// Early-exit: we must not have authorized all 700 candidates. With a
+		// batch size of 500 the first batch already fills the page of 100.
+		require.LessOrEqual(t, ac.checked, 500)
+		require.Less(t, ac.checked, 700)
+	})
+
+	t.Run("returns first limit authorized hits in sort order", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// Interleave allowed/denied folders; default list sort is by title asc,
+		// and titles equal the (zero-padded) names, so order is deterministic.
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, _ := searchNames(t, index, ac, listQuery(3))
+
+		// The first three authorized (even-indexed) docs in title order.
+		require.Equal(t, []string{"doc-00", "doc-02", "doc-04"}, names)
+	})
+
+	t.Run("relevance query falls back to in-searcher path", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("alpha", "allowed"),
+			newDoc("beta", "denied"),
+		})
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		q.Query = "alpha" // relevance query -> old path, still authz-filtered
+		names, _ := searchNames(t, index, ac, q)
+		require.Equal(t, []string{"alpha"}, names)
+	})
+
+	t.Run("fewer authorized than limit returns all authorized", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
+			newDoc("doc-3", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, res := searchNames(t, index, ac, listQuery(10))
+		require.Equal(t, []string{"doc-0", "doc-2"}, names)
+		require.Equal(t, int64(4), res.TotalHits)
+	})
+
+	t.Run("no authorized documents returns empty", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "denied"),
+			newDoc("doc-1", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, _ := searchNames(t, index, ac, listQuery(10))
+		require.Empty(t, names)
+	})
+
+	t.Run("limit larger than total returns everything authorized", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "allowed"),
+		})
+		ac := &countingAccessClient{allowAll: true}
+		names, _ := searchNames(t, index, ac, listQuery(1000))
+		require.ElementsMatch(t, []string{"doc-0", "doc-1"}, names)
+	})
+
+	// pageAll walks SearchAfter cursors until a short/empty page, returning the
+	// names in the order they were returned across pages.
+	pageAll := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
+		t.Helper()
+		var all []string
+		var after []string
+		for page := 0; ; page++ {
+			require.Less(t, page, 1000, "pagination did not terminate")
+			q := listQuery(limit)
+			q.SearchAfter = after
+			names, res := searchNames(t, index, ac, q)
+			require.LessOrEqual(t, len(names), int(limit))
+			all = append(all, names...)
+			rows := res.Results.GetRows()
+			if len(rows) == 0 {
+				break
+			}
+			after = rows[len(rows)-1].SortFields
+			require.NotEmpty(t, after, "every returned row must carry sort values for the next cursor")
+			if len(rows) < int(limit) {
+				break
+			}
+		}
+		return all
+	}
+
+	t.Run("SearchAfter pages contiguously when all authorized", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 25)
+		want := make([]string, 0, 25)
+		for i := 0; i < 25; i++ {
+			name := fmt.Sprintf("doc-%02d", i)
+			docs = append(docs, newDoc(name, "allowed"))
+			want = append(want, name)
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		got := pageAll(t, index, ac, 10)
+		// Full, ordered coverage with no gaps or duplicates.
+		require.Equal(t, want, got)
+	})
+
+	t.Run("SearchAfter pages over authorized hits only", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		want := make([]string, 0, 15)
+		for i := 0; i < 30; i++ {
+			name := fmt.Sprintf("doc-%02d", i)
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+				want = append(want, name)
+			}
+			docs = append(docs, newDoc(name, folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		got := pageAll(t, index, ac, 4)
+		// Only even-indexed docs are authorized; paging must cover exactly those,
+		// in order, with no duplicates across page boundaries.
+		require.Equal(t, want, got)
+	})
+
+	t.Run("facets fall back to in-searcher path and stay authz-filtered", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"folder": {Field: "folder", Limit: 10},
+		}
+		names, res := searchNames(t, index, ac, q)
+		require.ElementsMatch(t, []string{"doc-0", "doc-2"}, names)
+		require.NotNil(t, res.Facet["folder"], "facet counts should be computed on the old path")
+	})
+
+	t.Run("offset falls back to in-searcher path", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "allowed"),
+			newDoc("doc-2", "allowed"),
+		})
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(10)
+		q.Offset = 1
+		names, _ := searchNames(t, index, ac, q)
+		// Old path applies the offset over the (authorized) sorted results.
+		require.Equal(t, []string{"doc-1", "doc-2"}, names)
+	})
+}

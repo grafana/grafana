@@ -114,6 +114,9 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
+			PostRankAuthzFn: func() bool {
+				return features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearchPostRankAuthz)
+			},
 		}, indexMetrics)
 
 		if err != nil {

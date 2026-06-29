@@ -26,6 +26,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "unifiedStorageSearchPostRankAuthz",
+			Description: "Authorize bleve search hits after ranking with concurrent BatchCheck batches and early-exit at the requested limit, instead of filtering inside the bleve searcher",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true},
+		},
+		{
 			Name:         "publicDashboardsEmailSharing",
 			Description:  "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:        FeatureStagePublicPreview,

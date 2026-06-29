@@ -28,6 +28,7 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
@@ -124,6 +125,11 @@ type BleveOptions struct {
 	// rebuild. Older siblings under the same resource still use
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
+
+	// PostRankAuthzFn returns whether the unifiedStorageSearchPostRankAuthz
+	// feature toggle is enabled. Evaluated per-search. When nil, the toggle is
+	// treated as disabled and the in-searcher permissionScopedQuery path is used.
+	PostRankAuthzFn func() bool
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -1623,6 +1629,10 @@ type bleveIndex struct {
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
+
+	// postRankAuthzFn returns whether the post-ranking authz path is enabled.
+	// nil / false falls back to the in-searcher permissionScopedQuery path.
+	postRankAuthzFn func() bool
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1646,6 +1656,7 @@ func (b *bleveBackend) newBleveIndex(
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
 		indexMetrics:      b.indexMetrics,
+		postRankAuthzFn:   b.opts.PostRankAuthzFn,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1987,9 +1998,17 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	// postRankAuthz: for the simplest case (a plain list query with a limit and
+	// ordering, no relevance ranking, no facets, no federation, no offset/cursor)
+	// we rank in bleve without the in-searcher authz wrapper, then authorize the
+	// ranked hits in order and stop as soon as `limit` authorized hits are found.
+	// This bounds the (expensive) authorization work to roughly what is needed to
+	// fill the page instead of authorizing every match.
+	postRank := b.canPostRankAuthz(access, req, federate)
+
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -2005,6 +2024,26 @@ func (b *bleveIndex) Search(
 		}
 		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
 	}
+
+	if postRank {
+		// Fetch all matching candidates (in sort order) so the post-rank filter
+		// can walk them and early-exit at `limit` authorized. DocCount is an
+		// upper bound on the number of matches. Bleve ranking is cheap relative
+		// to the per-hit authorization checks we are trying to bound.
+		cnt, err := index.DocCount()
+		if err != nil {
+			return nil, err
+		}
+		searchrequest.Size = int(cnt)
+
+		// The post-rank filter needs the folder of each hit to authorize it, so
+		// make sure bleve loads the stored folder field even when the caller
+		// requested an explicit (folder-less) field set.
+		if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) &&
+			!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
+		}
+	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -2017,6 +2056,14 @@ func (b *bleveIndex) Search(
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
 	stats.AddTotalHits(int(res.Total))
+
+	if postRank {
+		authorizedHits, err := b.postRankAuthzFilter(ctx, access, req, res.Hits, int(req.Limit))
+		if err != nil {
+			return nil, err
+		}
+		res.Hits = authorizedHits
+	}
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
@@ -2035,6 +2082,128 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
+}
+
+// canPostRankAuthz reports whether the simple post-rank authorization path can
+// be used for this request. It is intentionally conservative: only plain list
+// queries (no relevance ranking, no facets, no federation, no offset) take this
+// path. Forward cursor pagination (SearchAfter) is supported because the cursor
+// is the last authorized hit's sort values, so paging stays contiguous.
+// Everything else falls back to the in-searcher permissionScopedQuery path,
+// which keeps facet counts and backward/offset pagination correct.
+func (b *bleveIndex) canPostRankAuthz(access authlib.AccessClient, req *resourcepb.ResourceSearchRequest, federate []resource.ResourceIndex) bool {
+	return b.postRankAuthzFn != nil &&
+		b.postRankAuthzFn() &&
+		access != nil &&
+		req.Limit > 0 &&
+		req.Offset == 0 &&
+		len(req.Facet) == 0 &&
+		len(federate) == 0 &&
+		len(req.Federated) == 0 &&
+		len(req.SearchBefore) == 0 &&
+		!isRelevanceQuery(req)
+}
+
+// isRelevanceQuery reports whether the request ranks by text relevance (score).
+// A plain match-all ("" or "*") is not a relevance query.
+func isRelevanceQuery(req *resourcepb.ResourceSearchRequest) bool {
+	return req.Query != "" && req.Query != "*"
+}
+
+// postRankAuthzFilter walks the ranked hits in order, authorizes them in
+// batches, and returns the first `limit` authorized hits (in rank order). It
+// stops issuing checks as soon as `limit` authorized hits are collected, so the
+// number of authorization checks is bounded by what is needed to fill the page
+// rather than the total number of matches.
+func (b *bleveIndex) postRankAuthzFilter(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	hits search.DocumentMatchCollection,
+	limit int,
+) (search.DocumentMatchCollection, error) {
+	ctx, span := tracer.Start(ctx, "search.postRankAuthz", trace.WithAttributes(
+		attribute.String("namespace", b.key.Namespace),
+		attribute.String("group", b.key.Group),
+		attribute.Int("search.limit", limit),
+	))
+	defer span.End()
+
+	resources := b.authzResources(req)
+
+	var candidates int64
+	candidateSeq := func(yield func(docInfo) bool) {
+		for _, hit := range hits {
+			info, ok := parseHitDocInfo(hit, resources)
+			if !ok {
+				continue
+			}
+			candidates++
+			if !yield(info) {
+				return
+			}
+		}
+	}
+
+	extractFn := func(info docInfo) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      info.name,
+			Folder:    info.folder,
+			Verb:      info.verb,
+			Group:     info.group,
+			Resource:  info.resourceType,
+			Namespace: info.namespace,
+		}
+	}
+
+	authorized := make(search.DocumentMatchCollection, 0, limit)
+	for info, err := range authz.FilterAuthorized(ctx, access, candidateSeq, extractFn, authz.WithTracer(tracer)) {
+		if err != nil {
+			return nil, err
+		}
+		authorized = append(authorized, info.doc)
+		if len(authorized) >= limit {
+			break // early-exit: the page is full
+		}
+	}
+
+	span.SetAttributes(
+		attribute.Int64("search.candidates", candidates),
+		attribute.Int("search.authorized", len(authorized)),
+	)
+	return authorized, nil
+}
+
+// parseHitDocInfo extracts the authorization fields from an already-ranked hit.
+// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values from the index
+// reader mid-search), the hit here already has its external ID and stored
+// fields populated by bleve. The doc ID format is
+// <namespace>/<group>/<resourceType>/<name>.
+func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
+	parts := strings.Split(doc.ID, "/")
+	if len(parts) != 4 {
+		return docInfo{}, false
+	}
+	resourceType := parts[2]
+	verb, ok := resources[resourceType]
+	if !ok {
+		return docInfo{}, false
+	}
+
+	folder := ""
+	if v, ok := doc.Fields[resource.SEARCH_FIELD_FOLDER].(string); ok {
+		folder = v
+	}
+
+	return docInfo{
+		doc:          doc,
+		namespace:    parts[0],
+		group:        parts[1],
+		resourceType: resourceType,
+		name:         parts[3],
+		folder:       folder,
+		verb:         verb,
+	}, true
 }
 
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
@@ -2110,8 +2279,24 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
+// authzResources builds the resource -> verb mapping used for batch
+// authorization, including any federated resources.
+func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
+	verb := utils.VerbGet
+	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+		verb = utils.VerbUpdate
+	}
+	resources := map[string]string{
+		b.key.Resource: verb,
+	}
+	for _, federated := range req.Federated {
+		resources[federated.Resource] = utils.VerbGet
+	}
+	return resources
+}
+
 // nolint:gocyclo
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
@@ -2311,27 +2496,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	if access != nil {
-		verb := utils.VerbGet
-		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-			verb = utils.VerbUpdate
-		}
-
-		// Build resource -> verb mapping for batch authorization
-		resources := map[string]string{
-			b.key.Resource: verb,
-		}
-
-		// Handle federation
-		for _, federated := range req.Federated {
-			resources[federated.Resource] = utils.VerbGet
-		}
-
+	// When postRankAuthz is set, authorization is applied after ranking in
+	// bleveIndex.Search (postRankAuthzFilter), so the in-searcher wrapper is
+	// skipped here and bleve returns unfiltered ranked hits.
+	if access != nil && !postRankAuthz {
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
 			access:    access,
 			namespace: b.key.Namespace,
 			group:     b.key.Group,
-			resources: resources,
+			resources: b.authzResources(req),
 		})
 	}
 
@@ -3038,6 +3211,12 @@ type batchAuthzSearcher struct {
 	resources   map[string]string // resource -> verb mapping
 	log         log.Logger
 
+	// Traces the authz-filtered scan and records how many candidate documents
+	// were considered vs. how many survived authorization. Ended in Close.
+	span       trace.Span
+	candidates atomic.Int64
+	authorized atomic.Int64
+
 	// Pull iterator state (lazily initialized)
 	searchCtx *search.SearchContext
 	next      func() (docInfo, error, bool)
@@ -3055,8 +3234,14 @@ func newBatchAuthzSearcher(
 	resources map[string]string,
 	logger log.Logger,
 ) *batchAuthzSearcher {
+	ctx, span := tracer.Start(ctx, "search.batchAuthzSearcher", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("group", group),
+	))
+
 	return &batchAuthzSearcher{
 		ctx:         ctx,
+		span:        span,
 		searcher:    searcher,
 		indexReader: indexReader,
 		dvReader:    dvReader,
@@ -3105,6 +3290,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 			if !ok {
 				continue // Skip invalid documents
 			}
+			s.candidates.Add(1)
 
 			if !yield(info) {
 				return
@@ -3123,10 +3309,20 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn)
+	// WithTracer makes FilterAuthorized emit a span around the batched
+	// BatchCheck loop, so the authz phase is visible as a child of this
+	// searcher's span instead of an opaque gap.
+	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn, authz.WithTracer(tracer))
 
 	s.next, s.stop = iter.Pull2(func(yield func(docInfo, error) bool) {
-		authzIter(yield)
+		for item, err := range authzIter {
+			if err == nil {
+				s.authorized.Add(1)
+			}
+			if !yield(item, err) {
+				return
+			}
+		}
 		if iterErr != nil {
 			var zero docInfo
 			yield(zero, iterErr)
@@ -3197,6 +3393,13 @@ func (s *batchAuthzSearcher) Advance(searchCtx *search.SearchContext, ID index.I
 func (s *batchAuthzSearcher) Close() error {
 	if s.stop != nil {
 		s.stop()
+	}
+	if s.span != nil {
+		s.span.SetAttributes(
+			attribute.Int64("search.candidates", s.candidates.Load()),
+			attribute.Int64("search.authorized", s.authorized.Load()),
+		)
+		s.span.End()
 	}
 	return s.searcher.Close()
 }

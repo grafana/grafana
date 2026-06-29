@@ -5431,6 +5431,19 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchPostRankAuthz",
+        "resourceVersion": "1782748277478",
+        "creationTimestamp": "2026-06-29T15:51:17Z"
+      },
+      "spec": {
+        "description": "Authorize bleve search hits after ranking with concurrent BatchCheck batches and early-exit at the requested limit, instead of filtering inside the bleve searcher",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "unlimitedLayoutsNesting",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-10-10T12:15:54Z"
