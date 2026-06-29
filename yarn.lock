@@ -2233,7 +2233,7 @@ __metadata:
     "@types/systemjs": "npm:^6.15.3"
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:^3.0.1"
-    d3-scale-chromatic: "npm:3.1.0"
+    d3-scale-chromatic: "npm:^3.1.0"
     date-fns: "npm:4.1.0"
     dompurify: "npm:3.4.0"
     esbuild: "npm:0.25.8"
@@ -14697,7 +14697,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.1.0":
+"d3-scale-chromatic@npm:3, d3-scale-chromatic@npm:3.1.0, d3-scale-chromatic@npm:^3.1.0":
   version: 3.1.0
   resolution: "d3-scale-chromatic@npm:3.1.0"
   dependencies:
