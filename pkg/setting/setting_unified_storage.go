@@ -27,6 +27,7 @@ const (
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
+	CorrelationsResource     = "correlations.correlations.grafana.app"
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -39,6 +40,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PreferencesResource:      false,
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
+	CorrelationsResource:     false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching

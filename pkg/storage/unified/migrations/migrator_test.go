@@ -46,6 +46,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
+		testcases.NewCorrelationsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313

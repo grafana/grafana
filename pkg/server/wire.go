@@ -63,6 +63,8 @@ import (
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
+	correlationsmigration "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	correlationsmigrator "github.com/grafana/grafana/pkg/registry/apps/correlations/migrator"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	querycachingmigration "github.com/grafana/grafana/pkg/registry/apps/querycaching"
@@ -250,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	playlistmigrator.ProvidePlaylistMigrator,
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	correlationsmigrator.ProvideCorrelationsMigrator,
 	legacystars.ProvideStarsMigrator,
 	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
@@ -621,6 +624,7 @@ func provideMigrationRegistry(
 	starsMigrator legacystars.StarsMigrator,
 	preferencesMigrator legacypreferences.PreferencesMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
+	correlationsMigrator correlationsmigrator.CorrelationsMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
@@ -630,5 +634,6 @@ func provideMigrationRegistry(
 	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
 	r.Register(legacypreferences.PreferencesMigrationDefinition(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
+	r.Register(correlationsmigration.CorrelationsMigration(correlationsMigrator))
 	return r
 }
