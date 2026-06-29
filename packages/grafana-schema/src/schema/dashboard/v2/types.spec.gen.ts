@@ -899,6 +899,8 @@ export interface AutoGridLayoutSpec {
 	rowHeight?: number;
 	fillScreen?: boolean;
 	fitContent?: boolean;
+	minHeightMode?: "short" | "standard" | "tall" | "custom";
+	minHeight?: number;
 	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom" | "screen";
 	maxHeight?: number;
 	matchRowHeights?: boolean;
@@ -929,6 +931,7 @@ export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
 	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	fitContent?: boolean;
 }
 
 export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({

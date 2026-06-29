@@ -28,6 +28,7 @@ export function serializeAutoGridLayout(
     maxColumnCount,
     fillScreen,
     fitContent,
+    minHeight,
     maxHeightMode,
     maxHeight,
     matchRowHeights,
@@ -52,6 +53,7 @@ export function serializeAutoGridLayout(
       matchRowHeights: matchRowHeights === false ? false : undefined,
       ...serializeAutoGridColumnWidth(columnWidth),
       ...serializeAutoGridRowHeight(rowHeight),
+      ...serializeAutoGridMinHeight(minHeight),
       items,
     },
   };
@@ -82,6 +84,11 @@ export function serializeAutoGridItem(item: AutoGridItem): AutoGridLayoutItemKin
       mode: 'variable',
       value: item.state.variableName,
     };
+  }
+
+  // Tri-state: undefined follows the layout default, so only persist an explicit override.
+  if (item.state.fitContent !== undefined) {
+    layoutItem.spec.fitContent = item.state.fitContent;
   }
 
   return layoutItem;
@@ -136,6 +143,8 @@ export function deserializeAutoGridLayout(
     rowHeight,
     fillScreen,
     fitContent,
+    minHeightMode,
+    minHeight,
     maxHeightMode,
     maxHeight,
     matchRowHeights,
@@ -145,6 +154,7 @@ export function deserializeAutoGridLayout(
 
   const columnWidthCombined = columnWidthMode === 'custom' ? columnWidth : columnWidthMode;
   const rowHeightCombined = rowHeightMode === 'custom' ? rowHeight : rowHeightMode;
+  const minHeightCombined = minHeightMode === 'custom' ? minHeight : minHeightMode;
   const fillScreenResolved = fillScreen ?? defaults.fillScreen ?? false;
   const fitContentResolved = fitContent ?? defaults.fitContent ?? false;
 
@@ -154,6 +164,7 @@ export function deserializeAutoGridLayout(
     rowHeight: rowHeightCombined,
     fillScreen: fillScreenResolved,
     fitContent: fitContentResolved,
+    minHeight: minHeightCombined,
     maxHeightMode,
     maxHeight,
     matchRowHeights,
@@ -165,7 +176,8 @@ export function deserializeAutoGridLayout(
       autoRows: getAutoRowsTemplate(
         rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
         fillScreenResolved,
-        fitContentResolved
+        // Rows must be able to grow if the layout default OR any panel opts into fit-content.
+        fitContentResolved || children.some((child) => child.state.fitContent === true)
       ),
       children,
     }),
@@ -183,6 +195,16 @@ function serializeAutoGridRowHeight(rowHeight: AutoGridRowHeight) {
   return {
     rowHeightMode: typeof rowHeight === 'number' ? 'custom' : rowHeight,
     rowHeight: typeof rowHeight === 'number' ? rowHeight : undefined,
+  };
+}
+
+function serializeAutoGridMinHeight(minHeight: AutoGridRowHeight | undefined) {
+  if (minHeight === undefined) {
+    return { minHeightMode: undefined, minHeight: undefined };
+  }
+  return {
+    minHeightMode: typeof minHeight === 'number' ? ('custom' as const) : minHeight,
+    minHeight: typeof minHeight === 'number' ? minHeight : undefined,
   };
 }
 
@@ -204,5 +226,6 @@ export function deserializeAutoGridItem(
     body: panel.kind === 'LibraryPanel' ? buildLibraryPanel(panel, id) : buildVizPanel(panel, id),
     variableName: item.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(item),
+    fitContent: item.spec.fitContent,
   });
 }
