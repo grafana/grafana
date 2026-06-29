@@ -11,6 +11,7 @@ import (
 
 	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -241,7 +242,7 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	// LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
 	loadingTime := time.Since(startTime).Seconds()
 	moa.metrics.SyncAlertmanagersTimeSeconds.Set(loadingTime)
-	moa.logger.Debug("Done synchronizing Alertmanagers for orgs", "duration_seconds", loadingTime)
+	moa.logger.Info("Done synchronizing Alertmanagers for orgs", "org_count", len(orgIDs), "duration_seconds", loadingTime)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return nil
@@ -270,50 +271,80 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
 		return
 	}
-	moa.alertmanagersMtx.Lock()
+	// Snapshot the running Alertmanagers under a read lock so the per-org work below can run concurrently
+	// without holding the lock. This method is the only writer of moa.alertmanagers and runs serially.
+	moa.alertmanagersMtx.RLock()
+	existing := make(map[int64]Alertmanager, len(moa.alertmanagers))
+	for orgID, am := range moa.alertmanagers {
+		existing[orgID] = am
+	}
+	moa.alertmanagersMtx.RUnlock()
+
+	// Determine which orgs to sync, skipping disabled ones.
+	syncOrgs := make([]int64, 0, len(orgIDs))
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
 			moa.logger.Debug("Skipping syncing Alertmanager for disabled org", "org", orgID)
 			continue
 		}
 		orgsFound[orgID] = struct{}{}
+		syncOrgs = append(syncOrgs, orgID)
+	}
 
-		alertmanager, found := moa.alertmanagers[orgID]
-
-		if !found {
-			// These metrics are not exported by Grafana and are mostly a placeholder.
-			// To export them, we need to translate the metrics from each individual registry and,
-			// then aggregate them on the main registry.
-			am, err := moa.factory(ctx, orgID)
-			if err != nil {
-				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
-				continue
+	// Each goroutine writes its result into its own index-aligned slot, so no locking is needed here.
+	// Failures are logged and leave a nil slot, preserving the previous "log and skip" behavior.
+	synced := make([]Alertmanager, len(syncOrgs))
+	var g errgroup.Group
+	// SetLimit(0) would block every goroutine forever; floor it (a Cfg may be built without ReadUnifiedAlertingSettings).
+	concurrency := moa.settings.UnifiedAlerting.SyncConcurrency
+	if concurrency < 1 {
+		concurrency = 1
+	}
+	g.SetLimit(concurrency)
+	for i, orgID := range syncOrgs {
+		i, orgID := i, orgID
+		g.Go(func() error {
+			alertmanager, alertmanagerFound := existing[orgID]
+			if !alertmanagerFound {
+				// These metrics are not exported by Grafana and are mostly a placeholder.
+				// To export them, we need to translate the metrics from each individual registry and,
+				// then aggregate them on the main registry.
+				am, err := moa.factory(ctx, orgID)
+				if err != nil {
+					moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+					return nil // synced[i] stays nil: a failed factory means the org is not registered.
+				}
+				alertmanager = am
 			}
-			moa.alertmanagers[orgID] = am
-			alertmanager = am
-		}
+			// Register the AM before applying config: a failed apply must still leave it (not-ready) in the map.
+			synced[i] = alertmanager
 
-		dbConfig, cfgFound := dbConfigs[orgID]
-		if !cfgFound {
-			if found {
-				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
-				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+			dbConfig, cfgFound := dbConfigs[orgID]
+			if !cfgFound {
+				if alertmanagerFound {
+					// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
+					moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
+				}
+				if err := alertmanager.SaveAndApplyDefaultConfig(ctx); err != nil {
+					moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
+				}
+				return nil
 			}
-			err := alertmanager.SaveAndApplyDefaultConfig(ctx)
-			if err != nil {
-				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
-				continue
-			}
-			moa.alertmanagers[orgID] = alertmanager
-			continue
-		}
 
-		err := alertmanager.ApplyConfig(ctx, dbConfig)
-		if err != nil {
-			moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
-			continue
+			if err := alertmanager.ApplyConfig(ctx, dbConfig); err != nil {
+				moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
+			}
+			return nil
+		})
+	}
+	_ = g.Wait() // goroutines never return an error; failures are logged above and the org is skipped.
+
+	// Merge results and prune removed orgs under the write lock. This phase is fast and does no I/O.
+	moa.alertmanagersMtx.Lock()
+	for i, orgID := range syncOrgs {
+		if synced[i] != nil {
+			moa.alertmanagers[orgID] = synced[i]
 		}
-		moa.alertmanagers[orgID] = alertmanager
 	}
 
 	amsToStop := map[int64]Alertmanager{}

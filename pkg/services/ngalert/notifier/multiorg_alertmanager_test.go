@@ -153,6 +153,76 @@ grafana_alerting_discovered_configurations 4
 	}
 }
 
+// TestMultiOrgAlertmanager_SyncAlertmanagersConcurrency verifies that syncing many orgs with a higher
+// alertmanager_sync_concurrency is faster than syncing them serially (concurrency=1). Per-org init is
+// simulated with a fixed delay in the Alertmanager factory so the difference is dominated by how many
+// orgs are initialized at once rather than by I/O noise. The delays are sleeps, so they overlap even on
+// a single CPU, making the comparison robust under CI contention.
+func TestMultiOrgAlertmanager_SyncAlertmanagersConcurrency(t *testing.T) {
+	const (
+		numOrgs     = 20
+		perOrgDelay = 25 * time.Millisecond
+	)
+
+	// timeFirstSync builds a fresh MOA with the given concurrency, where each org's Alertmanager creation
+	// is delayed by perOrgDelay, and returns how long the initial load+sync of numOrgs orgs took.
+	timeFirstSync := func(t *testing.T, concurrency int) time.Duration {
+		t.Helper()
+
+		orgs := make([]int64, numOrgs)
+		for i := range orgs {
+			orgs[i] = int64(i + 1)
+		}
+
+		configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
+		orgStore := &FakeOrgStore{orgs: orgs}
+		kvStore := ngfakes.NewFakeKVStore(t)
+		provStore := ngfakes.NewFakeProvisioningStore()
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		decryptFn := secretsService.GetDecryptedValue
+		reg := prometheus.NewPedanticRegistry()
+		m := metrics.NewNGAlert(reg)
+		cfg := &setting.Cfg{
+			DataPath: t.TempDir(),
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				AlertmanagerConfigPollInterval: 3 * time.Minute, // do not poll in tests.
+				DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+				SyncConcurrency:                concurrency,
+			},
+		}
+
+		// Simulate expensive per-org initialization by delaying each Alertmanager's creation.
+		slowFactory := WithAlertmanagerOverride(func(orig OrgAlertmanagerFactory) OrgAlertmanagerFactory {
+			return func(ctx context.Context, orgID int64) (Alertmanager, error) {
+				time.Sleep(perOrgDelay)
+				return orig(ctx, orgID)
+			}
+		})
+
+		mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{}, slowFactory)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		start := time.Now()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		elapsed := time.Since(start)
+
+		require.Len(t, mam.alertmanagers, numOrgs)
+		return elapsed
+	}
+
+	serial := timeFirstSync(t, 1)
+	parallel := timeFirstSync(t, 10)
+
+	t.Logf("syncing %d orgs (per-org delay %s): serial (concurrency=1) took %s, parallel (concurrency=10) took %s (%.1fx faster)",
+		numOrgs, perOrgDelay, serial, parallel, float64(serial)/float64(parallel))
+
+	// With 10-way concurrency over 20 delayed initializations the parallel run should be roughly 10x
+	// faster. Assert a conservative >2x bound so the test stays robust under load while still failing if
+	// the work ever regresses to running serially.
+	require.Less(t, parallel, serial/2, "expected concurrent sync to be at least 2x faster than serial")
+}
+
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
 	var orgWithBadConfig int64 = 2

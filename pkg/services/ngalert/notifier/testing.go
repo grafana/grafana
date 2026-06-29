@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 )
 
 type fakeConfigStore struct {
+	// mtx guards the maps below for concurrent access (the real store is safe for concurrent use).
+	mtx     sync.Mutex
 	configs map[int64]*models.AlertConfiguration
 
 	// historicConfigs stores configs by orgID.
@@ -25,6 +28,8 @@ type fakeConfigStore struct {
 }
 
 func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	settings, ok := f.notificationSettings[q.OrgID]
 	if !ok {
 		return nil, nil
@@ -87,6 +92,8 @@ func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfigurati
 }
 
 func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
 		result = append(result, configuration)
@@ -95,6 +102,8 @@ func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 }
 
 func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	config, ok := f.configs[orgID]
 	if !ok {
 		return nil, store.ErrNoAlertmanagerConfiguration
@@ -114,6 +123,9 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
 	}
+
+	// Hold the lock only around the map mutations; the callback may re-enter the store.
+	f.mtx.Lock()
 	f.configs[cmd.OrgID] = &cfg
 
 	historicConfig := models.HistoricConfigFromAlertConfig(cfg)
@@ -121,6 +133,7 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 		historicConfig.LastApplied = time.Now().UTC().Unix()
 		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
 	}
+	f.mtx.Unlock()
 
 	if err := callback(); err != nil {
 		return err
@@ -130,6 +143,8 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 }
 
 func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
 		newConfig := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
@@ -149,6 +164,8 @@ func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd
 }
 
 func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	orgConfigs, ok := f.historicConfigs[cmd.OrgID]
 	if !ok {
 		return nil
@@ -168,6 +185,8 @@ func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *mod
 }
 
 func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	configsByOrg, ok := f.historicConfigs[orgID]
 	if !ok {
 		return []*models.HistoricAlertConfiguration{}, nil
@@ -191,6 +210,8 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 }
 
 func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
 	configsByOrg, ok := f.historicConfigs[orgID]
 	if !ok {
 		return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
