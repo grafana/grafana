@@ -2590,7 +2590,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.13.1, @grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
+"@grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
   version: 0.13.1
   resolution: "@grafana/plugin-ui@npm:0.13.1"
   dependencies:
@@ -2839,7 +2839,7 @@ __metadata:
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.13.1"
+    "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/ui": "npm:13.2.0-pre"
     "@react-awesome-query-builder/ui": "npm:6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
