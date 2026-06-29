@@ -16,6 +16,7 @@ import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import { QualityFilter } from './quality/QualityFilter';
 import { filterIncompleteRules } from './quality/filterIncompleteRules';
+import { useApplyDefaultQualitySearch } from './quality/useApplyDefaultQualitySearch';
 
 // A missing runbook URL leaves responders with nowhere to start, so it's treated as a
 // high-severity issue and costs a full point. A missing summary/description is medium and
@@ -57,6 +58,7 @@ function QualityTab() {
   const { isAvailable: isAssistantAvailable, isFixing, progress, fixRule, fixAll } = useFixIncompleteRules();
   const [fixingUid, setFixingUid] = useState<string | undefined>(undefined);
   const { filterState } = useRulesFilter();
+  const { isApplying: isApplyingDefaultSearch } = useApplyDefaultQualitySearch();
 
   // The score reflects the whole org and stays stable while filtering; the list below
   // narrows to the rules matching the active folder / label / name filters.
@@ -101,7 +103,7 @@ function QualityTab() {
     <AlertingPageWrapper
       navId={navId}
       pageNav={pageNav}
-      isLoading={isLoading}
+      isLoading={isLoading || isApplyingDefaultSearch}
       actions={
         incompleteCount > 0 ? (
           <FixAllButton

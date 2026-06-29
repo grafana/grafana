@@ -1,6 +1,8 @@
 import {
   type UseGenericSavedSearchesResult,
   createAppliedTracker,
+  createAutoApplyTracker,
+  createDefaultLoader,
   useGenericSavedSearches,
 } from '../../hooks/useGenericSavedSearches';
 
@@ -20,4 +22,13 @@ export function useQualitySavedSearches(): UseQualitySavedSearchesResult {
   });
 }
 
+/**
+ * Load the default Alert quality saved search from storage.
+ * Used by the auto-apply hook to apply the default search on first visit.
+ */
+export const loadDefaultQualitySearch = createDefaultLoader({
+  storageKey: QUALITY_SAVED_SEARCHES_STORAGE_KEY,
+});
+
 export const trackQualitySavedSearchApplied = createAppliedTracker({ page: 'alertQuality' });
+export const trackQualitySavedSearchAutoApply = createAutoApplyTracker({ page: 'alertQuality' });
