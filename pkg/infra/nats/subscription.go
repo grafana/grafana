@@ -10,8 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// subscription adapts a nats.Subscription to the lean Subscription interface,
-// translating *nats.Msg into Message and converting Close into a drain.
+// subscription adapts a nats.Subscription to the lean Subscription interface.
 type subscription struct {
 	sub     *natsclient.Subscription
 	out     chan Message
@@ -46,8 +45,7 @@ func (s *subscription) pump(ctx context.Context, in chan *natsclient.Msg) {
 		case <-ctx.Done():
 			return
 		case msg := <-in:
-			if msg == nil {
-				// Channel closed by an unsubscribe/drain.
+			if msg == nil { // channel closed by unsubscribe/drain
 				return
 			}
 			s.metrics.messagesRecv.Inc()
@@ -65,9 +63,7 @@ func (s *subscription) C() <-chan Message { return s.out }
 func (s *subscription) Close() error {
 	var err error
 	s.closeOnce.Do(func() {
-		// Drain lets messages already buffered in the NATS client be delivered
-		// before the subscription is torn down; the pump exits when the input
-		// channel closes or the context is cancelled.
+		// Drain delivers already-buffered messages before tearing down.
 		if derr := s.sub.Drain(); derr != nil && !errors.Is(derr, natsclient.ErrConnectionClosed) {
 			s.log.Warn("failed to drain nats subscription", "subject", s.sub.Subject, "err", derr)
 			err = derr

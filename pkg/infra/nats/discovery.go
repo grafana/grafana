@@ -13,9 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-// peerRecord is a single embedded-NATS cluster peer advertisement stored in
-// the DB-backed peer registry. It is operational membership metadata, not
-// message state.
+// peerRecord is a single embedded-NATS cluster peer advertisement (membership
+// metadata, not message state) stored in the DB-backed peer registry.
 type peerRecord struct {
 	NodeID    string    `json:"nodeID"`
 	RouteURL  string    `json:"routeURL"`

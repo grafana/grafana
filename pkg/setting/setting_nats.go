@@ -6,65 +6,46 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// NATSSettings configures the Core NATS message bus used to signal
-// unified-storage resource changes to controllers. The bus is stateless:
-// it only carries change signals, never durable event state, so a disabled
-// or unavailable bus degrades gracefully to DB polling.
+// NATSSettings configures the stateless Core NATS message bus that signals
+// unified-storage resource changes; a disabled or unavailable bus degrades
+// gracefully to DB polling. Keys are documented in defaults.ini.
 type NATSSettings struct {
-	// Enabled turns the NATS infrastructure on. Disabled by default.
-	Enabled bool
-
-	// Embedded starts an in-process Core NATS server. When false, clients
-	// connect to the URLs in ClientURLs (external mode).
+	Enabled  bool
 	Embedded bool
 
-	// ClientURLs are the Core NATS servers clients connect to. In embedded
-	// mode the local server is prepended automatically.
+	// ClientURLs are the servers clients connect to; in embedded mode the local
+	// server is prepended automatically.
 	ClientURLs []string
 
-	// Embedded server listener settings.
 	ListenAddress    string
 	ClientPort       int
 	ClusterPort      int
 	AdvertiseAddress string
 
-	// Peer discovery for embedded clusters.
 	Discovery         string
 	DiscoveryInterval time.Duration
 	DiscoveryTTL      time.Duration
 
-	// TLS configures transport security for client connections.
-	TLS NATSTLSSettings
-
-	// Auth configures the connection identity presented to the server.
+	TLS  NATSTLSSettings
 	Auth NATSAuthSettings
 }
 
-// NATSTLSSettings configures TLS for client connections.
 type NATSTLSSettings struct {
-	Enabled bool
-	// CACertPath is the CA bundle used to verify the server certificate.
+	Enabled    bool
 	CACertPath string
-	// CertPath / KeyPath enable mutual TLS (client certificate auth).
-	CertPath string
-	KeyPath  string
-	// ServerName overrides the hostname verified against the server cert.
+	CertPath   string
+	KeyPath    string
 	ServerName string
-	// InsecureSkipVerify disables server certificate verification. For
-	// testing only; never enable in production.
+	// InsecureSkipVerify is for testing only; never enable in production.
 	InsecureSkipVerify bool
 }
 
-// NATSAuthSettings configures the credentials presented when connecting.
-// Per-role credentials let the publisher and subscriber present distinct,
-// least-privilege identities (pub-only vs sub-only) in external mode; when a
-// role-specific value is empty the shared value is used.
+// NATSAuthSettings configures the connection identity. Per-role credentials let
+// publisher and subscriber present distinct least-privilege identities; an
+// empty role value falls back to the shared CredentialsFile.
 type NATSAuthSettings struct {
-	// Token is a shared bearer token (lowest-privilege, simplest form).
-	Token string
-	// CredentialsFile is a shared NATS .creds file (JWT + NKEY seed).
-	CredentialsFile string
-	// Per-role credential overrides.
+	Token                     string
+	CredentialsFile           string
 	PublisherCredentialsFile  string
 	SubscriberCredentialsFile string
 }
@@ -100,8 +81,6 @@ func readNATSSettings(cfg *Cfg) {
 	}
 }
 
-// PublisherCredentials returns the credentials file the publisher role should
-// present, falling back to the shared credentials file.
 func (a NATSAuthSettings) PublisherCredentials() string {
 	if a.PublisherCredentialsFile != "" {
 		return a.PublisherCredentialsFile
@@ -109,8 +88,6 @@ func (a NATSAuthSettings) PublisherCredentials() string {
 	return a.CredentialsFile
 }
 
-// SubscriberCredentials returns the credentials file the subscriber role should
-// present, falling back to the shared credentials file.
 func (a NATSAuthSettings) SubscriberCredentials() string {
 	if a.SubscriberCredentialsFile != "" {
 		return a.SubscriberCredentialsFile

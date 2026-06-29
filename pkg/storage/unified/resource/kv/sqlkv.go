@@ -29,7 +29,7 @@ const (
 	LeasesSection                 = "unified/leases"
 	SearchSnapshotManifestSection = "search/snapshot-manifest"
 	SearchSnapshotDataSection     = "search/snapshot-data"
-	// NATSPeersSection stores embedded NATS cluster peer advertisements (infra/nats discovery).
+	// NATSPeersSection stores embedded NATS peer advertisements.
 	NATSPeersSection = "nats/peers"
 )
 

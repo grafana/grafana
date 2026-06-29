@@ -14,45 +14,30 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ErrDisabled is returned by Bus operations when NATS is not enabled.
 var ErrDisabled = errors.New("nats is disabled")
 
-// Bus is the lean seam between the NATS platform (workstream A) and its
-// consumers (the unified-storage notifier, workstream B). It deliberately
-// hides the nats.go types so consumers can mock it and so the transport can
-// evolve without touching callers.
-//
-// The bus is stateless: Publish is fire-and-forget signalling and a dropped
-// message is recovered by the consumer's DB catch-up, never a correctness bug.
+// Bus is the lean seam between the NATS platform and its consumers. It hides
+// the nats.go types so consumers can mock it and the transport can evolve
+// without touching callers. Publish is fire-and-forget: a dropped message is
+// recovered by the consumer's DB catch-up, never a correctness bug.
 type Bus interface {
-	// Enabled reports whether NATS is configured and active.
 	Enabled() bool
-	// Publish sends a message to a subject. It is fire-and-forget; delivery is
-	// best-effort and not durable.
 	Publish(ctx context.Context, subject string, data []byte) error
-	// Subscribe creates a subscription to a subject (NATS wildcards allowed).
-	// The returned Subscription delivers messages until it is closed or the
-	// context is cancelled.
 	Subscribe(ctx context.Context, subject string, opts ...SubOption) (Subscription, error)
 }
 
-// Subscription is an active NATS subscription. Closing it drains in-flight
-// messages and releases the underlying NATS subscription.
+// Subscription is an active NATS subscription. Close drains in-flight messages
+// and is safe to call more than once.
 type Subscription interface {
-	// C returns the channel on which received messages are delivered. It is
-	// closed when the subscription ends (Close or context cancellation).
 	C() <-chan Message
-	// Close drains and unsubscribes. It is safe to call more than once.
 	Close() error
 }
 
-// Message is a received NATS message, reduced to what consumers need.
 type Message struct {
 	Subject string
 	Data    []byte
 }
 
-// SubOption configures a subscription.
 type SubOption func(*subConfig)
 
 type subConfig struct {
@@ -60,13 +45,11 @@ type subConfig struct {
 	bufferSize int
 }
 
-// WithQueueGroup makes the subscription part of a queue group, so each message
-// is delivered to only one subscriber in the group (load balancing).
+// WithQueueGroup delivers each message to only one subscriber in the group.
 func WithQueueGroup(name string) SubOption {
 	return func(c *subConfig) { c.queueGroup = name }
 }
 
-// WithBufferSize sets the size of the delivery channel buffer.
 func WithBufferSize(n int) SubOption {
 	return func(c *subConfig) {
 		if n > 0 {
@@ -77,9 +60,8 @@ func WithBufferSize(n int) SubOption {
 
 const defaultSubBufferSize = 1024
 
-// connRole identifies a logical connection. Publisher and subscriber use
-// separate connections so they can present distinct least-privilege
-// credentials in external mode.
+// connRole identifies a logical connection; publisher and subscriber connect
+// separately so they can present distinct least-privilege credentials.
 type connRole string
 
 const (
@@ -87,14 +69,13 @@ const (
 	roleSubscriber connRole = "subscriber"
 )
 
-// bus is the default Bus implementation. It lazily establishes (and reuses) a
-// publisher and a subscriber connection.
+// bus lazily establishes and reuses a publisher and a subscriber connection.
 type bus struct {
 	cfg     setting.NATSSettings
 	log     log.Logger
 	metrics *metrics
-	// urls resolves the client URLs at connect time; in embedded mode the
-	// local server URL is only known after the server starts.
+	// urls is resolved at connect time; the embedded server URL is only known
+	// once the server has started.
 	urls func() []string
 
 	publisherMu sync.Mutex
@@ -103,15 +84,13 @@ type bus struct {
 	subscriberMu sync.Mutex
 	subscriber   *natsclient.Conn
 
-	// extraOptions are appended to every connection. The Service uses this to
-	// inject nats.InProcessServer for the embedded server, so the local
-	// publisher/subscriber hop bypasses TCP/TLS/auth entirely.
+	// extraOptions injects nats.InProcessServer so the local hop to an embedded
+	// server bypasses TCP/TLS/auth.
 	optsMu       sync.Mutex
 	extraOptions []natsclient.Option
 }
 
-// setExtraOptions sets connection options appended on the next connect. It must
-// be called before consumers first use the bus (e.g. during service startup).
+// setExtraOptions must be called before consumers first use the bus.
 func (b *bus) setExtraOptions(opts ...natsclient.Option) {
 	b.optsMu.Lock()
 	defer b.optsMu.Unlock()
@@ -207,8 +186,6 @@ func (b *bus) subscriberConn(ctx context.Context) (*natsclient.Conn, error) {
 	return nc, nil
 }
 
-// connect establishes a connection for the given role, applying best-practice
-// reconnect behaviour, TLS, credentials, and metric/logging handlers.
 func (b *bus) connect(ctx context.Context, role connRole) (*natsclient.Conn, error) {
 	urls := b.urls()
 	if len(urls) == 0 {
@@ -250,8 +227,8 @@ func (b *bus) connectOptions(role connRole) ([]natsclient.Option, error) {
 	options := []natsclient.Option{
 		natsclient.Name("grafana-nats-" + roleStr),
 		natsclient.Timeout(5 * time.Second),
-		// Keep retrying forever so a NATS outage degrades gracefully: the
-		// connection self-heals and consumers fall back to DB polling meanwhile.
+		// Retry forever so a NATS outage degrades gracefully; consumers fall
+		// back to DB polling until the connection self-heals.
 		natsclient.RetryOnFailedConnect(true),
 		natsclient.MaxReconnects(-1),
 		natsclient.ReconnectWait(2 * time.Second),
@@ -294,7 +271,7 @@ func (b *bus) connectOptions(role connRole) ([]natsclient.Option, error) {
 		options = append(options, natsclient.Secure(tc))
 	}
 
-	// Credentials precedence: per-role creds file > shared creds file > token.
+	// Precedence: per-role creds file > shared creds file > token.
 	creds := b.cfg.Auth.PublisherCredentials()
 	if role == roleSubscriber {
 		creds = b.cfg.Auth.SubscriberCredentials()
@@ -309,8 +286,7 @@ func (b *bus) connectOptions(role connRole) ([]natsclient.Option, error) {
 	return options, nil
 }
 
-// close drains and closes both connections. Draining lets in-flight publishes
-// flush and subscription callbacks finish before the socket goes away.
+// close drains both connections so in-flight work flushes before shutdown.
 func (b *bus) close() {
 	b.publisherMu.Lock()
 	if b.publisher != nil && !b.publisher.IsClosed() {

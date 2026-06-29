@@ -9,8 +9,7 @@ const (
 	metricsSubsystem = "nats"
 )
 
-// roleLabel distinguishes the publisher and subscriber connections, which may
-// hold distinct least-privilege credentials.
+// roleLabel distinguishes the publisher and subscriber connections.
 const roleLabel = "role"
 
 type metrics struct {

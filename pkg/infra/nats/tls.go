@@ -9,10 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// buildTLSConfig assembles a *tls.Config from the NATS TLS settings. It is
-// built explicitly (rather than via nats.RootCAs/nats.ClientCert option
-// helpers) so CA, client certificate, server name and verification behaviour
-// are configured in one place with predictable precedence.
+// buildTLSConfig assembles a *tls.Config from the NATS TLS settings, built
+// explicitly so CA, client cert and verification have predictable precedence.
 func buildTLSConfig(t setting.NATSTLSSettings) (*tls.Config, error) {
 	tc := &tls.Config{
 		MinVersion:         tls.VersionTLS12,
@@ -32,7 +30,7 @@ func buildTLSConfig(t setting.NATSTLSSettings) (*tls.Config, error) {
 		tc.RootCAs = pool
 	}
 
-	// Client certificate (mutual TLS) requires both halves of the key pair.
+	// Mutual TLS requires both halves of the key pair.
 	if (t.CertPath == "") != (t.KeyPath == "") {
 		return nil, fmt.Errorf("nats tls requires both tls_cert_path and tls_key_path, or neither")
 	}

@@ -277,8 +277,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+search_snapshot_data_table.Name, migrator.NewAddTableMigration(search_snapshot_data_table))
 	mg.AddMigration("Change key_path collation of search_snapshot_data in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE search_snapshot_data ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
-	// Table backing the nats/peers KV section used by embedded NATS cluster
-	// peer discovery (infra/nats). Holds operational membership metadata only.
+	// Table backing the nats/peers KV section used by embedded NATS peer discovery.
 	nats_discovery_peers_table := migrator.Table{
 		Name: "nats_discovery_peers",
 		Columns: []*migrator.Column{

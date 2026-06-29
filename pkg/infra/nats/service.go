@@ -28,10 +28,9 @@ const (
 )
 
 // Service owns the NATS platform lifecycle: the optional embedded server,
-// DB-backed peer discovery, and the shared Bus. It is a dskit service (so it
-// composes with the module server and exposes lifecycle/readiness state) that
-// also bridges to the monolith background-service contract via Run. It is a
-// no-op when NATS is disabled.
+// peer discovery, and the shared Bus. It is a dskit service (so it composes
+// with the module server) that also bridges to the monolith background-service
+// contract via Run. It is a no-op when NATS is disabled.
 type Service struct {
 	services.NamedService
 
@@ -75,7 +74,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, reg prometheu
 	return s, nil
 }
 
-// ProvideBus exposes the lean Bus seam to consumers.
 func ProvideBus(service *Service) Bus {
 	return service.bus
 }
@@ -92,9 +90,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(ctx)
 }
 
-// starting brings up the embedded server (if any), validates connectivity, and
-// begins peer discovery. ctx is the service context: it stays live through the
-// running phase and is cancelled when the service is stopped.
+// starting runs once; ctx is the service context, live until the service stops.
 func (s *Service) starting(ctx context.Context) error {
 	if !s.cfg.Enabled {
 		return nil
@@ -127,8 +123,7 @@ func (s *Service) stopping(_ error) error {
 	return nil
 }
 
-// Health reports whether the platform is operational: enabled, with at least
-// one usable client URL and (in embedded mode) a running server.
+// Health reports whether the platform is operational.
 func (s *Service) Health(_ context.Context) error {
 	if !s.cfg.Enabled {
 		return ErrDisabled
@@ -181,8 +176,7 @@ func (s *Service) startEmbeddedServer(ctx context.Context) error {
 	s.clientURLs = append([]string{clientURL}, s.cfg.ClientURLs...)
 	s.mu.Unlock()
 
-	// Connect the local publisher/subscriber to the embedded server in-process,
-	// bypassing the TCP/TLS/auth path; peers still cluster over TCP routes.
+	// Local hop connects in-process; peers still cluster over TCP routes.
 	s.bus.setExtraOptions(natsclient.InProcessServer(server))
 
 	s.metrics.embeddedServerUp.Set(1)
@@ -211,8 +205,7 @@ func (s *Service) serverOptions() *natsserver.Options {
 }
 
 func (s *Service) shutdown(ctx context.Context) {
-	// Drain client connections first so in-flight work flushes before the
-	// embedded server (if any) goes away.
+	// Drain clients before the embedded server goes away.
 	s.bus.close()
 
 	s.mu.RLock()
