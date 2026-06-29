@@ -47,9 +47,3 @@ export function reportNavExperimentViewOnce(variant: NavExperimentVariant) {
   hasExposed = true;
   reportExperimentView(NAV_EXPERIMENT_ID, NAV_EXPERIMENT_GROUP, variant);
 }
-
-/** Test-only: reset the module-scope exposure guard and cached variant between tests. */
-export function resetNavExperimentStateForTests() {
-  currentVariant = undefined;
-  hasExposed = false;
-}
