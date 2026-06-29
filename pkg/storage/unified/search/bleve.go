@@ -2005,9 +2005,9 @@ func (b *bleveIndex) Search(
 
 	// postRankAuthz (postFilter mode): rank in bleve without the in-searcher
 	// authz wrapper, fetch a bounded window, authorize app-side in rank order,
-	// and page via SearchAfter until the page is filled or the candidate cap is
-	// hit. Facets are aggregated app-side. See runPostFilterAuthz.
-	postRank := b.canPostRankAuthz(access, req, federate)
+	// and page via SearchAfter/SearchBefore until the page is filled or the
+	// candidate cap is hit. Facets are aggregated app-side. See runPostFilterAuthz.
+	postRank := b.postRankAuthzFn != nil && b.postRankAuthzFn() && access != nil && req.Limit > 0
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
@@ -2388,8 +2388,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	if postRankAuthz {
 		// Total-order tie-breaker so SearchAfter cursors are stable across
-		// windows: _id is unique per resource within a single (non-federated)
-		// index, which guarantees a deterministic rank with no skips/dupes.
+		// windows: the doc ID is {namespace}/{group}/{resource}/{name}, which is
+		// globally unique across a federated index alias (e.g. dashboards +
+		// folders differ by the resource segment), so the SortDocID tie-breaker
+		// guarantees a deterministic rank with no skips/dupes over the merged
+		// result set.
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
 
 		// The post-filter path reads the folder (to authorize) and every facet

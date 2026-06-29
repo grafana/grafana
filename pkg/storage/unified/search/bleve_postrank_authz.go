@@ -67,23 +67,6 @@ func (c PostRankAuthzConfig) windowSize(limit int) int {
 	return w
 }
 
-// canPostRankAuthz reports whether the post-filter authorization path can be
-// used for this request. postFilter ranks in bleve without the authz wrapper,
-// fetches a bounded window, and authorizes app-side in rank order (paging via
-// SearchAfter, facets aggregated app-side). SearchBefore and federation stay on
-// the current in-searcher path in v1: federation breaks the single-index _id
-// tie-breaker the bounded scan relies on for deterministic paging, and
-// SearchBefore uses reverse cursor semantics the scan does not implement.
-func (b *bleveIndex) canPostRankAuthz(access authlib.AccessClient, req *resourcepb.ResourceSearchRequest, federate []resource.ResourceIndex) bool {
-	return b.postRankAuthzFn != nil &&
-		b.postRankAuthzFn() &&
-		access != nil &&
-		req.Limit > 0 &&
-		len(federate) == 0 &&
-		len(req.Federated) == 0 &&
-		len(req.SearchBefore) == 0
-}
-
 // ensureSearchFields makes bleve load every stored field when the caller did not
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
@@ -119,7 +102,9 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 // Unlike batchAuthzSearcher.parseDocInfo (which reads doc values from the index
 // reader mid-search), the hit here already has its external ID and stored
 // fields populated by bleve. The doc ID format is
-// <namespace>/<group>/<resourceType>/<name>.
+// <namespace>/<group>/<resourceType>/<name>; the resourceType segment is what
+// distinguishes dashboards from folders in a federated alias, and is used to
+// look up the verb in the resources map.
 func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
 	parts := strings.Split(doc.ID, "/")
 	if len(parts) != 4 {
@@ -154,6 +139,17 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 // (facets, or a low authorized fraction). The first window's res.Total is used
 // for TotalHits (the unfiltered match count). Facets, when requested, are
 // aggregated app-side over the authorized hits seen during the bounded scan.
+//
+// The index argument may be a single bleve index or a bleve.IndexAlias merging
+// several (e.g. dashboards + folders); in either case the doc ID
+// {namespace}/{group}/{resource}/{name} is globally unique, so the SortDocID
+// tie-breaker keeps SearchAfter cursors deterministic across the merged set.
+//
+// SearchBefore is handled by transforming it into a reversed-sort SearchAfter
+// (see the reverseSort block below): the scan walks away from the cursor in
+// reversed order and the page is reversed back to forward order before
+// returning, so callers see the same result shape as bleve's native
+// SearchBefore.
 func (b *bleveIndex) runPostFilterAuthz(
 	ctx context.Context,
 	access authlib.AccessClient,
@@ -198,11 +194,33 @@ func (b *bleveIndex) runPostFilterAuthz(
 	var firstRes *bleve.SearchResult
 	maxCandidates := int64(cfg.MaxCandidates)
 
+	// SearchBefore is implemented as a reversed-sort SearchAfter, mirroring
+	// bleve's native SearchBefore handling (index_impl.go: reverse Sort, treat
+	// SearchBefore as SearchAfter, collect, then re-sort forward). The forward
+	// bounded scan below then walks away from the cursor in reversed order and
+	// early-exits at the limit; we reverse the page back to the caller's forward
+	// order before returning. Reversing the whole Sort (not just req.SortBy)
+	// keeps the SortDocID tie-breaker a total order in the reversed direction,
+	// so deterministic paging holds for federated aliases too.
+	searchBefore := req.SearchBefore
+	reverseSort := len(searchBefore) > 0
+	if reverseSort {
+		req.SearchAfter = searchBefore
+		req.SearchBefore = nil
+		firstReq.Sort.Reverse()
+		firstReq.SearchAfter = firstReq.SearchBefore
+		firstReq.SearchBefore = nil
+	}
+
 	// Subsequent windows are built by re-running toBleveSearchRequest with
 	// req.SearchAfter set from the previous window's last hit. Restore the
-	// caller's cursor afterwards so we don't mutate the inbound request.
+	// caller's cursors afterwards so we don't mutate the inbound request.
 	prevSearchAfter := req.SearchAfter
-	defer func() { req.SearchAfter = prevSearchAfter }()
+	prevSearchBefore := req.SearchBefore
+	defer func() {
+		req.SearchAfter = prevSearchAfter
+		req.SearchBefore = prevSearchBefore
+	}()
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
@@ -277,6 +295,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 			response.Error = e
 			return response, nil
 		}
+		if reverseSort {
+			nextReq.Sort.Reverse()
+		}
 		if err := b.ensureSearchFields(nextReq, req); err != nil {
 			return nil, err
 		}
@@ -287,6 +308,15 @@ func (b *bleveIndex) runPostFilterAuthz(
 	response.QueryCost = float64(firstRes.Cost)
 	response.MaxScore = firstRes.MaxScore
 	stats.AddReturnedDocuments(len(page))
+
+	if reverseSort {
+		// The scan collected the limit authorized hits closest to the cursor in
+		// reversed (descending) order; reverse to return them ascending, with
+		// the hit nearest the cursor last — matching bleve's SearchBefore.
+		for i, j := 0, len(page)-1; i < j; i, j = i+1, j-1 {
+			page[i], page[j] = page[j], page[i]
+		}
+	}
 
 	resultsConversionStart := time.Now()
 	results, err := b.hitsToTable(ctx, firstReq.Fields, page, req.Explain)

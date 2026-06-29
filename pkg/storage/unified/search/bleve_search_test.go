@@ -1438,4 +1438,460 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, int64(3), f.Terms[1].Count)
 		require.Equal(t, int64(10), f.Total)
 	})
+
+	// --- SearchBefore (reverse cursor) on the postFilter path ---
+
+	// backwardNames runs a SearchBefore query with the given cursor and returns
+	// the names in the returned (forward-ordered) page, plus the response.
+	backwardNames := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, cursor []string, limit int64) ([]string, *resourcepb.ResourceSearchResponse) {
+		t.Helper()
+		q := listQuery(limit)
+		q.SearchBefore = cursor
+		return searchNames(t, index, ac, q)
+	}
+
+	t.Run("SearchBefore returns the previous page in forward order", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		// Establish a forward cursor at doc-14 (the 15th hit).
+		_, fwd := searchNames(t, index, ac, listQuery(15))
+		rows := fwd.Results.GetRows()
+		require.Len(t, rows, 15)
+		cursor := rows[len(rows)-1].SortFields // doc-14
+		require.Equal(t, "doc-14", rows[len(rows)-1].Key.Name)
+
+		// The 5 hits immediately before doc-14, in forward order.
+		names, res := backwardNames(t, index, ac, cursor, 5)
+		require.Equal(t, []string{"doc-09", "doc-10", "doc-11", "doc-12", "doc-13"}, names)
+		require.Equal(t, int64(30), res.TotalHits, "TotalHits stays the unfiltered match count")
+	})
+
+	t.Run("SearchBefore pages backwards contiguously with no dupes or skips", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		// Start from doc-14.
+		_, fwd := searchNames(t, index, ac, listQuery(15))
+		cursor := fwd.Results.GetRows()[len(fwd.Results.GetRows())-1].SortFields
+
+		// Walk backwards in pages of 5; each page's first row is the next cursor.
+		var got []string
+		pages := [][]string{
+			{"doc-09", "doc-10", "doc-11", "doc-12", "doc-13"},
+			{"doc-04", "doc-05", "doc-06", "doc-07", "doc-08"},
+			{"doc-00", "doc-01", "doc-02", "doc-03"}, // start of index reached
+		}
+		for p, want := range pages {
+			require.Less(t, p, 100)
+			names, res := backwardNames(t, index, ac, cursor, 5)
+			require.Equal(t, want, names, "page %d backwards", p)
+			got = append(got, names...)
+			rows := res.Results.GetRows()
+			if len(rows) == 0 {
+				break
+			}
+			cursor = rows[0].SortFields // smallest sort key -> next SearchBefore cursor
+			if len(rows) < 5 {
+				break // shorter page => reached the start
+			}
+		}
+		// Backward walk covers doc-00..doc-13 exactly once, in forward order
+		// within each page and decreasing ranges across pages.
+		wantAll := []string{
+			"doc-09", "doc-10", "doc-11", "doc-12", "doc-13",
+			"doc-04", "doc-05", "doc-06", "doc-07", "doc-08",
+			"doc-00", "doc-01", "doc-02", "doc-03",
+		}
+		require.Equal(t, wantAll, got)
+	})
+
+	t.Run("SearchBefore respects authorization", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// Even-indexed docs authorized; titles equal names so order is stable.
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		// Forward cursor at doc-18 (authorized). Forward search over authorized
+		// hits returns the even docs; the last returned is doc-18.
+		_, fwd := searchNames(t, index, ac, listQuery(20))
+		rows := fwd.Results.GetRows()
+		require.Equal(t, "doc-18", rows[len(rows)-1].Key.Name)
+		cursor := rows[len(rows)-1].SortFields
+
+		// The 3 authorized hits immediately before doc-18 (in forward order):
+		// doc-12, doc-14, doc-16.
+		names, _ := backwardNames(t, index, ac, cursor, 3)
+		require.Equal(t, []string{"doc-12", "doc-14", "doc-16"}, names)
+	})
+}
+
+// newTestFoldersIndexPostRank builds a folders index with the post-rank-authz
+// path enabled and the given tunables (zero values fall back to bleve defaults).
+func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+	t.Helper()
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+	}
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:            t.TempDir(),
+		FileThreshold:   threshold, // use in-memory for tests
+		PostRankAuthzFn: func() bool { return true },
+		PostRankAuthz:   cfg,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	// Folders use the default (empty) searchable field set, matching bleve_test.go.
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, size, nil, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
+}
+
+func TestSearchPostRankAuthzFederated(t *testing.T) {
+	dashKey := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	folderKey := &resourcepb.ResourceKey{
+		Namespace: dashKey.Namespace,
+		Group:     "folder.grafana.app",
+		Resource:  "folders",
+	}
+
+	indexDashboards := func(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
+		t.Helper()
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+	}
+
+	newDash := func(name, title, folder string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:    1,
+				Name:  name,
+				Title: title,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: dashKey.Namespace,
+					Group:     dashKey.Group,
+					Resource:  dashKey.Resource,
+				},
+				Folder: folder,
+			},
+		}
+	}
+
+	newFolder := func(name, title string, labels map[string]string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:    1,
+				Name:  name,
+				Title: title,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: folderKey.Namespace,
+					Group:     folderKey.Group,
+					Resource:  folderKey.Resource,
+				},
+				Labels: labels,
+			},
+		}
+	}
+
+	// federatedQuery builds a dashboard+folder search request sorted by title.
+	federatedQuery := func(limit int64) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Key: dashKey},
+			Fields:  []string{"title", "_id"},
+			Federated: []*resourcepb.ResourceKey{
+				folderKey,
+			},
+			Limit: limit,
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
+		}
+	}
+
+	// searchFederated runs a federated query against the dashboards index with the
+	// folders index joined in, returning (resource, name) pairs in result order.
+	searchFederated := func(t *testing.T, dash, folderIdx resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([][2]string, *resourcepb.ResourceSearchResponse) {
+		t.Helper()
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
+		ctx := authlib.WithAuthInfo(context.Background(), requester)
+		res, err := dash.Search(ctx, ac, q, []resource.ResourceIndex{folderIdx}, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		out := make([][2]string, 0, len(res.Results.GetRows()))
+		for _, row := range res.Results.GetRows() {
+			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
+		}
+		return out, res
+	}
+
+	federatedRowLabels := func(rows []*resourcepb.ResourceTableRow) [][2]string {
+		out := make([][2]string, 0, len(rows))
+		for _, row := range rows {
+			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
+		}
+		return out
+	}
+
+	pageAllFederated := func(t *testing.T, dash, folderIdx resource.ResourceIndex, ac authlib.AccessClient, limit int64) [][2]string {
+		t.Helper()
+		var all [][2]string
+		var after []string
+		for page := 0; ; page++ {
+			require.Less(t, page, 1000, "pagination did not terminate")
+			q := federatedQuery(limit)
+			q.SearchAfter = after
+			rows, res := searchFederated(t, dash, folderIdx, ac, q)
+			require.LessOrEqual(t, len(rows), int(limit))
+			all = append(all, rows...)
+			r := res.Results.GetRows()
+			if len(r) == 0 {
+				break
+			}
+			after = r[len(r)-1].SortFields
+			require.NotEmpty(t, after, "every returned row must carry sort values for the next cursor")
+			if len(r) < int(limit) {
+				break
+			}
+		}
+		return all
+	}
+
+	t.Run("returns dashboards + folders merged in sort order", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		indexDashboards(t, dash, []*resource.BulkIndexItem{
+			newDash("d-bbb", "bbb", "allowed"),
+			newDash("d-aaa", "aaa", "allowed"),
+		})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{
+			newFolder("f-zzz", "zzz", nil),
+			newFolder("f-mmm", "mmm", nil),
+		})
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		got, res := searchFederated(t, dash, folder, ac, federatedQuery(100))
+		// Title-ascending order across both indexes.
+		require.Equal(t, [][2]string{
+			{"dashboards", "d-aaa"},
+			{"dashboards", "d-bbb"},
+			{"folders", "f-mmm"},
+			{"folders", "f-zzz"},
+		}, got)
+		require.Equal(t, int64(4), res.TotalHits, "TotalHits is the unfiltered merged match count")
+	})
+
+	t.Run("respects permissions per resource type", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		indexDashboards(t, dash, []*resource.BulkIndexItem{
+			newDash("d-aaa", "aaa", "any"),
+		})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{
+			newFolder("f-zzz", "zzz", nil),
+		})
+
+		// dashboard-only allowed
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": false})
+		got, _ := searchFederated(t, dash, folder, ac, federatedQuery(100))
+		require.Equal(t, [][2]string{{"dashboards", "d-aaa"}}, got)
+
+		// folder-only allowed
+		ac = search.NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true})
+		got, _ = searchFederated(t, dash, folder, ac, federatedQuery(100))
+		require.Equal(t, [][2]string{{"folders", "f-zzz"}}, got)
+
+		// none allowed
+		ac = search.NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false})
+		got, _ = searchFederated(t, dash, folder, ac, federatedQuery(100))
+		require.Empty(t, got)
+	})
+
+	t.Run("SearchAfter pages across dashboards + folders with no dupes or skips", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		want := make([][2]string, 0, 30)
+		// Interleave titles so the merged sort alternates resources. Titles are
+		// zero-padded so the global title order is deterministic.
+		for i := 0; i < 15; i++ {
+			name := fmt.Sprintf("d-%02d", i)
+			title := fmt.Sprintf("t-%02d", i*2)
+			docs = append(docs, newDash(name, title, "allowed"))
+			want = append(want, [2]string{"dashboards", name})
+		}
+		indexDashboards(t, dash, docs)
+
+		fdocs := make([]*resource.BulkIndexItem, 0, 15)
+		for i := 0; i < 15; i++ {
+			name := fmt.Sprintf("f-%02d", i)
+			title := fmt.Sprintf("t-%02d", i*2+1)
+			fdocs = append(fdocs, newFolder(name, title, nil))
+			want = append(want, [2]string{"folders", name})
+		}
+		indexDashboards(t, folder, fdocs)
+
+		// Sort want by title (the merged sort order). Titles were assigned so that
+		// t-00 (d-00), t-01 (f-00), t-02 (d-01), ... interleave perfectly.
+		wantSorted := make([][2]string, 0, 30)
+		di, fi := 0, 0
+		for i := 0; i < 30; i++ {
+			if i%2 == 0 {
+				wantSorted = append(wantSorted, want[di])
+				di++
+			} else {
+				wantSorted = append(wantSorted, want[15+fi])
+				fi++
+			}
+		}
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		got := pageAllFederated(t, dash, folder, ac, 7)
+		require.Equal(t, wantSorted, got, "paging must cover every doc once, in merged title order")
+	})
+
+	t.Run("duplicate sort keys across resources page deterministically via _id", func(t *testing.T) {
+		// Identical titles for a dashboard and a folder force the _id tie-breaker
+		// to be the only differentiator; a tiny MaxWindow forces many windows so
+		// SearchAfter cursors cross window boundaries repeatedly.
+		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 5}
+		dash := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		folder := newTestFoldersIndexPostRank(t, 2, cfg)
+		const n = 12
+		docs := make([]*resource.BulkIndexItem, 0, n)
+		fdocs := make([]*resource.BulkIndexItem, 0, n)
+		// Every doc shares the same title; the _id (resource/name) breaks ties.
+		// dashboards sort before folders because "dashboard.grafana.app/dashboards"
+		// < "folder.grafana.app/folders" lexicographically in the doc id.
+		for i := 0; i < n; i++ {
+			dName := fmt.Sprintf("d-%02d", i)
+			docs = append(docs, newDash(dName, "same-title", "allowed"))
+			fName := fmt.Sprintf("f-%02d", i)
+			fdocs = append(fdocs, newFolder(fName, "same-title", nil))
+		}
+		indexDashboards(t, dash, docs)
+		indexDashboards(t, folder, fdocs)
+
+		// Expected global order: all dashboards (by name) then all folders (by
+		// name), since the SortDocID tie-breaker orders by the full doc id.
+		want := make([][2]string, 0, 2*n)
+		for i := 0; i < n; i++ {
+			want = append(want, [2]string{"dashboards", fmt.Sprintf("d-%02d", i)})
+		}
+		for i := 0; i < n; i++ {
+			want = append(want, [2]string{"folders", fmt.Sprintf("f-%02d", i)})
+		}
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		got := pageAllFederated(t, dash, folder, ac, 5)
+		require.Equal(t, want, got, "duplicate titles must page deterministically by _id across the alias")
+	})
+
+	t.Run("facets aggregated app-side over authorized federated hits", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		indexDashboards(t, dash, []*resource.BulkIndexItem{
+			newDash("d-aaa", "aaa", "any"), // labels via tags not set; contribute to count only
+		})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{
+			newFolder("f-zzz", "zzz", map[string]string{"region": "west"}),
+			newFolder("f-mmm", "mmm", map[string]string{"region": "east"}),
+		})
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		q := federatedQuery(100)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"region": {Field: "labels.region", Limit: 100},
+		}
+		_, res := searchFederated(t, dash, folder, ac, q)
+
+		f, ok := res.Facet["region"]
+		require.True(t, ok, "facet should be aggregated app-side")
+		require.NotNil(t, f)
+		// 3 authorized hits considered; the dashboard has no region label -> missing.
+		require.Equal(t, int64(3), f.Total)
+		require.Equal(t, int64(1), f.Missing)
+		terms := map[string]int64{}
+		for _, term := range f.Terms {
+			terms[term.Term] = term.Count
+		}
+		require.Equal(t, map[string]int64{"west": 1, "east": 1}, terms)
+	})
+
+	t.Run("SearchBefore returns the previous federated page in forward order", func(t *testing.T) {
+		// Use a tiny MaxWindow so the backward scan crosses window boundaries.
+		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 6}
+		dash := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		folder := newTestFoldersIndexPostRank(t, 2, cfg)
+		// 6 dashboards (t-00,t-02,...,t-10) and 6 folders (t-01,t-03,...,t-11),
+		// interleaved by title so the merged sort alternates resources.
+		docs := make([]*resource.BulkIndexItem, 0, 6)
+		for i := 0; i < 6; i++ {
+			docs = append(docs, newDash(fmt.Sprintf("d-%02d", i), fmt.Sprintf("t-%02d", i*2), "allowed"))
+		}
+		indexDashboards(t, dash, docs)
+		fdocs := make([]*resource.BulkIndexItem, 0, 6)
+		for i := 0; i < 6; i++ {
+			fdocs = append(fdocs, newFolder(fmt.Sprintf("f-%02d", i), fmt.Sprintf("t-%02d", i*2+1), nil))
+		}
+		indexDashboards(t, folder, fdocs)
+
+		// Merged forward title order: t-00(d-00), t-01(f-00), t-02(d-01), ...
+		merged := make([][2]string, 0, 12)
+		for i := 0; i < 12; i++ {
+			if i%2 == 0 {
+				merged = append(merged, [2]string{"dashboards", fmt.Sprintf("d-%02d", i/2)})
+			} else {
+				merged = append(merged, [2]string{"folders", fmt.Sprintf("f-%02d", i/2)})
+			}
+		}
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		// Forward page of 8 -> merged[0..7]; cursor = merged[7] (t-07, f-03).
+		_, fwd := searchFederated(t, dash, folder, ac, federatedQuery(8))
+		fwdRows := fwd.Results.GetRows()
+		require.Len(t, fwdRows, 8)
+		require.Equal(t, merged[:8], federatedRowLabels(fwdRows))
+		cursor := fwdRows[len(fwdRows)-1].SortFields
+
+		// SearchBefore limit=5 -> the 5 merged hits before the cursor, forward
+		// order: merged[2..6] = t-02..t-06.
+		q := federatedQuery(5)
+		q.SearchBefore = cursor
+		got, res := searchFederated(t, dash, folder, ac, q)
+		require.Equal(t, merged[2:7], got, "SearchBefore must return the previous federated page in forward order")
+		require.Equal(t, int64(12), res.TotalHits, "TotalHits stays the unfiltered merged match count")
+	})
 }
