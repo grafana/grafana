@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -82,7 +83,11 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 
 	dtos := make([]*annotations.ItemDTO, 0, len(annos))
 	for _, anno := range annos {
-		dto := annoToItemDTO(anno)
+		dto, err := annoToItemDTO(anno)
+		if err != nil {
+			h.logger.Warn("failed to convert annotation to DTO, dropping it", "err", err)
+			continue
+		}
 		if cb := anno.GetCreatedBy(); cb != "" {
 			if u, ok := userMap[cb]; ok {
 				applyUserToDTO(u, dto)
@@ -124,7 +129,11 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 
 // Create writes to new store and returns the assigned legacy ID.
 func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error) {
-	result, err := h.client.Create(ctx, orgID, itemToAnnotation(item))
+	anno, err := itemToAnnotation(item)
+	if err != nil {
+		return 0, err
+	}
+	result, err := h.client.Create(ctx, orgID, anno)
 	if err != nil {
 		return 0, err
 	}
@@ -138,7 +147,10 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 	if err != nil {
 		return err
 	}
-	anno := itemToAnnotation(item)
+	anno, err := itemToAnnotation(item)
+	if err != nil {
+		return err
+	}
 	anno.SetName(existing.GetName())
 	anno.SetResourceVersion(existing.GetResourceVersion())
 	annotationpkg.SetLegacyID(anno, annotationID)
@@ -169,7 +181,10 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 		return nil, err
 	}
 
-	dto := annoToItemDTO(anno)
+	dto, err := annoToItemDTO(anno)
+	if err != nil {
+		return nil, err
+	}
 
 	createdBy := anno.GetCreatedBy()
 	if createdBy != "" {
@@ -190,7 +205,7 @@ func applyUserToDTO(u *user.User, dto *annotations.ItemDTO) {
 	dto.Email = u.Email
 }
 
-func annoToItemDTO(anno *annotationV0.Annotation) *annotations.ItemDTO {
+func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) {
 	dto := &annotations.ItemDTO{
 		ID:           annotationpkg.GetLegacyID(anno),
 		Text:         anno.Spec.Text,
@@ -207,11 +222,17 @@ func annoToItemDTO(anno *annotationV0.Annotation) *annotations.ItemDTO {
 	if ts := anno.GetCreationTimestamp(); !ts.IsZero() {
 		dto.Created = ts.UnixMilli()
 	}
-	return dto
+	if raw, ok := annotationpkg.GetLegacyData(anno); ok && raw != "" {
+		data, err := simplejson.NewJson([]byte(raw))
+		if err != nil {
+			return dto, fmt.Errorf("decoding legacy data: %w", err)
+		}
+		dto.Data = data
+	}
+	return dto, nil
 }
 
-// TODO: item.Data is not stored — consider adding a legacy_data field to the annotation schema to preserve it during migration.
-func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
+func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) {
 	spec := annotationV0.AnnotationSpec{
 		Text: item.Text,
 		Time: item.Epoch,
@@ -237,5 +258,14 @@ func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
 		},
 		Spec: spec,
 	}
-	return anno
+
+	if item.Data != nil {
+		raw, err := item.Data.Encode()
+		if err != nil {
+			return anno, fmt.Errorf("encoding legacy data: %w", err)
+		}
+		annotationpkg.SetLegacyData(anno, string(raw))
+	}
+
+	return anno, nil
 }

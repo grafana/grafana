@@ -183,7 +183,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	}
 
 	var legacyData *string
-	if d, ok := getLegacyData(anno); ok {
+	if d, ok := GetLegacyData(anno); ok {
 		legacyData = &d
 	}
 
@@ -212,7 +212,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 // Update updates an existing annotation (only mutable fields: text, tags, scopes, legacy_data)
 func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
 	var legacyData *string
-	if d, ok := getLegacyData(anno); ok {
+	if d, ok := GetLegacyData(anno); ok {
 		legacyData = &d
 	}
 
@@ -456,7 +456,7 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 
 	// Populate the legacy data annotation if the column has a value
 	if legacyData != nil {
-		setLegacyData(anno, *legacyData)
+		SetLegacyData(anno, *legacyData)
 	}
 
 	return anno
