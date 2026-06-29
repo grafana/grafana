@@ -199,6 +199,6 @@
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@reduxjs/toolkit": "^2.10.0",
-    "rxjs": "7.8.2"
+    "rxjs": "^7.8.2"
   }
 }
