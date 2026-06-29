@@ -371,6 +371,63 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		}, sqlmock)
 }
 
+// TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots verifies the
+// externalSnapshotsSupportLegacyAPI opt-in lever on public-mode external hosts.
+// Default off: anonymous /api/snapshots pushes hit the k8s rewrite and get 401.
+// On: the handler short-circuits to CreateDashboardSnapshotPublic so legacy
+// senders can keep pushing while they migrate to the authenticated k8s push.
+func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) {
+	tests := []struct {
+		name           string
+		supportLegacy  bool
+		expectedStatus int
+	}{
+		{
+			name:           "rejects anonymous push by default",
+			supportLegacy:  false,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:           "accepts anonymous push when externalSnapshotsSupportLegacyAPI is on",
+			supportLegacy:  true,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashSnapSvc := dashboardsnapshots.NewMockService(t)
+			if tt.supportLegacy {
+				dashSnapSvc.On("CreateDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.CreateDashboardSnapshotCommand")).
+					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
+			}
+
+			flags := []any{featuremgmt.FlagKubernetesSnapshots}
+			if tt.supportLegacy {
+				flags = append(flags, featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+			}
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.SnapshotEnabled = true
+				cfg.SnapshotPublicMode = true
+				hs.Cfg = cfg
+				hs.Features = featuremgmt.WithFeatures(flags...)
+				hs.dashboardsnapshotsService = dashSnapSvc
+			})
+
+			body := strings.NewReader(`{"name":"public push","dashboard":{"uid":"x","title":"t"}}`)
+			req := server.NewRequest(http.MethodPost, "/api/snapshots/", body)
+			req.Header.Set("Content-Type", "application/json")
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			defer func() { _ = res.Body.Close() }()
+
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+		})
+	}
+}
+
 func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPServer {
 	hs := &HTTPServer{
 		dashboardsnapshotsService: d,
