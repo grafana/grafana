@@ -2986,10 +2986,10 @@
   },
   "public/app/plugins/datasource/influxdb/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 11
+      "count": 9
     }
   },
   "public/app/plugins/datasource/influxdb/influx_query_model.ts": {

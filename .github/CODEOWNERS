@@ -144,6 +144,7 @@
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
+/pkg/infra/nats/ @grafana/grafana-search-and-storage
 /pkg/infra/network/ @grafana/grafana-backend-group
 /pkg/infra/process/ @grafana/grafana-backend-group
 /pkg/infra/remotecache/ @grafana/grafana-backend-group

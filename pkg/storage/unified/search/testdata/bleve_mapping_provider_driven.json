@@ -50,7 +50,19 @@
         "enabled": true,
         "dynamic": true,
         "properties": {
-          "panel_types": {
+          "description": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "standard",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
+          "label": {
             "enabled": true,
             "dynamic": true,
             "fields": [

@@ -37,8 +37,6 @@ export const MegaMenu = memo(
       canCustomise,
       isLoading,
       navItems,
-      homeItem,
-      unpinnedItems,
       pinnedNavItems,
       activeItem,
       isPinned,
@@ -71,10 +69,9 @@ export const MegaMenu = memo(
       />
     );
 
-    // Pinned layout: Home, then the pinned block (if any), then the collapsible rest.
+    // Pinned layout: the pinned block (if any), then the collapsible rest.
     const renderPinnedLayout = () => (
       <>
-        {homeItem && renderNavItem(homeItem)}
         {pinnedNavItems.length > 0 && (
           <>
             <li>
@@ -88,7 +85,7 @@ export const MegaMenu = memo(
         {showUnpinnedItems && (
           <li>
             <ul id={UNPINNED_ITEMS_ID} className={styles.pinnedList}>
-              {unpinnedItems.map((link) => renderNavItem(link))}
+              {navItems.map((link) => renderNavItem(link))}
             </ul>
           </li>
         )}
