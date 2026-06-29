@@ -32,6 +32,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -137,7 +138,18 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
       scene.setState(newState);
 
-      return { success: true, data: { applied: true }, changes: [] };
+      // Re-serialize the swapped scene and return it, so a caller that needs the
+      // post-apply spec (Grafana rekeys elements to `panel-<id>` on rebuild) gets
+      // it from this same call instead of issuing a follow-up GET_SPEC. Best
+      // effort: if serialization throws, still report success — the apply landed.
+      let appliedSpec: DashboardV2Spec | undefined;
+      try {
+        appliedSpec = transformSceneToSaveModelSchemaV2(scene);
+      } catch {
+        appliedSpec = undefined;
+      }
+
+      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
     } catch (error) {
       return {
         success: false,
