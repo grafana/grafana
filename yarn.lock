@@ -10449,13 +10449,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:^6.15.3":
-  version: 6.15.4
-  resolution: "@types/systemjs@npm:6.15.4"
-  checksum: 10/0150d47cd5e94cb253753bbfb9fbaabec183943404019a55e7d4abcdfb05e9f38fd5e42e27074555aeb8a8d52b7173682c7fa8723cbee59be14fecaa31a5cf5e
-  languageName: node
-  linkType: hard
-
 "@types/tapable@npm:2.3.0":
   version: 2.3.0
   resolution: "@types/tapable@npm:2.3.0"
