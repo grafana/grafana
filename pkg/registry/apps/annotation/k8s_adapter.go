@@ -34,8 +34,7 @@ var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupRes
 // This follows the convention in pkg/storage/unified/apistore/prepare.go.
 const maxSafeJSInt = (1 << 52) - 1
 
-// maxFutureWindow bounds how far ahead of now an annotation's time (or timeEnd)
-// may be set, guarding against clearly bogus future timestamps.
+// maxFutureWindow bounds how far ahead of now an annotation's time (or timeEnd) may be set.
 // TODO: determine appropriate future bound and maybe make configurable.
 const maxFutureWindow = 7 * 24 * time.Hour
 
@@ -226,27 +225,18 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
 	}
 
+	name, err := s.validateAnnotation(annotation)
+	if err != nil {
+		return nil, toAPIError(err, annotation.Name)
+	}
+	annotation.Name = *name
+
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
 	if !allowed {
 		return nil, apierrors.NewForbidden(annotationGR, annotation.Name, fmt.Errorf("insufficient permissions"))
-	}
-
-	if annotation.Name == "" && annotation.GenerateName == "" {
-		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
-	}
-	if annotation.Name == "" && annotation.GenerateName != "" {
-		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
-	}
-
-	if err := s.validateScopeCount(annotation); err != nil {
-		return nil, err
-	}
-
-	if err := s.validateAnnotation(annotation); err != nil {
-		return nil, toAPIError(err, annotation.Name)
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -425,6 +415,18 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 	return nil
 }
 
+func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) (*string, error) {
+	if err := s.validateScopeCount(anno); err != nil {
+		return nil, err
+	}
+
+	if err := s.validateTimes(anno); err != nil {
+		return nil, err
+	}
+
+	return s.validateNames(anno)
+}
+
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	if len(a.Spec.Scopes) > s.maxScopeCount {
 		return apierrors.NewBadRequest(fmt.Sprintf(
@@ -433,7 +435,7 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	return nil
 }
 
-func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error {
+func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 	maxPast := now.Add(-s.retentionTTL).UnixMilli()
@@ -456,4 +458,14 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 	}
 
 	return nil
+}
+
+func (s *k8sRESTAdapter) validateNames(anno *annotationV0.Annotation) (*string, error) {
+	if anno.Name == "" && anno.GenerateName == "" {
+		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+	if anno.Name == "" && anno.GenerateName != "" {
+		return new(anno.GenerateName + util.GenerateShortUID()), nil
+	}
+	return new(anno.Name), nil
 }
