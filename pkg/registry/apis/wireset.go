@@ -34,13 +34,9 @@ var WireSetExts = wire.NewSet(
 	iam.ProvideNoopRoleApiInstaller,
 	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
-	iam.ProvideNoopExternalGroupMappingApiInstaller,
 	iam.ProvideNoopRoleBindingApiInstaller,
 
 	externalgroupmapping.ProvideNoopTeamGroupsHandlerProvider,
-
-	externalgroupmapping.ProvideNoopSearchREST,
-	wire.Bind(new(externalgroupmapping.SearchHandler), new(*externalgroupmapping.NoopSearchREST)),
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
