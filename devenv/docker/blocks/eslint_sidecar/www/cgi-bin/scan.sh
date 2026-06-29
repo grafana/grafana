@@ -29,34 +29,36 @@ git clone --depth=1 \
 if [ ! -d "$repodir" ]; then
   printf "Status: 404 Not Found\r\nContent-Type: application/json\r\n\r\n"
   printf '{"error":"failed to clone repo: %s"}\n' "$(cat /tmp/clone_err | tr '"' "'" | tr '\n' ' ')"
-  rm -rf "$repodir"
   exit 0
 fi
 
-# Check for JS/TS files — skip if none found in src/
+# --- ESLint scan ---
+eslint_output='[]'
 jsfiles=$(find "$repodir/src" -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" 2>/dev/null | head -1)
-if [ -z "$jsfiles" ]; then
-  rm -rf "$repodir"
-  printf "Content-Type: application/json\r\n\r\n"
-  printf '{"results":[],"message":"no JS/TS source files found in src/"}\n'
-  exit 0
+if [ -n "$jsfiles" ]; then
+  cp /www/eslint.config.js "$repodir/eslint.config.js"
+  eslint_output=$(cd "$repodir" && NODE_PATH=/usr/local/lib/node_modules node /usr/local/lib/node_modules/eslint/bin/eslint.js \
+    src/ \
+    --no-ignore \
+    --format json \
+    2>/tmp/eslint_err || true)
+  [ -z "$eslint_output" ] && eslint_output='[]'
 fi
 
-cp /www/eslint.config.js "$repodir/eslint.config.js"
-
-output=$(cd "$repodir" && NODE_PATH=/usr/local/lib/node_modules node /usr/local/lib/node_modules/eslint/bin/eslint.js \
-  src/ \
-  --no-ignore \
-  --format json \
-  2>/tmp/eslint_err || true)
+# --- npm audit ---
+# Generates package-lock.json without installing, then audits against the npm advisory database.
+# Covers transitive dependency CVEs not detected by OpenSSF Scorecard's Vulnerabilities check.
+npm_output='{}'
+if [ -f "$repodir/package.json" ]; then
+  cd "$repodir"
+  npm install --package-lock-only --silent 2>/tmp/npm_err || true
+  if [ -f "$repodir/package-lock.json" ]; then
+    npm_output=$(npm audit --json 2>/tmp/npm_audit_err || true)
+    [ -z "$npm_output" ] && npm_output='{}'
+  fi
+fi
 
 rm -rf "$repodir"
 
-if [ -z "$output" ]; then
-  printf "Status: 500 Internal Server Error\r\nContent-Type: application/json\r\n\r\n"
-  printf '{"error":"eslint produced no output: %s"}\n' "$(cat /tmp/eslint_err | tr '"' "'" | tr '\n' ' ')"
-  exit 0
-fi
-
 printf "Content-Type: application/json\r\n\r\n"
-printf '%s\n' "$output"
+printf '{"eslint":%s,"npmAudit":%s}\n' "$eslint_output" "$npm_output"

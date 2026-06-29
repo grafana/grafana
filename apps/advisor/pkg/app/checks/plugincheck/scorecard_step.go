@@ -66,12 +66,16 @@ func (s *scorecardStep) Run(ctx context.Context, log logging.Logger, _ *advisor.
 		return nil, nil
 	}
 
-	var result pluginscoring.ScorecardResult
-	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+	var cached struct {
+		Scorecard *pluginscoring.ScorecardResult   `json:"scorecard,omitempty"`
+		ESLint    []pluginscoring.ESLintFileResult `json:"eslint,omitempty"`
+		Gosec     *pluginscoring.GosecResult       `json:"gosec,omitempty"`
+	}
+	if err := json.Unmarshal([]byte(raw), &cached); err != nil {
 		return nil, nil
 	}
 
-	insights := pluginscoring.FromScorecard(p.ID, p.Info.Version, &result)
+	insights := pluginscoring.Merge(p.ID, p.Info.Version, cached.Scorecard, cached.ESLint, cached.Gosec)
 	score := overallInsightScore(insights)
 	if score < 0 {
 		return nil, nil

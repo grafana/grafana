@@ -134,6 +134,14 @@ type checkMapping struct {
 	dimension   string
 }
 
+// Source prefixes identify which scanner produced a finding in the UI.
+// Format: "<Source>: <finding>" e.g. "Repo: Pinned-Dependencies", "JS: eval() with expression".
+const (
+	prefixRepo = "Repo: " // OpenSSF Scorecard — repository-level hygiene checks
+	prefixJS   = "JS: "   // ESLint SAST + npm audit — JavaScript/TypeScript findings
+	prefixGo   = "Go: "   // gosec SAST + govulncheck — Go findings
+)
+
 // scorecardBlocklist contains Scorecard check names that are explicitly excluded
 // from scoring. Checks are blocked because they are not applicable to the Grafana
 // plugin ecosystem and would penalise every plugin equally, providing no
@@ -279,7 +287,7 @@ func FromESLint(files []ESLintFileResult) (map[string][]InsightItem, map[string]
 		totals[dim] += score
 		counts[dim]++
 		if score < 10 {
-			name := state.mapping.displayName
+			name := prefixJS + state.mapping.displayName
 			if isSuppressedOnly {
 				name += " (suppressed)"
 			}
@@ -414,7 +422,7 @@ func FromGosec(result *GosecResult) (map[string][]InsightItem, map[string]float6
 		totals[dim] += score
 		counts[dim]++
 		if score < 10 {
-			name := state.mapping.displayName
+			name := prefixGo + state.mapping.displayName
 			if state.nosec {
 				name += " (suppressed)"
 			}
@@ -474,7 +482,7 @@ func Merge(pluginID, version string, sc *ScorecardResult, eslint []ESLintFileRes
 			if c.Score < 10 {
 				scItems[m.dimension] = append(scItems[m.dimension], InsightItem{
 					ID:    m.cwe,
-					Name:  m.displayName,
+					Name:  prefixRepo + m.displayName,
 					Level: itemLevelWarning,
 					Link:  cweRef(m.cwe),
 				})
@@ -613,7 +621,7 @@ func FromScorecard(pluginID, version string, r *ScorecardResult) CatalogPluginIn
 
 		items[m.dimension] = append(items[m.dimension], InsightItem{
 			ID:    m.cwe,
-			Name:  m.displayName,
+			Name:  prefixRepo + m.displayName,
 			Level: itemLevelWarning,
 			Link:  cweRef(m.cwe),
 		})
