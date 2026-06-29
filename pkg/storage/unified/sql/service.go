@@ -392,7 +392,12 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		}
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
+	docBuilders := s.docBuilders
+	if kvBackend, ok := s.backend.(resource.KVBackend); ok {
+		docBuilders = search.MaybeUseUnifiedStorageStats(s.cfg, docBuilders, kvBackend.KV())
+	}
+
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}

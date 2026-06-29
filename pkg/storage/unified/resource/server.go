@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/stats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -392,6 +393,10 @@ type ResourceServerOptions struct {
 	// reconciler's watch path lights up. The reconciler owns the
 	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
+
+	// StatsIngester, when non-nil, enables the RecordEvent RPC and its
+	// background flush/recalc loops (unified-storage usage stats POC).
+	StatsIngester *stats.Ingester
 }
 
 // Runnable is anything the server can launch in a goroutine and that
@@ -542,6 +547,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
+		stats:                          opts.StatsIngester,
 	}
 
 	if opts.Search.Resources != nil {
@@ -651,6 +657,9 @@ type server struct {
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
+
+	// Usage stats ingester (POC). nil disables RecordEvent.
+	stats *stats.Ingester
 }
 
 // Init implements ResourceServer.
@@ -676,6 +685,11 @@ func (s *server) Init(ctx context.Context) error {
 		// and Stop() joins them via indexersWG.
 		if s.initErr == nil {
 			s.startVectorIndexers()
+		}
+
+		// Launch the usage-stats flush + daily recalc loops (POC).
+		if s.initErr == nil && s.stats != nil {
+			s.stats.Start(s.ctx)
 		}
 
 		if s.initErr != nil {
@@ -1345,6 +1359,41 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 	}
 
 	return res, err
+}
+
+// RecordEvent buffers usage events (views/queries/errors) for asynchronous
+// flush to KV. Untracked resources / invalid metrics are dropped and counted;
+// the call never issues a full object update. (Unified-storage stats POC.)
+func (s *server) RecordEvent(ctx context.Context, req *resourcepb.RecordEventRequest) (*resourcepb.RecordEventResponse, error) {
+	if s.stats == nil {
+		return nil, status.Error(codes.Unimplemented, "usage stats are not enabled")
+	}
+
+	var dropped int64
+	for _, ev := range req.GetEvents() {
+		key := ev.GetKey()
+		if key == nil {
+			dropped++
+			continue
+		}
+		count := ev.GetCount()
+		if count == 0 {
+			count = 1
+		}
+		err := s.stats.RecordEvent(key.Group, key.Resource, key.Namespace, key.Name, ev.GetMetric(), count)
+		if errors.Is(err, stats.ErrInvalidMetric) {
+			return &resourcepb.RecordEventResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: fmt.Sprintf("invalid metric %q for %s/%s", ev.GetMetric(), key.Group, key.Resource),
+					Code:    http.StatusBadRequest,
+				},
+			}, nil
+		}
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+	return &resourcepb.RecordEventResponse{Dropped: dropped}, nil
 }
 
 func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
