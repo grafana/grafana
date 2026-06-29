@@ -2,11 +2,16 @@ import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
-import { useAsync } from 'react-use';
 
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
-import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
+import {
+  type DataSourceSrv,
+  setDataSourceSrv,
+  setPluginLinksHook,
+  setPluginComponentsHook,
+  useAppPluginInstalled,
+} from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -14,12 +19,12 @@ import { TraceView } from './TraceView';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useAsync: jest.fn(),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn(),
 }));
 
-const mockUseAsync = useAsync as jest.MockedFunction<typeof useAsync>;
+const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
@@ -56,7 +61,7 @@ function renderTraceViewNew() {
 
 describe('TraceView', () => {
   beforeEach(() => {
-    mockUseAsync.mockReturnValue({
+    mockUseAppPluginInstalled.mockReturnValue({
       loading: false,
       error: undefined,
       value: undefined,
@@ -175,7 +180,7 @@ describe('TraceView', () => {
     });
 
     it('does not render the banner when grafana-adaptivetraces-app is not installed', async () => {
-      mockUseAsync.mockReturnValue({
+      mockUseAppPluginInstalled.mockReturnValue({
         loading: false,
         error: undefined,
         value: false,
@@ -185,7 +190,7 @@ describe('TraceView', () => {
     });
 
     it('renders the banner when at least one span has grafana.adaptivetraces.restored=true', async () => {
-      mockUseAsync.mockReturnValue({
+      mockUseAppPluginInstalled.mockReturnValue({
         loading: false,
         error: undefined,
         value: true,
@@ -196,7 +201,7 @@ describe('TraceView', () => {
     });
 
     it('hides the banner after the user dismisses it', async () => {
-      mockUseAsync.mockReturnValue({
+      mockUseAppPluginInstalled.mockReturnValue({
         loading: false,
         error: undefined,
         value: true,
