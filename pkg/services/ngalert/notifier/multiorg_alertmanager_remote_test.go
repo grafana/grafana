@@ -94,10 +94,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
-		nil, // adminConfigStore - not needed in this test
-		nil, // datasourceService - not needed in this test
-		nil, // httpClientProvider - not needed in this test
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
+		// Sync deps are nil — this test does not enable the sync feature flag.
+		notifier.NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), nopLogger, nil, nil, nil),
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)
@@ -267,7 +265,7 @@ var validConfig = `{
 				"name": "email receiver",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}]

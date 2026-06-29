@@ -224,8 +224,8 @@ func (f *fakeVector) markExists(ns, model, res, uid string) {
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
-func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, vs []vector.Vector) error {
-	return f.Upsert(ctx, vs)
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []string) error {
+	return f.Upsert(ctx, changed)
 }
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
@@ -248,7 +248,7 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if existing, ok := f.existing[uid]; ok {
@@ -256,9 +256,9 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid strin
 		for k, v := range existing {
 			out[k] = v
 		}
-		return out, nil
+		return out, "", nil
 	}
-	return nil, nil
+	return nil, "", nil
 }
 func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
 	f.mu.Lock()
@@ -269,6 +269,10 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil
 func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
+}
+func (f *fakeVector) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVector) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+	return nil
 }
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()

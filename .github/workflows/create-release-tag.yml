@@ -22,19 +22,67 @@ jobs:
   create-tag:
     runs-on: ubuntu-arm64-small
     permissions:
-      contents: write
+      id-token: write
+      contents: read
     concurrency:
       group: create-release-tag-${{ inputs.tag }}
       cancel-in-progress: false
     steps:
+      # grafana/grafana is large enough that GitHub's pre-receive workflow-file scan
+      # exceeds its server-side timeout on any ref creation here. The push/API call is
+      # then rejected with "workflows scope may be required" regardless of whether
+      # workflow files were actually touched. workflows:write tells GitHub to skip the
+      # scan. grafana-writer is the only app installed with that scope on grafana/grafana;
+      # no bot lacking it can create refs (branches or tags) in this repo.
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-writer
       - name: Create annotated tag
         env:
           TAG: ${{ inputs.tag }}
           TAG_MESSAGE: ${{ inputs.message }}
           COMMIT_SHA: ${{ inputs.commit }}
           REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
+          set -euo pipefail
+
+          # Idempotent re-runs (e.g. auto-promotion retries): if the tag ref already exists AND points
+          # at the requested commit, this is a no-op. If it exists but points elsewhere, fail loudly —
+          # don't silently accept a tag on the wrong commit.
+          ref_err=$(mktemp)
+          if existing=$(gh api "repos/${REPO}/git/ref/tags/${TAG}" 2>"$ref_err"); then
+            rm -f "$ref_err"
+            obj_sha=$(printf '%s' "$existing" | jq -r '.object.sha')
+            obj_type=$(printf '%s' "$existing" | jq -r '.object.type')
+            # This workflow publishes an ANNOTATED tag. Only a matching annotated tag is a valid no-op;
+            # a lightweight tag (or any other ref type) is an anomaly we surface rather than accept.
+            if [ "$obj_type" != "tag" ]; then
+              echo "::error::Tag ${TAG} already exists as a non-annotated ref (type ${obj_type}); expected an annotated tag." >&2
+              exit 1
+            fi
+            # Annotated tag: dereference the tag object to the commit it points at.
+            target=$(gh api "repos/${REPO}/git/tags/${obj_sha}" --jq '.object.sha')
+            # Resolve the requested commit to its canonical 40-char SHA so a short SHA input still matches.
+            want=$(gh api "repos/${REPO}/commits/${COMMIT_SHA}" --jq '.sha')
+            if [ "$target" = "$want" ]; then
+              echo "Annotated tag ${TAG} already exists at ${want}; nothing to do."
+              exit 0
+            fi
+            echo "::error::Tag ${TAG} already exists but points at ${target}, not ${want}." >&2
+            exit 1
+          elif ! grep -q "HTTP 404" "$ref_err"; then
+            # Only a 404 means "tag absent, go create it". Any other error (5xx, auth, rate limit) must
+            # fail loudly — otherwise we'd fall through to creation and fail on an already-existing ref,
+            # leaking an orphan tag object and hiding the real problem.
+            echo "::error::Failed to query tag ${TAG}: $(cat "$ref_err")" >&2
+            rm -f "$ref_err"
+            exit 1
+          fi
+          rm -f "$ref_err"
+
           tag_sha=$(gh api "repos/${REPO}/git/tags" \
             --method POST \
             -f "tag=${TAG}" \

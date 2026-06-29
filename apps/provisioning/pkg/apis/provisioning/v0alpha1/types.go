@@ -34,6 +34,11 @@ type SecureValues struct {
 
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingMethod. When unset, commits are
+	// unsigned.
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -41,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -191,6 +196,11 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// GitHub || GitHubEnterprise
+func (r RepositoryType) IsGitHub() bool {
+	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
+}
+
 // Branch returns the branch for git-based repositories
 // or an empty string for local repositories
 func (r *Repository) Branch() string {
@@ -224,6 +234,35 @@ func (r *Repository) Branch() string {
 	}
 
 	return ""
+}
+
+// SetBranch writes branch to the provider-specific spec field for git-based repositories,
+// mirroring Branch(). It is a no-op for non-git types or when the provider config is absent.
+func (r *Repository) SetBranch(branch string) {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			r.Spec.GitHub.Branch = branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			r.Spec.GitHubEnterprise.Branch = branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			r.Spec.Git.Branch = branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			r.Spec.Bitbucket.Branch = branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			r.Spec.GitLab.Branch = branch
+		}
+	default:
+		// do nothing
+	}
 }
 
 // URL returns the URL for git-based repositories
@@ -321,10 +360,37 @@ type CommitOptions struct {
 	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
 
 	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only. The
-	// Grafana-saved-by trailer is always appended regardless of this setting.
+	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName string `json:"signerName,omitempty"`
+
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail string `json:"signerEmail,omitempty"`
+
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
 }
+
+// SigningMethod selects how commits are signed.
+// +enum
+type SigningMethod string
+
+const (
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
+)
 
 func (CommitOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "CommitOptions"
@@ -445,6 +511,15 @@ const (
 	// It will contain a copy of everything from the remote
 	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
+
+	// Resources are saved at the top level without a wrapper folder.
+	// Like `folder`, multiple `folderless` repositories may coexist with each
+	// other, with `folder` repositories, and with unprovisioned resources.
+	// Unlike `folder`, no repo-named container folder is created: files at the
+	// repository path root become top-level resources and subdirectories become
+	// top-level folders. Ownership is tracked per-resource via manager
+	// annotations rather than by folder containment.
+	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
 type SyncOptions struct {
@@ -475,6 +550,12 @@ type WebhookConfig struct {
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
 	BaseURL string `json:"baseUrl,omitempty"`
+
+	// Disabled turns off webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from the Git provider
+	// and will poll the repository on an interval instead. Use this when Grafana
+	// is not reachable from the public internet.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 func (WebhookConfig) OpenAPIModelName() string {

@@ -17,6 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -2301,6 +2303,8 @@ func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, defaultFeatureFlags)
+
 			var captured *user.CreateUserCommand
 			fakeUserSvc := &usertest.FakeUserService{
 				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -2332,6 +2336,228 @@ func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
 	}
 }
 
+func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
+	tests := []struct {
+		name                    string
+		authenticatedBy         string
+		kubernetesUsersRedirect bool
+		wantDefaultOrgRole      string
+	}{
+		{
+			name:                    "auth proxy with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag enabled aligns OrgID so the asserted role is written",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "Editor",
+		},
+		{
+			name:                    "ldap with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.LDAPAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
+			authenticatedBy:         login.AuthProxyAuthModule,
+			kubernetesUsersRedirect: false,
+			wantDefaultOrgRole:      "None",
+		},
+		{
+			name:                    "non auth-proxy module is not aligned even with flag enabled",
+			authenticatedBy:         login.SAMLAuthModule,
+			kubernetesUsersRedirect: true,
+			wantDefaultOrgRole:      "None",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.CreateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedError: user.ErrUserNotFound,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					captured = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				setting.NewCfg(),
+				nil,
+			)
+
+			// Mirrors the auth proxy identity: the asserted role is keyed by DefaultOrgID but OrgID is unset.
+			email := "proxyuser@example.com"
+			loginName := "proxyuser"
+			id := &authn.Identity{
+				Login:           loginName,
+				Email:           email,
+				Name:            "Proxy User",
+				AuthID:          "proxyuser",
+				AuthenticatedBy: tt.authenticatedBy,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
+				ClientParams: authn.ClientParams{
+					SyncUser:    true,
+					AllowSignUp: true,
+					LookUpParams: login.UserLookupParams{
+						Email: &email,
+						Login: &loginName,
+					},
+				},
+			}
+
+			err := s.SyncUserHook(context.Background(), id, nil)
+			require.NoError(t, err)
+			require.NotNil(t, captured)
+			assert.Equal(t, tt.wantDefaultOrgRole, captured.DefaultOrgRole,
+				"DefaultOrgRole written to the k8s user must reflect whether OrgID was aligned")
+		})
+	}
+}
+
+func strPtr(s string) *string { return &s }
+
+func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
+	tests := []struct {
+		name                    string
+		singleOrganization      bool
+		kubernetesUsersRedirect bool
+		syncOrgRoles            bool
+		currentRole             string
+		assertedRole            org.RoleType
+		wantUpdateRole          *string
+	}{
+		{
+			name:                    "role change is synced in single-org k8s mode",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          strPtr("Editor"),
+		},
+		{
+			name:                    "explicit None role is synced (demotion)",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleNone,
+			wantUpdateRole:          strPtr("None"),
+		},
+		{
+			name:                    "unchanged role is not synced",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Editor",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when SyncOrgRoles is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            false,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when not in single-org mode",
+			singleOrganization:      false,
+			kubernetesUsersRedirect: true,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+		{
+			name:                    "no sync when k8s users redirect is disabled",
+			singleOrganization:      true,
+			kubernetesUsersRedirect: false,
+			syncOrgRoles:            true,
+			currentRole:             "Admin",
+			assertedRole:            org.RoleEditor,
+			wantUpdateRole:          nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			var captured *user.UpdateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					captured = cmd
+					return nil
+				},
+			}
+
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = tt.singleOrganization
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				cfg,
+				nil,
+			)
+
+			usr := &user.User{ID: 1, Login: "proxyuser", OrgID: 1, OrgRole: tt.currentRole}
+			id := &authn.Identity{
+				ID:              "1",
+				Login:           "proxyuser",
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: tt.assertedRole},
+				ClientParams:    authn.ClientParams{SyncUser: true, SyncOrgRoles: tt.syncOrgRoles},
+			}
+
+			// userAuth is non-nil so no auth-connection creation is attempted.
+			err := s.updateUserAttributes(context.Background(), usr, id, &login.UserAuth{})
+			require.NoError(t, err)
+
+			if tt.wantUpdateRole == nil {
+				if captured != nil {
+					assert.Nil(t, captured.OrgRole, "OrgRole must not be set on the update command")
+				}
+				return
+			}
+
+			require.NotNil(t, captured, "an update should have been issued")
+			require.NotNil(t, captured.OrgRole)
+			assert.Equal(t, *tt.wantUpdateRole, *captured.OrgRole)
+		})
+	}
+}
+
 // Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
 func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
 	usr := &user.SignedInUser{
@@ -2351,4 +2577,236 @@ func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
 		"Groups must be populated from usr.TeamUIDs")
 	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
 		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
+}
+
+func TestMergeExternalAuthInfo(t *testing.T) {
+	authProxy := &authn.Identity{AuthenticatedBy: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}
+
+	t.Run("returns no change when identity has no auth module", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "x"}}
+		got, changed := mergeExternalAuthInfo(existing, &authn.Identity{})
+		assert.False(t, changed)
+		assert.Equal(t, existing, got)
+	})
+
+	t.Run("does not record internal auth modules", func(t *testing.T) {
+		for _, module := range []string{
+			login.PasswordAuthModule,
+			login.APIKeyAuthModule,
+			login.ExtendedJWTModule,
+			login.RenderModule,
+		} {
+			got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: module, AuthID: "1"})
+			assert.False(t, changed, "module %q must not be recorded", module)
+			assert.Nil(t, got, "module %q must not be recorded", module)
+		}
+	})
+
+	t.Run("appends a new connection", func(t *testing.T) {
+		got, changed := mergeExternalAuthInfo(nil, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
+	})
+
+	t.Run("preserves connections from other modules", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "ldap-id"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{
+			{Module: login.LDAPAuthModule, AuthID: "ldap-id"},
+			{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"},
+		}, got)
+		assert.Len(t, existing, 1, "input slice must not be mutated")
+	})
+
+	t.Run("updates an existing connection for the same module", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "old", ExternalUID: "old-uid"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.True(t, changed)
+		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
+	})
+
+	t.Run("returns no change when the connection already matches", func(t *testing.T) {
+		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}
+		got, changed := mergeExternalAuthInfo(existing, authProxy)
+		assert.False(t, changed)
+		assert.Equal(t, existing, got)
+	})
+}
+
+func TestUserSync_SyncUserHook_PopulatesExternalAuthInfo(t *testing.T) {
+	email := "proxyuser@example.com"
+	loginName := "proxyuser"
+	wantEntry := user.ExternalAuthInfo{Module: login.AuthProxyAuthModule, AuthID: "proxyuser", ExternalUID: "ext-1"}
+
+	newIdentity := func() *authn.Identity {
+		return &authn.Identity{
+			Login:           loginName,
+			Email:           email,
+			Name:            "Proxy User",
+			AuthID:          "proxyuser",
+			ExternalUID:     "ext-1",
+			AuthenticatedBy: login.AuthProxyAuthModule,
+			ClientParams: authn.ClientParams{
+				SyncUser:     true,
+				AllowSignUp:  true,
+				LookUpParams: login.UserLookupParams{Email: &email, Login: &loginName},
+			},
+		}
+	}
+
+	tests := []struct {
+		name                    string
+		kubernetesUsersRedirect bool
+		dualWriterMode          grafanarest.DualWriterMode
+		existing                *user.User
+		wantCreateInfo          []user.ExternalAuthInfo
+		wantUpdateInfo          []user.ExternalAuthInfo
+		wantUpdateCalled        bool
+	}{
+		{
+			name:                    "create seeds ExternalAuthInfo when flag enabled and unified storage",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			wantCreateInfo:          []user.ExternalAuthInfo{wantEntry},
+		},
+		{
+			name:                    "create omits ExternalAuthInfo when flag disabled",
+			kubernetesUsersRedirect: false,
+			dualWriterMode:          grafanarest.Mode5,
+			wantCreateInfo:          nil,
+		},
+		{
+			name:                    "create omits ExternalAuthInfo in legacy-read storage mode",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode1,
+			wantCreateInfo:          nil,
+		},
+		{
+			name:                    "update adds ExternalAuthInfo when flag enabled and unified storage",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
+			wantUpdateInfo:          []user.ExternalAuthInfo{wantEntry},
+			wantUpdateCalled:        true,
+		},
+		{
+			name:                    "update is skipped in legacy-read storage mode",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode1,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
+			wantUpdateCalled:        false,
+		},
+		{
+			name:                    "update is skipped when the connection is already present",
+			kubernetesUsersRedirect: true,
+			dualWriterMode:          grafanarest.Mode5,
+			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User", ExternalAuthInfo: []user.ExternalAuthInfo{wantEntry}},
+			wantUpdateCalled:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
+			})
+
+			cfg := setting.NewCfg()
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: tt.dualWriterMode},
+			}
+
+			var createCmd *user.CreateUserCommand
+			var updateCmd *user.UpdateUserCommand
+			fakeUserSvc := &usertest.FakeUserService{
+				ExpectedUser: tt.existing,
+				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+					createCmd = cmd
+					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
+				},
+				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+					updateCmd = cmd
+					return nil
+				},
+			}
+			if tt.existing == nil {
+				fakeUserSvc.ExpectedError = user.ErrUserNotFound
+			}
+
+			s := ProvideUserSync(
+				fakeUserSvc,
+				&authinfoimpl.OSSUserProtectionImpl{},
+				&authinfotest.FakeService{
+					ExpectedError:    user.ErrUserNotFound,
+					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
+					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
+				},
+				&quotatest.FakeQuotaService{},
+				tracing.InitializeTracerForTest(),
+				featuremgmt.WithFeatures(),
+				cfg,
+				nil,
+			)
+
+			err := s.SyncUserHook(context.Background(), newIdentity(), nil)
+			require.NoError(t, err)
+
+			if tt.existing == nil {
+				require.NotNil(t, createCmd)
+				assert.Equal(t, tt.wantCreateInfo, createCmd.ExternalAuthInfo)
+				assert.Nil(t, updateCmd)
+				return
+			}
+
+			if tt.wantUpdateCalled {
+				require.NotNil(t, updateCmd)
+				assert.Equal(t, tt.wantUpdateInfo, updateCmd.ExternalAuthInfo)
+			} else {
+				assert.Nil(t, updateCmd, "update should not be called when nothing changed")
+			}
+		})
+	}
+}
+
+func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, true),
+	})
+
+	createCalled, updateCalled := false, false
+	fakeUserSvc := &usertest.FakeUserService{
+		CreateFn: func(_ context.Context, _ *user.CreateUserCommand) (*user.User, error) {
+			createCalled = true
+			return &user.User{}, nil
+		},
+		UpdateFn: func(_ context.Context, _ *user.UpdateUserCommand) error {
+			updateCalled = true
+			return nil
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
+	}
+
+	s := ProvideUserSync(
+		fakeUserSvc,
+		&authinfoimpl.OSSUserProtectionImpl{},
+		&authinfotest.FakeService{},
+		&quotatest.FakeQuotaService{},
+		tracing.InitializeTracerForTest(),
+		featuremgmt.WithFeatures(),
+		cfg,
+		nil,
+	)
+
+	// Mirrors the anonymous client identity: SyncUser is not set.
+	anon := &authn.Identity{Type: claims.TypeAnonymous, ClientParams: authn.ClientParams{SyncPermissions: true}}
+	err := s.SyncUserHook(context.Background(), anon, nil)
+
+	require.NoError(t, err)
+	assert.False(t, createCalled, "anonymous identity must not create a user")
+	assert.False(t, updateCalled, "anonymous identity must not update a user")
 }

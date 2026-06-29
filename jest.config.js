@@ -84,7 +84,6 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/cloud-monitoring',
     '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
@@ -94,9 +93,5 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/loki',
     '<rootDir>/public/app/plugins/datasource/mssql',
     '<rootDir>/public/app/plugins/datasource/mysql',
-    '<rootDir>/public/app/plugins/datasource/opentsdb',
-    '<rootDir>/public/app/plugins/datasource/parca',
-    '<rootDir>/public/app/plugins/datasource/tempo',
   ],
-  projects: ['<rootDir>'],
 };

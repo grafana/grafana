@@ -54,19 +54,19 @@
     },
     {
       "relation": "depends-on",
-      "group": "dashboards.grafana.app",
+      "group": "dashboard.grafana.app",
       "kind": "LibraryPanel",
       "name": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
     },
     {
       "relation": "depends-on",
-      "group": "dashboards.grafana.app",
+      "group": "dashboard.grafana.app",
       "kind": "LibraryPanel",
       "name": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
     },
     {
       "relation": "depends-on",
-      "group": "dashboards.grafana.app",
+      "group": "dashboard.grafana.app",
       "kind": "LibraryPanel",
       "name": "a7975b7a-fb53-4ab7-951d-15810953b54f"
     }

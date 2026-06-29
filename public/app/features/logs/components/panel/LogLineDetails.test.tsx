@@ -18,7 +18,6 @@ import {
 } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
-import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
@@ -30,6 +29,7 @@ import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from 
 import { LogLineDetails, type Props } from './LogLineDetails';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -240,6 +240,53 @@ describe('LogLineDetails', () => {
       );
     });
   });
+  describe('Filtering by log line string', () => {
+    test('calls onClickFilterString with the log line and refId', async () => {
+      const onClickFilterString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter for this log line'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('calls onClickFilterOutString with the log line and refId', async () => {
+      const onClickFilterOutString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterOutString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter out this log line'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('does not render the filter buttons when the callbacks are not provided', async () => {
+      await setup(undefined, { labels: { key1: 'label1' } });
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.queryByLabelText('Filter for this log line')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out this log line')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -875,6 +922,78 @@ describe('LogLineDetails', () => {
     await userEvent.click(screen.getByText('Trace'));
 
     expect(await screen.findByText('Trace view')).toBeInTheDocument();
+  });
+
+  test('Requests the trace by ID when the derived field uses a TraceQL trace-id lookup', async () => {
+    const entry = 'traceId=1234 msg="some message"';
+    const dataFrame = toDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'entry', values: [entry] },
+        {
+          name: 'traceId',
+          values: ['1234'],
+          config: { links: [{ title: 'link title', url: 'localhost:3210/${__value.text}' }] },
+        },
+        { name: 'userId', values: ['5678'] },
+      ],
+    });
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, datasourceUid: lokiDS.uid },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: '/explore',
+                interpolatedParams: {
+                  query: {
+                    datasource: {
+                      uid: tempoDS.uid,
+                    },
+                    refId: 'A',
+                    query: '{trace:id = "abcd1234"}',
+                    queryType: 'traceql',
+                  },
+                },
+                title: 'tempo',
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      }
+    );
+
+    const querySpy = jest.spyOn(tempoDS, 'query').mockReturnValueOnce(
+      of({
+        data: [
+          createDataFrame({
+            fields: [
+              { name: 'traceID', values: ['5d5d850e24d89509'], type: FieldType.string },
+              { name: 'spanID', values: ['5d5d850e24d89509'], type: FieldType.string },
+            ],
+          }),
+        ],
+      })
+    );
+
+    await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+    await userEvent.click(screen.getByText('Trace'));
+
+    expect(await screen.findByText('Trace view')).toBeInTheDocument();
+    // The TraceQL lookup must be unwrapped to the bare trace ID so Tempo returns full trace spans.
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ targets: [expect.objectContaining({ query: 'abcd1234' })] })
+    );
   });
 
   test('Shows a message if the trace cannot be retrieved', async () => {

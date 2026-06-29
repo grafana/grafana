@@ -10,6 +10,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -75,8 +77,10 @@ func New(cfg *setting.Cfg,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
-	if options.K8sActionFormat && options.APIGroup == "" {
-		return nil, fmt.Errorf("APIGroup is required when K8sActionFormat is enabled")
+	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
+	// is configured.
+	if options.APIGroup == "" && requiresAPIGroup(context.Background(), options.Resource, options.K8sActionFormat) {
+		return nil, fmt.Errorf("APIGroup is required for resource %q when Kubernetes-native permissions are enabled (K8sActionFormat or the resource-permission redirect)", options.Resource)
 	}
 
 	permissions := make([]string, 0, len(options.PermissionsToActions))
@@ -535,15 +539,22 @@ func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) e
 	return nil
 }
 
-func (s *Service) declareFixedRoles() error {
-	scopeAll := s.options.GetScope("*")
+// FixedRoleRegistrations returns the templated reader/writer fixed-role
+// registrations derived from the given Options (fixed:{resource}.permissions:reader
+// and :writer). It is the single source of truth for how per-resource permission
+// management roles are generated, shared by the live service ([Service.declareFixedRoles])
+// and the GlobalRole seeder aggregation so the two cannot drift. Only the
+// role-identity fields of Options are read (Resource, APIGroup, K8sActionFormat,
+// ReaderRoleName, WriterRoleName, RoleGroup); the runtime closures are ignored.
+func FixedRoleRegistrations(o Options) []accesscontrol.RoleRegistration {
+	scopeAll := o.GetScope("*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("reader"),
-			DisplayName: s.options.ReaderRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("reader"),
+			DisplayName: o.ReaderRoleName,
+			Group:       o.RoleGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: s.options.GetAction("read"), Scope: scopeAll},
+				{Action: o.GetAction("read"), Scope: scopeAll},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -551,17 +562,21 @@ func (s *Service) declareFixedRoles() error {
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        s.options.GetRoleName("writer"),
-			DisplayName: s.options.WriterRoleName,
-			Group:       s.options.RoleGroup,
+			Name:        o.GetRoleName("writer"),
+			DisplayName: o.WriterRoleName,
+			Group:       o.RoleGroup,
 			Permissions: accesscontrol.ConcatPermissions(readerRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: s.options.GetAction("write"), Scope: scopeAll},
+				{Action: o.GetAction("write"), Scope: scopeAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.service.DeclareFixedRoles(readerRole, writerRole)
+	return []accesscontrol.RoleRegistration{readerRole, writerRole}
+}
+
+func (s *Service) declareFixedRoles() error {
+	return s.service.DeclareFixedRoles(FixedRoleRegistrations(s.options)...)
 }
 
 type ActionSetService interface {
@@ -705,4 +720,38 @@ func (s *Service) scopeResource() string {
 		return fmt.Sprintf("%s/%s", s.options.APIGroup, s.options.Resource)
 	}
 	return s.options.Resource
+}
+
+// requiresAPIGroup reports whether a resource-permission service must have an
+// APIGroup configured, since it can no longer be guessed (see getAPIGroup). It is
+// required for any Kubernetes-native flow:
+//   - K8sActionFormat is enabled (K8s-format actions/scopes), or
+//   - the resource-permission redirect is enabled for a resource that routes
+//     through the generic K8s adapter.
+//
+// The redirect gate is read through the same OpenFeature helper used at runtime
+// (k8sResourcePermissionRedirectEnabled), so this startup check stays aligned with
+// when getAPIGroup is actually exercised. Called at construction with a background
+// context, so it sees the global flag values; per-tenant overrides are still
+// guarded at runtime by getAPIGroup.
+func requiresAPIGroup(ctx context.Context, resource string, k8sActionFormat bool) bool {
+	if k8sActionFormat {
+		return true
+	}
+
+	// These resources never resolve a single static APIGroup via getAPIGroup, so
+	// they are exempt from the redirect requirement:
+	//   - teams use the Team.Spec.Members path: the `Resource != "teams"` guards in
+	//     api.go dispatch to the member helpers in api_adapter.go, which never
+	//     resolve an APIGroup.
+	//   - datasources resolve a per-plugin group at request time (the group is a
+	//     wildcard, e.g. loki.datasource.grafana.app, configured in
+	//     pkg/extensions/accesscontrol/permission_services.go), so there is no
+	//     single value.
+	switch resource {
+	case iamv0.TeamResourceInfo.GetName(), datasources.ScopeRoot:
+		return false
+	}
+
+	return k8sResourcePermissionRedirectEnabled(ctx)
 }

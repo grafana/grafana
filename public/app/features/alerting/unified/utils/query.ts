@@ -28,7 +28,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   return [];
 }
 
-export function dataQueryToAlertQuery(dataQuery: DataQuery, dataSourceUid: string): AlertQuery {
+function dataQueryToAlertQuery(dataQuery: DataQuery, dataSourceUid: string): AlertQuery {
   return {
     refId: dataQuery.refId,
     datasourceUid: dataSourceUid,

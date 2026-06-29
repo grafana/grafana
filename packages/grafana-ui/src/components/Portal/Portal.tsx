@@ -41,7 +41,11 @@ export function Portal(props: PropsWithChildren<Props>) {
   );
 }
 
-/** @internal */
+/**
+ * Returns the container element Grafana renders overlays into (tooltips, menus, modals).
+ * Content rendered into this container coexists with an open Modal: it is treated as
+ * inside the modal for focus management and pressing it does not dismiss the modal.
+ */
 export function getPortalContainer() {
   return window.document.getElementById('grafana-portal-container') ?? document.body;
 }

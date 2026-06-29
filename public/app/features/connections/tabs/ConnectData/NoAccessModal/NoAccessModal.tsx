@@ -108,7 +108,7 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
   );
 }
 
-export function NoAccessModalHeader({ item }: { item: CardGridItem }) {
+function NoAccessModalHeader({ item }: { item: CardGridItem }) {
   const styles = useStyles2(getStyles);
   return (
     <div>

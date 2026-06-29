@@ -21,14 +21,14 @@ import {
   trackNotificationPolicyResetError,
 } from '../notificationPolicyAnalytics';
 
-export interface DeleteModalProps {
+interface DeleteModalProps {
   isOpen: boolean;
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
   routeName: string;
 }
 
-export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
+const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<unknown | undefined>();
 

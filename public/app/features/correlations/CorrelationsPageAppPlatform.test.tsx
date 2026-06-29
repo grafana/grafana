@@ -8,6 +8,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, type reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { appEvents } from 'app/core/app_events';
 import { type createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -163,6 +164,7 @@ jest.mock('app/core/copy/appNotification', () => {
 });
 
 beforeAll(() => {
+  mockBoundingClientRect();
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
   config.featureToggles.kubernetesCorrelations = true;
 });

@@ -62,13 +62,10 @@ const ALERT_ANNOTATIONS_COUNTS = {
 
 test.use({
   viewport: { width: 1064, height: 1840 },
-  featureToggles: {
-    annotationsClustering: true,
-  },
 });
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
-  test.describe('width: 1000', () => {
+  test.describe('width: 1064', () => {
     test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
@@ -317,8 +314,22 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
         await expect(panel, `Panel should be visible`).toBeVisible();
 
-        // Meta click to create a wip annotation
-        await panel.locator('.u-over').click({ position: { x: 100, y: 100 }, modifiers: ['Meta'] });
+        // Meta click to create a wip annotation. Target a point reliably inside the plot rather
+        // than a hardcoded pixel offset, which can land outside the plot area depending on the
+        // panel's rendered size and intercept the click on the panel content wrapper.
+        const plot = panel.locator('.u-over');
+        const plotBox = await plot.boundingBox();
+        if (!plotBox) {
+          throw new Error('could not resolve plot bounding box');
+        }
+        // Two click points 10px apart (close enough to cluster once clustering is enabled),
+        // both well inside the plot, derived from the plot box rather than hardcoded pixels.
+        const clickY = Math.round(plotBox.height * 0.5);
+        const clickBaseX = Math.round(plotBox.width * 0.25);
+        const clickLeft = { x: clickBaseX, y: clickY };
+        const clickRight = { x: clickBaseX + 10, y: clickY };
+
+        await plot.click({ position: clickLeft, modifiers: ['Meta'] });
 
         const descriptionTextarea = page.getByTestId('annotation-editor-description');
         const tagsInput = page.getByText('Add tags');
@@ -348,7 +359,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await expect(markersLocator, 'annotation marker is visible').toBeVisible();
 
         // add another anno
-        await panel.locator('.u-over').click({ position: { x: 110, y: 100 }, modifiers: ['Meta'] });
+        await plot.click({ position: clickRight, modifiers: ['Meta'] });
         await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
         await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
         await descriptionTextarea.fill('description2 text goes here');
@@ -454,8 +465,14 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
         await expect(panel, `Panel should be visible`).toBeVisible();
 
-        // Meta click to create a wip annotation
-        await panel.locator('.u-over').click({ position: { x: 100, y: 100 }, modifiers: ['Meta'] });
+        // Meta click to create a wip annotation at a known x within the plot.
+        const plot = panel.locator('.u-over');
+        const plotBox = await plot.boundingBox();
+        if (!plotBox) {
+          throw new Error('could not resolve plot bounding box');
+        }
+        const clickX = 100;
+        await plot.click({ position: { x: clickX, y: Math.round(plotBox.height * 0.5) }, modifiers: ['Meta'] });
 
         const descriptionTextarea = page.getByTestId('annotation-editor-description');
         const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
@@ -477,21 +494,34 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         // assert annotation was created
         await expect(markersLocator, 'annotation marker is visible').toBeVisible();
 
-        await expect(markersLocator, 'annotation marker has left offset of 100').toHaveAttribute(
-          'style',
-          /left: 100px/
-        );
+        // Marker renders at roughly the click x (small tolerance for rendering rounding).
+        const leftOf = (style: string | null) => {
+          const m = style?.match(/left:\s*(-?\d+(?:\.\d+)?)px/);
+          return m ? parseFloat(m[1]) : NaN;
+        };
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')), {
+            message: 'marker left is near the click x',
+          })
+          .toBeLessThanOrEqual(clickX + 5);
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')))
+          .toBeGreaterThanOrEqual(clickX - 5);
 
-        // Move time range backwards, annotation should now be on right half of screen
+        // Move time range backwards, annotation should now be on the right half of the plot.
         await page.getByTestId(selectors.components.TimePicker.moveBackwardButton).click();
 
-        // Assert that the marker was re-rendered after the annotation was re-queried
-        // should greater than 100, is asserting the exact offset overstepping the bounds of this test?
+        // Assert the marker re-rendered to the right half after the annotation was re-queried.
+        // Use an in-bounds range rather than a hardcoded pixel (which is sensitive to sub-pixel
+        // plot-width differences across schema versions).
         await expect
-          .poll(() => {
-            return markersLocator.first().getAttribute('style');
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')), {
+            message: 'marker moved to the right half of the plot after shifting time back',
           })
-          .toMatch(/left: 519px/);
+          .toBeGreaterThan(plotBox.width * 0.5);
+        await expect
+          .poll(async () => leftOf(await markersLocator.first().getAttribute('style')))
+          .toBeLessThan(plotBox.width);
 
         // Clean up annos
         const tooltip = page.getByTestId(selectors.pages.Dashboard.Annotations.tooltip);
