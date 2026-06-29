@@ -83,12 +83,16 @@ async function fetchGrafanaFolderNames(
   fetchGrafanaGroups: FetchGrafanaGroups,
   searchFolder?: string
 ): Promise<string[]> {
-  const response = await fetchGrafanaGroups({
-    limitAlerts: 0,
-    groupLimit: GROUP_FETCH_LIMIT + 1,
-    searchFolder: searchFolder || undefined,
-  }).unwrap();
-  return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
+  try {
+    const response = await fetchGrafanaGroups({
+      limitAlerts: 0,
+      groupLimit: GROUP_FETCH_LIMIT + 1,
+      searchFolder: searchFolder || undefined,
+    }).unwrap();
+    return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
+  } catch {
+    return [];
+  }
 }
 
 async function fetchExternalNamespaceNames(
@@ -135,8 +139,10 @@ export function useNamespaceAndGroupOptions(): {
 
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
-      const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue);
-      const { externalNamespaces, isLimitReached } = await fetchExternalNamespaceNames(fetchExternalGroups);
+      const [grafanaFolderNames, { externalNamespaces, isLimitReached }] = await Promise.all([
+        fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue),
+        fetchExternalNamespaceNames(fetchExternalGroups),
+      ]);
 
       // Grafana folders are filtered server-side via `search.folder`. External namespaces have no
       // backend folder search, so they're filtered client-side here.
@@ -167,7 +173,6 @@ export function useNamespaceAndGroupOptions(): {
 
   const groupOptions = useCallback(
     async (inputValue: string) => {
-      // Require minimum characters for search
       const trimmedInput = inputValue?.trim() || '';
       if (trimmedInput.length < MIN_GROUP_SEARCH_CHARACTERS) {
         return [
