@@ -2375,7 +2375,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/flamegraph@workspace:packages/grafana-flamegraph"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.2.0-pre"
