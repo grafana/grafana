@@ -146,12 +146,13 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
