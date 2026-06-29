@@ -90,12 +90,14 @@ func NewSearchOptions(
 		// hash check is a no-op rather than a nil deref. Real callers always
 		// pass a non-nil supplier.
 		var searchFieldsHashes map[string]string
+		var searchFieldsProviders map[string]resource.SearchFieldsProvider
 		if docs != nil {
 			builders, err := docs.GetDocumentBuilders()
 			if err != nil {
 				return resource.SearchOptions{}, err
 			}
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
+			searchFieldsProviders = resource.SearchFieldProvidersForBuilders(builders)
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
@@ -107,6 +109,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
 			SelectableFieldsForKinds:       resource.SelectableFields(),
 			SearchFieldsHashesForKinds:     searchFieldsHashes,
+			SearchFieldsProvidersForKinds:  searchFieldsProviders,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,

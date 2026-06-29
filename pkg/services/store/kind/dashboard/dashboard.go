@@ -777,7 +777,15 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 			}
 		case "vizConfig":
 			if iter.WhatIsNext() == jsoniter.ObjectValue {
-				if k, ok := readObjectValueGetString(iter, "kind"); ok && k != "" {
+				vc, _ := iter.Read().(map[string]any)
+				// In the stable v2 envelope the panel plugin id lives in
+				// vizConfig.group; kind is the literal "VizConfig". Older
+				// v2alpha1 dashboards carry the plugin id directly in kind.
+				if g, ok := vc["group"].(string); ok && g != "" {
+					panel.Type = g
+				} else if k, ok := vc["kind"].(string); ok && k != "" && k != "VizConfig" {
+					// Guard the fallback: on a stable v2 panel with a missing or empty
+					// group, kind is the literal "VizConfig" - never index that as a type.
 					panel.Type = k
 				}
 			} else {

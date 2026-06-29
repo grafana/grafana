@@ -38,6 +38,7 @@ area/expressions
 area/field/overrides
 area/frontend/library-panels
 area/frontend/login
+area/grafana-assistant
 area/image-rendering
 area/internationalization
 area/legend
@@ -109,14 +110,11 @@ datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
-datasource/OpenTSDB
-datasource/Parca
 datasource/Phlare
 datasource/Postgres
 datasource/Prometheus
 datasource/SiteWIse
 datasource/Splunk
-datasource/Tempo
 datasource/TestDataDB
 datasource/Timestream
 datasource/X-Ray

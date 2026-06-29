@@ -1,11 +1,10 @@
 import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
 
-import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
+import { getProfileLinkButtonsContext, getSpanDetailLinkButtons, RelatedProfilesTitle } from './SpanDetailLinkButtons';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

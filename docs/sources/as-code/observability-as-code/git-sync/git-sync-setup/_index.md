@@ -158,7 +158,7 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token 
 Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **API Token** text box.
-1. Paste the **Repository URL** for your GitLab repository into the text box.
+1. Paste the **Repository URL** for your Bitbucket repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
 
@@ -187,7 +187,7 @@ On this screen, you'll sync the external resources you specified in the previous
 
 To set up synchronization:
 
-1. Select wether you want to store synced resources in a **new folder or at root level** in Grafana. For more information on these options, refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets/). The UI provides information about the available resources you can sync.
+1. Select whether you want to store synced resources in a **new folder or at root level** in Grafana. For more information on these options, refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets/). The UI provides information about the available resources you can sync.
 1. Enter a **Display name** for your repository connection. All the synced resources from this Git Sync connection will appear under the this name in the Grafana UI.
 1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
@@ -227,9 +227,14 @@ You can also select these optional settings:
 - Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
 - Check **Enable push to configured branch** to allow direct commits to the configured branch.
 - Check **Generate dashboards previews** to create preview links for pull requests. This option requires using image rendering and activating public access.
-- Enter a **Webhook URL** to override the auto-detected URL to register webhooks.
 
-After deciding on these options, you can chose to configure a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
+After deciding on these options, you can chose to configure **Webhooks** or a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
+
+### Webhook options
+
+In the **Webhook options** menu, you can type in an URL to override the auto-detected URL used to register webhooks.
+
+You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
 ### Advanced commit options
 

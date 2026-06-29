@@ -13,14 +13,14 @@ type StorageMetrics struct {
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
 	RequestDuration        *prometheus.HistogramVec
+	DegradedOperations     *prometheus.CounterVec
 	Broadcaster            *BroadcasterMetrics
 }
 
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       "storage_server",
-			Name:                            "watch_latency_seconds",
+			Name:                            "storage_server_watch_latency_seconds",
 			Help:                            "Time (in seconds) spent waiting for watch events to be sent",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
@@ -28,8 +28,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"}),
 		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Namespace:                       "storage_server",
-			Name:                            "poller_query_latency_seconds",
+			Name:                            "storage_server_poller_query_latency_seconds",
 			Help:                            "poller query latency",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
@@ -41,14 +40,18 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			Help: "number of times List was served by field selector search",
 		}, []string{"resource", "served_by"}),
 		RequestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       "storage_server",
-			Name:                            "grpc_request_duration_seconds",
+			Name:                            "storage_server_grpc_request_duration_seconds",
 			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by group and resource.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"method", "group", "resource", "status_code"}),
+		DegradedOperations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_degraded_operations_total",
+			Help: "Operations that proceeded despite a failed external dependency " +
+				"(e.g. a guard/check that was skipped because a downstream call failed).",
+		}, []string{"operation", "reason", "group", "resource"}),
 		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }

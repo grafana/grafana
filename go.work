@@ -7,7 +7,6 @@ use (
 	. // skip:golangci-lint
 	./apps/advisor
 	./apps/alerting/alertenrichment
-	./apps/alerting/historian
 	./apps/alerting/notifications
 	./apps/alerting/rules
 	./apps/annotation
@@ -28,7 +27,6 @@ use (
 	./apps/scope
 	./apps/secret
 	./apps/shorturl
-	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apiserver
 	./pkg/build/wire // skip:golangci-lint
@@ -36,7 +34,6 @@ use (
 	./pkg/infra/features
 	./pkg/plugins
 	./pkg/plugins/codegen
-	./pkg/semconv
 	./pkg/storage/unified/resource/kv
 	./pkg/storage/unified/resourcepb
 	./pkg/util/sqlite

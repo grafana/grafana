@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
@@ -54,6 +54,9 @@ const DefaultQPS = float32(200)
 const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
+
+// DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
+const DefaultIdleConnTimeout = 30 * time.Second
 
 const (
 	ApiGroup   = "setting.grafana.app"
@@ -171,6 +174,10 @@ type Config struct {
 	CacheTTL time.Duration
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
+	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
+	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
+	// client-go default.
+	IdleConnTimeout time.Duration
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -204,7 +211,7 @@ type settingListMetadata struct {
 // New creates a Service from the provided configuration.
 func New(config Config) (Service, error) {
 	log := logging.New(LogPrefix)
-	metrics := initMetrics()
+	metrics := initMetrics(resolveServiceName(config))
 
 	restClient, err := getRestClient(config, log, metrics)
 	if err != nil {
@@ -244,7 +251,7 @@ func New(config Config) (Service, error) {
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -266,7 +273,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 
 func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -526,9 +533,17 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		}
 	}
 
+	idleConnTimeout := DefaultIdleConnTimeout
+	if config.IdleConnTimeout != 0 {
+		idleConnTimeout = config.IdleConnTimeout
+	}
+
 	// Wrap with tracing middleware to propagate trace context to all outbound requests
 	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		if baseTransport, ok := rt.(*http.Transport); ok && idleConnTimeout > 0 {
+			baseTransport.IdleConnTimeout = idleConnTimeout
+		}
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return authTransport(tracingRT)
 	}
@@ -543,15 +558,7 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		burst = config.Burst
 	}
 
-	serviceName := config.ServiceName
-	if serviceName == "" {
-		serviceName = os.Getenv(otelServiceNameEnvVar)
-	}
-
-	if serviceName == "" {
-		serviceName = defaultServiceName
-	}
-	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, serviceName)
+	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, resolveServiceName(config))
 
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
@@ -618,7 +625,19 @@ func (r *instrumentedRateLimiter) Wait(ctx context.Context) error {
 	return err
 }
 
-func initMetrics() clientMetrics {
+func resolveServiceName(config Config) string {
+	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = os.Getenv(otelServiceNameEnvVar)
+	}
+	if serviceName == "" {
+		serviceName = defaultServiceName
+	}
+	return serviceName
+}
+
+func initMetrics(serviceName string) clientMetrics {
+	constLabels := prometheus.Labels{"service": serviceName}
 	metrics := clientMetrics{
 		listDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -628,6 +647,7 @@ func initMetrics() clientMetrics {
 				Help:                        "Duration of remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
 				Buckets:                     instrument.DefBuckets,
+				ConstLabels:                 constLabels,
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
@@ -639,25 +659,29 @@ func initMetrics() clientMetrics {
 				Help:                        "Number of settings returned by remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
 				Buckets:                     instrument.DefBuckets,
+				ConstLabels:                 constLabels,
 			},
 		),
 		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "rate_limiter_throttle_total",
-			Help:      "Total number of requests that waited more than 50ms due to client-side rate limiting",
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "rate_limiter_throttle_total",
+			Help:        "Total number of requests that waited more than 50ms due to client-side rate limiting",
+			ConstLabels: constLabels,
 		}),
 		cacheHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "list_settings_cache_hit_total",
-			Help:      "Total number of List cache hits",
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_hit_total",
+			Help:        "Total number of List cache hits",
+			ConstLabels: constLabels,
 		}),
 		cacheMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "list_settings_cache_miss_total",
-			Help:      "Total number of List cache misses",
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_miss_total",
+			Help:        "Total number of List cache misses",
+			ConstLabels: constLabels,
 		}),
 	}
 	return metrics

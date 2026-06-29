@@ -174,15 +174,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "refactorVariablesTimeRange",
-			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: false, React: false}, // BE-only toggle
 		},
 		{
 			Name:        "faroDatasourceSelector",
@@ -324,14 +316,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "dashgpt",
-			Description: "Enable AI powered features in dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "aiGeneratedDashboardChanges",
 			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
 			Stage:       FeatureStageExperimental,
@@ -397,6 +381,24 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:            "externalSnapshotsK8SAPIPush",
+			Description:     "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:            "externalSnapshotsSupportLegacyAPI",
+			Description:     "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:            "kubernetesLibraryPanels",
 			Description:     "Routes library panel requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
@@ -424,20 +426,21 @@ var (
 			Generate:        Generate{React: true},
 		},
 		{
-			Name:            "kubernetesShortURLs",
-			Description:     "Enables k8s short URL API and uses it under the hood when handling legacy /api",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:            "grafana.newPanelQueryErrorsUI",
+			Description:     "Enables a new UI for query errors and notices",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{React: true},
 		},
+
 		{
 			Name:        "useKubernetesShortURLsAPI",
 			Description: "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",
 		},
 
@@ -745,15 +748,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
-		},
-		{
-			Name:         "panelFilterVariable",
-			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:        "pdfTables",
@@ -1097,14 +1091,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newUnconfiguredPanel",
-			Description: "Enables the new unconfigured panel experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,
@@ -1137,8 +1123,8 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.orgDashboardTemplates",
-			Description: "Enables org-defined dashboard templates for enterprise",
+			Name:        "grafana.customDashboardTemplates",
+			Description: "Enables custom dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{Go: true, React: true},
@@ -1308,15 +1294,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 
-		{
-			Name:            "dataplaneAggregator",
-			Description:     "Enable grafana dataplane aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
 		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
@@ -1661,14 +1638,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "newLogsPanel",
-			Description: "Enables the new logs panel",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "true",
 		},
 		{
 			Name:         "alertingJiraIntegration",
@@ -2027,14 +1996,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "sharingDashboardImage",
-			Description: "Enables image sharing functionality for dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2129,14 +2090,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newLogContext",
-			Description: "New Log Context component",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",
-		},
-		{
 			Name:        "newClickhouseConfigPageDesign",
 			Description: "Enables new design for the Clickhouse data source configuration page",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2151,6 +2104,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "true",
+		},
+		{
+			Name:        "grafana.starredFolders",
+			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
 		},
 		{
 			Name:        "interactiveLearning",
@@ -2279,10 +2240,10 @@ var (
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
@@ -2386,15 +2347,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "opentsdbBackendMigration",
-			Description:     "Run queries through the data source backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDataSourcesPlugins,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "ttlPluginInstanceManager",
 			Description: "Enable TTL plugin instance manager",
 			Stage:       FeatureStageExperimental,
@@ -2437,14 +2389,6 @@ var (
 			Generate:     Generate{React: true},
 			Expression:   "false",
 			HideFromDocs: true,
-		},
-		{
-			Name:        "multiPropsVariables",
-			Description: "Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardSectionVariables",
@@ -2517,7 +2461,7 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
@@ -2701,15 +2645,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "frontendServiceUseSettingsService",
-			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "frontendService.settingsSourceFilter",
 			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
 			Stage:        FeatureStageExperimental,
@@ -2837,7 +2772,7 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:         "plugins.useMTPluginSettings",
@@ -2978,7 +2913,7 @@ var (
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
+			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -3046,24 +2981,6 @@ var (
 			Generate:    Generate{React: false, Go: true, LegacyGo: true, LegacyFrontend: false},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
-		},
-		{
-			Name:         "grafana.meticulousAIRecorder",
-			Description:  "Enable Meticulous AI session recorder for automated UI test generation",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{Go: true},
-		},
-		{
-			Name:         "grafana.meticulousAIRecorderHighVolume",
-			Description:  "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "grafana.meticulousAIMode",
@@ -3177,6 +3094,50 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
+		},
+		{
+			Name:         "splunk.useLegacyResultsApi",
+			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "table.protoRowParser",
+			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.refactorNested",
+			Description:  "Enables the refactored TableNG nested-table implementation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "dataviz.experimentalColorSchemes",
+			Description:  "Enables additional experimental color schemes for visualizations.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.customizableMegaMenu",
+			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

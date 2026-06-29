@@ -124,6 +124,7 @@ func NewAppInstaller(
 		folderResolver: folderResolver,
 		installer:      installer,
 		snowflakeNode:  sfNode,
+		maxScopeCount:  cfg.MaxScopeCount,
 		tracer:         installer.tracer,
 		metrics:        installer.metrics,
 		logger:         logger,
@@ -134,7 +135,7 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := newTagsHandler(tagProvider, installer.tracer, installer.metrics, logger)
+	tagHandler := newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger)
 
 	// Create the search handler
 	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)

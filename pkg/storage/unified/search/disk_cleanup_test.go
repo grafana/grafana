@@ -127,7 +127,7 @@ func TestRunDiskCleanup_OwnedResource_KeepsCachedActive(t *testing.T) {
 	// its Name() like it would in production. Sibling "20240101-000000" stays
 	// a bare directory — it would normally be a stale leftover that the sweep
 	// is meant to clean up.
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, nil, "", "", nil)
 	require.NoError(t, err)
 	activeDir := filepath.Join(resourceDir, "20240301-120000")
 	activeIdx, err := newBleveIndex(activeDir, mapper, time.Now(), buildVersion, nil, "")
@@ -168,7 +168,7 @@ func TestRunDiskCleanup_UnownedResource_KeepsCachedActive(t *testing.T) {
 	resourceDir := b.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, nil, "", "", nil)
 	require.NoError(t, err)
 	activeDir := filepath.Join(resourceDir, "20240301-120000")
 	activeIdx, err := newBleveIndex(activeDir, mapper, time.Now(), buildVersion, nil, "")
