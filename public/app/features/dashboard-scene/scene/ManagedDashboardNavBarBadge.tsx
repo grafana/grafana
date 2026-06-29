@@ -27,7 +27,7 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   const isOrphaned = kind === ManagerKind.Repo && isError && isFetchError(error) && error.status === 404;
 
   return (
-    <Stack direction="row" alignItems="stretch">
+    <Stack direction="row" alignItems="center">
       <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />
       <ViewRepositoryButton repositoryName={kind === ManagerKind.Repo ? id : undefined} isOrphaned={isOrphaned} />
     </Stack>
