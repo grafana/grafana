@@ -183,6 +183,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
+	_ "github.com/grafana/grafana/pkg/infra/nats"
 	_ "github.com/grafana/grafana/pkg/infra/process"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
