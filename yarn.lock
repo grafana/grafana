@@ -10442,7 +10442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:6.15.3, @types/systemjs@npm:^6.15.3":
+"@types/systemjs@npm:6.15.3":
   version: 6.15.3
   resolution: "@types/systemjs@npm:6.15.3"
   checksum: 10/c2e6d7b3d83282657074e0b2d5bfcd6e4923f02d659e7bd3bca215466aee1960a444243d0f97dd26e8843a45e2b34ee33ecac39efb4e419ce2dc8f8f7fb03472
