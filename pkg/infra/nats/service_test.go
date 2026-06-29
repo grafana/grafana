@@ -30,7 +30,7 @@ func TestService_ExternalModeHealth(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
 		Enabled:    true,
-		Embedded:   false,
+		Mode:       setting.NATSModeExternal,
 		ClientURLs: []string{"nats://example:4222"},
 	}
 
@@ -62,7 +62,7 @@ func TestService_DskitLifecycle_Disabled(t *testing.T) {
 
 func TestService_EmbeddedHealthFailsBeforeStart(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.NATS = setting.NATSSettings{Enabled: true, Embedded: true, Discovery: "none"}
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded, Discovery: "none"}
 
 	s, err := ProvideService(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)

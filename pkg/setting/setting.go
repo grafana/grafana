@@ -1590,6 +1590,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := readNATSSettings(cfg); err != nil {
+		return err
+	}
+
 	if err := cfg.readProvisioningSettings(iniFile); err != nil {
 		return err
 	}

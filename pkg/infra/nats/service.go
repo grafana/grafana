@@ -59,7 +59,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, reg prometheu
 	}
 
 	// Discovery is only needed for the embedded clustered topology.
-	if cfg.NATS.Enabled && cfg.NATS.Embedded && cfg.NATS.Discovery == "auto" {
+	if cfg.NATS.Enabled && cfg.NATS.Embedded() && cfg.NATS.Discovery == "auto" {
 		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
 		if err != nil {
 			return nil, fmt.Errorf("create nats discovery kv: %w", err)
@@ -96,7 +96,7 @@ func (s *Service) starting(ctx context.Context) error {
 		return nil
 	}
 
-	if s.cfg.Embedded {
+	if s.cfg.Embedded() {
 		if err := s.startEmbeddedServer(ctx); err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (s *Service) starting(ctx context.Context) error {
 		return fmt.Errorf("nats is enabled but no client urls are available")
 	}
 
-	s.log.Info("nats platform started", "embedded", s.cfg.Embedded, "client_urls", s.ClientURLs())
+	s.log.Info("nats platform started", "mode", s.cfg.Mode, "client_urls", s.ClientURLs())
 	return nil
 }
 
@@ -131,7 +131,7 @@ func (s *Service) Health(_ context.Context) error {
 	if len(s.ClientURLs()) == 0 {
 		return fmt.Errorf("nats has no client urls available")
 	}
-	if s.cfg.Embedded {
+	if s.cfg.Embedded() {
 		s.mu.RLock()
 		server := s.server
 		s.mu.RUnlock()

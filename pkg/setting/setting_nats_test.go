@@ -15,10 +15,11 @@ func TestReadNATSSettings(t *testing.T) {
 		require.NoError(t, err)
 		cfg.Raw = f
 
-		readNATSSettings(cfg)
+		require.NoError(t, readNATSSettings(cfg))
 
 		require.False(t, cfg.NATS.Enabled)
-		require.True(t, cfg.NATS.Embedded)
+		require.Equal(t, NATSModeEmbedded, cfg.NATS.Mode)
+		require.True(t, cfg.NATS.Embedded())
 		require.Equal(t, "127.0.0.1", cfg.NATS.ListenAddress)
 		require.Equal(t, 4222, cfg.NATS.ClientPort)
 		require.Equal(t, 6222, cfg.NATS.ClusterPort)
@@ -34,7 +35,7 @@ func TestReadNATSSettings(t *testing.T) {
 		f, err := ini.Load([]byte(`
 [nats]
 enabled = true
-embedded = false
+mode = external
 client_urls = nats://a:4222, nats://b:4222
 tls_enabled = true
 tls_ca_cert_path = /etc/ca.pem
@@ -44,15 +45,25 @@ publisher_credentials_file = /etc/pub.creds
 		require.NoError(t, err)
 		cfg.Raw = f
 
-		readNATSSettings(cfg)
+		require.NoError(t, readNATSSettings(cfg))
 
 		require.True(t, cfg.NATS.Enabled)
-		require.False(t, cfg.NATS.Embedded)
+		require.Equal(t, NATSModeExternal, cfg.NATS.Mode)
+		require.False(t, cfg.NATS.Embedded())
 		require.Equal(t, []string{"nats://a:4222", "nats://b:4222"}, cfg.NATS.ClientURLs)
 		require.True(t, cfg.NATS.TLS.Enabled)
 		require.Equal(t, "/etc/ca.pem", cfg.NATS.TLS.CACertPath)
 		require.Equal(t, "s3cret", cfg.NATS.Auth.Token)
 		require.Equal(t, "/etc/pub.creds", cfg.NATS.Auth.PublisherCredentialsFile)
+	})
+
+	t.Run("rejects invalid mode", func(t *testing.T) {
+		cfg := NewCfg()
+		f, err := ini.Load([]byte("[nats]\nmode = bogus\n"))
+		require.NoError(t, err)
+		cfg.Raw = f
+
+		require.Error(t, readNATSSettings(cfg))
 	})
 }
 
