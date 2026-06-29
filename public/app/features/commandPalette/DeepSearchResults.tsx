@@ -169,6 +169,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       color: theme.colors.text.primary,
       outline: 'none',
+      // The card is an <a>, so it inherits the global `a:focus-visible` box-shadow
+      // ring. Suppress it — we render our own focus indicator (the gradient bar below).
+      '&:focus-visible': {
+        outline: 'none',
+        boxShadow: 'none',
+      },
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
