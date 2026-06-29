@@ -223,6 +223,30 @@ func TestCascadeDelete_DeletesDashboardsAcrossPages(t *testing.T) {
 	}
 }
 
+func TestCascadeDelete_PropagatesDeleteOptionsToDashboards(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	// Capture the options the dashboard delete is called with.
+	var got metav1.DeleteOptions
+	dyn.PrependReactor("delete", "dashboards", func(a k8stesting.Action) (bool, runtime.Object, error) {
+		got = a.(k8stesting.DeleteActionImpl).DeleteOptions
+		return false, nil, nil
+	})
+
+	opts := forceDelete()
+	opts.DryRun = []string{metav1.DryRunAll}
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{metav1.DryRunAll}, got.DryRun)
+	require.NotNil(t, got.GracePeriodSeconds)
+	require.Equal(t, int64(0), *got.GracePeriodSeconds)
+}
+
 func TestCascadeDelete_DashboardNotFoundTolerated(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 

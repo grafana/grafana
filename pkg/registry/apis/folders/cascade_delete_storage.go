@@ -88,7 +88,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	}
 
 	// Remove the dashboards contained directly in this folder before deleting the folder itself.
-	if err := s.deleteDashboardsInFolder(ctx, namespace, name); err != nil {
+	if err := s.deleteDashboardsInFolder(ctx, namespace, name, options); err != nil {
 		return nil, false, err
 	}
 
@@ -105,7 +105,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 // folderUID. Deletes go through the dashboard apiserver (so its admission and delete hooks run); a
 // NotFound for an individual dashboard is treated as already-done so the sweep is idempotent and
 // resumable.
-func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string) error {
+func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error {
 	svc, err := s.dashboardClient(ctx)
 	if err != nil {
 		return fmt.Errorf("get dashboard client: %w", err)
@@ -116,6 +116,14 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 	}
 	client := (*svc).Namespace(namespace)
 
+	// Carry dry-run and the force opt-in to dashboard deletes; folder-specific preconditions don't
+	// apply to dashboards so they are not propagated.
+	dashOpts := metav1.DeleteOptions{}
+	if options != nil {
+		dashOpts.DryRun = options.DryRun
+		dashOpts.GracePeriodSeconds = options.GracePeriodSeconds
+	}
+
 	// Enumerate fully before deleting: offset paging is only valid against a stable collection, and
 	// deleting mid-pagination would shift later pages and skip dashboards.
 	names, err := s.dashboardsInFolder(ctx, namespace, folderUID)
@@ -124,7 +132,7 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 	}
 
 	for _, name := range names {
-		if err := client.Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		if err := client.Delete(ctx, name, dashOpts); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("delete dashboard %q: %w", name, err)
 		}
 	}
