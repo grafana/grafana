@@ -1107,7 +1107,7 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 					},
 					Stats: []provisioning.ResourceCount{
 						{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 40},
-						{Group: "folders.grafana.app", Resource: "folders", Count: 56},
+						{Group: "folder.grafana.app", Resource: "folders", Count: 56},
 					},
 				},
 			},

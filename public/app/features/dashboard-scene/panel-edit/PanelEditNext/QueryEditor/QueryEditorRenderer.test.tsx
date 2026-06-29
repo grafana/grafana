@@ -95,9 +95,10 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByText(/loading datasource/i)).toBeInTheDocument();
   });
 
-  it('shows an error when the datasource fails to load', () => {
+  it('shows an actionable error when the datasource fails to load', () => {
     renderRenderer(queryA, { selectedQueryDsData: null });
     expect(screen.getByText(/failed to load datasource for this query/i)).toBeInTheDocument();
+    expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
   });
 
   it('renders the query editor for the selected query', () => {

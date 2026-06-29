@@ -356,7 +356,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

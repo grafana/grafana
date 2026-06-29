@@ -693,7 +693,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 }
 
-export function getPluginVersion(plugin: PanelPlugin): string {
+function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 

@@ -206,7 +206,7 @@ export function useCanSilenceInFolder(folderUID?: string): boolean {
 }
 
 /** Returns the RBAC `accessControl` map for a folder. */
-export function useFolderPermissions(folderUID?: string): Record<string, boolean> {
+function useFolderPermissions(folderUID?: string): Record<string, boolean> {
   const { folder } = useFolder(folderUID);
   return folder?.accessControl ?? {};
 }

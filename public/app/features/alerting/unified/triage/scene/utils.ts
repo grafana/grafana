@@ -101,7 +101,7 @@ export function removeFilter(sceneContext: SceneObject, key: string) {
   }
 }
 
-export function clearAllFilters(sceneContext: SceneObject) {
+function clearAllFilters(sceneContext: SceneObject) {
   const filtersVariable = sceneGraph.lookupVariable(VARIABLES.filters, sceneContext);
   if (filtersVariable instanceof AdHocFiltersVariable) {
     // Preserve groupBy entries — only clear regular (non-groupBy) filters.

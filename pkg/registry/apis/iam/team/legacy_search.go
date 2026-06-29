@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
+	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -139,6 +140,13 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
+		if field == teamsearch.LegacyIDField {
+			columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+				Name: teamsearch.LegacyIDField,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			})
+			continue
+		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
@@ -159,6 +167,10 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
+		if field == teamsearch.LegacyIDField {
+			cells = append(cells, []byte(strconv.FormatInt(t.ID, 10)))
+			continue
+		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:

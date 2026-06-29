@@ -315,7 +315,7 @@ export class DatasourceAPIVersions {
   }
 }
 
-export const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
+const parseListOptionsSelector = (selector: ListOptionsLabelSelector | ListOptionsFieldSelector | undefined) => {
   if (!Array.isArray(selector)) {
     return selector;
   }

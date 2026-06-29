@@ -11,7 +11,7 @@ type WizardContextProps<T> = {
   CurrentPageComponent: React.ComponentType;
 };
 
-export const WizardContext = createContext<WizardContextProps<FieldValues> | undefined>(undefined);
+const WizardContext = createContext<WizardContextProps<FieldValues> | undefined>(undefined);
 
 /**
  * Dependencies provided to Wizard component required to build WizardContext

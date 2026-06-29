@@ -26,7 +26,7 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
-export class SharedPreferences extends PureComponent<Props, State> {
+class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];

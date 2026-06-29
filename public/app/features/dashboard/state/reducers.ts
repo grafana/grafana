@@ -41,11 +41,6 @@ const dashboardSlice = createSlice({
         );
       };
     },
-    cleanUpDashboard: (state) => {
-      state.initPhase = DashboardInitPhase.NotStarted;
-      state.initError = null;
-      state.getModel = () => null;
-    },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
@@ -59,9 +54,7 @@ export const {
   dashboardInitFetching,
   dashboardInitFailed,
   dashboardInitCompleted,
-  dashboardInitServices,
-  cleanUpDashboard,
-  addPanel,
+
   setInitialDatasource,
 } = dashboardSlice.actions;
 

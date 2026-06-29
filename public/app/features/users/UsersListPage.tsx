@@ -116,11 +116,3 @@ export const UsersListPageUnconnected = ({
 };
 
 export const UsersListPageContent = connector(UsersListPageUnconnected);
-
-export default function UsersListPage() {
-  return (
-    <Page navId="users">
-      <UsersListPageContent />
-    </Page>
-  );
-}

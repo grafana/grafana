@@ -29,7 +29,7 @@ export class AddNewEditPane extends SceneObjectBase {
   }
 }
 
-export function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
+function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);

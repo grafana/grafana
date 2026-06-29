@@ -46,8 +46,3 @@ export function merge(callbacks: ShortcutCallbacks) {
     }
   });
 }
-
-export function reset() {
-  const combokeys = getInstance();
-  combokeys.reset();
-}

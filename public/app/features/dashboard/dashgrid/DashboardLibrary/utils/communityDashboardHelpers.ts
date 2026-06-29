@@ -22,7 +22,6 @@ import { type GnetDashboard, type Link } from '../types';
 import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 import type { AssistantSource } from './templateDashboardHelpers';
 
-export const SEARCH_DEBOUNCE_MS = 500;
 export const DEFAULT_SORT_ORDER = 'downloads';
 export const DEFAULT_SORT_DIRECTION = 'desc';
 export const INCLUDE_LOGO = true;
@@ -50,7 +49,7 @@ export function getLogoUrl(dashboard: GnetDashboard): string {
 /**
  * Format date string for display
  */
-export function formatDate(dateString?: string): string {
+function formatDate(dateString?: string): string {
   if (!dateString) {
     return 'N/A';
   }

@@ -15,7 +15,7 @@ interface Props {
 
 const { disableLoginForm } = config;
 
-export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
+const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
   const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
     updateProfile(data);
   };

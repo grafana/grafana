@@ -9,6 +9,12 @@ export class PanelOptions extends PageObject {
     );
   }
 
+  async setTitle(title: string) {
+    await test.step(`Set panel title to "${title}"`, async () => {
+      await this.getTitleInput().fill(title);
+    });
+  }
+
   getDescriptionTextarea() {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))

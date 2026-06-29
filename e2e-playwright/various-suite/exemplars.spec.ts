@@ -34,10 +34,10 @@ test.describe(
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
       await dataSourcePicker.click();
 
-      const tempoOption = page.getByText('gdev-tempo');
-      await tempoOption.scrollIntoViewIfNeeded();
-      await expect(tempoOption).toBeVisible();
-      await tempoOption.click();
+      const jaegerOption = page.getByText('gdev-jaeger');
+      await jaegerOption.scrollIntoViewIfNeeded();
+      await expect(jaegerOption).toBeVisible();
+      await jaegerOption.click();
 
       // Save the data source
       const saveAndTestButton = page.getByTestId(selectors.pages.DataSource.saveAndTest);
@@ -49,7 +49,7 @@ test.describe(
       await page.goto('/');
     });
 
-    test('should be able to navigate to configured data source', async ({ page, selectors }) => {
+    test('should be able to navigate to configured data source', async ({ page, selectors, components }) => {
       // Mock API responses
       await page.route(/api\/ds\/query/, async (route) => {
         const postData = route.request().postDataJSON();
@@ -61,7 +61,7 @@ test.describe(
             contentType: 'application/json',
             body: JSON.stringify(require('../fixtures/exemplars-query-response.json')),
           });
-        } else if (datasourceType === 'tempo') {
+        } else if (datasourceType === 'jaeger') {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -76,14 +76,7 @@ test.describe(
       await page.goto('/explore');
 
       // Select data source
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByText(dataSourceName);
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(dataSourceName);
 
       // Switch to code editor
       const codeRadioButton = page.getByTestId(selectors.components.RadioButton.container).filter({ hasText: 'Code' });
@@ -124,7 +117,7 @@ test.describe(
       const exemplarMarker = page.getByTestId(selectors.components.DataSource.Prometheus.exemplarMarker).first();
       await exemplarMarker.hover();
 
-      const queryWithTempoLink = page.getByText('Query with gdev-tempo');
+      const queryWithTempoLink = page.getByText('Query with gdev-jaeger');
       await queryWithTempoLink.click();
 
       // Verify trace viewer has span bars

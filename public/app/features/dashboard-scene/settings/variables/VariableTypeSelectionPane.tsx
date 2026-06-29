@@ -51,7 +51,7 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
   }
 }
 
-export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
+function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = getDashboardSceneFor(model);
@@ -153,7 +153,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   );
 }
 
-export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
+function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 

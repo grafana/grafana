@@ -92,7 +92,7 @@ export async function buildShareUrl(
   return shareUrl;
 }
 
-export function buildSoloUrl(
+function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
@@ -163,7 +163,7 @@ export function buildIframeHtml(
   return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
-export function getLocalTimeZone() {
+function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API

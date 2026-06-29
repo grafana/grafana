@@ -124,15 +124,27 @@ export function useSelectionState({
   // to seed stale ids into the bulk set.
   useEffect(() => {
     if (activeQueryRefId !== null && !queries.some((q) => q.refId === activeQueryRefId)) {
-      setActiveQueryRefId(queries[0]?.refId ?? null);
+      const nextQueryRefId = queries[0]?.refId ?? null;
+      setActiveQueryRefId(nextQueryRefId);
+      // No queries left: fall back to the first transformation so a card stays
+      // active (and gets seeded into multi-select on re-entry).
+      if (nextQueryRefId === null) {
+        setActiveTransformationId(transformations[0]?.transformId ?? null);
+      }
     }
-  }, [queries, activeQueryRefId]);
+  }, [queries, activeQueryRefId, transformations]);
 
   useEffect(() => {
     if (activeTransformationId !== null && !transformations.some((t) => t.transformId === activeTransformationId)) {
-      setActiveTransformationId(null);
+      const nextTransformationId = transformations[0]?.transformId ?? null;
+      setActiveTransformationId(nextTransformationId);
+      // No transformations left: fall back to the first query so a card stays
+      // active (and gets seeded into multi-select on re-entry).
+      if (nextTransformationId === null) {
+        setActiveQueryRefId(queries[0]?.refId ?? null);
+      }
     }
-  }, [transformations, activeTransformationId]);
+  }, [transformations, activeTransformationId, queries]);
 
   const onCardSelectionChange = useCallback(
     (queryRefId: string | null, transformationId: string | null, options?: { seedBulk?: boolean }) => {
@@ -203,10 +215,10 @@ export function useSelectionState({
     }
 
     if (modifiers?.multi) {
+      // Unchecking the last card is allowed — multi-select stays active with an empty set so the
+      // user can keep building a fresh selection without leaving the mode.
       const next = currentSelection.includes(query.refId)
-        ? currentSelection.length === 1
-          ? currentSelection
-          : currentSelection.filter((id) => id !== query.refId)
+        ? currentSelection.filter((id) => id !== query.refId)
         : [...currentSelection, query.refId];
       setSelectedQueryRefIds(next);
       // Pin the anchor to the toggled card; everything else becomes the base a later Shift extends.
@@ -242,10 +254,10 @@ export function useSelectionState({
       }
 
       if (modifiers?.multi) {
+        // Unchecking the last card is allowed — multi-select stays active with an empty set so the
+        // user can keep building a fresh selection without leaving the mode.
         const next = currentSelection.includes(transformation.transformId)
-          ? currentSelection.length === 1
-            ? currentSelection
-            : currentSelection.filter((id) => id !== transformation.transformId)
+          ? currentSelection.filter((id) => id !== transformation.transformId)
           : [...currentSelection, transformation.transformId];
         setSelectedTransformationIds(next);
         transformationAnchorRef.current = transformation.transformId;
@@ -309,7 +321,18 @@ export function useSelectionState({
 
   const removeTransformationFromSelection = useCallback((transformId: string) => {
     setSelectedTransformationIds((current) => current.filter((id) => id !== transformId));
-    setActiveTransformationId((current) => (current === transformId ? null : current));
+    if (activeTransformationIdRef.current === transformId) {
+      const remaining = transformationsRef.current.filter((t) => t.transformId !== transformId);
+      if (remaining.length > 0) {
+        // Stay within transformations: promote the next one so a real card stays active.
+        setActiveTransformationId(remaining[0].transformId);
+      } else {
+        // No transformations left — promote the first query so re-entering multi-select seeds a
+        // real, checkable card instead of useSelectedCard's display-only fallback.
+        setActiveTransformationId(null);
+        setActiveQueryRefId(queriesRef.current[0]?.refId ?? null);
+      }
+    }
     if (transformationAnchorRef.current === transformId) {
       transformationAnchorRef.current = null;
     }

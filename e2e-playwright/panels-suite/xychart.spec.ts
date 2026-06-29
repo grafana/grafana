@@ -88,6 +88,28 @@ test.describe('Panels test: XYChart', { tag: ['@panels', '@xychart'] }, () => {
     await expect(pointSizeLabel, 'point size option is visible').toBeVisible();
   });
 
+  // Coloring points by a field value compiles per-value color functions via `new Function(...)`
+  // in scatter.ts (fieldValueColors). These panels exercise that path: thresholds (panel 13)
+  // and value mappings (panel 14). Both render only if the compiled functions execute, so a
+  // blocked `unsafe-eval` CSP would surface here as a panel error / missing uplot.
+  for (const { id, title } of [
+    { id: '13', title: 'Color by field (threshold)' },
+    { id: '14', title: 'Color by field (value mappings)' },
+  ]) {
+    test(`renders points colored by field value (${title})`, async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: id }),
+      });
+
+      const xyChartUplot = page.locator('.uplot');
+      await expect(xyChartUplot, 'xychart uplot renders with field-value coloring').toBeVisible();
+
+      const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
+      await expect(errorInfo, 'no error in the panel').toBeHidden();
+    });
+  }
+
   test('tooltip interactions', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,

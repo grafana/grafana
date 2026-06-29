@@ -65,7 +65,7 @@ export function addCustomRightAction(content: DynamicDashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const DashNav = memo<Props>((props) => {
+const DashNav = memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
@@ -300,8 +300,6 @@ export const DashNav = memo<Props>((props) => {
 });
 
 DashNav.displayName = 'DashNav';
-
-export default connector(DashNav);
 
 const modalStyles = css({
   width: 'max-content',

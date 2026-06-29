@@ -122,7 +122,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {

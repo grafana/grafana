@@ -15,7 +15,7 @@ export interface RepositoryTypeConfig {
   logo?: string;
 }
 
-export const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
+const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
   {
     type: 'git',
     label: t('provisioning.repository-types.pure-git', 'Pure Git'),

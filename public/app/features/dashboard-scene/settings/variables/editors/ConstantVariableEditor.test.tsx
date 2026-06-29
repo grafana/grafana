@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ConstantVariable } from '@grafana/scenes';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { ConstantVariableEditor, getConstantVariableOptions } from './ConstantVariableEditor';
 
@@ -40,6 +41,45 @@ describe('ConstantVariableEditor', () => {
   it('should get variable options', () => {
     const options = getConstantVariableOptions(constantVar);
     expect(options).toHaveLength(1);
+  });
+
+  it('shows the correct value when switching between constants with the same name', async () => {
+    const constant1 = new ConstantVariable({
+      name: 'env',
+      type: 'constant',
+      value: 'prod',
+      key: 'constant-key-1',
+    });
+    const constant2 = new ConstantVariable({
+      name: 'env',
+      type: 'constant',
+      value: 'staging',
+      key: 'constant-key-2',
+    });
+
+    const renderOptionsInput = (variable: ConstantVariable) => {
+      const descriptor = getConstantVariableOptions(variable)[0];
+      descriptor.parent = new OptionsPaneCategoryDescriptor({
+        id: 'mock-parent-id',
+        title: 'Mock Parent',
+      });
+      return render(descriptor.renderElement());
+    };
+
+    const { unmount } = renderOptionsInput(constant1);
+    expect(screen.getByRole('textbox')).toHaveValue('prod');
+
+    unmount();
+    renderOptionsInput(constant2);
+    expect(screen.getByRole('textbox')).toHaveValue('staging');
+
+    const input = screen.getByRole('textbox');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'dev');
+    await userEvent.tab();
+
+    expect(constant2.state.value).toBe('dev');
+    expect(constant1.state.value).toBe('prod');
   });
 });
 

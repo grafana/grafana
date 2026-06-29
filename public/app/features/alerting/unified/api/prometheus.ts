@@ -26,7 +26,7 @@ interface PrometheusDataSourceConfig {
   identifier?: RuleIdentifier;
 }
 
-export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
+function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
   const { dataSourceName, limitAlerts, identifier } = dataSourceConfig;
 
   return {

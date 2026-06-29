@@ -74,7 +74,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   );
 });
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     controls: css({
       display: 'flex',

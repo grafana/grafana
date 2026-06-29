@@ -119,7 +119,12 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	selector := labels.SelectorFromSet(labels.Set{
 		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10),
 	})
-	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	// Resolve the user with a service identity: the caller is already authorized
+	// for the team membership operation (e.g. teams.permissions:write) but may
+	// lack users:list (e.g. a team admin), which would otherwise fail the lookup.
+	// Mirrors the legacy SQL lookup, which needed no users:list.
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	result, err := client.List(svcCtx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return "", err
 	}
@@ -635,7 +640,12 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 		if hit.MemberCount != nil {
 			memberCount = *hit.MemberCount
 		}
+		var id int64
+		if hit.InternalId != nil {
+			id = *hit.InternalId
+		}
 		teams = append(teams, &team.TeamDTO{
+			ID:            id,
 			UID:           hit.Name,
 			OrgID:         query.OrgID,
 			Name:          hit.Title,

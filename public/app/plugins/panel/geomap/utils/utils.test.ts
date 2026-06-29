@@ -34,7 +34,10 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
-import { hasVariableDependencies, hasLayerData, isSegmentVisible } from './utils';
+import { type GeomapPanel } from '../GeomapPanel';
+import { type MapLayerState } from '../types';
+
+import { hasVariableDependencies, hasLayerData, isSegmentVisible, getNextLayerName } from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -184,6 +187,39 @@ describe('hasLayerData', () => {
     },
   ])('$name', ({ createLayer, expected }) => {
     expect(hasLayerData(createLayer())).toBe(expected);
+  });
+});
+
+describe('getNextLayerName', () => {
+  function panelWith(layerCount: number, takenNames: string[] = []): GeomapPanel {
+    const byName = new Map<string, MapLayerState>();
+    for (const n of takenNames) {
+      byName.set(n, {} as MapLayerState);
+    }
+    return { layers: new Array(layerCount).fill({}), byName } as unknown as GeomapPanel;
+  }
+
+  it('returns the first available name starting at panel.layers.length', () => {
+    const name = getNextLayerName(panelWith(0));
+    // i18n in jest returns the fallback template with interpolation: "Layer 0".
+    expect(name).toMatch(/\b0\b/);
+  });
+
+  it('skips a name that is already present in byName', () => {
+    const occupied = getNextLayerName(panelWith(1));
+    const second = getNextLayerName(panelWith(1, [occupied]));
+    expect(second).not.toBe(occupied);
+    expect(second).toMatch(/\b2\b/);
+  });
+
+  it('falls back to a Date.now()-based name once 100 layers exist', () => {
+    const before = Date.now();
+    const name = getNextLayerName(panelWith(100));
+    const after = Date.now();
+    // The numeric portion of the returned name should be the timestamp captured during the call.
+    const numeric = Number(name.match(/\d+/)?.[0] ?? NaN);
+    expect(numeric).toBeGreaterThanOrEqual(before);
+    expect(numeric).toBeLessThanOrEqual(after);
   });
 });
 

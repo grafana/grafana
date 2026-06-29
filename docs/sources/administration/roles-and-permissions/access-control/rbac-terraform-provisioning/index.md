@@ -46,6 +46,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#to-add-a-token-to-a-service-account
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#to-add-a-token-to-a-service-account
+  plan-rbac-rollout-strategy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
+  manage-rbac-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/
+  custom-role-actions-scopes:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
 # Provisioning RBAC with Terraform
@@ -56,13 +71,17 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
+Before you provision roles and assignments, decide which roles to create and how to assign them to users and teams. For planning guidance, refer to [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
+
 ## Before you begin
 
 - Ensure you have the grafana/grafana [Terraform provider](https://registry.terraform.io/providers/grafana/grafana/) 1.29.0 or higher.
 
 - Ensure you are using Grafana 9.2 or higher.
 
-## Create a Service Account Token for provisioning
+- Decide how to authenticate the provider. We recommend a [service account token](ref:service-accounts) for self-managed Grafana and Grafana Cloud. For more information, refer to [Create a service account token for provisioning](#create-a-service-account-token-for-provisioning).
+
+## Create a service account token for provisioning
 
 We recommend using service account tokens for provisioning. [Service accounts](ref:service-accounts) support fine grained permissions, which allows you to easily authenticate and use the minimum set of permissions needed to provision your RBAC infrastructure.
 
@@ -74,33 +93,47 @@ To create a service account token for provisioning, complete the following steps
    - Alternatively, you can assign "Admin" basic role to the service account.
 1. [Create a new service account token](ref:service-accounts-to-add-a-token-to-a-service-account) for use in Terraform.
 
-Alternatively, you can use basic authentication. To view all the supported authentication formats, see [here](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
+Alternatively, you can use basic authentication. To view all the supported authentication formats, refer to the [provider authentication documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
 ## Configure the Terraform provider
 
 RBAC support is included as part of the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-The following is an example you can use to configure the Terraform provider.
+The following example configures the provider. To keep your service account token out of source control, set the credentials with the `GRAFANA_URL` and `GRAFANA_AUTH` environment variables instead of hardcoding them in the configuration:
 
 ```terraform
 terraform {
-    required_providers {
-        grafana = {
-            source = "grafana/grafana"
-            version = ">= 1.29.0"
-        }
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = ">= 1.29.0"
     }
+  }
 }
 
-provider "grafana" {
-    url = <YOUR_GRAFANA_URL>
-    auth = <YOUR_GRAFANA_SERVICE_ACCOUNT_TOKEN>
-}
+# Reads credentials from the GRAFANA_URL and GRAFANA_AUTH environment variables
+provider "grafana" {}
 ```
+
+Export the environment variables before you run Terraform:
+
+```bash
+export GRAFANA_URL="<GRAFANA_URL>"
+export GRAFANA_AUTH="<SERVICE_ACCOUNT_TOKEN>"
+```
+
+Replace the following placeholders:
+
+- _`<GRAFANA_URL>`_: The base URL of your Grafana instance, for example `https://<YOUR_STACK_NAME>.grafana.net` on Grafana Cloud or `http://localhost:3000` for a local instance.
+- _`<SERVICE_ACCOUNT_TOKEN>`_: A service account token with permission to manage the roles and assignments that you provision, for example `glsa_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`.
+
+Alternatively, set the `url` and `auth` attributes directly in the `provider` block. To view all the supported authentication formats, refer to the [provider authentication documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 
 ## Provision basic roles
 
 Basic roles (`None`, `Viewer`, `Editor`, `Admin`, and `Grafana Admin`) correspond to a user's or service account's organization role. A basic role's permissions are derived from the organization role, so you manage basic roles by setting the organization role rather than by creating an RBAC role assignment. The `grafana_role_assignment` resource only assigns fixed and custom roles.
+
+To change which permissions a basic role grants, rather than who has the role, edit the basic role's permissions instead. For more information, refer to [Manage RBAC roles](ref:manage-rbac-roles).
 
 {{< admonition type="note" >}}
 Assigning a basic role such as `basic_admin` with `grafana_role_assignment` fails with the error `this endpoint cannot be used to assign basic, managed or external services roles`.
@@ -158,37 +191,42 @@ The following example shows how to provision a custom role with some permissions
 
 ```terraform
 resource "grafana_role" "my_new_role" {
-  name  = "my_new_role"
-  description = "My test role"
-  version = 1
-  uid = "newroleuid"
-  global = false
+  name        = "custom:users:manager"
+  description = "Manage organization users and teams"
+  uid         = "customusersmanager"
+  version     = 1
+  global      = false
 
+  # Manage organization users
+  permissions {
+    action = "org.users:read"
+    scope  = "users:*"
+  }
   permissions {
     action = "org.users:add"
-    scope = "users:*"
+    scope  = "users:*"
   }
   permissions {
     action = "org.users:write"
-    scope = "users:*"
+    scope  = "users:*"
+  }
+
+  # Manage teams
+  permissions {
+    action = "teams:create"
   }
   permissions {
-    action = "org.users:read"
-    scope = "users:*"
+    action = "teams:read"
+    scope  = "teams:*"
   }
   permissions {
-	  action = "teams:create"
-  }
-  permissions {
-	  action = "teams:read"
-	  scope = "teams:*"
-  }
-  permissions {
-	  action = "teams:write"
-	  scope = "teams:*"
+    action = "teams:write"
+    scope  = "teams:*"
   }
 }
 ```
+
+For a reference of the available actions and scopes that you can grant in a custom role, refer to [RBAC actions and scopes](ref:custom-role-actions-scopes).
 
 2. Run the command `terraform apply`.
 3. Go to Grafana's UI and check that the new role appears in the role picker:
@@ -238,8 +276,9 @@ Note that instead of using a provisioned role, you can also look up the `uid` of
 You can use the [API endpoint for listing roles](ref:api-rbac-create-and-manage-custom-roles) to look up role `uid`s.
 Similarly, you can look up and use `id`s of users, teams and service accounts that have not been provisioned to assign roles to them.
 
-## Useful Links
+## Useful links
 
-[RBAC setup with Grafana provisioning](ref:rbac-grafana-provisioning)
-
-[Grafana Cloud Terraform provisioning](/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/)
+- [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy)
+- [Manage RBAC roles](ref:manage-rbac-roles)
+- [RBAC setup with Grafana provisioning](ref:rbac-grafana-provisioning)
+- [Grafana Cloud Terraform provisioning](/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/)

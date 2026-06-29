@@ -270,7 +270,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:
@@ -377,14 +377,12 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         token: ${{ steps.get-github-app-token.outputs.token }}
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Run knip
-      # TODO reduce this to just `yarn run knip`
-      run: |
-        yarn run knip --workspace '@grafana/*'
-        yarn run knip --workspace '@test-plugins/*'
-        yarn run knip --workspace '@grafana-plugins/*'
+      run: yarn run knip
 
   yarn-install-validation:
     needs:

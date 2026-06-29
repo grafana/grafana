@@ -19,7 +19,7 @@ import (
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",
@@ -61,7 +61,7 @@ func TestDocumentMapping(t *testing.T) {
 }
 
 func TestTermVectorsAndFreqNorm(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	data := resource.IndexableDocument{
@@ -83,6 +83,8 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	require.NoError(t, err)
 
 	// Keyword/exact-match fields must skip freq/norm (no BM25 scoring needed).
+	// description is in this bucket because the field is not scored today; the
+	// SkipFreqNorm:true on its text mapping is an index-size optimization.
 	mustSkipFreqNorm := map[string]bool{
 		resource.SEARCH_FIELD_NAME:             true,
 		resource.SEARCH_FIELD_TITLE_PHRASE:     true,
@@ -132,7 +134,7 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 }
 
 func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	idx, err := bleve.NewUsing(t.TempDir(), mappings, bleve.Config.DefaultIndexType, bleve.Config.DefaultKVStore, nil)
@@ -200,7 +202,7 @@ func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
 
 func TestDocValuesConfiguration(t *testing.T) {
 	t.Run("DocValuesDynamic is disabled", func(t *testing.T) {
-		mappings, err := search.GetBleveMappings(nil, nil)
+		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
 		impl, ok := mappings.(*mapping.IndexMappingImpl)
@@ -209,7 +211,7 @@ func TestDocValuesConfiguration(t *testing.T) {
 	})
 
 	t.Run("only folder and title_phrase have DocValues", func(t *testing.T) {
-		mappings, err := search.GetBleveMappings(nil, nil)
+		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
 		data := resource.IndexableDocument{

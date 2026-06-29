@@ -7,7 +7,7 @@ import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
 import { QueryEditorType, type SidebarSize } from '../../constants';
-import { trackSidebarViewChange } from '../../tracking';
+import { trackSidebarViewChange, trackStackedViewToggle } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getSelectedStackedItem } from '../StackedEditor/utils';
 import { EMPTY_ALERT } from '../types';
@@ -46,6 +46,16 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
   };
 
+  const handleStackedModeToggle = () => {
+    if (stackedMode.enabled) {
+      trackStackedViewToggle('exit');
+      stackedMode.exit();
+    } else {
+      trackStackedViewToggle('enter');
+      stackedMode.enter();
+    }
+  };
+
   const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;
 
   const alertsLabel = loading
@@ -68,27 +78,35 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
 
   return (
     <div className={styles.container}>
-      <SidebarHeaderActions sidebarSize={sidebarSize} setSidebarSize={setSidebarSize}>
-        <SegmentedToggle
-          options={viewOptions}
-          value={toggleValue}
-          onChange={handleViewChange}
-          aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
-          showBackground={false}
-        />
-        {showStackedModeAction && (
-          <div className={styles.stackedModeAction}>
+      <SidebarHeaderActions
+        sidebarSize={sidebarSize}
+        setSidebarSize={setSidebarSize}
+        // The alerts label is the only width-affecting content that changes at runtime.
+        contentKey={alertsLabel}
+        trailing={
+          showStackedModeAction ? (
             <IconButton
               name="layer-group"
               size="sm"
               variant="secondary"
               className={cx({ [styles.stackedModeActionButtonActive]: stackedMode.enabled })}
-              onClick={stackedMode.enabled ? stackedMode.exit : stackedMode.enter}
+              onClick={handleStackedModeToggle}
               aria-label={stackedModeLabel}
               aria-pressed={stackedMode.enabled}
               tooltip={stackedModeLabel}
             />
-          </div>
+          ) : undefined
+        }
+      >
+        {(compact) => (
+          <SegmentedToggle
+            options={viewOptions}
+            value={toggleValue}
+            onChange={handleViewChange}
+            aria-label={t('query-editor-next.sidebar.view-toggle', 'View')}
+            showBackground={false}
+            hideLabels={compact}
+          />
         )}
       </SidebarHeaderActions>
       {/** The translateX property of the hoverActions in SidebarCard causes the scroll container to overflow by 8px. */}
@@ -120,9 +138,6 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
-    }),
-    stackedModeAction: css({
-      marginLeft: 'auto',
     }),
     stackedModeActionButtonActive: css({
       color: theme.colors.primary.text,

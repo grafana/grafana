@@ -13,7 +13,7 @@ import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const moveRowPayloadSchema = payloads.moveRow;
+const moveRowPayloadSchema = payloads.moveRow;
 
 export type MoveRowPayload = z.infer<typeof moveRowPayloadSchema>;
 

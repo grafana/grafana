@@ -130,7 +130,7 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   return values;
 }
 
-export function createTabRepeats({
+function createTabRepeats({
   values,
   texts,
   variable,

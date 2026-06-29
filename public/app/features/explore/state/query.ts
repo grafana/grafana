@@ -116,16 +116,14 @@ interface QueriesImportedPayload {
   exploreId: string;
   queries: DataQuery[];
 }
-export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
+const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export interface QueryStoreSubscriptionPayload {
   exploreId: string;
   querySubscription: Unsubscribable;
 }
 
-export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
-  'explore/queryStoreSubscription'
-);
+const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>('explore/queryStoreSubscription');
 
 const setSupplementaryQueryEnabledAction = createAction<{
   exploreId: string;
@@ -147,7 +145,7 @@ export interface CleanSupplementaryQueryDataProvider {
 /**
  * Stores available supplementary query data provider after running the query. Used internally by runQueries().
  */
-export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
+const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
   'explore/storeSupplementaryQueryDataProviderAction'
 );
 
@@ -200,7 +198,7 @@ export interface ChangeLoadingStatePayload {
   exploreId: string;
   loadingState: LoadingState;
 }
-export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
+const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export interface SetPausedStatePayload {
   exploreId: string;
@@ -239,7 +237,7 @@ interface AddResultsToCachePayload {
   cacheKey: string;
   queryResponse: ExplorePanelData;
 }
-export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
+const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
 /**
  *  Clears cache.
@@ -247,7 +245,7 @@ export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('e
 interface ClearCachePayload {
   exploreId: string;
 }
-export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
+const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
 /**
  * Adds a query row after the row with the given index.

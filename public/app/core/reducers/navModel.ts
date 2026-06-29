@@ -67,15 +67,15 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
   };
 }
 
-export const initialState: NavIndex = {};
+const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
-export const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
+const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
 
-export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
   ...item,
   parentItem: {
     ...item.parentItem,

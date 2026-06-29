@@ -30,7 +30,7 @@ test.describe(
       const panelTitle = 'Unique';
 
       await panel.selectByTitle(oldPanelTitle);
-      await sidebar.panelOptions.getTitleInput().fill(panelTitle);
+      await sidebar.panelOptions.setTitle(panelTitle);
 
       await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(1);
 

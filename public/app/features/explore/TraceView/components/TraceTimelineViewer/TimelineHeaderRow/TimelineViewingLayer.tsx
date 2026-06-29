@@ -23,7 +23,7 @@ import { type DraggableBounds, type DraggingUpdate } from '../../utils/Draggable
 import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
-export const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory(() => {
   return {
     TimelineViewingLayer: css({
       label: 'TimelineViewingLayer',

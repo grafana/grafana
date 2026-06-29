@@ -27,6 +27,7 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     dashboardOutlineClicked: jest.fn(),
     outlineItemClicked: jest.fn(),
   },

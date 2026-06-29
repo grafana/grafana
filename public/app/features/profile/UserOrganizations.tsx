@@ -12,7 +12,7 @@ interface Props {
   setUserOrg: (org: UserOrg) => void;
 }
 
-export const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) => {
+const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) => {
   if (isLoading) {
     return (
       <LoadingPlaceholder

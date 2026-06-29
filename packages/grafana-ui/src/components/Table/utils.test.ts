@@ -3,12 +3,12 @@ import { type Row } from 'react-table';
 
 import { type Field, type FieldConfigSource, FieldType, MutableDataFrame, type SelectableValue } from '@grafana/data';
 
+import { getTextAlign } from './cellUtils';
 import {
   calculateUniqueFieldValues,
   filterByValue,
   getColumns,
   getFilteredOptions,
-  getTextAlign,
   rowToFieldValue,
   sortNumber,
   sortOptions,

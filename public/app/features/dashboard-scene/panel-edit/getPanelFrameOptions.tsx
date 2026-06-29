@@ -3,7 +3,6 @@ import React from 'react';
 import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
@@ -82,7 +81,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         render: function renderTitle(descriptor) {
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
-        addon: config.featureToggles.dashgpt && (
+        addon: (
           <GenAIPanelTitleButton
             onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
@@ -99,7 +98,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
-        addon: config.featureToggles.dashgpt && (
+        addon: (
           <GenAIPanelDescriptionButton
             onGenerate={(description) => panel.setState({ description })}
             panel={vizPanelToPanel(panel)}
@@ -139,10 +138,6 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
 }
 
 export function getPanelStylesOptions(panel: VizPanel): OptionsPaneCategoryDescriptor | undefined {
-  if (!config.featureToggles.vizPresets) {
-    return undefined;
-  }
-
   return new OptionsPaneCategoryDescriptor({
     title: t('dashboard-scene.get-panel-frame-options.title.panel-styles', 'Panel styles'),
     id: 'panel-styles',

@@ -11,15 +11,12 @@ import {
   type CombinedRuleWithLocation,
   type EditableRuleIdentifier,
   type GrafanaRuleIdentifier,
-  type PromRuleWithLocation,
   type PrometheusRuleIdentifier,
   type RecordingRule,
   type Rule,
   type RuleGroupIdentifier,
   type RuleIdentifier,
-  type RuleNamespace,
   type RuleWithLocation,
-  type RulesSource,
 } from 'app/types/unified-alerting';
 import {
   type Annotations,
@@ -236,22 +233,6 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
-export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
-  return rulerRuleType.any.alertingRule(rule) ? rule.for : undefined;
-}
-
-export function getKeepFiringfor(rule: CombinedRule): string | undefined {
-  if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
-    return undefined;
-  }
-
-  if (isGrafanaAlertingRule(rule.rulerRule)) {
-    return rule.rulerRule.keep_firing_for;
-  }
-
-  return undefined;
-}
-
 export function getAnnotations(rule?: AlertingRule): Annotations {
   return rule?.annotations ?? {};
 }
@@ -328,19 +309,6 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
   }
   return capitalize(state);
 }
-
-export const flattenRules = (rules: RuleNamespace[]) => {
-  return rules.reduce<PromRuleWithLocation[]>((acc, { dataSourceName, name: namespaceName, groups }) => {
-    groups.forEach(({ name: groupName, rules }) => {
-      rules.forEach((rule) => {
-        if (isAlertingRule(rule)) {
-          acc.push({ dataSourceName, namespaceName, groupName, rule });
-        }
-      });
-    });
-    return acc;
-  }, []);
-};
 
 export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
   isAlertingRule(rule.promRule) ? rule.promRule : null;
@@ -482,24 +450,6 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
   }
 };
 
-/**
- * Calculates the number of rule evaluations before the alerting rule will fire
- * @param pendingPeriodMs - The pending period of the alerting rule in milliseconds
- * @param groupIntervalMs - The group's evaluation interval in milliseconds
- * @returns The number of rule evaluations before the rule will fire
- */
-export function calcRuleEvalsToStartAlerting(pendingPeriodMs: number, groupIntervalMs: number) {
-  if (pendingPeriodMs === 0) {
-    return 1; // No pending period, the rule will fire immediately
-  }
-  if (groupIntervalMs === 0) {
-    return 0; // Invalid case. Group interval is never 0. The default interval will be used.
-  }
-
-  const evaluationsBeforeCeil = pendingPeriodMs / groupIntervalMs;
-  return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(pendingPeriodMs / groupIntervalMs) + 1;
-}
-
 /*
  * Extracts a rule group identifier from a CombinedRule
  */
@@ -549,10 +499,6 @@ export function getRuleGroupLocationFromFormValues(values: RuleFormValues): Rule
     namespaceName,
     groupName,
   };
-}
-
-export function rulesSourceToDataSourceName(rulesSource: RulesSource): string {
-  return isGrafanaRulesSource(rulesSource) ? rulesSource : rulesSource.name;
 }
 
 export function isGrafanaAlertingRuleByType(type?: RuleFormType) {
