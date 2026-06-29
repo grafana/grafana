@@ -5,7 +5,6 @@ description: Learn about Grafana Enterprise configuration options that you can s
 labels:
   products:
     - enterprise
-    - oss
 title: Configure Grafana Enterprise
 weight: 100
 ---
