@@ -102,6 +102,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
     reportInteraction('command_palette_action_selected', {
       actionId: action.id,
       actionName: action.name,
+      actionSection: action.section,
       interactionMode: getCommandPaletteInputMode(),
     });
   };

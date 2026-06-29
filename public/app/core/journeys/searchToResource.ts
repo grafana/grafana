@@ -15,7 +15,7 @@ import { collectUnsubs, str } from './utils';
  *     Carries `hasQuery` and bucketed `queryLength`; never the raw query string.
  *
  * Mid-journey:
- *   - command_palette_action_selected sets `resourceType`, `actionId`, `actionName`,
+ *   - command_palette_action_selected sets `resourceType`, `actionId`, `actionName`, `actionSection`,
  *     and `interactionMode` (`keyboard` | `mouse` | `unknown`) so we can see how
  *     the user activated the result.
  *
@@ -56,6 +56,7 @@ onJourneyInstance('search_to_resource', (handle) => {
         resourceType: selectedResourceType,
         actionId,
         actionName: str(props.actionName),
+        actionSection: str(props.actionSection ?? ''),
         interactionMode: str(props.interactionMode ?? 'unknown'),
       });
     })
