@@ -4,6 +4,7 @@ import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
   type DataFrame,
+  type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
   type GrafanaTheme2,
@@ -14,7 +15,13 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
-import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
+
+interface TempoQuery extends DataQuery {
+  query?: string;
+  queryType?: string;
+  tableType?: string;
+  filters: unknown[];
+}
 
 import { useLogListContext } from './LogListContext';
 import { getTraceIdFromTraceQlQuery, type EmbeddedInternalLink } from './links';
@@ -59,7 +66,7 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
           query: traceQuery,
           queryType: 'traceql',
           refId: `log-details-trace-${traceQuery}`,
-          tableType: SearchTableType.Traces,
+          tableType: 'traces',
           filters: [],
         },
       ],

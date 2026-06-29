@@ -51,7 +51,7 @@ export const useLogDetailsContext = (): LogDetailsContextData => {
 
 export interface Props {
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   detailsMode?: LogLineDetailsMode;
   enableLogDetails: boolean;
@@ -224,7 +224,6 @@ export const LogDetailsContextProvider = ({
   );
 };
 
-// Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
 export function getDetailsWidth(
   containerElement: HTMLDivElement | undefined,
   logOptionsStorageKey?: string,

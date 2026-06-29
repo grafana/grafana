@@ -96,6 +96,7 @@ type IndexBuildInfo struct {
 	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
 	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
 	SelectableFields []string        // List of selectable fields used when index was built.
+	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
 }
 
 type ResourceIndex interface {
@@ -206,6 +207,7 @@ type searchServer struct {
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
 	selectableFields     map[string][]string
+	searchFieldsHashes   map[string]string
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -293,6 +295,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		selectableFields:          opts.SelectableFieldsForKinds,
+		searchFieldsHashes:        opts.SearchFieldsHashesForKinds,
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
@@ -343,6 +346,14 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 	}
 
 	ret.selectableFields = mergeSelectableFields(a.selectableFields, b.selectableFields)
+
+	// Both requests should carry the same expected hash because it is derived
+	// per (group, resource). Prefer the non-empty value; if both are non-empty
+	// and differ, take b’s as the more recent observation.
+	ret.expectedSearchFieldsHash = b.expectedSearchFieldsHash
+	if ret.expectedSearchFieldsHash == "" {
+		ret.expectedSearchFieldsHash = a.expectedSearchFieldsHash
+	}
 
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
@@ -1319,11 +1330,12 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 
 		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
 		sfields := s.selectableFields[sfKey]
+		expectedSearchFieldsHash := s.searchFieldsHashes[sfKey]
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
-			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -1391,7 +1403,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -1464,7 +1476,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, expectedSearchFieldsHash string, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -1511,6 +1523,24 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 		return true
 	}
 
+	// Search-field metadata that affects what gets indexed (paths, types,
+	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
+	// index was built. Rebuild so documents are re-extracted with the new
+	// declarations.
+	//
+	// An empty expected hash means "no opinion" for this kind: either no
+	// SearchFieldsProvider is registered today, or the running binary doesn't
+	// supply hashes yet. In that case we leave the stored hash alone (mirrors
+	// the SelectableFields semantics, which only triggers a rebuild on added
+	// fields). The stored hash gets refreshed naturally on the next rebuild
+	// triggered by another condition.
+	if expectedSearchFieldsHash != "" && expectedSearchFieldsHash != buildInfo.SearchFieldsHash {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("search field metadata changed since the index was built, rebuilding the index")
+		}
+		return true
+	}
+
 	return false
 }
 
@@ -1538,26 +1568,28 @@ type rebuildState struct {
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime     time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime   time.Time       // if not zero, rebuild index if it has been built before this timestamp.
-	minBuildVersion  *semver.Version // if not nil, rebuild index with build version older than this.
-	selectableFields []string        // rebuild index which is missing some of these selectable fields.
+	minBuildTime             time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime           time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion          *semver.Version // if not nil, rebuild index with build version older than this.
+	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
+	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, expectedSearchFieldsHash string, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
 	}
 	return rebuildRequest{
-		NamespacedResource: key,
-		minBuildTime:       minBuildTime,
-		minBuildVersion:    minBuildVersion,
-		lastImportTime:     lastImportTime,
-		selectableFields:   selectableFields,
-		completeChannels:   completeChannels,
+		NamespacedResource:       key,
+		minBuildTime:             minBuildTime,
+		minBuildVersion:          minBuildVersion,
+		lastImportTime:           lastImportTime,
+		selectableFields:         selectableFields,
+		expectedSearchFieldsHash: expectedSearchFieldsHash,
+		completeChannels:         completeChannels,
 	}
 }
 

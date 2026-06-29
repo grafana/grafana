@@ -36,7 +36,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			// featuremgmt.FlagDatasourcesQueryTypes,
 			featuremgmt.FlagDatasourcesLoadOpenAPI,
-			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			"kubernetesAnnotations",
 			featuremgmt.FlagKubernetesAlertingHistorian,
@@ -125,6 +124,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
+	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "collections.grafana.app",
 		Version: "v1alpha1",

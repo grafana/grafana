@@ -19,7 +19,6 @@ import {
   type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
@@ -34,6 +33,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
+import { TimePickerSettings } from './TimePickerSettings';
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {
@@ -272,9 +272,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="title-input">
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
-                )}
+                <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
               </Stack>
             }
           >
@@ -292,9 +290,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="description-input">
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
-                )}
+                <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
               </Stack>
             }
           >

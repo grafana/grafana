@@ -15,8 +15,8 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
-import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
+import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';

@@ -4,7 +4,64 @@
   "colors": {
     "mode": "dark",
     "background": {
-      "canvas": "#ff0000"
-    }
+      "canvas": "palette.ink950",
+      "page": "palette.ink900",
+      "primary": "palette.ink850",
+      "secondary": "palette.ink800",
+      "elevated": "palette.ink800"
+    },
+    "primary": {
+      "main": "palette.ink100"
+    },
+    "secondary": {
+      "main": "palette.ink700",
+      "border": "palette.ink600",
+      "text": "palette.ink200",
+      "contrastText": "palette.ink200"
+    },
+    "tertiary": {
+      "main": "palette.violet400"
+    },
+    "accent": {
+      "main": "palette.orange400",
+      "text": "palette.orange400"
+    },
+    "error": {
+      "main": "palette.coral400",
+      "border": "palette.coral900"
+    },
+    "warning": {
+      "main": "palette.amber400",
+      "border": "palette.amber900"
+    },
+    "success": {
+      "main": "palette.sage400",
+      "border": "palette.sage900"
+    },
+    "info": {
+      "main": "palette.blue400",
+      "border": "palette.blue900"
+    },
+    "text": {
+      "primary": "palette.ink100",
+      "secondary": "palette.ink200",
+      "disabled": "palette.ink300",
+      "link": "palette.orange400"
+    },
+    "border": {
+      "weak": "palette.ink700",
+      "medium": "palette.ink600",
+      "strong": "palette.ink500"
+    },
+    "gradients": {
+      "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
+      "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
+    },
+    "contrastThreshold": 4.5
+  },
+  "shape": {
+    "borderRadiusSm": 6,
+    "borderRadius": 8,
+    "borderRadiusLg": 12
   }
 }
