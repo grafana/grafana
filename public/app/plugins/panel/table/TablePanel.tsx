@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { useFlagTableProtoRowParser } from '@grafana/runtime/internal';
-import { type MatcherScope } from '@grafana/schema';
+import { type MatcherScope, TableCellHeight } from '@grafana/schema';
 import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
@@ -43,6 +43,7 @@ export function TablePanel(props: Props) {
     transparent,
     initialRowIndex,
     sortByBehavior = 'initial',
+    fitContent,
   } = props;
 
   useMemo(() => {
@@ -66,13 +67,15 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
-  let tableHeight = height;
+  // Fit-content: the panel has no fixed height, so self-size from the row count.
+  // The cell's CSS min/max bounds (and scrolls) the result.
+  let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  if (count > 1) {
+  if (count > 1 && !fitContent) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
     const padding = theme.spacing.gridSize;
 
@@ -139,6 +142,32 @@ export function TablePanel(props: Props) {
 
 function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
+}
+
+// Approximate row/header pixel sizes used to self-size in fit-content mode.
+// Mirrors getDefaultRowHeight in TableNG; exact pixels are not critical because
+// the cell's CSS max-height ultimately bounds the panel.
+const TABLE_ROW_HEIGHT_SM = 36;
+const TABLE_ROW_HEIGHT_MD = 42;
+const TABLE_ROW_HEIGHT_LG = 60;
+const TABLE_HEADER_HEIGHT = 36;
+
+function getRowPixelHeight(cellHeight: TableCellHeight | undefined): number {
+  switch (cellHeight) {
+    case TableCellHeight.Sm:
+      return TABLE_ROW_HEIGHT_SM;
+    case TableCellHeight.Lg:
+      return TABLE_ROW_HEIGHT_LG;
+    case TableCellHeight.Md:
+    default:
+      return TABLE_ROW_HEIGHT_MD;
+  }
+}
+
+function getNaturalTableHeight(frame: DataFrame | undefined, options: Options): number {
+  const rowCount = frame?.length ?? 0;
+  const headerHeight = options.showHeader === false ? 0 : TABLE_HEADER_HEIGHT;
+  return headerHeight + rowCount * getRowPixelHeight(options.cellHeight);
 }
 
 export function onColumnResize(

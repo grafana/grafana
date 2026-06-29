@@ -96,6 +96,14 @@ export interface PanelProps<T = any> {
   /** Current height of the panel in pixels */
   height: number;
 
+  /**
+   * When true the panel is rendered in a content-fit layout: it has no fixed
+   * height and should size to its content (the cell enforces min/max via CSS).
+   * Only set for plugins that opt in via {@link PanelPlugin.setFitContentSupport}.
+   * Fit-aware panels must not rely on `height` in this mode.
+   */
+  fitContent?: boolean;
+
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 
@@ -120,63 +128,6 @@ export interface PanelProps<T = any> {
   /** Time range change handler */
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
-
-/**
- * Default vertical space (px) for PanelChrome header, padding, and border.
- * Used when {@link PanelNaturalHeightContext.chromeOverhead} is not provided.
- *
- * @public
- */
-export const PANEL_CHROME_HEIGHT_OVERHEAD = 58;
-
-/**
- * Context passed to a {@link PanelNaturalHeightSupplier}. The layout asks the
- * plugin how tall the panel wants to be and uses the returned number as-is;
- * the plugin is responsible for clamping to `minHeight`/`maxHeight` and
- * including chrome overhead.
- *
- * @public
- */
-export interface PanelNaturalHeightContext<TOptions = unknown> {
-  data: PanelData;
-  options: TOptions;
-  /** Inner content width in pixels (PanelChrome's innerWidth). */
-  width: number;
-  /** User-configured floor (px). The layout will not constrain — plugin must. */
-  minHeight: number;
-  /** User-configured cap (px). `Number.POSITIVE_INFINITY` when unlimited. */
-  maxHeight: number;
-  /**
-   * Estimated PanelChrome overhead (px) for this panel. Set by
-   * {@link VizPanel.getNaturalHeight} in `@grafana/scenes`; falls back to
-   * {@link PANEL_CHROME_HEIGHT_OVERHEAD} in {@link clampPanelNaturalHeight}.
-   */
-  chromeOverhead?: number;
-}
-
-/**
- * Clamps inner content height plus chrome to the layout min/max bounds.
- *
- * @public
- */
-export function clampPanelNaturalHeight(
-  innerContentHeight: number,
-  ctx: Pick<PanelNaturalHeightContext, 'minHeight' | 'maxHeight' | 'chromeOverhead'>
-): number {
-  const chrome = ctx.chromeOverhead ?? PANEL_CHROME_HEIGHT_OVERHEAD;
-  return Math.min(ctx.maxHeight, Math.max(ctx.minHeight, innerContentHeight + chrome));
-}
-
-/**
- * Returns the **final wrapper height** in pixels, including chrome, clamped
- * to `ctx.minHeight`/`ctx.maxHeight`. The layout sets this value directly.
- * Return `undefined` to opt out (layout will use the configured default).
- *
- * @public
- */
-export type PanelNaturalHeightSupplier<TOptions = unknown> = (
-  ctx: PanelNaturalHeightContext<TOptions>
-) => number | undefined;
 
 export interface PanelEditorProps<T = any> {
   /** Panel options */

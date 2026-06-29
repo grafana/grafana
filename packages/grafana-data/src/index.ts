@@ -680,10 +680,6 @@ export {
   type PanelMenuItem,
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
-  type PanelNaturalHeightContext,
-  type PanelNaturalHeightSupplier,
-  PANEL_CHROME_HEIGHT_OVERHEAD,
-  clampPanelNaturalHeight,
   VizOrientation,
 } from './types/panel';
 export {

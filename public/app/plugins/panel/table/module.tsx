@@ -1,14 +1,7 @@
-import {
-  clampPanelNaturalHeight,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-  PanelPlugin,
-  standardEditorsRegistry,
-} from '@grafana/data';
+import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   TableCellDisplayMode,
-  TableCellHeight,
   type TableCellOptions,
   TableCellTooltipPlacement,
   defaultTableFieldOptions,
@@ -26,36 +19,10 @@ function getTableNoValuePlaceholder(): string {
   return t('table.no-value-placeholder', 'No rows');
 }
 
-// Pixel sizes used when computing natural height. Approximate — sufficient
-// for layout sizing decisions. Mirrors getDefaultRowHeight in TableNG/utils.
-const TABLE_ROW_HEIGHT_SM = 36;
-const TABLE_ROW_HEIGHT_MD = 42;
-const TABLE_ROW_HEIGHT_LG = 60;
-const TABLE_HEADER_HEIGHT = 36;
-function getRowPixelHeight(cellHeight: TableCellHeight | undefined): number {
-  switch (cellHeight) {
-    case TableCellHeight.Sm:
-      return TABLE_ROW_HEIGHT_SM;
-    case TableCellHeight.Lg:
-      return TABLE_ROW_HEIGHT_LG;
-    case TableCellHeight.Md:
-    default:
-      return TABLE_ROW_HEIGHT_MD;
-  }
-}
-
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
-  .setNaturalHeight((ctx) => {
-    // First series drives the visible row count. Other series are usually
-    // rendered as nested tables — we approximate by ignoring them here.
-    const rowCount = ctx.data.series[0]?.length ?? 0;
-    const rowHeight = getRowPixelHeight(ctx.options.cellHeight);
-    const headerHeight = ctx.options.showHeader === false ? 0 : TABLE_HEADER_HEIGHT;
-    const inner = headerHeight + rowCount * rowHeight;
-    return clampPanelNaturalHeight(inner, ctx);
-  })
+  .setFitContentSupport()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {

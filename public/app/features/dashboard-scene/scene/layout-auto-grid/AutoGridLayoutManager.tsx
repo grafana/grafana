@@ -43,7 +43,10 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
   fillScreen: boolean;
+  /** Layout-wide default for content-fit. Per-panel overrides via {@link AutoGridItem} `fitContent`. */
   fitContent?: boolean;
+  /** Floor (px envelope) for content-fit panels. Distinct from `rowHeight`, which sizes non-fit panels. */
+  minHeight?: AutoGridRowHeight;
   maxHeightMode?: AutoGridMaxHeightMode;
   maxHeight?: number;
   matchRowHeights?: boolean;
@@ -330,19 +333,20 @@ export class AutoGridLayoutManager
   }
 
   public onFillScreenChanged(fillScreen: boolean) {
-    const fitContent = fillScreen ? false : this.state.fitContent;
-    this.setState({ fillScreen, fitContent });
-    this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen, fitContent),
-    });
+    this.setState({ fillScreen });
+    this.updateAutoRows();
   }
 
   public onFitContentChanged(fitContent: boolean) {
-    const fillScreen = fitContent ? false : this.state.fillScreen;
-    this.setState({ fitContent, fillScreen });
-    this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen, fitContent),
-    });
+    this.setState({ fitContent });
+    this.updateAutoRows();
+  }
+
+  public onMinHeightChanged(minHeight: AutoGridRowHeight) {
+    if (minHeight === 'custom') {
+      minHeight = getNamedHeightInPixels(this.state.minHeight ?? AUTO_GRID_DEFAULT_ROW_HEIGHT);
+    }
+    this.setState({ minHeight });
   }
 
   public onMaxHeightModeChanged(maxHeightMode: AutoGridMaxHeightMode | undefined) {
@@ -365,8 +369,26 @@ export class AutoGridLayoutManager
     }
 
     this.setState({ rowHeight });
+    this.updateAutoRows();
+  }
+
+  /**
+   * Content-fit is active when the layout default is on or any panel opts in.
+   * When active, row tracks must be able to grow to a panel's content height.
+   */
+  public hasFitContent(): boolean {
+    if (this.state.fitContent) {
+      return true;
+    }
+    return this.state.layout.state.children.some(
+      (child) => child instanceof AutoGridItem && child.state.fitContent === true
+    );
+  }
+
+  /** Recomputes the grid's `autoRows` from the current state. Call after a per-panel fit change. */
+  public updateAutoRows() {
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen, this.state.fitContent),
+      autoRows: getAutoRowsTemplate(this.state.rowHeight, this.state.fillScreen, this.hasFitContent()),
     });
   }
 
@@ -507,23 +529,28 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
   }
 }
 
-export function getMaxHeightInPixels(
+/**
+ * Resolves the configured max-height mode to a CSS `max-height` value. The
+ * browser enforces the bound, so `screen` maps to `100vh` (re-evaluated on
+ * viewport resize natively) and unlimited maps to `none`.
+ */
+export function getMaxHeightCssValue(
   mode: AutoGridMaxHeightMode | undefined,
   customPixels: number | undefined
-): number {
+): string {
   switch (mode) {
     case 'short':
     case 'standard':
     case 'tall':
-      return getNamedHeightInPixels(mode);
+      return `${getNamedHeightInPixels(mode)}px`;
     case 'custom':
-      return customPixels ?? Number.POSITIVE_INFINITY;
+      return customPixels != null ? `${customPixels}px` : 'none';
     case 'screen':
-      return window.innerHeight;
+      return '100vh';
     case 'unlimited':
     case undefined:
     default:
-      return Number.POSITIVE_INFINITY;
+      return 'none';
   }
 }
 
@@ -544,11 +571,12 @@ export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean, fitContent?: boolean) {
-  if (fitContent) {
-    return 'max-content';
-  }
+export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean, hasFitContent?: boolean) {
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
-  const maxRowHeightValue = fillScreen ? 'auto' : `${rowHeightPixels}px`;
+  // Row tracks always floor at the configured row height. The max grows when:
+  //  - fill screen: stretch to fill the viewport (`auto`)
+  //  - content-fit present: grow to the tallest panel's content (`max-content`)
+  //  - otherwise: fixed at the row height
+  const maxRowHeightValue = fillScreen ? 'auto' : hasFitContent ? 'max-content' : `${rowHeightPixels}px`;
   return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
 }
