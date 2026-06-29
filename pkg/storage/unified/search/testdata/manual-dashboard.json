@@ -60,14 +60,14 @@
     {
       "name": "schema_version",
       "type": "number",
-      "format": "int32",
+      "format": "int64",
       "description": "Numeric version saying when the schema was saved",
       "priority": 0
     },
     {
       "name": "link_count",
       "type": "number",
-      "format": "int32",
+      "format": "int64",
       "description": "How many links appear on the page",
       "priority": 0
     },
@@ -83,6 +83,20 @@
       "type": "string",
       "format": "",
       "description": "The panel types used in this dashboard",
+      "priority": 0
+    },
+    {
+      "name": "ds_types",
+      "type": "string",
+      "format": "",
+      "description": "Data source types referenced by this dashboard's panels",
+      "priority": 0
+    },
+    {
+      "name": "transformation",
+      "type": "string",
+      "format": "",
+      "description": "Transformation IDs used in this dashboard's panels",
       "priority": 0
     },
     {
@@ -222,6 +236,8 @@
         null,
         null,
         null,
+        null,
+        null,
         null
       ],
       "object": {
@@ -251,6 +267,8 @@
         [
           "timeseries"
         ],
+        null,
+        null,
         40,
         null,
         null,
@@ -296,6 +314,8 @@
           "timeseries",
           "table"
         ],
+        null,
+        null,
         25,
         null,
         null,

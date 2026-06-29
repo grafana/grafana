@@ -7,17 +7,52 @@ import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
-import { AppChrome } from './AppChrome';
+import { AppChrome, EXTENSION_SIDEBAR_FLOATING_TESTID } from './AppChrome';
+import {
+  type ExtensionSidebarContextType,
+  useExtensionSidebarContext,
+} from './ExtensionSidebar/ExtensionSidebarProvider';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
+
+jest.mock('app/core/hooks/useMediaQueryMinWidth');
+
+jest.mock('./ExtensionSidebar/ExtensionSidebar', () => ({
+  ...jest.requireActual('./ExtensionSidebar/ExtensionSidebar'),
+  ExtensionSidebar: () => <div data-testid="ext-sidebar-stub" />,
+}));
+
+jest.mock('./ExtensionSidebar/ExtensionSidebarProvider', () => ({
+  ...jest.requireActual('./ExtensionSidebar/ExtensionSidebarProvider'),
+  useExtensionSidebarContext: jest.fn(),
+}));
+
+const mockUseMediaQueryMinWidth = jest.mocked(useMediaQueryMinWidth);
+const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
+
+const closedSidebarContext: ExtensionSidebarContextType = {
+  isOpen: false,
+  dockedComponentId: undefined,
+  setDockedComponentId: jest.fn(),
+  availableComponents: new Map(),
+  extensionSidebarWidth: 300,
+  setExtensionSidebarWidth: jest.fn(),
+};
+
+const openSidebarContext: ExtensionSidebarContextType = {
+  ...closedSidebarContext,
+  isOpen: true,
+  dockedComponentId: 'p/c/v',
+};
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -61,6 +96,8 @@ const setup = (children: ReactNode) => {
 describe('AppChrome', () => {
   beforeEach(() => {
     server.use(getCustomSearchHandler([]));
+    mockUseMediaQueryMinWidth.mockReturnValue(false);
+    mockUseExtensionSidebarContext.mockReturnValue(closedSidebarContext);
   });
 
   afterEach(() => {
@@ -106,6 +143,28 @@ describe('AppChrome', () => {
     });
     waitFor(() => {
       expect(screen.queryByRole('link', { name: 'Skip to main content' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('extension sidebar mobile floating', () => {
+    beforeEach(() => {
+      mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+    });
+
+    it('renders the sidebar as a full-width floating overlay on small screens', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(false);
+      setup(<Page navId="child1">Children</Page>);
+
+      await screen.findByTestId('ext-sidebar-stub');
+      expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
+    });
+
+    it('renders the sidebar docked, not floating, on larger screens', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      setup(<Page navId="child1">Children</Page>);
+
+      await screen.findByTestId('ext-sidebar-stub');
+      expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
     });
   });
 });
