@@ -63,7 +63,7 @@ export function RepositoryListItem({ repository }: Props) {
   return (
     <Card noMargin key={name} className={styles.card}>
       <Card.Figure className={styles.figure}>
-        <RepoIcon type={spec?.type} />
+        <RepoIcon type={spec?.type} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center" wrap>

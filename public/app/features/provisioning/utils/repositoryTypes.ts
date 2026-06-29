@@ -48,7 +48,7 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
       'provisioning.repository-types.github-enterprise-tooltip',
       'Enhanced GitHub integration for self-hosted GitHub Enterprise Server or Github Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
     ),
-    icon: 'github' as const,
+    icon: 'github-enterprise' as const,
   },
   {
     type: 'gitlab',

@@ -92,7 +92,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
 
   // GitHub and GitHub Enterprise share the same fields; only the URL placeholder host
   // differs.
-  const github = (host: string): Record<string, FieldConfig> => ({
+  const github = (...hosts: string[]): Record<string, FieldConfig> => ({
     token: {
       label: t('provisioning.github.token-label', 'Personal Access Token'),
       description: t(
@@ -110,7 +110,11 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       ...shared.url,
       description: t('provisioning.github.url-description', 'The GitHub repository URL'),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      placeholder: `${host}/owner/repository`,
+      placeholder: hosts
+        .map((h) => {
+          return h + '/owner/repository';
+        })
+        .join(' or '),
       required: true,
       validation: {
         ...shared.url.validation,
@@ -140,7 +144,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
 
   return {
     github: github('https://github.com'),
-    githubEnterprise: github('https://your-ghe-url.com or https://<slug>.ghe.com'),
+    githubEnterprise: github('https://your-ghe-url.com', 'https://<slug>.ghe.com'),
     gitlab: {
       token: {
         label: t('provisioning.gitlab.token-label', 'Project Access Token'),
