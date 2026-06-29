@@ -167,6 +167,46 @@ func TestMapProvider_PreferredVersionFallback(t *testing.T) {
 	assert.Equal(t, "", p.PreferredVersion("other.grafana.app", "things"))
 }
 
+func TestMapProvider_FieldsUnionAcrossVersions(t *testing.T) {
+	gr := schema.GroupResource{Group: "example.test", Resource: "widgets"}
+	v1 := schema.GroupVersionResource{Group: gr.Group, Version: "v1", Resource: gr.Resource}
+	v2 := schema.GroupVersionResource{Group: gr.Group, Version: "v2", Resource: gr.Resource}
+
+	p := NewMapProvider(
+		map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {
+				{Name: "shared", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+				{Name: "only_v1", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}},
+			},
+			v2: {
+				{Name: "shared", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}},
+				{Name: "only_v2", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}},
+			},
+		},
+		map[schema.GroupResource]string{gr: "v1"},
+	)
+
+	// Per-version lookup is unchanged.
+	assert.Len(t, p.Fields(v1), 2)
+	assert.Len(t, p.Fields(v2), 2)
+
+	// Empty-version lookup returns the union deduped by Name.
+	union := p.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource})
+	names := make([]string, 0, len(union))
+	for _, sfd := range union {
+		names = append(names, sfd.Name)
+	}
+	assert.ElementsMatch(t, []string{"shared", "only_v1", "only_v2"}, names)
+
+	// Preferred version (v1) wins on Name collisions: the shape of `shared`
+	// comes from v1, not v2.
+	for _, sfd := range union {
+		if sfd.Name == "shared" {
+			assert.Equal(t, []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}, sfd.Capabilities)
+		}
+	}
+}
+
 func TestMapProvider_IndexAffectingHash(t *testing.T) {
 	const (
 		group    = "iam.grafana.app"
@@ -373,6 +413,40 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 	})
 	t.Run("StandardSearchFieldDefinitions passes validation", func(t *testing.T) {
 		err := validateSearchFieldDefinitions(StandardSearchFieldDefinitions())
+		require.NoError(t, err)
+	})
+	t.Run("text on int64 is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityText}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "text")
+		assert.Contains(t, err.Error(), "int64")
+	})
+	t.Run("partial on boolean is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityPartial}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "partial")
+	})
+	t.Run("facet on double is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "score", Type: SearchFieldTypeDouble, Capabilities: []SearchCapability{SearchCapabilityFacet}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "facet")
+	})
+	t.Run("text on string is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "title", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("facet on string is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "tag", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFacet}},
+		})
 		require.NoError(t, err)
 	})
 }

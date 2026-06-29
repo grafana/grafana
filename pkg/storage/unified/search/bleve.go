@@ -92,6 +92,13 @@ type BleveOptions struct {
 	// can detect drift and rebuild. Keys must be lower-case.
 	SearchFieldsHashesForKinds map[string]string
 
+	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
+	// mapping for that (group, resource). When a provider is registered
+	// for a kind, the bleve mapping is built from the provider's
+	// SearchFieldDefinitions rather than from the legacy column-definition
+	// list carried by SearchableDocumentFields. Keys must be lower-case.
+	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
+
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
@@ -175,8 +182,9 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields   map[string][]string
-	searchFieldsHashes map[string]string
+	selectableFields     map[string][]string
+	searchFieldsHashes   map[string]string
+	searchFieldsProvider map[string]resource.SearchFieldsProvider
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -258,6 +266,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		indexMetrics:            indexMetrics,
 		selectableFields:        opts.SelectableFieldsForKinds,
 		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
+		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -739,8 +748,9 @@ func (b *bleveBackend) BuildIndex(
 	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
 	selectableFields := b.selectableFields[sfKey]
 	searchFieldsHash := b.searchFieldsHashes[sfKey]
+	searchFieldsProvider := b.searchFieldsProvider[sfKey]
 
-	mapper, err := GetBleveMappings(fields, selectableFields)
+	mapper, err := GetBleveMappings(fields, searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
 		return nil, err
 	}
