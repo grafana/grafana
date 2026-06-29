@@ -1,7 +1,6 @@
 import { screen, act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { type DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
 import { type MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
@@ -103,15 +102,8 @@ describe('SuggestedDashboardsModal', () => {
       expect(screen.getByText('Suggested dashboards')).toBeInTheDocument();
     });
 
-    it('should show datasource-specific title when datasourceUid is provided', () => {
-      setDataSourceSrv({
-        getInstanceSettings: () =>
-          ({ uid: 'prom-uid', name: 'Prometheus', type: 'prometheus' }) as ReturnType<
-            DataSourceSrv['getInstanceSettings']
-          >,
-      } as DataSourceSrv);
-
-      render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" />);
+    it('should show datasource-specific title when datasourceType is provided', () => {
+      render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" datasourceType="prometheus" />);
 
       expect(screen.getByText('Suggested dashboards for your prometheus datasource')).toBeInTheDocument();
     });
