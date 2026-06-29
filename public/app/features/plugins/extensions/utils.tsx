@@ -94,9 +94,11 @@ export const wrapWithPluginContext = <T,>({
     <PluginContextProvider meta={meta}>
       <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
         <RestrictedGrafanaApisProvider pluginId={pluginId}>
-          <Component
-            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
-          />
+          <div data-testid={`${pluginId}-extension-component`} style={{ display: 'contents' }}>
+            <Component
+              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
+            />
+          </div>
         </RestrictedGrafanaApisProvider>
       </ExtensionErrorBoundary>
     </PluginContextProvider>
