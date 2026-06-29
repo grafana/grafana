@@ -3115,6 +3115,17 @@
       "text-provisioned": "Provisioned",
       "ungrouped": "Ungrouped"
     },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
+    },
     "saved-searches": {
       "actions-aria-label": "Actions",
       "button-label": "Saved searches",
@@ -12040,6 +12051,12 @@
     "item": {
       "bookmark": {
         "tooltip": "Bookmark {{itemName}}"
+      },
+      "pin": {
+        "tooltip": "Pin {{itemName}}"
+      },
+      "unpin": {
+        "tooltip": "Unpin {{itemName}}"
       }
     },
     "kiosk": {
@@ -12049,8 +12066,12 @@
       "close": "Close menu",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "open": "Main menu",
+      "pin-error": "Failed to update pinned menu items",
+      "pinned-list-label": "Pinned",
+      "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12489,9 +12510,6 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
-    "save-provisioned": {
-      "drawer-title": "Save provisioned playlist"
-    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12508,9 +12526,6 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
-    },
-    "delete-provisioned": {
-      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -12853,6 +12868,7 @@
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",
@@ -13343,7 +13359,6 @@
     },
     "migrate": {
       "all-resources": "All resources",
-      "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
@@ -13365,8 +13380,8 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "playlists": "Playlists",
-      "playlists-folder-title": "Playlists",
+      "partial-error-body": "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
+      "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13599,6 +13614,16 @@
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
+    "resource-kind": {
+      "dashboard": "dashboard",
+      "dashboards": "Dashboards",
+      "folder": "folder",
+      "folders": "Folders",
+      "library-panel": "library panel",
+      "library-panels": "Library panels",
+      "playlist": "playlist",
+      "playlists": "Playlists"
+    },
     "resource-tree": {
       "header-hash": "Hash",
       "header-status": "Status",
@@ -13637,6 +13662,8 @@
       "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "drawer-title-delete": "Delete provisioned {{resource}}",
+      "drawer-title-save": "Save provisioned {{resource}}",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly."

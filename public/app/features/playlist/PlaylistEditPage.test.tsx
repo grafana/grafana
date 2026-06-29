@@ -37,6 +37,8 @@ async function getTestContext(
   const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
     of(
       createFetchResponse({
+        apiVersion: 'playlist.grafana.app/v0alpha1',
+        kind: 'Playlist',
         spec: {
           title: 'Test Playlist',
           interval: '5s',

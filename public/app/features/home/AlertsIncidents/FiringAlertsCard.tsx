@@ -59,8 +59,11 @@ function buildTeamMatchers(teamNames: string[]) {
   return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
 }
 
+// Exported so the homepage skeleton reserves the card slot using the same gate.
+export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+
 export function FiringAlertsCard() {
-  if (!contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead)) {
+  if (!canViewFiringAlerts()) {
     return null;
   }
 

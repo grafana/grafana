@@ -26,20 +26,6 @@ grafana.assetSriChecks:
   defaultRule:
     variation: disabled
 
-grafana.meticulousAIRecorder:
-  variations:
-    enabled: true
-    disabled: false
-  defaultRule:
-    variation: disabled
-
-grafana.meticulousAIRecorderHighVolume:
-  variations:
-    enabled: true
-    disabled: false
-  defaultRule:
-    variation: disabled
-
 grafana.meticulousAIMode:
   variations:
     off: 'off'

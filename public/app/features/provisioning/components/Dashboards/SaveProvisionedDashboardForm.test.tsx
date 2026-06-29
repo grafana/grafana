@@ -1252,3 +1252,63 @@ describe('SaveProvisionedDashboardForm commit message template', () => {
     expect(comment).not.toHaveAttribute('readonly');
   });
 });
+
+describe('SaveProvisionedDashboardForm branch name template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  const branchDefaultValues = {
+    ref: 'dashboard/2023-01-01-abcde',
+    path: 'test-dashboard.json',
+    repo: 'test-repo',
+    comment: '',
+    folder: { uid: 'folder-uid', title: '' },
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    workflow: 'branch' as const,
+  };
+
+  it('pre-fills the branch name from the repository template on the branch workflow', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        branchOptions: { nameTemplate: 'grafana/{{action}}-{{title}}' },
+      },
+      defaultValues: branchDefaultValues,
+    });
+
+    const branch = await screen.findByRole('combobox', { name: /branch/i });
+    await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
+    expect(branch).not.toHaveAttribute('readonly');
+  });
+
+  it('renders the branch field read-only when the template is enforced', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        branchOptions: { nameTemplate: 'grafana/{{action}}-{{title}}', enforceTemplate: true },
+      },
+      defaultValues: branchDefaultValues,
+    });
+
+    const branch = await screen.findByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
+    expect(branch).toHaveAttribute('readonly');
+  });
+});

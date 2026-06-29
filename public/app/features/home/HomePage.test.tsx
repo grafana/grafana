@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { type ComponentType, lazy, useEffect } from 'react';
+import { act, render, screen } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -9,6 +10,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
+import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 
 setBackendSrv(backendSrv);
@@ -66,12 +68,11 @@ describe('HomePage', () => {
 
   it('renders dashboard tabs and auto-switches to starred', async () => {
     render(<HomePage />);
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /starred/i })).toBeInTheDocument();
 
-    // Default mocks have starred dashboards but no recent impressions,
-    // so auto-switch activates the Starred tab
+    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
+    // auto-switches to the Starred tab once its fetches settle.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
   });
 
   it('renders the Enterprise welcome message', async () => {
@@ -141,8 +142,101 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    expect(await screen.findByText('Homepage extra extension 1')).toBeInTheDocument();
-    expect(await screen.findByText('Homepage extra extension 2')).toBeInTheDocument();
+    // Once revealed, both trusted extra extensions are shown and the untrusted one is filtered out.
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByText('Homepage extra extension 1')).toBeInTheDocument();
+    expect(screen.getByText('Homepage extra extension 2')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
+  });
+
+  it('reserves the alerts card slot in the loading skeleton when the user can view firing alerts', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton-cards')).toBeInTheDocument();
+  });
+
+  it('renders a skeleton instead of the page content while extensions are loading', async () => {
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
+    render(<HomePage />);
+
+    // dashboards load inside DashboardTabs now; the page does not gate reveal on them
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+  });
+
+  it('reveals extension tabs together with the built-in tabs', async () => {
+    const tabComponent = createComponentWithMeta(
+      {
+        pluginId: 'grafana-setupguide-app',
+        title: 'Plugin tab',
+        component: (({ register }: HomepageTabExtensionProps) => {
+          useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
+          return null;
+        }) as React.ComponentType,
+      },
+      PluginExtensionPoints.HomepageTabs
+    );
+
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components: extensionPointId === PluginExtensionPoints.HomepageTabs ? [tabComponent] : [],
+    }));
+
+    render(<HomePage />);
+
+    // The extension tab registers from inside DashboardTabs and shows alongside the
+    // built-in tabs once the tab list settles.
+    expect(await screen.findByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+  });
+
+  it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
+    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
+    const LazyExtension = lazy(
+      () =>
+        new Promise<{ default: ComponentType<{}> }>((resolve) => {
+          resolveComponent = resolve;
+        })
+    );
+    const lazyComponent = createComponentWithMeta(
+      { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
+      PluginExtensionPoints.HomepageAssistant
+    );
+
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components: extensionPointId === PluginExtensionPoints.HomepageAssistant ? [lazyComponent] : [],
+    }));
+
+    render(<HomePage />);
+
+    // While the lazy extension is pending, the local Suspense fallback shows the skeleton
+    // and the greeting stays — the suspension must not bubble to the route-level spinner.
+    expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
+    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveComponent({ default: () => <div>Lazy assistant content</div> });
+    });
+
+    // Reveal waits only for the lazy extension to resolve; the dashboard list loads inside
+    // DashboardTabs. The final paint shows the resolved lazy content, built-in tabs, and no skeleton.
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
   });
 });
