@@ -4,8 +4,8 @@ import { type DataFrame, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
-import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { type FieldNameMetaStore } from 'app/features/logs/components/fieldSelector/fieldNameMeta';
 
 import {
   FIELD_SELECTOR_MIN_WIDTH,

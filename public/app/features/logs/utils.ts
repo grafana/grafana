@@ -30,12 +30,12 @@ import {
   type Field,
   type LogsMetaItem,
   store,
+  DataFrameType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
 
-import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
@@ -613,4 +613,32 @@ export function getLogsVisibleRange(logs: LogRowModel[]) {
     end = values[values.length - 1];
   }
   return { end, start };
+}
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+export function getLogsExtractFields(dataFrame: DataFrame) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
+      const isFieldDataplaneLabels =
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+      ];
+    });
 }

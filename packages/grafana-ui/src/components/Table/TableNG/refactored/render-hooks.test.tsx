@@ -18,6 +18,7 @@ import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { type PanelContext } from '../../../PanelChrome';
+import { getCellRenderer } from '../Cells/renderers';
 import { type FilterType, type NestedRowEntry, type TableRow, type TableSummaryRow } from '../types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from '../utils';
 
@@ -276,6 +277,7 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     setFilter: jest.fn(),
     setInspectCell: jest.fn(),
     gridRef: createRef(),
+    getCellRenderer,
     getCellActions: jest.fn().mockReturnValue([]),
     onCellFilterAdded: undefined,
     frozenColumns: 0,

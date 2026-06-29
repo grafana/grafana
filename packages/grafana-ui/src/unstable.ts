@@ -23,3 +23,4 @@ export type {
   CodeMirrorExtension,
 } from './components/CodeMirror/types';
 export { TableNG } from './components/Table/TableNG/TableNG';
+export { TableCore } from './components/Table/TableNG/refactored/TableCore';

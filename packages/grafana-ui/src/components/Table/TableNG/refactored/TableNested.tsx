@@ -17,6 +17,7 @@ import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../../utils/colors';
 import { usePanelContext } from '../../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../../cellUtils';
+import { getCellRenderer as resolveRegistryCellRenderer } from '../Cells/renderers';
 import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
 import { RowExpander } from '../components/RowExpander';
 import { COLUMN, TABLE } from '../constants';
@@ -399,6 +400,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       setFilter,
       setInspectCell,
       gridRef,
+      getCellRenderer: resolveRegistryCellRenderer,
       getCellActions,
       onCellFilterAdded,
       frozenColumns,

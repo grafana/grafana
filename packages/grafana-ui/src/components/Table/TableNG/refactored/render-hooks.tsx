@@ -38,7 +38,7 @@ import {
 } from '@grafana/schema';
 
 import { type PanelContext } from '../../../PanelChrome';
-import { getCellRenderer, getCellSpecificStyles } from '../Cells/renderers';
+import { getCellSpecificStyles } from '../Cells/renderers';
 import { HeaderCell } from '../components/HeaderCell';
 import { SummaryCell } from '../components/SummaryCell';
 import { TableCellActions } from '../components/TableCellActions';
@@ -54,6 +54,7 @@ import {
   IS_SAFARI_26,
 } from '../styles';
 import {
+  type CellRendererResolver,
   type CellRootRenderer,
   type FilterType,
   type FromFieldsResult,
@@ -148,6 +149,9 @@ export interface ColumnBuildConfig {
   disableSanitizeHtml?: boolean;
   filter: FilterType;
   frozenColumns: number;
+  // resolves the renderer for each field; injected so the lean and batteries-included tables can
+  // supply different cell-type sets without forking the column-building pipeline.
+  getCellRenderer: CellRendererResolver;
   getCellActions: GetActionsFunctionLocal;
   getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>;
   getTextColorForBackground: (color: string) => string;
@@ -198,6 +202,7 @@ function buildColumnsFromFields(
     setFilter,
     setInspectCell,
     gridRef,
+    getCellRenderer,
     getCellActions,
     onCellFilterAdded,
     frozenColumns,

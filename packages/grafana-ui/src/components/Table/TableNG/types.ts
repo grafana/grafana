@@ -147,14 +147,20 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of the proto-based parser
   protoParserEnabled?: boolean;
-  // temporary feature toggle to manage rollout of the refactored nested-table implementation
-  nestedRefactorEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
 export type TableCellRenderer = FC<TableCellRendererProps>;
+
+/**
+ * Resolves the cell renderer for a field. Injected into the column builder so the rendering
+ * pipeline is decoupled from any specific set of cell types: the batteries-included table passes
+ * the full registry (gauge/sparkline/markdown/...), while a lean table can pass a minimal resolver
+ * that only handles Auto/text and the custom-cell seam.
+ */
+export type CellRendererResolver = (field: Field, cellOptions: TableCellOptions) => TableCellRenderer;
 
 export interface TableCellRendererProps {
   rowIdx: number;

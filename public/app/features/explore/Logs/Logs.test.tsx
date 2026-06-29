@@ -509,14 +509,14 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
+      const table = await screen.findByRole('grid');
       expect(table).toBeInTheDocument();
     });
 
     it('should use default state from localstorage - table', async () => {
       localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
-      const table = await screen.findByTestId('logRowsTable');
+      const table = await screen.findByRole('grid');
       expect(table).toBeInTheDocument();
     });
 
@@ -532,7 +532,7 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
+      const table = await screen.findByRole('grid');
       expect(table).toBeInTheDocument();
     });
   });
@@ -578,7 +578,7 @@ describe('Logs', () => {
         },
       });
       await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
+      expect(await screen.findByRole('grid')).toBeInTheDocument();
     });
 
     it('should show logs', async () => {

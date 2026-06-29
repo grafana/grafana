@@ -8,6 +8,7 @@ import { useTheme2 } from '../../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../../utils/colors';
 import { usePanelContext } from '../../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../../cellUtils';
+import { getCellRenderer as resolveRegistryCellRenderer } from '../Cells/renderers';
 import { TABLE } from '../constants';
 import {
   useColumnResize,
@@ -21,6 +22,7 @@ import {
   useSortedRows,
 } from '../hooks';
 import {
+  type CellRendererResolver,
   type CellRootRenderer,
   type InspectCellProps,
   type TableColumn,
@@ -51,7 +53,15 @@ type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellC
 const EMPTY_EXPANDED_ROWS: Set<string> = new Set();
 const NOOP_STABLE_KEY = () => '';
 
-export function TableFlat(props: TableNGProps) {
+/**
+ * @internal `getCellRenderer` resolves the renderer for each field. Defaults to the full cell-type
+ * registry; the lean `TableCore` passes a minimal Auto/text + custom-cell resolver instead.
+ */
+export interface TableFlatProps extends TableNGProps {
+  getCellRenderer?: CellRendererResolver;
+}
+
+export function TableFlat(props: TableFlatProps) {
   const {
     cellHeight,
     data,
@@ -62,6 +72,7 @@ export function TableFlat(props: TableNGProps) {
     enableVirtualization,
     frozenColumns: _frozenColumns = 0,
     getActions = () => [],
+    getCellRenderer = resolveRegistryCellRenderer,
     height,
     maxRowHeight: _maxRowHeight,
     noHeader,
@@ -258,6 +269,7 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       setInspectCell,
       gridRef,
+      getCellRenderer,
       getCellActions,
       onCellFilterAdded,
       frozenColumns,
@@ -276,6 +288,7 @@ export function TableFlat(props: TableNGProps) {
       rowHeight,
       rowHeightFn,
       filter,
+      getCellRenderer,
       getCellActions,
       onCellFilterAdded,
       frozenColumns,

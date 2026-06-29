@@ -3,7 +3,8 @@ import { memo, useState } from 'react';
 
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
+import { TableCore } from '@grafana/ui/unstable';
 import { PANEL_BORDER } from 'app/core/constants';
 import { TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, type TableResultsStyle } from 'app/types/explore';
 
@@ -113,7 +114,7 @@ export const RawPrometheusContainerPure = memo(
         {frames?.length && (
           <>
             {renderTable && (
-              <Table
+              <TableCore
                 ariaLabel={ariaLabel}
                 data={frames[0]}
                 width={tableWidth}

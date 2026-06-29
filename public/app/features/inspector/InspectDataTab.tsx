@@ -16,7 +16,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Button, Spinner, Table } from '@grafana/ui';
+import { Button, Spinner } from '@grafana/ui';
+import { TableCore } from '@grafana/ui/unstable';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
@@ -300,7 +301,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return null;
               }
 
-              return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
+              return <TableCore width={width} height={height} data={dataFrame} showTypeIcons={true} />;
             }}
           </AutoSizer>
         </div>
