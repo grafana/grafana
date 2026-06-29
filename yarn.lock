@@ -2859,7 +2859,7 @@ __metadata:
     jest: "npm:^29.6.4"
     lodash: "npm:^4.18.1"
     react-use: "npm:^17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
     sql-formatter-plus: "npm:1.3.6"
@@ -28035,7 +28035,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.6":
+"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
