@@ -21,7 +21,7 @@ export interface AnnotationTooltipProps {
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({
+export const AnnotationTooltip = ({
   annoVals,
   annoIdx,
   timeZone,

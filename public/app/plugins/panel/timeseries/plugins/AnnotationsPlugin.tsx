@@ -14,11 +14,14 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
+import { AnnotationMarker } from 'app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker';
+import { type AnnotationVals, type XYAnnoVals } from 'app/plugins/panel/timeseries/plugins/annotations/types';
+import {
+  ClusteringMode,
+  useAnnotationClustering,
+} from 'app/plugins/panel/timeseries/plugins/annotations/useAnnotationClustering';
+import { useAnnotations } from 'app/plugins/panel/timeseries/plugins/annotations/useAnnotations';
 
-import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
-import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
-import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
-import { useAnnotations } from './annotations2-cluster/useAnnotations';
 import {
   ANNOTATION_LANE_SIZE,
   getAnnoRegionBoxStyle,
@@ -26,7 +29,7 @@ import {
   shouldRenderAnnotationRegion,
 } from './utils';
 
-interface AnnotationsPlugin2ClusterProps {
+interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
   options: VizAnnotations | undefined;
   annotations?: DataFrame[];
@@ -59,7 +62,7 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   return vals;
 }
 /**
- * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
+ * Refactored version of the AnnotationsPlugin
  * @param annotations
  * @param timeZone
  * @param config
@@ -70,7 +73,7 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
  * @param options
  * @constructor
  */
-export const AnnotationsPlugin2Cluster = ({
+export const AnnotationsPlugin = ({
   annotations,
   timeZone,
   config,
@@ -79,7 +82,7 @@ export const AnnotationsPlugin2Cluster = ({
   replaceVariables,
   canvasRegionRendering = true,
   options,
-}: AnnotationsPlugin2ClusterProps) => {
+}: AnnotationsPluginProps) => {
   const plotRef = useRef<uPlot | null>(null);
   const plotRangeRef = useRef<TimeRange2>({
     from: plotRef.current?.scales?.x?.min ?? -1,
@@ -323,7 +326,7 @@ export const AnnotationsPlugin2Cluster = ({
           const isPinned = pinnedAnnotationId === annotationKey;
 
           markers.push(
-            <AnnotationMarker2
+            <AnnotationMarker
               key={annotationKey}
               setPinned={setPinned}
               isPinned={isPinned}

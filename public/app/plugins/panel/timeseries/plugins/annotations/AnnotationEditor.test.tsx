@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { usePanelContext } from '@grafana/ui';
 
-import { AnnotationEditor2 } from './AnnotationEditor2';
+import { AnnotationEditor } from './AnnotationEditor';
 import { type AnnotationVals } from './types';
 
 jest.mock('@grafana/ui', () => ({
@@ -37,7 +37,7 @@ describe('onSubmit', () => {
       eventBus: jest.fn(),
     });
 
-    render(<AnnotationEditor2 annoVals={annoVals} annoIdx={0} timeZone="browser" dismiss={jest.fn()} />);
+    render(<AnnotationEditor annoVals={annoVals} annoIdx={0} timeZone="browser" dismiss={jest.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onAnnotationCreate).toHaveBeenCalledWith({
@@ -60,7 +60,7 @@ describe('onSubmit', () => {
     });
 
     render(
-      <AnnotationEditor2
+      <AnnotationEditor
         annoVals={{ ...annoVals, ...{ id: [4683] } }}
         annoIdx={0}
         timeZone="browser"
