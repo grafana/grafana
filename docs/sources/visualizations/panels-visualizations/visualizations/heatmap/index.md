@@ -59,7 +59,7 @@ Once you’ve created a [dashboard](ref:dashboards), the following video shows y
 
 ## Supported data formats
 
-Heatmaps support time series data.
+Heatmaps support raw time series data and pre-calculated heatmap data. When **Calculate from data** is enabled, Grafana calculates buckets from time series or table data. When **Calculate from data** is disabled, Grafana can render pre-bucketed heatmap rows, heatmap cells, or wide frames that use one field per bucket.
 
 ### Example
 
@@ -159,8 +159,8 @@ Toggle the switch to reverse the color scheme. This option only applies the **Sc
 
 By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
 
-- **Start** - Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
-- **End** - Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
+- **Start color scale from value** - Minimum value used for cell color calculation. If the bucket value is less than this value, then it's mapped to the minimum color. The series minimum value is the default value.
+- **End color scale at value** - Maximum value used for cell color calculation. If the bucket value is greater than this value, then it's mapped to the maximum color. The series maximum value is the default value.
 
 ### Cell display options
 
@@ -170,10 +170,11 @@ Use these settings to control the display of heatmap cells.
 
 | Option | Description |
 | ------ | ----------- |
+| Value name | When **Calculate from data** is **No**, set the name used for the cell value field. The placeholder is **Value**. |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Cell gap | Set how much space there is between cells. |
-| Hide cells with values <= | Enter a value. |
+| Hide cells with values <= | Enter a value. The default is `1e-9`; clear the field if you don't want Grafana to hide very small values. |
 | Hide cells with values >= | Enter a value. |
 
 <!-- prettier-ignore-end -->
@@ -182,13 +183,13 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                             |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
-| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Option                                | Description                                                                                                                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                                   |
+| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.                       |
+| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                                                |
+| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                                      |
+| Max height                            | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** or when exemplar annotations are present, and only applies when you enter a value. |
 
 #### Tooltip mode
 
@@ -223,5 +224,7 @@ Set the color used to show exemplar data.
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Field overrides
+
+You can use field overrides to change heatmap field options, including **Y axis scale** for a specific field. **Y axis scale** supports **Linear**, **Logarithmic**, and **Symlog** scales.
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

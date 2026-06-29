@@ -118,7 +118,7 @@ value4 , value5 , value6
 value7 , value8 , value9
 ```
 
-If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
+If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization still displays the data and shows missing values as empty or null cells:
 
 ```csv
 Column1, Column2, Column3
@@ -304,7 +304,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 | [Pill](#pill)                             | Displays each item in a comma-separated string in a colored block. |
 | [Markdown + HTML](#markdown--html)        | Displays rich markdown or HTML content. |
 | [Image](#image)                           | Displays an image when the value is a URL or a base64 encoded image. |
-| [Actions](#actions)                       | The cell displays a button that triggers a basic, unauthenticated API call when clicked. |
+| [Actions](#actions)                       | The cell displays buttons for configured actions. |
 <!-- prettier-ignore-end -->
 
 #### Auto
@@ -403,7 +403,7 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 This cell type shows values rendered as a sparkline.
 To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
-You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override. When thresholds are defined, the sparkline automatically uses the **Scheme** gradient mode to reflect threshold levels along the line.
+You can color sparklines using thresholds by setting the field's color scheme to **From thresholds (by value)** in the [standard color scheme options](ref:color-scheme), using an override.
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
@@ -418,7 +418,7 @@ For more detailed information about all of the sparkline styling options (except
 | Line interpolation  | How the graph interpolates the series line. Choose from:<ul><li>**Linear** - Points are joined by straight lines.</li><li>**Smooth** - Points are joined by curved lines that smooths transitions between points.</li><li>**Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.</li><li>**Step after** - The line is displayed as steps between points. Points are rendered at the beginning of the step.</li></ul> |
 | Line width          | The thickness of the series lines or the outline for bars using the **Line width** slider. |
 | Fill opacity        | The series area fill color using the **Fill opacity** slider. |
-| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li><li>**Scheme** - The sparkline line color reflects the configured threshold levels. Automatically applied when the color scheme is set to **From thresholds (by value)** and thresholds are defined.</li></ul> |
+| Gradient mode       | Gradient mode controls the gradient fill, which is based on the series color. Gradient appearance is influenced by the **Fill opacity** setting. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme](ref:color-scheme). Choose from:<ul><li>**None** - No gradient fill. This is the default setting.</li><li>**Opacity** - An opacity gradient where the opacity of the fill increases as y-axis values increase.</li><li>**Hue** - A subtle gradient that's based on the hue of the series color.</li></ul> |
 | Line style          | Choose from:<ul><li>**Solid**</li><li>**Dash** - Select the length and gap for the line dashes. Default dash spacing is 10, 10.</li><li>**Dots** - Select the gap for the dot spacing. Default dot spacing is 0, 10.</li></ul> |
 | Connect null values | How null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. Choose from:<ul><li>**Never** - Time series data points with gaps in the data are never connected.</li><li>**Always** - Time series data points with gaps in the data are always connected.</li><li>**Threshold** - Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size or within a known range, and gaps outside this range should no longer be connected.</li></ul> |
 | Show points         | Whether to show data points to lines or bars. Choose from: <ul><li>**Auto** - Grafana determines a point's visibility based on the density of the data. If the density is low, then points appear.</li><li>**Always** - Show the points regardless of how dense the dataset is.</li><li>**Never** - Don't show points.</li></ul> |
@@ -494,20 +494,7 @@ It has the following options:
 
 #### Actions
 
-The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
-
-<!-- prettier-ignore-start -->
-| Option             | Description  |
-| ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
-| Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
-<!-- prettier-ignore-end -->
+The cell displays buttons for actions configured on the field. Configure the action itself under [Data links and actions](#data-links-and-actions), or add an override that targets the field and defines an action. The **Actions** cell type controls how those configured actions render in the table; it doesn't add separate API call settings.
 
 #### Tooltip from field
 

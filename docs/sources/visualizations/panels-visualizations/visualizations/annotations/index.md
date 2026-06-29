@@ -56,6 +56,8 @@ Choose from:
 - **All dashboards** - List annotations from all dashboards in the current organization.
 - **This dashboard** - Limit the list to the annotations on the current dashboard.
 
+When dashboard scopes are active, Grafana limits the list to annotations that match those scopes.
+
 #### Time range
 
 Specify whether the list should be limited to the current time range.
@@ -72,11 +74,13 @@ These options control additional metadata included in the annotations list displ
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
-| Show user | Show or hide which user created the annotation.  |
-| Show time | Show or hide the time the annotation creation time. |
+| Show user | Show or hide which user created the annotation. When this option is shown, you can click a user in the list to filter annotations by that creator. |
+| Show time | Show or hide the annotation time. If an annotation spans a range, both the start and end times are shown. |
 | Show tags | Show or hide the tags associated with an annotation. Note that you can use the tags to filter the annotations list. |
 
 <!-- prettier-ignore-end -->
+
+When you filter by selecting a user or tag in the visualization, Grafana displays the active filters in a **Filter:** bar above the annotation list. Remove a filter from that bar to show the broader result set again.
 
 ### Link behavior options
 

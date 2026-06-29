@@ -39,8 +39,9 @@ When the log line details are open, you have access to the following additional 
 
 - Explain log line in Assistant
 - Copy to clipboard
-- Anchor to the right
-- Close log details
+- Display inline
+- Switch to condensed view or **Switch to expanded view**
+- Close log details sidebar or **Close details for this log**
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-logs-options-v12.3.png" max-width="750px" alt="Log icons" >}}
 
@@ -62,9 +63,9 @@ The following video provides a walkthrough of creating a logs visualization. You
 
 The logs visualization works best with log-type datasets such as queries from data sources like Loki, Elastic, and InfluxDB.
 
-You can also build log-formatted data from other data sources as long as the first field is a time type followed by string, number, and time fields. The leading time field is used to sort and timestamp the logs and if the data contains other time-type fields, they’re included as elements of the logged record.
+Grafana can render OpenTelemetry-style log frames with fields such as `timestamp`, `body`, `severity`, and `labels`. You can also build log-formatted data from other data sources as long as the first field is a time type followed by string, number, and time fields. The leading time field is used to sort and timestamp the logs and if the data contains other time-type fields, they’re included as elements of the logged record.
 
-The second field is used as the log record title regardless of whether it’s a time, numeric, or string field. Usually the second field is a text field containing multiple string elements, but if the message level (or `lvl`) is present, the visualization uses the values in it to add colors to the record, as described in [Log levels integration](ref:log-levels).
+In legacy log frames, the second field is used as the log record title regardless of whether it’s a time, numeric, or string field. Usually the second field is a text field containing multiple string elements, but if a level field is present, the visualization uses the values in it to add colors to the record, as described in [Log levels integration](ref:log-levels).
 
 Subsequent fields are collapsed inside of each log record.
 
@@ -82,7 +83,7 @@ To limit the number of log lines rendered in the visualization, you can use the 
 
 ## Log level
 
-For logs where a `level` label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions](ref:log-levels).
+Grafana uses supported level fields and labels to determine the log level and update color accordingly. Supported sources include `severity`, `level`, `detected_level`, `lvl`, and `loglevel`. If the log doesn't have one of these fields or labels, Grafana tries to determine whether its content matches any of the supported expressions. The log level is always determined by the first match. If Grafana can't determine a log level, it visualizes the log with the **unknown** log level. Refer to [supported log levels and mappings of log level abbreviation and expressions](ref:log-levels).
 
 ## Configuration options
 
@@ -101,16 +102,21 @@ Use these settings to refine your visualization:
 |      Option     |   Description   |
 | --------------- | --------------- |
 | Show timestamps | Show or hide the time column. This is the timestamp associated with the log line as reported from the data source. |
+| Timestamp resolution | When **Show timestamps** is enabled, choose **Milliseconds** or **Nanoseconds** for timestamp display. |
+| Display log level | Show or hide the log level indicator. This option is on by default. |
 | Unique labels | Show or hide the unique labels column, which shows only non-common labels. |
 | Wrap lines | Turn line wrapping on or off. |
+| Enable columns for displayed fields | When **Wrap lines** is off, align displayed field values using columns. |
 | Prettify JSON | Toggle the switch on to pretty print all JSON logs. This setting does not affect logs in any format other than JSON. |
 | Enable highlighting | Use a predefined syntax coloring grammar to highlight relevant parts of the log lines |
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display ad-hoc statistics in relation to all displayed logs. The default setting is on. |
 | Log Details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. |
-| Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list. |
+| Enable field selector | Experimental. Show a component to manage the displayed fields from the logs. |
+| Enable infinite scrolling | Experimental. Request more results by scrolling to the bottom of the logs list. |
 | Show controls | Display controls to jump to the last or first log line, and filters by log level |
+| Display download control | When **Show controls** is on, show an option to download the logs on display. |
 | Font size | Select between the default font size and small font size. |
-| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numerical** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signatures** - Removing successive lines with identical punctuation and white space.</li></ul> |
+| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**None** - No deduplication.</li><li>**Exact** - Deduplicate lines that are identical.</li><li>**Numbers** - Deduplicate lines that differ only by numbers such as IP addresses or latencies.</li><li>**Signature** - Deduplicate lines with identical punctuation and whitespace.</li></ul> |
 | Order | Set whether to show results **Newest first** or **Oldest first**. |
 
 <!-- prettier-ignore-end -->

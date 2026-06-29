@@ -39,7 +39,7 @@ refs:
 
 # Alert list
 
-Alert lists allow you to display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. Learn more about alerts in [Grafana Alerting overview](ref:grafana-alerting-overview).
+Alert lists allow you to display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, recovering, or normal. Learn more about alerts in [Grafana Alerting overview](ref:grafana-alerting-overview).
 
 ![An alert list visualization](/media/docs/grafana/panels-visualizations/screenshot-alert-list-v11.3.png)
 
@@ -84,16 +84,18 @@ Select how to order the alerts displayed. Choose from:
 
 - **Alphabetical (asc)** - Alphabetical order.
 - **Alphabetical (desc)** - Reverse alphabetical order.
-- **Importance** - By importance according to the following values, with 1 being the highest:
+- **Importance** - By alert state importance, with `1` being the highest. Alert instances use the following order:
+  - error: 1
   - alerting: 1
   - firing: 1
-  - no_data: 2
-  - pending: 3
-  - ok: 4
-  - paused: 5
-  - inactive: 5
-- **Time (asc)** - Oldest active alert instances first.
-- **Time (desc)** - Newest active alert instances first.
+  - pending: 2
+  - recovering: 2
+  - inactive: 2
+  - no_data: 3
+  - normal: 4
+  - unknown: 5
+- **Time (asc)** - Oldest active alert rules first. When alert instances are shown, instances are ordered by their active time.
+- **Time (desc)** - Newest active alert rules first. When alert instances are shown, instances are ordered by their active time.
 
 ### Filter options
 

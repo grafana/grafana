@@ -155,13 +155,13 @@ The **Include** and **Ignore** options allow it to visualize other included data
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                  | Description                                                                                                                    |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
-| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
-| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
-| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+| Option                                  | Description                                                                                                                                                                                    |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                                   |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                                                                                        |
+| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.                                                                 |
+| Max width                               | Set the maximum width of the tooltip box.                                                                                                                                                      |
+| Max height                              | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** or when exemplar annotations are present, and only applies when you enter a value. |
 
 #### Tooltip mode
 

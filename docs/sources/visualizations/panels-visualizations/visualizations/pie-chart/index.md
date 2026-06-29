@@ -86,7 +86,7 @@ To allow values in multiple rows to be displayed, change the **Show** setting in
 
 ### Example - Multiple rows and columns
 
-If your dataset contains multiple rows and columns with numeric data, by default only the last row's values are summed.
+If your dataset contains multiple rows and columns with numeric data, by default the pie chart reduces each column or series using the selected calculation. The default calculation is **Last \* (not null)**.
 
 | Value1 | Value2 | Value3 | Optional |
 | ------ | ------ | ------ | -------- |
@@ -100,7 +100,7 @@ If you want to display all the cells, change the **Show** setting in the [Value 
 
 ![Pie chart visualization with multiple rows and columns showing the all values](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-pie-example5.png)
 
-If you want to display only the values from a given field (or column), once the **Show** setting in the [Value options](#value-options) is set to **All values**, set the **Fields** option to the column you wish to sum in the display. The value labels are also concatenated as indicated before.
+If you want to display only the values from a given field or column, once the **Show** setting in the [Value options](#value-options) is set to **All values**, set the **Fields** option to the column you want to display. The value labels are also concatenated as indicated before.
 
 ![Pie chart visualization with multiple rows and columns showing values from one column](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.1-pie-example6.png)
 
@@ -122,8 +122,8 @@ Use the following options to refine the value in your visualization.
 | ------ | ----------- |
 | Show | Set how much information to show. Choose from:<ul><li>**Calculate** - Reduces each value to a single value per series.</li><li>**All values** - Displays every value from a single series.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
-| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
+| Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. The default is `25`, and the maximum is `5000`. |
+| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
@@ -176,6 +176,7 @@ Use these settings to define how the legend appears in your visualization. For m
 | Mode | Use these settings to define how the legend appears in your visualization. Choose from:<ul><li>**List** - Displays the legend as a list. This is a default display mode of the legend.</li><li>**Table** - Displays the legend as a table.</li></ul> |
 | Placement | Select where to display the legend. Choose **Bottom** or **Right**. |
 | Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
+| Limit | Limit how many items are shown by default in the legend. |
 | Legend values | Select values to display in the legend. You can select more than one:<ul><li>**Percent** - The percentage of the whole.</li><li>**Value** - The raw numerical value.</li></ul> |
 
 <!-- prettier-ignore-end -->
