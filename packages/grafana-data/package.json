@@ -72,7 +72,7 @@
     "@types/systemjs": "^6.15.3",
     "d3-interpolate": "^3.0.1",
     "d3-scale-chromatic": "^3.1.0",
-    "date-fns": "4.1.0",
+    "date-fns": "^4.1.0",
     "dompurify": "3.4.0",
     "eventemitter3": "5.0.1",
     "history": "4.10.1",
