@@ -12,7 +12,6 @@ import {
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
   type PanelPluginDataSupport,
-  type PanelNaturalHeightSupplier,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
@@ -183,11 +182,12 @@ export class PanelPlugin<
   shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   /**
-   * Optional callback returning the inner content natural height in pixels.
-   * When implemented, content-aware layouts can size the panel to fit. See
-   * {@link PanelNaturalHeightSupplier}.
+   * Whether this plugin can render in a content-fit layout (no fixed height,
+   * sizes to content within the layout's min/max). Declared statically via
+   * {@link setFitContentSupport}; content-aware layouts read it to decide
+   * whether to offer "fit content" for this panel.
    */
-  getNaturalHeight?: PanelNaturalHeightSupplier<TOptions>;
+  supportsFitContent?: boolean;
   noPadding?: boolean;
   /** @internal - set via {@link setScreenshotImage}, read by the panel screenshot service. */
   onScreenshot?: PanelScreenshotHandler;
@@ -302,15 +302,16 @@ export class PanelPlugin<
   }
 
   /**
-   * Registers a callback that returns the panel's natural inner content
-   * height in pixels for given data + options + width. Content-aware layouts
-   * use this to size the panel to fit its content without rendering it first.
+   * Declares that this panel can render in a content-fit layout: with no fixed
+   * height, sizing to its content while the layout enforces min/max via CSS.
+   * The panel receives {@link PanelProps.fitContent} and is responsible for
+   * rendering in flow (or self-sizing) when it is set.
    *
-   * Plugins that opt out (don't call this) will be sized to the layout's
-   * default height.
+   * Plugins that don't call this stay fixed-height and are not offered the
+   * "fit content" layout option.
    */
-  setNaturalHeight(supplier: PanelNaturalHeightSupplier<TOptions>) {
-    this.getNaturalHeight = supplier;
+  setFitContentSupport(supports = true) {
+    this.supportsFitContent = supports;
     return this;
   }
 

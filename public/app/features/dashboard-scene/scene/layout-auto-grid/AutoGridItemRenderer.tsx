@@ -2,13 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import {
-  LazyLoader,
-  sceneGraph,
-  type SceneComponentProps,
-  useVizPanelNaturalHeight,
-  type VizPanel,
-} from '@grafana/scenes';
+import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitContext, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -20,12 +14,12 @@ import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
-import { AutoGridLayoutManager, getMaxHeightInPixels, getNamedHeightInPixels } from './AutoGridLayoutManager';
+import { AutoGridLayoutManager, getMaxHeightCssValue, getNamedHeightInPixels } from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
-  const { body, repeatedPanels = [], key } = model.useState();
+  const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
   const styles = useStyles2(getStyles);
@@ -33,25 +27,43 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);
 
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { isDropTarget, fitContent, rowHeight, maxHeightMode, maxHeight, matchRowHeights } = layoutManager.useState();
-  const minHeight = getNamedHeightInPixels(rowHeight);
-  const matchRowHeightsOn = matchRowHeights !== false;
-  const fitContentOn = fitContent === true;
-
-  const panelHeight = useVizPanelNaturalHeight(body, {
-    enabled: fitContentOn,
-    containerRef: model.containerRef,
+  const {
+    isDropTarget,
+    fitContent: layoutFitContent,
+    rowHeight,
     minHeight,
-    maxHeight: getMaxHeightInPixels(maxHeightMode, maxHeight),
-    watchViewportResize: maxHeightMode === 'screen',
-  });
+    maxHeightMode,
+    maxHeight,
+    matchRowHeights,
+  } = layoutManager.useState();
 
-  const itemHeight = panelHeight ?? minHeight;
-  const fitContentStyle: React.CSSProperties | undefined = fitContentOn
-    ? matchRowHeightsOn
-      ? { minHeight: itemHeight }
-      : { height: itemHeight }
-    : undefined;
+  // Subscribe so we re-render once the plugin loads and its capability is known.
+  body.useState();
+
+  // Content-fit only applies to panels whose plugin supports it. A per-panel
+  // override (opt-in/opt-out) wins over the layout default.
+  const pluginSupportsFit = body.getPlugin()?.supportsFitContent === true;
+  const fitContentOn = pluginSupportsFit && (itemFitContent ?? layoutFitContent ?? false);
+  const matchRowHeightsOn = matchRowHeights !== false;
+  const rowHeightPx = getNamedHeightInPixels(rowHeight);
+  const fitMinHeightPx = getNamedHeightInPixels(minHeight ?? rowHeight);
+
+  // Fit-content sizing is pure CSS: the cell caps the height and the browser
+  // sizes the row to content. The min-height floor is applied to the panel
+  // chrome (via the fit context) so the chrome itself fills it — a min-height on
+  // this cell would leave the chrome floating at the top.
+  // Non-fit panels stay at the row height; when row heights aren't matched they
+  // must pin to it explicitly so a tall fit sibling doesn't stretch them.
+  const itemStyle: React.CSSProperties | undefined = fitContentOn
+    ? { maxHeight: getMaxHeightCssValue(maxHeightMode, maxHeight), overflow: 'auto' }
+    : matchRowHeightsOn
+      ? undefined
+      : { height: rowHeightPx };
+
+  const fitContentValue = useMemo(
+    () => ({ enabled: fitContentOn, minHeight: fitMinHeightPx }),
+    [fitContentOn, fitMinHeightPx]
+  );
 
   const Wrapper = useMemo(
     () =>
@@ -94,7 +106,9 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
 
           const wrapperContent = (
             <>
-              <item.Component model={item} />
+              <VizPanelFitContext.Provider value={fitContentValue}>
+                <item.Component model={item} />
+              </VizPanelFitContext.Provider>
               {conditionalRenderingOverlay}
               {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
             </>
@@ -126,7 +140,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn]
+    [model, isLazy, key, styles, isEditing, fitContentOn, fitContentValue]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
@@ -150,7 +164,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         isDragged={isDragged}
         showDropTarget={showDropTarget}
         isLastPanel={repeatedPanels.length === 0}
-        extraStyle={fitContentStyle}
+        extraStyle={itemStyle}
       />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
@@ -163,7 +177,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat={true}
           isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
-          extraStyle={fitContentStyle}
+          extraStyle={itemStyle}
         />
       ))}
     </>

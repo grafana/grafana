@@ -165,10 +165,14 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
 }
 
 function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManager }) {
-  const { rowHeight, fillScreen, fitContent, maxHeightMode, maxHeight, matchRowHeights } = layoutManager.useState();
+  const { rowHeight, fillScreen, fitContent, minHeight, maxHeightMode, maxHeight, matchRowHeights } =
+    layoutManager.useState();
   const matchRowHeightsOn = matchRowHeights !== false;
   const [inputRef, setInputRef] = React.useState<HTMLInputElement | null>(null);
   const [focusInput, setFocusInput] = React.useState(false);
+  const [minHeightInputRef, setMinHeightInputRef] = React.useState<HTMLInputElement | null>(null);
+  const [minHeightFocusInput, setMinHeightFocusInput] = React.useState(false);
+  const [minHeightError, setMinHeightError] = React.useState(false);
   const [maxHeightFocusInput, setMaxHeightFocusInput] = React.useState(false);
   const [maxHeightInputRef, setMaxHeightInputRef] = React.useState<HTMLInputElement | null>(null);
   const [customMinWidthError, setCustomMinWidthError] = React.useState(false);
@@ -188,6 +192,13 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
       setMaxHeightFocusInput(false);
     }
   }, [maxHeightFocusInput, maxHeightInputRef]);
+
+  useEffect(() => {
+    if (minHeightFocusInput && minHeightInputRef) {
+      minHeightInputRef.focus();
+      setMinHeightFocusInput(false);
+    }
+  }, [minHeightFocusInput, minHeightInputRef]);
 
   const maxHeightOptions: Array<ComboboxOption<AutoGridMaxHeightMode>> = [
     { label: t('dashboard.auto-grid.options.max-height-unlimited', 'Unlimited'), value: 'unlimited' as const },
@@ -209,11 +220,37 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
   }));
 
   const isStandardHeight = typeof rowHeight === 'string';
-  const rowHeightLabel = fitContent
-    ? t('dashboard.auto-grid.options.min-height-fit', 'Minimum height')
-    : rowHeight
-      ? t('dashboard.auto-grid.options.min-height', 'Row height')
-      : t('dashboard.auto-grid.options.min-height-custom', 'Custom row height');
+  const rowHeightLabel = isStandardHeight
+    ? t('dashboard.auto-grid.options.row-height', 'Row height')
+    : t('dashboard.auto-grid.options.row-height-custom', 'Custom row height');
+
+  const minHeightValue = minHeight ?? 'standard';
+  const isStandardMinHeight = typeof minHeightValue === 'string';
+  const minHeightLabel = isStandardMinHeight
+    ? t('dashboard.auto-grid.options.min-height', 'Min height')
+    : t('dashboard.auto-grid.options.min-height-custom', 'Custom min height');
+
+  const onCustomMinHeightChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pixels = parseInt(e.target.value, 10);
+    if (isNaN(pixels) || pixels < 50 || pixels > 2000) {
+      setMinHeightError(true);
+      return;
+    }
+    setMinHeightError(false);
+    layoutManager.onMinHeightChanged(pixels);
+  };
+
+  const onNamedFitMinHeightChanged = (value: ComboboxOption<AutoGridRowHeight>) => {
+    if (value.value === 'custom') {
+      setMinHeightFocusInput(true);
+    }
+    layoutManager.onMinHeightChanged(value.value);
+  };
+
+  const onClearCustomMinHeight = () => {
+    setMinHeightError(false);
+    layoutManager.onMinHeightChanged('standard');
+  };
 
   const onCustomHeightChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     const pixels = parseInt(e.target.value, 10);
@@ -291,18 +328,62 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
           />
         )}
       </Field>
-      {!fitContent && (
+      <Field
+        label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')}
+        className={styles.narrowSelector}
+        noMargin
+      >
+        <InlineSwitch
+          id="fill-screen-toggle"
+          value={fillScreen}
+          onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
+        />
+      </Field>
+      {fitContent && (
         <Field
-          label={t('dashboard.auto-grid.options.height-fill', 'Fill screen')}
-          className={styles.narrowSelector}
+          label={minHeightLabel}
+          invalid={minHeightError}
+          error={
+            minHeightError
+              ? t('dashboard.auto-grid.options.min-height-error', 'A number between 50 and 2000 is required')
+              : undefined
+          }
+          className={styles.wideSelector}
           noMargin
         >
-          <InlineSwitch
-            id="fill-screen-toggle"
-            value={fillScreen}
-            onChange={() => layoutManager.onFillScreenChanged(!fillScreen)}
-            data-testid={selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen}
-          />
+          {isStandardMinHeight ? (
+            <Combobox
+              id="fit-min-height"
+              options={minWidthOptions}
+              value={minHeightValue}
+              onChange={onNamedFitMinHeightChanged}
+            />
+          ) : (
+            <Input
+              id="fit-min-height"
+              defaultValue={minHeightValue}
+              onBlur={onCustomMinHeightChanged}
+              ref={(ref) => {
+                setMinHeightInputRef(ref);
+              }}
+              type="number"
+              min={50}
+              max={2000}
+              invalid={minHeightError}
+              suffix={
+                <Button
+                  size="sm"
+                  fill="text"
+                  icon="times"
+                  tooltip={t('dashboard.auto-grid.options.min-height-custom-clear', 'Back to standard min height')}
+                  onClick={onClearCustomMinHeight}
+                >
+                  {t('dashboard.auto-grid.options.custom-min-height.clear', 'Clear')}
+                </Button>
+              }
+            />
+          )}
         </Field>
       )}
       {fitContent && (
