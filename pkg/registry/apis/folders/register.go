@@ -76,16 +76,19 @@ type FolderAPIBuilder struct {
 	resourcePermissionsSvcMu sync.Mutex
 
 	// Dashboard apiserver client used by cascade delete to remove dashboards in a deleted folder.
-	// Built lazily from restConfigProvider; do not access directly, use `dashboardClient(ctx)`.
-	dashboardSvc   *dynamic.NamespaceableResourceInterface
-	dashboardSvcMu sync.Mutex
+	// Built lazily from cascadeConfigProvider; do not access directly, use `dashboardClient(ctx)`.
+	// cascadeConfigProvider is set independently of the authz flag so dashboard cleanup works
+	// whenever cascade delete is enabled.
+	cascadeConfigProvider apiserver.RestConfigProvider
+	dashboardSvc          *dynamic.NamespaceableResourceInterface
+	dashboardSvcMu        sync.Mutex
 }
 
 // dashboardClient returns the dashboard dynamic client, building it lazily from restConfigProvider.
 // Returns nil when no client is configured (e.g. no restConfigProvider), in which case cascade
 // delete skips dashboard cleanup.
 func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	if b.restConfigProvider == nil {
+	if b.cascadeConfigProvider == nil {
 		return b.dashboardSvc, nil
 	}
 
@@ -96,7 +99,7 @@ func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.Namesp
 		return b.dashboardSvc, nil
 	}
 
-	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get rest config: %w", err)
 	}
@@ -135,6 +138,9 @@ func RegisterAPIService(cfg *setting.Cfg,
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
 	}
+
+	// Cascade dashboard cleanup needs an apiserver client regardless of the authz flag above.
+	builder.cascadeConfigProvider = restConfigProvider
 
 	apiregistration.RegisterAPI(builder)
 	return builder
