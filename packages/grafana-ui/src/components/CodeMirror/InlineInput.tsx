@@ -152,6 +152,10 @@ function createInlineInputTheme(theme: GrafanaTheme2, monospace: boolean): Exten
       backgroundColor: theme.colors.action.hover,
       color: theme.colors.text.primary,
     },
+    '.cm-tooltip-autocomplete ul li:hover': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
     '.cm-completionLabel': {
       fontFamily: theme.typography.fontFamilyMonospace,
     },
