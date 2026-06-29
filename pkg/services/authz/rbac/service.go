@@ -975,9 +975,6 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 		return true, nil
 	}
 
-	// A specific object was named but its parent folder is unknown. Without a
-	// folder the only thing that can authorize the request is a wildcard folder
-	// grant (handled above).
 	if req.ParentFolder == "" {
 		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
 	}
@@ -1155,6 +1152,15 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 }
 
 func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *listRequest) (*authzv1.ListResponse, error) {
+	// Mapper-miss resources (folder-scoped CRDs, *.ext.grafana.app) use the
+	// dual-check folder-authz model. Fork here before the scopeMap["*"] early
+	// return so a resource-type wildcard does not auto-allow all objects for
+	// folder-scoped CRDs (consistent with checkPermissionWithFolderAuthz).
+	t, mapperFound := s.mapper.Get(req.Group, req.Resource, req.Subresource)
+	if !mapperFound {
+		return s.listPermissionWithFolderAuthz(ctx, scopeMap, req)
+	}
+
 	if scopeMap["*"] {
 		return &authzv1.ListResponse{
 			All:    true,
@@ -1165,12 +1171,6 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.listPermission")
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
-
-	t, ok := s.mapper.Get(req.Group, req.Resource, req.Subresource)
-	if !ok {
-		ctxLogger.Debug("resource not in mapper, using K8s-native fallback", "group", req.Group, "resource", req.Resource, "subresource", req.Subresource)
-		t = newK8sNativeMapping(req.Group, req.Resource, req.Subresource)
-	}
 
 	var tree folderTree
 	cacheHit := false
@@ -1194,6 +1194,85 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	} else {
 		res = buildItemList(scopeMap, tree, t.Prefix())
 	}
+
+	if cacheHit {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
+	} else {
+		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Unix()}
+	}
+
+	span.SetAttributes(attribute.Int("num_folders", len(res.Folders)), attribute.Int("num_items", len(res.Items)))
+	return res, nil
+}
+
+// listPermissionWithFolderAuthz implements the "stack role AND folder
+// permission" model for the List/Compile path of K8s-native (mapper-miss)
+// resources, mirroring checkPermissionWithFolderAuthz.
+//
+// The stack-role grant lives under the resource-type action with an empty
+// scope (scopeMap[""]). A resource-type wildcard (scopeMap["*"]) is
+// deliberately not treated as the stack role and must not auto-allow, which is
+// why the caller forks here before listPermission's scopeMap["*"] early
+// return. Once the stack role is established we issue a second query for the
+// user's folder grants and return the set of readable folders, so the compiled
+// ItemChecker allows any object whose parent folder is readable.
+func (s *Service) listPermissionWithFolderAuthz(ctx context.Context, scopeMap map[string]bool, req *listRequest) (*authzv1.ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.listPermissionWithFolderAuthz")
+	defer span.End()
+	ctxLogger := s.logger.FromContext(ctx).New("namespace", req.Namespace.Value, "group", req.Group, "resource", req.Resource, "verb", req.Verb)
+
+	// No stack role at all (can't proceed regardless of folder grants).
+	// Gate on scopeMap[""] only: a resource-type wildcard must not be treated
+	// as the stack role nor auto-allow.
+	if !scopeMap[""] {
+		ctxLogger.Debug("folderAuthz: no stack role, returning empty list response")
+		return &authzv1.ListResponse{Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()}}, nil
+	}
+
+	// Issue a second permission query for the corresponding folder action
+	// (folders:read for reads), including the action-set names so users granted
+	// via managed roles like "folders:edit" are matched.
+	folderAction, folderActionSets := dualCheckFolderAuthz(req.Verb)
+	folderScopeMap, err := s.getCachedIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, folderAction)
+	permsFromCache := err == nil
+	if err != nil {
+		folderScopeMap, err = s.getIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, folderAction, folderActionSets)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Wildcard folder grant (Folder admin / folders:read scope=*) → allow all.
+	if folderScopeMap["*"] {
+		timestamp := time.Now()
+		if permsFromCache {
+			timestamp = timestamp.Add(-s.settings.CacheTTL)
+		}
+		return &authzv1.ListResponse{
+			All:    true,
+			Zookie: &authzv1.Zookie{Timestamp: timestamp.Unix()},
+		}, nil
+	}
+
+	var tree folderTree
+	cacheHit := false
+	if !req.Options.SkipCache {
+		tree, cacheHit = s.getCachedFolderTree(ctx, req.Namespace)
+	}
+	if !cacheHit {
+		tree, err = s.buildFolderTree(ctx, req.Namespace)
+		if err != nil {
+			ctxLogger.Error("could not build folder tree", "error", err)
+			return nil, err
+		}
+	}
+
+	// Feed the folder scopeMap to buildItemList: folder scopes (folders:uid:*)
+	// land in the Folders field (expanded to descendants), Items stays empty.
+	// The prefix is irrelevant here since the folder scopeMap has no resource
+	// scopes. Do not use buildFolderList — it puts folder UIDs in the Items
+	// field, which would deny every real object.
+	res := buildItemList(folderScopeMap, tree, "")
 
 	if cacheHit {
 		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}

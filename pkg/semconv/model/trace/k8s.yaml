@@ -1,7 +1,0 @@
-groups:
-  - id: trace.k8s
-    type: span
-    brief: 'Semantic Convention for Grafana Kubernetes resources'
-    stability: stable
-    attributes:
-      - ref: k8s.dataplaneservice.name

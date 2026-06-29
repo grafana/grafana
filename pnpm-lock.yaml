@@ -24,6 +24,7 @@ overrides:
   nwsapi: 2.2.2
   webpack: 5.107.2
   '@reduxjs/toolkit': 2.10.1
+  '@codemirror/view': 6.43.1
   semver@~7.3.5: ^7.3.5
   debug@^0.7.2: 2.6.9
   debug@^0.7.4: 2.6.9
@@ -116,9 +117,6 @@ importers:
       '@formatjs/intl-durationformat':
         specifier: ^0.7.0
         version: 0.7.6
-      '@grafana-plugins/tempo':
-        specifier: workspace:*
-        version: link:public/app/plugins/datasource/tempo
       '@grafana/alerting':
         specifier: workspace:*
         version: link:packages/grafana-alerting
@@ -156,8 +154,8 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-i18n
       '@grafana/llm':
-        specifier: 1.0.8
-        version: 1.0.8(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(zod@4.4.3)
+        specifier: 1.0.9
+        version: 1.0.9(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(zod@4.4.3)
       '@grafana/o11y-ds-frontend':
         specifier: workspace:*
         version: link:packages/grafana-o11y-ds-frontend
@@ -221,6 +219,9 @@ importers:
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
+      '@opentelemetry/exporter-collector':
+        specifier: 0.25.0
+        version: 0.25.0(@opentelemetry/api@1.9.0)
       '@popperjs/core':
         specifier: 2.11.8
         version: 2.11.8
@@ -489,8 +490,8 @@ importers:
         specifier: 4.4.5
         version: 4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-virtual:
         specifier: 2.10.4
         version: 2.10.4(react@18.3.1)
@@ -1224,7 +1225,7 @@ importers:
         specifier: ^9.8.0
         version: 9.9.0
       '@grafana/api-clients':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../grafana-api-clients
       '@grafana/data':
         specifier: workspace:*
@@ -1364,7 +1365,7 @@ importers:
   packages/grafana-data:
     dependencies:
       '@braintree/sanitize-url':
-        specifier: 7.0.1
+        specifier: ^7.0.1
         version: 7.0.1
       '@grafana/i18n':
         specifier: workspace:*
@@ -1373,70 +1374,70 @@ importers:
         specifier: workspace:*
         version: link:../grafana-schema
       '@leeoniya/ufuzzy':
-        specifier: 1.0.19
+        specifier: ^1.0.19
         version: 1.0.19
       '@types/d3-interpolate':
         specifier: ^3.0.0
         version: 3.0.4
       '@types/string-hash':
-        specifier: 1.1.3
+        specifier: ^1.1.3
         version: 1.1.3
       '@types/systemjs':
-        specifier: 6.15.3
+        specifier: ^6.15.3
         version: 6.15.3
       d3-interpolate:
-        specifier: 3.0.1
+        specifier: ^3.0.1
         version: 3.0.1
       d3-scale-chromatic:
-        specifier: 3.1.0
+        specifier: ^3.1.0
         version: 3.1.0
       date-fns:
-        specifier: 4.1.0
+        specifier: ^4.1.0
         version: 4.1.0
       dompurify:
         specifier: ^3.4.8
         version: 3.4.10
       eventemitter3:
-        specifier: 5.0.1
+        specifier: ^5.0.1
         version: 5.0.1
       history:
-        specifier: 4.10.1
+        specifier: ^4.10.1
         version: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
       marked:
-        specifier: 16.3.0
+        specifier: ^16.3.0
         version: 16.3.0
       marked-mangle:
-        specifier: 1.1.12
+        specifier: ^1.1.12
         version: 1.1.12(marked@16.3.0)
       moment:
-        specifier: 2.30.1
+        specifier: ^2.30.1
         version: 2.30.1
       moment-timezone:
-        specifier: 0.5.47
+        specifier: ^0.5.47
         version: 0.5.47
       ol:
-        specifier: 10.7.0
+        specifier: ^10.7.0
         version: 10.7.0
       papaparse:
-        specifier: 5.5.3
+        specifier: ^5.5.3
         version: 5.5.3
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
-        specifier: 7.8.2
+        specifier: ^7.8.2
         version: 7.8.2
       string-hash:
         specifier: ^1.1.3
         version: 1.1.3
       tinycolor2:
-        specifier: 1.6.0
+        specifier: ^1.6.0
         version: 1.6.0
       uplot:
-        specifier: 1.6.32
+        specifier: ^1.6.32
         version: 1.6.32
       xss:
         specifier: ^1.0.14
@@ -1595,8 +1596,8 @@ importers:
         specifier: ^7.8.0
         version: 7.8.0(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-virtualized-auto-sizer:
         specifier: 1.0.26
         version: 1.0.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1759,8 +1760,8 @@ importers:
         specifier: ^18.0.0
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -1931,6 +1932,9 @@ importers:
       '@openfeature/core':
         specifier: ^1.10.0
         version: 1.11.0
+      '@openfeature/localstorage-provider':
+        specifier: ^0.1.2
+        version: 0.1.2(@openfeature/web-sdk@1.9.0(@openfeature/core@1.11.0))
       '@openfeature/ofrep-web-provider':
         specifier: ^0.4.1
         version: 0.4.1(@openfeature/core@1.11.0)(@openfeature/web-sdk@1.9.0(@openfeature/core@1.11.0))
@@ -1941,13 +1945,13 @@ importers:
         specifier: ^1.8.0
         version: 1.9.0(@openfeature/core@1.11.0)
       '@types/systemjs':
-        specifier: 6.15.3
+        specifier: ^6.15.3
         version: 6.15.3
       fast-json-patch:
-        specifier: 3.1.1
+        specifier: ^3.1.1
         version: 3.1.1
       history:
-        specifier: 4.10.1
+        specifier: ^4.10.1
         version: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
       immutable:
         specifier: ^5.1.5
@@ -1959,13 +1963,13 @@ importers:
         specifier: ^11.2.2
         version: 11.2.2
       react-loading-skeleton:
-        specifier: 3.5.0
+        specifier: ^3.5.0
         version: 3.5.0(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
-        specifier: 7.8.2
+        specifier: ^7.8.2
         version: 7.8.2
     devDependencies:
       '@rollup/plugin-node-resolve':
@@ -2086,8 +2090,8 @@ importers:
         specifier: ^18.0.0
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-virtualized-auto-sizer:
         specifier: 1.0.26
         version: 1.0.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2223,31 +2227,31 @@ importers:
   packages/grafana-ui:
     dependencies:
       '@codemirror/autocomplete':
-        specifier: 6.20.1
+        specifier: ^6.20.1
         version: 6.20.1
       '@codemirror/lang-json':
-        specifier: 6.0.2
+        specifier: ^6.0.2
         version: 6.0.2
       '@codemirror/lang-sql':
-        specifier: 6.10.0
+        specifier: ^6.10.0
         version: 6.10.0
       '@codemirror/state':
-        specifier: 6.6.0
+        specifier: ^6.6.0
         version: 6.6.0
       '@codemirror/view':
-        specifier: 6.41.0
-        version: 6.41.0
+        specifier: 6.43.1
+        version: 6.43.1
       '@emotion/css':
-        specifier: 11.13.5
+        specifier: ^11.13.5
         version: 11.13.5
       '@emotion/react':
-        specifier: 11.14.0
+        specifier: ^11.14.0
         version: 11.14.0(@types/react@18.3.18)(react@18.3.1)
       '@emotion/serialize':
-        specifier: 1.3.3
+        specifier: ^1.3.3
         version: 1.3.3
       '@floating-ui/react':
-        specifier: 0.27.19
+        specifier: ^0.27.19
         version: 0.27.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@grafana/data':
         specifier: workspace:*
@@ -2268,82 +2272,79 @@ importers:
         specifier: workspace:*
         version: link:../grafana-schema
       '@hello-pangea/dnd':
-        specifier: 18.0.1
+        specifier: ^18.0.1
         version: 18.0.1(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@monaco-editor/react':
-        specifier: 4.7.0
+        specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.34.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@popperjs/core':
-        specifier: 2.11.8
+        specifier: ^2.11.8
         version: 2.11.8
       '@rc-component/cascader':
-        specifier: 1.9.0
+        specifier: ^1.9.0
         version: 1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@rc-component/drawer':
-        specifier: 1.3.0
+        specifier: ^1.3.0
         version: 1.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/picker':
-        specifier: 1.7.1
-        version: 1.7.1(date-fns@4.1.0)(moment@2.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@rc-component/slider':
-        specifier: 1.0.1
+        specifier: ^1.0.1
         version: 1.0.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@rc-component/tooltip':
-        specifier: 1.4.0
+        specifier: ^1.4.0
         version: 1.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-aria/dialog':
-        specifier: 3.5.31
+        specifier: ^3.5.31
         version: 3.5.31(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-aria/focus':
-        specifier: 3.21.2
+        specifier: ^3.21.2
         version: 3.21.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-aria/overlays':
-        specifier: 3.30.0
+        specifier: ^3.30.0
         version: 3.30.0(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-virtual':
         specifier: ^3.5.1
         version: 3.14.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/jquery':
-        specifier: 3.5.33
+        specifier: ^3.5.33
         version: 3.5.33
       '@types/lodash':
-        specifier: 4.17.20
+        specifier: ^4.17.20
         version: 4.17.20
       '@types/react-table':
-        specifier: 7.7.20
+        specifier: ^7.7.20
         version: 7.7.20
       '@uiw/codemirror-theme-vscode':
-        specifier: 4.25.9
-        version: 4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)
+        specifier: ^4.25.9
+        version: 4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)
       '@uiw/react-codemirror':
-        specifier: 4.25.9
-        version: 4.25.9(@babel/runtime@7.29.7)(@codemirror/autocomplete@6.20.1)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.41.0)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^4.25.9
+        version: 4.25.9(@babel/runtime@7.29.7)(@codemirror/autocomplete@6.20.1)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       calculate-size:
-        specifier: 1.1.1
+        specifier: ^1.1.1
         version: 1.1.1
       classnames:
-        specifier: 2.5.1
+        specifier: ^2.5.1
         version: 2.5.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
       date-fns:
-        specifier: 4.1.0
+        specifier: ^4.1.0
         version: 4.1.0
       downshift:
         specifier: ^9.0.6
         version: 9.3.6(react@18.3.1)
       hoist-non-react-statics:
-        specifier: 3.3.2
+        specifier: ^3.3.2
         version: 3.3.2
       immutable:
         specifier: ^5.1.5
         version: 5.1.5
       is-hotkey:
-        specifier: 0.2.0
+        specifier: ^0.2.0
         version: 0.2.0
       jquery:
-        specifier: 3.7.1
+        specifier: ^3.7.1
         version: 3.7.1
       lodash:
         specifier: ^4.17.23
@@ -2351,88 +2352,88 @@ importers:
       micro-memoize:
         specifier: ^4.1.2
         version: 4.2.0
-      moment:
-        specifier: 2.30.1
-        version: 2.30.1
       monaco-editor:
-        specifier: 0.34.1
+        specifier: ^0.34.1
         version: 0.34.1
       ol:
-        specifier: 10.7.0
+        specifier: ^10.7.0
         version: 10.7.0
       prismjs:
-        specifier: 1.30.0
+        specifier: ^1.30.0
         version: 1.30.0
       react-calendar:
         specifier: ^6.0.0
         version: 6.0.1(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-colorful:
-        specifier: 5.6.1
+        specifier: ^5.6.1
         version: 5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-custom-scrollbars-2:
-        specifier: 4.5.0
+        specifier: ^4.5.0
         version: 4.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-dropzone:
-        specifier: 14.3.8
+        specifier: ^14.3.8
         version: 14.3.8(react@18.3.1)
       react-highlight-words:
-        specifier: 0.21.0
+        specifier: ^0.21.0
         version: 0.21.0(react@18.3.1)
       react-hook-form:
         specifier: 7.62.0
         version: 7.62.0(react@18.3.1)
       react-inlinesvg:
-        specifier: 4.3.0
+        specifier: ^4.3.0
         version: 4.3.0(react@18.3.1)
       react-loading-skeleton:
-        specifier: 3.5.0
+        specifier: ^3.5.0
         version: 3.5.0(react@18.3.1)
       react-router-dom:
-        specifier: 5.3.4
+        specifier: ^5.3.4
         version: 5.3.4(react@18.3.1)
       react-router-dom-v5-compat:
         specifier: ^6.26.1
         version: 6.30.4(react-dom@18.3.1(react@18.3.1))(react-router-dom@5.3.4(react@18.3.1))(react@18.3.1)
       react-select:
-        specifier: 5.10.2
+        specifier: ^5.10.2
         version: 5.10.2(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-table:
-        specifier: 7.8.0
+        specifier: ^7.8.0
         version: 7.8.0(react@18.3.1)
       react-transition-group:
-        specifier: 4.4.5
+        specifier: ^4.4.5
         version: 4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-window:
-        specifier: 1.8.11
+        specifier: ^1.8.11
         version: 1.8.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
-        specifier: 7.8.2
+        specifier: ^7.8.2
         version: 7.8.2
       slate:
-        specifier: 0.47.9
+        specifier: ^0.47.9
         version: 0.47.9(immutable@5.1.5)
       slate-plain-serializer:
-        specifier: 0.7.13
+        specifier: ^0.7.13
         version: 0.7.13(immutable@5.1.5)(slate@0.47.9(immutable@5.1.5))
       slate-react:
-        specifier: 0.22.10
+        specifier: ^0.22.10
         version: 0.22.10(immutable@5.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(slate@0.47.9(immutable@5.1.5))
       tinycolor2:
-        specifier: 1.6.0
+        specifier: ^1.6.0
         version: 1.6.0
       uplot:
-        specifier: 1.6.32
+        specifier: ^1.6.32
         version: 1.6.32
       uwrap:
-        specifier: 0.1.2
+        specifier: ^0.1.2
         version: 0.1.2
     devDependencies:
       '@faker-js/faker':
         specifier: ^9.0.0
         version: 9.9.0
+      '@grafana/test-utils':
+        specifier: workspace:*
+        version: link:../grafana-test-utils
       '@rollup/plugin-node-resolve':
         specifier: 16.0.1
         version: 16.0.1(rollup@4.62.0)
@@ -2649,8 +2650,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2659,7 +2660,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@grafana/test-utils':
         specifier: workspace:*
@@ -2710,103 +2711,6 @@ importers:
         specifier: 5.107.2
         version: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.13.3(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1)
 
-  public/app/plugins/datasource/cloud-monitoring:
-    dependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5
-      '@grafana/data':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-data
-      '@grafana/google-sdk':
-        specifier: 0.6.0
-        version: 0.6.0(@grafana/data@packages+grafana-data)(@grafana/ui@packages+grafana-ui)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@grafana/plugin-ui':
-        specifier: ^0.13.1
-        version: 0.13.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(typescript@6.0.2)
-      '@grafana/runtime':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-runtime
-      '@grafana/schema':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-schema
-      '@grafana/ui':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-ui
-      debounce-promise:
-        specifier: 3.1.2
-        version: 3.1.2
-      fast-deep-equal:
-        specifier: ^3.1.3
-        version: 3.1.3
-      lodash:
-        specifier: ^4.17.23
-        version: 4.18.1
-      monaco-editor:
-        specifier: 0.34.1
-        version: 0.34.1
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
-      react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@grafana/e2e-selectors':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-e2e-selectors
-      '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
-        version: link:../../../../../packages/grafana-plugin-configs
-      '@testing-library/dom':
-        specifier: 10.4.1
-        version: 10.4.1
-      '@testing-library/jest-dom':
-        specifier: 6.6.4
-        version: 6.6.4
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@testing-library/user-event':
-        specifier: 14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.1)
-      '@types/debounce-promise':
-        specifier: 3.1.9
-        version: 3.1.9
-      '@types/jest':
-        specifier: 29.5.14
-        version: 29.5.14
-      '@types/lodash':
-        specifier: 4.17.20
-        version: 4.17.20
-      '@types/node':
-        specifier: 24.10.1
-        version: 24.10.1
-      '@types/react':
-        specifier: 18.3.18
-        version: 18.3.18
-      '@types/react-dom':
-        specifier: 18.3.5
-        version: 18.3.5(@types/react@18.3.18)
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2))
-      react-select-event:
-        specifier: 5.5.1
-        version: 5.5.1
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-      webpack:
-        specifier: 5.107.2
-        version: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.13.3(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1)
-
   public/app/plugins/datasource/grafana-postgresql-datasource:
     dependencies:
       '@emotion/css':
@@ -2822,7 +2726,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/sql':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-sql
       '@grafana/ui':
         specifier: workspace:*
@@ -2841,7 +2745,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -2913,8 +2817,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2923,7 +2827,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -2992,8 +2896,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -3002,7 +2906,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3077,8 +2981,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       redux:
         specifier: ^5.0.0
         version: 5.0.1
@@ -3090,7 +2994,7 @@ importers:
         version: 7.7.3
     devDependencies:
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3141,7 +3045,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/sql':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-sql
       '@grafana/ui':
         specifier: workspace:*
@@ -3156,8 +3060,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -3166,7 +3070,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3317,8 +3221,8 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 17.6.1
+        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -3330,7 +3234,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3390,7 +3294,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/sql':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-sql
       '@grafana/ui':
         specifier: workspace:*
@@ -3409,7 +3313,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3457,7 +3361,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-runtime
       '@grafana/sql':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-sql
       '@grafana/ui':
         specifier: workspace:*
@@ -3476,7 +3380,7 @@ importers:
         specifier: workspace:*
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
+        specifier: 13.2.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -3502,267 +3406,6 @@ importers:
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2))
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-      webpack:
-        specifier: 5.107.2
-        version: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.13.3(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1)
-
-  public/app/plugins/datasource/opentsdb:
-    dependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5
-      '@grafana/data':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-data
-      '@grafana/runtime':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-runtime
-      '@grafana/ui':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-ui
-      debounce-promise:
-        specifier: 3.1.2
-        version: 3.1.2
-      lodash:
-        specifier: ^4.17.23
-        version: 4.18.1
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@grafana/plugin-configs':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-plugin-configs
-      '@testing-library/dom':
-        specifier: 10.4.1
-        version: 10.4.1
-      '@testing-library/jest-dom':
-        specifier: 6.6.4
-        version: 6.6.4
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/debounce-promise':
-        specifier: 3.1.9
-        version: 3.1.9
-      '@types/jest':
-        specifier: 29.5.14
-        version: 29.5.14
-      '@types/lodash':
-        specifier: 4.17.20
-        version: 4.17.20
-      '@types/node':
-        specifier: 24.10.1
-        version: 24.10.1
-      '@types/react':
-        specifier: 18.3.18
-        version: 18.3.18
-      '@types/react-dom':
-        specifier: 18.3.5
-        version: 18.3.5(@types/react@18.3.18)
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2))
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-      webpack:
-        specifier: 5.107.2
-        version: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.13.3(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1)
-
-  public/app/plugins/datasource/parca:
-    dependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5
-      '@grafana/data':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-data
-      '@grafana/runtime':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-runtime
-      '@grafana/schema':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-schema
-      '@grafana/ui':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-ui
-      lodash:
-        specifier: ^4.17.23
-        version: 4.18.1
-      monaco-editor:
-        specifier: 0.34.1
-        version: 0.34.1
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
-      react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@grafana/e2e-selectors':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-e2e-selectors
-      '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
-        version: link:../../../../../packages/grafana-plugin-configs
-      '@testing-library/dom':
-        specifier: 10.4.1
-        version: 10.4.1
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@testing-library/user-event':
-        specifier: 14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.1)
-      '@types/lodash':
-        specifier: 4.17.20
-        version: 4.17.20
-      '@types/node':
-        specifier: 24.10.1
-        version: 24.10.1
-      '@types/react':
-        specifier: 18.3.18
-        version: 18.3.18
-      '@types/react-dom':
-        specifier: 18.3.5
-        version: 18.3.5(@types/react@18.3.18)
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2))
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-      webpack:
-        specifier: 5.107.2
-        version: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.13.3(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1)
-
-  public/app/plugins/datasource/tempo:
-    dependencies:
-      '@emotion/css':
-        specifier: 11.13.5
-        version: 11.13.5
-      '@grafana/assistant':
-        specifier: ^0.1.24
-        version: 0.1.24(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/scenes@8.5.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react-router-dom@5.3.4(react@18.3.1))(react@18.3.1)(rxjs@7.8.2))(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@18.3.1)(rxjs@7.8.2)
-      '@grafana/data':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-data
-      '@grafana/e2e-selectors':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-e2e-selectors
-      '@grafana/lezer-traceql':
-        specifier: 0.0.25
-        version: 0.0.25(@lezer/lr@1.4.8)
-      '@grafana/o11y-ds-frontend':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-o11y-ds-frontend
-      '@grafana/plugin-ui':
-        specifier: ^0.13.1
-        version: 0.13.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(typescript@6.0.2)
-      '@grafana/runtime':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-runtime
-      '@grafana/schema':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-schema
-      '@grafana/ui':
-        specifier: workspace:*
-        version: link:../../../../../packages/grafana-ui
-      '@lezer/common':
-        specifier: 1.5.2
-        version: 1.5.2
-      '@lezer/lr':
-        specifier: 1.4.8
-        version: 1.4.8
-      '@opentelemetry/api':
-        specifier: 1.9.0
-        version: 1.9.0
-      '@opentelemetry/exporter-collector':
-        specifier: 0.25.0
-        version: 0.25.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/semantic-conventions':
-        specifier: 1.38.0
-        version: 1.38.0
-      i18next:
-        specifier: 25.6.2
-        version: 25.6.2(typescript@6.0.2)
-      lodash:
-        specifier: ^4.17.23
-        version: 4.18.1
-      monaco-editor:
-        specifier: 0.34.1
-        version: 0.34.1
-      prismjs:
-        specifier: 1.30.0
-        version: 1.30.0
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
-      react-use:
-        specifier: 17.6.0
-        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@grafana/plugin-configs':
-        specifier: 13.1.0-pre
-        version: link:../../../../../packages/grafana-plugin-configs
-      '@testing-library/dom':
-        specifier: 10.4.1
-        version: 10.4.1
-      '@testing-library/jest-dom':
-        specifier: 6.6.4
-        version: 6.6.4
-      '@testing-library/react':
-        specifier: 16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@testing-library/user-event':
-        specifier: 14.6.1
-        version: 14.6.1(@testing-library/dom@10.4.1)
-      '@types/jest':
-        specifier: 29.5.14
-        version: 29.5.14
-      '@types/lodash':
-        specifier: 4.17.20
-        version: 4.17.20
-      '@types/node':
-        specifier: 24.10.1
-        version: 24.10.1
-      '@types/prismjs':
-        specifier: 1.26.5
-        version: 1.26.5
-      '@types/react':
-        specifier: 18.3.18
-        version: 18.3.18
-      '@types/react-dom':
-        specifier: 18.3.5
-        version: 18.3.5(@types/react@18.3.18)
-      jest:
-        specifier: 29.7.0
-        version: 29.7.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2))
-      react-select-event:
-        specifier: 5.5.1
-        version: 5.5.1
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -4079,9 +3722,6 @@ packages:
 
   '@codemirror/theme-one-dark@6.1.3':
     resolution: {integrity: sha512-NzBdIvEJmx6fjeremiGp3t/okrLPYT0d9orIc7AFun8oZcRk58aejkqhv6spnz4MLAevrKNPMQYXEWMg4s+sKA==}
-
-  '@codemirror/view@6.41.0':
-    resolution: {integrity: sha512-6H/qadXsVuDY219Yljhohglve8xf4B8xJkVOEWfA5uiYKiTFppjqsvsfR5iPA0RbvRBoOyTZpbLIxe9+0UR8xA==}
 
   '@codemirror/view@6.43.1':
     resolution: {integrity: sha512-+BIjw/AG3tDQ4pJgTLPYdAW25eDE66YsvM4LKyVPgGzVgZ4a9Wj1SRX8kPVKgBDdPt8oHtZ15F0qx7p0oOHdHw==}
@@ -4692,14 +4332,6 @@ packages:
   '@grafana/faro-web-tracing@2.7.1':
     resolution: {integrity: sha512-BCgFfxme4geu3glzHTbgdQpt1foKLS7Vu+jtuTYtelmR6VWBNcgrmrrzzOfJKTEmruk3Sq7SLM6/iAQS4CV1zA==}
 
-  '@grafana/google-sdk@0.6.0':
-    resolution: {integrity: sha512-bxOFOHK1xKne12HBUSD5jrTJojW1goxb4dFKdmuAlCY4W2+AkAEbIKrHk3x1XKGNSc8JY9aKu+gYOUaLid+uBQ==}
-    peerDependencies:
-      '@grafana/data': workspace:*
-      '@grafana/ui': workspace:*
-      react: ^18.2.0
-      react-dom: ^18.2.0
-
   '@grafana/levitate@0.17.2':
     resolution: {integrity: sha512-huJVnbOZUeh1huR3Qpr3h8cP06vsbZHeAR9nZbpbgP1KhSeigdsWbHma20kdeWVVFkjogKMewqLy+SbHB3pBzg==}
     hasBin: true
@@ -4709,13 +4341,8 @@ packages:
     peerDependencies:
       '@lezer/lr': ^1.0.0
 
-  '@grafana/lezer-traceql@0.0.25':
-    resolution: {integrity: sha512-9BhfXMC8CbXD2+7Yb3LuTCg8nhpnzTOiJRxIGh7aEW72UxrHCOFRoDlvUWCvy3tozuVULEnrxwZicjPy4C1fzg==}
-    peerDependencies:
-      '@lezer/lr': ^1.4.2
-
-  '@grafana/llm@1.0.8':
-    resolution: {integrity: sha512-Qzan+nhuHU85BB1Wv3sgjoMjqP8oIdd6zXT90KIAUVJ3mpaDoUpHNJixQRMEjDEDxkQrVfe7zvPmpufPz4JnWg==}
+  '@grafana/llm@1.0.9':
+    resolution: {integrity: sha512-6bChcL28sovqR+oi275L6UOIsZYZkqbb7DvwP4T6vAbcB0/CwKH8SsosK7kJIS3KUwNrCxttig3juKRdnaQI9Q==}
     peerDependencies:
       '@grafana/data': workspace:*
       '@grafana/runtime': workspace:*
@@ -5842,6 +5469,11 @@ packages:
   '@openfeature/core@1.11.0':
     resolution: {integrity: sha512-P0u3/ht/oZCQT89fOed+laLk0kZR529a825cS02uPDglxXbE97irWYpDAeRGGVETIzKfuy+H2g8c3Ccv/tXJNQ==}
 
+  '@openfeature/localstorage-provider@0.1.2':
+    resolution: {integrity: sha512-lgz1yQwjONVnrJPFm03eetNl772RF9zqgm01I9IB1EsBE6qBXxKt+kP3EQ+9zbTp95pu2PhvkmpYXsz5r6ayCw==}
+    peerDependencies:
+      '@openfeature/web-sdk': ^1.6.0
+
   '@openfeature/ofrep-core@2.2.0':
     resolution: {integrity: sha512-YbeT8mYS4Ggo/JFcYY1IzN0O0UvsCx7RPk1m40TFc4ip0gJdFVpYc5a8WDwZC2v/YqxreJ7NWBDxHxP5SOevsA==}
     peerDependencies:
@@ -6458,26 +6090,6 @@ packages:
     peerDependencies:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
-
-  '@rc-component/picker@1.7.1':
-    resolution: {integrity: sha512-u75rwgbYbH3M2+k22dWOCXv1YUtdb5bgrD7YXCV19H6qS6mUHxQOcqRVTU2JmUPKkq+TOaHC4kDgU83mN2G01w==}
-    engines: {node: '>=12.x'}
-    peerDependencies:
-      date-fns: '>= 2.x'
-      dayjs: '>= 1.x'
-      luxon: '>= 3.x'
-      moment: '>= 2.x'
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-    peerDependenciesMeta:
-      date-fns:
-        optional: true
-      dayjs:
-        optional: true
-      luxon:
-        optional: true
-      moment:
-        optional: true
 
   '@rc-component/portal@2.2.1':
     resolution: {integrity: sha512-ck+r1kW/JSv0wxPji3KN2ss9K6Z0qqwusw/mf/0JobXhZ8hC2ejZwCJObW/SvDi0uhA0VzmCnx0CaCci95tcmA==}
@@ -7881,6 +7493,9 @@ packages:
   '@types/js-cookie@2.2.7':
     resolution: {integrity: sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==}
 
+  '@types/js-cookie@3.0.6':
+    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
+
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
@@ -8270,7 +7885,7 @@ packages:
       '@codemirror/lint': '>=6.0.0'
       '@codemirror/search': '>=6.0.0'
       '@codemirror/state': '>=6.0.0'
-      '@codemirror/view': '>=6.0.0'
+      '@codemirror/view': 6.43.1
 
   '@uiw/codemirror-theme-vscode@4.25.9':
     resolution: {integrity: sha512-9KTnScHTSk97yGnyNYvDm6QZuBCdbO1OzMQ5bHtoBSPSVtH0LjY3bS6CXsBagb22v8OLPx/XwrBYOjKFp409CQ==}
@@ -8280,7 +7895,7 @@ packages:
     peerDependencies:
       '@codemirror/language': '>=6.0.0'
       '@codemirror/state': '>=6.0.0'
-      '@codemirror/view': '>=6.0.0'
+      '@codemirror/view': 6.43.1
 
   '@uiw/react-codemirror@4.25.9':
     resolution: {integrity: sha512-HftqCBUYShAOH0pGi1CHP8vfm5L8fQ3+0j0VI6lQD6QpK+UBu3J7nxfEN5O/BXMilMNf9ZyFJRvRcuMMOLHMng==}
@@ -8288,7 +7903,7 @@ packages:
       '@babel/runtime': '>=7.11.0'
       '@codemirror/state': '>=6.0.0'
       '@codemirror/theme-one-dark': '>=6.0.0'
-      '@codemirror/view': '>=6.0.0'
+      '@codemirror/view': 6.43.1
       codemirror: '>=6.0.0'
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
@@ -14541,24 +14156,6 @@ packages:
   rbush@4.0.1:
     resolution: {integrity: sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==}
 
-  rc-overflow@1.5.0:
-    resolution: {integrity: sha512-Lm/v9h0LymeUYJf0x39OveU52InkdRXqnn2aYXfWmo8WdOonIKB2kfau+GF0fWq6jPgtdO9yMqveGcK6aIhJmg==}
-    peerDependencies:
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-
-  rc-resize-observer@1.4.3:
-    resolution: {integrity: sha512-YZLjUbyIWox8E9i9C3Tm7ia+W7euPItNWSPX5sCcQTYbnwDb5uNpnLHQCG1f22oZWUhLw4Mv2tFmeWe68CDQRQ==}
-    peerDependencies:
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-
-  rc-util@5.44.4:
-    resolution: {integrity: sha512-resueRJzmHG9Q6rI/DfK6Kdv9/Lfls05vzMs1Sk3M2P+3cJa+MakaZyWY8IPfehVuhPJFKrIY1IK4GqbiaiY5w==}
-    peerDependencies:
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-
   rc@1.2.8:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
@@ -14919,6 +14516,12 @@ packages:
 
   react-use@17.6.0:
     resolution: {integrity: sha512-OmedEScUMKFfzn1Ir8dBxiLLSOzhKe/dPZwVxcujweSj45aNM7BEGPb9BEVIgVEqEXx6f3/TsXzwIktNgUR02g==}
+    peerDependencies:
+      react: '*'
+      react-dom: '*'
+
+  react-use@17.6.1:
+    resolution: {integrity: sha512-uibb3pgzV4LFsYPHyXYGu7dD2+pyk/ZJlPH+AizBR3zolqPWyCleKcWWbUQaKSKfydwgnQ3ymGm1Ab3/saGHCA==}
     peerDependencies:
       react: '*'
       react-dom: '*'
@@ -17466,14 +17069,14 @@ snapshots:
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
       '@lezer/common': 1.5.2
 
   '@codemirror/commands@6.10.3':
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
       '@lezer/common': 1.5.2
 
   '@codemirror/lang-json@6.0.2':
@@ -17493,7 +17096,7 @@ snapshots:
   '@codemirror/language@6.12.3':
     dependencies:
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.8
@@ -17508,7 +17111,7 @@ snapshots:
   '@codemirror/search@6.7.0':
     dependencies:
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
       crelt: 1.0.6
 
   '@codemirror/state@6.6.0':
@@ -17519,15 +17122,8 @@ snapshots:
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
       '@lezer/highlight': 1.2.3
-
-  '@codemirror/view@6.41.0':
-    dependencies:
-      '@codemirror/state': 6.6.0
-      crelt: 1.0.6
-      style-mod: 4.1.3
-      w3c-keyname: 2.2.8
 
   '@codemirror/view@6.43.1':
     dependencies:
@@ -18073,13 +17669,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@grafana/google-sdk@0.6.0(@grafana/data@packages+grafana-data)(@grafana/ui@packages+grafana-ui)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@grafana/data': link:packages/grafana-data
-      '@grafana/ui': link:packages/grafana-ui
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
   '@grafana/levitate@0.17.2(eslint@9.32.0(jiti@2.7.0))':
     dependencies:
       '@stylistic/eslint-plugin-ts': 4.4.1(eslint@9.32.0(jiti@2.7.0))(typescript@5.9.3)
@@ -18104,11 +17693,7 @@ snapshots:
     dependencies:
       '@lezer/lr': 1.4.8
 
-  '@grafana/lezer-traceql@0.0.25(@lezer/lr@1.4.8)':
-    dependencies:
-      '@lezer/lr': 1.4.8
-
-  '@grafana/llm@1.0.8(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(zod@4.4.3)':
+  '@grafana/llm@1.0.9(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(zod@4.4.3)':
     dependencies:
       '@grafana/data': link:packages/grafana-data
       '@grafana/runtime': link:packages/grafana-runtime
@@ -19880,6 +19465,11 @@ snapshots:
 
   '@openfeature/core@1.11.0': {}
 
+  '@openfeature/localstorage-provider@0.1.2(@openfeature/web-sdk@1.9.0(@openfeature/core@1.11.0))':
+    dependencies:
+      '@openfeature/web-sdk': 1.9.0(@openfeature/core@1.11.0)
+      tslib: 2.8.1
+
   '@openfeature/ofrep-core@2.2.0(@openfeature/core@1.11.0)':
     dependencies:
       '@openfeature/core': 1.11.0
@@ -20357,19 +19947,6 @@ snapshots:
       clsx: 2.1.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-
-  '@rc-component/picker@1.7.1(date-fns@4.1.0)(moment@2.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@rc-component/resize-observer': 1.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/trigger': 3.9.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@rc-component/util': 1.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      clsx: 2.1.1
-      rc-overflow: 1.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    optionalDependencies:
-      date-fns: 4.1.0
-      moment: 2.30.1
 
   '@rc-component/portal@2.2.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -22421,6 +21998,8 @@ snapshots:
 
   '@types/js-cookie@2.2.7': {}
 
+  '@types/js-cookie@3.0.6': {}
+
   '@types/js-yaml@4.0.9': {}
 
   '@types/jsdom@20.0.1':
@@ -22929,7 +22508,7 @@ snapshots:
       '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260421.2
       '@typescript/native-preview-win32-x64': 7.0.0-dev.20260421.2
 
-  '@uiw/codemirror-extensions-basic-setup@4.25.9(@codemirror/autocomplete@6.20.1)(@codemirror/commands@6.10.3)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)':
+  '@uiw/codemirror-extensions-basic-setup@4.25.9(@codemirror/autocomplete@6.20.1)(@codemirror/commands@6.10.3)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)':
     dependencies:
       '@codemirror/autocomplete': 6.20.1
       '@codemirror/commands': 6.10.3
@@ -22937,30 +22516,30 @@ snapshots:
       '@codemirror/lint': 6.9.7
       '@codemirror/search': 6.7.0
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
 
-  '@uiw/codemirror-theme-vscode@4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)':
+  '@uiw/codemirror-theme-vscode@4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)':
     dependencies:
-      '@uiw/codemirror-themes': 4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)
+      '@uiw/codemirror-themes': 4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)
     transitivePeerDependencies:
       - '@codemirror/language'
       - '@codemirror/state'
       - '@codemirror/view'
 
-  '@uiw/codemirror-themes@4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)':
+  '@uiw/codemirror-themes@4.25.9(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)':
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
 
-  '@uiw/react-codemirror@4.25.9(@babel/runtime@7.29.7)(@codemirror/autocomplete@6.20.1)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.41.0)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@uiw/react-codemirror@4.25.9(@babel/runtime@7.29.7)(@codemirror/autocomplete@6.20.1)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.1)(codemirror@6.0.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@codemirror/commands': 6.10.3
       '@codemirror/state': 6.6.0
       '@codemirror/theme-one-dark': 6.1.3
-      '@codemirror/view': 6.41.0
-      '@uiw/codemirror-extensions-basic-setup': 4.25.9(@codemirror/autocomplete@6.20.1)(@codemirror/commands@6.10.3)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/view@6.41.0)
+      '@codemirror/view': 6.43.1
+      '@uiw/codemirror-extensions-basic-setup': 4.25.9(@codemirror/autocomplete@6.20.1)(@codemirror/commands@6.10.3)(@codemirror/language@6.12.3)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.0)(@codemirror/state@6.6.0)(@codemirror/view@6.43.1)
       codemirror: 6.0.2
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -24116,7 +23695,7 @@ snapshots:
       '@codemirror/lint': 6.9.7
       '@codemirror/search': 6.7.0
       '@codemirror/state': 6.6.0
-      '@codemirror/view': 6.41.0
+      '@codemirror/view': 6.43.1
 
   collect-v8-coverage@1.0.3: {}
 
@@ -30692,31 +30271,6 @@ snapshots:
     dependencies:
       quickselect: 3.0.0
 
-  rc-overflow@1.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      classnames: 2.5.1
-      rc-resize-observer: 1.4.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rc-util: 5.44.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
-  rc-resize-observer@1.4.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      classnames: 2.5.1
-      rc-util: 5.44.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      resize-observer-polyfill: 1.5.1
-
-  rc-util@5.44.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-is: 18.3.1
-
   rc@1.2.8:
     dependencies:
       deep-extend: 0.6.0
@@ -31166,6 +30720,25 @@ snapshots:
   react-use@17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@types/js-cookie': 2.2.7
+      '@xobotyi/scrollbar-width': 1.9.5
+      copy-to-clipboard: 3.3.3
+      fast-deep-equal: 3.1.3
+      fast-shallow-equal: 1.0.0
+      js-cookie: 3.0.8
+      nano-css: 5.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-universal-interface: 0.6.2(react@18.3.1)(tslib@2.8.1)
+      resize-observer-polyfill: 1.5.1
+      screenfull: 5.2.0
+      set-harmonic-interval: 1.0.1
+      throttle-debounce: 3.0.1
+      ts-easing: 0.2.0
+      tslib: 2.8.1
+
+  react-use@17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@types/js-cookie': 3.0.6
       '@xobotyi/scrollbar-width': 1.9.5
       copy-to-clipboard: 3.3.3
       fast-deep-equal: 3.1.3

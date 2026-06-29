@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -401,6 +401,28 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       );
 
       expect(checkbox).toBeInTheDocument();
+    });
+
+    describe('with starred folders enabled', () => {
+      testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+
+      beforeEach(() => {
+        setTestFlags({ 'grafana.starredFolders': true });
+      });
+
+      afterEach(() => {
+        setTestFlags({});
+      });
+
+      it('shows the star toggle as the first action, before "Recently deleted"', async () => {
+        render(<BrowseDashboardsPage queryParams={{}} />);
+
+        const star = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+        const recentlyDeleted = await screen.findByRole('link', { name: 'Recently deleted' });
+
+        // star precedes "Recently deleted" in document order, so it is the first action
+        expect(star.compareDocumentPosition(recentlyDeleted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      });
     });
   });
 

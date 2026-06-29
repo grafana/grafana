@@ -144,6 +144,13 @@
               },
               "type": "object"
             },
+            "queryDelay": {
+              "description": "Flaky query scenario: base delay (Go duration string) and jitter percentage (0-100)",
+              "type": "string"
+            },
+            "queryDelayVariability": {
+              "type": "number"
+            },
             "rawFrameContent": {
               "type": "string"
             },

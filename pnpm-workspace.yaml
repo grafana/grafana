@@ -136,6 +136,12 @@ overrides:
   # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
   webpack: "5.107.2"
   "@reduxjs/toolkit": "2.10.1"
+  # @codemirror/lint requires view ^6.42.0 while @codemirror/autocomplete allows
+  # ^6.17.0, so pnpm resolves two view copies. grafana-ui's CodeEditor imports
+  # acceptCompletion (autocomplete's 6.41.0 view) into a KeyBinding typed against
+  # the 6.43.1 view, and the private dispatchTransactions makes the types
+  # non-assignable. Pin to one version that satisfies every range.
+  "@codemirror/view": "6.43.1"
 
   # --- Scoped version selectors (yarn npm: prefix dropped) ---
   "semver@~7.3.5": "^7.3.5"

@@ -9,7 +9,7 @@ BARREL_IMPORTS="$(grep -r -oP '@todo: replace barrel import path' public/app | w
 CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" public/app | wc -l)"
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
-SCSS_FILES="$(find public packages -name '*.scss' | wc -l)"
+SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
 # pnpm prints one entry per outdated dependency; count them. yarn's summary line
 # "N dependencies are out of date" has no pnpm equivalent.
 OUTDATED_DEPENDENCIES="$(pnpm outdated --format list 2>/dev/null | grep -cE '^[^[:space:]]' || true)"

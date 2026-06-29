@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
+import { Suspense } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
+import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { type HomepageTabExtensionProps } from './DashboardTabs/types';
+import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
 
@@ -30,13 +34,34 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
-  const { components: preComponents } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepagePre,
+  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageAssistant,
   });
 
-  const { components: extraComponents } = usePluginComponents({
+  const { components: extraComponents, isLoading: isLoadingExtra } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
+
+  const { components: tabComponents, isLoading: isLoadingTabs } = usePluginComponents<HomepageTabExtensionProps>({
+    extensionPointId: PluginExtensionPoints.HomepageTabs,
+  });
+
+  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
+  // what actually renders below.
+  const extraContent = renderLimitedComponents({
+    props: {},
+    components: extraComponents,
+    pluginId: SETUPGUIDE_PLUGIN_ID,
+    wrapper: ({ children }) => (
+      <div className={styles.extra}>
+        <HomeSection>{children}</HomeSection>
+      </div>
+    ),
+  });
+  const showExtra = extraContent !== null;
+  const showAlertsCard = canViewFiringAlerts();
+  const skeleton = <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />;
 
   return (
     <Page
@@ -49,28 +74,31 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        <Stack direction="column" gap={2}>
-          <HomeSection direction="column" display="flex" gap={2}>
-            {renderLimitedComponents({
-              props: {},
-              components: preComponents,
-              pluginId: SETUPGUIDE_PLUGIN_ID,
-            })}
-            <DashboardTabs />
-          </HomeSection>
-          <FiringAlertsCard />
+        {isLoadingExtensions ? (
+          skeleton
+        ) : (
+          <Suspense fallback={skeleton}>
+            <Stack direction="column" gap={2}>
+              <HomeSection direction="column" display="flex" gap={2}>
+                {/* Assistant injects an Assistant-based prompt input when available */}
+                {renderLimitedComponents({
+                  props: {},
+                  limit: 1,
+                  components: assistantComponents,
+                  pluginId: ASSISTANT_PLUGIN_ID,
+                })}
+                <DashboardTabs extensionComponents={tabComponents} />
+              </HomeSection>
 
-          {renderLimitedComponents({
-            props: {},
-            components: extraComponents,
-            pluginId: SETUPGUIDE_PLUGIN_ID,
-            wrapper: ({ children }) => (
-              <div className={styles.extra}>
-                <HomeSection>{children}</HomeSection>
-              </div>
-            ),
-          })}
-        </Stack>
+              <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                <FiringAlertsCard />
+                <IncidentsCard />
+              </Grid>
+
+              {extraContent}
+            </Stack>
+          </Suspense>
+        )}
       </Page.Contents>
     </Page>
   );

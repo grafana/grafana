@@ -346,3 +346,32 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 		assert.Empty(t, list.Items)
 	})
 }
+
+func TestAuthorizeReadOrganizationAnnotations(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(t.Context(), 1)
+
+	t.Run("allows when org annotation read is permitted", func(t *testing.T) {
+		ac := &fakeAccessClient{fn: func(item authtypes.BatchCheckItem) bool {
+			return item.Group == "annotation.grafana.app" &&
+				item.Resource == "annotations" &&
+				item.Name == "organization" &&
+				item.Verb == utils.VerbList
+		}}
+		require.NoError(t, authorizeReadOrganizationAnnotations(ctx, ac, "default"))
+	})
+
+	t.Run("forbids when org annotation read is denied", func(t *testing.T) {
+		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
+		err := authorizeReadOrganizationAnnotations(ctx, ac, "default")
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+		assert.ErrorContains(t, err, "requires the annotations:read permission with the organization scope")
+	})
+
+	t.Run("unauthorized when no identity is present", func(t *testing.T) {
+		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
+		err := authorizeReadOrganizationAnnotations(t.Context(), ac, "default")
+		require.Error(t, err)
+		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
+	})
+}
