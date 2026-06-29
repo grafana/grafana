@@ -63,7 +63,6 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
-  // [SKETCH] Full-spec read/write surface (proposed core addition).
   getSpecCommand,
   applySpecCommand,
 ];
