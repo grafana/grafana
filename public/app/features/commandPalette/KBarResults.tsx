@@ -26,10 +26,21 @@ interface KBarResultsProps {
    * click on the row). Receives the raw index into `items`, for analytics.
    */
   onItemSelected?: (item: ActionImpl, index: number) => void;
+  /**
+   * Use the legacy (pre-deep-search) keyboard model: this component owns
+   * arrow/Enter navigation over the single list and auto-selects the first item.
+   * When false, the palette-wide handler in RenderResults owns the keys and
+   * nothing is preselected. Selected by the deep search feature toggle.
+   */
+  legacyKeyboard?: boolean;
 }
+
+const START_INDEX = 0;
 
 export const KBarResults = (props: KBarResultsProps) => {
   const parentRef = React.useRef<HTMLDivElement | null>(null);
+  // Active row element, used by the legacy keyboard handler to perform on Enter
+  const activeRef = React.useRef<HTMLElement | null>(null);
 
   // store a ref to all items so we do not have to pass
   // them as a dependency when setting up event listeners.
@@ -62,9 +73,51 @@ export const KBarResults = (props: KBarResultsProps) => {
     activeIndex: state.activeIndex,
   }));
 
-  // Arrow/Enter/Escape key handling lives in the palette-wide navigation
-  // handler (RenderResults) — it owns moving the highlight between the search
-  // input, this list and the deep search column.
+  // Legacy keyboard handler (deep search off): this component owns arrow/Enter
+  // navigation over the single list, the same way upstream kbar does. When deep
+  // search is on, the palette-wide handler in RenderResults owns the keys instead
+  // and this effect is a no-op.
+  const { legacyKeyboard } = props;
+  React.useEffect(() => {
+    if (!legacyKeyboard) {
+      return;
+    }
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p')) {
+        event.preventDefault();
+        query.setActiveIndex((index) => {
+          let nextIndex = index > START_INDEX ? index - 1 : index;
+          // avoid setting active index on a group
+          if (typeof itemsRef.current[nextIndex] === 'string') {
+            if (nextIndex === 0) {
+              return index;
+            }
+            nextIndex -= 1;
+          }
+          return nextIndex;
+        });
+      } else if (event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n')) {
+        event.preventDefault();
+        query.setActiveIndex((index) => {
+          let nextIndex = index < itemsRef.current.length - 1 ? index + 1 : index;
+          // avoid setting active index on a group
+          if (typeof itemsRef.current[nextIndex] === 'string') {
+            if (nextIndex === itemsRef.current.length - 1) {
+              return index;
+            }
+            nextIndex += 1;
+          }
+          return nextIndex;
+        });
+      } else if (event.key === 'Enter' && !event.metaKey) {
+        event.preventDefault();
+        // The active row holds a ref so we don't have to resolve the action from activeIndex here
+        activeRef.current?.click();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [query, legacyKeyboard]);
 
   // destructuring here to prevent linter warning to pass
   // entire rowVirtualizer in the dependencies array.
@@ -82,10 +135,15 @@ export const KBarResults = (props: KBarResultsProps) => {
   }, [activeIndex, scrollToIndex]);
 
   React.useEffect(() => {
-    // Nothing is preselected — the highlight appears once keyboard navigation
-    // enters the list (or on pointer hover)
-    query.setActiveIndex(-1);
-  }, [search, currentRootActionId, props.items, query]);
+    if (legacyKeyboard) {
+      // Legacy: auto-select the first item (skipping a leading group header)
+      query.setActiveIndex(typeof props.items[START_INDEX] === 'string' ? START_INDEX + 1 : START_INDEX);
+    } else {
+      // New: nothing is preselected — the highlight appears once keyboard
+      // navigation enters the list (or on pointer hover)
+      query.setActiveIndex(-1);
+    }
+  }, [search, currentRootActionId, props.items, query, legacyKeyboard]);
 
   const execute = React.useCallback(
     (ev: React.MouseEvent, item: RenderParams['item']) => {
@@ -124,6 +182,11 @@ export const KBarResults = (props: KBarResultsProps) => {
   );
 
   const pointerMoved = usePointerMovedSinceMount();
+
+  // Callback ref (avoids a type assertion) so the legacy handler can click the active row.
+  const setActiveRow = (element: HTMLElement | null) => {
+    activeRef.current = element;
+  };
 
   return (
     <div
@@ -212,6 +275,7 @@ export const KBarResults = (props: KBarResultsProps) => {
                 key={virtualRow.index}
                 href={typeof url === 'function' ? url(search) : url}
                 target={target}
+                ref={legacyKeyboard && active ? setActiveRow : undefined}
                 {...childProps}
               >
                 {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
@@ -221,7 +285,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
 
           return (
-            <div key={virtualRow.index} {...childProps}>
+            <div key={virtualRow.index} ref={legacyKeyboard && active ? setActiveRow : undefined} {...childProps}>
               {groupLabel ? <span className="sr-only">{groupLabel}: </span> : null}
               {renderedItem}
             </div>

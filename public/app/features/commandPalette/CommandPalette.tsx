@@ -256,6 +256,10 @@ const RenderResults = ({
   // the react-aria overlay closes on Escape. Capture at the window beats all
   // of them; stopImmediatePropagation keeps handled keys to ourselves.
   useEffect(() => {
+    // Deep search off → the legacy keyboard model (owned by KBarResults) is used instead
+    if (!deepSearchEnabled) {
+      return;
+    }
     const handler = (event: KeyboardEvent) => {
       const input = query.getInput();
       const keywordList = keywordListRef.current;
@@ -378,7 +382,7 @@ const RenderResults = ({
 
     window.addEventListener('keydown', handler, { capture: true });
     return () => window.removeEventListener('keydown', handler, { capture: true });
-  }, [query]);
+  }, [query, deepSearchEnabled]);
 
   const hasKeywordResults = items.length > 0;
   const hasDeepSearchResults = deepSearchResults.length > 0;
@@ -419,6 +423,7 @@ const RenderResults = ({
             items={items}
             maxHeight={650}
             scrollRef={keywordListRef}
+            legacyKeyboard={!deepSearchEnabled}
             onItemSelected={(item, rawIndex) =>
               reportActionSelected({
                 actionId: item.id,

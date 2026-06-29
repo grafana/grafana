@@ -324,17 +324,18 @@ describe('CommandPalette', () => {
         expect.objectContaining({
           actionName: 'API latency',
           index: 0,
-          group: 'deep-search',
-          deep_search: true,
-          deep_search_loaded: true,
-          deep_search_count: 2,
-          old_search_count: expect.any(Number),
+          section: 'deep-search',
+          isDeepSearchAction: true,
+          isDeepSearchEnabled: true,
+          isDeepSearchLoaded: true,
+          deepSearchItemsCount: 2,
+          itemsCount: expect.any(Number),
         })
       );
       consoleErrorSpy.mockRestore();
     });
 
-    it('reports deep_search false when a keyword result is selected', async () => {
+    it('reports a non-deep-search selection when a keyword result is selected', async () => {
       server.use(getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 }]));
 
       setup();
@@ -347,13 +348,41 @@ describe('CommandPalette', () => {
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
         expect.objectContaining({
-          deep_search: false,
+          isDeepSearchAction: false,
           index: expect.any(Number),
           // Stable slug, not the translated section header ("Preferences")
-          group: 'preferences',
-          old_search_count: expect.any(Number),
+          section: 'preferences',
+          itemsCount: expect.any(Number),
         })
       );
+    });
+  });
+
+  describe('keyboard model', () => {
+    it('uses the legacy model (auto-selects an item) when deep search is disabled', async () => {
+      // Either flag off → deepSearchEnabled is false → legacy keyboard handling
+      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'dark');
+      await screen.findAllByRole('option', {}, { timeout: 3000 });
+
+      // Legacy behavior: an item is preselected, so the input points at it
+      expect(input).toHaveAttribute('aria-activedescendant');
+    });
+
+    it('uses the new model (nothing preselected) when deep search is enabled', async () => {
+      // Both flags default to true in beforeEach → new keyboard handling
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'dark');
+      await screen.findAllByRole('option', {}, { timeout: 3000 });
+
+      // New behavior: focus starts in the input, nothing is highlighted
+      expect(input).not.toHaveAttribute('aria-activedescendant');
     });
   });
 });
