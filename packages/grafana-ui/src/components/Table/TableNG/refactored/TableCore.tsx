@@ -2,6 +2,7 @@ import { type TableNGProps } from '../types';
 
 import { Safari26Wrapper } from './Safari26Wrapper';
 import { TableFlat } from './TableFlat';
+import { TableSizeContainer } from './TableSizeContainer';
 import { getLeanCellRenderer } from './leanCellRenderer';
 
 /**
@@ -16,8 +17,10 @@ import { getLeanCellRenderer } from './leanCellRenderer';
  */
 export function TableCore(props: TableNGProps) {
   return (
-    <Safari26Wrapper>
-      <TableFlat {...props} getCellRenderer={getLeanCellRenderer} />
-    </Safari26Wrapper>
+    <TableSizeContainer width={props.width} height={props.height}>
+      <Safari26Wrapper>
+        <TableFlat {...props} getCellRenderer={getLeanCellRenderer} />
+      </Safari26Wrapper>
+    </TableSizeContainer>
   );
 }
