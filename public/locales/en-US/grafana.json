@@ -6945,6 +6945,14 @@
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
     },
+    "errors-and-notices-inspector": {
+      "copy": "Copy to clipboard",
+      "learn-more": "Learn more",
+      "no-issues": "No errors or notices for this query.",
+      "severity-error": "Error",
+      "severity-info": "Info",
+      "severity-warning": "Warning"
+    },
     "filters-list": {
       "add-filter": "Add filter",
       "reorder-description": "Reorder filters list",

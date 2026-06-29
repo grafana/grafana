@@ -10,9 +10,13 @@ import {
 } from '@grafana/scenes';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';
+
 export interface InspectErrorsAndNoticesTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
-  dataSource: DataSourceApi;
+  // The data source is only set when it provides a custom ErrorsAndNoticesInspector. Otherwise
+  // the standard inspector is used, which works for any data source (including mixed).
+  dataSource?: DataSourceApi;
 }
 
 export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAndNoticesTabState> {
@@ -27,15 +31,19 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
   static Component = ({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) => {
     const { panelRef, dataSource } = model.state;
     const data = sceneGraph.getData(panelRef.resolve());
-    const Inspector = dataSource.components?.ErrorsAndNoticesInspector;
 
-    if (!data.state.data || !Inspector) {
+    if (!data.state.data) {
       return null;
     }
 
     const panelData = data.state.data;
     const errors = panelData.errors ?? (panelData.error ? [panelData.error] : []);
 
-    return <Inspector datasource={dataSource} data={panelData.series} errors={errors} />;
+    const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
+    if (CustomInspector) {
+      return <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />;
+    }
+
+    return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />;
   };
 }
