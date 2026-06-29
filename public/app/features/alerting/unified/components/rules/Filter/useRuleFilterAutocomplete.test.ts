@@ -178,9 +178,7 @@ describe('useNamespaceAndGroupOptions', () => {
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
       // No Grafana folders (the fetch failed), but the external namespace is preserved.
-      expect(options).toEqual([
-        { label: 'external-namespace', value: 'external-namespace', description: 'mimir-ext' },
-      ]);
+      expect(options).toEqual([{ label: 'external-namespace', value: 'external-namespace', description: 'mimir-ext' }]);
     });
 
     it('formats external namespaces: yaml paths use the filename, long names are truncated, described by data source', async () => {
