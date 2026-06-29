@@ -85,6 +85,7 @@ func RegisterAPIService(
 	tracing *tracing.TracingService,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider,
+	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
@@ -128,33 +129,34 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracing),
-		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracing),
-		legacyTeamStore:            team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
-		externalGroupReconciler:    externalGroupReconciler,
-		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracing),
-		ssoLegacyStore:             sso.NewLegacyStore(ssoService, tracing),
-		roleApiInstaller:           roleApiInstaller,
-		globalRoleApiInstaller:     globalRoleApiInstaller,
-		teamLBACApiInstaller:       teamLBACApiInstaller,
-		resourcePermissionsStorage: rpStorage,
-		mappers:                    mappers,
-		roleBindingsApiInstaller:   roleBindingsApiInstaller,
-		teamGroupsHandlerProvider:  teamGroupsHandlerProvider,
-		sso:                        ssoService,
-		resourceParentProvider:     resourceParentProvider,
-		authorizer:                 authorizer,
-		legacyAccessClient:         legacyAccessClient,
-		accessClient:               accessClient,
-		ac:                         ac,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                        reg,
-		logger:                     log.New("iam.apis"),
-		features:                   features,
-		dual:                       dual,
-		unified:                    unified,
+		store:                             store,
+		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
+		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, tracing),
+		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
+		externalGroupReconciler:           externalGroupReconciler,
+		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
+		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
+		roleApiInstaller:                  roleApiInstaller,
+		globalRoleApiInstaller:            globalRoleApiInstaller,
+		teamLBACApiInstaller:              teamLBACApiInstaller,
+		resourcePermissionsStorage:        rpStorage,
+		mappers:                           mappers,
+		roleBindingsApiInstaller:          roleBindingsApiInstaller,
+		teamGroupsHandlerProvider:         teamGroupsHandlerProvider,
+		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
+		sso:                               ssoService,
+		resourceParentProvider:            resourceParentProvider,
+		authorizer:                        authorizer,
+		legacyAccessClient:                legacyAccessClient,
+		accessClient:                      accessClient,
+		ac:                                ac,
+		zClient:                           zClient,
+		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                               reg,
+		logger:                            log.New("iam.apis"),
+		features:                          features,
+		dual:                              dual,
+		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
 		teamSearchHandler:                team.NewSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
@@ -926,6 +928,10 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 	if enableResourcePermissionsApi && b.resourcePermissionsSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.resourcePermissionsSearchHandler.GetAPIRoutes(defs))
+	}
+
+	if enableTeamsApi && b.externalGroupMappingSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
 	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))

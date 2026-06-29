@@ -19,6 +19,22 @@ const injectedRtkApi = api
         }),
         providesTags: ['Display'],
       }),
+      searchExternalGroupMappings: build.mutation<
+        SearchExternalGroupMappingsApiResponse,
+        SearchExternalGroupMappingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchExternalGroupMappings`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            limit: queryArg.limit,
+            page: queryArg.page,
+            offset: queryArg.offset,
+          },
+        }),
+        invalidatesTags: ['Search'],
+      }),
       getSearchTeams: build.query<GetSearchTeamsApiResponse, GetSearchTeamsApiArg>({
         query: (queryArg) => ({
           url: `/searchTeams`,
@@ -426,6 +442,18 @@ export type GetDisplayMappingApiResponse = /** status 200 undefined */ DisplayLi
 export type GetDisplayMappingApiArg = {
   /** Display keys */
   key: string[];
+};
+export type SearchExternalGroupMappingsApiResponse = unknown;
+export type SearchExternalGroupMappingsApiArg = {
+  /** number of results to return */
+  limit?: number;
+  /** page number (starting from 1) */
+  page?: number;
+  /** number of results to skip */
+  offset?: number;
+  body: {
+    externalGroups?: string[];
+  };
 };
 export type GetSearchTeamsApiResponse = /** status 200 undefined */ any;
 export type GetSearchTeamsApiArg = {
@@ -1221,6 +1249,7 @@ export const {
   useLazyGetApiResourcesQuery,
   useGetDisplayMappingQuery,
   useLazyGetDisplayMappingQuery,
+  useSearchExternalGroupMappingsMutation,
   useGetSearchTeamsQuery,
   useLazyGetSearchTeamsQuery,
   useGetSearchUsersQuery,

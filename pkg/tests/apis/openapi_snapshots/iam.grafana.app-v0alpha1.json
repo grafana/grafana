@@ -77,6 +77,87 @@
         }
       }
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchExternalGroupMappings": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Returns the team UIDs that map to any of the provided external group IDs.",
+        "operationId": "searchExternalGroupMappings",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "number of results to return",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 30
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page number (starting from 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "number of results to skip",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 0
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "externalGroups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "default": {
+            "description": "Default OK response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchTeams": {
       "get": {
         "tags": [
