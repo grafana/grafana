@@ -42,6 +42,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2026-05-19,externalSnapshotsK8SAPIPush,experimental,@grafana/sharing-squad,false,true,false
+2026-05-21,externalSnapshotsSupportLegacyAPI,experimental,@grafana/sharing-squad,false,true,false
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
@@ -360,5 +362,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
 2026-06-22,table.protoRowParser,experimental,@grafana/dataviz-squad,false,false,true
+2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true

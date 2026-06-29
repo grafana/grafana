@@ -5,8 +5,8 @@ import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { DeleteProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/DeleteProvisionedPlaylistDrawer';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
@@ -99,7 +99,12 @@ export const PlaylistPage = () => {
             {playlistToDelete &&
               (isManagedByRepository(playlistToDelete) ? (
                 // Repository-managed playlists are removed by committing the deletion to git.
-                <DeleteProvisionedPlaylistDrawer playlist={playlistToDelete} onDismiss={onDismissDelete} />
+                <SaveProvisionedResourceDrawer
+                  resource={playlistToDelete}
+                  title={playlistToDelete.spec?.title ?? ''}
+                  action="delete"
+                  onDismiss={onDismissDelete}
+                />
               ) : (
                 <ConfirmModal
                   title={playlistToDelete.spec?.title ?? ''}
