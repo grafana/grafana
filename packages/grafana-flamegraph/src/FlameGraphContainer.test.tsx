@@ -48,11 +48,7 @@ describe('FlameGraphContainer', () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
   });
 
-  // TODO(table-ng): the top table now renders via TableNG (react-data-grid), which routes
-  // single-link cells through a DataLinksActionsTooltip instead of firing the link onClick on a
-  // direct click. So highlighting a symbol now takes an extra click (open tooltip -> click link).
-  // Skipped pending a decision on the flamegraph top-table interaction under TableNG.
-  it.skip('should update search when row selected in top table', async () => {
+  it('should update search when row selected in top table', async () => {
     render(<FlameGraphContainerWithProps />);
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
@@ -256,12 +252,10 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(() => render(<FlameGraphContainerWithNewUI />)).not.toThrow();
   });
 
-  // TODO(table-ng): see the legacy counterpart — TableNG routes link cells through a tooltip.
-  it.skip('should update search when row selected in top table', async () => {
+  it('should update search when row selected in top table', async () => {
     render(<FlameGraphContainerWithNewUI />);
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
-    // see TODO(table-ng) on the legacy "should update search when row selected in top table" test
     // Unclick the selection so that we can click something else and continue test checks
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
 

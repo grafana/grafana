@@ -129,6 +129,12 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
+// jsdom doesn't implement scrollIntoView, which @grafana/react-data-grid (TableNG) calls when a
+// cell is selected. Without this, any test that selects/clicks a grid cell throws.
+if (!window.HTMLElement.prototype.scrollIntoView) {
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+}
+
 // originally using just global.MessageChannel = MessageChannel
 // however this results in open handles in jest tests
 // see https://github.com/facebook/react/issues/26608#issuecomment-1734172596
