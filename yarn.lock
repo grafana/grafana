@@ -2245,7 +2245,7 @@ __metadata:
     moment: "npm:^2.30.1"
     moment-timezone: "npm:^0.5.47"
     ol: "npm:^10.7.0"
-    papaparse: "npm:5.5.3"
+    papaparse: "npm:^5.5.3"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-use: "npm:17.6.1"
@@ -25634,7 +25634,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"papaparse@npm:5.5.3":
+"papaparse@npm:5.5.3, papaparse@npm:^5.5.3":
   version: 5.5.3
   resolution: "papaparse@npm:5.5.3"
   checksum: 10/383e38f8ff910be48b684e7f47b84dbe5e67708669c13bb21f316a0591ef183ff670dfc7eb9f6d0a8b67e21a5b0e8934712cda96ff8fb678d6591e597d108bd1
