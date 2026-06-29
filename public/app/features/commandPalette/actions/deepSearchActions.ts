@@ -72,7 +72,7 @@ function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string)
   let start = 0;
   while (start < segments.length) {
     const segment = segments[start];
-    // This seems complicated, but the exact parts of the breadcrumb does not seem to be guarantied, and so we can't
+    // This seems complicated, but the exact parts of the breadcrumb does not seem to be guaranteed, and so we can't
     // just take a segment with specific index.
     const isFolder = folderTitle !== undefined && segment === folderTitle;
     const isDashboard = segment === cardTitle || cardTitle.startsWith(segment + ' — ');
@@ -209,7 +209,7 @@ interface UseDeepSearchResultsOptions {
   searchQuery: string;
   /** False while the palette shows a sub-category — deep results only apply at the root. */
   show: boolean;
-  /** Gate on assistant availability; when false no requests fire and results stay empty. */
+  /** When false no requests fire and results stay empty. */
   enabled: boolean;
 }
 

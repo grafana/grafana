@@ -4923,8 +4923,8 @@
       "scopes": "Scopes"
     },
     "deep-search": {
-      "match-count_one": "{{count}} match",
-      "match-count_other": "{{count}} matches",
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
       "no-matches": "No matches"
     },
     "empty-state": {
@@ -4941,7 +4941,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
-      "deep-search": "Deep search",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",

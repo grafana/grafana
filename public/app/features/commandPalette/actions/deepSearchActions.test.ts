@@ -101,7 +101,7 @@ describe('groupDeepSearchResults', () => {
       panelResult({ dashboardUid: 'dash-2', content: 'c', score: 0.5 }),
     ]);
 
-    // best = 0.4, cutoff = 0.4 + 0.15 = 0.55 → all three within the margin, nothing dropped
+    // best = 0.4, cutoff = 0.4 + 0.2 = 0.6 → all three within the margin, nothing dropped
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
     expect(grouped[0].matchedPanelCount).toBe(2);
     expect(grouped[1].matchedPanelCount).toBe(1);
@@ -116,7 +116,7 @@ describe('groupDeepSearchResults', () => {
       panelResult({ dashboardUid: 'dash-3', content: 'worst', score: 0.9 }),
     ]);
 
-    // best = 0.2, cutoff = 0.35 → dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail
+    // best = 0.2, cutoff = 0.4 → dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail
     // and its dashboards are dropped. The arbitrary worst score (0.9) doesn't move the cutoff.
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
     expect(grouped[0].matchedPanelCount).toBe(3);
@@ -130,7 +130,7 @@ describe('groupDeepSearchResults', () => {
       panelResult({ dashboardUid: 'dash-2', content: 'far', score: 0.8 }),
     ]);
 
-    // best = 0.5, cutoff = 0.65 → keeps the 0.5 / 0.6 band, drops the 0.8 panel and dash-2
+    // best = 0.5, cutoff = 0.7 → keeps the 0.5 / 0.6 band, drops the 0.8 panel and dash-2
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
     expect(grouped[0].matchedPanelCount).toBe(2);
   });
