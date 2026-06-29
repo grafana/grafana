@@ -192,11 +192,11 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   return (
     <>
       {navModel ? (
-        <Page data-testid={`${plugin.meta?.id}-page`} navModel={navModel} pageNav={pluginNav?.node}>
+        <Page data-testid={`${pluginId}-page`} navModel={navModel} pageNav={pluginNav?.node}>
           <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
         </Page>
       ) : (
-        <Page data-testid={`${plugin.meta?.id}-page`}>{pluginRoot}</Page>
+        <Page data-testid={`${pluginId}-page`}>{pluginRoot}</Page>
       )}
     </>
   );
