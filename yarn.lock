@@ -2235,7 +2235,7 @@ __metadata:
     d3-interpolate: "npm:^3.0.1"
     d3-scale-chromatic: "npm:^3.1.0"
     date-fns: "npm:^4.1.0"
-    dompurify: "npm:3.4.0"
+    dompurify: "npm:^3.4.0"
     esbuild: "npm:0.25.8"
     eventemitter3: "npm:5.0.1"
     history: "npm:4.10.1"
@@ -15534,7 +15534,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:3.4.0":
+"dompurify@npm:3.4.0, dompurify@npm:^3.4.0":
   version: 3.4.0
   resolution: "dompurify@npm:3.4.0"
   dependencies:
