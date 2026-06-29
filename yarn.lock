@@ -2834,7 +2834,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/assistant": "npm:^0.1.24"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
