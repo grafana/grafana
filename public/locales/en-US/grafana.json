@@ -13761,6 +13761,9 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
+    "view-repository-button": {
+      "label": "View repository"
+    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
