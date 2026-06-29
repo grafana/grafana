@@ -2841,7 +2841,7 @@ __metadata:
     "@grafana/i18n": "npm:13.2.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/ui": "npm:13.2.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-awesome-query-builder/ui": "npm:^6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -6904,7 +6904,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
+"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/ui@npm:6.6.15"
   dependencies:

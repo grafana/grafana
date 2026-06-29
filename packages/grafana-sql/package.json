@@ -48,7 +48,7 @@
     "@grafana/i18n": "13.2.0-pre",
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/ui": "13.2.0-pre",
-    "@react-awesome-query-builder/ui": "6.6.15",
+    "@react-awesome-query-builder/ui": "^6.6.15",
     "lodash": "4.18.1",
     "react-use": "17.6.1",
     "react-virtualized-auto-sizer": "1.0.26",
