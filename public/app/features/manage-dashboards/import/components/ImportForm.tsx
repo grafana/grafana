@@ -26,6 +26,7 @@ interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'co
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
+  onFolderChange?: (uid: string) => void;
 }
 
 export function ImportForm({
@@ -39,6 +40,7 @@ export function ImportForm({
   onCancel,
   onSubmit,
   watch,
+  onFolderChange,
 }: Props) {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
@@ -81,7 +83,16 @@ export function ImportForm({
         <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')} noMargin>
           <Controller
             render={({ field: { ref, value, onChange, ...field } }) => (
-              <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
+              <FolderPicker
+                {...field}
+                onChange={(uid, title) => {
+                  onChange({ uid, title });
+                  if (uid) {
+                    onFolderChange?.(uid);
+                  }
+                }}
+                value={value.uid}
+              />
             )}
             name="folder"
             control={control}
@@ -98,7 +109,10 @@ export function ImportForm({
             {!uidReset ? (
               <Input
                 disabled
-                {...register('uid', { validate: async (v: string) => await validateUid(v) })}
+                {...register('uid', {
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
                 addonAfter={
                   !uidReset && (
                     <Button onClick={onUidReset}>
@@ -108,7 +122,13 @@ export function ImportForm({
                 }
               />
             ) : (
-              <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
+              <Input
+                {...register('uid', {
+                  required: true,
+                  setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                  validate: async (v: string) => await validateUid(v),
+                })}
+              />
             )}
           </>
         </Field>

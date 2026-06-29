@@ -1,25 +1,25 @@
 import { css } from '@emotion/css';
 import { type DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { memo, forwardRef } from 'react';
 
-import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
-import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
+import { MegaMenuSkeleton } from './MegaMenuSkeleton';
+import { useNavCustomization } from './hooks';
 
 export const MENU_WIDTH = '300px';
+
+// id on the unpinned-items list so the collapse toggle can reference it via aria-controls.
+const UNPINNED_ITEMS_ID = 'megamenu-unpinned-items';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -27,40 +27,26 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
-    const location = useLocation();
+    const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
     const { chrome } = useGrafana();
-    const dispatch = useDispatch();
     const state = chrome.useState();
-    const [patchPreferences] = usePatchUserPreferencesMutation();
-    const pinnedItems = usePinnedItems();
+    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
 
-    // Remove profile + help from tree
-    const navItems = navTree
-      .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
-
-    const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
-    if (bookmarksItem) {
-      // Add children to the bookmarks section
-      bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
-        const item = findByUrl(navItems, url);
-        if (!item) {
-          return acc;
-        }
-        const newItem = {
-          id: item.id,
-          text: item.text,
-          url: item.url,
-          parentItem: { id: 'bookmarks', text: 'Bookmarks' },
-        };
-        acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
-        return acc;
-      }, []);
-    }
-
-    const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+    const {
+      canCustomise,
+      isLoading,
+      navItems,
+      homeItem,
+      unpinnedItems,
+      pinnedNavItems,
+      activeItem,
+      isPinned,
+      onPinItem,
+      unpinnedCollapsible,
+      showUnpinnedItems,
+      setUnpinnedExpanded,
+    } = useNavCustomization();
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -69,60 +55,86 @@ export const MegaMenu = memo(
       }
     };
 
-    const isPinned = useCallback(
-      (url?: string) => {
-        if (!url || !pinnedItems?.length) {
-          return false;
-        }
-        return pinnedItems?.includes(url);
-      },
-      [pinnedItems]
+    const renderNavItem = (link: NavModelItem, key: string = link.text, pinned = false) => (
+      <MegaMenuItem
+        key={key}
+        link={link}
+        isPinned={pinned ? () => true : isPinned}
+        onClick={state.megaMenuDocked ? undefined : onClose}
+        activeItem={activeItem}
+        // Pinned-area controls unpin (remove); normal-nav controls pin (add).
+        onPin={(item) => onPinItem(item, pinned)}
+        pinned={pinned}
+        canCustomise={canCustomise}
+        loadingChildren={link.id === 'starred' && starredItemsLoading}
+        childrenLoadError={link.id === 'starred' && starredItemsError}
+      />
     );
 
-    const onPinItem = (item: NavModelItem) => {
-      const { url } = item;
-      if (url) {
-        const isSaved = isPinned(url);
-        const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
-        const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
-        reportInteraction(interactionName, {
-          path: url,
-        });
-        patchPreferences({
-          patchPrefsCmd: {
-            navbar: {
-              bookmarkUrls: newItems,
-            },
-          },
-        }).then((data) => {
-          if (!data.error) {
-            dispatch(setBookmark({ item: item, isSaved: !isSaved }));
-          }
-        });
-      }
-    };
+    // Pinned layout: Home, then the pinned block (if any), then the collapsible rest.
+    const renderPinnedLayout = () => (
+      <>
+        {homeItem && renderNavItem(homeItem)}
+        {pinnedNavItems.length > 0 && (
+          <>
+            <li>
+              <ul className={styles.pinnedList} aria-label={t('navigation.megamenu.pinned-list-label', 'Pinned')}>
+                {pinnedNavItems.map((link) => renderNavItem(link, `pinned-${link.id ?? link.url}`, true))}
+              </ul>
+            </li>
+            {showUnpinnedItems && <li className={styles.divider} aria-hidden="true" />}
+          </>
+        )}
+        {showUnpinnedItems && (
+          <li>
+            <ul id={UNPINNED_ITEMS_ID} className={styles.pinnedList}>
+              {unpinnedItems.map((link) => renderNavItem(link))}
+            </ul>
+          </li>
+        )}
+      </>
+    );
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
-          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
-            <>
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
-                  <MegaMenuItem
-                    key={link.text}
-                    link={link}
-                    isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
-                    activeItem={activeItem}
-                    onPin={onPinItem}
-                  />
-                ))}
-              </ul>
-              <MegaMenuExtensionPoint />
-            </>
-          </ScrollContainer>
+          <div className={styles.scrollArea}>
+            <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
+              <>
+                <ul
+                  className={styles.itemList}
+                  aria-label={t('navigation.megamenu.list-label', 'Navigation')}
+                  aria-busy={isLoading || undefined}
+                >
+                  {isLoading ? (
+                    <MegaMenuSkeleton />
+                  ) : canCustomise ? (
+                    renderPinnedLayout()
+                  ) : (
+                    navItems.map((link) => renderNavItem(link))
+                  )}
+                </ul>
+                <MegaMenuExtensionPoint />
+              </>
+            </ScrollContainer>
+          </div>
+          {unpinnedCollapsible && (
+            <button
+              type="button"
+              className={styles.unpinnedToggle}
+              onClick={() => setUnpinnedExpanded(!showUnpinnedItems)}
+              aria-expanded={showUnpinnedItems}
+              aria-controls={UNPINNED_ITEMS_ID}
+            >
+              <Icon name={showUnpinnedItems ? 'angle-up' : 'angle-down'} size="lg" />
+              <Text color="secondary">
+                {showUnpinnedItems
+                  ? t('navigation.megamenu.hide-unpinned-items', 'Hide unpinned items')
+                  : t('navigation.megamenu.show-unpinned-items', 'Show unpinned items')}
+              </Text>
+            </button>
+          )}
         </nav>
       </div>
     );
@@ -140,15 +152,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       position: 'relative',
     }),
-    mobileHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: theme.spacing(1, 1, 1, 2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      [theme.breakpoints.up('md')]: {
-        display: 'none',
-      },
+    scrollArea: css({
+      flex: 1,
+      minHeight: 0,
     }),
     itemList: css({
       boxSizing: 'border-box',
@@ -160,13 +166,36 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: MENU_WIDTH,
       },
     }),
-    dockMenuButton: css({
-      display: 'none',
-      position: 'relative',
-      top: theme.spacing(1),
-
-      [theme.breakpoints.up('xl')]: {
-        display: 'inline-flex',
+    divider: css({
+      listStyleType: 'none',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      margin: theme.spacing(1, 1, 1, 0.5),
+    }),
+    pinnedList: css({
+      display: 'flex',
+      flexDirection: 'column',
+      listStyleType: 'none',
+      padding: 0,
+      margin: 0,
+    }),
+    // Pinned to the bottom of the menu as a footer, with a divider separating it from the list.
+    unpinnedToggle: css({
+      alignItems: 'center',
+      background: 'none',
+      border: 'none',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      cursor: 'pointer',
+      display: 'flex',
+      flexShrink: 0,
+      gap: theme.spacing(1),
+      padding: theme.spacing(1.5, 2),
+      width: '100%',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: '-2px',
       },
     }),
   };

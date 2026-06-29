@@ -24,10 +24,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type WebhookRepository interface {
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
-
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
@@ -92,7 +88,7 @@ func (s *webhookConnector) Authorize(ctx context.Context, a authorizer.Attribute
 }
 
 func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error {
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = s
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = provisioningapis.WithTimeout(s, 30*time.Second)
 	return nil
 }
 
@@ -111,23 +107,11 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	namespace := request.NamespaceValue(ctx)
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the repository with the worker identity (since the request user is likely anonymous).
-	// Reject the request early if the repository is not healthy
-	repo, err := s.core.GetHealthyRepository(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
 		defer span.End()
 
+		namespace := request.NamespaceValue(ctx)
 		span.SetAttributes(
 			attribute.String("repository", name),
 			attribute.String("namespace", namespace),
@@ -135,13 +119,39 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		logger := logging.FromContext(ctx).With("logger", "webhook-connector", "repo", name)
 		ctx = logging.Context(ctx, logger)
+
+		// Switch to the worker identity (the request user is likely anonymous), then
+		// fetch the repository under that identity. Both calls run against the
+		// timeout-bounded ctx so they can't hang past the connector's SLA.
+		var err error
+		ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+		if err != nil {
+			span.RecordError(err)
+			responder.Error(err)
+			return
+		}
+
+		// Get the repository with the worker identity. Reject the request early if
+		// the repository is not healthy.
+		repo, err := s.core.GetHealthyRepository(ctx, name)
+		if err != nil {
+			span.RecordError(err)
+			responder.Error(err)
+			return
+		}
+
 		if !s.webhooksEnabled {
 			responder.Error(errors.NewBadRequest("webhooks are not enabled"))
 			return
 		}
 
-		hooks, ok := repo.(WebhookRepository)
+		hooks, ok := repo.(repository.WebhookRepository)
 		if !ok {
+			cfg := repo.Config()
+			if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+				responder.Error(errors.NewBadRequest("webhook integration is disabled for this repository"))
+				return
+			}
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return
 		}
@@ -192,7 +202,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), 30*time.Second), nil
+	}), nil
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.

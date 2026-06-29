@@ -326,8 +326,8 @@ You must reload the connections with old certificates for them to work.
 
 #### `socket_gid`
 
-GID where the socket should be set when `protocol=socket`.
-Make sure that the target group is in the group of Grafana process and that Grafana process is the file owner before you change this setting.
+GID of the socket when `protocol=socket`.
+Make sure that the user running the Grafana process is a member of the target group and is the file owner before you change this setting.
 It is recommended to set the GID as HTTP server user GID.
 Not set when the value is `-1`.
 
@@ -685,6 +685,16 @@ Optionally, use this option to override the default endpoint address for Applica
 #### `application_insights_auto_route_tracking`
 
 Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
+
+#### `posthog_token`
+
+If you want to track Grafana usage via PostHog, specify _your_ PostHog project API key here.
+By default this feature is disabled.
+
+#### `posthog_host`
+
+Optional PostHog instance host URL. Defaults to `https://us.i.posthog.com` (PostHog US Cloud).
+Set this if you use PostHog EU Cloud (`https://eu.i.posthog.com`) or a self-hosted instance.
 
 #### `feedback_links_enabled`
 
@@ -1376,6 +1386,8 @@ clouds_config = `[
 
 Specifies whether Grafana is running in Azure with Managed Identity configured (for example, running in a Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
 
+When enabled, Grafana automatically forwards the Azure platform's managed-identity discovery environment variables (`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, `IDENTITY_SERVER_THUMBPRINT`, `IMDS_ENDPOINT`, `MSI_ENDPOINT`, `MSI_SECRET`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to obtain tokens on Azure App Service, Azure Container Apps, Azure Arc, and Service Fabric, where managed-identity endpoints are not reachable via IMDS.
+
 #### `managed_identity_client_id`
 
 The client ID to use for user-assigned managed identity.
@@ -1389,6 +1401,8 @@ Specifies whether Entra ID Workload Identity authentication should be enabled in
 For more documentation on Entra ID Workload Identity, review [Entra ID Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
 
 Disabled by default, needs to be explicitly enabled.
+
+When enabled, Grafana automatically forwards the workload-identity environment variables injected by the AKS `azure-workload-identity` webhook (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`, `AZURE_AUTHORITY_HOST`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to perform federated token exchange.
 
 #### `workload_identity_tenant_id`
 
@@ -2823,6 +2837,10 @@ Comma-separated list of targets that a repository can control. `folder` by defau
 
 Whether image rendering is allowed for dashboard previews. Requires the image rendering service to be configured. Default is `true`.
 
+#### `allow_insecure`
+
+Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -3108,7 +3126,7 @@ For example, to set cartoDB light as the default base layer:
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Open street map",
+    "attribution": "OpenStreetMap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`
@@ -3122,7 +3140,7 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 
 Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
 
-#### `plugin_cleanup`
+#### `plugins_cleanup`
 
 Comma-separated list of plugin IDs whose RBAC data (roles, permissions, and seed assignments) will be purged from the database at startup.
 Use this to clean up leftover data from plugins that have been uninstalled or renamed.
@@ -3131,7 +3149,7 @@ The cleanup runs once at startup and is a no-op when the list is empty.
 
 ```ini
 # Example
-plugin_cleanup = grafana-slo-app, grafana-irm-app
+plugins_cleanup = grafana-slo-app, grafana-irm-app
 ```
 
 ### `[navigation.app_sections]`

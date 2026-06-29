@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import ConfigEditor from './ConfigEditor';
+import { ConfigEditor } from './ConfigEditor';
 
 describe('AppInsights ConfigEditor', () => {
   const baseOptions = {

@@ -42,12 +42,15 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn(),
 }));
 
+const mockGet = jest.fn(() => Promise.resolve(mockDS));
+const mockGetInstanceSettings = jest.fn(() => mockDS);
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: () => Promise.resolve(mockDS),
+    get: mockGet,
     getList: () => {},
-    getInstanceSettings: () => mockDS,
+    getInstanceSettings: mockGetInstanceSettings,
   }),
 }));
 
@@ -385,6 +388,23 @@ describe('QueryEditorRow', () => {
     onReplace: jest.fn(),
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  });
+  it('forwards scopedVars when resolving a query datasource variable', async () => {
+    mockGetInstanceSettings.mockClear();
+    const data = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    // A section-scoped (row/tab) datasource variable can only be resolved with the panel's scene
+    // scope, so QueryEditorRow must forward scopedVars to getInstanceSettings.
+    const scopedVars = { __sceneObject: { value: {} } };
+    const query = { refId: 'B', datasource: { uid: '${ds_var}', type: 'prometheus' } };
+    render(<QueryEditorRow {...props(data)} query={query} scopedVars={scopedVars} />);
+
+    await waitFor(() => {
+      expect(mockGetInstanceSettings).toHaveBeenCalledWith(query.datasource, scopedVars);
+    });
   });
   it('should display error message in corresponding panel', async () => {
     const data = {

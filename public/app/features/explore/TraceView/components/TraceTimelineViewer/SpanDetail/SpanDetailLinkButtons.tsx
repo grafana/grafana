@@ -15,7 +15,7 @@ import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+export const RelatedProfilesTitle = 'Related profiles';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from '../../types/links';

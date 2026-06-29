@@ -2,7 +2,9 @@ import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -14,15 +16,24 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
   useIsProvisionedInstance: jest.fn(),
 }));
 
+jest.mock(
+  'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
+  () => ({
+    getDashboardTemplatesTab: jest.fn(() => null),
+  })
+);
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+let mockTestDataSources: Array<{ name: string; uid: string; type: string }> = [
+  { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+];
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
+      getList: jest.fn(() => mockTestDataSources),
     }),
   };
 });
@@ -106,13 +117,13 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
   });
 
-  it('should hide Import button when folder is provisioned', async () => {
+  it('should show Import dashboard button when folder is provisioned', async () => {
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
   it('should show Import dashboard button when folder is not provisioned', async () => {
@@ -124,29 +135,35 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should hide Import dashboard button when entire instance is provisioned', async () => {
+  it('should show Import dashboard button when entire instance is provisioned', async () => {
     mockUseIsProvisionedInstance.mockReturnValue(true);
     const regularFolder = mockFolderDTO(1, { managedBy: undefined });
     await renderAndOpen(regularFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should hide Import dashboard button when both instance and folder are provisioned', async () => {
+  it('should show Import dashboard button when both instance and folder are provisioned', async () => {
     mockUseIsProvisionedInstance.mockReturnValue(true);
     const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
     await renderAndOpen(provisionedFolder);
 
     expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Import dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
   describe('Dashboard from template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
+      // Reset to defaults: a test datasource is available, custom templates are off.
+      mockTestDataSources = [
+        { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+      ];
+      mockGetDashboardTemplatesTab.mockReturnValue(null);
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
     });
 
     it('should show a `Use template` button when the feature flag is enabled', async () => {
@@ -154,10 +171,20 @@ describe('NewActionsButton', () => {
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('should not show a `Use template` button when the feature flag is disabled', async () => {
+    it('should not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       await renderAndOpen();
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('should show a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      mockTestDataSources = [];
+      mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+
+      await renderAndOpen();
+      expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
     it('should redirect the user to the dashboard from template page when the button is clicked', async () => {

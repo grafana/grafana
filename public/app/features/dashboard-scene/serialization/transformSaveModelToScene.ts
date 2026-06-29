@@ -66,16 +66,6 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
 
-export interface DashboardLoaderState {
-  dashboard?: DashboardScene;
-  isLoading?: boolean;
-  loadError?: string;
-}
-
-export interface SaveModelToSceneOptions {
-  isEmbedded?: boolean;
-}
-
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
 export interface SceneCreationOptions {
@@ -504,6 +494,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   if (panel.libraryPanel) {
@@ -543,8 +534,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
       ),
     });
   }
-
-  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   const body = new VizPanel(vizPanelState);
 

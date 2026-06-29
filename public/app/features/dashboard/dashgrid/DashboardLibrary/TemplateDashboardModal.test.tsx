@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -11,10 +11,23 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { TemplateDashboardModal } from './TemplateDashboardModal';
 import { NewTemplateDashboardInteractions } from './analytics/main';
+import { getDashboardTemplatesTab } from './enterprise-components/DashboardTemplatesTabExtension';
 import { TemplateDashboardInteractions } from './interactions';
+
+jest.mock('./enterprise-components/DashboardTemplatesTabExtension', () => ({
+  getDashboardTemplatesTab: jest.fn(() => null),
+}));
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+const MockCustomTemplatesTab = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
+  <div data-testid="custom-templates-tab">Custom Templates Tab Content</div>
+);
 
 const mockItemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockImplementation();
 const mockNewItemClicked = jest.spyOn(NewTemplateDashboardInteractions, 'itemClicked').mockImplementation();
+const mockLoaded = jest.spyOn(TemplateDashboardInteractions, 'loaded').mockImplementation();
+const mockNewLoaded = jest.spyOn(NewTemplateDashboardInteractions, 'loaded').mockImplementation();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -51,9 +64,13 @@ jest.mock('@grafana/assistant', () => ({
 describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.dashboardTemplates = true;
     mockGetList.mockReturnValue([
       { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
     ]);
+    // Default: no custom templates tab registered (matches the real default before the
+    // enterprise extension registers itself). Individual describes override this.
+    mockGetDashboardTemplatesTab.mockReturnValue(null);
     server.use(
       http.get('/api/gnet/dashboards', () => {
         return HttpResponse.json({
@@ -96,7 +113,7 @@ describe('TemplateDashboardModal', () => {
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
 
-    it('should not show TemplateDashboard modal when query param is present but there are no template dashboards', async () => {
+    it('renders an empty state in the Grafana templates tab when there are no template dashboards', async () => {
       server.use(
         http.get('/api/gnet/dashboards', () => {
           return HttpResponse.json({
@@ -109,9 +126,11 @@ describe('TemplateDashboardModal', () => {
       render(<TemplateDashboardModal />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
-      });
+
+      // The modal still renders, but the Grafana tab shows an empty state instead of cards.
+      expect(await screen.findByRole('dialog', { name: 'Start a dashboard from a template' })).toBeInTheDocument();
+      expect(await screen.findByText('No template dashboards found')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
     });
 
     it('should not show TemplateDashboard modal when query param is not present', async () => {
@@ -133,9 +152,7 @@ describe('TemplateDashboardModal', () => {
       });
 
       expect(
-        screen.getByText(
-          'Get started with Grafana templates using sample data. Connect your data to power them with real metrics.'
-        )
+        screen.getByText('Get started with Grafana templates. Connect your data to power them with real metrics.')
       ).toBeInTheDocument();
     });
     it('should show template dashboard cards', async () => {
@@ -348,5 +365,156 @@ describe('TemplateDashboardModal', () => {
         action: 'view_template',
       })
     );
+  });
+
+  describe('Custom templates tab', () => {
+    describe('when the grafana.customDashboardTemplates flag is enabled and the extension is registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+
+      it('renders both Custom and Grafana-provisioned tabs when grafana templates are available', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.getByRole('tab', { name: 'Custom templates' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Grafana-provisioned' })).toBeInTheDocument();
+      });
+
+      it('defaults to the Custom tab and renders its content', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        expect(await screen.findByTestId('custom-templates-tab')).toBeInTheDocument();
+        // Grafana cards should not be visible while Custom tab is active
+        expect(screen.queryByRole('heading', { level: 3, name: 'Test Template Dashboard' })).not.toBeInTheDocument();
+      });
+
+      it('shows the custom-tab description text by default', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        expect(
+          await screen.findByText('Get started with templates. Connect your data to power them with real metrics.')
+        ).toBeInTheDocument();
+      });
+
+      it('switches to the Grafana-provisioned tab when clicked', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByTestId('custom-templates-tab');
+
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+
+        await waitFor(() => {
+          const cardHeadings = screen.getAllByRole('heading', { level: 3 });
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+        });
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when the grafana.customDashboardTemplates flag is disabled', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.customDashboardTemplates': false });
+      });
+
+      it('does not render the Custom tab even when the extension is registered', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when the extension is not registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(null);
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+
+      it('does not render the Custom tab even when the feature flag is enabled', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Grafana templates loaded tracking', () => {
+    it('fires loaded once on open when the Grafana tab is the only view', async () => {
+      setTestFlags({ analyticsFramework: false });
+      render(<TemplateDashboardModal />, {
+        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      });
+
+      await waitFor(() => {
+        expect(mockLoaded).toHaveBeenCalledTimes(1);
+      });
+      expect(mockNewLoaded).not.toHaveBeenCalled();
+    });
+
+    describe('with the custom templates tab registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.customDashboardTemplates': true, analyticsFramework: false });
+      });
+
+      it('does not fire loaded on open while the Custom tab is the active (default) view', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        // Wait for the gnet fetch to resolve (tabs become available) so we know the
+        // loaded effect had a chance to run had it been wired to modal open.
+        await screen.findByRole('tab', { name: 'Grafana-provisioned' });
+
+        expect(mockLoaded).not.toHaveBeenCalled();
+        expect(mockNewLoaded).not.toHaveBeenCalled();
+      });
+
+      it('fires loaded once when the user selects the Grafana tab, and not again on toggle', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByTestId('custom-templates-tab');
+
+        // Select the Grafana-provisioned tab -> fires loaded once.
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+        await waitFor(() => {
+          expect(mockLoaded).toHaveBeenCalledTimes(1);
+        });
+
+        // Grafana -> Custom -> Grafana must not fire a second loaded event.
+        await user.click(screen.getByRole('tab', { name: 'Custom templates' }));
+        await screen.findByTestId('custom-templates-tab');
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+
+        await waitFor(() => {
+          expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2);
+        });
+        expect(mockLoaded).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 });

@@ -7,7 +7,21 @@ const packageIgnoreDeps = [
   'rollup-plugin-node-externals',
 ];
 
-const packageEntries = ['i18next.config.ts'];
+const defaultEntries = ['i18next.config.ts'];
+
+const externalisedDatasources = [
+  'azuremonitor',
+  'grafana-postgresql-datasource',
+  'grafana-pyroscope-datasource',
+  'grafana-testdata-datasource',
+  'graphite',
+  'influxdb',
+  'jaeger',
+  'loki',
+  'mssql',
+  'mysql',
+  'parca',
+];
 
 const config: KnipConfig = {
   compilers: {
@@ -17,31 +31,99 @@ const config: KnipConfig = {
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
   ],
-  ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
-  ignoreBinaries: ['make'],
+  rules: {
+    // there are cases where duplicates are necessary e.g. React.lazy expects a default import
+    duplicates: 'off',
+  },
+  ignore: [
+    '**/*.gen.ts*',
+    '**/*_gen.ts*',
+    'public/app/features/alerting/unified/search/search.terms.js',
+    'scripts/grafana-server/tmp/**',
+    'devenv/**',
+  ],
+  ignoreBinaries: ['jq', 'make', 'shellcheck'],
+  tags: ['-lintignore'],
   workspaces: {
     '.': {
-      // TODO figure out how to properly include webpack/jest configs
-      jest: false,
-      webpack: false,
-      project: ['!devenv', '!packages', '!pkg', '!public/app/plugins'],
+      ignoreDependencies: [
+        // TODO remove these ignores when react 19 is released
+        'react-19',
+        'react-dom-19',
+
+        // used by yarn test:ci
+        'jest-junit',
+
+        // used by coverage script, see jest.config.codeowner.js
+        'jest-monocart-coverage',
+
+        // needed by github actions
+        '@grafana/levitate',
+        'wait-on',
+
+        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        '@arethetypeswrong/cli',
+        'publint',
+      ],
+      project: [
+        'public/app/**',
+        'scripts/**',
+        '.github/**',
+        'e2e-playwright/**',
+
+        // paths to ignore
+        '!e2e-playwright/test-plugins/**',
+        '!packages/**',
+        '!pkg/**',
+        '!scripts/grafana-server/tmp/**',
+        ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
+      ],
+      entry: [
+        ...defaultEntries,
+        'public/app/app.ts',
+        'public/app/index.ts',
+        'public/app/api/clients/**/index.ts',
+        'public/app/extensions/index.ts',
+        'public/app/extensions/api/clients/**/index.ts',
+        'public/app/plugins/**/module.{ts,tsx,js}',
+        'scripts/**/*.{t,j,mt,mj,cj}s*',
+        '!scripts/grafana-server/tmp/**',
+
+        // reporter for playwright
+        'e2e-playwright/utils/axe-a11y/reporter.ts',
+
+        // levitate
+        '.github/workflows/scripts/levitate/*.js',
+
+        // custom jest config for code coverage
+        'jest.config.codeowner.js',
+      ],
+      webpack: {
+        config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
+      },
+      postcss: {
+        config: 'scripts/webpack/postcss.config.js',
+      },
+      playwright: {
+        config: [
+          'e2e-playwright/playwright.config.ts',
+          'e2e-playwright/extensions/enterprise/playwright-enterprise.config.ts',
+          'e2e-playwright/extensions/oem/playwright-enterprise-oem.config.ts',
+        ],
+      },
     },
-    'public/app/plugins/datasource/*': {
-      // TODO figure out how to properly include webpack/jest configs
-      webpack: false,
+    [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
       jest: true,
-      entry: [...packageEntries, 'module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}'],
       // these are provided by grafana-plugin-configs
       ignoreDependencies: ['@swc/jest'],
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
-      // TODO figure out how to properly include webpack/jest configs
-      webpack: false,
-      entry: [...packageEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
     },
     'packages/**': {
-      entry: packageEntries,
+      entry: defaultEntries,
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
@@ -51,7 +133,7 @@ const config: KnipConfig = {
     //   - its stories/mdx docs reference dependencies that are managed by `grafana-ui`
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
-      entry: packageEntries,
+      entry: defaultEntries,
       ignoreDependencies: [
         ...packageIgnoreDeps,
         '@storybook/addon-docs',
@@ -61,12 +143,11 @@ const config: KnipConfig = {
       storybook: true,
     },
     'packages/grafana-api-clients': {
-      entry: [...packageEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
+      entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
     },
     'packages/grafana-plugin-configs': {
-      // TODO figure out how to properly include webpack/jest configs
+      // this package contains shared code that isn't immediately used by the package
       webpack: false,
-      // this package contains shared dependencies that aren't immediately used by the package
       ignoreDependencies: ['.*'],
     },
   },

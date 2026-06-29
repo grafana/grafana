@@ -30,6 +30,7 @@ export enum TestDataQueryType {
   Simulation = 'simulation',
   Steps = 'steps',
   SlowQuery = 'slow_query',
+  FlakyQuery = 'flaky_query',
   StreamingClient = 'streaming_client',
   TableStatic = 'table_static',
   Trace = 'trace',
@@ -124,4 +125,9 @@ export interface TestDataDataQuery extends common.DataQuery {
   stringInput?: string;
   usa?: USAQuery;
   errorSource?: 'plugin' | 'downstream';
+  errorProbability?: number;
+  errorMessage?: string;
+  errorStatusCode?: number;
+  queryDelay?: string;
+  queryDelayVariability?: number;
 }

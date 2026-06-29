@@ -57,6 +57,7 @@ jobs:
           echo "to_commit=$TO_COMMIT" >> "$GITHUB_OUTPUT"
 
       - name: Compare commit hashes
+        id: compare-commits
         run: |
           FROM_COMMIT="${{ steps.current-commit.outputs.from_commit }}"
           TO_COMMIT="${{ steps.latest-commit.outputs.to_commit }}"
@@ -66,11 +67,22 @@ jobs:
 
           if [ "$FROM_COMMIT" = "$SHORT_TO_COMMIT" ]; then
             echo "Current version ($FROM_COMMIT) is already at latest ($SHORT_TO_COMMIT). No update needed."
-            exit 0
+            echo "needs_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Updates available: $FROM_COMMIT -> $TO_COMMIT"
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "Updates available: $FROM_COMMIT -> $TO_COMMIT"
+
+      - name: Annotate noop
+        if: steps.compare-commits.outputs.needs_update == 'false'
+        run: |
+          {
+            echo "## No update needed"
+            echo "Already at latest commit: \`${{ steps.current-commit.outputs.from_commit }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check for commit history
+        if: steps.compare-commits.outputs.needs_update == 'true'
         id: check-commits
         env:
           GH_TOKEN: ${{ github.token }}
@@ -94,6 +106,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Update alerting module
+        if: steps.compare-commits.outputs.needs_update == 'true'
         env:
           GOSUMDB: off
           PINNED_COMMIT: ${{ steps.latest-commit.outputs.to_commit }}
@@ -102,29 +115,25 @@ jobs:
           make update-workspace
 
       - name: Update snapshots
+        if: steps.compare-commits.outputs.needs_update == 'true'
         run: |
           go test -v -count=1 -timeout 5m -run TestIntegrationAvailableChannels ./pkg/tests/api/alerting/... || true
           go test -v -count=1 -timeout 5m -run TestIntegrationTypeSchemaList ./pkg/tests/apis/alerting/notifications/integrationtypeschema/... || true
 
-      - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+      - name: Get GitHub App token
+        if: steps.compare-commits.outputs.needs_update == 'true'
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GITHUB_APP_ID=alerting-team:app-id
-            GITHUB_APP_PRIVATE_KEY=alerting-team:private-key
-
-      - name: "Generate token"
-        id: generate_token
-        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # 1.11.5
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: alerting-team
 
       - name: Create Pull Request
+        if: steps.compare-commits.outputs.needs_update == 'true'
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         id: create-pr
         with:
-          token: '${{ steps.generate_token.outputs.token }}'
+          token: '${{ steps.get-github-app-token.outputs.token }}'
+          sign-commits: true
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true
@@ -153,6 +162,7 @@ jobs:
             echo "🔗 [View Pull Request]($PR_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack Message
+        if: steps.compare-commits.outputs.needs_update == 'true'
         uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
         with:
           method: 'chat.postMessage'

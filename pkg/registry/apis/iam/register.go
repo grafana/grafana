@@ -162,7 +162,7 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
-		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
+		teamSearchHandler:                team.NewSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -392,12 +392,22 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.TeamBindingResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Optional,
 	})
 	// Cap the apiserver name at 253 characters so callers get a clear
 	// validation error instead of a silent truncation/error at the storage
@@ -533,8 +543,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 
 	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
 
-	if b.teamSearch != nil {
-		b.teamSearch.teamGetter = b.teamGetter
+	if b.teamSearchHandler != nil {
+		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
 	}
 
 	// addmember / removemember mutate a single Spec.Members entry through
@@ -932,8 +942,8 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if enableTeamsApi && b.teamSearch != nil {
-		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
+	if enableTeamsApi && b.teamSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.teamSearchHandler.GetAPIRoutes(defs))
 	}
 
 	if enableResourcePermissionsApi && b.resourcePermissionsSearchHandler != nil {

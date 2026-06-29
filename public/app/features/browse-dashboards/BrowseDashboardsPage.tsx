@@ -6,20 +6,21 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
+import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
-import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
-import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
+import { useTemplateDashboardsAvailability } from '../dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
+import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -52,6 +53,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
+  const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
   useEffect(() => {
@@ -100,22 +102,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const navModel = useNavModel(folderDTO, 'dashboards');
+
   const [saveFolder] = useUpdateFolder();
-  const navModel = useMemo(() => {
-    if (!folderDTO) {
-      return undefined;
-    }
-    const model = buildNavModel(folderDTO);
-
-    // Set the "Dashboards" tab to active
-    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
-    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
-    if (dashboardsTab) {
-      dashboardsTab.active = true;
-    }
-    return model;
-  }, [folderDTO]);
-
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
@@ -123,7 +112,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const folder = folderDTO ?? rootFolderDTO;
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
-  const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
+  const isProvisionedFolder = isItemManagedByRepository(folder);
   const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
   const showEditTitle = canEditFolders && !!folderUID;
@@ -223,7 +212,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             }
           </AutoSizer>
         </div>
-        {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
+        {isTemplateDashboardsAvailable && <TemplateDashboardModal />}
       </Page.Contents>
       {showRenameDrawer && folderDTO && (
         <Drawer

@@ -34,10 +34,15 @@ jobs:
   setup:
     name: setup
     runs-on: ubuntu-x64-small
-    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
+    # grafana/grafana builds only main (push/schedule/dispatch); release-candidate builds
+    # now run in the mirror.
+    if: >-
+      (github.repository == 'grafana/grafana' && github.ref_name == 'main') ||
+      (github.repository == 'grafana/grafana-security-mirror' && endsWith(github.ref_name, '#patched'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
+      public-commit: ${{ steps.output.outputs.public_commit }}
     permissions:
       contents: read
     steps:
@@ -46,7 +51,13 @@ jobs:
           persist-credentials: false
       - name: Set up version (Release Branches)
         if: startsWith(github.ref_name, 'release-')
-        run: echo "${REF_NAME#release-}" > VERSION
+        # Drop the leading release- and any trailing #patched (the patched mirror branch
+        # suffix) so the version is clean, e.g. release-13.0.0#patched -> 13.0.0. A
+        # +security suffix is preserved (release-13.0.0+security-01 -> 13.0.0+security-01).
+        run: |
+          version="${REF_NAME#release-}"
+          version="${version%\#patched}"
+          echo "$version" > VERSION
         env:
           REF_NAME: ${{ github.ref_name }}
       - name: Set up version (Non-release branches)
@@ -56,9 +67,27 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           BUILD_ID: ${{ github.run_id }}
       - id: output
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          # grafana_commit is the source pin (#patched HEAD in the mirror) — it drives every
+          # clone/checkout (enterprise/upstream + the build checkouts). Do NOT repoint it.
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+
+          # public_commit is the commit STAMPED into the binary (-X main.commit). For a mirror
+          # #patched build it's the sibling unpatched branch HEAD — a real grafana/grafana
+          # commit — so artifacts advertise a public commit instead of the mirror-only one.
+          # Everywhere else it's just the checkout HEAD. This value is only ever passed to the
+          # Makefile's COMMIT_SHA; it is never used as a checkout/clone ref.
+          if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *'#patched' ]]; then
+            sibling="${REF_NAME%\#patched}"
+            public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${sibling}" --jq '.object.sha')
+          else
+            public_commit=$(git rev-parse HEAD)
+          fi
+          echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
@@ -82,12 +111,16 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          PUBLIC_COMMIT: ${{ needs.setup.outputs.public-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            // grafana-enterprise has no #patched branches, so dispatch it on the plain
+            // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
+            const enterpriseRef = REF.replace(/#patched$/, '');
             let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
@@ -98,19 +131,30 @@ jobs:
               workflow = 'release-build-nightly.yml';
             }
 
+            const inputs = {
+              "version": VERSION,
+              "build-id": String(BUILD_ID),
+              "bucket": BUCKET,
+              "grafana-commit": GRAFANA_COMMIT,
+              "source-event": SOURCE_EVENT,
+              "upstream": REPO,
+            };
+            // Only release-build-enterprise.yml accepts (and stamps) the public commit;
+            // pro/nightly build from main where the stamped commit is already the HEAD.
+            if (workflow === 'release-build-enterprise.yml') {
+              inputs["grafana-public-commit"] = PUBLIC_COMMIT;
+              // Supply run ID separately in case we ever change what BUILD_ID is.
+              // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
+              // fail together.
+              inputs["upstream-run-id"] = String(BUILD_ID);
+            }
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
                 workflow_id: workflow,
-                ref:  REF,
-                inputs: {
-                  "version": VERSION,
-                  "build-id": String(BUILD_ID),
-                  "bucket": BUCKET,
-                  "grafana-commit": GRAFANA_COMMIT,
-                  "source-event": SOURCE_EVENT,
-                  "upstream": REPO,
-                }
+                ref:  enterpriseRef,
+                inputs,
             })
 
   build-frontend:
@@ -190,6 +234,9 @@ jobs:
           arm: ${{ matrix.arm }}
           build-number: ${{ github.run_id }}
           build-version: ${{ needs.setup.outputs.version }}
+          # Stamp the public (non-#patched) commit while still compiling the #patched
+          # source that was checked out above. See the build invariant in the plan.
+          commit: ${{ needs.setup.outputs.public-commit }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}
@@ -831,105 +878,13 @@ jobs:
       bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod
       runs-on: ubuntu-x64-small
-
-  publish-dockerhub:
-    if: github.repository == 'grafana/grafana' && github.ref_name == 'main'
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-x64-small
-    needs:
-      - setup
-      - verify-targz
-      - build-docker-linux-amd64
-      - build-docker-linux-arm64
-      - build-docker-linux-armv7
-      - verify-packages
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - variant: alpine
-            full-artifact: artifacts-docker
-            slim-artifact: artifacts-docker-alpine-slim
-            full-tag-suffix: ""
-            slim-tag-suffix: "-slim"
-          - variant: ubuntu
-            full-artifact: artifacts-docker-ubuntu
-            slim-artifact: artifacts-docker-ubuntu-slim
-            full-tag-suffix: "-ubuntu"
-            slim-tag-suffix: "-ubuntu-slim"
-          - variant: distroless
-            full-artifact: artifacts-docker-distroless
-            slim-artifact: artifacts-docker-distroless-slim
-            full-tag-suffix: "-distroless"
-            slim-tag-suffix: "-distroless-slim"
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-amd64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-arm64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.full-artifact }}-linux-armv7
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-amd64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-arm64
-          path: dist
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: ${{ matrix.slim-artifact }}-linux-armv7
-          path: dist
-      - name: Push ${{ matrix.variant }} + ${{ matrix.variant }}-slim to Docker Hub
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-          FULL_TAG_SUFFIX: ${{ matrix.full-tag-suffix }}
-          SLIM_TAG_SUFFIX: ${{ matrix.slim-tag-suffix }}
-        run: |
-          set -euo pipefail
-          TAG_VERSION="${VERSION//+/-}"
-          for f in dist/*.docker.tar.gz; do docker load -i "$f"; done \
-            | grep "Loaded image:" | sed 's/Loaded image: //' | sort -u | tee docker_images
-          while read -r line; do docker push "$line"; done < docker_images
-          docker manifest create "grafana/grafana:main${FULL_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana:main${SLIM_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${FULL_TAG_SUFFIX}-armv7"
-          docker manifest create "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-amd64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-arm64" \
-            "grafana/grafana-image-tags:${TAG_VERSION}${SLIM_TAG_SUFFIX}-armv7"
-          docker manifest push "grafana/grafana:main${FULL_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana:main${SLIM_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${FULL_TAG_SUFFIX}"
-          docker manifest push "grafana/grafana-dev:${TAG_VERSION}${SLIM_TAG_SUFFIX}"
-
   run-meticulous-tests:
     if: github.repository == 'grafana/grafana'
-    needs:
-      - setup
-      - publish-dockerhub
     name: Run Meticulous tests
     runs-on: ubuntu-x64-small
     continue-on-error: true
+    needs:
+      - build-docker-linux-amd64
     permissions:
       actions: write
       contents: read
@@ -943,16 +898,26 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Compute image tag
-        id: tag
-        env:
-          VERSION: ${{ needs.setup.outputs.version }}
-        run: echo "value=grafana/grafana-dev:${VERSION//+/-}" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: artifacts-docker-distroless-slim-linux-amd64
+          path: dist
 
-      - name: Pull image from Dockerhub
-        env:
-          IMAGE_TAG: ${{ steps.tag.outputs.value }}
-        run: docker pull "$IMAGE_TAG"
+      - name: Load Docker image under test
+        id: load-image
+        run: |
+          PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.distroless-slim.docker.tar.gz' | sort | sed -n '1p')"
+          if [ -z "$PACKAGE_PATH" ]; then
+            echo "No distroless-slim docker package found in dist/"
+            ls -laR dist
+            exit 1
+          fi
+          IMAGE="$(docker load -i "$PACKAGE_PATH" | sed -n 's/^Loaded image: //p' | sed -n '1p')"
+          if [ -z "$IMAGE" ]; then
+            echo "Unable to load Docker image from $PACKAGE_PATH"
+            exit 1
+          fi
+          echo "IMAGE_UNDER_TEST=$IMAGE" | tee -a "$GITHUB_OUTPUT"
 
       - name: Get vault secrets
         id: vault-secrets
@@ -964,8 +929,8 @@ jobs:
       - name: Run Meticulous tests
         uses: alwaysmeticulous/report-diffs-action/upload-container@89c6081b30d17cfcc410b5c19c269cd7a4d67cdf # v1
         with:
-          api-token: ${{ env.METICULOUS_API_TOKEN }}
-          image-tag: ${{ steps.tag.outputs.value }}
+          api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
+          image-tag: ${{ steps.load-image.outputs.IMAGE_UNDER_TEST }}
           container-port: 3000
           container-env: |
             GF_AUTH_ANONYMOUS_ENABLED=true

@@ -1,12 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
-import { useDataSourceInstance, useDataSourceInstanceSettingsList, useDataSourceInstanceSettings } from './hooks';
+import { useDataSourceInstance, useDataSourceInstanceList, useDataSourceInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
@@ -85,28 +85,17 @@ describe('useDataSourceInstanceSettings', () => {
   });
 });
 
-describe('useDataSourceInstanceSettingsList', () => {
-  it('populates items and reports hasMore=false for the initial page', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceSettingsList());
+describe('useDataSourceInstanceList', () => {
+  it('populates items', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceList());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
-    expect(result.current.hasMore).toBe(false);
-  });
-
-  it('is safe to call fetchMore when there are no more pages', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceSettingsList());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    act(() => {
-      result.current.fetchMore();
-    });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
   it('does not re-fetch when the same filter function reference is re-rendered', async () => {
-    const stableFilter = (x: DataSourceInstanceSettings) => Boolean(x.meta.metrics);
-    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+    const stableFilter = (x: DataSourceInstanceListItem) => Boolean(x.meta.metrics);
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: stableFilter },
     });
 
@@ -122,10 +111,10 @@ describe('useDataSourceInstanceSettingsList', () => {
   });
 
   it('re-fetches and updates items when the filter function reference changes', async () => {
-    const filterA = (x: DataSourceInstanceSettings) => x.name === 'Alpha';
-    const filterB = (x: DataSourceInstanceSettings) => x.name === 'Bravo';
+    const filterA = (x: DataSourceInstanceListItem) => x.name === 'Alpha';
+    const filterB = (x: DataSourceInstanceListItem) => x.name === 'Bravo';
 
-    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: filterA },
     });
 

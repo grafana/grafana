@@ -45,6 +45,7 @@ const (
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
+	TestReadAtRVBeforeDelete      = "read at RV edge cases"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -95,6 +96,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
 	}
 
 	for _, tc := range cases {
@@ -537,8 +539,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -1714,6 +1717,12 @@ func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
 	return &sliceBulkRequestIterator{ix: -1, items: items}
 }
 
+// ToBulkIterator returns a BulkRequestIterator over the given requests, for use by
+// bulk-processing tests in other packages.
+func ToBulkIterator(items []*resourcepb.BulkRequest) resource.BulkRequestIterator {
+	return toBulkIterator(items)
+}
+
 func (s *sliceBulkRequestIterator) Next() bool {
 	s.ix++
 	return s.ix < len(s.items)
@@ -1923,6 +1932,94 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(404), resp.Error.Code)
 	})
+}
+
+// runTestIntegrationBackendReadAtRVEdgeCases pins down ReadResource behavior
+// at exact revision boundaries for create, update, delete, and recreate events.
+// This includes the trash contract the restore flow depends on: trash listings
+// surface each item's delete-event RV, and reading at deleteRV-1 must return the
+// live pre-delete state while reads at and after deleteRV must return not found
+// until the resource is recreated.
+func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-read-rv"
+	key := &resourcepb.ResourceKey{
+		Name:      "target",
+		Namespace: ns,
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	rvCreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-create"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvUpdate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED,
+		WithNamespaceAndRV(ns, rvCreate), WithValue("target-update"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvDelete, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED,
+		WithNamespaceAndRV(ns, rvUpdate), WithValue("target-delete"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvRecreate, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("target-recreate"))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-d", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	type readAtRVCase struct {
+		name              string
+		requestRV         int64
+		expectedStatus    int32
+		expectedRV        int64
+		expectedSubstring string
+	}
+
+	cases := []readAtRVCase{
+		{name: "create rv-1", requestRV: rvCreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "create rv", requestRV: rvCreate, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "create rv+1", requestRV: rvCreate + 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv-1", requestRV: rvUpdate - 1, expectedRV: rvCreate, expectedSubstring: "target-create"},
+		{name: "update rv", requestRV: rvUpdate, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "update rv+1", requestRV: rvUpdate + 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv-1", requestRV: rvDelete - 1, expectedRV: rvUpdate, expectedSubstring: "target-update"},
+		{name: "delete rv", requestRV: rvDelete, expectedStatus: http.StatusNotFound},
+		{name: "delete rv+1", requestRV: rvDelete + 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv-1", requestRV: rvRecreate - 1, expectedStatus: http.StatusNotFound},
+		{name: "recreate rv", requestRV: rvRecreate, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+		{name: "recreate rv+1", requestRV: rvRecreate + 1, expectedRV: rvRecreate, expectedSubstring: "target-recreate"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+				Key:             key,
+				ResourceVersion: tc.requestRV,
+			})
+			if tc.expectedStatus != 0 {
+				require.NotNil(t, resp.Error)
+				require.Equal(t, tc.expectedStatus, resp.Error.Code)
+				return
+			}
+			require.Nil(t, resp.Error, "ReadResource error: %v", resp.Error)
+			require.Equal(t, tc.expectedRV, resp.ResourceVersion)
+			require.Contains(t, string(resp.Value), tc.expectedSubstring)
+		})
+	}
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns

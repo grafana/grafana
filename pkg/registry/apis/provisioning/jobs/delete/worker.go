@@ -96,7 +96,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	msg := fmt.Sprintf("Delete from Grafana %s", job.Name)
 	stageOptions := repository.StageOptions{
 		Mode:                  repository.StageModeCommitOnlyOnce,
-		CommitOnlyOnceMessage: msg,
+		CommitOnlyOnceMessage: jobs.CommitMessage(job, msg),
 		PushOnWrites:          false,
 		Timeout:               10 * time.Minute,
 		Ref:                   opts.Ref,
