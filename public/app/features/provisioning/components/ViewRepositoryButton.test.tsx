@@ -1,18 +1,23 @@
 import { render, screen } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ViewRepositoryButton } from './ViewRepositoryButton';
 
 describe('ViewRepositoryButton', () => {
+  const originalProvisioningToggle = config.featureToggles.provisioning;
+
   beforeEach(() => {
+    config.featureToggles.provisioning = true;
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action: string) => action === AccessControlAction.ProvisioningRepositoriesRead);
   });
 
   afterEach(() => {
+    config.featureToggles.provisioning = originalProvisioningToggle;
     jest.restoreAllMocks();
   });
 
@@ -29,6 +34,14 @@ describe('ViewRepositoryButton', () => {
 
     const link = screen.getByRole('link', { name: 'View repository' });
     expect(link).toHaveAttribute('href', '/admin/provisioning/my%20repo%2Fwith%20special');
+  });
+
+  it('renders nothing when the provisioning feature toggle is off', () => {
+    config.featureToggles.provisioning = false;
+
+    render(<ViewRepositoryButton repositoryName="my-repo" />);
+
+    expect(screen.queryByRole('link', { name: 'View repository' })).not.toBeInTheDocument();
   });
 
   it('renders nothing without provisioning.repositories:read permission', () => {
