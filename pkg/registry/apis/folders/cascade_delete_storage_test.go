@@ -100,7 +100,15 @@ func (s *fakeCascadeSearcher) Search(_ context.Context, req *resourcepb.Resource
 	for _, n := range names {
 		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows}, TotalHits: int64(len(rows))}, nil
+
+	// Honor offset/limit so multi-page enumeration is exercised.
+	total := int64(len(rows))
+	start := min(req.Offset, total)
+	end := total
+	if req.Limit > 0 && start+req.Limit < end {
+		end = start + req.Limit
+	}
+	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows[start:end]}, TotalHits: total}, nil
 }
 
 func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
@@ -185,6 +193,33 @@ func TestCascadeDelete_DeletesAllDashboardsInFolder(t *testing.T) {
 	for _, name := range []string{"dash-1", "dash-2"} {
 		_, err := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), name, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "dashboard %s should be deleted", name)
+	}
+}
+
+func TestCascadeDelete_DeletesDashboardsAcrossPages(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// Force multi-page enumeration to guard against offset paging skipping items mid-delete.
+	prev := childFolderPageSize
+	childFolderPageSize = 2
+	t.Cleanup(func() { childFolderPageSize = prev })
+
+	names := []string{"d1", "d2", "d3", "d4", "d5"}
+	objs := make([]runtime.Object, len(names))
+	for i, n := range names {
+		objs[i] = unstructuredDashboard("default", n)
+	}
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": names}}
+	s, dyn := newDashboardCascade(store, searcher, objs...)
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	for _, n := range names {
+		_, err := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), n, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "dashboard %s should be deleted", n)
 	}
 }
 

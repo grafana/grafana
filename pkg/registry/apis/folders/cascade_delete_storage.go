@@ -25,8 +25,8 @@ const (
 	folderTerminatingLabelValue = "true"
 )
 
-// childFolderPageSize bounds each search page when enumerating direct child folders.
-const childFolderPageSize int64 = 1000
+// childFolderPageSize bounds each search page when enumerating child folders or dashboards.
+var childFolderPageSize int64 = 1000
 
 var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 
@@ -116,9 +116,30 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 	}
 	client := (*svc).Namespace(namespace)
 
+	// Enumerate fully before deleting: offset paging is only valid against a stable collection, and
+	// deleting mid-pagination would shift later pages and skip dashboards.
+	names, err := s.dashboardsInFolder(ctx, namespace, folderUID)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range names {
+		if err := client.Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("delete dashboard %q: %w", name, err)
+		}
+	}
+	return nil
+}
+
+// dashboardsInFolder lists the names of all dashboards whose grafana.app/folder annotation points at
+// folderUID, paging through the search results.
+func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace, folderUID string) ([]string, error) {
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 
-	var offset int64
+	var (
+		names  []string
+		offset int64
+	)
 	for {
 		resp, err := s.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -137,27 +158,24 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 			Offset: offset,
 		})
 		if err != nil {
-			return fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
+			return nil, fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
 		}
 		if resp.Error != nil {
-			return fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
+			return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
 		}
 		if resp.Results == nil || len(resp.Results.Rows) == 0 {
-			return nil
+			return names, nil
 		}
 
 		for _, row := range resp.Results.Rows {
-			if row.Key == nil {
-				continue
-			}
-			if err := client.Delete(ctx, row.Key.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-				return fmt.Errorf("delete dashboard %q: %w", row.Key.Name, err)
+			if row.Key != nil {
+				names = append(names, row.Key.Name)
 			}
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
 		if offset+int64(len(resp.Results.Rows)) >= resp.TotalHits {
-			return nil
+			return names, nil
 		}
 		offset += childFolderPageSize
 	}
