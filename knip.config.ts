@@ -20,7 +20,6 @@ const externalisedDatasources = [
   'loki',
   'mssql',
   'mysql',
-  'parca',
 ];
 
 const config: KnipConfig = {
