@@ -83,7 +83,7 @@ SELECT hostname FROM host WHERE region IN($region)
 ```
 
 {{< admonition type="note" >}}
-+When using a multi-value PostgreSQL query variable with **Include All option** enabled and **Display** set to **Hidden**, the variable defaults to the first returned value, not **All**.
+When using a multi-value PostgreSQL query variable with **Include All option** enabled and **Display** set to **Hidden**, the variable defaults to the first returned value, not **All**.
 This is because Grafana persists the active selection at dashboard save time, and a hidden variable has no UI for users to change it.
 To default a hidden variable to **All**, temporarily show the variable, select **All** in the drop-down, save the dashboard, then hide the variable and save again.
 {{< /admonition >}}
