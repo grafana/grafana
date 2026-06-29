@@ -2115,7 +2115,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@faker-js/faker": "npm:^9.8.0"
     "@grafana/api-clients": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
