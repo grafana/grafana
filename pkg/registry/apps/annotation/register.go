@@ -125,6 +125,7 @@ func NewAppInstaller(
 		installer:      installer,
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
+		retentionTTL:   cfg.RetentionTTL,
 		tracer:         installer.tracer,
 		metrics:        installer.metrics,
 		logger:         logger,
@@ -232,7 +233,6 @@ func newPostgresStore(ctx context.Context, cfg Config, m *Metrics) (Store, error
 		MaxConnections:   cfg.PostgresMaxConnections,
 		MaxIdleConns:     cfg.PostgresMaxIdleConns,
 		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
-		RetentionTTL:     cfg.RetentionTTL,
 		TagCacheTTL:      cfg.PostgresTagCacheTTL,
 		TagCacheSize:     cfg.PostgresTagCacheSize,
 	}

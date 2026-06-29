@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
@@ -36,6 +37,8 @@ func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolde
 		tracer:         tracing.InitializeTracerForTest(),
 		logger:         log.NewNopLogger(),
 		metrics:        ProvideMetrics(nil),
+		// use a large retention window in case of long-running tests.
+		retentionTTL: 200 * 365 * 24 * time.Hour,
 	}
 }
 

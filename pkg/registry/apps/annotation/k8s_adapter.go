@@ -34,6 +34,11 @@ var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupRes
 // This follows the convention in pkg/storage/unified/apistore/prepare.go.
 const maxSafeJSInt = (1 << 52) - 1
 
+// maxFutureWindow bounds how far ahead of now an annotation's time (or timeEnd)
+// may be set, guarding against clearly bogus future timestamps.
+// TODO: determine appropriate future bound and maybe make configurable.
+const maxFutureWindow = 7 * 24 * time.Hour
+
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
 // status + telemetry classification agree. Already-typed apierrors and unknown
 // errors pass through unchanged (the apiserver will wrap the latter as 500).
@@ -82,6 +87,11 @@ type k8sRESTAdapter struct {
 	// annotation. 0 means no scopes are allowed. Negative values are
 	// rejected by the settings loader.
 	maxScopeCount int
+
+	// retentionTTL bounds how far in the past an annotation's time may be,
+	// matching the cleanup window so we don't accept data that would be
+	// immediately purged.
+	retentionTTL time.Duration
 
 	tracer  trace.Tracer
 	metrics *Metrics
@@ -233,6 +243,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 
 	if err := s.validateScopeCount(annotation); err != nil {
 		return nil, err
+	}
+
+	if err := s.validateAnnotation(annotation); err != nil {
+		return nil, toAPIError(err, annotation.Name)
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -416,5 +430,30 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(fmt.Sprintf(
 			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
 	}
+	return nil
+}
+
+func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error {
+	now := time.Now().UTC()
+	maxFuture := now.Add(maxFutureWindow).UnixMilli()
+	maxPast := now.Add(-s.retentionTTL).UnixMilli()
+
+	if anno.Spec.Time > maxFuture {
+		return fmt.Errorf("%w: time cannot be more than 1 week in the future", ErrInvalidInput)
+	}
+	if anno.Spec.Time < maxPast {
+		return fmt.Errorf("%w: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL)
+	}
+
+	// If timeEnd is set, validate it's after time and within future bounds
+	if anno.Spec.TimeEnd != nil {
+		if *anno.Spec.TimeEnd < anno.Spec.Time {
+			return fmt.Errorf("%w: timeEnd must be after time", ErrInvalidInput)
+		}
+		if *anno.Spec.TimeEnd > maxFuture {
+			return fmt.Errorf("%w: timeEnd cannot be more than 1 week in the future", ErrInvalidInput)
+		}
+	}
+
 	return nil
 }

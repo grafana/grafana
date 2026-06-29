@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -156,10 +155,6 @@ func matchScopes(annoScopes []string, filterScopes []string, matchAny bool) bool
 func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	if anno.Name == "" {
-		anno.Name = uuid.New().String()
-	}
 
 	key := anno.Namespace + "/" + anno.Name
 
