@@ -2747,7 +2747,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-loading-skeleton: "npm:^3.5.0"
-    react-use: "npm:17.6.1"
+    react-use: "npm:^17.6.1"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
