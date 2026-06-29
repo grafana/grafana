@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { createAssistantContextItem, type ChatContextItem, useProvidePageContext } from '@grafana/assistant';
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { type ExploreItemState } from 'app/types/explore';
 
@@ -10,28 +10,39 @@ export function useExplorePageContext(panes: Array<[string, ExploreItemState]>):
   const setContext = useProvidePageContext(/^\/explore/);
 
   useEffect(() => {
-    setContext(buildContext(panes));
+    let cancelled = false;
+    buildContext(panes).then((items) => {
+      if (!cancelled) {
+        setContext(items);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [panes, setContext]);
 }
 
-function buildContext(panes: Array<[string, ExploreItemState]>): ChatContextItem[] {
-  return panes.flatMap(([, pane]) => {
-    const ds = pane.datasourceInstance;
-    if (!ds) {
-      return [];
-    }
+async function buildContext(panes: Array<[string, ExploreItemState]>): Promise<ChatContextItem[]> {
+  const itemsPerPane = await Promise.all(
+    panes.map(async ([, pane]) => {
+      const ds = pane.datasourceInstance;
+      if (!ds) {
+        return [];
+      }
 
-    // if `-- Mixed --` datasource, we add each data source individual
-    if (ds.meta.mixed) {
-      return buildMixedContext(pane.queries);
-    }
+      // if `-- Mixed --` datasource, we add each data source individual
+      if (ds.meta.mixed) {
+        return buildMixedContext(pane.queries);
+      }
 
-    const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
-    return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
-  });
+      const matchingQueries = pane.queries.filter((q) => !q.datasource?.uid || q.datasource.uid === ds.uid);
+      return buildDatasourceContext(ds.uid, ds.name, ds.meta?.info?.logos?.small, matchingQueries, ds);
+    })
+  );
+  return itemsPerPane.flat();
 }
 
-function buildMixedContext(queries: DataQuery[]): ChatContextItem[] {
+async function buildMixedContext(queries: DataQuery[]): Promise<ChatContextItem[]> {
   const grouped = new Map<string, DataQuery[]>();
   for (const query of queries) {
     const uid = query.datasource?.uid;
@@ -48,7 +59,7 @@ function buildMixedContext(queries: DataQuery[]): ChatContextItem[] {
 
   const items: ChatContextItem[] = [];
   for (const [uid, dsQueries] of grouped) {
-    const settings = getDataSourceSrv().getInstanceSettings(uid);
+    const settings = await getDataSourceInstanceSettings(uid);
     if (!settings) {
       continue;
     }
