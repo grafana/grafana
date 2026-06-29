@@ -243,7 +243,10 @@ In order to implement signed commits, make sure that you set up a specific verif
 
 {{< admonition type="note" >}}
 
-Git Sync doesn't support verification of individual accounts for the moment.
+For the moment, Git Sync doesn't support:
+
+- Passphrase-protected keys.
+- Verification of individual accounts.
 
 {{< /admonition >}}
 
