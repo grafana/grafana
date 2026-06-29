@@ -2229,8 +2229,8 @@ __metadata:
     "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/string-hash": "npm:1.1.3"
-    "@types/systemjs": "npm:6.15.3"
+    "@types/string-hash": "npm:^1.1.3"
+    "@types/systemjs": "npm:^6.15.3"
     "@types/tinycolor2": "npm:1.4.6"
     d3-interpolate: "npm:3.0.1"
     d3-scale-chromatic: "npm:3.1.0"
@@ -10426,7 +10426,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/string-hash@npm:1.1.3":
+"@types/string-hash@npm:^1.1.3":
   version: 1.1.3
   resolution: "@types/string-hash@npm:1.1.3"
   checksum: 10/39a546088123efb1af9beac3854aa1eb54cf24ab75d99c8dac9ccfa7d46d70ac7c99c10983f7cc623dda1e476b6e21e7acffe6c5b3be894751ae4b9cfd103aaf
@@ -10446,6 +10446,13 @@ __metadata:
   version: 6.15.3
   resolution: "@types/systemjs@npm:6.15.3"
   checksum: 10/c2e6d7b3d83282657074e0b2d5bfcd6e4923f02d659e7bd3bca215466aee1960a444243d0f97dd26e8843a45e2b34ee33ecac39efb4e419ce2dc8f8f7fb03472
+  languageName: node
+  linkType: hard
+
+"@types/systemjs@npm:^6.15.3":
+  version: 6.15.4
+  resolution: "@types/systemjs@npm:6.15.4"
+  checksum: 10/0150d47cd5e94cb253753bbfb9fbaabec183943404019a55e7d4abcdfb05e9f38fd5e42e27074555aeb8a8d52b7173682c7fa8723cbee59be14fecaa31a5cf5e
   languageName: node
   linkType: hard
 
