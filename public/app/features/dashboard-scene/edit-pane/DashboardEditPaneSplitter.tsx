@@ -4,6 +4,7 @@ import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
@@ -210,6 +211,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
+          aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
           {body}
         </div>
