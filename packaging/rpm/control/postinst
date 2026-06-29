@@ -19,6 +19,8 @@ stopGrafana() {
 if [ $1 -eq 1 ] ; then
   [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
   [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  [ -z "$DATA_DIR" ] && DATA_DIR="/var/lib/grafana"
   if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
     groupadd -r "$GRAFANA_GROUP"
   fi
@@ -29,8 +31,16 @@ if [ $1 -eq 1 ] ; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
-  # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
-  mv $GRAFANA_HOME/data/plugins-bundled $DATA_DIR
+  # Replace plugins-bundled with the package's versioned copy. These plugins are
+  # owned by the package, so the shipped copy is authoritative on every install
+  # and upgrade. Replacing wholesale (rather than merging) keeps this idempotent
+  # and cross-device safe when /var/lib/grafana is a separate mount.
+  # See https://github.com/grafana/grafana/issues/123110 and
+  # https://github.com/grafana/grafana/issues/127164
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+    rm -rf "$DATA_DIR/plugins-bundled"
+    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR/plugins-bundled"
+  fi
   chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
   chmod 755 /var/log/grafana /var/lib/grafana
 
