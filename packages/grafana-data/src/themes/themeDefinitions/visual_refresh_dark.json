@@ -56,7 +56,8 @@
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
-    }
+    },
+    "contrastThreshold": 4.5
   },
   "shape": {
     "borderRadiusSm": 6,

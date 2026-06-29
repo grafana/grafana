@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
@@ -14,6 +13,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { tabChanged } from '../analytics/main';
 
+import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
@@ -55,10 +55,15 @@ function DashboardExtensionTab({
   return <Component register={register} active={activeTab === id} />;
 }
 
-export function DashboardTabs() {
+interface Props {
+  extensionComponents: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+}
+
+export function DashboardTabs({ extensionComponents }: Props) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const {
     value: recentDashboards,
@@ -97,10 +102,6 @@ export function DashboardTabs() {
   const hasDashboards = hasRecent || hasMostUsed || hasStarred;
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
-  const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
-    extensionPointId: PluginExtensionPoints.HomepageTabs,
-  });
-
   const registerTab = useCallback((tab: HomepageTab) => {
     setExtensionTabs((prev) => [...prev, tab]);
     return () => setExtensionTabs((prev) => prev.filter((t) => t !== tab));
@@ -138,6 +139,17 @@ export function DashboardTabs() {
       didAutoSwitch.current = true;
     }
   }, [initialLoading, selectableTabs, activeTab]);
+
+  // Latch once loaded so a later per-source refetch can't flash the skeleton back.
+  useEffect(() => {
+    if (!initialLoading) {
+      setInitialLoadDone(true);
+    }
+  }, [initialLoading]);
+
+  if (!initialLoadDone) {
+    return <DashboardTabsSkeleton />;
+  }
 
   const builtInTabs: HomepageTab[] = [
     {

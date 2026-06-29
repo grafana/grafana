@@ -55,6 +55,9 @@ const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
+// DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
+const DefaultIdleConnTimeout = 30 * time.Second
+
 const (
 	ApiGroup   = "setting.grafana.app"
 	apiVersion = "v1beta1"
@@ -171,6 +174,10 @@ type Config struct {
 	CacheTTL time.Duration
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
+	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
+	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
+	// client-go default.
+	IdleConnTimeout time.Duration
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -526,9 +533,17 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		}
 	}
 
+	idleConnTimeout := DefaultIdleConnTimeout
+	if config.IdleConnTimeout != 0 {
+		idleConnTimeout = config.IdleConnTimeout
+	}
+
 	// Wrap with tracing middleware to propagate trace context to all outbound requests
 	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		if baseTransport, ok := rt.(*http.Transport); ok && idleConnTimeout > 0 {
+			baseTransport.IdleConnTimeout = idleConnTimeout
+		}
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return authTransport(tracingRT)
 	}

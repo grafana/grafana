@@ -383,6 +383,21 @@
       },
       "additionalProperties": false
     },
+    "shadows": {
+      "type": "object",
+      "properties": {
+        "z1": {
+          "type": "string"
+        },
+        "z2": {
+          "type": "string"
+        },
+        "z3": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "shape": {
       "type": "object",
       "properties": {

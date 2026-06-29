@@ -32,6 +32,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/restmapper"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -125,6 +127,15 @@ func (rk resourceKind) token() string {
 	return rk.group + "/" + rk.kind
 }
 
+// unifiedStorageKey is the [unified_storage] config key (<resource>.<group>) for this kind. The
+// plural resource is derived from the kind name; the descriptors under test follow the regular
+// lowercase-plural convention (Dashboard->dashboards, LibraryPanel->librarypanels). If a derived
+// key is wrong the kind silently falls back to its default storage, so the dimension tests fail
+// loudly rather than passing on the wrong backend.
+func (rk resourceKind) unifiedStorageKey() string {
+	return strings.ToLower(rk.kind) + "s." + rk.group
+}
+
 // instance returns a deterministic (name, title) pair for the i-th resource of this kind.
 func (rk resourceKind) instance(i int) (name, title string) {
 	return fmt.Sprintf("%s-%d", rk.name, i), fmt.Sprintf("%s %d", rk.kind, i)
@@ -195,6 +206,17 @@ func harnessOptions(kinds []resourceKind) []common.GrafanaOption {
 			// Setting [provisioning] resources replaces the default set.
 			opts.ProvisioningResources = tokens
 			opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, flags...)
+			// Serve every kind under test from unified storage (Mode5). Provisioning round-trips
+			// the manager/source annotations through that backend; legacy stores backing some
+			// kinds (e.g. library panels via library_element) have nowhere to persist them.
+			if opts.UnifiedStorageConfig == nil {
+				opts.UnifiedStorageConfig = map[string]setting.UnifiedStorageConfig{}
+			}
+			for _, rk := range kinds {
+				opts.UnifiedStorageConfig[rk.unifiedStorageKey()] = setting.UnifiedStorageConfig{
+					DualWriterMode: grafanarest.Mode5,
+				}
+			}
 		},
 	}
 }

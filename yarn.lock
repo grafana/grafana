@@ -1799,7 +1799,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
@@ -1865,7 +1865,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
@@ -1901,7 +1901,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
@@ -1934,7 +1934,7 @@ __metadata:
     moment: "npm:2.30.1"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     redux: "npm:5.0.1"
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.3"
@@ -1970,7 +1970,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
@@ -2039,7 +2039,7 @@ __metadata:
     lru-cache: "npm:11.2.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     uuid: "npm:14.0.0"
@@ -2134,47 +2134,7 @@ __metadata:
     monaco-editor: "npm:0.34.1"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
-    rxjs: "npm:7.8.2"
-    typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
-  peerDependencies:
-    "@grafana/runtime": "*"
-  languageName: unknown
-  linkType: soft
-
-"@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.2.0-pre"
-    "@grafana/e2e-selectors": "npm:13.2.0-pre"
-    "@grafana/google-sdk": "npm:0.6.0"
-    "@grafana/plugin-configs": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.2.0-pre"
-    "@grafana/schema": "npm:13.2.0-pre"
-    "@grafana/ui": "npm:13.2.0-pre"
-    "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/jest-dom": "npm:6.6.4"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
-    "@types/debounce-promise": "npm:3.1.9"
-    "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
-    "@types/node": "npm:24.10.1"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    debounce-promise: "npm:3.1.2"
-    fast-deep-equal: "npm:^3.1.3"
-    jest: "npm:29.7.0"
-    lodash: "npm:^4.17.23"
-    monaco-editor: "npm:0.34.1"
-    react: "npm:18.3.1"
-    react-dom: "npm:18.3.1"
-    react-select-event: "npm:5.5.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
@@ -2320,7 +2280,7 @@ __metadata:
     papaparse: "npm:5.5.3"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-copy: "npm:3.5.0"
@@ -2476,7 +2436,7 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -2491,18 +2451,6 @@ __metadata:
     react-table: ^7.8.0
   languageName: unknown
   linkType: soft
-
-"@grafana/google-sdk@npm:0.6.0":
-  version: 0.6.0
-  resolution: "@grafana/google-sdk@npm:0.6.0"
-  peerDependencies:
-    "@grafana/data": ">=11.6.0"
-    "@grafana/ui": ">=11.6.0"
-    react: ^18.2.0
-    react-dom: ^18.2.0
-  checksum: 10/d7ecd1a642ec3e1bec3079cc0b4d3cd1f89bf698995ba339eb77104371a265d53521bccdac57f9cac13fe074d86ccfb23867ec53f81c32692fa99c377827f233
-  languageName: node
-  linkType: hard
 
 "@grafana/i18n@npm:13.2.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
   version: 0.0.0-use.local
@@ -2607,7 +2555,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
@@ -2831,7 +2779,7 @@ __metadata:
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-loading-skeleton: "npm:3.5.0"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -2942,7 +2890,7 @@ __metadata:
     i18next-cli: "npm:^1.48.0"
     jest: "npm:^29.6.4"
     lodash: "npm:4.18.1"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.60.1"
     rxjs: "npm:7.8.2"
@@ -3096,7 +3044,7 @@ __metadata:
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     react-window: "npm:1.8.11"
     remark-gfm: "npm:^4.0.1"
     rimraf: "npm:6.0.1"
@@ -10117,6 +10065,13 @@ __metadata:
   version: 2.2.7
   resolution: "@types/js-cookie@npm:2.2.7"
   checksum: 10/851f47e94ca1fc43661d8f51614d67a613e7810c91b876d0a3b311ce72f7df800107fd02a08cb6948184e12c120b4f058edca2f50424d8798bdcffd6627281e3
+  languageName: node
+  linkType: hard
+
+"@types/js-cookie@npm:^3.0.0":
+  version: 3.0.6
+  resolution: "@types/js-cookie@npm:3.0.6"
+  checksum: 10/272d551687547445cb210213c73e72e0e5d58ad73e2e444a65d688b8ff9425529779ee0cd6492aaa1f070161916d4254ef2b1a76d64179100437f60749d094ef
   languageName: node
   linkType: hard
 
@@ -18741,7 +18696,7 @@ __metadata:
     react-split-pane: "npm:0.1.92"
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
-    react-use: "npm:17.6.0"
+    react-use: "npm:17.6.1"
     react-virtual: "npm:2.10.4"
     react-virtualized-auto-sizer: "npm:1.0.26"
     react-window: "npm:1.8.11"
@@ -28123,7 +28078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.6.0, react-use@npm:^17.3.1, react-use@npm:^17.4.0, react-use@npm:^17.5.0, react-use@npm:^17.6.0":
+"react-use@npm:17.6.0":
   version: 17.6.0
   resolution: "react-use@npm:17.6.0"
   dependencies:
@@ -28145,6 +28100,31 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: 10/a817b74e82b481a39d3539bfe8d3b535c08d59d44a75ea91f65e56a7ccaedb0de185159e50b44ea4a635dda0c1c7159f07530e81a1d64b57130e0a715a107795
+  languageName: node
+  linkType: hard
+
+"react-use@npm:17.6.1, react-use@npm:^17.3.1, react-use@npm:^17.4.0, react-use@npm:^17.5.0, react-use@npm:^17.6.0":
+  version: 17.6.1
+  resolution: "react-use@npm:17.6.1"
+  dependencies:
+    "@types/js-cookie": "npm:^3.0.0"
+    "@xobotyi/scrollbar-width": "npm:^1.9.5"
+    copy-to-clipboard: "npm:^3.3.1"
+    fast-deep-equal: "npm:^3.1.3"
+    fast-shallow-equal: "npm:^1.0.0"
+    js-cookie: "npm:^3.0.0"
+    nano-css: "npm:^5.6.2"
+    react-universal-interface: "npm:^0.6.2"
+    resize-observer-polyfill: "npm:^1.5.1"
+    screenfull: "npm:^5.1.0"
+    set-harmonic-interval: "npm:^1.0.1"
+    throttle-debounce: "npm:^3.0.1"
+    ts-easing: "npm:^0.2.0"
+    tslib: "npm:^2.1.0"
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 10/0b3630ac9a02b755cdfa205d0a0dbee0c620a4b0fcfb00b5cceb4f38fdf928fca3c6d924671e210d89b34aafeda222f7500eb4ceb9883baf2b9ce0181f4fcd82
   languageName: node
   linkType: hard
 

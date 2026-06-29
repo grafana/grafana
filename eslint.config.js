@@ -500,7 +500,6 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
