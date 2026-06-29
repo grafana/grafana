@@ -17,7 +17,7 @@ export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps)
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
-      {error ? text : <img alt={alt} src={text} title={title} onError={() => setError(true)} />}
+      {error ? (alt ?? text) : <img alt={alt} src={text} title={title} onError={() => setError(true)} />}
     </MaybeWrapWithLink>
   );
 };

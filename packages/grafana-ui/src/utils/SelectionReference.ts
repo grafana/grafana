@@ -1,5 +1,10 @@
 import { type VirtualElement } from '@popperjs/core/lib/types';
 
+/**
+ * A floating-ui/popper virtual reference element anchored to the current text selection (caret).
+ * Used to position floating menus (suggestions, typeahead) relative to where the user is typing
+ * inside a contenteditable Slate editor.
+ */
 export class SelectionReference implements VirtualElement {
   getBoundingClientRect() {
     const selection = window.getSelection();

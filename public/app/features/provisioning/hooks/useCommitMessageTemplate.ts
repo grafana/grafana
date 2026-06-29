@@ -1,5 +1,4 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useEffect } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -9,6 +8,8 @@ import {
   getSingleResourceCommitMessage,
   renderCommitMessage,
 } from '../utils/commitMessage';
+
+import { useTemplateAutofill } from './useTemplateAutofill';
 
 interface UseCommitMessageTemplateArgs {
   repository: RepositoryView | undefined;
@@ -56,18 +57,16 @@ export function useCommitMessageTemplate({
       ? getSingleResourceCommitMessage({ comment: resolvedComment, repository, ...vars })
       : getBulkResourceCommitMessage({ comment: resolvedComment, repository, fallbackMessage, ...vars });
 
-  // Pre-fill only the editable field; enforced repos render `message` read-only instead. An effect,
-  // not a form defaultValue, because the template tracks live `vars` and the repo usually resolves
-  // after the form mounts, so a static default would be stale. Frozen once the user edits.
-  useEffect(() => {
-    if (!active || locked || isCommentDirty) {
-      return;
-    }
-    // Keep `comment` in deps so an external reset that clears it re-triggers the fill.
-    if (comment !== rendered) {
-      setComment(rendered);
-    }
-  }, [active, locked, isCommentDirty, comment, rendered, setComment]);
+  // Pre-fill only the editable field; enforced repos render `message` read-only instead. The
+  // template tracks live `vars` and the repo usually resolves after the form mounts, so a static
+  // form default would be stale. `active && !locked` because enforced commits bypass the field.
+  useTemplateAutofill({
+    active: active && !locked,
+    rendered,
+    value: comment,
+    isDirty: isCommentDirty,
+    setValue: setComment,
+  });
 
   return { locked, message };
 }

@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1alpha1
+package v1
 
 // +k8s:openapi-gen=true
 type PreferencesQueryHistoryPreference struct {
@@ -15,7 +15,7 @@ func NewPreferencesQueryHistoryPreference() *PreferencesQueryHistoryPreference {
 
 // OpenAPIModelName returns the OpenAPI model name for PreferencesQueryHistoryPreference.
 func (PreferencesQueryHistoryPreference) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesQueryHistoryPreference"
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesQueryHistoryPreference"
 }
 
 // +k8s:openapi-gen=true
@@ -32,7 +32,7 @@ func NewPreferencesNavbarPreference() *PreferencesNavbarPreference {
 
 // OpenAPIModelName returns the OpenAPI model name for PreferencesNavbarPreference.
 func (PreferencesNavbarPreference) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesNavbarPreference"
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesNavbarPreference"
 }
 
 // +k8s:openapi-gen=true
@@ -62,5 +62,5 @@ func NewPreferencesSpec() *PreferencesSpec {
 
 // OpenAPIModelName returns the OpenAPI model name for PreferencesSpec.
 func (PreferencesSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1alpha1.PreferencesSpec"
+	return "com.github.grafana.grafana.apps.preferences.pkg.apis.preferences.v1.PreferencesSpec"
 }
