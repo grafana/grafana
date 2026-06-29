@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
@@ -32,6 +34,7 @@ var (
 	_ rest.Creater              = (*folderStorage)(nil)
 	_ rest.Updater              = (*folderStorage)(nil)
 	_ rest.GracefulDeleter      = (*folderStorage)(nil)
+	_ rest.Watcher              = (*folderStorage)(nil)
 )
 
 type folderStorage struct {
@@ -69,6 +72,14 @@ func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 
 func (s *folderStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return s.store.List(ctx, options)
+}
+
+func (s *folderStorage) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	w, ok := s.store.(rest.Watcher)
+	if !ok {
+		return nil, k8serrors.NewMethodNotSupported(s.resourceInfo.GroupResource(), "watch")
+	}
+	return w.Watch(ctx, options)
 }
 
 func (s *folderStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
