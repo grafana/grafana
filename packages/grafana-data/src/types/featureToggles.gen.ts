@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
