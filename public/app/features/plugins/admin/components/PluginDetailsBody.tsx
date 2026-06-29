@@ -132,7 +132,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     for (const configPage of pluginConfig.configPages) {
       if (pageId === configPage.id) {
         return (
-          <div>
+          <div data-testid={`${plugin.id}-${configPage.id}`}>
             <PluginContextProvider meta={pluginConfig.meta}>
               <configPage.body plugin={pluginConfig} query={queryParams} />
             </PluginContextProvider>
