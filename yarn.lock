@@ -2857,7 +2857,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     i18next-cli: "npm:^1.48.0"
     jest: "npm:^29.6.4"
-    lodash: "npm:4.18.1"
+    lodash: "npm:^4.18.1"
     react-use: "npm:17.6.1"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.60.1"
