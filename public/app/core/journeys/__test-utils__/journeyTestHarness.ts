@@ -1,8 +1,8 @@
 import { type JourneyHandle, type JourneyTracker, type StepHandle } from '@grafana/runtime';
 import { setJourneyRegistry, setJourneyTracker } from '@grafana/runtime/internal';
 
-import { JourneyRegistryImpl } from '../../services/JourneyRegistryImpl';
-import { JOURNEY_REGISTRY } from '../../services/journeyRegistry';
+import { JourneyRegistryImpl } from '../../services/journey/JourneyRegistryImpl';
+import { JOURNEY_REGISTRY } from '../../services/journey/journeyRegistry';
 
 /**
  * Shared interaction callback registry used by all journey wiring tests.
