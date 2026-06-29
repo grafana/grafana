@@ -158,7 +158,7 @@ export function useNamespaceAndGroupOptions(): {
         options.unshift(
           createInfoOption(
             t(
-              'alerting.rules-filter.namespace-autocomplete-unavailable',
+              'alerting.rules-filter.namespace-search-incomplete',
               'Due to a large number of groups, search might not be complete in external data sources.'
             ),
             'exclamation-triangle'
