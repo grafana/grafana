@@ -601,6 +601,9 @@ type Cfg struct {
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
 
+	// NATS message bus.
+	NATS NATSSettings
+
 	CustomResponseHeaders map[string]string
 
 	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
@@ -1584,6 +1587,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readNATSSettings(cfg); err != nil {
 		return err
 	}
 
