@@ -125,14 +125,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/Tempo",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/grafana-pyroscope",
     "action": "addToProject",
     "addToProject": {

@@ -1,6 +1,9 @@
 {
   "title": "V2 dashboard with elements",
-  "tags": ["v2", "elements"],
+  "tags": [
+    "v2",
+    "elements"
+  ],
   "datasource": [
     {
       "uid": "default.uid",
@@ -12,19 +15,34 @@
       "id": 0,
       "title": "Timeseries panel",
       "description": "A v2 panel",
-      "type": "TimeseriesPanel",
+      "type": "timeseries",
       "datasource": [
         {
           "uid": "default.uid",
           "type": "default.type"
         }
       ],
-      "transformer": ["merge", "groupBy"]
+      "transformer": [
+        "merge",
+        "groupBy"
+      ]
     },
     {
       "id": 0,
       "title": "Library panel instance",
       "libraryPanel": "lib-uid-123",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "Legacy v2alpha1 panel",
+      "description": "A v2alpha1 panel carrying the plugin id in kind",
+      "type": "table",
       "datasource": [
         {
           "uid": "default.uid",

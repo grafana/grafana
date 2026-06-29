@@ -39,6 +39,10 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
+  /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
+  GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -49,8 +53,6 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
-  /** Enables org-defined dashboard templates for enterprise */
-  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
@@ -65,14 +67,12 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables the logs tableNG panel to replace existing tableRT */
+  LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
   ManagedPluginsV2: "managedPluginsV2",
-  /** New Log Context component */
-  NewLogContext: "newLogContext",
-  /** Enables the new logs panel */
-  NewLogsPanel: "newLogsPanel",
   /** Enables the new Saved queries (query library) modal experience */
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
@@ -257,6 +257,28 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
+ * Allows users to customise the mega menu by hiding top-level navigation items they are not interested in
+ *
+ * **Details:**
+ * - flag key: `grafana.customizableMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -309,17 +331,6 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
-};
-
-/**
- * Enables org-defined dashboard templates for enterprise
- *
- * **Details:**
- * - flag key: `grafana.orgDashboardTemplates`
- * - default value: `false`
- */
-export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.orgDashboardTemplates", false, options).value;
 };
 
 /**
@@ -400,6 +411,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables the logs tableNG panel to replace existing tableRT
+ *
+ * **Details:**
+ * - flag key: `logsTablePanelNG`
+ * - default value: `false`
+ */
+export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("logsTablePanelNG", false, options).value;
+};
+
+/**
  * Use stream shards to split queries into smaller subqueries
  *
  * **Details:**
@@ -419,28 +441,6 @@ export const useFlagLokiShardSplitting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("managedPluginsV2", false, options).value;
-};
-
-/**
- * New Log Context component
- *
- * **Details:**
- * - flag key: `newLogContext`
- * - default value: `true`
- */
-export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", true, options).value;
-};
-
-/**
- * Enables the new logs panel
- *
- * **Details:**
- * - flag key: `newLogsPanel`
- * - default value: `true`
- */
-export const useFlagNewLogsPanel = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogsPanel", true, options).value;
 };
 
 /**

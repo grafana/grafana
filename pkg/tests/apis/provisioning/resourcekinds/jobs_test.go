@@ -29,7 +29,7 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 			repo := rk.name + "-delete-job-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})
@@ -79,7 +79,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			repo := rk.name + "-move-job-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})

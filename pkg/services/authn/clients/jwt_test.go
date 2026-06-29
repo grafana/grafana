@@ -47,7 +47,6 @@ func TestAuthenticateJWT(t *testing.T) {
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
-				HelpFlags1:      0,
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					AllowSignUp:     true,
@@ -99,7 +98,6 @@ func TestAuthenticateJWT(t *testing.T) {
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
-				HelpFlags1:      0,
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					AllowSignUp:     true,
@@ -150,7 +148,6 @@ func TestAuthenticateJWT(t *testing.T) {
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
-				HelpFlags1:      0,
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					AllowSignUp:     true,
@@ -205,7 +202,6 @@ func TestAuthenticateJWT(t *testing.T) {
 				AuthenticatedBy: login.JWTModule,
 				AuthID:          "1234567890",
 				IsDisabled:      false,
-				HelpFlags1:      0,
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					AllowSignUp:     true,

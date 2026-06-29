@@ -362,7 +362,6 @@
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
-/pkg/tsdb/cloud-monitoring/ @grafana/data-sources-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
@@ -777,7 +776,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # @grafana/openapi
-/packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
+/packages/grafana-openapi/ @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
 
 
 # root files, mostly frontend
@@ -1139,7 +1138,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad

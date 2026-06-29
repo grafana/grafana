@@ -43,6 +43,7 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('sapphiredusk');
   allowedExtraThemes.push('tron');
   allowedExtraThemes.push('visual_refresh_dark');
+  allowedExtraThemes.push('visual_refresh_light');
 }
 
 /*
