@@ -2737,7 +2737,7 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/systemjs": "npm:6.15.3"
+    "@types/systemjs": "npm:^6.15.3"
     esbuild: "npm:0.25.8"
     fast-json-patch: "npm:3.1.1"
     history: "npm:4.10.1"
@@ -10442,7 +10442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:6.15.3":
+"@types/systemjs@npm:6.15.3, @types/systemjs@npm:^6.15.3":
   version: 6.15.3
   resolution: "@types/systemjs@npm:6.15.3"
   checksum: 10/c2e6d7b3d83282657074e0b2d5bfcd6e4923f02d659e7bd3bca215466aee1960a444243d0f97dd26e8843a45e2b34ee33ecac39efb4e419ce2dc8f8f7fb03472
