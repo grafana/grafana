@@ -673,6 +673,8 @@ AutoGridLayoutSpec: {
 	rowHeight?:       number
 	fillScreen?:      bool | *false
 	fitContent?:      bool | *false
+	minHeightMode?:   "short" | "standard" | "tall" | "custom"
+	minHeight?:       number
 	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom" | "screen"
 	maxHeight?:       number
 	matchRowHeights?: bool | *true
@@ -688,6 +690,7 @@ AutoGridLayoutItemSpec: {
 	element:               ElementReference
 	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
+	fitContent?:           bool
 }
 
 TabsLayoutKind: {
