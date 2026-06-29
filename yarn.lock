@@ -2739,7 +2739,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/systemjs": "npm:^6.15.3"
     esbuild: "npm:0.25.8"
-    fast-json-patch: "npm:3.1.1"
+    fast-json-patch: "npm:^3.1.1"
     history: "npm:4.10.1"
     immutable: "npm:^5.1.5"
     lodash: "npm:^4.17.23"
@@ -17118,7 +17118,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-json-patch@npm:3.1.1, fast-json-patch@npm:^3.0.0-1":
+"fast-json-patch@npm:3.1.1, fast-json-patch@npm:^3.0.0-1, fast-json-patch@npm:^3.1.1":
   version: 3.1.1
   resolution: "fast-json-patch@npm:3.1.1"
   checksum: 10/3e56304e1c95ad1862a50e5b3f557a74c65c0ff2ba5b15caab983b43e70e86ddbc5bc887e9f7064f0aacfd0f0435a29ab2f000fe463379e72b906486345e6671
