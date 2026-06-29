@@ -82,11 +82,9 @@ func RegisterAPIService(
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider,
-	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
 	unified resource.ResourceClient,
@@ -105,7 +103,6 @@ func RegisterAPIService(
 		roleApiInstaller,
 		globalRoleApiInstaller,
 		teamLBACApiInstaller,
-		externalGroupMappingApiInstaller,
 		roleBindingsApiInstaller,
 	)
 	registerMetrics(reg)
@@ -131,35 +128,33 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:                             store,
-		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
-		saLegacyStore:                     serviceaccount.NewLegacyStore(store, accessClient, tracing),
-		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
-		externalGroupReconciler:           externalGroupReconciler,
-		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
-		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
-		roleApiInstaller:                  roleApiInstaller,
-		globalRoleApiInstaller:            globalRoleApiInstaller,
-		teamLBACApiInstaller:              teamLBACApiInstaller,
-		externalGroupMappingApiInstaller:  externalGroupMappingApiInstaller,
-		resourcePermissionsStorage:        rpStorage,
-		mappers:                           mappers,
-		roleBindingsApiInstaller:          roleBindingsApiInstaller,
-		teamGroupsHandlerProvider:         teamGroupsHandlerProvider,
-		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
-		sso:                               ssoService,
-		resourceParentProvider:            resourceParentProvider,
-		authorizer:                        authorizer,
-		legacyAccessClient:                legacyAccessClient,
-		accessClient:                      accessClient,
-		ac:                                ac,
-		zClient:                           zClient,
-		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                               reg,
-		logger:                            log.New("iam.apis"),
-		features:                          features,
-		dual:                              dual,
-		unified:                           unified,
+		store:                      store,
+		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracing),
+		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracing),
+		legacyTeamStore:            team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
+		externalGroupReconciler:    externalGroupReconciler,
+		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracing),
+		ssoLegacyStore:             sso.NewLegacyStore(ssoService, tracing),
+		roleApiInstaller:           roleApiInstaller,
+		globalRoleApiInstaller:     globalRoleApiInstaller,
+		teamLBACApiInstaller:       teamLBACApiInstaller,
+		resourcePermissionsStorage: rpStorage,
+		mappers:                    mappers,
+		roleBindingsApiInstaller:   roleBindingsApiInstaller,
+		teamGroupsHandlerProvider:  teamGroupsHandlerProvider,
+		sso:                        ssoService,
+		resourceParentProvider:     resourceParentProvider,
+		authorizer:                 authorizer,
+		legacyAccessClient:         legacyAccessClient,
+		accessClient:               accessClient,
+		ac:                         ac,
+		zClient:                    zClient,
+		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                        reg,
+		logger:                     log.New("iam.apis"),
+		features:                   features,
+		dual:                       dual,
+		unified:                    unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
 		teamSearchHandler:                team.NewSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
@@ -386,7 +381,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
-	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
 
@@ -404,10 +398,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
 		Index:                b.unified,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
-	})
-	opts.StorageOptsRegister(iamv0.TeamBindingResourceInfo.GroupResource(), apistore.StorageOptions{
-		Index:                b.unified,
-		DeprecatedInternalID: apistore.DeprecatedID_Optional,
 	})
 	// Cap the apiserver name at 253 characters so callers get a clear
 	// validation error instead of a silent truncation/error at the storage
@@ -428,12 +418,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
-	if enableTeamsApi {
-		if err := b.UpdateTeamBindingsAPIGroup(opts, storage); err != nil {
-			return err
-		}
-	}
-
 	if enableUserApi {
 		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 			return err
@@ -450,12 +434,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
 		storage[ssoResource.StoragePath()] = b.ssoLegacyStore
-	}
-
-	if enableExternalGroupMappingsApi {
-		if err := b.externalGroupMappingApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
-			return err
-		}
 	}
 
 	if enableRolesApi {
@@ -950,10 +928,6 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.resourcePermissionsSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if enableTeamsApi && b.externalGroupMappingSearchHandler != nil {
-		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
-	}
-
 	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
 	routes = append(routes, b.display.GetAPIRoutes(defs))
 	routes = append(routes, searchRoutes...)
@@ -993,8 +967,6 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
-	case *iamv0.ExternalGroupMapping:
-		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
 		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.RoleBinding:

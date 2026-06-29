@@ -25,24 +25,11 @@ func newIAMAuthorizer(
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLbacApiInstaller TeamLBACApiInstaller,
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 ) authorizer.Authorizer {
 	resourceAuthorizer := make(map[string]authorizer.Authorizer)
 
 	serviceAuthorizer := gfauthorizer.NewServiceAuthorizer()
-	// Authorizer that allows any authenticated user
-	// To be used when authorization is handled at the storage layer
-	allowAuthorizer := authorizer.AuthorizerFunc(func(
-		ctx context.Context, attr authorizer.Attributes,
-	) (authorized authorizer.Decision, reason string, err error) {
-		if !attr.IsResourceRequest() {
-			return authorizer.DecisionNoOpinion, "", nil
-		}
-
-		// Any authenticated user can access the API
-		return authorizer.DecisionAllow, "", nil
-	})
 
 	serviceIdentityAuthorizer := authorizer.AuthorizerFunc(func(
 		ctx context.Context, attr authorizer.Attributes,
@@ -88,9 +75,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = roleBindingsApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = newServiceAccountAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
-	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
-	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
