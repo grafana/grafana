@@ -33,9 +33,7 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -130,6 +128,11 @@ type BleveOptions struct {
 	// feature toggle is enabled. Evaluated per-search. When nil, the toggle is
 	// treated as disabled and the in-searcher permissionScopedQuery path is used.
 	PostRankAuthzFn func() bool
+
+	// PostRankAuthz tunes the post-filter authorization path used when
+	// PostRankAuthzFn returns true. Zero values fall back to the defaults in
+	// PostRankAuthzConfig.effective().
+	PostRankAuthz PostRankAuthzConfig
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -1633,6 +1636,7 @@ type bleveIndex struct {
 	// postRankAuthzFn returns whether the post-ranking authz path is enabled.
 	// nil / false falls back to the in-searcher permissionScopedQuery path.
 	postRankAuthzFn func() bool
+	postRankAuthz   PostRankAuthzConfig
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1657,6 +1661,7 @@ func (b *bleveBackend) newBleveIndex(
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
 		indexMetrics:      b.indexMetrics,
 		postRankAuthzFn:   b.opts.PostRankAuthzFn,
+		postRankAuthz:     b.opts.PostRankAuthz.effective(),
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1998,12 +2003,10 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// postRankAuthz: for the simplest case (a plain list query with a limit and
-	// ordering, no relevance ranking, no facets, no federation, no offset/cursor)
-	// we rank in bleve without the in-searcher authz wrapper, then authorize the
-	// ranked hits in order and stop as soon as `limit` authorized hits are found.
-	// This bounds the (expensive) authorization work to roughly what is needed to
-	// fill the page instead of authorizing every match.
+	// postRankAuthz (postFilter mode): rank in bleve without the in-searcher
+	// authz wrapper, fetch a bounded window, authorize app-side in rank order,
+	// and page via SearchAfter until the page is filled or the candidate cap is
+	// hit. Facets are aggregated app-side. See runPostFilterAuthz.
 	postRank := b.canPostRankAuthz(access, req, federate)
 
 	conversionStarts := time.Now()
@@ -2014,37 +2017,14 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected.
-	// Individual field names tell bleve which stored values to load.
-	// The sentinel triggers hitsToTable to use the curated allFields column list.
-	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
-		f, err := b.index.Fields()
-		if err != nil {
-			return nil, err
-		}
-		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
-	}
-
-	if postRank {
-		// Fetch all matching candidates (in sort order) so the post-rank filter
-		// can walk them and early-exit at `limit` authorized. DocCount is an
-		// upper bound on the number of matches. Bleve ranking is cheap relative
-		// to the per-hit authorization checks we are trying to bound.
-		cnt, err := index.DocCount()
-		if err != nil {
-			return nil, err
-		}
-		searchrequest.Size = int(cnt)
-
-		// The post-rank filter needs the folder of each hit to authorize it, so
-		// make sure bleve loads the stored folder field even when the caller
-		// requested an explicit (folder-less) field set.
-		if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) &&
-			!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
-			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
-		}
+	if err := b.ensureSearchFields(searchrequest, req); err != nil {
+		return nil, err
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
+
+	if postRank {
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, stats, response)
+	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
@@ -2056,14 +2036,6 @@ func (b *bleveIndex) Search(
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
 	stats.AddTotalHits(int(res.Total))
-
-	if postRank {
-		authorizedHits, err := b.postRankAuthzFilter(ctx, access, req, res.Hits, int(req.Limit))
-		if err != nil {
-			return nil, err
-		}
-		res.Hits = authorizedHits
-	}
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
@@ -2082,128 +2054,6 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
-}
-
-// canPostRankAuthz reports whether the simple post-rank authorization path can
-// be used for this request. It is intentionally conservative: only plain list
-// queries (no relevance ranking, no facets, no federation, no offset) take this
-// path. Forward cursor pagination (SearchAfter) is supported because the cursor
-// is the last authorized hit's sort values, so paging stays contiguous.
-// Everything else falls back to the in-searcher permissionScopedQuery path,
-// which keeps facet counts and backward/offset pagination correct.
-func (b *bleveIndex) canPostRankAuthz(access authlib.AccessClient, req *resourcepb.ResourceSearchRequest, federate []resource.ResourceIndex) bool {
-	return b.postRankAuthzFn != nil &&
-		b.postRankAuthzFn() &&
-		access != nil &&
-		req.Limit > 0 &&
-		req.Offset == 0 &&
-		len(req.Facet) == 0 &&
-		len(federate) == 0 &&
-		len(req.Federated) == 0 &&
-		len(req.SearchBefore) == 0 &&
-		!isRelevanceQuery(req)
-}
-
-// isRelevanceQuery reports whether the request ranks by text relevance (score).
-// A plain match-all ("" or "*") is not a relevance query.
-func isRelevanceQuery(req *resourcepb.ResourceSearchRequest) bool {
-	return req.Query != "" && req.Query != "*"
-}
-
-// postRankAuthzFilter walks the ranked hits in order, authorizes them in
-// batches, and returns the first `limit` authorized hits (in rank order). It
-// stops issuing checks as soon as `limit` authorized hits are collected, so the
-// number of authorization checks is bounded by what is needed to fill the page
-// rather than the total number of matches.
-func (b *bleveIndex) postRankAuthzFilter(
-	ctx context.Context,
-	access authlib.AccessClient,
-	req *resourcepb.ResourceSearchRequest,
-	hits search.DocumentMatchCollection,
-	limit int,
-) (search.DocumentMatchCollection, error) {
-	ctx, span := tracer.Start(ctx, "search.postRankAuthz", trace.WithAttributes(
-		attribute.String("namespace", b.key.Namespace),
-		attribute.String("group", b.key.Group),
-		attribute.Int("search.limit", limit),
-	))
-	defer span.End()
-
-	resources := b.authzResources(req)
-
-	var candidates int64
-	candidateSeq := func(yield func(docInfo) bool) {
-		for _, hit := range hits {
-			info, ok := parseHitDocInfo(hit, resources)
-			if !ok {
-				continue
-			}
-			candidates++
-			if !yield(info) {
-				return
-			}
-		}
-	}
-
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
-
-	authorized := make(search.DocumentMatchCollection, 0, limit)
-	for info, err := range authz.FilterAuthorized(ctx, access, candidateSeq, extractFn, authz.WithTracer(tracer)) {
-		if err != nil {
-			return nil, err
-		}
-		authorized = append(authorized, info.doc)
-		if len(authorized) >= limit {
-			break // early-exit: the page is full
-		}
-	}
-
-	span.SetAttributes(
-		attribute.Int64("search.candidates", candidates),
-		attribute.Int("search.authorized", len(authorized)),
-	)
-	return authorized, nil
-}
-
-// parseHitDocInfo extracts the authorization fields from an already-ranked hit.
-// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values from the index
-// reader mid-search), the hit here already has its external ID and stored
-// fields populated by bleve. The doc ID format is
-// <namespace>/<group>/<resourceType>/<name>.
-func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
-	parts := strings.Split(doc.ID, "/")
-	if len(parts) != 4 {
-		return docInfo{}, false
-	}
-	resourceType := parts[2]
-	verb, ok := resources[resourceType]
-	if !ok {
-		return docInfo{}, false
-	}
-
-	folder := ""
-	if v, ok := doc.Fields[resource.SEARCH_FIELD_FOLDER].(string); ok {
-		folder = v
-	}
-
-	return docInfo{
-		doc:          doc,
-		namespace:    parts[0],
-		group:        parts[1],
-		resourceType: resourceType,
-		name:         parts[3],
-		folder:       folder,
-		verb:         verb,
-	}, true
 }
 
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
@@ -2279,22 +2129,6 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-// authzResources builds the resource -> verb mapping used for batch
-// authorization, including any federated resources.
-func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
-	verb := utils.VerbGet
-	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-		verb = utils.VerbUpdate
-	}
-	resources := map[string]string{
-		b.key.Resource: verb,
-	}
-	for _, federated := range req.Federated {
-		resources[federated.Resource] = utils.VerbGet
-	}
-	return resources
-}
-
 // nolint:gocyclo
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
@@ -2326,10 +2160,22 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, resource.AsErrorResult(err)
 	}
 
+	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
+	// authorization (and offset/facet aggregation) happen afterward in
+	// bleveIndex.Search. The window is sized from the limit via
+	// PostRankAuthzConfig.windowSize and paged with SearchAfter. From/offset are
+	// applied app-side (over authorized hits), so bleve always starts at 0.
+	reqSize := size
+	reqFrom := offset
+	if postRankAuthz {
+		reqSize = b.postRankAuthz.windowSize(size)
+		reqFrom = 0
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    size,
-		From:    offset,
+		Size:    reqSize,
+		From:    reqFrom,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -2508,11 +2354,18 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		})
 	}
 
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
+	// On the post-filter path facets are aggregated app-side over the authorized
+	// hits, so do not ask bleve to compute them (its facets would run over the
+	// unfiltered searcher and include unauthorized docs).
+	if postRankAuthz {
+		searchrequest.Facets = nil
+	} else {
+		for k, v := range req.Facet {
+			if searchrequest.Facets == nil {
+				searchrequest.Facets = make(bleve.FacetsRequest)
+			}
+			searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
 	// Add the sort fields
@@ -2530,6 +2383,27 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
 				Desc:  false,
 			})
+		}
+	}
+
+	if postRankAuthz {
+		// Total-order tie-breaker so SearchAfter cursors are stable across
+		// windows: _id is unique per resource within a single (non-federated)
+		// index, which guarantees a deterministic rank with no skips/dupes.
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
+
+		// The post-filter path reads the folder (to authorize) and every facet
+		// field (to aggregate counts app-side) from each hit's stored fields,
+		// so make sure bleve loads them regardless of the caller's field set.
+		needed := []string{resource.SEARCH_FIELD_FOLDER}
+		for _, f := range req.Facet {
+			needed = append(needed, f.Field)
+		}
+		for _, f := range needed {
+			if !slices.Contains(searchrequest.Fields, f) &&
+				!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+				searchrequest.Fields = append(searchrequest.Fields, f)
+			}
 		}
 	}
 

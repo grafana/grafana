@@ -994,8 +994,15 @@ func TestSearchPermissionFiltering(t *testing.T) {
 }
 
 // newTestDashboardsIndexPostRank builds a dashboards index with the
-// post-rank-authz path enabled.
+// post-rank-authz path enabled and default tunables.
 func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceIndex {
+	return newTestDashboardsIndexPostRankWithConfig(t, size, search.PostRankAuthzConfig{})
+}
+
+// newTestDashboardsIndexPostRankWithConfig builds a dashboards index with the
+// post-rank-authz path enabled and the given tunables (zero values fall back to
+// the bleve defaults).
+func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
 	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -1006,6 +1013,7 @@ func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceI
 		Root:            t.TempDir(),
 		FileThreshold:   threshold, // use in-memory for tests
 		PostRankAuthzFn: func() bool { return true },
+		PostRankAuthz:   cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1162,7 +1170,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"doc-00", "doc-02", "doc-04"}, names)
 	})
 
-	t.Run("relevance query falls back to in-searcher path", func(t *testing.T) {
+	t.Run("relevance query runs through postFilter path", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("alpha", "allowed"),
@@ -1171,7 +1179,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		q := listQuery(10)
-		q.Query = "alpha" // relevance query -> old path, still authz-filtered
+		q.Query = "alpha" // relevance query -> now postFilter, still authz-filtered
 		names, _ := searchNames(t, index, ac, q)
 		require.Equal(t, []string{"alpha"}, names)
 	})
@@ -1277,7 +1285,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, want, got)
 	})
 
-	t.Run("facets fall back to in-searcher path and stay authz-filtered", func(t *testing.T) {
+	t.Run("facets aggregated app-side over authorized hits", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
@@ -1291,10 +1299,18 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 		names, res := searchNames(t, index, ac, q)
 		require.ElementsMatch(t, []string{"doc-0", "doc-2"}, names)
-		require.NotNil(t, res.Facet["folder"], "facet counts should be computed on the old path")
+		f := res.Facet["folder"]
+		require.NotNil(t, f, "facet counts should be aggregated app-side")
+		// Only authorized hits contribute: both authorized docs are in the
+		// "allowed" folder; "denied" must not appear.
+		require.Equal(t, int64(2), f.Total)
+		require.Equal(t, int64(0), f.Missing)
+		require.Len(t, f.Terms, 1)
+		require.Equal(t, "allowed", f.Terms[0].Term)
+		require.Equal(t, int64(2), f.Terms[0].Count)
 	})
 
-	t.Run("offset falls back to in-searcher path", func(t *testing.T) {
+	t.Run("offset skips authorized hits on postFilter path", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
@@ -1305,7 +1321,121 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		q := listQuery(10)
 		q.Offset = 1
 		names, _ := searchNames(t, index, ac, q)
-		// Old path applies the offset over the (authorized) sorted results.
+		// postFilter applies the offset over the authorized, sorted hits.
 		require.Equal(t, []string{"doc-1", "doc-2"}, names)
+	})
+
+	t.Run("low auth fraction stops at MaxCandidates cap and is deterministic", func(t *testing.T) {
+		// Small cap so the scan terminates well before scanning everything.
+		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 20, MaxCandidates: 50}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 2000)
+		for i := 0; i < 2000; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "denied"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		names1, res1 := searchNames(t, index, ac, q)
+		// Nothing authorized -> empty page, but the scan is bounded by the cap.
+		require.Empty(t, names1)
+		require.LessOrEqual(t, ac.checked, 50+authlib.MaxBatchCheckItems,
+			"scan must stop near MaxCandidates, not authorize all 2000")
+		require.Less(t, ac.checked, 2000)
+
+		// Determinism: the same bounded scan yields the same partial result.
+		ac2 := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names2, _ := searchNames(t, index, ac2, q)
+		require.Equal(t, names1, names2)
+		require.Equal(t, int64(2000), res1.TotalHits, "TotalHits stays the unfiltered match count")
+	})
+
+	t.Run("tie-breaker keeps duplicate sort keys contiguous across windows", func(t *testing.T) {
+		// Identical titles force the _id tie-breaker to be the only
+		// differentiator; a small MaxWindow forces many windows so SearchAfter
+		// cursors cross window boundaries repeatedly.
+		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 7}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		const n = 60
+		docs := make([]*resource.BulkIndexItem, 0, n)
+		want := make([]string, 0, n)
+		for i := 0; i < n; i++ {
+			name := fmt.Sprintf("doc-%02d", i)
+			docs = append(docs, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  name,
+					Title: "same-title", // identical sort key for every doc
+					Key: &resourcepb.ResourceKey{
+						Name:      name,
+						Namespace: key.Namespace,
+						Group:     key.Group,
+						Resource:  key.Resource,
+					},
+					Folder: "allowed",
+				},
+			})
+			want = append(want, name)
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		got := pageAll(t, index, ac, 10)
+		// Full coverage, in _id (name) order, no skips or duplicates across the
+		// many windows the bounded scan had to traverse.
+		require.Equal(t, want, got)
+	})
+
+	t.Run("SearchAfter stays contiguous at scale across windows", func(t *testing.T) {
+		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 100}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		const n = 500
+		docs := make([]*resource.BulkIndexItem, 0, n)
+		want := make([]string, 0, n)
+		for i := 0; i < n; i++ {
+			name := fmt.Sprintf("doc-%03d", i)
+			docs = append(docs, newDoc(name, "allowed"))
+			want = append(want, name)
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		got := pageAll(t, index, ac, 50)
+		require.Equal(t, want, got, "paging must cover every doc once in order")
+	})
+
+	t.Run("app-side facet term list respects Limit", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// 5 folders with descending counts so the top-2 are well defined.
+		folders := []struct {
+			name  string
+			count int
+		}{
+			{"f1", 4}, {"f2", 3}, {"f3", 2}, {"f4", 1},
+		}
+		docs := make([]*resource.BulkIndexItem, 0, 10)
+		for _, f := range folders {
+			for i := 0; i < f.count; i++ {
+				docs = append(docs, newDoc(fmt.Sprintf("%s-%d", f.name, i), f.name))
+			}
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(100)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"folder": {Field: "folder", Limit: 2},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["folder"]
+		require.NotNil(t, f)
+		require.Len(t, f.Terms, 2, "term list must be truncated to the requested Limit")
+		require.Equal(t, "f1", f.Terms[0].Term)
+		require.Equal(t, int64(4), f.Terms[0].Count)
+		require.Equal(t, "f2", f.Terms[1].Term)
+		require.Equal(t, int64(3), f.Terms[1].Count)
+		require.Equal(t, int64(10), f.Total)
 	})
 }
