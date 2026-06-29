@@ -296,16 +296,6 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
-			Name:            "grafanaAPIServerEnsureKubectlAccess",
-			Description:     "Start an additional https handler and write kubectl options",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
