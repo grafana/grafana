@@ -136,7 +136,7 @@ Choose from the following:
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - Transparency of the gradient is calculated based on the values on the Y-axis. The opacity of the fill is increasing with the values on the Y-axis.
 - **Hue** - Gradient color is generated based on the hue of the line color.
-- **Scheme** - The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
+- **Scheme** - The selected [color palette](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 
 ### Tooltip options
 
