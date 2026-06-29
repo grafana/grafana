@@ -36,7 +36,7 @@ func ProvideOSSDataKeyCache(tracer trace.Tracer, cfg *setting.Cfg) encryption.Da
 }
 
 func (c *ossDataKeyCache) GetById(ctx context.Context, namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
-	ctx, span := c.tracer.Start(ctx, "GetById", trace.WithAttributes(
+	_, span := c.tracer.Start(ctx, "GetById", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("id", id),
 	))
@@ -69,7 +69,7 @@ func (c *ossDataKeyCache) GetById(ctx context.Context, namespace, id string) (_ 
 }
 
 func (c *ossDataKeyCache) GetByLabel(ctx context.Context, namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool, err error) {
-	ctx, span := c.tracer.Start(ctx, "ossDataKeyCache.GetByLabel", trace.WithAttributes(
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.GetByLabel", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("label", label),
 	))
@@ -101,7 +101,7 @@ func (c *ossDataKeyCache) GetByLabel(ctx context.Context, namespace, label strin
 }
 
 func (c *ossDataKeyCache) Set(ctx context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
-	ctx, span := c.tracer.Start(ctx, "ossDataKeyCache.Set", trace.WithAttributes(
+	_, span := c.tracer.Start(ctx, "ossDataKeyCache.Set", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("id", entry.Id),
 		attribute.String("label", entry.Label),
