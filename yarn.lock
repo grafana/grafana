@@ -2403,7 +2403,7 @@ __metadata:
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
-    react: "npm:18.3.1"
+    react: "npm:^18.3.1"
     react-use: "npm:17.6.1"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.60.1"
@@ -28078,7 +28078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:18.3.1":
+"react@npm:18.3.1, react@npm:^18.3.1":
   version: 18.3.1
   resolution: "react@npm:18.3.1"
   dependencies:
