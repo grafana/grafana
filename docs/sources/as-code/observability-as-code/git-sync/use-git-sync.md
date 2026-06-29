@@ -130,7 +130,7 @@ To add or modify folder permissions:
 
 ### The Git Sync folder JSON metadata file
 
-Each folder in a synced repository contains a `.folder.json` file at its root:
+Each folder in a synced repository contains a `_folder.json` file at its root:
 
 ```json
 {
