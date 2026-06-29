@@ -427,7 +427,7 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 		return err
 	}
 
-	return s.validateNames(anno)
+	return validateNames(anno)
 }
 
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
@@ -466,7 +466,7 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	return nil
 }
 
-func (s *k8sRESTAdapter) validateNames(anno *annotationV0.Annotation) error {
+func validateNames(anno *annotationV0.Annotation) error {
 	if anno.Name == "" && anno.GenerateName == "" {
 		return apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
 	}
