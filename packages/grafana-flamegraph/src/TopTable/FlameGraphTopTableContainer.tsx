@@ -85,20 +85,24 @@ const FlameGraphTopTableContainer = memo(
               sandwichItem
             );
             return (
-              <Table
-                sortBy={sort}
-                sortByBehavior="managed"
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-                enableVirtualization={enableVirtualization}
-              />
+              // TableNG sizes itself to its container (block-size: 100%) rather than to the height
+              // prop, so it needs a parent with a definite height inside AutoSizer.
+              <div style={{ width, height }}>
+                <Table
+                  sortBy={sort}
+                  sortByBehavior="managed"
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={height}
+                  enableVirtualization={enableVirtualization}
+                />
+              </div>
             );
           }}
         </AutoSizer>

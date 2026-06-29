@@ -301,7 +301,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return null;
               }
 
-              return <TableCore width={width} height={height} data={dataFrame} showTypeIcons={true} />;
+              // TableCore fills its container (block-size: 100%), so it needs a parent with a
+              // definite height inside AutoSizer.
+              return (
+                <div style={{ width, height }}>
+                  <TableCore width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                </div>
+              );
             }}
           </AutoSizer>
         </div>

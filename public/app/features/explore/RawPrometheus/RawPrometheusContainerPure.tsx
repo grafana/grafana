@@ -114,13 +114,16 @@ export const RawPrometheusContainerPure = memo(
         {frames?.length && (
           <>
             {renderTable && (
-              <TableCore
-                ariaLabel={ariaLabel}
-                data={frames[0]}
-                width={tableWidth}
-                height={height}
-                onCellFilterAdded={onCellFilterAdded}
-              />
+              // TableCore fills its container (block-size: 100%), so give it a definite-height parent.
+              <div style={{ width: tableWidth, height }}>
+                <TableCore
+                  ariaLabel={ariaLabel}
+                  data={frames[0]}
+                  width={tableWidth}
+                  height={height}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              </div>
             )}
             {resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>
