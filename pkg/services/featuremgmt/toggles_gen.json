@@ -2122,6 +2122,87 @@
     },
     {
       "metadata": {
+        "name": "externalSnapshotsDenyLegacyPublicPush",
+        "resourceVersion": "1779379338516",
+        "creationTimestamp": "2026-05-21T16:02:18Z",
+        "deletionTimestamp": "2026-05-21T18:03:59Z"
+      },
+      "spec": {
+        "description": "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, reject anonymous /api/snapshots pushes by routing them through the authenticated k8s create endpoint instead of CreateDashboardSnapshotPublic. Default off: anonymous legacy pushes still work for senders that have not migrated to the authenticated k8s push. Turn on once all senders have migrated, to deprecate the unauthenticated public push.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsK8SAPIPush",
+        "resourceVersion": "1779386639364",
+        "creationTimestamp": "2026-05-19T14:20:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:03:59.364818 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsK8sAPIPush",
+        "resourceVersion": "1779200384255",
+        "creationTimestamp": "2026-05-19T14:19:44Z",
+        "deletionTimestamp": "2026-05-19T14:20:50Z"
+      },
+      "spec": {
+        "description": "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsSupportLegacyAPI",
+        "resourceVersion": "1779389019012",
+        "creationTimestamp": "2026-05-21T18:03:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:43:39.012069 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalVizSuggestions",
+        "resourceVersion": "1774877899502",
+        "creationTimestamp": "2025-12-01T23:22:22Z",
+        "deletionTimestamp": "2026-05-08T20:27:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+        "stage": "GA",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "faroDatasourceSelector",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-05-05T00:35:10Z"
@@ -2294,7 +2375,8 @@
       "metadata": {
         "name": "frontendServiceUseSettingsService",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-20T16:13:44Z"
       },
       "spec": {
         "description": "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
@@ -2341,6 +2423,33 @@
         "description": "Route any calls to legacy correlations endpoints to call through to app platform",
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.customDashboardTemplates",
+        "resourceVersion": "1781723429145",
+        "creationTimestamp": "2026-06-17T19:10:29Z"
+      },
+      "spec": {
+        "description": "Enables custom dashboard templates for enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.customizableMegaMenu",
+        "resourceVersion": "1782389631454",
+        "creationTimestamp": "2026-06-25T12:13:51Z"
+      },
+      "spec": {
+        "description": "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2419,7 +2528,8 @@
       "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-25T15:12:55Z"
       },
       "spec": {
         "description": "Enable Meticulous AI session recorder for automated UI test generation",
@@ -2433,7 +2543,8 @@
       "metadata": {
         "name": "grafana.meticulousAIRecorderHighVolume",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-25T15:12:55Z"
       },
       "spec": {
         "description": "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
@@ -2477,7 +2588,8 @@
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-17T19:10:29Z"
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
@@ -3364,13 +3476,17 @@
     {
       "metadata": {
         "name": "logsTablePanelNG",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782158134143",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-22 19:55:34.143374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3528,6 +3644,7 @@
         "name": "multiPropsVariables",
         "resourceVersion": "1781873846528",
         "creationTimestamp": "2025-12-09T17:11:49Z",
+        "deletionTimestamp": "2026-06-25T12:46:20Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
         }
@@ -3614,6 +3731,7 @@
         "name": "newLogContext",
         "resourceVersion": "1781279681608",
         "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-06-23T19:18:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
         }
@@ -3630,7 +3748,8 @@
       "metadata": {
         "name": "newLogsPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-04T17:40:17Z"
+        "creationTimestamp": "2025-02-04T17:40:17Z",
+        "deletionTimestamp": "2026-06-22T16:17:34Z"
       },
       "spec": {
         "description": "Enables the new logs panel",
@@ -3672,7 +3791,8 @@
       "metadata": {
         "name": "newUnconfiguredPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-24T11:58:10Z"
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
@@ -5043,6 +5163,21 @@
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refactorNested",
+        "resourceVersion": "1782413661913",
+        "creationTimestamp": "2026-06-25T18:54:21Z"
+      },
+      "spec": {
+        "description": "Enables the refactored TableNG nested-table implementation",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

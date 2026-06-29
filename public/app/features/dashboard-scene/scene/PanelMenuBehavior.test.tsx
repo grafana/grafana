@@ -978,12 +978,7 @@ describe('panelMenuBehavior', () => {
       return { menu, panel };
     }
 
-    beforeEach(() => {
-      config.featureToggles.panelStyleActions = true;
-    });
-
     afterEach(() => {
-      config.featureToggles.panelStyleActions = false;
       store.delete(LS_STYLES_COPY_KEY);
     });
 
@@ -1006,13 +1001,6 @@ describe('panelMenuBehavior', () => {
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
-    });
-
-    it('should not show styles menu when feature flag is disabled', async () => {
-      config.featureToggles.panelStyleActions = false;
-      const { menu } = await buildTimeseriesTestScene();
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
 
     it('should not show styles menu for unsupported panel types', async () => {

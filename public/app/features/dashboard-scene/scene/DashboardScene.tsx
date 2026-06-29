@@ -769,10 +769,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public copyPanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const panelType = vizPanel.state.pluginId;
     const styleConfig = getPanelStyleConfig(panelType);
 
@@ -791,10 +787,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public static hasPanelStylesToPaste(panelType: string): boolean {
-    if (!config.featureToggles.panelStyleActions) {
-      return false;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return false;
@@ -810,10 +802,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public pastePanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return;
@@ -952,7 +940,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
-    locationService.partial({ editview: 'settings' });
+    const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
+    locationService.partial({ editview });
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {

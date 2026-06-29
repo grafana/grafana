@@ -24,7 +24,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
-import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
