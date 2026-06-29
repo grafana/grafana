@@ -69,7 +69,7 @@
     "immutable": "^5.1.5",
     "lodash": "^4.17.23",
     "lru-cache": "^11.2.2",
-    "react-loading-skeleton": "3.5.0",
+    "react-loading-skeleton": "^3.5.0",
     "react-use": "17.6.1",
     "rxjs": "7.8.2"
   },
