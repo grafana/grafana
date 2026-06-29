@@ -5409,6 +5409,7 @@
         "name": "vizPresets",
         "resourceVersion": "1779296184831",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-06-29T12:51:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
         }

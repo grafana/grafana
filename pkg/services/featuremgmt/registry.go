@@ -2196,14 +2196,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "vizPresets",
-			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "nestedFramesFieldOverrides",
 			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
 			Stage:       FeatureStagePublicPreview,

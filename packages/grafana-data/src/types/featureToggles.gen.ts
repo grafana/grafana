@@ -1201,11 +1201,6 @@ export interface FeatureToggles {
   */
   panelStyleActions?: boolean;
   /**
-  * Enable visualization presets
-  * @default true
-  */
-  vizPresets?: boolean;
-  /**
   * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
