@@ -211,13 +211,15 @@ func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnT
 // to PreferredVersion. That fallback is the consumer's responsibility; the
 // Fields method itself does not perform it.
 type SearchFieldsProvider interface {
-	// Fields returns the declared search fields for the exact
-	// GroupVersionResource. Returns nil if nothing is registered for that
-	// key; the caller decides how to handle missing versions (usually by
-	// retrying with PreferredVersion).
+	// Fields returns the declared search fields for a GroupVersionResource.
+	// With a non-empty Version only that version's fields are returned.
+	// With an empty Version Fields returns every field declared by any
+	// version of (group, resource); a field declared in multiple versions
+	// appears once, with the preferred version's shape.
 	//
-	// The returned slice is owned by the provider; callers must not mutate
-	// it.
+	// Two versions declaring a field with different shapes are not yet
+	// validated; a later check will reject mismatches. The returned slice
+	// is owned by the provider; do not mutate it.
 	Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition
 
 	// PreferredVersion returns the served version that callers should use
@@ -286,16 +288,36 @@ var sortableTypes = []SearchFieldType{
 	SearchFieldTypeString,
 }
 
+// stringOnlyCapabilities lists capabilities that require a string-mapped
+// Type. These rely on text/keyword analysis under the bleve text engine
+// and have no meaningful semantics on numeric or boolean fields.
+var stringOnlyCapabilities = []SearchCapability{
+	SearchCapabilityText,
+	SearchCapabilityPartial,
+	SearchCapabilityFacet,
+}
+
 // validateSearchFieldDefinitions returns a non-nil error when any declaration
 // uses a capability that the current bleve mapper cannot honour. The only
 // rule enforced today is that SearchCapabilitySort requires a string-mapped
 // Type; numeric and boolean fields would otherwise be sorted lexically
-// because the mapper does not emit numeric mappings yet.
+// because the mapper does not emit numeric mappings yet. The validator
+// also rejects text/partial/facet capabilities on non-string fields:
+// these capabilities rely on text or keyword analysis that has no
+// meaning on numeric or boolean values.
 func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 	var violations []string
 	for _, sfd := range sfds {
+		isStringTyped := sfd.Type == SearchFieldTypeString
 		if slices.Contains(sfd.Capabilities, SearchCapabilitySort) && !slices.Contains(sortableTypes, sfd.Type) {
 			violations = append(violations, "field "+sfd.Name+": sort capability is not supported for type "+string(sfd.Type))
+		}
+		if !isStringTyped {
+			for _, cap := range stringOnlyCapabilities {
+				if slices.Contains(sfd.Capabilities, cap) {
+					violations = append(violations, "field "+sfd.Name+": "+string(cap)+" capability requires a string-typed field (got "+string(sfd.Type)+")")
+				}
+			}
 		}
 	}
 	if len(violations) == 0 {
@@ -305,7 +327,39 @@ func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 }
 
 func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition {
-	return p.fields[gvr]
+	if gvr.Version != "" {
+		return p.fields[gvr]
+	}
+	// Empty version: return the union across every registered version of
+	// (gvr.Group, gvr.Resource), deduplicated by Name. Preferred version
+	// goes first so its shape wins on collisions; other versions are
+	// iterated in sorted order for determinism.
+	var out []SearchFieldDefinition
+	seen := map[string]bool{}
+	appendNew := func(sfds []SearchFieldDefinition) {
+		for _, sfd := range sfds {
+			if seen[sfd.Name] {
+				continue
+			}
+			seen[sfd.Name] = true
+			out = append(out, sfd)
+		}
+	}
+	pref := p.PreferredVersion(gvr.Group, gvr.Resource)
+	if pref != "" {
+		appendNew(p.fields[schema.GroupVersionResource{Group: gvr.Group, Version: pref, Resource: gvr.Resource}])
+	}
+	var otherVersions []string
+	for key := range p.fields {
+		if key.Group == gvr.Group && key.Resource == gvr.Resource && key.Version != pref {
+			otherVersions = append(otherVersions, key.Version)
+		}
+	}
+	slices.Sort(otherVersions)
+	for _, v := range otherVersions {
+		appendNew(p.fields[schema.GroupVersionResource{Group: gvr.Group, Version: v, Resource: gvr.Resource}])
+	}
+	return out
 }
 
 func (p *mapProvider) PreferredVersion(group, resource string) string {

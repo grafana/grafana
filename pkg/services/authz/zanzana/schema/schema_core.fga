@@ -3,6 +3,7 @@ module core
 type user
   relations
     define get: [user, service-account, team#member, role#assignee]
+    define create: [user, service-account, team#member, role#assignee]
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 
@@ -12,6 +13,7 @@ type user
 type service-account
   relations
     define get: [user, service-account, team#member, role#assignee]
+    define create: [user, service-account, team#member, role#assignee]
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 

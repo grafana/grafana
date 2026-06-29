@@ -94,6 +94,15 @@ var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefin
 // createdAt mirrors the standard IndexableDocument.Created field into the
 // per-kind fields.* sub-document because the top-level created field has no
 // bleve mapping today. See PR #126405 for context.
+//
+// lastSeenAt (int64) and disabled (boolean) declare SearchCapabilityFilter to
+// record that these fields are intended to be filterable, and to drive the
+// bleve mapping (numeric / boolean under dynamic mapping). End-to-end
+// numeric and boolean equality filters in ResourceSearchRequest are still a
+// follow-up: the query path treats filter values as strings, so a request
+// against these fields would not match a numeric-indexed term yet. No
+// in-tree client filters by lastSeenAt or disabled today, so this is a
+// known gap rather than a rollout concern.
 var UserSearchFields = []resource.SearchFieldDefinition{
 	{Name: USER_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	{Name: USER_LOGIN, Path: "spec.login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
@@ -127,9 +136,10 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 
 	gr := iamv0.UserResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:    gr,
-		Fields:           fields,
-		Builder:          resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash: provider.IndexAffectingHash(gr.Group, gr.Resource),
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
 	}, nil
 }

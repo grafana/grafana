@@ -93,6 +93,5 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/loki',
     '<rootDir>/public/app/plugins/datasource/mssql',
     '<rootDir>/public/app/plugins/datasource/mysql',
-    '<rootDir>/public/app/plugins/datasource/parca',
   ],
 };

@@ -176,10 +176,13 @@ func TestAddCapabilityFieldMappings_NonTitleFullSet(t *testing.T) {
 }
 
 func TestAddCapabilityFieldMappings_SortWithoutFilter(t *testing.T) {
-	// sort on its own still needs a keyword variant to back DocValues.
+	// sort on its own still needs a keyword variant to back DocValues. Sort
+	// is validated as string-only at provider construction time (the bleve
+	// mapper emits keyword regardless of declared Type, so non-strings
+	// would sort lexically), so this test uses a string-typed field.
 	got := flatMappings(t, resource.SearchFieldDefinition{
 		Name: "lastSeenAt",
-		Type: resource.SearchFieldTypeInt64,
+		Type: resource.SearchFieldTypeString,
 		Capabilities: []resource.SearchCapability{
 			resource.SearchCapabilitySort,
 			resource.SearchCapabilityRetrieve,
