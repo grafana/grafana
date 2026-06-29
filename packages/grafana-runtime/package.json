@@ -71,7 +71,7 @@
     "lru-cache": "^11.2.2",
     "react-loading-skeleton": "^3.5.0",
     "react-use": "^17.6.1",
-    "rxjs": "7.8.2"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",
