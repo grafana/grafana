@@ -15,21 +15,21 @@ const MANY_ANNOTATIONS_COUNTS = {
   frame1: {
     count: 224,
     widths: {
-      '1000': 1,
+      '1064': 1,
       '2600': 6,
     },
   },
   frame2: {
     count: 235,
     widths: {
-      '1000': 2,
+      '1064': 2,
       '2600': 15,
     },
   },
   frame3: {
     count: 2,
     widths: {
-      '1000': 2,
+      '1064': 2,
       '2600': 2,
     },
   },
@@ -38,14 +38,14 @@ const REGION_ANNOTATIONS_COUNTS = {
   frame1: {
     count: 223,
     widths: {
-      '1000': 1,
+      '1064': 1,
       '2600': 5,
     },
   },
   frame2: {
     count: 235,
     widths: {
-      '1000': 2,
+      '1064': 2,
       '2600': 13,
     },
   },
@@ -54,14 +54,14 @@ const ALERT_ANNOTATIONS_COUNTS = {
   frame1: {
     count: 11,
     widths: {
-      '1000': 1,
+      '1064': 1,
       '2600': 1,
     },
   },
 };
 
 test.use({
-  viewport: { width: 1000, height: 1840 },
+  viewport: { width: 1064, height: 1840 },
   featureToggles: {
     annotationsClustering: true,
   },
@@ -101,25 +101,25 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Clustering enabled',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] +
-          MANY_ANNOTATIONS_COUNTS.frame2.widths['1000'] +
-          MANY_ANNOTATIONS_COUNTS.frame3.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1064']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Clustering enabled w/ multi-row',
-        MANY_ANNOTATIONS_COUNTS.frame1.widths['1000'] +
-          MANY_ANNOTATIONS_COUNTS.frame2.widths['1000'] +
-          MANY_ANNOTATIONS_COUNTS.frame3.widths['1000']
+        MANY_ANNOTATIONS_COUNTS.frame1.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame2.widths['1064'] +
+          MANY_ANNOTATIONS_COUNTS.frame3.widths['1064']
       );
 
       await assertAnnotationCount(
         dashboardPage,
         selectors,
         'Alert annos clustering',
-        ALERT_ANNOTATIONS_COUNTS.frame1.widths['1000']
+        ALERT_ANNOTATIONS_COUNTS.frame1.widths['1064']
       );
 
       // Regions
@@ -134,7 +134,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         dashboardPage,
         selectors,
         'Region clustering (on)',
-        REGION_ANNOTATIONS_COUNTS.frame1.widths['1000'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['1000']
+        REGION_ANNOTATIONS_COUNTS.frame1.widths['1064'] + REGION_ANNOTATIONS_COUNTS.frame2.widths['1064']
       );
     });
   });
