@@ -2525,7 +2525,7 @@ __metadata:
     react: "npm:18.3.1"
     react-use: "npm:^17.6.1"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:7.8.2"
+    rxjs: "npm:^7.8.2"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
