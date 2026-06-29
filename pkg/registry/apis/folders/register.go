@@ -25,6 +25,7 @@ import (
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -73,6 +74,39 @@ type FolderAPIBuilder struct {
 	// resourcePermissionsSvc directly and leaves restConfigProvider nil.
 	restConfigProvider       apiserver.RestConfigProvider
 	resourcePermissionsSvcMu sync.Mutex
+
+	// Dashboard apiserver client used by cascade delete to remove dashboards in a deleted folder.
+	// Built lazily from restConfigProvider; do not access directly, use `dashboardClient(ctx)`.
+	dashboardSvc   *dynamic.NamespaceableResourceInterface
+	dashboardSvcMu sync.Mutex
+}
+
+// dashboardClient returns the dashboard dynamic client, building it lazily from restConfigProvider.
+// Returns nil when no client is configured (e.g. no restConfigProvider), in which case cascade
+// delete skips dashboard cleanup.
+func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.restConfigProvider == nil {
+		return b.dashboardSvc, nil
+	}
+
+	b.dashboardSvcMu.Lock()
+	defer b.dashboardSvcMu.Unlock()
+
+	if b.dashboardSvc != nil {
+		return b.dashboardSvc, nil
+	}
+
+	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource())
+	b.dashboardSvc = &client
+	return b.dashboardSvc, nil
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -205,6 +239,14 @@ func (b *FolderAPIBuilder) storageForVersion(
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}
+	}
+
+	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
+	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
+	b.storage = &cascadeDeleteStorage{
+		Storage:         b.storage,
+		searcher:        b.searcher,
+		dashboardClient: b.dashboardClient,
 	}
 
 	storage := map[string]rest.Storage{}

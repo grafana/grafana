@@ -2,15 +2,20 @@ package folders
 
 import (
 	"context"
+	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/dynamic"
 
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -32,6 +37,10 @@ var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 type cascadeDeleteStorage struct {
 	grafanarest.Storage
 	searcher resourcepb.ResourceIndexClient
+	// dashboardClient resolves the dashboard apiserver client used to delete dashboards contained in
+	// a folder. May return nil when no client is configured, in which case dashboard cleanup is
+	// skipped.
+	dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
 }
 
 // Delete removes a folder and, when cascade delete is enabled, its entire subtree. The subtree is
@@ -75,6 +84,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 		}
 	}
 
+	// Remove the dashboards contained directly in this folder before deleting the folder itself.
+	if err := s.deleteDashboardsInFolder(ctx, namespace, name); err != nil {
+		return nil, false, err
+	}
+
 	// No remaining child folders: delete this folder. A NotFound here means it was already
 	// deleted, which is success for an idempotent (resumable) cascade.
 	obj, async, err := s.Storage.Delete(ctx, name, deleteValidation, options)
@@ -84,11 +98,79 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	return obj, async, err
 }
 
+// deleteDashboardsInFolder removes every dashboard whose grafana.app/folder annotation points at
+// folderUID. Deletes go through the dashboard apiserver (so its admission and delete hooks run); a
+// NotFound for an individual dashboard is treated as already-done so the sweep is idempotent and
+// resumable.
+func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string) error {
+	svc, err := s.dashboardClient(ctx)
+	if err != nil {
+		return fmt.Errorf("get dashboard client: %w", err)
+	}
+	if svc == nil {
+		// No dashboard apiserver client configured (e.g. legacy mode); nothing to clean up here.
+		return nil
+	}
+	client := (*svc).Namespace(namespace)
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+
+	var offset int64
+	for {
+		resp, err := s.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: namespace,
+					Group:     gvr.Group,
+					Resource:  gvr.Resource,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.Equals),
+					Values:   []string{folderUID},
+				}},
+			},
+			Limit:  childFolderPageSize,
+			Offset: offset,
+		})
+		if err != nil {
+			return fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
+		}
+		if resp.Error != nil {
+			return fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
+		}
+		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+			return nil
+		}
+
+		for _, row := range resp.Results.Rows {
+			if row.Key == nil {
+				continue
+			}
+			if err := client.Delete(ctx, row.Key.Name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				return fmt.Errorf("delete dashboard %q: %w", row.Key.Name, err)
+			}
+		}
+
+		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
+		if offset+int64(len(resp.Results.Rows)) >= resp.TotalHits {
+			return nil
+		}
+		offset += childFolderPageSize
+	}
+}
+
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
 // observable before its leaves are removed.
 func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string) error {
-	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, _ runtime.Object) (runtime.Object, error) {
-		meta, err := utils.MetaAccessor(newObj)
+	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
+		// With a nil base object, DefaultUpdatedObjectInfo passes a nil newObj; mutate a copy of the
+		// existing folder instead.
+		obj := newObj
+		if obj == nil {
+			obj = oldObj.DeepCopyObject()
+		}
+		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +180,7 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string)
 		}
 		labels[folderTerminatingLabel] = folderTerminatingLabelValue
 		meta.SetLabels(labels)
-		return newObj, nil
+		return obj, nil
 	})
 
 	_, _, err := s.Storage.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
