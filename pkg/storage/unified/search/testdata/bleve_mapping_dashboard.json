@@ -50,7 +50,45 @@
         "enabled": true,
         "dynamic": true,
         "properties": {
+          "ds_types": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "panel_title": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "standard",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
           "panel_types": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "transformation": {
             "enabled": true,
             "dynamic": true,
             "fields": [
