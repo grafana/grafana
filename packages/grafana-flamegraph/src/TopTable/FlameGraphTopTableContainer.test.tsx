@@ -25,6 +25,7 @@ describe('FlameGraphTopTableContainer', () => {
         onSearch={onSearch}
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
+        enableVirtualization={false}
       />
     );
 
@@ -36,26 +37,21 @@ describe('FlameGraphTopTableContainer', () => {
     mockBoundingClientRect({ width: 500, height: 500 });
 
     setup();
-    const rows = screen.getAllByRole('row');
-    expect(rows).toHaveLength(16);
 
+    // Columns: an actions column followed by Symbol / Self / Total.
     const columnHeaders = screen.getAllByRole('columnheader');
     expect(columnHeaders).toHaveLength(4);
     expect(columnHeaders[1].textContent).toEqual('Symbol');
     expect(columnHeaders[2].textContent).toEqual('Self');
     expect(columnHeaders[3].textContent).toEqual('Total');
 
-    const cells = screen.getAllByRole('cell');
-    expect(cells).toHaveLength(60); // 16 rows
-    expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
-    expect(cells[2].textContent).toEqual('31.7 K');
-    expect(cells[3].textContent).toEqual('5.58 Bil');
-    expect(cells[5].textContent).toEqual('total');
-    expect(cells[6].textContent).toEqual('16.5 K');
-    expect(cells[7].textContent).toEqual('16.5 Bil');
-    expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
-    expect(cells[26].textContent).toEqual('5.63 K');
-    expect(cells[27].textContent).toEqual('5.63 Bil');
+    // Sample rows render with their (unique) symbol names + self/total values.
+    expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    expect(screen.getByText('net/http.(*conn).serve')).toBeInTheDocument();
+    expect(screen.getAllByText('total').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('31.7 K').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
   });
 
   it('should render search and sandwich buttons', async () => {

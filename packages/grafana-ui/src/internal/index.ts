@@ -64,9 +64,7 @@ export {
   FILTER_FOR_OPERATOR,
   FILTER_OUT_OPERATOR,
 } from '../components/Table/types';
-export { defaultSparklineCellConfig } from '../components/Table/Cells/SparklineCell';
-export { TableCell } from '../components/Table/Cells/TableCell';
-export { useTableStyles } from '../components/Table/TableRT/styles';
+export { defaultSparklineCellConfig } from '../components/Table/TableNG/Cells/SparklineCell';
 export { migrateTableDisplayModeToCellOptions } from '../components/Table/cellUtils';
 export {
   type DataLinksContextMenuApi,
