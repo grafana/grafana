@@ -2323,8 +2323,8 @@ github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 h1:QL3vQTj64ZQpxiDZx6bFYS7oN
 github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0/go.mod h1:kGroOkFJzE2Si+mojCi3PCvuAnGnzEh1FAzy1Oh9mI8=
 github.com/redis/go-redis/extra/redisotel/v9 v9.19.0 h1:yXeFe+EFMUirnzzy8MI5iazoqlpBdzVC6pk+K2Mu7do=
 github.com/redis/go-redis/extra/redisotel/v9 v9.19.0/go.mod h1:GgAFS1Cg26tQEiHzDd8cHXPKUzzTineQ91Ei9glAxQs=
-github.com/redis/go-redis/v9 v9.19.0 h1:XPVaaPSnG6RhYf7p+rmSa9zZfeVAnWsH5h3lxthOm/k=
-github.com/redis/go-redis/v9 v9.19.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
+github.com/redis/go-redis/v9 v9.20.1 h1:sfCU6A8P3dXbKyWes02uxA2baehGux9dZHfEKtsTB1w=
+github.com/redis/go-redis/v9 v9.20.1/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
 github.com/redis/rueidis v1.0.72 h1:rc1ZUha266B7PYAeZp0OafXFcGz69WKy0aHtbkZzrJg=
 github.com/redis/rueidis v1.0.72/go.mod h1:lfdcZzJ1oKGKL37vh9fO3ymwt+0TdjkkUCJxbgpmcgQ=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
