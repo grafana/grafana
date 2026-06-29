@@ -2311,11 +2311,6 @@
       "count": 26
     }
   },
-  "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "public/app/features/query/components/QueryEditorRow.tsx": {
     "@grafana/no-gf-form": {
       "count": 1

@@ -84,19 +84,20 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
 
     const { title, description, appID, installationID, privateKey, webhookDisabled, serverUrl } =
       credentialForm.getValues();
+    const baseSpec = {
+      title,
+      ...(description && { description }),
+      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
+    };
     const spec: ConnectionSpec = isGitHubEnterprise
       ? {
+          ...baseSpec,
           type: 'githubEnterprise',
-          title,
-          ...(description && { description }),
-          ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
           githubEnterprise: { appID, installationID, serverUrl },
         }
       : {
+          ...baseSpec,
           type: 'github',
-          title,
-          ...(description && { description }),
-          ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
           github: { appID, installationID },
         };
 

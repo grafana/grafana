@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { config, isFetchError, reportInteraction } from '@grafana/runtime';
+import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
-import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -24,19 +23,23 @@ interface ConnectionFormProps {
   data?: Connection;
 }
 
-const providerOptions = [
-  { value: 'github', label: 'GitHub' },
-  ...(config.licenseInfo.edition === GrafanaEdition.Enterprise
-    ? [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
-    : []),
-];
-
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
   const privateKey = data?.secure?.privateKey;
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
+
+  const { data: frontendSettings } = useGetFrontendSettingsQuery();
+  const availableTypes = frontendSettings?.availableRepositoryTypes ?? [];
+  const providerOptions = [
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    { value: 'github', label: 'GitHub' },
+    ...(availableTypes.includes('githubEnterprise')
+      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
+      : []),
+  ];
 
   const formMethods = useForm<ConnectionFormData>({
     defaultValues: {
@@ -159,7 +162,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
                   id="type"
-                  disabled={providerOptions.length <= 1}
+                  disabled={isEdit || providerOptions.length <= 1}
                   options={providerOptions}
                   onChange={(option) => onChange(option?.value)}
                   {...field}

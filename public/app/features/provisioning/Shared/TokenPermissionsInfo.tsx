@@ -17,11 +17,15 @@ export function TokenPermissionsInfo({ type, url }: { type: InstructionAvailabil
     <div className={styles.container}>
       <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
-        <TextLink external href={createTokenLink}>
-          {tokenText}
-        </TextLink>
+        {createTokenLink ? (
+          <TextLink external href={createTokenLink}>
+            {tokenText}
+          </TextLink>
+        ) : (
+          <strong>&nbsp;{tokenText}</strong>
+        )}
         <Trans i18nKey="provisioning.token-permissions-info.and-click">and click</Trans>
-        <strong>"{createTokenButtonText}".</strong>
+        <strong>&quot;{createTokenButtonText}&quot;.</strong>
         <Trans i18nKey="provisioning.token-permissions-info.make-sure">Create a token with these permissions</Trans>:
       </Stack>
 
@@ -156,11 +160,12 @@ function connectStepInstruction({ type, serverUrl }: { type: InstructionAvailabi
     case 'githubEnterprise':
       // GitHub Enterprise hosts the token settings on its own server, derived from the repository URL.
       // GitHub UI is English only, so these strings are not translated.
-      return {
-        createTokenLink: `${serverUrl}/settings/personal-access-tokens/new`,
-        tokenText: 'GitHub Personal Access Token',
+      const instruction = {
         createTokenButtonText: 'Fine-grained token',
+        createTokenLink: serverUrl ? `${serverUrl}/settings/personal-access-tokens/new` : '',
+        tokenText: 'Settings -> Personal Access Tokens',
       };
+      return instruction;
     case 'github':
     default:
       // GitHub UI is English only, so these strings are not translated

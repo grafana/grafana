@@ -63,6 +63,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined
   );
 
+  // const repositoryUrl = watch('repository.url')
   const isGit = repoType === 'git';
 
   return (
@@ -119,13 +120,13 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
+      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+
       {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
         <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
       ) : (
         <RepositoryTokenInput />
       )}
-
-      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
 }

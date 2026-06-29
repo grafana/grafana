@@ -155,7 +155,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           let sourceLink: string | undefined = undefined;
           if (item.hasFile && repo.spec?.type) {
             const spec = repo.spec;
-            const config = spec.github || spec.gitlab || spec.bitbucket;
+            const config = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket;
             if (config) {
               const rawSourceLink = getRepoFileUrl({
                 repoType: spec.type,

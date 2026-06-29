@@ -140,7 +140,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
 
   return {
     github: github('https://github.com'),
-    githubEnterprise: github('https://your-ghe-host.com or https://<slug>.ghe.com'),
+    githubEnterprise: github('https://your-ghe-url.com or https://<slug>.ghe.com'),
     gitlab: {
       token: {
         label: t('provisioning.gitlab.token-label', 'Project Access Token'),

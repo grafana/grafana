@@ -1,6 +1,7 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
@@ -68,6 +69,29 @@ describe('ConnectionForm', () => {
       expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub Installation ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
+    });
+
+    it('should allow selecting GitHub Enterprise when creating and it is available', async () => {
+      mockComboboxRect();
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({ availableRepositoryTypes: ['github', 'githubEnterprise'] })
+        )
+      );
+
+      const { user } = setup();
+
+      const providerField = screen.getByLabelText(/^Provider/);
+      await waitFor(() => {
+        expect(providerField).toBeEnabled();
+      });
+
+      await user.click(providerField);
+      await user.click(await screen.findByRole('option', { name: 'GitHub Enterprise' }));
+
+      expect(providerField).toHaveDisplayValue('GitHub Enterprise');
+      // Selecting GitHub Enterprise reveals the GHE-only server URL field
+      expect(await screen.findByLabelText(/^Custom server URL/)).toBeInTheDocument();
     });
 
     it('should render Save button', () => {
