@@ -3,7 +3,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { OrgRole } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { type StoreState } from 'app/types/store';
@@ -33,7 +32,7 @@ const renderWithProvider = ({ initialState }: { initialState?: Partial<StoreStat
 
 describe('OrganisationSwitcher', () => {
   const originalLocation = window.location;
-  let assignMock: jest.Mock;
+  let reloadMock: jest.Mock;
 
   beforeEach(() => {
     mockDispatch.mockReset();
@@ -46,11 +45,11 @@ describe('OrganisationSwitcher', () => {
         }) as unknown as MediaQueryList
     );
 
-    assignMock = jest.fn();
+    reloadMock = jest.fn();
     Object.defineProperty(window, 'location', {
       configurable: true,
       writable: true,
-      value: { ...originalLocation, assign: assignMock },
+      value: { ...originalLocation, reload: reloadMock },
     });
   });
 
@@ -122,9 +121,8 @@ describe('OrganisationSwitcher', () => {
     expect(getUserOrganizations).not.toHaveBeenCalled();
   });
 
-  it('dispatches setUserOrganization and navigates after the request resolves', async () => {
+  it('dispatches setUserOrganization and reloads after the request resolves', async () => {
     mockDispatch.mockResolvedValueOnce(undefined);
-    config.appSubUrl = '/grafana';
 
     renderWithProvider({
       initialState: {
@@ -142,12 +140,11 @@ describe('OrganisationSwitcher', () => {
 
     expect(setUserOrganization).toHaveBeenCalledWith(2);
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
-    expect(assignMock).toHaveBeenCalledWith('/grafana/?orgId=2');
+    expect(reloadMock).toHaveBeenCalled();
   });
 
-  it('does not navigate when setUserOrganization rejects', async () => {
+  it('does not reload when setUserOrganization rejects', async () => {
     mockDispatch.mockRejectedValueOnce(new Error('boom'));
-    config.appSubUrl = '/grafana';
 
     renderWithProvider({
       initialState: {
@@ -164,6 +161,6 @@ describe('OrganisationSwitcher', () => {
     await selectOptionInTest(screen.getByRole('combobox', { name: 'Change organization' }), 'test2');
 
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
-    expect(assignMock).not.toHaveBeenCalled();
+    expect(reloadMock).not.toHaveBeenCalled();
   });
 });
