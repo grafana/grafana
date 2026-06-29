@@ -143,6 +143,10 @@ jobs:
             // pro/nightly build from main where the stamped commit is already the HEAD.
             if (workflow === 'release-build-enterprise.yml') {
               inputs["grafana-public-commit"] = PUBLIC_COMMIT;
+              // Supply run ID separately in case we ever change what BUILD_ID is.
+              // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
+              // fail together.
+              inputs["upstream-run-id"] = String(BUILD_ID);
             }
 
             await github.rest.actions.createWorkflowDispatch({

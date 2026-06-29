@@ -109,12 +109,12 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
     path: grafana/
-# GitHub App connection only:
+  # GitHub App connection only:
   connection:
     name: '<GITHUB_CONNECTION_NAME>'
 # GitHub Personal Access Token only:
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # GitLab Personal Access Token only:
 spec:
@@ -123,7 +123,7 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # Bitbucket Personal Access Token only:
 spec:
@@ -133,7 +133,7 @@ spec:
     branch: '<BRANCH>'
     tokenUser: tokenuser
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # Pure Git only:
 spec:
@@ -141,10 +141,10 @@ spec:
   git:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
-    path: "grafana/"
+    path: 'grafana/'
     tokenUser: tokenuser
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 ```
 
 Replace the placeholders with your values:

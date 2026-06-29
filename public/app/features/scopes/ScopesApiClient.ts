@@ -268,10 +268,6 @@ export class ScopesApiClient {
   };
 
   public fetchScopeNode = async (scopeNodeId: string): Promise<ScopeNode | undefined> => {
-    if (!config.featureToggles.useScopeSingleNodeEndpoint) {
-      return Promise.resolve(undefined);
-    }
-
     const subscription = dispatch(
       scopeAPIv0alpha1.endpoints.getScopeNode.initiate({ name: scopeNodeId }, { subscribe: false })
     );

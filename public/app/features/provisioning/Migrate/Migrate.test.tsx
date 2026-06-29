@@ -212,6 +212,24 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
+    it('closes the migrate drawer when it is dismissed', async () => {
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      const { user } = render(<Migrate />);
+
+      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
+      const migrateAll = await screen.findByRole('button', { name: /migrate all \(1\)/i });
+      await waitFor(() => expect(migrateAll).toBeEnabled());
+      await user.click(migrateAll);
+
+      const drawerText = /all resources not yet managed by git will be migrated/i;
+      expect(await screen.findByText(drawerText)).toBeInTheDocument();
+
+      // Cancelling dismisses the drawer.
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await waitFor(() => expect(screen.queryByText(drawerText)).not.toBeInTheDocument());
+    });
+
     it('offers a connect action instead of migrate when no write-capable repo is connected', async () => {
       // A PR-only repo can't run a migration, matching the drawer's guard.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
@@ -237,6 +255,19 @@ describe('Migrate', () => {
       await user.click(migrateEverything);
 
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
+    });
+
+    it('offers a connect action on the resource-list-error fallback when no write repo is connected', async () => {
+      // PR-only repo can't run a migration, so the error fallback surfaces the
+      // connect action instead of the migrate-everything button.
+      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+      render(<Migrate />);
+
+      expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
     });
 
     it('lists unmanaged folders in the Resources to migrate table', async () => {
@@ -398,6 +429,60 @@ describe('Migrate', () => {
       await user.click(await screen.findByRole('button', { name: /expand playlists/i }));
       expect(await screen.findByText('Morning rotation')).toBeInTheDocument();
       expect(screen.getByText('Ops wall')).toBeInTheDocument();
+    });
+
+    it('warns and keeps select-all selective when a kind fails to enumerate', async () => {
+      respondWithStats(withPlaylists);
+      enablePlaylists();
+      // The playlist apiserver list fails (500, not a 404 fallback), so the
+      // playlist kind can't be enumerated while dashboards load fine.
+      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      const { user } = render(<Migrate />);
+
+      // The incomplete list is surfaced rather than silently dropped...
+      expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
+      // ...and the dashboards that did load are still shown.
+      expect(await screen.findByText('Team A')).toBeInTheDocument();
+
+      // Selecting every displayed row stays a SELECTIVE migration — it must not
+      // escalate to migrate-everything and pull in the un-shown playlists.
+      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
+      expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate all/i })).not.toBeInTheDocument();
+    });
+
+    it('keeps an explicit migrate-everything action in the partial-failure warning', async () => {
+      respondWithStats(withPlaylists);
+      enablePlaylists();
+      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      const { user } = render(<Migrate />);
+
+      await screen.findByText(/some resource types could not be loaded/i);
+      const migrateEverything = await screen.findByRole('button', { name: /migrate everything/i });
+      await waitFor(() => expect(migrateEverything).toBeEnabled());
+      await user.click(migrateEverything);
+
+      expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
+    });
+
+    it('shows a connect action in the partial-failure warning when no write repo is connected', async () => {
+      respondWithStats(withPlaylists);
+      enablePlaylists();
+      server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      render(<Migrate />);
+
+      expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
+      // A connect action replaces the migrate-everything button (the table footer
+      // also surfaces one, hence findAll).
+      expect((await screen.findAllByRole('button', { name: /configure/i })).length).toBeGreaterThan(0);
+      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
     });
 
     it('migrates a selected playlist via a selective job', async () => {

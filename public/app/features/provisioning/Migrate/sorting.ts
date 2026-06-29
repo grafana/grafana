@@ -1,4 +1,4 @@
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 
 export type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
 

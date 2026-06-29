@@ -601,6 +601,9 @@ type Cfg struct {
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
 
+	// NATS message bus.
+	NATS NATSSettings
+
 	CustomResponseHeaders map[string]string
 
 	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
@@ -766,8 +769,14 @@ type Cfg struct {
 	EnforcedQuotaResources        []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend                bool
-	EnableSQLKVCompatibilityMode      bool
+	EnableSQLKVBackend           bool
+	EnableSQLKVCompatibilityMode bool
+	// LogSQLBackendCalls, when true, logs every call that reaches an exported
+	// method of the legacy SQL backend. Temporary smoke-test instrumentation
+	// used to confirm no production traffic still reaches sql/backend before
+	// removing the sqlkv backwards-compatibility layer.
+	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
+	LogSQLBackendCalls                bool
 	EnableKVLeases                    bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
@@ -1578,6 +1587,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readNATSSettings(cfg); err != nil {
 		return err
 	}
 

@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
@@ -43,10 +43,10 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	if err != nil {
 		return nil, err
 	}
-	if user.GetIdentityType() != authlib.TypeUser {
-		return nil, fmt.Errorf("only users may list preferences")
-	}
-	if user.GetIdentifier() == "" {
+	// Non-user identities (e.g. the image renderer) may list preferences, but
+	// they only receive the namespace (org) preferences -- never user or team ones.
+	isUser := user.GetIdentityType() == authlib.TypeUser
+	if isUser && user.GetIdentifier() == "" {
 		return nil, fmt.Errorf("user identifier is required")
 	}
 	if options == nil {
@@ -66,35 +66,8 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		Items: make([]preferences.Preferences, 0, len(groups)+2),
 	}
 
-	// Append user+team preferences
 	addPreferencesToResult := func(owner utils.OwnerReference) error {
-		switch owner.Owner {
-		case utils.NamespaceResourceOwner:
-			// OK
-		case utils.UserResourceOwner:
-			if user.GetIdentifier() != owner.Identifier {
-				return nil
-			}
-		case utils.TeamResourceOwner:
-			if !slices.Contains(groups, owner.Identifier) {
-				return nil
-			}
-		default:
-			return nil // skip
-		}
-
-		rsp, err := s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
-		if k8serrors.IsNotFound(err) {
-			return nil // don't add it to the list
-		}
-		if rsp != nil {
-			obj, ok := rsp.(*preferences.Preferences)
-			if !ok {
-				return fmt.Errorf("expected preferences, found %T", rsp)
-			}
-			result.Items = append(result.Items, *obj)
-		}
-		return err
+		return s.appendOwnerPreferences(ctx, user, isUser, owner, result)
 	}
 
 	// Try getting an explicit preferences
@@ -119,19 +92,21 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		return result, nil
 	}
 
-	// Add the explicit user values
-	if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
-		return nil, err
-	}
-
-	// predictable order
-	slices.Sort(groups)
-	for i, group := range groups {
-		if i >= PreferencesTeamLimit {
-			break // only process the first PreferencesTeamLimit -- to keep it bounded
-		}
-		if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
+	if isUser {
+		// Add the explicit user values
+		if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
 			return nil, err
+		}
+
+		// predictable order
+		slices.Sort(groups)
+		for i, group := range groups {
+			if i >= PreferencesTeamLimit {
+				break // only process the first PreferencesTeamLimit -- to keep it bounded
+			}
+			if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -141,4 +116,36 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	}
 
 	return result, nil
+}
+
+// appendOwnerPreferences fetches the preferences for a single owner and, if the
+// caller is allowed to see them and they exist, appends them to result.
+func (s *preferencesStorage) appendOwnerPreferences(ctx context.Context, user identity.Requester, isUser bool, owner utils.OwnerReference, result *preferences.PreferencesList) error {
+	switch owner.Owner {
+	case utils.NamespaceResourceOwner:
+		// OK
+	case utils.UserResourceOwner:
+		if !isUser || user.GetIdentifier() != owner.Identifier {
+			return nil
+		}
+	case utils.TeamResourceOwner:
+		if !isUser || !slices.Contains(user.GetGroups(), owner.Identifier) {
+			return nil
+		}
+	default:
+		return nil // skip
+	}
+
+	rsp, err := s.Get(ctx, owner.AsName(), &metav1.GetOptions{})
+	if k8serrors.IsNotFound(err) {
+		return nil // don't add it to the list
+	}
+	if rsp != nil {
+		obj, ok := rsp.(*preferences.Preferences)
+		if !ok {
+			return fmt.Errorf("expected preferences, found %T", rsp)
+		}
+		result.Items = append(result.Items, *obj)
+	}
+	return err
 }

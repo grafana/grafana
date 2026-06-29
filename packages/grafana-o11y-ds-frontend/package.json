@@ -46,7 +46,7 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/runtime": "13.2.0-pre",
     "@grafana/ui": "13.2.0-pre",
-    "react-use": "17.6.0",
+    "react-use": "17.6.1",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
