@@ -38,7 +38,7 @@ import { type ViewedBoundsFunctionType } from './utils';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
-function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
+export function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
   const tag = tags.find((kv) => kv.key === GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY);
   if (!tag) {
     return false;
