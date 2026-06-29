@@ -2259,7 +2259,7 @@ __metadata:
     tinycolor2: "npm:^1.6.0"
     tsx: "npm:^4.21.0"
     typescript: "npm:6.0.2"
-    uplot: "npm:1.6.32"
+    uplot: "npm:^1.6.32"
     xss: "npm:^1.0.14"
     zod: "npm:^4.3.0"
   peerDependencies:
