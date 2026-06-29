@@ -2,6 +2,7 @@ package search
 
 import (
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -130,7 +131,7 @@ func TestCellsParseRoundTrip(t *testing.T) {
 			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: ruleCells(rule)}},
 		},
 	}
-	hits := parseAlertRuleHits(resp)
+	hits := NewHandler(nil, nil).parseAlertRuleHits(resp)
 	require.Len(t, hits, 1)
 	h := hits[0]
 	assert.Equal(t, "uid1", h.Name)
@@ -152,6 +153,56 @@ func TestCellsParseRoundTrip(t *testing.T) {
 	assert.Equal(t, "slack", *h.Receiver)
 	require.NotNil(t, h.NotificationType)
 	assert.Equal(t, "SimplifiedRouting", *h.NotificationType)
+}
+
+// TestBuildSearchRequestPagination covers limit/continueToken validation and
+// clamping: malformed or out-of-range input must be rejected, and the page size
+// must be capped so a single request cannot materialize an entire tenant's rules.
+func TestBuildSearchRequestPagination(t *testing.T) {
+	gr := alertrule.ResourceInfo.GroupResource()
+
+	t.Run("rejects non-numeric limit", func(t *testing.T) {
+		_, _, err := buildSearchRequest(url.Values{"limit": {"abc"}}, "default", gr, nil)
+		require.Error(t, err)
+	})
+	t.Run("rejects non-positive limit", func(t *testing.T) {
+		for _, v := range []string{"0", "-5"} {
+			_, _, err := buildSearchRequest(url.Values{"limit": {v}}, "default", gr, nil)
+			require.Error(t, err, "limit=%s", v)
+		}
+	})
+	t.Run("clamps limit to maxLimit", func(t *testing.T) {
+		req, _, err := buildSearchRequest(url.Values{"limit": {strconv.FormatInt(maxLimit+1, 10)}}, "default", gr, nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(maxLimit), req.Limit)
+	})
+	t.Run("defaults limit when unset", func(t *testing.T) {
+		req, _, err := buildSearchRequest(url.Values{}, "default", gr, nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(defaultLimit), req.Limit)
+	})
+	t.Run("rejects invalid continueToken", func(t *testing.T) {
+		for _, v := range []string{"notanumber", "-1"} {
+			_, _, err := buildSearchRequest(url.Values{"continueToken": {v}}, "default", gr, nil)
+			require.Error(t, err, "continueToken=%s", v)
+		}
+	})
+	t.Run("accepts valid continueToken as offset", func(t *testing.T) {
+		req, offset, err := buildSearchRequest(url.Values{"continueToken": {"40"}}, "default", gr, nil)
+		require.NoError(t, err)
+		assert.Equal(t, int64(40), offset)
+		assert.Equal(t, int64(40), req.Offset)
+	})
+}
+
+// TestNonEmptyDoesNotMutateInput guards against the aliasing regression where
+// nonEmpty compacted into the caller's slice, corrupting the shared url.Values
+// backing array.
+func TestNonEmptyDoesNotMutateInput(t *testing.T) {
+	in := []string{"a", "", "b"}
+	out := nonEmpty(in)
+	assert.Equal(t, []string{"a", "b"}, out)
+	assert.Equal(t, []string{"a", "", "b"}, in)
 }
 
 func titles(rules []*ngmodels.AlertRule) []string {
