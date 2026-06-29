@@ -227,9 +227,14 @@ You can also select these optional settings:
 - Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
 - Check **Enable push to configured branch** to allow direct commits to the configured branch.
 - Check **Generate dashboards previews** to create preview links for pull requests. This option requires using image rendering and activating public access.
-- Enter a **Webhook URL** to override the auto-detected URL to register webhooks.
 
-After deciding on these options, you can chose to configure a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
+After deciding on these options, you can chose to configure **Webhooks** or a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
+
+### Webhook options
+
+In the **Webhook options** menu, you can type in an URL to override the auto-detected URL used to register webhooks.
+
+You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
 ### Advanced commit options
 
