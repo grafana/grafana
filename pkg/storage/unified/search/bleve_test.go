@@ -1062,7 +1062,7 @@ func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
 }
 
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)

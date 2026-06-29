@@ -18,15 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func setKubernetesSnapshotsToggle(t *testing.T, enabled bool) {
+func setExternalSnapshotsK8SAPIPushToggle(t *testing.T, enabled bool) {
 	t.Helper()
 	variant := "disabled"
 	if enabled {
 		variant = "enabled"
 	}
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesSnapshots: {
-			Key:            featuremgmt.FlagKubernetesSnapshots,
+		featuremgmt.FlagExternalSnapshotsK8SAPIPush: {
+			Key:            featuremgmt.FlagExternalSnapshotsK8SAPIPush,
 			DefaultVariant: variant,
 			Variants: map[string]any{
 				"enabled":  true,
@@ -62,8 +62,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		}
 	}
 
-	t.Run("with kubernetesSnapshots ON sends DELETE to new k8s endpoint", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+	t.Run("with externalSnapshotsK8SAPIPush ON sends DELETE to new k8s endpoint", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -84,8 +84,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Equal(t, "Bearer test-token", receivedReq.Header.Get("Authorization"))
 	})
 
-	t.Run("with kubernetesSnapshots OFF sends GET to legacy endpoint", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, false)
+	t.Run("with externalSnapshotsK8SAPIPush OFF sends GET to legacy endpoint", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, false)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +105,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +126,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		store := makeStore(t, "not-a-url")
 

@@ -6,7 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
-import { SaveProvisionedPlaylistDrawer } from '../provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { SaveProvisionedResourceDrawer } from '../provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
@@ -51,10 +51,11 @@ export const PlaylistNewPage = () => {
         />
       </Page.Contents>
       {provisionedPlaylist && selectedRepository && (
-        <SaveProvisionedPlaylistDrawer
-          playlist={provisionedPlaylist}
+        <SaveProvisionedResourceDrawer
+          resource={provisionedPlaylist}
+          title={provisionedPlaylist.spec?.title ?? ''}
+          action="create"
           repositoryName={selectedRepository}
-          isNew
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

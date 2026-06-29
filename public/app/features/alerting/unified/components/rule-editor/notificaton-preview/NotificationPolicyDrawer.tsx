@@ -2,9 +2,8 @@ import { Fragment, useMemo, useState } from 'react';
 
 import { AlertLabel, type RouteMatchResult, type RouteWithID } from '@grafana/alerting';
 import { Trans } from '@grafana/i18n';
-import { Button, Divider, Drawer, Text, TextLink } from '@grafana/ui';
+import { Button, Divider, Drawer, Stack, Text, TextLink } from '@grafana/ui';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { createRelativeUrl } from '../../../utils/url';
 

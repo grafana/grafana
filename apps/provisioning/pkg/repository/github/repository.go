@@ -108,7 +108,7 @@ func (r *githubRepository) GetCurrentBranch() string {
 }
 
 func (r *githubRepository) SetBranch(branch string) {
-	r.config.Spec.GitHub.Branch = branch
+	r.config.SetBranch(branch)
 	r.GitRepository.SetBranch(branch)
 }
 

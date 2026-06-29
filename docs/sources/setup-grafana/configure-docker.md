@@ -149,7 +149,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 If you run multiple Grafana installations with the same plugins, you can save time by building a customized image that includes plugins available on the [Grafana Plugin download page](/grafana/plugins). When you build a customized image, Grafana doesn't have to install the plugins each time it starts, making the startup process more efficient.
 
-> **Note:** To specify the version of a plugin, you can use the `GF_INSTALL_PLUGINS` build argument and add the version number. The latest version is used if you don't specify a version number. For example, you can use `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"` to specify the versions of two plugins.
+> **Note:** To specify the version of a plugin, you can use the `GF_INSTALL_PLUGINS` build argument and add the version number. The latest version is used if you don't specify a version number. For example, you can use `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,yesoreyeram-infinity-datasource 3.8.0"` to specify the versions of two plugins.
 
 Example:
 
@@ -163,7 +163,7 @@ cd packaging/docker/custom
 # include the plugins you want e.g. clock planel etc
 docker build \
   --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
+  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,yesoreyeram-infinity-datasource" \
   -t grafana-custom .
 
 # running the custom Grafana container using the docker run command
@@ -183,7 +183,7 @@ cd packaging/docker/custom
 # running the build command
 docker build \
   --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;my-custom-plugin,grafana-clock-panel,grafana-simple-json-datasource" \
+  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;my-custom-plugin,grafana-clock-panel,yesoreyeram-infinity-datasource" \
   -t grafana-custom .
 
 # running the docker run command
