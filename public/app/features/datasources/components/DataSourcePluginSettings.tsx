@@ -19,7 +19,7 @@ export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChang
   }
 
   return (
-    <div>
+    <div data-testid={`${plugin.meta?.id}-config-editor`}>
       {plugin.components.ConfigEditor &&
         createElement(plugin.components.ConfigEditor, {
           options: writableProxy(dataSource, {
