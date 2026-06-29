@@ -2410,7 +2410,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
-    tinycolor2: "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
