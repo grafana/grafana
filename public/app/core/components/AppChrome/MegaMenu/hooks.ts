@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
+import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
   expandPinnedUrls,
@@ -93,7 +94,21 @@ export const useNavCustomization = () => {
     [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
   );
 
-  const canCustomise = useBooleanFlagValue('grafana.customizableMegaMenu', false) && contextSrv.isSignedIn;
+  const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
+
+  // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
+  // off. Cache the variant so the KPI interactions can be stamped with it, and fire the exposure
+  // (denominator) event once per page load for the experiment population (signed-in users).
+  const variant = customizableMegaMenu ? 'treatment' : 'control';
+  useEffect(() => {
+    if (!contextSrv.isSignedIn) {
+      return;
+    }
+    setNavExperimentVariant(variant);
+    reportNavExperimentViewOnce(variant);
+  }, [variant]);
+
   // Pins come from preferences, so render a skeleton until they've loaded on first visit — otherwise
   // the menu renders un-pinned and then reflows (pins jump to the top). Cached after the first load.
   const isLoading = canCustomise && pinnedLoading;
@@ -193,13 +208,19 @@ export const useNavCustomization = () => {
       const effective = expandPinnedUrls(pinnedUrls, baseItems);
       leaves.forEach((leaf) => (isUnpin ? effective.delete(leaf) : effective.add(leaf)));
       const next = normalizePinnedUrls(effective, baseItems);
-      reportInteraction(isUnpin ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
+      reportInteraction(isUnpin ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', {
+        path: url,
+        ...getNavExperimentPayload(),
+      });
       persistPinned(next);
     } else {
       // Legacy bookmarks behaviour (flag off): single-url toggle + redux Bookmarks section update.
       const isSaved = isPinned(url);
       const newItems = isSaved ? pinnedUrls.filter((i) => url !== i) : [...pinnedUrls, url];
-      reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
+      reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', {
+        path: url,
+        ...getNavExperimentPayload(),
+      });
       persistBookmarkUrls(newItems, () => {
         setPinnedUrls(newItems);
         dispatch(setBookmark({ item, isSaved: !isSaved }));

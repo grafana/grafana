@@ -2,7 +2,7 @@ import { act, getWrapper, render, screen, userEvent, waitFor, within } from 'tes
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { reportExperimentView, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -21,10 +21,19 @@ import { AppChromeService } from '../AppChromeService';
 
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
+import { NAV_EXPERIMENT_GROUP, NAV_EXPERIMENT_ID, resetNavExperimentStateForTests } from './navExperiment';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
   OrganizationSwitcher: () => null,
+}));
+
+// Spy on the analytics reporters so we can assert the experiment exposure and the variant/org
+// stamped onto the KPI interactions, while keeping the rest of @grafana/runtime real.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+  reportExperimentView: jest.fn(),
 }));
 
 // The searcher resolves starred UIDs to nav rows but has no MSW path, so stub it.
@@ -71,6 +80,8 @@ describe('MegaMenu', () => {
     // populates the Starred section deterministically (the stars query runs regardless of sign-in).
     setMockStarredDashboards([STARRED_DASHBOARD.uid]);
     setupSearcher();
+    // The exposure guard and cached variant live in module scope, so reset them per test.
+    resetNavExperimentStateForTests();
   });
 
   afterEach(async () => {
@@ -124,11 +135,13 @@ describe('MegaMenu', () => {
       contextSrv.isSignedIn = true;
       // The preferences query skips when the user isn't signed in.
       contextSrv.user.isSignedIn = true;
+      contextSrv.user.orgId = 42;
     });
 
     afterEach(() => {
       contextSrv.isSignedIn = false;
       contextSrv.user.isSignedIn = false;
+      contextSrv.user.orgId = 0;
     });
 
     it('shows a loading skeleton until preferences have loaded, instead of the un-customised menu', async () => {
@@ -141,6 +154,53 @@ describe('MegaMenu', () => {
       expect(list).toHaveAttribute('aria-busy', 'true');
       // The real items aren't rendered yet (so there's no reflow once preferences arrive)
       expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
+    });
+
+    describe('experiment instrumentation', () => {
+      it('fires the exposure event once with the treatment variant', async () => {
+        renderMegaMenu();
+
+        await screen.findByRole('link', { name: 'Explore' });
+        expect(reportExperimentView).toHaveBeenCalledTimes(1);
+        expect(reportExperimentView).toHaveBeenCalledWith(NAV_EXPERIMENT_ID, NAV_EXPERIMENT_GROUP, 'treatment');
+      });
+
+      it('fires the exposure event with the control variant when the flag is off', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: false });
+        renderMegaMenu();
+
+        await screen.findByRole('link', { name: 'Explore' });
+        expect(reportExperimentView).toHaveBeenCalledTimes(1);
+        expect(reportExperimentView).toHaveBeenCalledWith(NAV_EXPERIMENT_ID, NAV_EXPERIMENT_GROUP, 'control');
+      });
+
+      it('stamps the variant and org onto the nav click interaction', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('link', { name: 'Explore' }));
+
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_navigation_item_clicked',
+          expect.objectContaining({ experiment_nav_customization: 'treatment', org_id: 42 })
+        );
+      });
+
+      it('stamps the variant and org onto the pin interaction', async () => {
+        const { user } = renderMegaMenu();
+
+        await screen.findByRole('link', { name: 'Dashboards' });
+        const pinButton = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Dashboards');
+        await user.click(pinButton!);
+
+        await waitFor(() =>
+          expect(reportInteraction).toHaveBeenCalledWith(
+            'grafana_nav_item_pinned',
+            expect.objectContaining({ path: '/dashboards', experiment_nav_customization: 'treatment', org_id: 42 })
+          )
+        );
+      });
     });
 
     describe('pinned items', () => {
