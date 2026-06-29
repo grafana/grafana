@@ -33,7 +33,6 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      build_id: ${{ steps.output.outputs.build_id }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -42,30 +41,23 @@ jobs:
     runs-on: ubuntu-arm64-small
     steps:
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
-      # PR_BODY is read via env (not interpolated into the script) to avoid template injection. The
-      # automated public-release PR embeds "<!-- release-build-id: <id> -->"; manual PRs won't have it.
-      env:
-        PR_BODY: ${{ github.event.pull_request.body }}
       run: |
         {
         echo "VERSION=$(echo "${HEAD_REF}" | sed -e 's/release\/.*\//v/g')"
         echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}"
         echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}"
-        echo "BUILD_ID=$(printf '%s' "$PR_BODY" | sed -nE 's/.*release-build-id: ([0-9]+).*/\1/p' | head -n1)"
         } >> "$GITHUB_ENV"
     - id: output
       run: |
         echo "dry_run: $DRY_RUN"
         echo "latest: $LATEST"
         echo "version: $VERSION"
-        echo "build_id: ${BUILD_ID:-}"
 
         {
           echo "release_branch=$(echo "$VERSION" | sed -s 's/^v/release-/g')"
           echo "dry_run=$DRY_RUN"
           echo "latest=$LATEST"
           echo "version=$VERSION"
-          echo "build_id=${BUILD_ID:-}"
         } >> "$GITHUB_OUTPUT"
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
@@ -161,23 +153,22 @@ jobs:
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
       latest: ${{ needs.setup.outputs.latest }}
 
-  # Attach this build's deb/rpm to the GitHub release so the external apt/yum repo-sync can consume
-  # them. Only runs for the automated public-release path (build_id embedded in the PR body); the
-  # manual/private path keeps publishing apt/yum inline and carries no build_id, so this is skipped.
-  # Sources packages from dl.grafana.com (no GCS) and verifies each checksum against the gcom public
-  # packages API before uploading. RPMs are the signed ones served by dl.grafana.com.
+  # Attach this release's deb/rpm to the GitHub release so the external apt/yum repo-sync can consume
+  # them. Runs for every non-+security, non-dry-run public release. The gcom public packages API is the
+  # authoritative manifest (it holds exactly this version's build), so no build id is needed. Sources
+  # packages from dl.grafana.com (no GCS) and verifies each checksum against that API before uploading.
+  # RPMs are the signed ones served by dl.grafana.com.
   attach_release_packages:
     name: Attach Linux packages to the GitHub release
     needs:
       - setup
       - create_github_release
-    if: ${{ needs.setup.outputs.build_id != '' && needs.setup.outputs.dry_run != 'true' && !contains(needs.setup.outputs.version, '+security') }}
+    if: ${{ needs.setup.outputs.dry_run != 'true' && !contains(needs.setup.outputs.version, '+security') }}
     runs-on: ubuntu-arm64-small
     permissions:
       contents: write
     env:
       VERSION: ${{ needs.setup.outputs.version }}
-      BUILD_ID: ${{ needs.setup.outputs.build_id }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
@@ -195,8 +186,8 @@ jobs:
             api="https://grafana.com/api/${product}/versions/${version}/packages"
             echo "Reading package manifest: ${api}"
             # The gcom public packages API is the authoritative manifest: each entry has url
-            # (dl.grafana.com) + sha256. Select only THIS build's deb/rpm — the new build_id-keyed
-            # filenames contain _<build_id>_, which also excludes any stale/old-format entries.
+            # (dl.grafana.com) + sha256. gcom holds exactly this version's build, so selecting by the
+            # .deb/.rpm extension yields the right set without needing a build id.
             manifest="$(curl -fsSL "$api")"
             count="$(printf '%s' "$manifest" | jq '(.items // .) | length')"
 
@@ -207,7 +198,7 @@ jobs:
               i=$((i + 1))
 
               case "$url" in
-                *_"${BUILD_ID}"_*.deb | *_"${BUILD_ID}"_*.rpm) ;;
+                *.deb | *.rpm) ;;
                 *) continue ;;
               esac
 
@@ -227,7 +218,7 @@ jobs:
           done
 
           if [ "${#files[@]}" -eq 0 ]; then
-            echo "::error::no deb/rpm found for build ${BUILD_ID} of ${version} in the gcom manifest"
+            echo "::error::no deb/rpm found for ${version} in the gcom packages manifest"
             exit 1
           fi
 

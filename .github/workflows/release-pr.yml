@@ -40,11 +40,6 @@ on:
         required: false
         type: string
         description: "Release date in format YYYY-MM-DD"
-      build_id:
-        required: false
-        type: string
-        default: ""
-        description: "The prerelease build id (grafana-security-mirror run id) for this release. When set, it is embedded in the PR body so release-comms can attach this build's deb/rpm to the GitHub release. Set by the automated public-release (auto-promote) path; empty otherwise."
 
 permissions:
   contents: read
@@ -110,7 +105,6 @@ jobs:
       LATEST: ${{ inputs.latest }}
       DRY_RUN: ${{ inputs.dry_run }}
       RUN_NUMBER: ${{ github.run_number }}
-      BUILD_ID: ${{ inputs.build_id }}
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
@@ -281,14 +275,6 @@ jobs:
           if [ "$LATEST" = "true" ]; then
             LATEST_FLAG=(-l "release/latest")
           fi
-
-          BODY="These code changes must be merged after a release is complete"
-          # When this PR comes from the automated public-release path, embed the build id so release-comms
-          # can attach this exact build's deb/rpm (from dl.grafana.com) to the GitHub release on merge.
-          if [ -n "$BUILD_ID" ]; then
-            BODY="$(printf '%s\n\n<!-- release-build-id: %s -->' "$BODY" "$BUILD_ID")"
-          fi
-
           gh pr create \
             "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
@@ -296,4 +282,4 @@ jobs:
             -B "${RELEASE_BRANCH}" \
             -H "${WORK_BRANCH}" \
             --title "Release: $VERSION" \
-            --body "$BODY"
+            --body "These code changes must be merged after a release is complete"
