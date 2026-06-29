@@ -1,17 +1,36 @@
-import { renderHook } from '@testing-library/react';
+import { render, waitFor } from 'test/test-utils';
 
 import { dateTime, type TimeRange } from '@grafana/data';
-import { SceneTimeRange, sceneGraph } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, sceneGraph } from '@grafana/scenes';
 
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardScene } from '../scene/DashboardScene';
+import { mockResizeObserver } from '../utils/test-utils';
 
-import { useControlledRefresh, useControlledTimeRange } from './EmbeddedDashboard';
+import { EmbeddedDashboard } from './EmbeddedDashboard';
+
+const mockStateManager = {
+  useState: jest.fn(),
+  loadDashboard: jest.fn(),
+  clearState: jest.fn(),
+};
+
+jest.mock('../pages/DashboardScenePageStateManager', () => ({
+  getDashboardScenePageStateManager: () => mockStateManager,
+}));
+
+jest.mock('../utils/utils', () => ({
+  ...jest.requireActual('../utils/utils'),
+  useScenesFlickeringFix: jest.fn(),
+}));
 
 function buildScene() {
   return new DashboardScene({
     title: 'embedded',
     uid: 'embedded-1',
+    meta: {},
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
   });
 }
 
@@ -19,56 +38,56 @@ function makeTimeRange(from: string, to: string): TimeRange {
   return { from: dateTime(), to: dateTime(), raw: { from, to } };
 }
 
-describe('useControlledTimeRange', () => {
-  it('pushes the controlled time range into the embedded dashboard when active', () => {
-    const model = buildScene();
-
-    renderHook(() => useControlledTimeRange(makeTimeRange('now-1h', 'now'), model, true));
-
-    expect(sceneGraph.getTimeRange(model).state.from).toBe('now-1h');
-    expect(sceneGraph.getTimeRange(model).state.to).toBe('now');
+describe('EmbeddedDashboard', () => {
+  beforeAll(() => {
+    mockResizeObserver();
   });
 
-  it('does nothing while the dashboard is not active', () => {
-    const model = buildScene();
-    const onTimeRangeChange = jest.spyOn(sceneGraph.getTimeRange(model), 'onTimeRangeChange');
-
-    renderHook(() => useControlledTimeRange(makeTimeRange('now-1h', 'now'), model, false));
-
-    expect(onTimeRangeChange).not.toHaveBeenCalled();
-    expect(sceneGraph.getTimeRange(model).state.from).toBe('now-6h');
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
-});
 
-describe('useControlledRefresh', () => {
-  it('refreshes when the token changes but not on initial mount', () => {
-    const model = buildScene();
-    const onRefresh = jest.spyOn(sceneGraph.getTimeRange(model), 'onRefresh');
+  describe('controlled timeRange', () => {
+    it('syncs the time range into the embedded dashboard', async () => {
+      const model = buildScene();
+      mockStateManager.useState.mockReturnValue({ dashboard: model });
+      const onTimeRangeChange = jest.spyOn(sceneGraph.getTimeRange(model), 'onTimeRangeChange');
 
-    const { rerender } = renderHook(({ token }) => useControlledRefresh(token, model, true), {
-      initialProps: { token: 0 },
+      render(<EmbeddedDashboard uid="embedded-1" timeRange={makeTimeRange('now-1h', 'now')} />);
+
+      await waitFor(() => expect(onTimeRangeChange).toHaveBeenCalledTimes(1));
+      expect(sceneGraph.getTimeRange(model).state.from).toBe('now-1h');
+      expect(sceneGraph.getTimeRange(model).state.to).toBe('now');
     });
 
-    // Initial token value must not trigger a refresh (would double-run queries on mount).
-    expect(onRefresh).not.toHaveBeenCalled();
+    it('updates the time range when the prop changes', async () => {
+      const model = buildScene();
+      mockStateManager.useState.mockReturnValue({ dashboard: model });
 
-    rerender({ token: 1 });
-    expect(onRefresh).toHaveBeenCalledTimes(1);
+      const { rerender } = render(<EmbeddedDashboard uid="embedded-1" timeRange={makeTimeRange('now-1h', 'now')} />);
+      await waitFor(() => expect(sceneGraph.getTimeRange(model).state.from).toBe('now-1h'));
 
-    // Re-rendering with the same token does not refresh again.
-    rerender({ token: 1 });
-    expect(onRefresh).toHaveBeenCalledTimes(1);
+      rerender(<EmbeddedDashboard uid="embedded-1" timeRange={makeTimeRange('now-15m', 'now')} />);
+      await waitFor(() => expect(sceneGraph.getTimeRange(model).state.from).toBe('now-15m'));
+    });
   });
 
-  it('does nothing while the dashboard is not active', () => {
-    const model = buildScene();
-    const onRefresh = jest.spyOn(sceneGraph.getTimeRange(model), 'onRefresh');
+  describe('controlled refreshToken', () => {
+    it('refreshes when the token changes but not on initial mount', async () => {
+      const model = buildScene();
+      mockStateManager.useState.mockReturnValue({ dashboard: model });
+      const onRefresh = jest.spyOn(sceneGraph.getTimeRange(model), 'onRefresh');
 
-    const { rerender } = renderHook(({ token }) => useControlledRefresh(token, model, false), {
-      initialProps: { token: 0 },
+      const { rerender } = render(<EmbeddedDashboard uid="embedded-1" refreshToken={0} />);
+      // Initial token value must not trigger a refresh (would double-run queries on mount).
+      await waitFor(() => expect(onRefresh).not.toHaveBeenCalled());
+
+      rerender(<EmbeddedDashboard uid="embedded-1" refreshToken={1} />);
+      await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+
+      // Re-rendering with the same token does not refresh again.
+      rerender(<EmbeddedDashboard uid="embedded-1" refreshToken={1} />);
+      expect(onRefresh).toHaveBeenCalledTimes(1);
     });
-    rerender({ token: 1 });
-
-    expect(onRefresh).not.toHaveBeenCalled();
   });
 });

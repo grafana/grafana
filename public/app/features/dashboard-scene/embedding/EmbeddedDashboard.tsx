@@ -107,8 +107,7 @@ function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void)
   }, [model, onStateChange]);
 }
 
-// Exported for unit testing.
-export function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
+function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
   useEffect(() => {
     if (!isActive || !timeRange) {
       return;
@@ -118,8 +117,7 @@ export function useControlledTimeRange(timeRange: TimeRange | undefined, model: 
   }, [timeRange, model, isActive]);
 }
 
-// Exported for unit testing.
-export function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
+function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
   const lastToken = useRef(refreshToken);
 
   useEffect(() => {
