@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { type DashboardInput, type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { type PluginDashboard } from 'app/types/plugins';
@@ -18,6 +17,12 @@ interface SuggestedDashboardsModalProps {
   isOpen: boolean;
   onDismiss: () => void;
   datasourceUid?: string;
+  /**
+   * Datasource type for the currently scoped datasource (e.g. `prometheus`). Resolved
+   * by the parent so the modal and its list child render with a consistent, non-empty
+   * value — the list keys analytics on this and only emits its `loaded` event once.
+   */
+  datasourceType?: string;
   initialMappingContext?: MappingContext | null;
   provisionedDashboards: PluginDashboard[];
   communityDashboards: GnetDashboard[];
@@ -44,6 +49,7 @@ export const SuggestedDashboardsModal = ({
   isOpen,
   onDismiss,
   datasourceUid,
+  datasourceType = '',
   initialMappingContext,
   provisionedDashboards,
   communityDashboards,
@@ -55,9 +61,6 @@ export const SuggestedDashboardsModal = ({
   const [activeView, setActiveView] = useState<ModalView>('list');
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
-
-  const { settings: datasource } = useDataSourceInstanceSettings(datasourceUid);
-  const datasourceType = datasource?.type || '';
 
   // Update state when initialMappingContext changes or modal opens/closes
   useEffect(() => {

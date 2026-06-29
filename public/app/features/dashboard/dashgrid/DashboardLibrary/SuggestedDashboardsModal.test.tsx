@@ -1,8 +1,6 @@
 import { screen, act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
 import { type MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
@@ -24,13 +22,6 @@ jest.mock('./CommunityDashboardMappingForm', () => ({
   ),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn(() => ({ isLoading: false, settings: undefined })),
-}));
-
-const mockUseDataSourceInstanceSettings = jest.mocked(useDataSourceInstanceSettings);
-
 describe('SuggestedDashboardsModal', () => {
   const defaultProps = {
     isOpen: true,
@@ -44,7 +35,6 @@ describe('SuggestedDashboardsModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedOnShowMapping = null;
-    mockUseDataSourceInstanceSettings.mockReturnValue({ isLoading: false, settings: undefined });
   });
 
   it('should render when isOpen is true', () => {
@@ -112,13 +102,8 @@ describe('SuggestedDashboardsModal', () => {
       expect(screen.getByText('Suggested dashboards')).toBeInTheDocument();
     });
 
-    it('should show datasource-specific title when datasourceUid is provided', () => {
-      mockUseDataSourceInstanceSettings.mockReturnValue({
-        isLoading: false,
-        settings: { uid: 'prom-uid', name: 'Prometheus', type: 'prometheus' } as DataSourceInstanceSettings,
-      });
-
-      render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" />);
+    it('should show datasource-specific title when datasourceType is provided', () => {
+      render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" datasourceType="prometheus" />);
 
       expect(screen.getByText('Suggested dashboards for your prometheus datasource')).toBeInTheDocument();
     });
