@@ -24,7 +24,7 @@ var ofClient = openfeature.NewDefaultClient()
 //
 // Get user preferences.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/user-{uid}
 //
 // Deprecated: true
 //
@@ -50,7 +50,7 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 //
 // Update user preferences.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/user-{uid}
 //
 // Deprecated: true
 //
@@ -85,7 +85,7 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 //
 // Patch user preferences.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/user-{uid}
 //
 // Deprecated: true
 //
@@ -175,7 +175,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 //
 // Get Current Org Prefs.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/namespace
 //
 // Deprecated: true
 //
@@ -196,7 +196,7 @@ func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Res
 //
 // Update Current Org Prefs.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/namespace
 //
 // Deprecated: true
 //
@@ -224,7 +224,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 //
 // Patch Current Org Prefs.
 //
-// Please refer to [new API](?api=preferences.grafana.app-v1).
+// Use /apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/namespace
 //
 // Deprecated: true
 //
