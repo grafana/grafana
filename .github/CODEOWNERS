@@ -762,6 +762,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
 /packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
+# Generated clients must be explicitly owned by the API's squad. The empty-owner line removes the
+# package catch-all so a new client dir with no matching line is left unowned (surfacing the gap in
+# review) rather than being silently assigned to frontend-platform/frontend-navigation.
+/packages/grafana-api-clients/src/clients/rtkq/
+# Shared client infrastructure stays with the platform owners.
+/packages/grafana-api-clients/src/clients/rtkq/createBaseQuery.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
+/packages/grafana-api-clients/src/clients/rtkq/index.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/*.alerting/ @grafana/alerting-frontend
 /packages/grafana-api-clients/src/clients/rtkq/advisor/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/correlations/ @grafana/datapro
@@ -775,6 +782,20 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/openapi
 /packages/grafana-openapi/ @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
+# Specs must be explicitly owned by the API's squad. The empty-owner line below removes the
+# package-level catch-all so a new spec with no matching line is left unowned (surfacing the gap
+# in review) rather than being silently assigned to frontend-navigation/frontend-platform.
+/packages/grafana-openapi/src/apis/
+/packages/grafana-openapi/src/apis/*.alerting.* @grafana/alerting-frontend
+/packages/grafana-openapi/src/apis/advisor.* @grafana/grafana-catalog
+/packages/grafana-openapi/src/apis/correlations.* @grafana/datapro
+/packages/grafana-openapi/src/apis/dashboard.* @grafana/dashboards-squad
+/packages/grafana-openapi/src/apis/folder.* @grafana/grafana-frontend-navigation
+/packages/grafana-openapi/src/apis/iam.* @grafana/access-squad @grafana/identity-squad
+/packages/grafana-openapi/src/apis/logsdrilldown.* @grafana/observability-logs
+/packages/grafana-openapi/src/apis/preferences.* @grafana/grafana-catalog
+/packages/grafana-openapi/src/apis/provisioning.* @grafana/grafana-frontend-navigation
+/packages/grafana-openapi/src/apis/shorturl.* @grafana/sharing-squad
 
 
 # root files, mostly frontend
