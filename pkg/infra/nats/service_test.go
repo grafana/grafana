@@ -20,6 +20,9 @@ func TestService_Disabled(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, s.IsDisabled())
 	require.ErrorIs(t, s.Health(context.Background()), ErrDisabled)
+
+	bus := ProvideBus(s)
+	require.False(t, bus.Enabled())
 }
 
 func TestService_ExternalModeHealth(t *testing.T) {
