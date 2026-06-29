@@ -235,6 +235,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/detect-breaking-changes-levitate.yml
   - name: Workflow .github/workflows/documentation-ci.yml succeeded or skipped

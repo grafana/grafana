@@ -194,6 +194,16 @@ export interface FeatureToggles {
   */
   kubernetesSnapshots?: boolean;
   /**
+  * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+  * @default false
+  */
+  externalSnapshotsK8SAPIPush?: boolean;
+  /**
+  * On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+  * @default false
+  */
+  externalSnapshotsSupportLegacyAPI?: boolean;
+  /**
   * Routes library panel requests from /api to the /apis endpoint
   * @default false
   */
@@ -880,11 +890,6 @@ export interface FeatureToggles {
   */
   fetchRulesInCompactMode?: boolean;
   /**
-  * Enables the new logs panel
-  * @default true
-  */
-  newLogsPanel?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1140,11 +1145,6 @@ export interface FeatureToggles {
   */
   favoriteDatasources?: boolean;
   /**
-  * New Log Context component
-  * @default true
-  */
-  newLogContext?: boolean;
-  /**
   * Enables new design for the Clickhouse data source configuration page
   * @default true
   */
@@ -1306,12 +1306,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Deprecated. Enables support for variables whose values can have multiple properties
-  * @deprecated
-  * @default true
-  */
-  multiPropsVariables?: boolean;
-  /**
   * Enables support for section level variables (rows and tabs)
   * @default true
   */
@@ -1441,11 +1435,6 @@ export interface FeatureToggles {
   * @default true
   */
   react19?: boolean;
-  /**
-  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
-  * @default false
-  */
-  frontendServiceUseSettingsService?: boolean;
   /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
