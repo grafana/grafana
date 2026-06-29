@@ -227,8 +227,6 @@ func (b *bus) connectOptions(role connRole) ([]natsclient.Option, error) {
 	options := []natsclient.Option{
 		natsclient.Name("grafana-nats-" + roleStr),
 		natsclient.Timeout(5 * time.Second),
-		// Retry forever so a NATS outage degrades gracefully; consumers fall
-		// back to DB polling until the connection self-heals.
 		natsclient.RetryOnFailedConnect(true),
 		natsclient.MaxReconnects(-1),
 		natsclient.ReconnectWait(2 * time.Second),
