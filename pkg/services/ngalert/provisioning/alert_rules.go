@@ -95,9 +95,11 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType                  models.RuleTypeFilter
-	Limit                     int64
-	ContinueToken             string
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+	// RuleUIDs restricts the results to rules with these UIDs (metadata.name).
+	RuleUIDs                  []string
 	GroupFilter               ListRuleStringFilter
 	FolderFilter              ListRuleStringFilter
 	TitleFilter               ListRuleStringFilter
@@ -214,6 +216,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
 			OrgID:                            user.GetOrgID(),
+			RuleUIDs:                         opts.RuleUIDs,
 			RuleGroups:                       opts.GroupFilter.Include,
 			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
 			RuleGroupExists:                  opts.GroupFilter.Exists,
