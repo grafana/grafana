@@ -29,6 +29,8 @@ const (
 	LeasesSection                 = "unified/leases"
 	SearchSnapshotManifestSection = "search/snapshot-manifest"
 	SearchSnapshotDataSection     = "search/snapshot-data"
+	// NATSPeersSection stores embedded NATS cluster peer advertisements (infra/nats discovery).
+	NATSPeersSection = "nats/peers"
 )
 
 // validSaveSections is the set of sections accepted by SqlKV.Save.
@@ -40,6 +42,7 @@ var validSaveSections = map[string]bool{
 	LeasesSection:                 true,
 	SearchSnapshotManifestSection: true,
 	SearchSnapshotDataSection:     true,
+	NATSPeersSection:              true,
 }
 
 var _ KV = &SqlKV{}
@@ -121,6 +124,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
 		tableName = "search_snapshot_data"
+	case NATSPeersSection:
+		tableName = "nats_discovery_peers"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
