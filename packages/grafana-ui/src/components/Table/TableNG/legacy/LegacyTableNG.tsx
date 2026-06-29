@@ -240,7 +240,15 @@ export function LegacyTableNG(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
-  const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
+  const nestedRows = useNestedRows(
+    rows,
+    nestedData,
+    hasNestedFrames,
+    nestedFramesFieldName,
+    filter,
+    sortColumns,
+    protoParserEnabled
+  );
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
