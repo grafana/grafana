@@ -74,7 +74,7 @@
     "d3-scale-chromatic": "^3.1.0",
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.0",
-    "eventemitter3": "5.0.1",
+    "eventemitter3": "^5.0.1",
     "history": "4.10.1",
     "lodash": "^4.17.23",
     "marked": "16.3.0",
