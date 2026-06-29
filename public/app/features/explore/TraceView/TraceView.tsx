@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type RefObject, useMemo, useState } from 'react';
-import { useAsync, useToggle } from 'react-use';
+import { useToggle } from 'react-use';
 
 import {
   CoreApp,
@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { getTemplateSrv, isAppPluginInstalled } from '@grafana/runtime';
+import { getTemplateSrv, useAppPluginInstalled } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { type TempoQuery } from '@grafana-plugins/tempo/types';
@@ -106,10 +106,7 @@ export function TraceView(props: Props) {
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
-  const { value: isAdaptiveTracesAppInstalled } = useAsync(
-    () => isAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID),
-    []
-  );
+  const { value: isAdaptiveTracesAppInstalled } = useAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID);
 
   const isRestoredByAdaptiveTraces = useMemo(() => {
     if (!isAdaptiveTracesAppInstalled) {
