@@ -769,9 +769,9 @@ describe('DashboardCard', () => {
       );
     });
 
-    it('should render Edit button when onEdit is provided', () => {
+    it('should show Edit in the actions menu when onEdit is provided', async () => {
       const mockOnEdit = jest.fn();
-      render(
+      const { user } = render(
         <DashboardCard
           title="My Custom Template"
           dashboard={createMockGnetDashboard()}
@@ -781,7 +781,9 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Edit template: My Custom Template' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+
+      expect(screen.getByRole('menuitem', { name: 'Edit template: My Custom Template' })).toBeInTheDocument();
     });
 
     it('should render tags when provided', () => {
@@ -813,7 +815,7 @@ describe('DashboardCard', () => {
       expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
     });
 
-    it('should call onEdit when the Edit button is clicked', async () => {
+    it('should call onEdit when the Edit menu item is clicked', async () => {
       const mockOnEdit = jest.fn();
       const { user } = render(
         <DashboardCard
@@ -825,10 +827,57 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Edit template: My Custom Template' }));
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Edit template: My Custom Template' }));
 
       expect(mockOnEdit).toHaveBeenCalledTimes(1);
       expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should confirm in place before calling onDelete', async () => {
+      const mockOnDelete = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete template: My Custom Template' }));
+
+      // The confirmation replaces this card's content; onDelete must not fire until confirmed.
+      expect(screen.getByText('Delete this template?')).toBeInTheDocument();
+      expect(mockOnDelete).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+
+      expect(mockOnDelete).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should not call onDelete when the deletion is cancelled', async () => {
+      const mockOnDelete = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'More actions for My Custom Template' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete template: My Custom Template' }));
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(mockOnDelete).not.toHaveBeenCalled();
+      // The card returns to its normal state.
+      expect(screen.getByRole('button', { name: 'Use template: My Custom Template' })).toBeInTheDocument();
     });
 
     it('should call onClick when the primary "Use template" button is clicked', async () => {

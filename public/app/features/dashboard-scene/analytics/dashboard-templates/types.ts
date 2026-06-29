@@ -1,4 +1,5 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
+import { type EventLocation } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 
 export interface SaveAsOpenedProperties extends EventProperty {
   /** UID of the source dashboard the user is saving as a template. Empty for new dashboards. */
@@ -49,6 +50,8 @@ export interface UpdatedMetadataProperties extends EventProperty {
 export interface DeleteCompletedProperties extends EventProperty {
   /** UID of the template resource that was deleted. */
   templateUid: string;
+  /** The UI location where the template was deleted. */
+  eventLocation: EventLocation;
 }
 
 export interface LoadedProperties extends EventProperty {

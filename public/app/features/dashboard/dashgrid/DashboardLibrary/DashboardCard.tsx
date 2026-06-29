@@ -1,16 +1,32 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, IconButton, TagList, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Box,
+  Button,
+  Dropdown,
+  Icon,
+  IconButton,
+  Menu,
+  Stack,
+  TagList,
+  Text,
+  TextLink,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { CompatibilityBadge, type CompatibilityState } from './CompatibilityBadge';
+import { NewTemplateDashboardInteractions } from './analytics/main';
+import { CONTENT_KINDS } from './constants';
 import { type GnetDashboard } from './types';
 import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
@@ -26,7 +42,7 @@ interface Details {
 interface Props {
   title: string;
   imageUrl?: string;
-  dashboard: PluginDashboard | GnetDashboard;
+  dashboard: PluginDashboard | GnetDashboard | { id: string; name: string; description: string };
   details?: Details;
   onClick: (customizeWithAssistant?: boolean) => void;
   onClose?: () => void;
@@ -44,6 +60,10 @@ interface Props {
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
   onEdit?: () => void;
+  /**
+   * Handler called when the user confirms deleting the template.
+   */
+  onDelete?: () => void | Promise<void>;
   /** Optional tags to display at the bottom of the card */
   tags?: string[];
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
@@ -67,12 +87,31 @@ function DashboardCardComponent({
   onCompatibilityCheck,
   showAssistantButton,
   onEdit,
+  onDelete,
   tags,
   createdByName,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
   const isCustomTemplate = kind === 'custom_dashboard_template';
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const onConfirmDelete = async () => {
+    if (!onDelete) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Edit and Delete live in a kebab menu on custom-template cards only.
+  const hasCardMenu = isCustomTemplate && (Boolean(onEdit) || Boolean(onDelete));
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
@@ -110,8 +149,93 @@ function DashboardCardComponent({
 
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
+  if (showDeleteConfirm) {
+    return (
+      <article className={cx(styles.card, styles.confirmCard)}>
+        <Stack direction="column" gap={2} flex={1}>
+          <Stack direction="column" justifyContent="center" gap={1} flex={1}>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Icon name="exclamation-triangle" size="lg" className={styles.confirmIcon} />
+              <Text element="h3" variant="h5">
+                <Trans i18nKey="dashboard-library.card.delete-confirm-title">Delete this template?</Trans>
+              </Text>
+            </Stack>
+            <Text color="secondary" variant="bodySmall">
+              {t(
+                'dashboard-library.card.delete-confirm-body',
+                'This permanently deletes "{{templateTitle}}". This action cannot be undone.',
+                { templateTitle: title }
+              )}
+            </Text>
+          </Stack>
+          <Stack direction="row" justifyContent="flex-end" gap={1}>
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+            >
+              <Trans i18nKey="dashboard-library.card.delete-confirm-cancel">Cancel</Trans>
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onConfirmDelete}
+              disabled={isDeleting}
+              icon={isDeleting ? 'spinner' : undefined}
+            >
+              <Trans i18nKey="dashboard-library.card.delete-confirm-confirm">Delete</Trans>
+            </Button>
+          </Stack>
+        </Stack>
+      </article>
+    );
+  }
+
   return (
     <article className={styles.card}>
+      {hasCardMenu && (
+        <div className={styles.cardMenu}>
+          <Dropdown
+            placement="bottom-end"
+            onVisibleChange={(visible) =>
+              visible &&
+              NewTemplateDashboardInteractions.dropdownMenuClicked({
+                contentKind: CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE,
+              })
+            }
+            overlay={
+              <Menu>
+                {onEdit && (
+                  <Menu.Item
+                    label={t('dashboard-library.card.edit-template-menu-item', 'Edit')}
+                    icon="pen"
+                    ariaLabel={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
+                      title,
+                    })}
+                    onClick={onEdit}
+                  />
+                )}
+                {onDelete && (
+                  <Menu.Item
+                    destructive
+                    label={t('dashboard-library.card.delete-template-menu-item', 'Delete')}
+                    icon="trash-alt"
+                    ariaLabel={t('dashboard-library.card.delete-template-button-label', 'Delete template: {{title}}', {
+                      title,
+                    })}
+                    onClick={() => setShowDeleteConfirm(true)}
+                  />
+                )}
+              </Menu>
+            }
+          >
+            <IconButton
+              name="ellipsis-v"
+              aria-label={t('dashboard-library.card.more-actions-label', 'More actions for {{title}}', { title })}
+            />
+          </Dropdown>
+        </div>
+      )}
       {!isCustomTemplate && (
         <h3 className={styles.title}>
           <span className={styles.titleWithInfo} role="group" aria-label={title}>
@@ -205,18 +329,6 @@ function DashboardCardComponent({
               )}
             >
               <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
-            </Button>
-          )}
-          {onEdit && (
-            <Button
-              variant="secondary"
-              className={styles.overlayButton}
-              onClick={onEdit}
-              aria-label={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
-                title,
-              })}
-            >
-              <Trans i18nKey="dashboard-library.card.edit-template-button">Edit</Trans>
             </Button>
           )}
         </div>
@@ -337,6 +449,7 @@ function getStyles(theme: GrafanaTheme2) {
 
   return {
     card: css({
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       width: '350px',
@@ -351,6 +464,17 @@ function getStyles(theme: GrafanaTheme2) {
           duration: theme.transitions.duration.short,
         }),
       },
+    }),
+    cardMenu: css({
+      position: 'absolute',
+      top: theme.spacing(2),
+      right: theme.spacing(1.5),
+    }),
+    confirmCard: css({
+      padding: theme.spacing(2),
+    }),
+    confirmIcon: css({
+      color: theme.colors.warning.text,
     }),
     thumbnailContainer: css({
       // Render visually above the heading while keeping heading first in source order for tab/keyboard order.
