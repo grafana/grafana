@@ -50,7 +50,9 @@ After you've created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VER
 
 ## Supported data formats
 
-Histograms support time series and any table results with one or more numerical fields.
+Histograms support time series and any table results with one or more numerical fields. They also support pre-calculated histogram data, such as frames with bucket columns and a `+Inf` bucket.
+
+When a query returns pre-calculated histogram data, Grafana shows the values calculated in the query. In that mode, options for bucket count, bucket size, bucket offset, combine series, and stacking aren't available in the panel editor.
 
 ### Examples
 

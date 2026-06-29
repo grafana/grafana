@@ -14,7 +14,7 @@ Tooltip options control the information overlay that appears when you hover over
 | [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                                                                                |
 | Hide zeros                              | When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip. |
 | Max width                               | Set the maximum width of the tooltip box.                                                                                                                                              |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                                  |
+| Max height                              | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** and only applies when you enter a value.                                   |
 
 ### Tooltip mode
 

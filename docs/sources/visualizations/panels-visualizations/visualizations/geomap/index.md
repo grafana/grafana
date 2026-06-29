@@ -226,7 +226,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are eight map layer types to choose from in a geomap.
+Geomap includes data layers and basemap layers.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
@@ -241,12 +241,12 @@ There are eight map layer types to choose from in a geomap.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 - [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
-There are also two experimental (or alpha) layer types.
+There are also two experimental layer types, which are shown with the **(Alpha)** suffix when enabled.
 
-- **Icon at last point (alpha)** renders an icon at the last data point.
-- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
+- **Icon at last point (Alpha)** renders an icon at the last data point.
+- **Dynamic GeoJSON (Alpha)** styles a GeoJSON file based on query results.
 
-To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
+To enable experimental layers, set `enable_alpha` to `true` in your configuration file:
 
 ```
 [panels]
@@ -315,7 +315,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Configures the heatmap weight or intensity from field data. The default uses a fixed value, but you can choose a field and set minimum and maximum values to scale heatmap intensity from the selected data. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -571,7 +571,8 @@ Use the JSON configuration option `default_baselayer_config` to define the defau
 - **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "carto",
   "config": {
     "theme": "auto",
@@ -586,7 +587,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="World imagery" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "world-imagery"
@@ -598,7 +600,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="Custom" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "custom",
@@ -614,6 +617,7 @@ geomap_default_baselayer = `{
 - **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "osm-standard",
   "config": {}
@@ -623,6 +627,7 @@ default_baselayer_config = `{
 - **xyz** loads a custom tile server defined by the user. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
@@ -635,6 +640,7 @@ default_baselayer_config = `{
 - **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option to properly load a default base map. Here's an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "maplibre",
   "config": {
@@ -730,7 +736,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
+Tooltips are supported for data layers that attach query rows to map features, including **Markers**, **Heatmap**, and **Photos**.
 For these layer types, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
