@@ -867,14 +867,14 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		})
 
 		created, err := unstructuredClient.Resource.Create(ctx, unstructuredRule, v1.CreateOptions{})
-		require.NoError(t, err)
-
-		createdRule := new(v0alpha1.AlertRule)
-
-		runtime.DefaultUnstructuredConverter.FromUnstructured(created.Object, createdRule)
 
 		require.NoError(t, err)
 		require.NotNil(t, created)
+
+		createdRule := new(v0alpha1.AlertRule)
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(created.Object, createdRule)
+		require.NoError(t, err)
 
 		got, err := client.Get(ctx, createdRule.Name, v1.GetOptions{})
 		require.NoError(t, err)
