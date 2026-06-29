@@ -2504,7 +2504,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
