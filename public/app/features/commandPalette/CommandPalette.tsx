@@ -17,6 +17,7 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import { bucketQueryLength } from './bucketQueryLength';
 import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction } from './types';
@@ -87,10 +88,9 @@ function CommandPaletteContents() {
     hasTypedSearchRef.current = true;
     const handle = setTimeout(() => {
       const len = q.length;
-      const queryLength = len === 0 ? 'empty' : len <= 3 ? '1-3' : len <= 10 ? '4-10' : '11+';
       reportInteraction(
         'command_palette_search_query',
-        { hasQuery: len > 0 ? 'true' : 'false', queryLength },
+        { hasQuery: len > 0 ? 'true' : 'false', queryLength: bucketQueryLength(len) },
         { silent: true }
       );
     }, 500);
