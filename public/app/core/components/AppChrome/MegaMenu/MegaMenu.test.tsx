@@ -111,6 +111,13 @@ describe('MegaMenu', () => {
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 
+  it('should filter out home', async () => {
+    renderMegaMenu({ navBarTree: nestedNavTree });
+
+    expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
   describe('customisation', () => {
     beforeEach(() => {
       setTestFlags({ [CUSTOMISE_FLAG]: true });
@@ -179,12 +186,14 @@ describe('MegaMenu', () => {
         expect(screen.getAllByRole('link', { name: 'Administration' })).toHaveLength(1);
       });
 
-      it('places the pinned block directly below Home and above the other sections', async () => {
+      it('places the pinned block at the top, above the other sections', async () => {
         renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
 
         await screen.findByRole('list', { name: 'Pinned' });
+        // Home is reached via the logo, not listed, so the pinned block leads the menu
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
         const names = screen.getAllByRole('link').map((el) => el.textContent);
-        expect(names.indexOf('Home')).toBeLessThan(names.indexOf('Administration'));
+        expect(names.indexOf('Administration')).toBe(0);
         expect(names.indexOf('Administration')).toBeLessThan(names.indexOf('Explore'));
       });
 
@@ -272,14 +281,27 @@ describe('MegaMenu', () => {
       });
 
       it('highlights a pinned item that matches the current page', async () => {
-        // Pin Home; the test renders at "/", so the pinned Home row is the current page
-        renderMegaMenu({ bookmarkUrls: ['/'] });
+        seedBookmarks(['/explore']);
+
+        // Current page is Explore, which is pinned, so the pinned Explore row is the current page
+        const chrome = new AppChromeService();
+        chrome.update({
+          sectionNav: { node: { id: 'explore', text: 'Explore', url: '/explore' }, main: { text: '' } },
+        });
+
+        const wrapper = getWrapper({
+          store: configureStore({ navBarTree: customisableNavTree }),
+          grafanaContext: { chrome },
+          renderWithRouter: true,
+          historyOptions: { initialEntries: ['/explore'] },
+        });
+        render(<MegaMenu onClose={() => {}} />, { wrapper });
 
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        expect(pinned.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+        expect(pinned.getByRole('link', { name: 'Explore' })).toHaveAttribute('aria-current', 'page');
       });
 
-      it('highlights only the pinned row (not Home) when the active page is under a pinned section', async () => {
+      it('highlights only the matching pinned row when the active page is under a pinned section', async () => {
         seedBookmarks(['/dashboards']);
 
         // Current page is "Playlists", which lives under the (fully pinned) Dashboards section
@@ -311,20 +333,8 @@ describe('MegaMenu', () => {
 
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         expect(pinned.getByRole('link', { name: 'Playlists' })).toHaveAttribute('aria-current', 'page');
-        // Home must not be highlighted just because the section was moved out of the normal nav
-        expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page');
-      });
-
-      it('does not offer a pin control on Home', async () => {
-        renderMegaMenu();
-
-        await screen.findByRole('link', { name: 'Home' });
-        const labels = screen
-          .getAllByRole('button', { hidden: true })
-          .map((button) => button.getAttribute('aria-label'));
-        expect(labels).not.toContain('Pin Home');
-        // sanity: a regular item still offers it
-        expect(labels).toContain('Pin Explore');
+        // Only the matching pinned row is current — an ancestor section isn't highlighted in its place
+        expect(pinned.getByRole('link', { name: 'Dashboards' })).not.toHaveAttribute('aria-current', 'page');
       });
 
       it('does not offer a pin control on individual starred items, only the Starred section', async () => {
@@ -349,7 +359,7 @@ describe('MegaMenu', () => {
         expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
       });
 
-      it('keeps the legacy bookmark control on Home and starred items when the flag is off', async () => {
+      it('keeps the legacy bookmark control on regular and starred items when the flag is off', async () => {
         setTestFlags({ [CUSTOMISE_FLAG]: false });
         const { user } = renderMegaMenu();
 
@@ -361,10 +371,10 @@ describe('MegaMenu', () => {
         const labels = screen
           .getAllByRole('button', { hidden: true })
           .map((button) => button.getAttribute('aria-label'));
-        expect(labels).toContain('Bookmark Home');
+        expect(labels).toContain('Bookmark Explore');
         expect(labels).toContain(`Bookmark ${STARRED_DASHBOARD.name}`);
         // ...and a bookmarked item keeps the legacy "Bookmark" tooltip, not "Unpin"
-        expect(labels).not.toContain('Unpin Home');
+        expect(labels).not.toContain('Unpin Explore');
       });
     });
 
@@ -396,8 +406,6 @@ describe('MegaMenu', () => {
         expect(
           within(screen.getByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Playlists' })
         ).toBeInTheDocument();
-        // Home stays visible above the pinned block
-        expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
 
         // Expand again
         await user.click(screen.getByRole('button', { name: 'Show unpinned items' }));
