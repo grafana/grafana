@@ -183,7 +183,7 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string)
 		return obj, nil
 	})
 
-	_, _, err := s.Storage.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
+	_, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
 	return err
 }
 
