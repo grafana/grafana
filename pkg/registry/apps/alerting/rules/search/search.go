@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,7 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const defaultLimit = 100
+const (
+	defaultLimit = 100
+	// maxLimit caps the page size a client can request. The legacy backend loads
+	// and filters the full rule set in memory before paginating, so an unbounded
+	// limit would let a single request materialize an entire tenant's rules.
+	maxLimit = 1000
+)
 
 // Handler serves the rule search custom routes. It builds a ResourceSearchRequest
 // from the query string and delegates to a dual-writer-aware search client that
@@ -52,7 +59,7 @@ func (h *Handler) SearchAlertRules(ctx context.Context, w app.CustomRouteRespons
 	return writeJSON(w, &model.GetSearchAlertRulesResponse{
 		TypeMeta:                listTypeMeta,
 		ListMeta:                metav1.ListMeta{Continue: next},
-		GetSearchAlertRulesBody: model.GetSearchAlertRulesBody{Items: parseAlertRuleHits(resp)},
+		GetSearchAlertRulesBody: model.GetSearchAlertRulesBody{Items: h.parseAlertRuleHits(resp)},
 	})
 }
 
@@ -64,7 +71,7 @@ func (h *Handler) SearchRecordingRules(ctx context.Context, w app.CustomRouteRes
 	return writeJSON(w, &model.GetSearchRecordingRulesResponse{
 		TypeMeta:                    listTypeMeta,
 		ListMeta:                    metav1.ListMeta{Continue: next},
-		GetSearchRecordingRulesBody: model.GetSearchRecordingRulesBody{Items: parseRecordingRuleHits(resp)},
+		GetSearchRecordingRulesBody: model.GetSearchRecordingRulesBody{Items: h.parseRecordingRuleHits(resp)},
 	})
 }
 
@@ -87,7 +94,7 @@ func (h *Handler) SearchRules(ctx context.Context, w app.CustomRouteResponseWrit
 	return writeJSON(w, &model.GetSearchRulesResponse{
 		TypeMeta:           listTypeMeta,
 		ListMeta:           metav1.ListMeta{Continue: next},
-		GetSearchRulesBody: model.GetSearchRulesBody{Items: parseRuleHits(resp)},
+		GetSearchRulesBody: model.GetSearchRulesBody{Items: h.parseRuleHits(resp)},
 	})
 }
 
@@ -128,15 +135,22 @@ func resourceKey(namespace string, gr schema.GroupResource) *resourcepb.Resource
 func buildSearchRequest(q url.Values, namespace string, primary schema.GroupResource, federated []schema.GroupResource) (*resourcepb.ResourceSearchRequest, int64, error) {
 	limit := int64(defaultLimit)
 	if v := q.Get("limit"); v != "" {
-		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
-			limit = n
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || n <= 0 {
+			return nil, 0, fmt.Errorf("invalid limit %q: must be a positive integer", v)
 		}
+		limit = n
+	}
+	if limit > maxLimit {
+		limit = maxLimit
 	}
 	var offset int64
 	if v := q.Get("continueToken"); v != "" {
-		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
-			offset = n
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || n < 0 {
+			return nil, 0, fmt.Errorf("invalid continueToken %q", v)
 		}
+		offset = n
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
@@ -188,11 +202,12 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 
 // rowReader reads cells from a search result table by column name.
 type rowReader struct {
-	idx map[string]int
-	row *resourcepb.ResourceTableRow
+	idx    map[string]int
+	row    *resourcepb.ResourceTableRow
+	logger log.Logger
 }
 
-func newRowReaders(resp *resourcepb.ResourceSearchResponse) []rowReader {
+func (h *Handler) newRowReaders(resp *resourcepb.ResourceSearchResponse) []rowReader {
 	if resp.Results == nil {
 		return nil
 	}
@@ -202,7 +217,7 @@ func newRowReaders(resp *resourcepb.ResourceSearchResponse) []rowReader {
 	}
 	readers := make([]rowReader, 0, len(resp.Results.Rows))
 	for _, row := range resp.Results.Rows {
-		readers = append(readers, rowReader{idx: idx, row: row})
+		readers = append(readers, rowReader{idx: idx, row: row, logger: h.logger})
 	}
 	return readers
 }
@@ -242,7 +257,9 @@ func (r rowReader) int64Ptr(name string) *int64 {
 func (r rowReader) jsonMap(name string) map[string]string {
 	var out map[string]string
 	if i, ok := r.idx[name]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
-		_ = json.Unmarshal(r.row.Cells[i], &out)
+		if err := json.Unmarshal(r.row.Cells[i], &out); err != nil {
+			r.logger.Warn("failed to decode rule search result column", "column", name, "rule", r.row.Key.GetName(), "error", err)
+		}
 	}
 	return out
 }
@@ -250,13 +267,15 @@ func (r rowReader) jsonMap(name string) map[string]string {
 func (r rowReader) datasourceUIDs() []string {
 	var out []string
 	if i, ok := r.idx[fieldDatasourceUIDs]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
-		_ = json.Unmarshal(r.row.Cells[i], &out)
+		if err := json.Unmarshal(r.row.Cells[i], &out); err != nil {
+			r.logger.Warn("failed to decode rule search result column", "column", fieldDatasourceUIDs, "rule", r.row.Key.GetName(), "error", err)
+		}
 	}
 	return out
 }
 
-func parseAlertRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchAlertRulesAlertRuleHit {
-	rows := newRowReaders(resp)
+func (h *Handler) parseAlertRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchAlertRulesAlertRuleHit {
+	rows := h.newRowReaders(resp)
 	hits := make([]model.GetSearchAlertRulesAlertRuleHit, 0, len(rows))
 	for _, r := range rows {
 		hits = append(hits, model.GetSearchAlertRulesAlertRuleHit{
@@ -282,8 +301,8 @@ func parseAlertRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSear
 	return hits
 }
 
-func parseRecordingRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRecordingRulesRecordingRuleHit {
-	rows := newRowReaders(resp)
+func (h *Handler) parseRecordingRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRecordingRulesRecordingRuleHit {
+	rows := h.newRowReaders(resp)
 	hits := make([]model.GetSearchRecordingRulesRecordingRuleHit, 0, len(rows))
 	for _, r := range rows {
 		hits = append(hits, model.GetSearchRecordingRulesRecordingRuleHit{
@@ -305,8 +324,8 @@ func parseRecordingRuleHits(resp *resourcepb.ResourceSearchResponse) []model.Get
 
 // parseRuleHits builds the cross-kind union, discriminating each row by its
 // type column into the matching variant.
-func parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRulesRuleHit {
-	rows := newRowReaders(resp)
+func (h *Handler) parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRulesRuleHit {
+	rows := h.newRowReaders(resp)
 	hits := make([]model.GetSearchRulesRuleHit, 0, len(rows))
 	for _, r := range rows {
 		hit := model.GetSearchRulesRuleHit{}
@@ -351,7 +370,7 @@ func parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRul
 }
 
 func nonEmpty(values []string) []string {
-	out := values[:0]
+	out := make([]string, 0, len(values))
 	for _, v := range values {
 		if v != "" {
 			out = append(out, v)
