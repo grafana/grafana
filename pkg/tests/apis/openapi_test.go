@@ -24,8 +24,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:      false, // required for experimental APIs
-		RBACSingleOrganization: true,  // required for the Users API
+		AppModeProduction:           false, // required for experimental APIs
+		RBACSingleOrganization:      true,  // required for the Users API
+		EnableAnnotationAppPlatform: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
@@ -37,7 +38,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			// featuremgmt.FlagDatasourcesQueryTypes,
 			featuremgmt.FlagDatasourcesLoadOpenAPI,
 			featuremgmt.FlagKubernetesCorrelations,
-			"kubernetesAnnotations",
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
 			featuremgmt.FlagKubernetesTeamsApi,
