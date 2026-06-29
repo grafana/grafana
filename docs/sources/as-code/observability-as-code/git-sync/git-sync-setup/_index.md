@@ -158,7 +158,7 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token 
 Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **API Token** text box.
-1. Paste the **Repository URL** for your BitBucket repository into the text box.
+1. Paste the **Repository URL** for your Bitbucket repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
 
