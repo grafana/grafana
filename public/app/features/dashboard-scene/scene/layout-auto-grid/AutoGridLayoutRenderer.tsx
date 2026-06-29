@@ -25,9 +25,10 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     meta: { isEmbedded },
   } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen, fitContent, matchRowHeights, dropPosition } = layoutManager.useState();
+  const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
-  const noStretchSiblings = fitContent === true && matchRowHeights === false;
+  // Off => align items to the top so a tall fit panel doesn't stretch its row siblings.
+  const noStretchSiblings = matchRowHeights === false;
 
   if (isHidden || !layoutOrchestrator) {
     return null;
@@ -95,7 +96,6 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     justifyItems: state.justifyItems || 'unset',
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
-    height: '100%',
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,
