@@ -19758,7 +19758,7 @@
     "/org/preferences": {
       "get": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "getOrgPreferences",
         "responses": {
           "200": {
@@ -19779,7 +19779,7 @@
       },
       "patch": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "patchOrgPreferences",
         "requestBody": {
           "content": {
@@ -19814,7 +19814,7 @@
       },
       "put": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "updateOrgPreferences",
         "requestBody": {
           "content": {
@@ -23654,7 +23654,7 @@
     "/user/preferences": {
       "get": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "getUserPreferences",
         "responses": {
           "200": {
@@ -23672,7 +23672,7 @@
       },
       "patch": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "patchUserPreferences",
         "requestBody": {
           "content": {
@@ -23704,7 +23704,7 @@
       },
       "put": {
         "deprecated": true,
-        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {
