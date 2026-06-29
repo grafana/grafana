@@ -22,52 +22,20 @@ var TeamSortableExtraFields = []string{
 	TEAM_SEARCH_EMAIL,
 }
 
-var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	TEAM_SEARCH_EMAIL: {
-		Name:        TEAM_SEARCH_EMAIL,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "Email of the team",
-	},
-	TEAM_SEARCH_PROVISIONED: {
-		Name:        TEAM_SEARCH_PROVISIONED,
-		Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-		Description: "Whether the team is provisioned",
-	},
-	TEAM_SEARCH_EXTERNAL_UID: {
-		Name:        TEAM_SEARCH_EXTERNAL_UID,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "External UID of the team",
-	},
-	TEAM_SEARCH_MEMBERS: {
-		Name:        TEAM_SEARCH_MEMBERS,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		IsArray:     true,
-		Description: "UIDs of users that are members of the team",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	TEAM_SEARCH_EXTERNAL_GROUPS: {
-		Name:        TEAM_SEARCH_EXTERNAL_GROUPS,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		IsArray:     true,
-		Description: "External group identifiers mapped to the team",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-}
+// TeamSearchTableColumnDefinitions exposes column-defs by name for the
+// IAM legacy SQL backend in team/legacy_search.go.
+var TeamSearchTableColumnDefinitions = tableColumnsByName(TeamSearchFields)
 
 // TeamSearchFields declares paths and types for each team search field. The
 // standard document builder uses these to extract spec values from the raw
 // JSON, avoiding a custom builder. Members is a projection over
 // spec.members[*].name so the indexed array contains member UIDs only.
 var TeamSearchFields = []resource.SearchFieldDefinition{
-	{Name: TEAM_SEARCH_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
-	{Name: TEAM_SEARCH_PROVISIONED, Path: "spec.provisioned", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
-	{Name: TEAM_SEARCH_EXTERNAL_UID, Path: "spec.externalUID", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
-	{Name: TEAM_SEARCH_MEMBERS, Path: "spec.members[*].name", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-	{Name: TEAM_SEARCH_EXTERNAL_GROUPS, Path: "spec.externalGroups", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	{Name: TEAM_SEARCH_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Email of the team"},
+	{Name: TEAM_SEARCH_PROVISIONED, Path: "spec.provisioned", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Whether the team is provisioned"},
+	{Name: TEAM_SEARCH_EXTERNAL_UID, Path: "spec.externalUID", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "External UID of the team"},
+	{Name: TEAM_SEARCH_MEMBERS, Path: "spec.members[*].name", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "UIDs of users that are members of the team"},
+	{Name: TEAM_SEARCH_EXTERNAL_GROUPS, Path: "spec.externalGroups", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "External group identifiers mapped to the team"},
 }
 
 func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {

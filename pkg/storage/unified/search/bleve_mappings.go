@@ -11,34 +11,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // fieldDefinitionsForMapping returns the SearchFieldDefinition slice that
-// drives the per-kind fields.* sub-document mapping. Provider declarations
-// win when present for (group, kindResource); otherwise the legacy
-// column-definition list is translated. Anything the helper does not emit
-// a mapping for (e.g. retrieve-only fields, or non-string fields with only
+// drives the per-kind fields.* sub-document mapping. The provider is the
+// only source of truth: a kind that wants per-kind bleve mappings must
+// register a SearchFieldsProvider. Anything the helper does not emit a
+// mapping for (retrieve-only fields, non-string fields with only
 // filter/facet under the type-aware mapper) is left to Bleve's dynamic
-// mapping at index time, which matches the previous behaviour for
-// non-filterable fields.
-func fieldDefinitionsForMapping(fields resource.SearchableDocumentFields, provider resource.SearchFieldsProvider, group, kindResource string) []resource.SearchFieldDefinition {
-	if provider != nil {
-		if defs := provider.Fields(schema.GroupVersionResource{Group: group, Resource: kindResource}); len(defs) > 0 {
-			return defs
-		}
-	}
-	if fields == nil {
+// mapping at index time.
+func fieldDefinitionsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) []resource.SearchFieldDefinition {
+	if provider == nil {
 		return nil
 	}
-	names := fields.Fields()
-	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(names))
-	for _, name := range names {
-		if def := fields.Field(name); def != nil {
-			cols = append(cols, def)
-		}
-	}
-	return resource.SearchFieldsFromTableColumns(cols)
+	return provider.Fields(schema.GroupVersionResource{Group: group, Resource: kindResource})
 }
 
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
@@ -147,12 +133,13 @@ func keywordVariantName(name string, hasText bool) string {
 }
 
 // GetBleveMappings returns the bleve index mapping for a single
-// (group, resource). When provider is non-nil and has SearchFieldDefinitions
-// registered for the (group, resource), the per-kind fields.* sub-document
-// mapping is built from those declarations. Otherwise the legacy fields
-// (SearchableDocumentFields, derived from in-tree column definitions) drive
-// the mapping. Passing both is allowed: provider wins.
-func GetBleveMappings(fields resource.SearchableDocumentFields, provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) (mapping.IndexMapping, error) {
+// (group, resource). When provider is non-nil and has
+// SearchFieldDefinitions registered for the (group, resource), the
+// per-kind fields.* sub-document mapping is built from those declarations.
+// When provider is nil, no per-kind explicit mappings are emitted and
+// every field under fields.* reaches the index through bleve's dynamic
+// mapping.
+func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 	mapper.DocValuesDynamic = false // only folder and title_phrase need DocValues
 	mapper.ScoringModel = index.BM25Scoring
@@ -161,12 +148,12 @@ func GetBleveMappings(fields resource.SearchableDocumentFields, provider resourc
 	if err != nil {
 		return nil, err
 	}
-	mapper.DefaultMapping = getBleveDocMappings(fields, provider, group, kindResource, selectableFields)
+	mapper.DefaultMapping = getBleveDocMappings(provider, group, kindResource, selectableFields)
 
 	return mapper, nil
 }
 
-func getBleveDocMappings(fields resource.SearchableDocumentFields, provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
+func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	// Standard top-level search fields are declared as SearchFieldDefinitions
@@ -190,7 +177,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, provider reso
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
-	for _, def := range fieldDefinitionsForMapping(fields, provider, group, kindResource) {
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		addCapabilityFieldMappings(fieldMapper, def)
 	}
 
