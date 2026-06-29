@@ -9353,6 +9353,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Accessible",
+        "experimentalGroup": "Experimental",
         "otherGroup": "Others"
       }
     },
