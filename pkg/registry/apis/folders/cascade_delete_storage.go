@@ -47,7 +47,10 @@ type cascadeDeleteStorage struct {
 // walked depth-first: each folder is stamped with a terminating label on the way down, and folders
 // are deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if !kubernetesFolderCascadeDeleteEnabled(ctx) {
+	// Only cascade behind the same force opt-in that validateOnDelete uses to bypass its empty
+	// check. Otherwise delegate so deleteValidation runs against the still-populated folder and
+	// rejects a non-empty delete, instead of us emptying it first.
+	if !kubernetesFolderCascadeDeleteEnabled(ctx) || !forceDeleteFromDeleteOptions(options) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
 

@@ -45,10 +45,16 @@ type fakeFolderStorage struct {
 	stamped  []string
 }
 
-func (f *fakeFolderStorage) Delete(ctx context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
+	}
+	// Mirror genericregistry: run delete admission against the fetched object before removing it.
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, fol); err != nil {
+			return nil, false, err
+		}
 	}
 	delete(f.existing, name)
 	f.deleted = append(f.deleted, name)
@@ -132,6 +138,12 @@ func ctxWithNamespace() context.Context {
 	return apirequest.WithNamespace(context.Background(), "default")
 }
 
+// forceDelete is the gracePeriodSeconds=0 opt-in required to cascade-delete a non-empty folder.
+func forceDelete() *metav1.DeleteOptions {
+	zero := int64(0)
+	return &metav1.DeleteOptions{GracePeriodSeconds: &zero}
+}
+
 func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 
@@ -145,7 +157,7 @@ func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 
 	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 
 	// Leaves are deleted before their parents, and every folder in the subtree is stamped.
@@ -165,7 +177,7 @@ func TestCascadeDelete_DeletesAllDashboardsInFolder(t *testing.T) {
 	s, dyn := newDashboardCascade(store, searcher,
 		unstructuredDashboard("default", "dash-1"), unstructuredDashboard("default", "dash-2"))
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.Equal(t, []string{"root"}, store.deleted)
 
@@ -184,7 +196,7 @@ func TestCascadeDelete_DashboardNotFoundTolerated(t *testing.T) {
 	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-ghost"}}}
 	s, _ := newDashboardCascade(store, searcher)
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.Equal(t, []string{"root"}, store.deleted)
 }
@@ -197,7 +209,7 @@ func TestCascadeDelete_DashboardClientNilSkips(t *testing.T) {
 	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
 	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.Equal(t, []string{"root"}, store.deleted)
 }
@@ -211,7 +223,7 @@ func TestCascadeDelete_DashboardClientErrorAborts(t *testing.T) {
 		return nil, errors.New("boom")
 	}}
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.Error(t, err)
 	require.Empty(t, store.deleted, "folder must not be deleted when dashboard cleanup fails")
 }
@@ -228,7 +240,7 @@ func TestCascadeDelete_DashboardDeleteErrorPropagates(t *testing.T) {
 		return true, nil, errors.New("delete failed")
 	})
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.Error(t, err)
 	require.Empty(t, store.deleted, "folder must not be deleted when a dashboard delete fails")
 }
@@ -242,9 +254,33 @@ func TestCascadeDelete_IdempotentOnMissingChild(t *testing.T) {
 
 	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_NonForceDoesNotEmptyFolder(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// Without the force opt-in, the folder must not be emptied before validation runs.
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{
+		childrenByParent:   map[string][]string{"root": {"child"}},
+		dashboardsByFolder: map[string][]string{"root": {"dash-1"}},
+	}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	// Stand-in for validateOnDelete rejecting a non-empty folder.
+	reject := func(context.Context, runtime.Object) error { return errors.New("folder is not empty") }
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", reject, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	require.Empty(t, store.deleted)
+	require.Empty(t, store.stamped, "folder must not be stamped/cascaded without the force opt-in")
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	_, err = dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
+	require.NoError(t, err, "dashboard must not be deleted without the force opt-in")
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {
@@ -255,7 +291,7 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 
 	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
 
-	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, &metav1.DeleteOptions{})
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 
 	// With the flag off only the requested folder is deleted; no cascade, no stamping.
