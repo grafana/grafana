@@ -1077,6 +1077,120 @@ func TestService_listPermission(t *testing.T) {
 	}
 }
 
+func TestService_listPermissionWithFolderAuthz(t *testing.T) {
+	const group = "widget.ext.grafana.app"
+
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	type testCase struct {
+		name string
+		// resourceScopeMap is the scope map for the resource action passed to
+		// listPermission (scopeMap[""] signals the stack role).
+		resourceScopeMap map[string]bool
+		// folderPerms are the user's folder grants, queried second.
+		folderPerms     []accesscontrol.Permission
+		folders         []store.Folder
+		verb            string
+		expectedAll     bool
+		expectedFolders []string
+	}
+
+	testCases := []testCase{
+		{
+			name:             "no stack role returns empty response",
+			resourceScopeMap: map[string]bool{},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+		},
+		{
+			name:             "resource-type wildcard does not auto-allow without folder grant",
+			resourceScopeMap: map[string]bool{"*": true},
+			folderPerms:      []accesscontrol.Permission{},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+		},
+		{
+			name:             "stack role and folders:read on parent returns folder and descendants",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "parent")},
+			folders:          []store.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			verb:             utils.VerbList,
+			expectedFolders:  []string{"parent", "child"},
+		},
+		{
+			name:             "stack role and folder grant via action-set name is matched",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:edit", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+			expectedFolders:  []string{"f1"},
+		},
+		{
+			name:             "stack role and folder wildcard returns all",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{{Action: "folders:read", Scope: "*", Kind: "*"}},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbList,
+			expectedAll:      true,
+		},
+		{
+			name:             "watch verb behaves like list",
+			resourceScopeMap: map[string]bool{"": true},
+			folderPerms:      []accesscontrol.Permission{folderPerm("folders:read", "f1")},
+			folders:          []store.Folder{{UID: "f1"}},
+			verb:             utils.VerbWatch,
+			expectedFolders:  []string{"f1"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupService()
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			fStore := &fakeStore{userID: userID, userPermissions: tc.folderPerms, folders: tc.folders, disableNsCheck: true}
+			s.store = fStore
+			s.permissionStore = fStore
+			s.folderStore = fStore
+			s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+
+			if tc.folders != nil {
+				s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
+			}
+
+			list := listRequest{
+				Namespace:    types.NamespaceInfo{Value: "default", OrgID: 1},
+				IdentityType: types.TypeUser,
+				UserUID:      "test-uid",
+				Group:        group,
+				Resource:     "widgets",
+				Verb:         tc.verb,
+				Action:       group + "/widgets:get",
+				Options:      &ListRequestOptions{},
+			}
+
+			got, err := s.listPermission(context.Background(), tc.resourceScopeMap, &list)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedAll, got.All)
+			assert.ElementsMatch(t, tc.expectedFolders, got.Folders)
+			// The folder-authz path expresses access only through Folders (or
+			// All), never Items: Items matches by object name, which is
+			// meaningless for folder-scoped CRDs. A regression that swapped
+			// buildItemList for buildFolderList would leak folder UIDs here and
+			// silently deny every object, so we assert it stays empty.
+			assert.Empty(t, got.Items)
+		})
+	}
+}
+
 func TestService_Check(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -1596,7 +1710,9 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.All)
 	})
 
-	t.Run("List: unregistered group returns items with K8s-native action", func(t *testing.T) {
+	t.Run("List: unregistered group with resource-scoped grant but no stack role returns empty", func(t *testing.T) {
+		// A scoped grant on the resource is no longer a stack role, so without
+		// an empty-scope grant the folder-authz list path returns nothing.
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w1"},
 			{Action: "unregistered.grafana.app/widgets:get", Scope: "unregistered.grafana.app/widgets:uid:w2"},
@@ -1606,10 +1722,32 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Subject:   "user:test-uid",
 			Group:     "unregistered.grafana.app",
 			Resource:  "widgets",
-			Verb:      "get",
+			Verb:      "list",
 		})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"w1", "w2"}, resp.Items)
+		assert.Empty(t, resp.Items)
+		assert.Empty(t, resp.Folders)
+		assert.False(t, resp.All)
+	})
+
+	t.Run("List: unregistered group with stack role and folder grant returns folders", func(t *testing.T) {
+		s := setup([]accesscontrol.Permission{
+			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
+			{Action: "folders:read", Scope: "folders:uid:f1", Kind: "folders", Attribute: "uid", Identifier: "f1"},
+		})
+		s.folderStore = s.store.(*fakeStore)
+		s.store.(*fakeStore).folders = []store.Folder{{UID: "f1"}}
+		resp, err := s.List(ctx, &authzv1.ListRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "unregistered.grafana.app",
+			Resource:  "widgets",
+			Verb:      "list",
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"f1"}, resp.Folders)
+		assert.Empty(t, resp.Items)
+		assert.False(t, resp.All)
 	})
 
 	t.Run("List: dashboards/annotations subresource resolves correct mapper entry", func(t *testing.T) {

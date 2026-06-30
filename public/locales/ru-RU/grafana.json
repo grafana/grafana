@@ -10020,10 +10020,16 @@
         },
         "name-limit": "Лимит",
         "name-mode": "Режим",
+        "name-overflow": "",
         "name-placement": "Размещение",
         "name-values": "Значения",
         "name-visibility": "Видимость",
         "name-width": "Ширина",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Снизу",
           "label-right": "Справа"
@@ -11368,6 +11374,8 @@
         }
       },
       "fields-section": "Поля",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
       "inline-no-scrolls": "",
@@ -12113,9 +12121,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Управление сопоставлениями групп поставщиков идентификации с ролями Grafana"
     },
     "help": {
       "title": "Справка"
@@ -14453,6 +14458,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Не удалось загрузить источник данных для этого запроса",
     "loading-datasource": "Загрузка источника данных",
     "no-query-editor-component": "Плагин источника данных не экспортирует компоненты редактора запросов"

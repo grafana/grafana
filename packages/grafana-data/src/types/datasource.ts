@@ -818,6 +818,22 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 }
 
 /**
+ * A lightweight view of a data source used for listing and selection. Carries
+ * identity fields (`uid`, `type`, `apiVersion`) and plugin metadata (`meta`),
+ * but not the per-instance settings (`jsonData`, `url`, secrets, `access`, …)
+ * which are fetched on demand when a data source is actually used.
+ */
+export interface DataSourceInstanceListItem {
+  uid: string;
+  type: string;
+  apiVersion?: string;
+  name: string;
+  meta: DataSourcePluginMeta;
+  readOnly: boolean;
+  isDefault: boolean;
+}
+
+/**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
  *
  * @deprecated -- use {@link AnnotationSupport}

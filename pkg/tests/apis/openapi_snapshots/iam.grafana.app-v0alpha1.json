@@ -6196,6 +6196,26 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo": {
+        "type": "object",
+        "required": [
+          "module",
+          "authID"
+        ],
+        "properties": {
+          "authID": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList": {
         "type": "object",
         "required": [
@@ -6263,6 +6283,17 @@
           "emailVerified": {
             "type": "boolean",
             "default": false
+          },
+          "externalAuthInfo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo"
+                }
+              ]
+            }
           },
           "grafanaAdmin": {
             "type": "boolean",

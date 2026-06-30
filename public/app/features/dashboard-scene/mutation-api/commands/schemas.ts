@@ -509,6 +509,7 @@ const rowsLayoutRowSpecSchema = z.object({
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
+  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this row.'),
 });
 
 const partialRowSpecSchema = z
@@ -523,6 +524,10 @@ const partialRowSpecSchema = z
     conditionalRendering: conditionalRenderingGroupKindSchema
       .optional()
       .describe('Show/hide rules for this row. Omit to leave unchanged.'),
+    variables: z
+      .array(variableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this row. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
@@ -530,6 +535,7 @@ const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
+  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this tab.'),
 });
 
 const partialTabSpecSchema = z
@@ -541,6 +547,10 @@ const partialTabSpecSchema = z
     conditionalRendering: conditionalRenderingGroupKindSchema
       .optional()
       .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
+    variables: z
+      .array(variableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this tab. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
@@ -647,15 +657,42 @@ const partialAnnotationQueryKindSchema = z.object({
 const addVariablePayloadSchema = z.object({
   variable: variableKindSchema.describe('Variable definition (VariableKind)'),
   position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = dashboard-level variables; "/rows/N" or "/tabs/N" (or nested) = section variables on that row or tab.'
+    ),
 });
 
 const updateVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to update'),
   variable: variableKindSchema.describe('New variable definition (VariableKind)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path (e.g. "/rows/0") to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
 });
 
 const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
+});
+
+const listVariablesPayloadSchema = z.object({
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = list dashboard-level variables; "/rows/N" or "/tabs/N" = list variables for that section only.'
+    ),
 });
 
 // Annotation payload schemas
@@ -1083,23 +1120,55 @@ const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
+const dashboardLinkSchema = z.object({
+  title: z.string().describe('Link label shown in the dashboard top bar'),
+  url: z.string().optional().describe('Link target URL (required when type is "link")'),
+  type: z
+    .enum(['link', 'dashboards'])
+    .optional()
+    .default('link')
+    .describe('Link type: "link" (single URL) or "dashboards" (by tags)'),
+  tooltip: z.string().optional().describe('Hover tooltip'),
+  icon: z.string().optional().describe('Icon name, e.g. "external link"'),
+  targetBlank: z.boolean().optional().describe('Open in a new tab'),
+  asDropdown: z.boolean().optional().describe('Render tag-based links as a dropdown'),
+  includeVars: z.boolean().optional().describe('Append current template variable values to the link'),
+  keepTime: z.boolean().optional().describe('Append the current time range to the link'),
+  tags: z.array(z.string()).optional().describe('Tags used when type is "dashboards"'),
+  placement: z
+    .literal('inControlsMenu')
+    .optional()
+    .describe('Render the link in the dashboard controls dropdown menu instead of above the panels'),
+});
+
+const timeSettingsSchema = z
+  .object({
+    from: z.string().optional().describe('Start of time range (e.g. "now-6h")'),
+    to: z.string().optional().describe('End of time range (e.g. "now")'),
+    autoRefresh: z
+      .string()
+      .optional()
+      .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+    timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  })
+  .describe('Dashboard time settings. Partial update: only the provided fields change.');
+
 const updateDashboardSettingsPayloadSchema = z.object({
   title: z.string().optional().describe('Dashboard title'),
   description: z.string().optional().describe('Dashboard description'),
   tags: z.array(z.string()).optional().describe('Dashboard tags'),
-  refresh: z
-    .string()
-    .optional()
-    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
-  timeRange: z
-    .object({
-      from: z.string().describe('Start of time range (e.g. "now-6h")'),
-      to: z.string().describe('End of time range (e.g. "now")'),
-    })
-    .optional()
-    .describe('Dashboard time range'),
-  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
   editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+  cursorSync: z
+    .enum(['Off', 'Crosshair', 'Tooltip'])
+    .optional()
+    .describe('Shared crosshair/tooltip behavior across panels'),
+  links: z
+    .array(dashboardLinkSchema)
+    .optional()
+    .describe('Replaces the full dashboard links list. Pass [] to clear all links.'),
+  timeSettings: timeSettingsSchema.optional(),
+  liveNow: z.boolean().optional().describe('Continuously redraw panels to keep live data moving left'),
+  preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
 /**
@@ -1112,13 +1181,13 @@ export const payloads = {
   addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
-  listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
   addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
   updateAnnotation: updateAnnotationPayloadSchema.describe(
     'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
   ),
   removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
   listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
+  listVariables: listVariablesPayloadSchema.describe('List template variables for a scope (dashboard or section)'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
   getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
   addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),
@@ -1139,8 +1208,10 @@ export const payloads = {
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),
-  getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  getDashboardInfo: emptyPayloadSchema.describe(
+    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
-    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+    'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
 };

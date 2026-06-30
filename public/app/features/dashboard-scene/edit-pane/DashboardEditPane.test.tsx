@@ -27,7 +27,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
-import { DashboardOutline } from './DashboardOutline';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { dashboardEditActions } from './shared';
 
 jest.mock('@grafana/runtime', () => ({

@@ -71,9 +71,10 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
 
   const typeConfig = useQueryEditorTypeConfig();
   const { dsSettings } = useDatasourceContext();
+  const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
-  const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings);
+  const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
   const editorType = getStackedQueryEditorType(query);
   const isExpression = editorType === QueryEditorType.Expression;
