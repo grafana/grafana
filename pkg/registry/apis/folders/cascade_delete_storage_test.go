@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/dynamic"
@@ -409,6 +410,43 @@ func TestCascadeDelete_RootValidationRejectsBeforeCascade(t *testing.T) {
 	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
 	_, getErr := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
 	require.NoError(t, getErr, "dashboard must survive a rejected root delete")
+}
+
+func TestCascadeDelete_StalePreconditionAbortsBeforeCascade(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	root := newFolder("root")
+	root.UID = "uid-1"
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": newFolder("child")}}
+	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+
+	stale := apitypes.UID("uid-stale")
+	opts := forceDelete()
+	opts.Preconditions = &metav1.Preconditions{UID: &stale}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+	require.True(t, apierrors.IsConflict(err))
+	require.Empty(t, store.deleted)
+	require.Empty(t, store.stamped)
+	require.Contains(t, store.existing, "child", "child must survive a failed precondition")
+}
+
+func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	root := newFolder("root")
+	root.UID = "uid-1"
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	uid := apitypes.UID("uid-1")
+	opts := forceDelete()
+	opts.Preconditions = &metav1.Preconditions{UID: &uid}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {

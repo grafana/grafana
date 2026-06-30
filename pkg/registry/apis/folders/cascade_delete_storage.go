@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -59,21 +60,55 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	// Validate the requested folder delete up-front so a rejected delete does not first destroy the
-	// descendants. The validation is bound to the requested folder; children inherit the forced
-	// cascade and are not re-validated (folder delete admission is the empty check, which force
-	// bypasses anyway).
+	// Validate and enforce preconditions on the requested folder up-front, before any destructive
+	// cascade: a rejected delete must not first destroy descendants, and markTerminating changes the
+	// root's resourceVersion so an RV precondition can't be deferred to the final delete. The cascade
+	// then runs without preconditions (they're folder-specific and already enforced here).
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
 	if deleteValidation != nil {
-		obj, err := s.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return nil, false, err
-		}
 		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err
 		}
 	}
+	if err := checkDeletePreconditions(obj, options); err != nil {
+		return nil, false, err
+	}
 
-	return s.cascadeDelete(ctx, ns.Value, name, options, true)
+	return s.cascadeDelete(ctx, ns.Value, name, withoutPreconditions(options), true)
+}
+
+// checkDeletePreconditions enforces DeleteOptions.Preconditions (uid/resourceVersion) against obj.
+func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions) error {
+	if options == nil || options.Preconditions == nil {
+		return nil
+	}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	gr := foldersv1.FolderResourceInfo.GroupResource()
+	pre := options.Preconditions
+	if pre.UID != nil && *pre.UID != meta.GetUID() {
+		return apierrors.NewConflict(gr, meta.GetName(), fmt.Errorf("precondition uid %q does not match %q", *pre.UID, meta.GetUID()))
+	}
+	if pre.ResourceVersion != nil && *pre.ResourceVersion != meta.GetResourceVersion() {
+		return apierrors.NewConflict(gr, meta.GetName(), fmt.Errorf("precondition resourceVersion %q does not match %q", *pre.ResourceVersion, meta.GetResourceVersion()))
+	}
+	return nil
+}
+
+// withoutPreconditions returns options with Preconditions cleared, so the cascade's updates/deletes
+// don't fail on the root's (now-stale after markTerminating) RV or on children's differing uid/RV.
+func withoutPreconditions(options *metav1.DeleteOptions) *metav1.DeleteOptions {
+	if options == nil || options.Preconditions == nil {
+		return options
+	}
+	cp := *options
+	cp.Preconditions = nil
+	return &cp
 }
 
 // cascadeDelete performs the depth-first deletion of the folder identified by name and all of its
@@ -251,7 +286,8 @@ func (s *cascadeDeleteStorage) childFolders(ctx context.Context, namespace, pare
 		}
 		all = append(all, children...)
 		hasMore = more
-		offset += childFolderPageSize
+		// Advance by the rows actually returned so a short page doesn't skip the remainder.
+		offset += int64(len(children))
 	}
 
 	return all, nil
