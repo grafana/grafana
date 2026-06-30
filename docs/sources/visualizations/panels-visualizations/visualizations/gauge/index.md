@@ -146,7 +146,7 @@ Adjust how the gauge is displayed.
 | [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. This option is on by default. |
 | [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
 | Show labels | Control whether threshold and neutral labels are shown outside of the gauge. |
-| Endpoint marker | Choose how to mark the current value endpoint. Choose from **Point**, **Glow**, or **None**. **Glow** is available only in dark mode. |
+| Endpoint marker | Choose how to mark the current value endpoint. Choose from **Point**, **Glow**, or **None**. **Glow** is available only in dark mode. This option only applies when the **Bar style** is **Rounded**. |
 | Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value. This effect is on by default.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
 
 <!-- prettier-ignore-end -->
