@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import {
   createDataFrame,
@@ -133,11 +133,13 @@ describe('HistogramPanel', () => {
       }
     );
 
-    expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
-    expect(screen.getByText('Bucket')).toBeVisible();
-    expect(screen.getByText('0 - 1')).toBeVisible();
-    expect(screen.getByText('count')).toBeVisible();
-    expect(screen.getByText('5')).toBeVisible();
+    const tooltip = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+
+    expect(tooltip).toBeVisible();
+    expect(within(tooltip).getByText('Bucket')).toBeVisible();
+    expect(within(tooltip).getByText('0 - 1')).toBeVisible();
+    expect(within(tooltip).getByText('count')).toBeVisible();
+    expect(within(tooltip).getByText('5')).toBeVisible();
   });
 
   it('renders histogram from explicit histogram fields via getHistogramFields when series has one frame', () => {

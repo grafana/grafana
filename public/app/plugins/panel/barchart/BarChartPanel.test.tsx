@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -231,9 +231,10 @@ describe('BarChartPanel', () => {
         legend: { ...baseLegend, showLegend: false },
       });
 
-      expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
-      expect(screen.getByText('a')).toBeVisible();
-      expect(screen.getByText('10')).toBeVisible();
+      const tooltip = screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
+      expect(tooltip).toBeVisible();
+      expect(within(tooltip).getByText('a')).toBeVisible();
+      expect(within(tooltip).getByText('10')).toBeVisible();
     });
   });
 
