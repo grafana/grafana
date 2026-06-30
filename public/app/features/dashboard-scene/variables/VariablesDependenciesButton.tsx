@@ -41,7 +41,7 @@ export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) =
               reportInteraction('Show variable dependencies');
               showModal();
             }}
-            data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.showDependenciesButton}
           >
             <Trans i18nKey="variables.variables-dependencies-button.show-dependencies">Show dependencies</Trans>
           </Button>

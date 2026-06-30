@@ -14,12 +14,12 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { FlagKeys } from '../../../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
