@@ -209,8 +209,7 @@ func (s *Service) k8sCtxWithIdentity(ctx context.Context) context.Context {
 	if id, ok := identity.OrgIDFrom(ctx); ok && id != 0 {
 		orgID = id
 	}
-	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
-	return ctx
+	return identity.WithServiceIdentityContext(ctx, orgID)
 }
 
 // k8sCtxForSelfRead elevates ctx to the service identity when the caller is a
