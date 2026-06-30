@@ -39,10 +39,12 @@ export interface ItemClickedProperties extends EventProperty {
   /** Whether the suggested dashboards assistant is enabled. */
   isSuggestedDashboardAssistantButtonEnabled?: boolean;
   /** The action taken by the user on the library item. */
-  action?: 'view_template' | 'use_dashboard' | 'assistant';
+  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'edit_template';
 }
 
 export interface SearchPerformedProperties extends EventProperty {
+  /** The categories of content being searched. */
+  contentKinds: ContentKind[];
   /** Plugin IDs of data sources used as search filters. */
   datasourceTypes: string[];
   /** The UI surface the user came from when they opened the library. */
@@ -52,6 +54,23 @@ export interface SearchPerformedProperties extends EventProperty {
   /** Whether the query returned at least one result. */
   hasResults: boolean;
   /** Number of items matching the query. */
+  resultCount: number;
+}
+
+export interface FiltersAppliedProperties extends EventProperty {
+  /** The categories of content being filtered. */
+  contentKinds: ContentKind[];
+  /** The UI surface the user came from when they opened the library. */
+  sourceEntryPoint: SourceEntryPoint;
+  /** The specific UI location within the product where the filter changed. */
+  eventLocation: EventLocation;
+  /** Which filter category changed. */
+  filterType: 'tags' | 'creators' | 'sort';
+  /** Number of values selected for the filter after the change. */
+  selectedCount: number;
+  /** The current sort direction, when filterType is 'sort'. */
+  sortValue?: string;
+  /** Number of items remaining after applying the filter. */
   resultCount: number;
 }
 
@@ -97,7 +116,10 @@ export interface EntryPointClickedProperties extends EventProperty {
   /** The specific entry point (button, link, etc.) the user interacted with. */
   entryPoint: SourceEntryPoint;
   /** The category of content accessible through this entry point. */
-  contentKind: ContentKind;
+  /** @deprecated Use contentKinds instead. */
+  contentKind: ContentKind | undefined;
+  /** The categories of content accessible through this entry point. */
+  contentKinds: ContentKind[];
 }
 
 export interface CreateFromScratchClickedProperties extends EventProperty {

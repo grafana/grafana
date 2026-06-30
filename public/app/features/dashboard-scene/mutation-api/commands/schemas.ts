@@ -1120,23 +1120,55 @@ const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
+const dashboardLinkSchema = z.object({
+  title: z.string().describe('Link label shown in the dashboard top bar'),
+  url: z.string().optional().describe('Link target URL (required when type is "link")'),
+  type: z
+    .enum(['link', 'dashboards'])
+    .optional()
+    .default('link')
+    .describe('Link type: "link" (single URL) or "dashboards" (by tags)'),
+  tooltip: z.string().optional().describe('Hover tooltip'),
+  icon: z.string().optional().describe('Icon name, e.g. "external link"'),
+  targetBlank: z.boolean().optional().describe('Open in a new tab'),
+  asDropdown: z.boolean().optional().describe('Render tag-based links as a dropdown'),
+  includeVars: z.boolean().optional().describe('Append current template variable values to the link'),
+  keepTime: z.boolean().optional().describe('Append the current time range to the link'),
+  tags: z.array(z.string()).optional().describe('Tags used when type is "dashboards"'),
+  placement: z
+    .literal('inControlsMenu')
+    .optional()
+    .describe('Render the link in the dashboard controls dropdown menu instead of above the panels'),
+});
+
+const timeSettingsSchema = z
+  .object({
+    from: z.string().optional().describe('Start of time range (e.g. "now-6h")'),
+    to: z.string().optional().describe('End of time range (e.g. "now")'),
+    autoRefresh: z
+      .string()
+      .optional()
+      .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+    timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  })
+  .describe('Dashboard time settings. Partial update: only the provided fields change.');
+
 const updateDashboardSettingsPayloadSchema = z.object({
   title: z.string().optional().describe('Dashboard title'),
   description: z.string().optional().describe('Dashboard description'),
   tags: z.array(z.string()).optional().describe('Dashboard tags'),
-  refresh: z
-    .string()
-    .optional()
-    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
-  timeRange: z
-    .object({
-      from: z.string().describe('Start of time range (e.g. "now-6h")'),
-      to: z.string().describe('End of time range (e.g. "now")'),
-    })
-    .optional()
-    .describe('Dashboard time range'),
-  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
   editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+  cursorSync: z
+    .enum(['Off', 'Crosshair', 'Tooltip'])
+    .optional()
+    .describe('Shared crosshair/tooltip behavior across panels'),
+  links: z
+    .array(dashboardLinkSchema)
+    .optional()
+    .describe('Replaces the full dashboard links list. Pass [] to clear all links.'),
+  timeSettings: timeSettingsSchema.optional(),
+  liveNow: z.boolean().optional().describe('Continuously redraw panels to keep live data moving left'),
+  preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
 /**
@@ -1176,8 +1208,10 @@ export const payloads = {
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),
-  getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  getDashboardInfo: emptyPayloadSchema.describe(
+    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
+  ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
-    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+    'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
 };

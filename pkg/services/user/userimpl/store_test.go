@@ -455,30 +455,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Update HelpFlags", func(t *testing.T) {
-		id, err := userStore.Insert(context.Background(), &user.User{
-			Email:      "help@test.com",
-			Name:       "help",
-			Login:      "help",
-			Updated:    time.Now(),
-			Created:    time.Now(),
-			LastSeenAt: time.Now(),
-		})
-		require.NoError(t, err)
-		original, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		helpflags := user.HelpFlags1(1)
-		err = userStore.Update(context.Background(), &user.UpdateUserCommand{UserID: id, HelpFlags1: &helpflags})
-		require.NoError(t, err)
-
-		got, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		original.HelpFlags1 = helpflags
-		assertEqualUser(t, original, got)
-	})
-
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = db.InitTestDB(t)
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
@@ -1112,18 +1088,6 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), stats)
 	})
-}
-
-func assertEqualUser(t *testing.T, expected, got *user.User) {
-	// zero out time fields
-	expected.Updated = time.Time{}
-	expected.Created = time.Time{}
-	expected.LastSeenAt = time.Time{}
-	got.Updated = time.Time{}
-	got.Created = time.Time{}
-	got.LastSeenAt = time.Time{}
-
-	assert.Equal(t, expected, got)
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {

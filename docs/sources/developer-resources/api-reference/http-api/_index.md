@@ -31,7 +31,7 @@ If you need to manage or access other resources from your [Grafana Cloud Stack](
 
 Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
 
-To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
+To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/).
 
 ## The Grafana API specification
 
@@ -40,7 +40,7 @@ HTTP API specs are available in Swagger:
 - [OpenAPI v2 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json)
 - [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json), generated from the v2 specs
 
-You can browser and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
+You can browse and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
 
 ## Authentication
 

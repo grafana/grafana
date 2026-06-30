@@ -4,7 +4,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
@@ -15,14 +15,37 @@ export interface Props {
   url: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
+  /** Whether to render the bookmark/pin control at all (default true) */
+  showPin?: boolean;
+  /** Customisation is enabled — switches the control to the pin icon and "Pin"/"Unpin" wording; off keeps the legacy bookmark icon and wording */
+  canCustomise?: boolean;
   itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({
+  children,
+  isActive,
+  onClick,
+  target,
+  url,
+  onPin,
+  isPinned,
+  showPin = true,
+  canCustomise,
+  itemName,
+}: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
+
+  // Flag on: pin/unpin wording. Flag off: the legacy "Bookmark" wording.
+  let pinTooltip = t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName });
+  if (canCustomise) {
+    pinTooltip = isPinned
+      ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName })
+      : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', { itemName });
+  }
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -47,15 +70,19 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
-        <IconButton
-          name="bookmark"
-          className={'pin-icon'}
-          iconType={isPinned ? 'solid' : 'default'}
-          onClick={() => onPin(url)}
-          aria-pressed={isPinned}
-          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
-        />
+      {showPin && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+        <Stack alignItems="center" gap={0} shrink={0}>
+          <IconButton
+            // No "unpin" icon exists, so the pinned/unpinned distinction is carried by the
+            // tooltip and aria-pressed. iconType is a no-op for the custom gf- icon.
+            name={canCustomise ? 'gf-pin' : 'bookmark'}
+            className={'pin-icon'}
+            iconType={isPinned ? 'solid' : 'default'}
+            onClick={() => onPin(url)}
+            aria-pressed={isPinned}
+            tooltip={pinTooltip}
+          />
+        </Stack>
       )}
     </div>
   );
@@ -66,16 +93,14 @@ MegaMenuItemText.displayName = 'MegaMenuItemText';
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   wrapper: css({
     display: 'flex',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     height: '100%',
+    // The pin control only shows on hover/focus.
     '.pin-icon': {
       visibility: 'hidden',
     },
     '&:hover, &:focus-within': {
-      a: {
-        width: 'calc(100% - 20px)',
-      },
       '.pin-icon': {
         visibility: 'visible',
       },
@@ -105,7 +130,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     height: '100%',
     position: 'relative',
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
 
     '&:hover span, &:focus-visible span': {
       color: theme.colors.text.primary,

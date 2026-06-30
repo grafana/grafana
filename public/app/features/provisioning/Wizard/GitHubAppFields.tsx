@@ -11,6 +11,7 @@ import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
@@ -45,6 +46,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       appID: '',
       installationID: '',
       privateKey: '',
+      webhookDisabled: false,
     },
   });
 
@@ -77,12 +79,13 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
+    const { title, description, appID, installationID, privateKey, webhookDisabled } = credentialForm.getValues();
     const spec: ConnectionSpec = {
       type: 'github',
       title,
       ...(description && { description }),
       github: { appID, installationID },
+      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
     };
 
     const defaultErrorMessage = t(
@@ -220,6 +223,11 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
             required
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
+          />
+          <WebhookDisabledField
+            registration={credentialForm.register('webhookDisabled')}
+            invalid={!!credentialForm.formState.errors.webhookDisabled}
+            error={credentialForm.formState.errors.webhookDisabled?.message}
           />
         </FormProvider>
       )}

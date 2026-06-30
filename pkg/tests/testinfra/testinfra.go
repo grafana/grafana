@@ -826,6 +826,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("allow_insecure", "true")
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningPublicRootURL != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("public_root_url", opts.ProvisioningPublicRootURL)
+		require.NoError(t, err)
+	}
 	if len(opts.ProvisioningRepositoryTypes) > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -947,6 +953,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("runtime_config", opts.APIServerRuntimeConfig)
 		require.NoError(t, err)
 	}
+
+	if opts.ScopesApiEnabled {
+		section, err := getOrCreateSection("scopes")
+		require.NoError(t, err)
+		_, err = section.NewKey("api_enabled", "true")
+		require.NoError(t, err)
+	}
+
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
@@ -1026,6 +1040,7 @@ type GrafanaOpts struct {
 	PermittedProvisioningPaths                           string
 	ProvisioningAllowedTargets                           []string
 	ProvisioningAllowInsecure                            bool
+	ProvisioningPublicRootURL                            string
 	ProvisioningRepositoryTypes                          []string
 	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
@@ -1072,6 +1087,9 @@ type GrafanaOpts struct {
 	HASingleNodeEvaluation bool
 
 	EnableAnnotationAppPlatform bool
+
+	// Enables Scope Api
+	ScopesApiEnabled bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
