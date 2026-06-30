@@ -9,4 +9,4 @@
  * and be subject to the standard policies
  */
 
-export {};
+export { DEFAULT_TAG_COLORS } from './themes/createComponents';
