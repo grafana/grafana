@@ -262,7 +262,7 @@ export const CandlestickPanel = ({
       {(uplotConfig, alignedFrame) => {
         return (
           <>
-            <KeyboardPlugin config={uplotConfig} />
+            <KeyboardPlugin config={uplotConfig} frames={data.series} showA11y />
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}

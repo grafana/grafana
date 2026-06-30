@@ -26,7 +26,7 @@ export const UPlotA11y = memo(({ frames, id }: Props) => {
 
   if (validFrames.length === 0) {
     return (
-      <div className="sr-only" id={id}>
+      <div className="sr-only" id={id} data-testid="uplot-a11y">
         <Trans i18nKey="grafana-ui.uplot-a11y.no-data">Chart has no data to display.</Trans>
       </div>
     );
@@ -38,7 +38,7 @@ export const UPlotA11y = memo(({ frames, id }: Props) => {
   const visibleFrames = validFrames.slice(start, start + FRAMES_PER_PAGE);
 
   return (
-    <div className="sr-only" id={id}>
+    <div className="sr-only" id={id} data-testid="uplot-a11y">
       {visibleFrames.map((frame, i) => (
         <FrameA11yTable key={start + i} frame={frame} allFrames={validFrames} />
       ))}

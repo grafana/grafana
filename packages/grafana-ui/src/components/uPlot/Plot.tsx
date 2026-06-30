@@ -1,7 +1,6 @@
 import { Component, createRef } from 'react';
 import uPlot, { type AlignedData, type Options } from 'uplot';
 
-import { UPlotA11y } from './UPlotA11y';
 import { type PlotProps } from './types';
 import { pluginLog } from './utils';
 
@@ -23,8 +22,6 @@ type UPlotChartState = {
   plot: uPlot | null;
 };
 
-let uniqueIdCounter = 0;
-
 /**
  * @internal
  * uPlot abstraction responsible for plot initialisation, setup and refresh
@@ -35,13 +32,6 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
   plotInstance: uPlot | null = null;
-  uniqueA11yId: string;
-
-  constructor(props: PlotProps) {
-    super(props);
-    this.uniqueA11yId = `uplot-a11y-${uniqueIdCounter}`;
-    uniqueIdCounter++;
-  }
 
   reinitPlot() {
     let { width, height, plotRef } = this.props;
@@ -73,14 +63,6 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
     }
 
     this.plotInstance = plot;
-
-    // accessibility attribute monkeypatching each time we get a new uPlot instance.
-    this.plotInstance.over?.setAttribute('tabindex', '-1');
-
-    this.plotInstance.root?.setAttribute('tabindex', '0');
-    this.plotInstance.root?.setAttribute('role', 'figure');
-    this.plotInstance.root?.setAttribute('aria-label', config.title ?? 'uPlot chart');
-    this.plotInstance.root?.setAttribute('aria-describedby', this.uniqueA11yId);
   }
 
   componentDidMount() {
@@ -109,7 +91,6 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
       <div style={{ position: 'relative' }}>
         <div ref={this.plotContainer} data-testid="uplot-main-div" />
         {this.props.children}
-        <UPlotA11y frames={this.props.frames} id={this.uniqueA11yId} />
       </div>
     );
   }

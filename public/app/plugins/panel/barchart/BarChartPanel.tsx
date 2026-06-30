@@ -154,7 +154,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       legend={legendComp}
     >
       {(vizWidth, vizHeight) => (
-        <UPlotChart config={builder!} data={plotData} frames={data.series} width={vizWidth} height={vizHeight}>
+        <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}

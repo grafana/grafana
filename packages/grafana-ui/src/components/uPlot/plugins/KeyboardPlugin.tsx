@@ -1,11 +1,19 @@
-import { useLayoutEffect } from 'react';
+import { useId, useLayoutEffect } from 'react';
 import type uPlot from 'uplot';
 
+import { type DataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
+
 import { clamp } from '../../../utils/clamp';
+import { UPlotA11y } from '../UPlotA11y';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface KeyboardPluginProps {
   config: UPlotConfigBuilder; // onkeypress, onkeyup, onkeydown (triggered by vizlayout handlers)
+  // Source DataFrames rendered into the screen-reader-only table linked to the chart via aria-details.
+  frames?: DataFrame[];
+  // if true, renders the accessibility table for screen readers.
+  showA11y?: boolean;
 }
 
 const PIXELS_PER_MS = 0.1 as const;
@@ -168,8 +176,47 @@ const initHook = (u: uPlot) => {
   (u.hooks.destroy ??= []).push(onDestroy);
 };
 
-export const KeyboardPlugin = ({ config }: KeyboardPluginProps) => {
-  useLayoutEffect(() => config.addHook('init', initHook), [config]);
+const initA11yHook = (u: uPlot, a11yTableId: string) => {
+  let parentWithFocus: HTMLElement | null = u.root;
+  if (!parentWithFocus) {
+    return;
+  }
 
-  return null;
+  // Make Graph area focusable. Setting this in Viz* components will make focus available on panels that do not yet have keyboard support
+  parentWithFocus.tabIndex = 0;
+
+  // Describe the chart as a figure whose details are the sr-only data table.
+  const title =
+    u.root.querySelector('.u-title')?.textContent?.trim() ||
+    t('grafana-ui.uplot-keyboard-plugin.chart-aria-label', 'Grafana chart');
+  parentWithFocus.setAttribute('role', 'figure');
+  parentWithFocus.setAttribute('aria-label', title);
+  parentWithFocus.setAttribute('aria-details', a11yTableId);
+
+  const onDestroy = () => {
+    parentWithFocus?.removeAttribute('role');
+    parentWithFocus?.removeAttribute('aria-label');
+    parentWithFocus?.removeAttribute('aria-details');
+    parentWithFocus = null;
+  };
+
+  (u.hooks.destroy ??= []).push(onDestroy);
+};
+
+export const KeyboardPlugin = ({ config, frames, showA11y = false }: KeyboardPluginProps) => {
+  // Shared id linking the chart root (aria-details) to the sr-only table below.
+  const a11yTableId = useId();
+
+  useLayoutEffect(
+    () =>
+      config.addHook('init', (uplot) => {
+        initHook(uplot);
+        if (showA11y) {
+          initA11yHook(uplot, a11yTableId);
+        }
+      }),
+    [config, showA11y, a11yTableId]
+  );
+
+  return showA11y ? <UPlotA11y frames={frames} id={a11yTableId} /> : null;
 };

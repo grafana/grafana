@@ -1,8 +1,6 @@
 import type * as React from 'react';
 import { type default as uPlot, type Options, type AlignedData } from 'uplot';
 
-import { type DataFrame } from '@grafana/data';
-
 import { type UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 /**
@@ -27,10 +25,6 @@ export interface PlotProps {
   children?: React.ReactNode;
   // Reference to uPlot instance
   plotRef?: (u: uPlot) => void;
-  // Source DataFrames used to render the screen-reader-only accessibility table. uPlot's `data` is
-  // a lossy, viz-specific shape (e.g. faceted heatmap data), so the accessible table is built from
-  // these frames instead. Omit to skip the table.
-  frames?: DataFrame[];
 }
 
 export abstract class PlotConfigBuilder<P, T> {

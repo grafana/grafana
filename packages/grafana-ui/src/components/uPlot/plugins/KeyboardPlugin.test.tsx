@@ -1,5 +1,7 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type uPlot from 'uplot';
+
+import { createDataFrame, FieldType } from '@grafana/data';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -87,6 +89,45 @@ describe('KeyboardPlugin', () => {
       expect(removeSpy).toHaveBeenCalledWith('blur', expect.any(Function));
 
       removeSpy.mockRestore();
+    });
+
+    it('marks the root as a figure linked to the data table via aria-details', () => {
+      const frames = [createDataFrame({ fields: [{ name: 'x', type: FieldType.number, values: [1, 2] }] })];
+      render(<KeyboardPlugin config={config} frames={frames} showA11y />);
+      const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
+      const { mockU, root } = createMockUPlot();
+
+      initCallback(mockU);
+
+      expect(root).toHaveAttribute('role', 'figure');
+      expect(root).toHaveAttribute('aria-label', 'Grafana chart');
+      // aria-details references the sr-only table rendered by the same plugin instance
+      expect(root).toHaveAttribute('aria-details', screen.getByTestId('uplot-a11y').id);
+    });
+
+    it('does not set the accessibility attributes when showA11y is false', () => {
+      const initCallback = runInit();
+      const { mockU, root } = createMockUPlot();
+
+      initCallback(mockU);
+
+      expect(root).not.toHaveAttribute('role');
+      expect(root).not.toHaveAttribute('aria-details');
+    });
+
+    it('removes the accessibility attributes on destroy', () => {
+      render(<KeyboardPlugin config={config} showA11y />);
+      const initCallback = addHookSpy.mock.calls.find((call) => call[0] === 'init')?.[1] as (u: uPlot) => void;
+      const { mockU, root } = createMockUPlot();
+
+      initCallback(mockU);
+      expect(root).toHaveAttribute('aria-details');
+
+      mockU.hooks.destroy?.forEach((onDestroy) => onDestroy?.(mockU));
+
+      expect(root).not.toHaveAttribute('role');
+      expect(root).not.toHaveAttribute('aria-label');
+      expect(root).not.toHaveAttribute('aria-details');
     });
   });
 

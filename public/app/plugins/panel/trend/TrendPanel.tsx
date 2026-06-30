@@ -80,7 +80,7 @@ export const TrendPanel = ({
       {(uPlotConfig, alignedDataFrame) => {
         return (
           <>
-            <KeyboardPlugin config={uPlotConfig} />
+            <KeyboardPlugin config={uPlotConfig} frames={data.series} showA11y />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={uPlotConfig}

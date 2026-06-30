@@ -10423,6 +10423,9 @@
       "previous-page": "Previous page",
       "row-pagination-label": "Table rows"
     },
+    "uplot-keyboard-plugin": {
+      "chart-aria-label": "Grafana chart"
+    },
     "user-icon": {
       "active-text": "Active last 15m",
       "label": "{{name}} icon"

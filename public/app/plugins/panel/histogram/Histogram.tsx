@@ -359,13 +359,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
     return (
       <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={this.state.config!}
-            data={this.state.alignedData}
-            frames={this.props.rawSeries}
-            width={vizWidth}
-            height={vizHeight}
-          >
+          <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
             {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}
           </UPlotChart>
         )}
