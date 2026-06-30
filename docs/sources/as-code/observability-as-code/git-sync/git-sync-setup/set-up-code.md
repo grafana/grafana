@@ -125,12 +125,12 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
     path: grafana/
-# GitHub Enterprise App connection only:
+  # GitHub Enterprise App connection only:
   connection:
     name: '<GITHUB_ENTERPRISE_CONNECTION_NAME>'
 # GitHub Personal Access Token only:
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # GitLab Personal Access Token only:
 spec:

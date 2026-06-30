@@ -117,12 +117,9 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
      - The ID of the GitHub App you want to use
      - The GitHub Installation ID
      - The Private Key
-
-     Additionally, for GitHub Enterprise:
-     - The URL of your GitHub Enterprise
-       - For GitHub Enterprise Cloud, this should be in the form: `https://<enterprise-slug>.ghe.com`
-       - For GitHub Enterprise Server, this would be your custom URL
-
+  1. Additionally, for GitHub Enterprise, add the URL of your GitHub Enterprise instance
+     - For GitHub Enterprise Cloud, it looks like `https://<enterprise-slug>.ghe.com`
+     - For GitHub Enterprise Server, your custom URL
   1. Click on **Configure repository** to proceed.
   1. Paste the **Repository URL** for your GitHub repository into the text box.
 
