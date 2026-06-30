@@ -10,7 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
-      "score": 0.115,
+      "score": 0.112,
       "explain": {
         "children": [
           {
@@ -33,11 +33,11 @@
                               },
                               {
                                 "message": "queryNorm",
-                                "value": 0.026
+                                "value": 0.025
                               }
                             ],
                             "message": "queryWeight(fields.panel_title:orange^5.000000), product of:",
-                            "value": 0.32
+                            "value": 0.313
                           },
                           {
                             "children": [
@@ -65,15 +65,15 @@
                           }
                         ],
                         "message": "weight(fields.panel_title:orange^5.000000 in <docID>), product of:",
-                        "value": 0.355
+                        "value": 0.346
                       }
                     ],
                     "message": "sum of:",
-                    "value": 0.355
+                    "value": 0.346
                   }
                 ],
                 "message": "sum of:",
-                "value": 0.355
+                "value": 0.346
               },
               {
                 "message": "coord(1/4)",
@@ -82,7 +82,7 @@
             ],
             "message": "product of:",
             "partial_match": true,
-            "value": 0.089
+            "value": 0.087
           },
           {
             "children": [
@@ -98,11 +98,11 @@
                           },
                           {
                             "message": "queryNorm",
-                            "value": 0.026
+                            "value": 0.025
                           }
                         ],
                         "message": "ConstantScore()^1.000000, product of:",
-                        "value": 0.026
+                        "value": 0.025
                       },
                       {
                         "message": "ConstantScore()",
@@ -110,21 +110,21 @@
                       }
                     ],
                     "message": "weight(^1.000000), product of:",
-                    "value": 0.026
+                    "value": 0.025
                   }
                 ],
                 "message": "sum of:",
-                "value": 0.026
+                "value": 0.025
               }
             ],
             "message": "sum of:",
-            "value": 0.026
+            "value": 0.025
           }
         ],
         "message": "sum of:",
-        "value": 0.115
+        "value": 0.112
       }
     }
   ],
-  "maxScore": 0.115
+  "maxScore": 0.112
 }

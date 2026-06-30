@@ -6,110 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-func TestSearchFieldsFromTableColumns(t *testing.T) {
-	t.Run("filterable string produces filter+retrieve", func(t *testing.T) {
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				Name:        "email",
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "user email",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					Filterable: true,
-				},
-			},
-		})
-		require.Len(t, got, 1)
-		assert.Equal(t, "email", got[0].Name)
-		assert.Equal(t, SearchFieldTypeString, got[0].Type)
-		assert.False(t, got[0].Array)
-		assert.Equal(t, "user email", got[0].Description)
-		assert.ElementsMatch(t,
-			[]SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
-			got[0].Capabilities,
-		)
-	})
-
-	t.Run("non-filterable string is retrieve-only", func(t *testing.T) {
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				Name: "title",
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			},
-		})
-		require.Len(t, got, 1)
-		assert.Equal(t, []SearchCapability{SearchCapabilityRetrieve}, got[0].Capabilities)
-	})
-
-	t.Run("filterable non-string is retrieve-only", func(t *testing.T) {
-		// Filterable is only honored on STRING fields in the current mapper;
-		// non-string types must not gain a keyword variant via translation.
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				Name: "lastSeenAt",
-				Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					Filterable: true,
-				},
-			},
-		})
-		require.Len(t, got, 1)
-		assert.Equal(t, SearchFieldTypeInt64, got[0].Type)
-		assert.Equal(t, []SearchCapability{SearchCapabilityRetrieve}, got[0].Capabilities)
-	})
-
-	t.Run("array flag is propagated", func(t *testing.T) {
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				Name:    "tags",
-				Type:    resourcepb.ResourceTableColumnDefinition_STRING,
-				IsArray: true,
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					Filterable: true,
-				},
-			},
-		})
-		require.Len(t, got, 1)
-		assert.True(t, got[0].Array)
-		assert.ElementsMatch(t,
-			[]SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
-			got[0].Capabilities,
-		)
-	})
-
-	t.Run("date_time collapses to date", func(t *testing.T) {
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{Name: "ts", Type: resourcepb.ResourceTableColumnDefinition_DATE_TIME},
-		})
-		require.Len(t, got, 1)
-		assert.Equal(t, SearchFieldTypeDate, got[0].Type)
-	})
-
-	t.Run("object and binary types map to unknown", func(t *testing.T) {
-		// OBJECT and BINARY have no corresponding SearchFieldType because the
-		// new design omits them; they map to SearchFieldTypeUnknown.
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			{Name: "obj", Type: resourcepb.ResourceTableColumnDefinition_OBJECT},
-			{Name: "bin", Type: resourcepb.ResourceTableColumnDefinition_BINARY},
-		})
-		require.Len(t, got, 2)
-		assert.Equal(t, SearchFieldTypeUnknown, got[0].Type)
-		assert.Equal(t, SearchFieldTypeUnknown, got[1].Type)
-	})
-
-	t.Run("nil entries are dropped", func(t *testing.T) {
-		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
-			nil,
-			{Name: "x", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			nil,
-		})
-		require.Len(t, got, 1)
-		assert.Equal(t, "x", got[0].Name)
-	})
-}
 
 func TestSearchFieldDefinition_HasCapability(t *testing.T) {
 	f := SearchFieldDefinition{
@@ -165,6 +62,40 @@ func TestMapProvider_PreferredVersionFallback(t *testing.T) {
 
 	// Resources without a registered preferred version return "".
 	assert.Equal(t, "", p.PreferredVersion("other.grafana.app", "things"))
+}
+
+func TestMapProvider_FieldsUnionAcrossVersions(t *testing.T) {
+	gr := schema.GroupResource{Group: "example.test", Resource: "widgets"}
+	v1 := schema.GroupVersionResource{Group: gr.Group, Version: "v1", Resource: gr.Resource}
+	v2 := schema.GroupVersionResource{Group: gr.Group, Version: "v2", Resource: gr.Resource}
+
+	shared := SearchFieldDefinition{Name: "shared", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}}
+	p := NewMapProvider(
+		map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {
+				shared,
+				{Name: "only_v1", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}},
+			},
+			v2: {
+				shared,
+				{Name: "only_v2", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}},
+			},
+		},
+		map[schema.GroupResource]string{gr: "v1"},
+	)
+
+	// Per-version lookup is unchanged.
+	assert.Len(t, p.Fields(v1), 2)
+	assert.Len(t, p.Fields(v2), 2)
+
+	// Empty-version lookup returns the union deduped by Name. A field
+	// declared identically in both versions appears once.
+	union := p.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource})
+	names := make([]string, 0, len(union))
+	for _, sfd := range union {
+		names = append(names, sfd.Name)
+	}
+	assert.ElementsMatch(t, []string{"shared", "only_v1", "only_v2"}, names)
 }
 
 func TestMapProvider_IndexAffectingHash(t *testing.T) {
@@ -271,14 +202,17 @@ func TestMapProvider_IndexAffectingHash(t *testing.T) {
 
 // TestMapProvider_IndexAffectingHash_GoldenHash pins the hash output for a
 // fixed reference input. The hash is computed from json.Marshal of a
-// canonical struct payload; Go's encoding/json output for plain string,
-// bool, and []string fields is stable in practice but not explicitly
-// pinned by the language spec. If a Go release ever shifts the canonical
-// form (struct field encoding order, HTML-escape default, string escape
-// rules, etc.), this test fails immediately in CI rather than silently
-// reindexing every kind that registers a SearchFieldsProvider. When that
-// happens, update the literal and document the Go version that caused
-// the shift.
+// canonical struct payload that includes both StandardSearchFieldDefinitions
+// and the per-(group, resource) declarations; Go's encoding/json output
+// for plain string, bool, and []string fields is stable in practice but
+// not explicitly pinned by the language spec.
+//
+// If a Go release ever shifts the canonical form (struct field encoding
+// order, HTML-escape default, string escape rules, etc.), or if the
+// standard set changes intentionally, this test fails immediately in CI
+// rather than silently reindexing every kind that registers a
+// SearchFieldsProvider. When that happens, update the literal and
+// document the cause (Go upgrade vs deliberate standard-set change).
 func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 	const (
 		group    = "example.test"
@@ -291,7 +225,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		v0: {
 			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 			{Name: "disabled", Path: "spec.disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
-			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve, SearchCapabilitySort}, CopyFromStandard: StandardFieldCreated},
+			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}, CopyFromStandard: StandardFieldCreated},
 			{Name: "members", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 		},
 		v1: {
@@ -299,7 +233,248 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	const expected = "d466508d55b135a18f8e2636815a459a3ae5f2011c5ca63749cf4d48dbe5db34"
+	const expected = "4cbe51ac08dd6cbc987b353d503f253a9aa0b478b4c7ef09ee0c5e5f29644a20"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
+}
+
+func TestValidateSearchFieldDefinitions(t *testing.T) {
+	t.Run("string with sort is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "title", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("date with sort is rejected (allowlist is minimal)", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "when", Type: SearchFieldTypeDate, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+	})
+	t.Run("unknown with sort is rejected (forces explicit Type)", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "x", Type: SearchFieldTypeUnknown, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+	})
+	t.Run("int64 with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "created")
+		assert.Contains(t, err.Error(), "int64")
+	})
+	t.Run("boolean with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "boolean")
+	})
+	t.Run("double with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "score", Type: SearchFieldTypeDouble, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "double")
+	})
+	t.Run("numeric without sort is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("multiple violations reported together", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "a", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}},
+			{Name: "b", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "a")
+		assert.Contains(t, err.Error(), "b")
+	})
+	t.Run("NewMapProvider panics on invalid declarations", func(t *testing.T) {
+		gvr := schema.GroupVersionResource{Group: "example.test", Version: "v0", Resource: "widgets"}
+		assert.Panics(t, func() {
+			NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {{Name: "bad", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}}},
+			}, nil)
+		})
+	})
+	t.Run("StandardSearchFieldDefinitions passes validation", func(t *testing.T) {
+		err := validateSearchFieldDefinitions(StandardSearchFieldDefinitions())
+		require.NoError(t, err)
+	})
+	t.Run("text on int64 is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityText}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "text")
+		assert.Contains(t, err.Error(), "int64")
+	})
+	t.Run("partial on boolean is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityPartial}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "partial")
+	})
+	t.Run("facet on double is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "score", Type: SearchFieldTypeDouble, Capabilities: []SearchCapability{SearchCapabilityFacet}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "facet")
+	})
+	t.Run("text on string is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "title", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("facet on string is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "tag", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFacet}},
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestValidateCrossVersionConsistency(t *testing.T) {
+	gr := schema.GroupResource{Group: "example.test", Resource: "widgets"}
+	v1 := schema.GroupVersionResource{Group: gr.Group, Version: "v1", Resource: gr.Resource}
+	v2 := schema.GroupVersionResource{Group: gr.Group, Version: "v2", Resource: gr.Resource}
+
+	t.Run("identical declaration across versions is allowed", func(t *testing.T) {
+		shared := SearchFieldDefinition{Name: "label", Path: "spec.label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}}
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {shared},
+			v2: {shared},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("capability order does not count as divergence", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}}},
+			v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityRetrieve, SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("description differing across versions is allowed", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}, Description: "old"}},
+			v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}, Description: "renamed for clarity"}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("path differing across versions is allowed", func(t *testing.T) {
+		// Path is an extractor-side concern: each version's document is
+		// extracted with that version's declaration, so v1 can read from
+		// spec.foo while v2 reads from spec.bar without conflicting on the
+		// shared bleve mapping.
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Path: "spec.foo", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			v2: {{Name: "label", Path: "spec.bar", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("path real vs computed across versions is allowed", func(t *testing.T) {
+		// One version backs the field with a JSON path, the other leaves
+		// Path empty so a custom builder fills it in. The bleve mapping is
+		// the same either way.
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Path: "spec.foo", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("emitZeroIfAbsent differing across versions is allowed", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "count", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}, EmitZeroIfAbsent: true}},
+			v2: {{Name: "count", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("copyFromStandard differing across versions is allowed", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, CopyFromStandard: StandardFieldCreated}},
+			v2: {{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityRetrieve}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("duplicate capability within one declaration does not count as divergence", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFilter, SearchCapabilityRetrieve}}},
+			v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("field declared in only one version is allowed", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "only_v1", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			v2: {{Name: "only_v2", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("diverging capabilities are rejected", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}}},
+			v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `field "label"`)
+		assert.Contains(t, err.Error(), gr.String())
+		assert.Contains(t, err.Error(), "v1")
+		assert.Contains(t, err.Error(), "v2")
+		assert.Contains(t, err.Error(), "capabilities")
+	})
+
+	t.Run("diverging type is rejected", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "count", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			v2: {{Name: "count", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "type")
+	})
+
+	t.Run("diverging array flag is rejected", func(t *testing.T) {
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1: {{Name: "tags", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			v2: {{Name: "tags", Type: SearchFieldTypeString, Array: false, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "array")
+	})
+
+	t.Run("unrelated (group, resource) does not interfere", func(t *testing.T) {
+		other := schema.GroupVersionResource{Group: "other.test", Version: "v1", Resource: "things"}
+		err := validateCrossVersionConsistency(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v1:    {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+			other: {{Name: "label", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("NewMapProvider panics on cross-version divergence", func(t *testing.T) {
+		assert.PanicsWithValue(t,
+			`inconsistent SearchFieldDefinitions across versions: field "label" on widgets.example.test diverges across versions [v1, v2] on capabilities`,
+			func() {
+				NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+					v1: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter}}},
+					v2: {{Name: "label", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityText}}},
+				}, nil)
+			})
+	})
 }

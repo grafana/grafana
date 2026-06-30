@@ -2848,7 +2848,9 @@
           "alerting": "Включите, чтобы приостановить оценку для этого правила оповещения.",
           "recording": "Включите, чтобы приостановить оценку для этого правила записи."
         },
-        "select-folder-before": "Выберите папку перед настройкой группы оценки и интервала."
+        "select-folder-before": "Выберите папку перед настройкой группы оценки и интервала.",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -6096,9 +6098,6 @@
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Ссылки на панели"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Назад к запросам"
     },
@@ -8808,7 +8807,9 @@
       "query-history-button": "История запросов",
       "query-history-button-aria-label": "История запросов",
       "query-inspector-button": "Инспектор запросов",
-      "query-inspector-button-aria-label": "Инспектор запросов"
+      "query-inspector-button-aria-label": "Инспектор запросов",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Показать все диапазоны",
     "span-bar": {
@@ -10019,10 +10020,16 @@
         },
         "name-limit": "Лимит",
         "name-mode": "Режим",
+        "name-overflow": "",
         "name-placement": "Размещение",
         "name-values": "Значения",
         "name-visibility": "Видимость",
         "name-width": "Ширина",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Снизу",
           "label-right": "Справа"
@@ -11367,6 +11374,8 @@
         }
       },
       "fields-section": "Поля",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Скрыть строку журнала",
       "inline-mode": "Показать встроенные",
       "inline-no-scrolls": "",
@@ -12112,9 +12121,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Управление сопоставлениями групп поставщиков идентификации с ролями Grafana"
     },
     "help": {
       "title": "Справка"
@@ -13189,9 +13195,6 @@
       "description-clear-repository-connection": "Это имя будет использоваться для подключения к репозиторию и для папки, отображаемой в пользовательском интерфейсе",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
-      "error-quota-exceeded-message": "Количество ресурсов в этой папке репозитория — {{fileCount}}. Оно превышает лимит для вашего аккаунта ({{limit}}). Чтобы синхронизировать этот репозиторий, повысьте уровень аккаунта или уменьшите количество синхронизируемых ресурсов.",
-      "error-quota-exceeded-message-onprem": "Количество ресурсов в этой папке репозитория — {{fileCount}}. Оно превышает лимит для вашего экземпляра ({{limit}}). Чтобы синхронизировать этот репозиторий, обновите конфигурацию Grafana или уменьшите количество синхронизируемых ресурсов.",
-      "error-quota-exceeded-title": "Превышена квота ресурсов",
       "error-repository-status-unhealthy-message": "Ошибка при подключении к репозиторию. Проверьте настройки и повторите попытку.",
       "error-repository-status-unhealthy-title": "Состояние репозитория: неисправно",
       "external-storage-label": "Внешнее хранилище",
@@ -13202,6 +13205,9 @@
       "unmanaged-resources-label": "Неуправляемые ресурсы",
       "update-configuration-action": "Просмотр документации по конфигурации",
       "upgrade-action": "Обновить аккаунт",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} дашборд",
       "dashboards-count_few": "{{count}} дашборда",
       "dashboards-count_many": "{{count}} дашбордов",
@@ -14452,6 +14458,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Не удалось загрузить источник данных для этого запроса",
     "loading-datasource": "Загрузка источника данных",
     "no-query-editor-component": "Плагин источника данных не экспортирует компоненты редактора запросов"
@@ -14473,6 +14480,58 @@
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_few": "",
+    "description_many": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

@@ -11,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -52,6 +53,30 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	for ix, name := range orderedExpectedNames {
 		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
 	}
+}
+
+// Partial queries against a hyphenated title must match it even when the
+// trailing fragment (e.g. "ma" in "users-service-ma") is shorter than the
+// ngram minimum.
+func TestHyphenatedTitlePartialMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	index := newTestDashboardsIndex(t, threshold, 2, noop)
+	indexDocumentsWithTitles(t, index, key, map[string]string{
+		"name1": "users-service-managed",
+		"name2": "billing-service-v2",
+	})
+
+	for _, query := range []string{"users-service", "users-service-ma", "users-service-man", "users-service-managed"} {
+		checkSearchQuery(t, index, newTestQuery(query), []string{"name1"})
+	}
+
+	// Precision is preserved: a discriminating suffix shorter than the ngram
+	// minimum must not cross-match a different title.
+	checkSearchQuery(t, index, newTestQuery("billing-service-v2"), []string{"name2"})
 }
 
 func TestCanSearchByTitle(t *testing.T) {
@@ -171,10 +196,27 @@ func TestCanSearchByTitle(t *testing.T) {
 
 		// word that doesn't exist
 		checkSearchQuery(t, index, newTestQuery("cats"), nil)
-		// string shorter than 3 chars (ngram min)
-		checkSearchQuery(t, index, newTestQuery("ma"), nil)
 		// substring that doesn't exist
 		checkSearchQuery(t, index, newTestQuery("A01"), nil)
+	})
+
+	t.Run("queries shorter than ngram min are rewritten as prefix wildcards", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "First Team",
+			"name2": "Team Alpha",
+			"name3": "Team Beta",
+			"name4": "mash potato",
+		})
+
+		// 1- and 2-char queries can't hit the n-gram index, so we rewrite them as
+		// a prefix wildcard ("f" → "f*"). The wildcard matches any token starting
+		// with the prefix, giving search-as-you-type prefix matching for short input.
+		checkSearchQuery(t, index, newTestQuery("f"), []string{"name1"})
+		checkSearchQuery(t, index, newTestQuery("fi"), []string{"name1"})
+		checkSearchQuery(t, index, newTestQuery("ma"), []string{"name4"})
+		// no word in any title starts with "zz" — prefix wildcard matches nothing.
+		checkSearchQuery(t, index, newTestQuery("zz"), nil)
 	})
 
 	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
@@ -319,13 +361,16 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 		checkSearchQuery(t, index, newNgramOnlyQuery("hello"), []string{"name1"})
 	})
 
-	t.Run("title_ngram field does not match short terms below ngram min", func(t *testing.T) {
+	t.Run("queries shorter than ngram min match via prefix wildcard", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "dashboard",
+			"name2": "unrelated",
 		})
-		// "da" is 2 chars, below NGRAM_MIN_TOKEN (3) — removeSmallTerms strips it
-		checkSearchQuery(t, index, newNgramOnlyQuery("da"), nil)
+		// "da" is 2 chars, below NGRAM_MIN_TOKEN (3). The query is rewritten to
+		// "da*" and matched as a wildcard against the title_ngram tokens — only
+		// the n-gram tokens starting with "da" match (e.g. "das", "dash", "dashb").
+		checkSearchQuery(t, index, newNgramOnlyQuery("da"), []string{"name1"})
 	})
 }
 
@@ -648,11 +693,30 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 }
 
 // newTestIndexWithFields creates a test index with custom searchable fields
-// (e.g. keyword-analyzed email/login for IAM-like tests).
+// (e.g. keyword-analyzed email/login for IAM-like tests). Each column
+// becomes a SearchFieldDefinition declaring [filter, retrieve] when the
+// column carries Properties.Filterable, otherwise [retrieve] only; the
+// provider drives the per-kind bleve mapping.
 func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
+	sfds := make([]resource.SearchFieldDefinition, 0, len(columns))
+	for _, c := range columns {
+		caps := []resource.SearchCapability{resource.SearchCapabilityRetrieve}
+		if c.Properties != nil && c.Properties.Filterable && c.Type == resourcepb.ResourceTableColumnDefinition_STRING {
+			caps = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+		}
+		sfds = append(sfds, resource.SearchFieldDefinition{Name: c.Name, Type: resource.SearchFieldTypeString, Array: c.IsArray, Capabilities: caps})
+	}
+	provider := resource.NewMapProvider(
+		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
+	)
+	sfKey := strings.ToLower(key.Group + "/" + key.Resource)
+
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold,
+		Root:                          t.TempDir(),
+		FileThreshold:                 threshold,
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{sfKey: provider},
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)

@@ -4,7 +4,7 @@ import { VariableSizeList } from 'react-window';
 import { createTheme, dateTimeForTimeZone, rangeUtil } from '@grafana/data';
 import { LogsSortOrder } from '@grafana/schema';
 
-import { ScrollDirection, SCROLLING_THRESHOLD } from '../InfiniteScroll';
+import { ScrollDirection, SCROLLING_THRESHOLD } from '../infiniteScrollUtils';
 import { createLogLine } from '../mocks/logRow';
 
 import { InfiniteScroll, type InfiniteScrollMode, type Props } from './InfiniteScroll';
