@@ -37,20 +37,29 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
   } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
 
-  const isGitHubEnterprise = connectionType === 'githubEnterprise';
-
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: connectionType,
-      title: '',
-      description: '',
-      appID: '',
-      installationID: '',
-      privateKey: '',
-      webhookDisabled: false,
-      serverUrl: '',
-    },
+    defaultValues:
+      connectionType === 'githubEnterprise'
+        ? {
+            type: 'githubEnterprise',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+            serverUrl: '',
+          }
+        : {
+            type: 'github',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+          },
   });
 
   const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
@@ -82,24 +91,24 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
       return;
     }
 
-    const { title, description, appID, installationID, privateKey, webhookDisabled, serverUrl } =
-      credentialForm.getValues();
+    const form = credentialForm.getValues();
     const baseSpec = {
-      title,
-      ...(description && { description }),
-      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
+      title: form.title,
+      ...(form.description && { description: form.description }),
+      ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
     };
-    const spec: ConnectionSpec = isGitHubEnterprise
-      ? {
-          ...baseSpec,
-          type: 'githubEnterprise',
-          githubEnterprise: { appID, installationID, serverUrl },
-        }
-      : {
-          ...baseSpec,
-          type: 'github',
-          github: { appID, installationID },
-        };
+    const spec: ConnectionSpec =
+      form.type === 'githubEnterprise'
+        ? {
+            ...baseSpec,
+            type: 'githubEnterprise',
+            githubEnterprise: { appID: form.appID, installationID: form.installationID, serverUrl: form.serverUrl },
+          }
+        : {
+            ...baseSpec,
+            type: 'github',
+            github: { appID: form.appID, installationID: form.installationID },
+          };
 
     const defaultErrorMessage = t(
       'provisioning.wizard.github-app-creation-default-error',
@@ -121,7 +130,7 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
     };
 
     try {
-      const result = await createConnection(spec, privateKey);
+      const result = await createConnection(spec, form.privateKey);
       if (result.data?.metadata?.name) {
         credentialForm.reset();
         onGitHubAppSubmit({ success: true, connectionName: result.data.metadata.name });

@@ -42,16 +42,27 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   ];
 
   const formMethods = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: data?.spec?.type || 'github',
-      title: data?.spec?.title || '',
-      description: data?.spec?.description || '',
-      appID: data?.spec?.github?.appID || data?.spec?.githubEnterprise?.appID || '',
-      installationID: data?.spec?.github?.installationID || data?.spec?.githubEnterprise?.installationID || '',
-      privateKey: '',
-      webhookDisabled: data?.spec?.webhook?.disabled ?? false,
-      serverUrl: data?.spec?.githubEnterprise?.serverUrl || '',
-    },
+    defaultValues:
+      data?.spec?.type === 'githubEnterprise'
+        ? {
+            type: 'githubEnterprise',
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            appID: data?.spec?.githubEnterprise?.appID || '',
+            installationID: data?.spec?.githubEnterprise?.installationID || '',
+            privateKey: '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+            serverUrl: data?.spec?.githubEnterprise?.serverUrl || '',
+          }
+        : {
+            type: 'github',
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            appID: data?.spec?.github?.appID || '',
+            installationID: data?.spec?.github?.installationID || '',
+            privateKey: '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+          },
   });
 
   const {
