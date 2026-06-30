@@ -29,12 +29,9 @@ export interface UseFolderReadmeResult {
 }
 
 /**
- * True when a job's completion means the folder's README may have changed on
- * the Grafana side. Only `pull`/`migrate` replicate remote content into
- * Grafana; `push`/`pr`/`move`/`delete` mutate only the remote, so they never
- * change the locally served README. `warning` is a completion with non-critical
- * errors (content was still written); `error`/`pending`/`working` are not
- * completions that produced new content.
+ * Only `pull`/`migrate` replicate remote content into Grafana, so only they can
+ * change the locally served README; other actions touch the remote alone.
+ * `warning` still counts — it's a completion that wrote content.
  */
 export function isReadmeRefreshingJob(job: Job): boolean {
   const action = job.spec?.action;
@@ -43,10 +40,8 @@ export function isReadmeRefreshingJob(job: Job): boolean {
 }
 
 /**
- * Names of jobs that warrant a README refetch and have not been handled yet.
- * `handled` carries names already refetched this panel lifetime so a completed
- * pull lingering in the watched list across later job events refetches exactly
- * once. Job names are unique per repository.
+ * `handled` dedupes by job name so a finished pull lingering in the watched list
+ * refetches only once; names are unique per repository.
  */
 export function readmeRefetchJobNames(jobs: Job[], handled: ReadonlySet<string>): string[] {
   const names: string[] = [];
@@ -93,10 +88,9 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
 
   const isLoading = isRepoLoading || isFileLoading;
 
-  // Auto-refresh the README when a pull replicates new remote content into
-  // Grafana, so the panel reflects edits without a manual page reload (#1223).
-  // Watch the repo's jobs (a server-sent stream, no polling) and refetch once
-  // per completed pull; see readmeRefetchJobNames for which jobs qualify.
+  // Show pulled-in README edits without a manual page reload (#1223). Watch the
+  // repo's jobs over the existing stream rather than polling, which is too
+  // API-heavy for the browse-dashboards page.
   const { data: jobsData } = useListJobQuery(
     repository?.name
       ? { labelSelector: `provisioning.grafana.app/repository=${repository.name}`, watch: true }

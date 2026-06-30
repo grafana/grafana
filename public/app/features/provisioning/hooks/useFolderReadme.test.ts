@@ -16,12 +16,10 @@ jest.mock('./useGetResourceRepositoryView', () => ({
   useGetResourceRepositoryView: jest.fn(),
 }));
 
-// `isReadmeRefreshingJob` / `readmeRefetchJobNames` own the refetch decision and
-// are unit-tested directly: the watch→effect→refetch→GET chain is async and RTK
-// Query coalesces overlapping refetches, so asserting exclusion through the
-// rendered content cannot distinguish "push excluded" from "push refetch merged
-// into the next pull's GET". The single integration test below covers the live
-// wiring end-to-end; these cover every accept/reject branch deterministically.
+// Unit-test the decision directly: the refetch→GET chain is async and RTK Query
+// coalesces overlapping refetches, so a wrongly-included push can't be told apart
+// from one merged into the next pull's GET via rendered content. The integration
+// test below still covers the live wiring end-to-end.
 describe('isReadmeRefreshingJob', () => {
   it.each(['pull', 'migrate'] as const)('accepts a successful %s', (action) => {
     expect(isReadmeRefreshingJob(createJob({ spec: { action }, status: { state: 'success' } }))).toBe(true);
