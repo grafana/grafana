@@ -274,6 +274,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           <UPlotChart
             config={config}
             data={alignedData!}
+            frames={this.props.frames}
             width={vizWidth}
             height={vizHeight}
             plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}

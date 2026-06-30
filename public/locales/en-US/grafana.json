@@ -10415,6 +10415,10 @@
     "unit-picker": {
       "placeholder": "Choose"
     },
+    "uplot-a11y": {
+      "no-data": "Chart has no data to display.",
+      "too-large": "Chart has too much data to display in a table for accessibility."
+    },
     "user-icon": {
       "active-text": "Active last 15m",
       "label": "{{name}} icon"

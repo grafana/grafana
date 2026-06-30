@@ -207,7 +207,14 @@ const HeatmapPanelViz = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart key={builder.uid} config={builder} data={facets} width={vizWidth} height={vizHeight}>
+          <UPlotChart
+            key={builder.uid}
+            config={builder}
+            data={facets}
+            frames={data.series}
+            width={vizWidth}
+            height={vizHeight}
+          >
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={builder} eventBus={eventBus} frame={info.series ?? info.heatmap} />
             )}

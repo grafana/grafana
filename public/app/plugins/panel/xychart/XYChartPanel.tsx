@@ -115,7 +115,7 @@ export const XYChartPanel2 = (props: Props2) => {
   return (
     <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={builder} data={data} width={vizWidth} height={vizHeight}>
+        <UPlotChart config={builder} data={data} frames={props.data.series} width={vizWidth} height={vizHeight}>
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}
