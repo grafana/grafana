@@ -26,7 +26,10 @@ const (
 	serviceName             = "nats"
 )
 
-var ErrDisabled = errors.New("nats is disabled")
+var (
+	ErrDisabled = errors.New("nats is disabled")
+	ErrClosed   = errors.New("nats connection is closed")
+)
 
 // Service owns the NATS platform lifecycle: the optional embedded server and
 // the publisher connection. It is a dskit service that also bridges to the

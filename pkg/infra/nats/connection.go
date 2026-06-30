@@ -29,8 +29,9 @@ type connection struct {
 	urls        func() []string
 	credentials func() string
 
-	mu   sync.Mutex
-	conn *natsclient.Conn
+	mu     sync.Mutex
+	conn   *natsclient.Conn
+	closed bool
 
 	optsMu       sync.Mutex
 	extraOptions []natsclient.Option
@@ -69,6 +70,9 @@ func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return nil, ErrClosed
+	}
 	if c.conn != nil && !c.conn.IsClosed() {
 		return c.conn, nil
 	}
@@ -105,6 +109,14 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 
 	select {
 	case <-ctx.Done():
+		// The dial goroutine may still be in flight. Drain its result and close
+		// any connection it produces, otherwise it is orphaned and would reconnect
+		// forever in the background (MaxReconnects(-1)).
+		go func() {
+			if res := <-ch; res.conn != nil {
+				res.conn.Close()
+			}
+		}()
 		return nil, ctx.Err()
 	case res := <-ch:
 		if res.err != nil {
@@ -171,10 +183,12 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	return options, nil
 }
 
-// close drains the connection so in-flight work flushes before shutdown.
+// close drains the connection so in-flight work flushes before shutdown. It is
+// terminal: once closed, get() refuses to reopen a connection.
 func (c *connection) close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.closed = true
 	if c.conn != nil && !c.conn.IsClosed() {
 		if err := c.conn.Drain(); err != nil {
 			c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)

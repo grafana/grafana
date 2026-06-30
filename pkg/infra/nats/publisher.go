@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Publisher hides nats.go types so consumers can mock it. Publish is fire-and-forget
+// Publisher hides nats.go types so consumers can mock it.
 type Publisher interface {
 	Enabled() bool
 	Publish(ctx context.Context, subject string, data []byte) error
@@ -28,10 +28,11 @@ func (p *publisher) Publish(ctx context.Context, subject string, data []byte) er
 	if err != nil {
 		return err
 	}
+	role := string(p.role)
 	if err := nc.Publish(subject, data); err != nil {
-		p.metrics.publishErrors.Inc()
+		p.metrics.publishErrors.WithLabelValues(role).Inc()
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
-	p.metrics.messagesPub.Inc()
+	p.metrics.messagesPub.WithLabelValues(role).Inc()
 	return nil
 }

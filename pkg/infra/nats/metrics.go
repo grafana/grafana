@@ -16,8 +16,8 @@ type metrics struct {
 	reconnects       *prometheus.CounterVec
 	disconnects      *prometheus.CounterVec
 	connectionErrors *prometheus.CounterVec
-	messagesPub      prometheus.Counter
-	publishErrors    prometheus.Counter
+	messagesPub      *prometheus.CounterVec
+	publishErrors    *prometheus.CounterVec
 	embeddedServerUp prometheus.Gauge
 }
 
@@ -47,18 +47,18 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:      "connection_errors_total",
 			Help:      "Total number of NATS asynchronous connection errors per role.",
 		}, []string{roleLabel}),
-		messagesPub: prometheus.NewCounter(prometheus.CounterOpts{
+		messagesPub: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "messages_published_total",
-			Help:      "Total number of messages published to NATS.",
-		}),
-		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Help:      "Total number of messages published to NATS per role.",
+		}, []string{roleLabel}),
+		publishErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "publish_errors_total",
-			Help:      "Total number of NATS publish errors.",
-		}),
+			Help:      "Total number of NATS publish errors per role.",
+		}, []string{roleLabel}),
 		embeddedServerUp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,

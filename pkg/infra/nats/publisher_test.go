@@ -58,3 +58,27 @@ func TestPublisher_Publish(t *testing.T) {
 
 	require.NoError(t, p.Publish(ctx, "grafana.test.a", []byte("hello")))
 }
+
+func TestPublisher_PublishAfterCloseFails(t *testing.T) {
+	srv := startTestServer(t)
+	p := newTestPublisher(t, srv)
+	ctx := context.Background()
+
+	require.NoError(t, p.Publish(ctx, "grafana.test.a", []byte("hello")))
+
+	p.close()
+	require.ErrorIs(t, p.Publish(ctx, "grafana.test.a", []byte("world")), ErrClosed)
+}
+
+func TestPublisher_PublishHonoursCancelledContext(t *testing.T) {
+	srv := startTestServer(t)
+	p := newTestPublisher(t, srv)
+
+	// Warm the connection so get() succeeds and the cancellation is observed by
+	// the explicit ctx.Err() check rather than during connect.
+	require.NoError(t, p.Publish(context.Background(), "grafana.test.a", []byte("hello")))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	require.ErrorIs(t, p.Publish(ctx, "grafana.test.a", []byte("world")), context.Canceled)
+}
