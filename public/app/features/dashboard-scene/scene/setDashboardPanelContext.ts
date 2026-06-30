@@ -5,10 +5,17 @@ import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
+import { InspectTab } from 'app/features/inspector/types';
 
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isNewPanelQueryErrorsUIEnabled,
+} from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -205,6 +212,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
+
+  // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
+  // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
+  // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  if (isNewPanelQueryErrorsUIEnabled()) {
+    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+  }
 }
 
 /**

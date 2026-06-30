@@ -291,7 +291,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		err = os.WriteFile(filepath.Join(repoPath, "new_a", "dashboard_new1.json"), newDash1Content, 0o600)
 		require.NoError(t, err, "should be able to write new_a/dashboard_new1.json")
 
-		newDash2Content := strings.Replace(string(helper.LoadFile("../testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "quota-nested-extra"`, 1)
+		newDash2Content := strings.Replace(string(helper.LoadFile("../testdata/timeline-demo.json")), `"name": "mIJjFy8Kz"`, `"name": "quota-nested-extra"`, 1)
 		err = os.MkdirAll(filepath.Join(repoPath, "new_b"), 0o750)
 		require.NoError(t, err)
 		err = os.WriteFile(filepath.Join(repoPath, "new_b", "dashboard_new2.json"), []byte(newDash2Content), 0o600)

@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -49,7 +48,6 @@ type finalizerProcessor interface {
 type RepositoryController struct {
 	client     client.ProvisioningV0alpha1Interface
 	repoLister listers.RepositoryLister
-	repoSynced cache.InformerSynced
 	logger     logging.Logger
 
 	jobs interface {
@@ -84,7 +82,7 @@ type RepositoryController struct {
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	repoInformer informer.RepositoryInformer,
+	repoLister listers.RepositoryLister,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
@@ -105,14 +103,13 @@ func NewRepositoryController(
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
-) (*RepositoryController, error) {
+) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
 		client:     provisioningClient,
-		repoLister: repoInformer.Lister(),
-		repoSynced: repoInformer.Informer().HasSynced,
+		repoLister: repoLister,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -122,7 +119,7 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
-		quotaChecker:      NewRepositoryQuotaChecker(repoInformer.Lister()),
+		quotaChecker:      NewRepositoryQuotaChecker(repoLister),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:           resourceLister,
@@ -144,21 +141,22 @@ func NewRepositoryController(
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
 	}
 
-	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
 
-	return rc, nil
+	return rc
+}
+
+// EventHandler returns the informer event handlers for the controller. Register
+// it with the Repository informer to enqueue repositories on add and update.
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: rc.enqueue,
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			rc.enqueue(newObj)
+		},
+	}
 }
 
 func repoKeyFunc(obj any) (string, error) {
@@ -185,10 +183,6 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	ctx = logging.Context(ctx, logger)
 	logger.Info("Starting RepositoryController")
 	defer logger.Info("Shutting down RepositoryController")
-
-	if !cache.WaitForCacheSync(ctx.Done(), rc.repoSynced) {
-		return
-	}
 
 	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {

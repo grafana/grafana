@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -45,7 +44,6 @@ type ConnectionStatusPatcher interface {
 type ConnectionController struct {
 	client     client.ProvisioningV0alpha1Interface
 	connLister listers.ConnectionLister
-	connSynced cache.InformerSynced
 	logger     logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
@@ -64,18 +62,17 @@ type ConnectionController struct {
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	connInformer informer.ConnectionInformer,
+	connLister listers.ConnectionLister,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
-) (*ConnectionController, error) {
+) *ConnectionController {
 	cc := &ConnectionController{
 		client:     provisioningClient,
-		connLister: connInformer.Lister(),
-		connSynced: connInformer.Informer().HasSynced,
+		connLister: connLister,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
@@ -91,19 +88,20 @@ func NewConnectionController(
 		drainTimeout:      drainTimeout,
 	}
 
-	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	cc.processFn = cc.process
+
+	return cc
+}
+
+// EventHandler returns the informer event handlers for the controller. Register
+// it with the Connection informer to enqueue connections on add and update.
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
 		AddFunc: cc.enqueue,
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			cc.enqueue(newObj)
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
-
-	cc.processFn = cc.process
-
-	return cc, nil
 }
 
 func (cc *ConnectionController) enqueue(obj interface{}) {

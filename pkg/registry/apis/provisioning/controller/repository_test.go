@@ -1707,7 +1707,6 @@ func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 				Name: "test-dedup",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1762,7 +1761,6 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 				Name: "test-dedup-before",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1807,7 +1805,6 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 				Name: "test-retry",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1848,7 +1845,6 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 				Name: "test-no-retry",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}

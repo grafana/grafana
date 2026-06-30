@@ -15,24 +15,9 @@ const (
 	TEAM_BINDING_EXTERNAL   = "external"
 )
 
-var TeamBindingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	TEAM_BINDING_SUBJECT: {
-		Name: TEAM_BINDING_SUBJECT, Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true},
-	},
-	TEAM_BINDING_TEAM: {
-		Name: TEAM_BINDING_TEAM, Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true},
-	},
-	TEAM_BINDING_PERMISSION: {
-		Name: TEAM_BINDING_PERMISSION, Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: false},
-	},
-	TEAM_BINDING_EXTERNAL: {
-		Name: TEAM_BINDING_EXTERNAL, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: false},
-	},
-}
+// TeamBindingTableColumnDefinitions exposes column-defs by name for the
+// IAM legacy SQL backend in teambinding/legacy_search.go.
+var TeamBindingTableColumnDefinitions = tableColumnsByName(TeamBindingSearchFields)
 
 // TeamBindingSearchFields declares paths and types for each team binding
 // search field. The standard document builder uses these to extract values

@@ -1393,7 +1393,6 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 				connLister:        mockLister,
 				connectionFactory: mockFactory,
 				healthChecker:     mockHealthChecker,
-				connSynced:        func() bool { return true },
 				statusPatcher:     mockPatcher,
 				logger:            logging.DefaultLogger,
 			}

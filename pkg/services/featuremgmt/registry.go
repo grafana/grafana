@@ -99,14 +99,6 @@ var (
 			Expression:  "true", // turned on by default
 		},
 		{
-			Name:        "influxdbBackendMigration",
-			Description: "Query InfluxDB InfluxQL without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
@@ -3138,6 +3130,15 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "auth.tokenRotationGracePeriod",
+			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

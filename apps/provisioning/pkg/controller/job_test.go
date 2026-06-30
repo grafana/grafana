@@ -15,26 +15,14 @@ import (
 )
 
 func TestJobController_New(t *testing.T) {
-	//nolint:staticcheck
-	client := provisioningfake.NewSimpleClientset()
-	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
+	controller := NewJobController()
 
-	controller, err := NewJobController(jobInformer)
-
-	require.NoError(t, err)
 	assert.NotNil(t, controller)
 	assert.NotNil(t, controller.notifications)
 }
 
 func TestJobController_InsertNotifications(t *testing.T) {
-	//nolint:staticcheck
-	client := provisioningfake.NewSimpleClientset()
-	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
-
-	controller, err := NewJobController(jobInformer)
-	require.NoError(t, err)
+	controller := NewJobController()
 
 	notifications := controller.InsertNotifications()
 	assert.NotNil(t, notifications)
@@ -56,7 +44,8 @@ func TestJobController_NotificationOnJobCreate(t *testing.T) {
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
 	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
 
-	controller, err := NewJobController(jobInformer)
+	controller := NewJobController()
+	_, err := jobInformer.Informer().AddEventHandler(controller.EventHandler())
 	require.NoError(t, err)
 
 	// Start informer and wait for cache sync
