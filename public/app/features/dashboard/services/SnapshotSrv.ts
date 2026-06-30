@@ -123,8 +123,9 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {
-    // The dashboard v0alpha1 baseAPI rewrites `org-0` → `default` per-request so the
-    // anonymous public snapshot view works through RTK like every other method.
+    // For anonymous callers (`org-0`) the dashboard v0alpha1 baseAPI routes these
+    // read-by-key endpoints to the `default` namespace, so the public snapshot view works
+    // through RTK like every other method.
     const snapshotPromise = dispatch(
       dashboardAPIv0alpha1.endpoints.getSnapshot.initiate({ name: uid }, { forceRefetch: true })
     );
