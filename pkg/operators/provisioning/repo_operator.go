@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
-
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
 func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
@@ -37,10 +35,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
+	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -93,9 +88,9 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	controller, err := controller.NewRepositoryController(
+	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
-		repoInformer,
+		repoInformer.Lister(),
 		repoFactory,
 		connectionFactory,
 		resourceLister,
@@ -117,12 +112,13 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
+	reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())
 	if err != nil {
-		return fmt.Errorf("failed to create repository controller: %w", err)
+		return fmt.Errorf("failed to add repository event handler: %w", err)
 	}
 
 	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), repoInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
