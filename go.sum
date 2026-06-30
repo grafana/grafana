@@ -1638,8 +1638,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.292.1 h1:8wvKUqIOtbHC43WIr6kheIGdV6q
 github.com/grafana/grafana-plugin-sdk-go v0.292.1/go.mod h1:RM/Ku+hoyicIO/UVsGeFJfed/3/iXaCT3opiwE69THY=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11 h1:dN402Jd/FsSi6lvfCJR5lXiv7j2ucbPV/ZJCjOX4+zc=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11/go.mod h1:rmYghozhFPZ5p+o8erXoCQ3BuSVDOuT5Y8dXWBUIXjs=
-github.com/grafana/grafana/apps/alerting/historian v0.0.0-20260625144332-ab4887256a2b h1:+wM0/IqA8SwnOyAO6Y7qi17aPoTQP1amumDVOwNN14o=
-github.com/grafana/grafana/apps/alerting/historian v0.0.0-20260625144332-ab4887256a2b/go.mod h1:b5N9jqhpYLlDbRnLoFiBLFl4ehjpgWdsbsjsFfc4MTU=
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 h1:U94jQ2TQr1m3HNyE8efSdyaBbDrdPaWImXyenuKZ/nw=
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=

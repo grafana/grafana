@@ -722,8 +722,6 @@ require (
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 )
 
-require github.com/grafana/grafana/apps/alerting/historian v0.0.0-20260625144332-ab4887256a2b
-
 require (
 	github.com/antithesishq/antithesis-sdk-go v0.7.0-default-no-op // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
