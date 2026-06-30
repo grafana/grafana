@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
@@ -70,10 +71,13 @@ func TestGraphiteHandler(t *testing.T) {
 		assert.Empty(t, resp.Spec.Tags)
 	})
 
-	t.Run("when defaults to 0", func(t *testing.T) {
+	t.Run("when defaults to now when omitted", func(t *testing.T) {
+		before := time.Now().UnixMilli()
 		resp, err := run(t, newTestAdapter(NewMemoryStore(), allowAll), `{"what":"deploy","tags":[]}`)
+		after := time.Now().UnixMilli()
 		require.NoError(t, err)
-		assert.Equal(t, int64(0), resp.Spec.Time)
+		assert.GreaterOrEqual(t, resp.Spec.Time, before)
+		assert.LessOrEqual(t, resp.Spec.Time, after)
 	})
 
 	t.Run("rejects empty what", func(t *testing.T) {

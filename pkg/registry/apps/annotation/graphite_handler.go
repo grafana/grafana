@@ -47,14 +47,23 @@ func newGraphiteHandler(
 			return apierrors.NewBadRequest(err.Error())
 		}
 
+		timeMs := cmd.When * 1000
+		if cmd.When == 0 {
+			timeMs = time.Now().UnixMilli()
+		}
+
 		anno := &annotationV0.Annotation{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: annotationV0.AnnotationKind().GroupVersionKind().GroupVersion().String(),
+				Kind:       annotationV0.AnnotationKind().Kind(),
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:    namespace,
 				GenerateName: "a-",
 			},
 			Spec: annotationV0.AnnotationSpec{
 				Text: FormatGraphiteText(cmd.What, cmd.Data),
-				Time: cmd.When * 1000,
+				Time: timeMs,
 				Tags: tags,
 			},
 		}
@@ -64,9 +73,6 @@ func newGraphiteHandler(
 		if err != nil {
 			return err
 		}
-
-		// custom route needs to write GVK in its own response.
-		created.GetObjectKind().SetGroupVersionKind(annotationV0.AnnotationKind().GroupVersionKind())
 
 		writer.Header().Set("Content-Type", "application/json")
 		return json.NewEncoder(writer).Encode(created)
