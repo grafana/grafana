@@ -459,6 +459,9 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
+	// Partial update: Name and ExternalUID are written only when set, so a
+	// single-field command (e.g. a SCIM externalUID-only patch) doesn't blank the
+	// others. Matches the legacy store, where xorm skips zero-value columns.
 	if cmd.Name != "" {
 		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
 			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
@@ -467,6 +470,10 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 			return err
 		}
 	}
+	// email is the deliberate exception: it's written unconditionally (not guarded
+	// like the fields above) so an empty value clears it, matching the legacy
+	// MustCols("email") contract that PUT /api/teams relies on. Do not add an
+	// `if cmd.Email != ""` guard or clearing a team's email breaks.
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
 		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
