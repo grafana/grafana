@@ -659,7 +659,7 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
-	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.Identifier() == ""):
 		logger.Info("webhook missing, reconciling")
 	case shouldRotateWebhookSecret:
 		logger.Info("webhook secret rotation due")
@@ -837,7 +837,7 @@ type webhookURLReporter interface {
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	webhookExpected := len(obj.Spec.Workflows) > 0
 	webhookMissing := webhookExpected &&
-		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+		(obj.Status.Webhook == nil || obj.Status.Webhook.Identifier() == "")
 
 	// Re-run hooks when the registered webhook URL no longer matches the configured one
 	// (e.g. a changed tunnel hostname) so OnUpdate can point it back. This is a local
@@ -884,7 +884,7 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if len(obj.Spec.Workflows) == 0 {
 		return false
 	}
-	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+	if obj.Status.Webhook == nil || obj.Status.Webhook.Identifier() == "" {
 		return false
 	}
 	if obj.Status.Webhook.LastRotated == 0 {

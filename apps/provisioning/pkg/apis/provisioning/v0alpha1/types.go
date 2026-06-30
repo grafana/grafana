@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"strconv"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -140,6 +142,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -640,7 +644,9 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next version.
+	UUID             string   `json:"uuid,omitempty"`
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
@@ -649,6 +655,19 @@ type WebhookStatus struct {
 
 func (WebhookStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "WebhookStatus"
+}
+
+// Identifier returns the provider webhook identifier as a string. Providers with
+// numeric identifiers (GitHub, GitLab) use ID; providers with string identifiers
+// (Bitbucket) use UUID. Empty when no webhook is registered.
+func (w *WebhookStatus) Identifier() string {
+	if w.UUID != "" {
+		return w.UUID
+	}
+	if w.ID != 0 {
+		return strconv.FormatInt(w.ID, 10)
+	}
+	return ""
 }
 
 type TokenStatus struct {

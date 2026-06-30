@@ -29,7 +29,7 @@ func TestWebhookManager_OnCreate(t *testing.T) {
 			name: "successfully create webhook",
 			setupMock: func(m *MockWebhookClient) {
 				m.On("CreateWebhook", mock.Anything, "https://example.com/webhook", mock.Anything, mock.Anything).
-					Return(&fakeWebhookConfig{id: 123, url: "https://example.com/webhook"}, nil)
+					Return(&fakeWebhookConfig{id: "123", url: "https://example.com/webhook"}, nil)
 			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -166,15 +166,15 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "successfully update webhook when webhook exists",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(&fakeWebhookConfig{
-						id:     123,
+						id:     "123",
 						url:    "https://example.com/webhook",
 						events: []string{"push"},
 					}, nil)
 
 				m.On("EditWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
-					return hook.GetID() == 123 && hook.GetURL() == "https://example.com/webhook-updated" &&
+					return hook.GetID() == "123" && hook.GetURL() == "https://example.com/webhook-updated" &&
 						slices.Equal(hook.GetEvents(), subscribedEvents)
 				})).Return(nil)
 			},
@@ -203,13 +203,13 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "create webhook when it doesn't exist",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(nil, ErrFileNotFound)
 
 				m.On("CreateWebhook", mock.Anything, "https://example.com/webhook", mock.MatchedBy(func(events []string) bool {
 					return slices.Equal(events, subscribedEvents)
 				}), mock.Anything).Return(&fakeWebhookConfig{
-					id:     456,
+					id:     "456",
 					url:    "https://example.com/webhook",
 					events: subscribedEvents,
 				}, nil)
@@ -249,7 +249,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "error getting webhook",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(nil, fmt.Errorf("failed to get webhook"))
 			},
 			config: &provisioning.Repository{
@@ -273,9 +273,9 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "error editing webhook",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(&fakeWebhookConfig{
-						id:     123,
+						id:     "123",
 						url:    "https://example.com/webhook",
 						events: []string{"push"},
 					}, nil)
@@ -306,7 +306,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 			setupMock: func(m *MockWebhookClient) {
 				m.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(&fakeWebhookConfig{
-						id:     456,
+						id:     "456",
 						url:    "https://example.com/webhook",
 						events: subscribedEvents,
 					}, nil)
@@ -335,7 +335,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 			setupMock: func(m *MockWebhookClient) {
 				m.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(&fakeWebhookConfig{
-						id:     789,
+						id:     "789",
 						url:    "https://example.com/webhook",
 						events: subscribedEvents,
 					}, nil)
@@ -386,13 +386,13 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "creates webhook when ErrFileNotFound",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(nil, ErrFileNotFound)
 
 				m.On("CreateWebhook", mock.Anything, "https://example.com/webhook", mock.MatchedBy(func(events []string) bool {
 					return slices.Equal(events, subscribedEvents)
 				}), mock.Anything).Return(&fakeWebhookConfig{
-					id:     456,
+					id:     "456",
 					url:    "https://example.com/webhook",
 					events: subscribedEvents,
 				}, nil)
@@ -422,7 +422,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "error on create when not found",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(nil, ErrFileNotFound)
 
 				m.On("CreateWebhook", mock.Anything, "https://example.com/webhook", mock.MatchedBy(func(events []string) bool {
@@ -450,9 +450,9 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "no update needed when URL and events match",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("GetWebhook", mock.Anything, int64(123)).
+				m.On("GetWebhook", mock.Anything, "123").
 					Return(&fakeWebhookConfig{
-						id:     123,
+						id:     "123",
 						url:    "https://example.com/webhook",
 						events: subscribedEvents,
 					}, nil)
@@ -478,7 +478,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "delete webhook when workflows are removed",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -521,7 +521,7 @@ func TestWebhookManager_OnUpdate(t *testing.T) {
 		{
 			name: "delete webhook when webhookDisabled is true",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -623,7 +623,7 @@ func TestWebhookManager_OnDelete(t *testing.T) {
 		{
 			name: "successfully delete webhook",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -643,7 +643,7 @@ func TestWebhookManager_OnDelete(t *testing.T) {
 		{
 			name: "webhook not found during deletion",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(ErrFileNotFound)
 			},
 			config: &provisioning.Repository{
@@ -663,7 +663,7 @@ func TestWebhookManager_OnDelete(t *testing.T) {
 		{
 			name: "unauthorized to delete the webhook",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(ErrUnauthorized)
 			},
 			config: &provisioning.Repository{
@@ -697,7 +697,7 @@ func TestWebhookManager_OnDelete(t *testing.T) {
 		{
 			name: "error deleting webhook",
 			setupMock: func(m *MockWebhookClient) {
-				m.On("DeleteWebhook", mock.Anything, int64(123)).
+				m.On("DeleteWebhook", mock.Anything, "123").
 					Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
@@ -738,10 +738,10 @@ func TestWebhookManager_OnDelete(t *testing.T) {
 func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 	t.Run("successful rotation returns status and secure patch ops", func(t *testing.T) {
 		mockClient := NewMockWebhookClient(t)
-		mockClient.On("GetWebhook", mock.Anything, int64(123)).
-			Return(&fakeWebhookConfig{id: 123, url: "https://example.com/hook", events: []string{"push"}}, nil)
+		mockClient.On("GetWebhook", mock.Anything, "123").
+			Return(&fakeWebhookConfig{id: "123", url: "https://example.com/hook", events: []string{"push"}}, nil)
 		mockClient.On("EditWebhook", mock.Anything, mock.MatchedBy(func(cfg WebhookConfig) bool {
-			return cfg.GetID() == 123 && cfg.GetSecret() != ""
+			return cfg.GetID() == "123" && cfg.GetSecret() != ""
 		})).Return(nil)
 
 		config := &provisioning.Repository{
@@ -765,7 +765,7 @@ func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
 		mockClient := NewMockWebhookClient(t)
-		mockClient.On("GetWebhook", mock.Anything, int64(123)).
+		mockClient.On("GetWebhook", mock.Anything, "123").
 			Return(nil, ErrFileNotFound)
 
 		config := &provisioning.Repository{
@@ -786,7 +786,7 @@ func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("get webhook error returns error", func(t *testing.T) {
 		mockClient := NewMockWebhookClient(t)
-		mockClient.On("GetWebhook", mock.Anything, int64(123)).
+		mockClient.On("GetWebhook", mock.Anything, "123").
 			Return(nil, fmt.Errorf("api error"))
 
 		config := &provisioning.Repository{
@@ -804,8 +804,8 @@ func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("edit webhook error returns error", func(t *testing.T) {
 		mockClient := NewMockWebhookClient(t)
-		mockClient.On("GetWebhook", mock.Anything, int64(123)).
-			Return(&fakeWebhookConfig{id: 123, url: "https://example.com/hook"}, nil)
+		mockClient.On("GetWebhook", mock.Anything, "123").
+			Return(&fakeWebhookConfig{id: "123", url: "https://example.com/hook"}, nil)
 		mockClient.On("EditWebhook", mock.Anything, mock.Anything).
 			Return(fmt.Errorf("edit failed"))
 
@@ -854,13 +854,13 @@ func newTestWebhookManager(client WebhookClient, config *provisioning.Repository
 // manager reads and mutates through the interface, standing in for a real
 // provider's webhook representation.
 type fakeWebhookConfig struct {
-	id     int64
+	id     string
 	url    string
 	events []string
 	secret string
 }
 
-func (c *fakeWebhookConfig) GetID() int64              { return c.id }
+func (c *fakeWebhookConfig) GetID() string             { return c.id }
 func (c *fakeWebhookConfig) GetURL() string            { return c.url }
 func (c *fakeWebhookConfig) GetEvents() []string       { return c.events }
 func (c *fakeWebhookConfig) GetSecret() string         { return c.secret }

@@ -136,9 +136,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		base = cfg.GitHub.Branch
 	case cfg.GitLab != nil:
 		base = cfg.GitLab.Branch
+	case cfg.Bitbucket != nil:
+		base = cfg.Bitbucket.Branch
 	default:
-		logger.Debug("expecting github or gitlab configuration")
-		return apierrors.NewBadRequest("expecting github or gitlab configuration")
+		logger.Debug("expecting github, gitlab or bitbucket configuration")
+		return apierrors.NewBadRequest("expecting github, gitlab or bitbucket configuration")
 	}
 
 	reader, ok := repo.(repository.Reader)

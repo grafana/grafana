@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -149,17 +150,17 @@ func (m *WebhookManager) OnDelete(ctx context.Context) error {
 // Status.Webhook entry is cleared so the next reconcile re-creates it, and an
 // error is returned so the failure is surfaced in logs.
 func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
-	if m.status == nil || m.status.ID == 0 {
+	if m.status == nil || m.status.Identifier() == "" {
 		return nil, nil
 	}
 
 	logger := logging.FromContext(ctx)
 	logger.Info("rotating webhook secret", "trigger", "rotation")
 
-	hook, err := m.client.GetWebhook(ctx, m.status.ID)
+	hook, err := m.client.GetWebhook(ctx, m.status.Identifier())
 	switch {
 	case errors.Is(err, ErrFileNotFound):
-		return clearStatusPatch(), fmt.Errorf("webhook %d not found on remote during rotation: %w", m.status.ID, err)
+		return clearStatusPatch(), fmt.Errorf("webhook %s not found on remote during rotation: %w", m.status.Identifier(), err)
 	case err != nil:
 		return nil, fmt.Errorf("get webhook for rotation: %w", err)
 	}
@@ -199,7 +200,7 @@ func (m *WebhookManager) createWebhook(ctx context.Context) (WebhookConfig, erro
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
 func (m *WebhookManager) updateWebhook(ctx context.Context) (WebhookConfig, bool, error) {
-	if m.status == nil || m.status.ID == 0 {
+	if m.status == nil || m.status.Identifier() == "" {
 		hook, err := m.createWebhook(ctx)
 		if err != nil {
 			return nil, false, err
@@ -207,7 +208,7 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (WebhookConfig, bool
 		return hook, true, nil
 	}
 
-	hook, err := m.client.GetWebhook(ctx, m.status.ID)
+	hook, err := m.client.GetWebhook(ctx, m.status.Identifier())
 	switch {
 	case errors.Is(err, ErrFileNotFound):
 		hook, err := m.createWebhook(ctx)
@@ -256,7 +257,7 @@ func (m *WebhookManager) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("webhook not found")
 	}
 
-	id := m.status.ID
+	id := m.status.Identifier()
 
 	err := m.client.DeleteWebhook(ctx, id)
 	if err != nil && !errors.Is(err, ErrFileNotFound) && !errors.Is(err, ErrUnauthorized) {
@@ -277,17 +278,22 @@ func (m *WebhookManager) deleteWebhook(ctx context.Context) error {
 
 // statusPatches returns the JSON patch operations that persist a freshly
 // created or rotated provider webhook: its status and secret.
-func statusPatches(id int64, url string, events []string, secret string) []map[string]any {
+func statusPatches(id string, url string, events []string, secret string) []map[string]any {
+	status := &provisioning.WebhookStatus{
+		URL:              url,
+		SubscribedEvents: events,
+		LastRotated:      time.Now().UnixMilli(),
+	}
+	if numericID, err := strconv.ParseInt(id, 10, 64); err == nil {
+		status.ID = numericID
+	} else {
+		status.UUID = id
+	}
 	return []map[string]any{
 		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               id,
-				URL:              url,
-				SubscribedEvents: events,
-				LastRotated:      time.Now().UnixMilli(),
-			},
+			"op":    "replace",
+			"path":  "/status/webhook",
+			"value": status,
 		},
 		{
 			"op":   "replace",

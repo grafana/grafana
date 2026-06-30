@@ -166,7 +166,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			expectedError: "missing spec.ref",
 		},
 		{
-			name: "missing github and gitlab configuration",
+			name: "missing github, gitlab and bitbucket configuration",
 			opts: &provisioning.PullRequestJobOptions{
 				PR:  123,
 				Ref: "test-ref",
@@ -181,7 +181,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 				})
 			},
-			expectedError: "expecting github or gitlab configuration",
+			expectedError: "expecting github, gitlab or bitbucket configuration",
 		},
 		{
 			name: "failed to list pull request files",

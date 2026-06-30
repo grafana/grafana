@@ -734,6 +734,10 @@ require (
 
 require gitlab.com/gitlab-org/api/client-go/v2 v2.42.0
 
+require gitlab.com/gitlab-org/api/client-go/v2 v2.42.0
+
+require github.com/ktrysmt/go-bitbucket v0.10.0 // indirect
+
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
