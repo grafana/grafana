@@ -88,7 +88,7 @@ func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
 		}),
 	}
 
-	reg.MustRegister(append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)...)
+	reg.MustRegister(append(m.collectors(), m.messagesPublished, m.publishErrors)...)
 
 	return m
 }
@@ -137,7 +137,7 @@ func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
 		}),
 	}
 
-	reg.MustRegister(append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)...)
+	reg.MustRegister(append(m.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)...)
 
 	return m
 }
