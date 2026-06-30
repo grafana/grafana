@@ -77,10 +77,10 @@ interface RestoreDashboardArgs {
 // We need to do this as the API will return different responses depending on the type of storage used and existing
 // resource types, even when we are using the old api/ endpoint.
 const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
-  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
-  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
-  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
-  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+  folders: folderCounts.folders || folderCounts.folder || 0,
+  dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
+  librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
+  alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -239,7 +239,7 @@ export const browseDashboardsAPI = createApi({
           const totalCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -248,7 +248,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.folders += normalizedCounts.folders;
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
-            totalCounts.library_elements += normalizedCounts.library_elements;
+            totalCounts.librarypanels += normalizedCounts.librarypanels;
           }
 
           return { data: totalCounts };

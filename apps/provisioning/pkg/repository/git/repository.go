@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -51,6 +52,7 @@ type gitRepository struct {
 	gitConfig     RepositoryConfig
 	client        nanogit.Client
 	writerOptions []nanogit.WriterOption
+	maxBytes      atomic.Int64
 }
 
 func NewRepository(
@@ -405,12 +407,22 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
+	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, len(blob.Content), max),
+		)
+	}
+
 	return &repository.FileInfo{
 		Path: filePath,
 		Ref:  ref,
 		Data: blob.Content,
 		Hash: blob.Hash.String(),
 	}, nil
+}
+
+func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
+	r.maxBytes.Store(maxBytes)
 }
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {

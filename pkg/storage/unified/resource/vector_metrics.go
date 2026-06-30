@@ -15,12 +15,16 @@ type VectorMetrics struct {
 	ReconcilerPendingEvents      prometheus.Gauge
 	ReconcilerRetriesTotal       *prometheus.CounterVec
 	ReconcilerEventsDroppedTotal *prometheus.CounterVec
-	BackfillItemDuration         *prometheus.HistogramVec
-	QueryCacheHitsTotal          *prometheus.CounterVec
-	QueryCacheMissesTotal        *prometheus.CounterVec
-	QueryCacheEvictionsTotal     prometheus.Counter
-	RateLimitedRequestsTotal     prometheus.Counter
-	RateLimiterErrorsTotal       prometheus.Counter
+
+	ReconcilerSubresourcesExtractedTotal *prometheus.CounterVec
+	ReconcilerSubresourcesEmbeddedTotal  *prometheus.CounterVec
+	ReconcilerSubresourcesDeletedTotal   *prometheus.CounterVec
+	BackfillItemDuration                 *prometheus.HistogramVec
+	QueryCacheHitsTotal                  *prometheus.CounterVec
+	QueryCacheMissesTotal                *prometheus.CounterVec
+	QueryCacheEvictionsTotal             prometheus.Counter
+	RateLimitedRequestsTotal             prometheus.Counter
+	RateLimiterErrorsTotal               prometheus.Counter
 }
 
 func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
@@ -61,6 +65,18 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_reconciler_events_dropped_total",
 			Help: "Total number of reconciler events dropped (gave up on), labeled by reason.",
 		}, []string{"group", "resource", "reason"}),
+		ReconcilerSubresourcesExtractedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_extracted_total",
+			Help: "Total subresources extracted from processed resources. Compare with embedded to see how many re-embeds the content diff avoids.",
+		}, []string{"group", "resource"}),
+		ReconcilerSubresourcesEmbeddedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_embedded_total",
+			Help: "Total subresources re-embedded (new or content-changed). Equal to extracted means the diff is saving nothing.",
+		}, []string{"group", "resource"}),
+		ReconcilerSubresourcesDeletedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_deleted_total",
+			Help: "Total stale subresources deleted because they no longer exist in the resource.",
+		}, []string{"group", "resource"}),
 		BackfillItemDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_backfill_item_duration_seconds",
 			Help:                            "Time (in seconds) to process a single backfill item, labeled by group, resource, and outcome status (including skip reasons).",

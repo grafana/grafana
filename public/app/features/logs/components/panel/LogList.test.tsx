@@ -14,8 +14,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { type TempoDatasource } from '@grafana-plugins/tempo/datasource';
-import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -23,6 +21,7 @@ import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
 import { LogList, type Props } from './LogList';
+import { type TempoDatasource, createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
 
@@ -97,7 +96,7 @@ jest.mock('re-resizable', () => {
 describe('LogList', () => {
   let logs: LogRowModel[], defaultProps: Props;
   beforeEach(() => {
-    setBooleanFlags({ newLogsPanel: true });
+    setBooleanFlags({ otelLogsFormatting: true });
     logs = [
       createLogRow({ uid: '1', labels: { name_of_the_label: 'value of the label' } }),
       createLogRow({ uid: '2' }),
@@ -215,7 +214,7 @@ describe('LogList', () => {
 
   describe('OTel log lines', () => {
     test('Does not perform OTel-related actions when the flag is disabled', () => {
-      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: false });
+      setBooleanFlags({ otelLogsFormatting: false });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -228,7 +227,7 @@ describe('LogList', () => {
     });
 
     test('Reports the default displayed fields for non-OTel logs', () => {
-      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -243,7 +242,7 @@ describe('LogList', () => {
     });
 
     test('Reports the default OTel displayed fields', () => {
-      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       const onLogOptionsChange = jest.fn();
       const setDisplayedFields = jest.fn();
 
@@ -266,7 +265,7 @@ describe('LogList', () => {
     });
 
     test('Calls setDisplayedFields when showLogAttributes is toggled off externally', async () => {
-      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       const setDisplayedFields = jest.fn();
       const otelLogs = [createLogRow({ uid: '1', labels: { [OTEL_PROBE_FIELD]: '1' } })];
 
@@ -533,7 +532,7 @@ describe('LogList', () => {
     });
 
     test('Applies OTel default displayed fields and suggested fields', () => {
-      setBooleanFlags({ newLogsPanel: true, otelLogsFormatting: true });
+      setBooleanFlags({ otelLogsFormatting: true });
 
       const logs = [
         createLogRow({

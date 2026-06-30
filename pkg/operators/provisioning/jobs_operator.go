@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,27 +40,20 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	}
 
 	// Jobs informer and controller (resync ~60s like in register.go)
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
+	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
-		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			provisioningClient,
-			controllerCfg.historyExpiration,
-		)
+		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
-		_, err = controller.NewHistoryJobController(
+		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
-			historyJobInformer,
 			controllerCfg.historyExpiration,
 		)
-		if err != nil {
-			return fmt.Errorf("failed to create history job controller: %w", err)
+		if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add history job event handler: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
@@ -87,9 +79,9 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	var wg sync.WaitGroup
 
 	if controllerCfg.jobProcessingEnabled {
-		jobController, err := controller.NewJobController(jobInformer)
-		if err != nil {
-			return fmt.Errorf("failed to create job controller: %w", err)
+		jobController := controller.NewJobController()
+		if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add job event handler: %w", err)
 		}
 
 		driver, err := buildDriver(

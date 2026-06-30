@@ -65,6 +65,7 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
 
   const meta = await getPluginMetaFromCache(pluginId);
   if (!meta) {
+    logPluginSettingsDebug('PluginSettings: falling back to getting legacy plugin settings', { pluginId });
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
 

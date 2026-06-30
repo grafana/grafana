@@ -13,6 +13,7 @@ const (
 	ScopeReceiversRoot       = "receivers"
 	ScopeRoutesRoot          = accesscontrol.AlertingRoutesKind
 	ScopeInhibitionRulesRoot = "inhibition-rules"
+	ScopeAlertingConfigRoot  = accesscontrol.AlertingConfigResource
 	AlertRolesGroup          = "Alerting"
 
 	PermissionView  ReceiverPermission = "View"
@@ -32,6 +33,9 @@ var (
 
 	ScopeAlertmanagerImportsProvider = accesscontrol.NewScopeProvider(accesscontrol.AlertingAlertmanagerImportsKind)
 	ScopeAlertmanagerImportsAll      = ScopeAlertmanagerImportsProvider.GetResourceAllScope()
+
+	ScopeAlertingConfigProvider = accesscontrol.NewScopeProvider(ScopeAlertingConfigRoot)
+	ScopeAlertingConfigAll      = ScopeAlertingConfigProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {

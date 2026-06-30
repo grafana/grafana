@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
-import { ManagerKind } from 'app/features/apiserver/types';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO, type FolderParent } from 'app/types/folders';
 
@@ -19,7 +19,7 @@ export function buildNavModel(
   counts?: { panels: number; rules: number }
 ): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
-  const isProvisioned = 'managedBy' in folder ? folder.managedBy === ManagerKind.Repo : false;
+  const isProvisioned = 'managedBy' in folder && isItemManagedByRepository(folder);
 
   const model: NavModelItem = {
     icon: 'folder',

@@ -149,6 +149,7 @@ export const ActionRow = ({
           getSortOptions={getSortOptions}
           placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
           isClearable
+          width={28}
         />
       </Stack>
     </Stack>

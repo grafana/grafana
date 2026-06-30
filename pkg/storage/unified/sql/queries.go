@@ -268,17 +268,42 @@ type historyReadRequest struct {
 	ResourceVersion int64
 }
 
+type historyReadResponse struct {
+	Key             *resourcepb.ResourceKey
+	Folder          string
+	GUID            string
+	ResourceVersion int64
+	Value           []byte
+	Action          int
+}
+
+func NewHistoryReadResponse() *historyReadResponse {
+	return &historyReadResponse{
+		Key: &resourcepb.ResourceKey{},
+	}
+}
+
+func (r *historyReadResponse) ReadResponse() *resource.BackendReadResponse {
+	return &resource.BackendReadResponse{
+		Key:             r.Key,
+		Folder:          r.Folder,
+		GUID:            r.GUID,
+		ResourceVersion: r.ResourceVersion,
+		Value:           r.Value,
+	}
+}
+
 type sqlResourceHistoryReadRequest struct {
 	sqltemplate.SQLTemplate
 	Request  *historyReadRequest
-	Response *resource.BackendReadResponse
+	Response *historyReadResponse
 }
 
 func (r sqlResourceHistoryReadRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+func (r sqlResourceHistoryReadRequest) Results() (*historyReadResponse, error) {
 	return r.Response, nil
 }
 

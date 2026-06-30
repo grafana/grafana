@@ -1446,14 +1446,15 @@ func TestTeamK8sService_GetTeamIDsByUser(t *testing.T) {
 
 func TestTeamK8sService_IsTeamMember(t *testing.T) {
 	tests := []struct {
-		name           string
-		orgID          int64
-		teamID         int64
-		userID         int64
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		nilProvider    bool
-		expectErr      bool
-		expectMember   bool
+		name                   string
+		orgID                  int64
+		teamID                 int64
+		userID                 int64
+		serverResponse         func(w http.ResponseWriter, r *http.Request)
+		nilProvider            bool
+		enforceServiceIdentity bool
+		expectErr              bool
+		expectMember           bool
 	}{
 		{
 			name:           "returns true when user is a team member",
@@ -1554,6 +1555,15 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			expectMember: false,
 		},
 		{
+			name:                   "resolves member under a service identity while team read stays as caller",
+			orgID:                  1,
+			teamID:                 10,
+			userID:                 42,
+			serverResponse:         membershipServerHandler(t),
+			enforceServiceIdentity: true,
+			expectMember:           true,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			orgID:       1,
 			teamID:      10,
@@ -1571,7 +1581,11 @@ func TestTeamK8sService_IsTeamMember(t *testing.T) {
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
-				provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+				cfg := &clientrest.Config{Host: ts.URL}
+				if tt.enforceServiceIdentity {
+					cfg.Transport = serviceIdentityRBAC{base: http.DefaultTransport}
+				}
+				provider := &mockDirectRestConfigProvider{restConfig: cfg}
 				svc = NewTeamK8sService(log.NewNopLogger(), nil, provider, tracing.InitializeTracerForTest())
 			}
 
@@ -2505,4 +2519,13 @@ func (m *mockDirectRestConfigProvider) IsReady() bool {
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
 	return context.WithValue(context.Background(), ctxkey.Key{}, reqCtx)
+}
+
+type serviceIdentityRBAC struct{ base http.RoundTripper }
+
+func (g serviceIdentityRBAC) RoundTrip(req *http.Request) (*http.Response, error) {
+	if strings.Contains(req.URL.Path, "/users") != identity.IsServiceIdentity(req.Context()) {
+		return &http.Response{StatusCode: http.StatusForbidden, Body: http.NoBody, Header: make(http.Header)}, nil
+	}
+	return g.base.RoundTrip(req)
 }

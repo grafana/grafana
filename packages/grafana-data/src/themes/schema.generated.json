@@ -285,6 +285,9 @@
             "canvas": {
               "type": "string"
             },
+            "page": {
+              "type": "string"
+            },
             "primary": {
               "type": "string"
             },
@@ -380,10 +383,35 @@
       },
       "additionalProperties": false
     },
+    "shadows": {
+      "type": "object",
+      "properties": {
+        "z1": {
+          "type": "string"
+        },
+        "z2": {
+          "type": "string"
+        },
+        "z3": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "shape": {
       "type": "object",
       "properties": {
+        "borderRadiusSm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
         "borderRadius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "borderRadiusLg": {
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
@@ -736,6 +764,37 @@
           "items": {
             "type": "string"
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "components": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "background": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "background",
+                  "text"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
