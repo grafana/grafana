@@ -67,12 +67,26 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 
   const isDraggable = !isClone && isEditing;
 
-  if (isHidden) {
-    return null;
+  if (soloPanelContext) {
+    return isHidden ? null : <layout.Component model={layout} />;
   }
 
-  if (soloPanelContext) {
-    return <layout.Component model={layout} />;
+  if (isHidden) {
+    // Keep the Draggable mounted (but visually hidden) instead of unmounting the row.
+    // myIndex is derived from the full rows array, so removing the element from the DOM
+    // leaves a gap in @hello-pangea/dnd's index sequence and the Droppable reserves
+    // empty space where the row used to be.
+    return (
+      <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled>
+        {(dragProvided) => (
+          <div
+            ref={dragProvided.innerRef}
+            {...dragProvided.draggableProps}
+            style={{ ...dragProvided.draggableProps.style, display: 'none' }}
+          />
+        )}
+      </Draggable>
+    );
   }
 
   const titleElement = (
