@@ -962,6 +962,9 @@ jobs:
             --field version_type="canary"
 
   notify-pr:
+    # Only run in grafana/grafana itself. In the security mirror (a private repo) this job would
+    # both leak that a build is happening and fail (nothing depends on it, but it fails the run).
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
