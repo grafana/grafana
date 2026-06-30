@@ -30,8 +30,8 @@ func (s stubWebhookRepo) Config() *provisioning.Repository { return s.cfg }
 func (s stubWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
 	return nil, nil
 }
-func (s stubWebhookRepo) Slug() string   { return s.slug }
-func (s stubWebhookRepo) Branch() string { return s.branch }
+func (s stubWebhookRepo) Slug() string             { return s.slug }
+func (s stubWebhookRepo) GetCurrentBranch() string { return s.branch }
 func (s stubWebhookRepo) ProcessRequest(context.Context, *http.Request) (repository.WebhookEvent, error) {
 	return s.event, s.err
 }

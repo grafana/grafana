@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -16,10 +17,12 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,10 +31,20 @@ import (
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
 
+// webhookCore is the subset of the provisioning APIBuilder the webhook
+// connector depends on, so lower-level code doesn't import the builder package.
+type webhookCore interface {
+	GetGroupVersion() schema.GroupVersion
+	GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error)
+	GetJobQueue() jobs.Queue
+	GetStatusPatcher() *appcontroller.RepositoryStatusPatcher
+	GetIncrementalPolicy() repository.IncrementalSyncPolicy
+}
+
 // This only works for github right now
 type webhookConnector struct {
 	webhooksEnabled bool
-	core            *provisioningapis.APIBuilder
+	core            webhookCore
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
 	metrics         webhookMetrics
@@ -42,8 +55,7 @@ type webhookConnector struct {
 
 func NewWebhookConnector(
 	webhooksEnabled bool,
-	// TODO: use interface for this
-	core *provisioningapis.APIBuilder,
+	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
 ) *webhookConnector {
@@ -212,14 +224,14 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 // webhook turns an inbound delivery into a sync/pull-request job response. The
 // repository supplies the normalized event via ProcessRequest; this dispatches
 // it against the configured repository and branch.
-func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks repository.WebhookRepository) (*provisioning.WebhookResponse, error) {
-	if hooks.Config().Status.Webhook == nil {
+func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo repository.WebhookRepository) (*provisioning.WebhookResponse, error) {
+	if repo.Config().Status.Webhook == nil {
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", hooks.Slug(), "ref", hooks.Branch()))
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.GetCurrentBranch()))
 
-	event, err := hooks.ProcessRequest(ctx, req)
+	event, err := repo.ProcessRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -234,25 +246,25 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks
 
 	switch event.Type {
 	case repository.WebhookEventPush:
-		if event.RepoSlug != hooks.Slug() {
-			logging.FromContext(ctx).Warn("webhook push event repository mismatch", "expected", hooks.Slug(), "got", event.RepoSlug)
+		if event.RepoSlug != repo.Slug() {
+			logging.FromContext(ctx).Warn("webhook push event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
 			return nil, repository.ErrRepositoryMismatch
 		}
-		if !hooks.Config().Spec.Sync.Enabled {
+		if !repo.Config().Spec.Sync.Enabled {
 			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 		}
 		// Skip silently if the event is not for the configured branch, as the
 		// webhook cannot be configured to only publish events for one branch.
-		if event.Branch != hooks.Branch() {
+		if event.Branch != repo.GetCurrentBranch() {
 			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 		}
 		return s.pushSyncResponse(event), nil
 	case repository.WebhookEventPullRequest:
-		if event.RepoSlug != hooks.Slug() {
-			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", hooks.Slug(), "got", event.RepoSlug)
+		if event.RepoSlug != repo.Slug() {
+			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
 			return nil, repository.ErrRepositoryMismatch
 		}
-		if event.Branch != hooks.Branch() {
+		if event.Branch != repo.GetCurrentBranch() {
 			return &provisioning.WebhookResponse{
 				Code:    http.StatusOK,
 				Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", event.Branch),

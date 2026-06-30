@@ -63,10 +63,6 @@ func (r *githubWebhookRepository) Slug() string {
 	return fmt.Sprintf("%s/%s", r.owner, r.repo)
 }
 
-func (r *githubWebhookRepository) Branch() string {
-	return r.config.Spec.GitHub.Branch
-}
-
 func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.Request) (repository.WebhookEvent, error) {
 	if r.secret.IsZero() {
 		return repository.WebhookEvent{}, fmt.Errorf("missing webhook secret")
