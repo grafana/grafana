@@ -411,7 +411,7 @@ func parseFieldSelector(fs fields.Selector) (fieldFilters, error) {
 	}
 	for _, r := range fs.Requirements() {
 		if r.Operator != selection.Equals && r.Operator != selection.DoubleEquals {
-			return f, fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field)
+			return f, fmt.Errorf("unsupported operator %s for %s (only = or == supported)", r.Operator, r.Field)
 		}
 		switch r.Field {
 		case "spec.dashboardUID":
@@ -453,7 +453,7 @@ func parseLabelSelector(ls labels.Selector) (labelFilters, error) {
 	}
 	for _, r := range requirements {
 		if r.Operator() != selection.Equals && r.Operator() != selection.DoubleEquals {
-			return f, fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator(), r.Key())
+			return f, fmt.Errorf("unsupported operator %s for %s (only = or == supported)", r.Operator(), r.Key())
 		}
 		switch r.Key() {
 		case LabelKeyLegacyID:
