@@ -153,7 +153,8 @@ Adjust how the gauge is displayed.
 
 #### Neutral value
 
-Set the starting value from which every gauge will be filled when it shouldn't be the minimum value.
+By default, the starting value of a gauge is the minimum value, not zero.
+You can set the starting value from which every gauge will be filled when you don't want it to be the minimum value.
 This option is especially useful in cases where the range of data values includes negative numbers.
 If you leave this empty, Grafana uses the configured minimum value.
 
