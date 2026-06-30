@@ -41,7 +41,7 @@ import { type DashboardGridItem } from '../../scene/layout-default/DashboardGrid
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
@@ -58,7 +58,11 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
@@ -133,7 +137,11 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
