@@ -3,7 +3,7 @@ import { type Page } from '@playwright/test';
 // Mirror of selectors.components.NavToolbar.commandPaletteTrigger from
 // packages/grafana-e2e-selectors. Hardcoded because the smoke runner runs as a
 // plain Node process and the workspace package isn't built into node_modules.
-export const COMMAND_PALETTE_TRIGGER = 'data-testid Command palette trigger';
+const COMMAND_PALETTE_TRIGGER = 'data-testid Command palette trigger';
 
 export type TypingPattern = 'burst' | 'normal' | 'thinking' | 'hunting';
 export type ActivationStyle = 'mouse' | 'keyboard-immediate' | 'keyboard-browse';
