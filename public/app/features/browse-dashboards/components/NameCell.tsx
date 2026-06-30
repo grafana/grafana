@@ -113,7 +113,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
         <FolderRepo folder={item} />
 
         {item.description && (
-          <Tooltip content={item.description} placement="top" interactive={false}>
+          <Tooltip content={item.description} placement="top" interactive>
             <span className={styles.description}>
               <Icon
                 name="info-circle"
