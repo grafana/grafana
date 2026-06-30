@@ -195,10 +195,11 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
-		if offset+int64(len(resp.Results.Rows)) >= resp.TotalHits {
+		// Advance by the rows actually returned so a short page doesn't skip the remainder.
+		offset += int64(len(resp.Results.Rows))
+		if offset >= resp.TotalHits {
 			return names, nil
 		}
-		offset += childFolderPageSize
 	}
 }
 
