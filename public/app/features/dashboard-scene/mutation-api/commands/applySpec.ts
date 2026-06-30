@@ -15,6 +15,7 @@ import { z } from 'zod';
 
 import { sceneUtils } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
@@ -65,9 +66,7 @@ function dtoFromScene(scene: MutationContextScene, spec: DashboardV2Spec): Dashb
  * envelope, preferring whatever the scene already has.
  */
 function resolveMetadata(scene: MutationContextScene): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the scene's untyped serializer metadata
-  const existing = (scene.serializer.metadata ?? {}) as Partial<DashboardWithAccessInfo<DashboardV2Spec>['metadata']> &
-    Record<string, unknown>;
+  const existing = scene.serializer.getK8SMetadata() ?? {};
   const meta = scene.state.meta;
   const uid =
     (typeof existing.name === 'string' && existing.name) ||
@@ -101,7 +100,7 @@ type MutationContextScene = {
       key?: string;
     };
   };
-  serializer: { metadata: unknown };
+  serializer: { getK8SMetadata: () => Partial<ObjectMeta> | undefined };
   setState: (state: unknown) => void;
 };
 
