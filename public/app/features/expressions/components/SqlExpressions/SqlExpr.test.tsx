@@ -85,6 +85,11 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref: unknown) => mockDataSourceSrv.get(ref),
+}));
+
 describe('SqlExpr', () => {
   const SqlEditorMock = jest.mocked(SqlEditor);
   const SQLEditorMock = jest.mocked(SQLEditor);
