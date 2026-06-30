@@ -229,7 +229,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.GetCurrentBranch()))
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.Config().Branch()))
 
 	// Authenticate the request before parsing anything.
 	verified, err := repo.VerifyRequest(req)
@@ -261,7 +261,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		}
 		// Skip silently if the event is not for the configured branch, as the
 		// webhook cannot be configured to only publish events for one branch.
-		if event.Branch != repo.GetCurrentBranch() {
+		if event.Branch != repo.Config().Branch() {
 			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 		}
 		return s.pushSyncResponse(event), nil
@@ -270,7 +270,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", repo.Slug(), "got", event.RepoSlug)
 			return nil, repository.ErrRepositoryMismatch
 		}
-		if event.Branch != repo.GetCurrentBranch() {
+		if event.Branch != repo.Config().Branch() {
 			return &provisioning.WebhookResponse{
 				Code:    http.StatusOK,
 				Message: fmt.Sprintf("ignoring pull request event as %s is not the configured branch", event.Branch),

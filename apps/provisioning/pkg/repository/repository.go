@@ -180,11 +180,9 @@ type RepositoryWithURLs interface {
 type WebhookRepository interface {
 	Repository
 
-	// Slug and GetCurrentBranch are the repository and branch the webhook is
-	// configured for; the dispatcher uses them to reject or skip events for
-	// anything else.
+	// Slug is the repository the webhook is configured for; the dispatcher uses
+	// it to reject events for anything else.
 	Slug() string
-	GetCurrentBranch() string
 
 	// VerifyRequest authenticates the inbound request and returns its verified form.
 	VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error)
