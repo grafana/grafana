@@ -51,13 +51,6 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 	migrationConfig := migrate.MigrationConfig{
 		URI:    connStr,
 		Engine: dbType,
-		// openfga v1.18+ pings the datastore in a backoff.Retry loop before
-		// running migrations. When these are left at zero, PingTimeout produces
-		// an already-expired context (so every ping fails instantly) and Timeout
-		// maps to backoff MaxElapsedTime=0, which retries forever. Use openfga's
-		// own CLI defaults so the ping loop is bounded.
-		PingTimeout: openfgaconfig.DefaultDatastorePingTimeout,
-		Timeout:     openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime,
 	}
 
 	if err := runOpenFGAMigrationsLocked(engine, m.Dialect, cfg, migrationConfig, logger); err != nil {
@@ -125,6 +118,8 @@ func runOpenFGAMigrationsLocked(
 }
 
 func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Logger) error {
+	migrationConfig = withPingDefaults(migrationConfig)
+
 	err := migrate.RunMigrations(migrationConfig)
 	if err == nil {
 		return nil
@@ -143,6 +138,23 @@ func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Lo
 	}
 
 	return nil
+}
+
+// withPingDefaults fills in openfga's datastore ping timeouts when they are
+// unset. openfga v1.18+ pings the datastore in a backoff.Retry loop before
+// running migrations. With the zero values, PingTimeout produces an
+// already-expired context (so every ping fails instantly) and Timeout maps to
+// backoff MaxElapsedTime=0, which retries forever and hangs. openfga normally
+// applies these defaults via its own config helpers, but we build the
+// MigrationConfig directly, so we apply them here for every caller.
+func withPingDefaults(cfg migrate.MigrationConfig) migrate.MigrationConfig {
+	if cfg.PingTimeout == 0 {
+		cfg.PingTimeout = openfgaconfig.DefaultDatastorePingTimeout
+	}
+	if cfg.Timeout == 0 {
+		cfg.Timeout = openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime
+	}
+	return cfg
 }
 
 // resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
