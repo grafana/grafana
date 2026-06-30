@@ -2,12 +2,16 @@ import { useMemo, useCallback } from 'react';
 
 import {
   type SelectableValue,
-  getTimeZoneInfo,
   type TimeZoneInfo,
-  getTimeZoneGroups,
   type GroupedTimeZones,
   type TimeZone,
   InternalTimeZones,
+  getTimeZone,
+  getTimeZoneAbbreviation,
+  getTimeZoneOffsetMinutes,
+  guessBrowserTimeZone,
+  isValidTimeZone,
+  listTimeZones,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
@@ -66,7 +70,7 @@ export const TimeZonePicker = (props: Props) => {
     <Select
       inputId={inputId}
       value={selected}
-      placeholder={t('time-picker.zone.select-search-input', 'Type to search (country, city, abbreviation)')}
+      placeholder={t('time-picker.zone.select-search-input', 'Type to search (city, abbreviation, offset)')}
       autoFocus={autoFocus}
       menuShouldPortal={menuShouldPortal}
       openMenuOnFocus={openMenuOnFocus}
@@ -103,6 +107,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         options.push({
           label: name,
           value: info.zone,
+          info,
           searchIndex: getSearchIndex(name, info, now),
         });
 
@@ -178,10 +183,97 @@ const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): s
     parts.push(label.toLowerCase());
   }
 
-  for (const country of info.countries) {
-    parts.push(country.name.toLowerCase());
-    parts.push(country.code.toLowerCase());
+  return parts.join('|');
+};
+
+/**
+ * Builds the grouped list of time zones from the Intl-backed catalog
+ * (no moment-timezone dependency). Optional internal zones (Default, Browser,
+ * UTC) are placed in a leading, label-less group so they render at the top.
+ */
+const getTimeZoneGroups = (includeInternal: boolean | InternalTimeZones[]): GroupedTimeZones[] => {
+  const internalZones: TimeZone[] = [];
+
+  if (includeInternal === true) {
+    internalZones.push(InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc);
+  } else if (Array.isArray(includeInternal)) {
+    internalZones.push(...includeInternal);
   }
 
-  return parts.join('|');
+  const groups = new Map<string, TimeZone[]>();
+
+  if (internalZones.length > 0) {
+    groups.set('', internalZones);
+  }
+
+  for (const zone of listTimeZones()) {
+    const delimiter = zone.indexOf('/');
+    const group = delimiter === -1 ? '' : zone.slice(0, delimiter);
+
+    const zones = groups.get(group) ?? [];
+    zones.push(zone);
+    groups.set(group, zones);
+  }
+
+  return Array.from(groups, ([name, zones]) => ({ name, zones }));
+};
+
+/**
+ * Intl-backed replacement for the moment-based getTimeZoneInfo. Country data is
+ * intentionally omitted; the picker no longer supports searching by country.
+ */
+const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
+  switch (zone) {
+    case InternalTimeZones.utc:
+      return {
+        name: 'Coordinated Universal Time',
+        ianaName: 'UTC',
+        zone,
+        countries: [],
+        abbreviation: 'UTC, GMT',
+        offsetInMins: 0,
+      };
+
+    case InternalTimeZones.localBrowserTime: {
+      const ianaName = guessBrowserTimeZone();
+      return {
+        name: 'Browser Time',
+        ianaName,
+        zone,
+        countries: [],
+        abbreviation: getTimeZoneAbbreviation(ianaName, timestamp),
+        offsetInMins: getTimeZoneOffsetMinutes(ianaName, timestamp),
+      };
+    }
+
+    case InternalTimeZones.default: {
+      const resolved = getTimeZone();
+      const info = resolved === InternalTimeZones.default ? undefined : getTimeZoneInfo(resolved, timestamp);
+
+      return {
+        countries: [],
+        abbreviation: '',
+        offsetInMins: 0,
+        ianaName: '',
+        ...info,
+        name: 'Default',
+        zone,
+      };
+    }
+
+    default: {
+      if (!isValidTimeZone(zone)) {
+        return undefined;
+      }
+
+      return {
+        name: zone,
+        ianaName: zone,
+        zone,
+        countries: [],
+        abbreviation: getTimeZoneAbbreviation(zone, timestamp),
+        offsetInMins: getTimeZoneOffsetMinutes(zone, timestamp),
+      };
+    }
+  }
 };
