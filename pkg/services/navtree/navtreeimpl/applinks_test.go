@@ -153,6 +153,115 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "Page2", app1Node.Children[0].Text)
 	})
 
+	t.Run("Should keep plugin nav items flat by default", func(t *testing.T) {
+		nestedApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "nested-app",
+				Name: "Nested app",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:     "Settings",
+						Path:     "/a/nested-app/settings",
+						Type:     "page",
+						AddToNav: true,
+					},
+					{
+						Name:     "Features",
+						Path:     "/a/nested-app/settings/features",
+						Type:     "page",
+						AddToNav: true,
+					},
+				},
+			},
+		}
+		nestedService := service
+		nestedService.navigationAppConfig = map[string]NavigationAppConfig{}
+		nestedService.pluginStore = &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{nestedApp}}
+		nestedService.pluginSettings = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			nestedApp.ID: {OrgID: 1, PluginID: nestedApp.ID, Enabled: true},
+		}}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := nestedService.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		appNode := treeRoot.FindById("plugin-page-nested-app")
+		require.NotNil(t, appNode)
+		require.Len(t, appNode.Children, 2)
+		require.Empty(t, appNode.Children[0].Children)
+		require.Empty(t, appNode.Children[1].Children)
+	})
+
+	t.Run("Should nest plugin nav items by URL for apps that opt in to hierarchical navigation", func(t *testing.T) {
+		assistantApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-assistant-app",
+				Name: "Assistant",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:     "Settings",
+						Path:     "/a/grafana-assistant-app/settings",
+						Type:     "page",
+						AddToNav: true,
+					},
+					{
+						Name:     "Features",
+						Path:     "/a/grafana-assistant-app/settings/features",
+						Type:     "page",
+						AddToNav: true,
+					},
+					{
+						Name:     "Skills",
+						Path:     "/a/grafana-assistant-app/settings/features/skills",
+						Type:     "page",
+						AddToNav: true,
+					},
+					{
+						Name:     "Memories",
+						Path:     "/a/grafana-assistant-app/settings/features/memories",
+						Type:     "page",
+						AddToNav: true,
+					},
+					{
+						Name:     "Automations",
+						Path:     "/a/grafana-assistant-app/settings/automations",
+						Type:     "page",
+						AddToNav: true,
+					},
+				},
+			},
+		}
+		assistantService := service
+		assistantService.navigationAppConfig = map[string]NavigationAppConfig{
+			assistantApp.ID: {SectionID: navtree.NavIDRoot, HierarchicalNavigation: true},
+		}
+		assistantService.pluginStore = &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{assistantApp}}
+		assistantService.pluginSettings = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			assistantApp.ID: {OrgID: 1, PluginID: assistantApp.ID, Enabled: true},
+		}}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := assistantService.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		assistantNode := treeRoot.FindById("plugin-page-grafana-assistant-app")
+		require.NotNil(t, assistantNode)
+		require.Len(t, assistantNode.Children, 1)
+
+		settingsNode := assistantNode.Children[0]
+		require.Equal(t, "Settings", settingsNode.Text)
+		require.Len(t, settingsNode.Children, 2)
+		require.Equal(t, "Features", settingsNode.Children[0].Text)
+		require.Equal(t, "Automations", settingsNode.Children[1].Text)
+
+		featuresNode := settingsNode.Children[0]
+		require.Len(t, featuresNode.Children, 2)
+		require.Equal(t, "Skills", featuresNode.Children[0].Text)
+		require.Equal(t, "Memories", featuresNode.Children[1].Text)
+	})
+
 	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have root nav id configured to the root", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{

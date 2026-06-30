@@ -54,12 +54,13 @@ type ServiceImpl struct {
 }
 
 type NavigationAppConfig struct {
-	SectionID  string
-	SortWeight int64
-	Text       string
-	Icon       string
-	SubTitle   string
-	IsNew      bool
+	SectionID              string
+	SortWeight             int64
+	Text                   string
+	Icon                   string
+	SubTitle               string
+	IsNew                  bool
+	HierarchicalNavigation bool
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starClient starapi.K8sClients,
