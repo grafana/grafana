@@ -3,8 +3,8 @@ import { render, waitFor } from 'test/test-utils';
 import { dateTime, type TimeRange } from '@grafana/data';
 import { SceneGridLayout, SceneTimeRange, sceneGraph } from '@grafana/scenes';
 
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { mockResizeObserver } from '../utils/test-utils';
 
 import { EmbeddedDashboard } from './EmbeddedDashboard';
