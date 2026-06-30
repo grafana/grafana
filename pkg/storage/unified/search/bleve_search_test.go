@@ -1221,6 +1221,50 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"alpha"}, names)
 	})
 
+	t.Run("relevance query with sparse auth pages past first window", func(t *testing.T) {
+		// Reproduces a bug where query=abd&limit=50 returned zero hits for a
+		// scoped user even though authorized matches existed beyond rank 50.
+		// The first window is sized to limit (50); score-sorted SearchAfter
+		// must still reach authorized hits in later windows.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 80)
+		want := make([]string, 0, 6)
+		for i := 0; i < 80; i++ {
+			name := fmt.Sprintf("doc-%03d", i)
+			folder := "denied"
+			title := fmt.Sprintf("Abdomen Denied %03d", i)
+			if i >= 60 {
+				folder = "allowed"
+				title = fmt.Sprintf("Abdomen Allowed %03d", i)
+				want = append(want, name)
+			}
+			docs = append(docs, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					RV:    1,
+					Name:  name,
+					Title: title,
+					Key: &resourcepb.ResourceKey{
+						Name:      name,
+						Namespace: postRankKey.Namespace,
+						Group:     postRankKey.Group,
+						Resource:  postRankKey.Resource,
+					},
+					Folder: folder,
+				},
+			})
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(50)
+		q.Query = "abd"
+		names, res := searchNames(t, index, ac, q)
+		require.Equal(t, want, names, "authorized matches beyond the first window must be returned")
+		require.Equal(t, int64(len(want)), res.TotalHits, "exhausted scan reports exact authorized total")
+		require.Greater(t, ac.checked, 50, "must scan past the first window")
+	})
+
 	t.Run("fewer authorized than limit returns all authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{

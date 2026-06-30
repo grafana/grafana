@@ -2039,7 +2039,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, searchrequest.Sort, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -2869,7 +2869,48 @@ func filterValue(field string, v string) string {
 	return v
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
+// hitSortFields builds bleve SearchAfter / SearchBefore cursor values for a hit.
+// hit.Sort uses sentinel placeholders (_score); bleve pagination expects decoded
+// values (numeric score, doc ID, decoded field values).
+func hitSortFields(hit *search.DocumentMatch, sort search.SortOrder) []string {
+	if hit == nil {
+		return nil
+	}
+	if len(sort) > 0 {
+		fields := make([]string, len(sort))
+		for i, ss := range sort {
+			switch ss.(type) {
+			case *search.SortScore:
+				fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+			case *search.SortDocID:
+				fields[i] = hit.ID
+			default:
+				if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+					fields[i] = hit.DecodedSort[i]
+				} else if i < len(hit.Sort) {
+					fields[i] = hit.Sort[i]
+				}
+			}
+		}
+		return fields
+	}
+	if len(hit.Sort) == 0 {
+		return nil
+	}
+	fields := make([]string, len(hit.Sort))
+	for i, v := range hit.Sort {
+		if v == "_score" {
+			fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+		} else if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+			fields[i] = hit.DecodedSort[i]
+		} else {
+			fields[i] = v
+		}
+	}
+	return fields
+}
+
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, sort search.SortOrder, explain bool) (*resourcepb.ResourceTable, error) {
 	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
 	defer span.End()
 
@@ -2918,7 +2959,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 		row := &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{},
 			Cells:      make([][]byte, len(fields)),
-			SortFields: match.Sort,
+			SortFields: hitSortFields(match, sort),
 		}
 		table.Rows[rowID] = row
 

@@ -295,7 +295,8 @@ func (b *bleveIndex) runPostFilterAuthz(
 			break
 		}
 		last := res.Hits[len(res.Hits)-1]
-		if len(last.Sort) == 0 {
+		cursor := hitSortFields(last, windowReq.Sort)
+		if len(cursor) == 0 {
 			exhausted = true
 			break // no sort values -> cannot build a SearchAfter cursor
 		}
@@ -303,7 +304,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		// the adaptive window Size change between windows; query, sort (already
 		// reversed once for SearchBefore), facets, and fields are identical.
 		next := *windowReq
-		next.SearchAfter = last.Sort
+		next.SearchAfter = cursor
 		next.SearchBefore = nil
 		next.Size = cfg.scanWindowSize(limit, offset, window+1, wantFacets)
 		windowReq = &next
@@ -313,7 +314,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
-	return response, b.finalizePostFilter(ctx, response, page, firstReq.Fields, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page, firstReq.Fields, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, agg, stats)
 }
 
@@ -341,6 +342,7 @@ func (b *bleveIndex) finalizePostFilter(
 	response *resourcepb.ResourceSearchResponse,
 	page search.DocumentMatchCollection,
 	fields []string,
+	sort search.SortOrder,
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
 	authorized int64,
@@ -374,7 +376,7 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, fields, page, req.Explain)
+	results, err := b.hitsToTable(ctx, fields, page, sort, req.Explain)
 	if err != nil {
 		return err
 	}
