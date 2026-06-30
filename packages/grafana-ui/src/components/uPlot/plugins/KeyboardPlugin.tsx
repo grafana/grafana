@@ -182,9 +182,6 @@ const initA11yHook = (u: uPlot, a11yTableId: string) => {
     return;
   }
 
-  // Make Graph area focusable. Setting this in Viz* components will make focus available on panels that do not yet have keyboard support
-  parentWithFocus.tabIndex = 0;
-
   // Describe the chart as a figure whose details are the sr-only data table.
   const title =
     u.root.querySelector('.u-title')?.textContent?.trim() ||
