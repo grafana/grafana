@@ -61,11 +61,15 @@ func (s *cascadeDeleteStorage) Watch(ctx context.Context, options *metainternalv
 }
 
 // DeleteCollection forwards to the wrapped storage so the collection-delete endpoint survives the
-// wrapper. Cascade applies per-folder via Delete, not here.
+// wrapper. The cascade only runs through Delete, so a forced collection delete would bypass it and
+// orphan children/dashboards; reject it and require folders to be force-deleted individually.
 func (s *cascadeDeleteStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	d, ok := s.Storage.(rest.CollectionDeleter)
 	if !ok {
 		return nil, apierrors.NewMethodNotSupported(foldersv1.FolderResourceInfo.GroupResource(), "deletecollection")
+	}
+	if kubernetesFolderCascadeDeleteEnabled(ctx) && forceDeleteFromDeleteOptions(options) {
+		return nil, apierrors.NewBadRequest("forced collection delete is not supported with folder cascade delete; delete folders individually")
 	}
 	return d.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }

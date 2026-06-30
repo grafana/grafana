@@ -479,6 +479,8 @@ func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 }
 
 func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, false)
+
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
 	s := &cascadeDeleteStorage{Storage: inner, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
 
@@ -487,6 +489,23 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	require.True(t, inner.watched)
 
 	_, err = s.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
+	require.NoError(t, err)
+	require.True(t, inner.deletedCollection)
+}
+
+func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
+	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
+	s := &cascadeDeleteStorage{Storage: inner, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	_, err := s.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
+	require.True(t, apierrors.IsBadRequest(err))
+	require.False(t, inner.deletedCollection, "underlying collection delete must not run")
+
+	// A non-force collection delete still forwards (the per-folder empty check protects it).
+	_, err = s.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 	require.NoError(t, err)
 	require.True(t, inner.deletedCollection)
 }
