@@ -44,7 +44,6 @@ func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
-	incrementalPolicy repository.IncrementalSyncPolicy,
 ) GithubWebhookRepository {
 	cfg := basic.Config()
 	r := &githubWebhookRepository{
