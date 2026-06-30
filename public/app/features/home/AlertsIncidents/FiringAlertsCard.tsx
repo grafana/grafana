@@ -10,6 +10,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { canonicalSeverity, type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
+import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
@@ -126,6 +128,13 @@ function FiringAlertsCardInner() {
   const canCreate = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
   const hasAlerts = (alerts?.length ?? 0) > 0;
 
+  // Built at render time, not module scope: createRelativeUrl reads config.appSubUrl on call,
+  // and LinkButton emits a plain <a href> with no router to prepend the sub path for us.
+  const newRuleHref = createRelativeUrl('/alerting/new/alerting');
+  const viewAllHref = hasAlerts
+    ? createRelativeUrl(ALERTING_PATHS.ALERT_GROUPS, { [ALERTMANAGER_NAME_QUERY_KEY]: GRAFANA_RULES_SOURCE_NAME })
+    : alertListPageLink({ search: `source:${GRAFANA_RULES_SOURCE_NAME}` });
+
   return (
     <SummaryCard
       title={t('home.firing-alerts-card.title', 'Firing alerts')}
@@ -187,7 +196,7 @@ function FiringAlertsCardInner() {
       }}
       emptyAction={
         canCreate ? (
-          <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
+          <LinkButton variant="primary" icon="plus" href={newRuleHref}>
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>
         ) : undefined
@@ -195,20 +204,11 @@ function FiringAlertsCardInner() {
       footer={
         <>
           {hasAlerts && canCreate && (
-            <LinkButton variant="secondary" size="sm" fill="text" icon="plus" href="/alerting/new/alerting">
+            <LinkButton variant="secondary" size="sm" fill="text" icon="plus" href={newRuleHref}>
               <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
             </LinkButton>
           )}
-          <LinkButton
-            variant="secondary"
-            size="sm"
-            fill="text"
-            href={
-              hasAlerts
-                ? `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`
-                : `/alerting/list?search=source:${GRAFANA_RULES_SOURCE_NAME}`
-            }
-          >
+          <LinkButton variant="secondary" size="sm" fill="text" href={viewAllHref}>
             {hasAlerts ? (
               <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
             ) : (
