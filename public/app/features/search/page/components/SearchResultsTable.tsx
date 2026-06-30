@@ -338,9 +338,6 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       userSelect: 'text',
       whiteSpace: 'nowrap',
     }),
-    nameCell: css({
-      gap: theme.spacing(1),
-    }),
     typeCell: css({
       gap: theme.spacing(0.5),
     }),
