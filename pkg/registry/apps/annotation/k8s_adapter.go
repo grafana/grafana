@@ -447,10 +447,7 @@ func parseLabelSelector(ls labels.Selector) (labelFilters, error) {
 	if ls == nil {
 		return f, nil
 	}
-	requirements, selectable := ls.Requirements()
-	if !selectable {
-		return f, fmt.Errorf("label selector cannot match anything")
-	}
+	requirements, _ := ls.Requirements()
 	for _, r := range requirements {
 		if r.Operator() != selection.Equals && r.Operator() != selection.DoubleEquals {
 			return f, fmt.Errorf("unsupported operator %s for %s (only = or == supported)", r.Operator(), r.Key())
