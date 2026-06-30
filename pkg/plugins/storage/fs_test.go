@@ -267,6 +267,65 @@ func TestIsSymlinkRelativeTo(t *testing.T) {
 	}
 }
 
+func TestGetParentDirMode(t *testing.T) {
+	t.Run("Should return 0755 when parent is pluginsDir", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		installDir := filepath.Join(pluginsDir, "test-plugin")
+		dstPath := filepath.Join(installDir, "subdir")
+		mode, err := getParentDirMode(pluginsDir, installDir, dstPath)
+		require.NoError(t, err)
+		require.Equal(t, os.FileMode(0755), mode)
+	})
+
+	t.Run("Should return 0755 when parent is installDir", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		installDir := filepath.Join(pluginsDir, "test-plugin")
+		dstPath := filepath.Join(installDir, "subdir", "nested")
+		mode, err := getParentDirMode(pluginsDir, installDir, dstPath)
+		require.NoError(t, err)
+		require.Equal(t, os.FileMode(0755), mode)
+	})
+
+	t.Run("Should fall back to 0755 when parent directory does not exist", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		installDir := filepath.Join(pluginsDir, "test-plugin")
+		dstPath := filepath.Join(installDir, "nonexistent", "deep")
+		mode, err := getParentDirMode(pluginsDir, installDir, dstPath)
+		require.NoError(t, err)
+		require.Equal(t, os.FileMode(0755), mode)
+	})
+
+	t.Run("Should inherit parent directory permissions when parent exists", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		installDir := filepath.Join(pluginsDir, "test-plugin")
+		err := os.MkdirAll(installDir, 0750)
+		require.NoError(t, err)
+		subDir := filepath.Join(installDir, "subdir")
+		err = os.MkdirAll(subDir, 0750)
+		require.NoError(t, err)
+
+		dstPath := filepath.Join(subDir, "deep")
+		mode, err := getParentDirMode(pluginsDir, installDir, dstPath)
+		require.NoError(t, err)
+		require.Equal(t, os.FileMode(0750), mode)
+	})
+
+	t.Run("Should inherit custom parent directory permissions", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		installDir := filepath.Join(pluginsDir, "test-plugin")
+		err := os.MkdirAll(installDir, 0755)
+		require.NoError(t, err)
+		subDir := filepath.Join(installDir, "subdir")
+		err = os.MkdirAll(subDir, 0777)
+		require.NoError(t, err)
+
+		dstPath := filepath.Join(subDir, "deep")
+		mode, err := getParentDirMode(pluginsDir, installDir, dstPath)
+		require.NoError(t, err)
+		require.Equal(t, os.FileMode(0777), mode)
+	})
+}
+
 func skipWindows(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping test on Windows")

@@ -98,10 +98,10 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 
 		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
 
+		parentMode, _ := getParentDirMode(fs.pluginsDir, installDir, dstPath)
+
 		if zf.FileInfo().IsDir() {
-			// We can ignore gosec G304 here since it makes sense to give all users read access
-			// nolint:gosec
-			if err := os.MkdirAll(dstPath, 0755); err != nil {
+			if err := os.MkdirAll(dstPath, parentMode); err != nil {
 				if os.IsPermission(err) {
 					return "", ErrPermissionDenied{Path: dstPath}
 				}
@@ -112,9 +112,7 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 		}
 
 		// Create needed directories to extract file
-		// We can ignore gosec G304 here since it makes sense to give all users read access
-		// nolint:gosec
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(dstPath), parentMode); err != nil {
 			return "", fmt.Errorf("%v: %w", "failed to create directory to extract plugin files", err)
 		}
 
@@ -136,6 +134,18 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 
 func isSymlink(file *zip.File) bool {
 	return file.Mode()&os.ModeSymlink == os.ModeSymlink
+}
+
+func getParentDirMode(pluginsDir, installDir, dstPath string) (os.FileMode, error) {
+	parentDir := filepath.Dir(dstPath)
+	if parentDir == pluginsDir || parentDir == installDir {
+		return 0755, nil
+	}
+	info, err := os.Stat(parentDir)
+	if err != nil {
+		return 0755, nil
+	}
+	return info.Mode() & os.ModePerm, nil
 }
 
 func extractSymlink(basePath string, file *zip.File, filePath string) error {
