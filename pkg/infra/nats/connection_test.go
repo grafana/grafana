@@ -7,7 +7,6 @@ import (
 	"time"
 
 	natsclient "github.com/nats-io/nats.go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +18,7 @@ import (
 // that must short-circuit before any dial.
 func newDisabledConnection() *connection {
 	cfg := setting.NATSSettings{Enabled: false}
-	return newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+	return newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 }
 
 func TestConnection(t *testing.T) {
@@ -27,7 +26,7 @@ func TestConnection(t *testing.T) {
 		require.False(t, newDisabledConnection().Enabled())
 
 		cfg := setting.NATSSettings{Enabled: true}
-		enabled := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		enabled := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 		require.True(t, enabled.Enabled())
 	})
 
@@ -38,7 +37,7 @@ func TestConnection(t *testing.T) {
 
 	t.Run("get errors when no urls configured", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: true}
-		c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 		_, err := c.get(context.Background())
 		require.ErrorContains(t, err, "no nats client urls configured")
@@ -60,7 +59,7 @@ func TestConnection(t *testing.T) {
 	t.Run("get sets the connection status metric", func(t *testing.T) {
 		srv := startTestServer(t)
 		cfg := setting.NATSSettings{Enabled: true}
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := newConnectionMetrics(rolePublisher)
 		c := newConnection(rolePublisher, log.NewNopLogger(), m, newTestConfig(srv, cfg), func() string { return "" })
 		t.Cleanup(c.close)
 
@@ -69,7 +68,7 @@ func TestConnection(t *testing.T) {
 
 		// The ConnectHandler fires asynchronously; wait for it to mark the role healthy.
 		require.Eventually(t, func() bool {
-			return testutil.ToFloat64(m.connectionStatus.WithLabelValues(string(rolePublisher))) == 1
+			return testutil.ToFloat64(m.connectionStatus) == 1
 		}, 5*time.Second, 10*time.Millisecond)
 	})
 
@@ -170,7 +169,7 @@ func TestConnection(t *testing.T) {
 	t.Run("connectOptions", func(t *testing.T) {
 		t.Run("builds base options without auth", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 			opts, err := c.connectOptions()
 			require.NoError(t, err)
@@ -179,7 +178,7 @@ func TestConnection(t *testing.T) {
 
 		t.Run("propagates invalid TLS config", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true, TLS: setting.NATSTLSSettings{Enabled: true, CACertPath: "/does/not/exist.pem"}}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 			_, err := c.connectOptions()
 			require.Error(t, err)
