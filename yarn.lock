@@ -2527,7 +2527,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.13.1, @grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
+"@grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
   version: 0.13.1
   resolution: "@grafana/plugin-ui@npm:0.13.1"
   dependencies:
@@ -2771,14 +2771,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/assistant": "npm:^0.1.24"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.13.1"
+    "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/ui": "npm:13.2.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-awesome-query-builder/ui": "npm:^6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -2794,12 +2794,12 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     i18next-cli: "npm:^1.48.0"
     jest: "npm:^29.6.4"
-    lodash: "npm:4.18.1"
-    react-use: "npm:17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    lodash: "npm:^4.18.1"
+    react-use: "npm:^17.6.1"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:7.8.2"
-    sql-formatter-plus: "npm:1.3.6"
+    rxjs: "npm:^7.8.2"
+    sql-formatter-plus: "npm:^1.3.6"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
@@ -6841,7 +6841,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
+"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/ui@npm:6.6.15"
   dependencies:
@@ -27972,7 +27972,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.6":
+"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
@@ -29992,7 +29992,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sql-formatter-plus@npm:1.3.6, sql-formatter-plus@npm:^1.3.6":
+"sql-formatter-plus@npm:^1.3.6":
   version: 1.3.6
   resolution: "sql-formatter-plus@npm:1.3.6"
   dependencies:
