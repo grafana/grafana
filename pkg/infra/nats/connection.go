@@ -28,45 +28,28 @@ type connection struct {
 	log     log.Logger
 	metrics *metrics
 	role    connRole
-	// urls and credentials are resolved at connect time: the embedded server URL
-	// is only known once it has started.
-	urls        func() []string
+	// endpoints and credentials are resolved at connect time: the embedded server
+	// URL and in-process dial option are only known once it has started.
+	endpoints   *endpoints
 	credentials func() string
 
 	mu     sync.Mutex
 	conn   *natsclient.Conn
 	closed bool
-
-	optsMu       sync.Mutex
-	extraOptions []natsclient.Option
 }
 
-func newConnection(role connRole, cfg setting.NATSSettings, logger log.Logger, m *metrics, urls func() []string, credentials func() string) *connection {
+func newConnection(role connRole, cfg setting.NATSSettings, logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *connection {
 	return &connection{
 		cfg:         cfg,
 		log:         logger,
 		metrics:     m,
 		role:        role,
-		urls:        urls,
+		endpoints:   ep,
 		credentials: credentials,
 	}
 }
 
 func (c *connection) Enabled() bool { return c.cfg.Enabled }
-
-// setExtraOptions must be called before the connection is first used. It injects
-// nats.InProcessServer so the local hop to an embedded server bypasses TCP/TLS.
-func (c *connection) setExtraOptions(opts ...natsclient.Option) {
-	c.optsMu.Lock()
-	defer c.optsMu.Unlock()
-	c.extraOptions = opts
-}
-
-func (c *connection) getExtraOptions() []natsclient.Option {
-	c.optsMu.Lock()
-	defer c.optsMu.Unlock()
-	return c.extraOptions
-}
 
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
@@ -93,7 +76,7 @@ func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 }
 
 func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
-	urls := c.urls()
+	urls := c.endpoints.URLs()
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("no nats client urls configured")
 	}
@@ -102,7 +85,7 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, c.getExtraOptions()...)
+	options = append(options, c.endpoints.dialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
 	type result struct {

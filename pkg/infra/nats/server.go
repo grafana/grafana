@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,7 +22,7 @@ import (
 
 const (
 	defaultServerNamePrefix = "grafana-nats-"
-	serviceName             = "nats"
+	serverName              = "nats-server"
 )
 
 var (
@@ -31,115 +30,101 @@ var (
 	ErrClosed   = errors.New("nats connection is closed")
 )
 
-// Service owns the NATS platform lifecycle: the optional embedded server and
-// the publisher connection. It is a dskit service that also bridges to the
-// monolith background-service contract via Run, and a no-op when NATS is disabled.
-type Service struct {
+// Server owns the embedded NATS server lifecycle, which is an On-Prem concern
+// only: in external/Cloud mode it is a no-op and need not be wired at all. Once
+// the embedded server is ready it publishes its local URL and in-process dial
+// option to the shared endpoints, which is how publisher/consumer clients reach
+// it. It is a dskit service that bridges to the monolith background-service
+// contract via Run.
+type Server struct {
 	services.NamedService
 
-	cfg     setting.NATSSettings
-	log     log.Logger
-	metrics *metrics
+	cfg       setting.NATSSettings
+	log       log.Logger
+	metrics   *metrics
+	endpoints *endpoints
 
-	publisher *publisher
-
-	mu         sync.RWMutex
-	server     *natsserver.Server
-	opts       *natsserver.Options
-	clientURLs []string
+	mu     sync.RWMutex
+	server *natsserver.Server
+	opts   *natsserver.Options
 }
 
-func ProvideService(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Service, error) {
-	logger := log.New("infra.nats")
-	m := newMetrics(reg)
-
-	s := &Service{
-		cfg:        cfg.NATS,
-		log:        logger,
-		metrics:    m,
-		clientURLs: append([]string(nil), cfg.NATS.ClientURLs...),
+func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, ep *endpoints, m *metrics) (*Server, error) {
+	s := &Server{
+		cfg:       cfg.NATS,
+		log:       log.New("infra.nats.server"),
+		metrics:   m,
+		endpoints: ep,
 	}
 
-	s.publisher = newPublisher(cfg.NATS, logger, m, s.ClientURLs)
 	s.opts = s.serverOptions()
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serviceName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serverName)
 
 	return s, nil
 }
 
-func ProvidePublisher(service *Service) Publisher {
-	return service.publisher
-}
-
-func (s *Service) IsDisabled() bool {
-	return !s.cfg.Enabled
+// IsDisabled reports whether the embedded server should run. It is disabled when
+// NATS is off entirely or running against an external broker.
+func (s *Server) IsDisabled() bool {
+	return !s.cfg.Enabled || !s.cfg.Embedded()
 }
 
 // Run bridges the dskit service into the monolith background-service contract.
-func (s *Service) Run(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
 }
 
-func (s *Service) starting(ctx context.Context) error {
-	if !s.cfg.Enabled {
+func (s *Server) starting(ctx context.Context) error {
+	if s.IsDisabled() {
 		return nil
 	}
 
-	if s.cfg.Embedded() {
-		if err := s.startEmbeddedServer(ctx); err != nil {
-			return err
-		}
+	if err := s.startEmbeddedServer(ctx); err != nil {
+		return err
 	}
 
-	if len(s.ClientURLs()) == 0 {
-		return fmt.Errorf("nats is enabled but no client urls are available")
+	if len(s.endpoints.URLs()) == 0 {
+		return fmt.Errorf("nats embedded server started but no client urls are available")
 	}
 
-	s.log.Info("nats platform started", "mode", s.cfg.Mode, "client_urls", s.ClientURLs())
+	s.log.Info("embedded nats server started", "client_urls", s.endpoints.URLs())
 	return nil
 }
 
-func (s *Service) running(ctx context.Context) error {
+func (s *Server) running(ctx context.Context) error {
 	<-ctx.Done()
 	return nil
 }
 
-func (s *Service) stopping(_ error) error {
-	if !s.cfg.Enabled {
+func (s *Server) stopping(_ error) error {
+	if s.IsDisabled() {
 		return nil
 	}
-	s.shutdown(context.Background())
+	s.shutdown()
 	return nil
 }
 
-func (s *Service) Health(_ context.Context) error {
+func (s *Server) Health(_ context.Context) error {
 	if !s.cfg.Enabled {
 		return ErrDisabled
 	}
-	if len(s.ClientURLs()) == 0 {
-		return fmt.Errorf("nats has no client urls available")
+	if !s.cfg.Embedded() {
+		// Nothing to own in external mode; the client connections report health.
+		return nil
 	}
-	if s.cfg.Embedded() {
-		s.mu.RLock()
-		server := s.server
-		s.mu.RUnlock()
-		if server == nil || !server.Running() {
-			return fmt.Errorf("embedded nats server is not running")
-		}
-	}
-	return s.publisher.healthy()
-}
-
-func (s *Service) ClientURLs() []string {
 	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return append([]string(nil), s.clientURLs...)
+	server := s.server
+	s.mu.RUnlock()
+	if server == nil || !server.Running() {
+		return fmt.Errorf("embedded nats server is not running")
+	}
+	return nil
 }
 
-func (s *Service) startEmbeddedServer(_ context.Context) error {
+func (s *Server) startEmbeddedServer(_ context.Context) error {
 	opts := *s.opts
 
 	server, err := natsserver.NewServer(&opts)
@@ -158,11 +143,11 @@ func (s *Service) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
-	s.clientURLs = append([]string{clientURL}, s.cfg.ClientURLs...)
 	s.mu.Unlock()
 
-	// Local hop connects in-process; peers still cluster over TCP routes.
-	s.publisher.setExtraOptions(natsclient.InProcessServer(server))
+	// Publish the local endpoint so clients connect in-process; peers still
+	// cluster over TCP routes.
+	s.endpoints.setEmbedded(server, s.cfg.ClientURLs)
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)
@@ -170,7 +155,7 @@ func (s *Service) startEmbeddedServer(_ context.Context) error {
 	return nil
 }
 
-func (s *Service) serverOptions() *natsserver.Options {
+func (s *Server) serverOptions() *natsserver.Options {
 	return &natsserver.Options{
 		ServerName:            defaultServerNamePrefix + randomSuffix(),
 		Host:                  s.cfg.ListenAddress,
@@ -185,10 +170,7 @@ func (s *Service) serverOptions() *natsserver.Options {
 	}
 }
 
-func (s *Service) shutdown(_ context.Context) {
-	// Drain clients before the embedded server goes away.
-	s.publisher.close()
-
+func (s *Server) shutdown() {
 	s.mu.RLock()
 	server := s.server
 	s.mu.RUnlock()
@@ -198,6 +180,12 @@ func (s *Service) shutdown(_ context.Context) {
 		server.WaitForShutdown()
 		s.metrics.embeddedServerUp.Set(0)
 	}
+}
+
+// ProvideMetrics registers the NATS metrics once so the Server and the client
+// components can share a single registration.
+func ProvideMetrics(reg prometheus.Registerer) *metrics {
+	return newMetrics(reg)
 }
 
 func randomSuffix() string {

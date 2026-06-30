@@ -6,7 +6,6 @@ import (
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -33,21 +32,24 @@ func startTestServer(t *testing.T) *natsserver.Server {
 	return srv
 }
 
-func newTestPublisher(t *testing.T, srv *natsserver.Server) *publisher {
+func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 	t.Helper()
-	cfg := setting.NATSSettings{Enabled: true, ClientURLs: []string{srv.ClientURL()}}
+	cfg := setting.NATSSettings{Enabled: true}
 	m := newMetrics(prometheus.NewRegistry())
-	p := newPublisher(cfg, log.NewNopLogger(), m, func() []string { return []string{srv.ClientURL()} })
-	p.setExtraOptions(natsclient.InProcessServer(srv))
+	ep := newEndpoints(cfg)
+	ep.setEmbedded(srv, cfg.ClientURLs)
+	p := newPublisher(cfg, log.NewNopLogger(), m, ep)
 	t.Cleanup(p.close)
 	return p
 }
 
 func TestPublisher_Disabled(t *testing.T) {
+	cfg := setting.NATSSettings{Enabled: false}
 	m := newMetrics(prometheus.NewRegistry())
-	p := newPublisher(setting.NATSSettings{Enabled: false}, log.NewNopLogger(), m, func() []string { return nil })
+	p := newPublisher(cfg, log.NewNopLogger(), m, newEndpoints(cfg))
 
 	require.False(t, p.Enabled())
+	require.True(t, p.IsDisabled())
 	require.ErrorIs(t, p.Publish(context.Background(), "subj", []byte("x")), ErrDisabled)
 }
 
