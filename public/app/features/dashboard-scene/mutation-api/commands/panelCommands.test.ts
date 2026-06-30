@@ -1011,4 +1011,48 @@ describe('Panel mutation commands', () => {
       expect(result.warnings![0]).toContain('DEPRECATED');
     });
   });
+
+  describe('CHANGE_PANEL_TITLE', () => {
+    it('changes the title of an existing panel', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const elementName = await addPanel(client, 'Old Title');
+
+      const result = await client.execute({
+        type: 'CHANGE_PANEL_TITLE',
+        payload: { panel: { name: elementName }, title: 'New Title' },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      expect(body.getVizPanels()[0].state.title).toBe('New Title');
+    });
+
+    it('returns an error for a non-existent panel', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const result = await client.execute({
+        type: 'CHANGE_PANEL_TITLE',
+        payload: { panel: { name: 'nonexistent' }, title: 'Whatever' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not found');
+    });
+
+    it('rejects payloads missing the title', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const elementName = await addPanel(client, 'Has Title');
+
+      const result = await client.execute({
+        type: 'CHANGE_PANEL_TITLE',
+        payload: { panel: { name: elementName } },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Validation failed');
+    });
+  });
 });

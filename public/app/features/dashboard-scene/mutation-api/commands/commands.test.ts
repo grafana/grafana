@@ -56,6 +56,7 @@ describe('Command consistency', () => {
       'ADD_ROW',
       'ADD_TAB',
       'ADD_VARIABLE',
+      'CHANGE_PANEL_TITLE',
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',

@@ -7,9 +7,14 @@
 
 import { addAnnotationCommand } from './addAnnotation';
 import { addPanelCommand } from './addPanel';
+// Builder-based commands self-register via createActionCommand. Importing each
+// module (for its side effect) runs that registration; getActionCommands() then
+// returns them, so they're added to ALL_COMMANDS without a manual array entry.
+import './changePanelTitle';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
+import { getActionCommands } from './createActionCommand';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
@@ -61,6 +66,8 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
+  // Commands defined via createActionCommand (self-registered on import above).
+  ...getActionCommands(),
 ];
 
 /** Lookup command by name (case-insensitive). */
