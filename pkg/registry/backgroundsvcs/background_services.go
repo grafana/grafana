@@ -83,6 +83,7 @@ func ProvideBackgroundServiceRegistry(
 	zanzanaService *authz.EmbeddedZanzanaService,
 	natsServer *infranats.Server,
 	natsPublisher *infranats.PublisherService,
+	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
@@ -110,6 +111,7 @@ func ProvideBackgroundServiceRegistry(
 		remoteCache,
 		natsServer,
 		natsPublisher,
+		natsSubscriber,
 		secretsService,
 		StorageService,
 		grpcServerProvider,

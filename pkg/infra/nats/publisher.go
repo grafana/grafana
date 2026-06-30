@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,19 +23,21 @@ type Publisher interface {
 type PublisherService struct {
 	services.NamedService
 	*connection
+	metrics *publisherMetrics
 }
 
-func newPublisher(logger log.Logger, m *clientMetrics, config *Config, credentials func() string) *PublisherService {
-	conn := newConnection(rolePublisher, logger, m, config, credentials)
-	p := &PublisherService{connection: conn}
+func newPublisher(logger log.Logger, m *publisherMetrics, config *Config, credentials func() string) *PublisherService {
+	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, credentials)
+	p := &PublisherService{connection: conn, metrics: m}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
 // ProvidePublisher builds the publisher from the shared connection config (which
-// carries the bus config and resolves the mode) plus its per-role credentials.
-func ProvidePublisher(cfg *setting.Cfg, config *Config, m *clientMetrics) *PublisherService {
-	return newPublisher(log.New("infra.nats.publisher"), m, config, cfg.NATS.Auth.PublisherCredentials)
+// carries the bus config and resolves the mode) plus its per-role credentials,
+// registering its own metrics.
+func ProvidePublisher(cfg *setting.Cfg, config *Config, reg prometheus.Registerer) *PublisherService {
+	return newPublisher(log.New("infra.nats.publisher"), newPublisherMetrics(reg), config, cfg.NATS.Auth.PublisherCredentials)
 }
 
 func (p *PublisherService) IsDisabled() bool {
@@ -68,11 +71,10 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	if err != nil {
 		return err
 	}
-	role := string(p.role)
 	if err := nc.Publish(subject, data); err != nil {
-		p.metrics.publishErrors.WithLabelValues(role).Inc()
+		p.metrics.publishErrors.Inc()
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
-	p.metrics.messagesPub.WithLabelValues(role).Inc()
+	p.metrics.messagesPublished.Inc()
 	return nil
 }
