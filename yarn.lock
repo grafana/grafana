@@ -2312,11 +2312,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/flamegraph@workspace:packages/grafana-flamegraph"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.2.0-pre"
-    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.2"
     "@storybook/preset-scss": "npm:1.0.3"
@@ -2340,14 +2340,14 @@ __metadata:
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
-    react: "npm:18.3.1"
-    react-use: "npm:17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    react: "npm:^18.3.1"
+    react-use: "npm:^17.6.1"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
-    tinycolor2: "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
@@ -28015,7 +28015,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:18.3.1":
+"react@npm:18.3.1, react@npm:^18.3.1":
   version: 18.3.1
   resolution: "react@npm:18.3.1"
   dependencies:
