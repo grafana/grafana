@@ -1698,7 +1698,7 @@ var (
 			Name:        "grafana.assetSriChecks",
 			Description: "Enables SRI checks for Grafana JavaScript assets",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendOpsWG,
+			Owner:       grafanaFrontendPlatformSquad,
 			Generate:    Generate{Go: true},
 			Expression:  "false",
 		},
