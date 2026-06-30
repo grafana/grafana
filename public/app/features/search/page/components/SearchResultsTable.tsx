@@ -338,12 +338,8 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       userSelect: 'text',
       whiteSpace: 'nowrap',
     }),
-    descriptionTooltip: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      color: theme.colors.text.secondary,
-      flex: '0 0 auto',
-      marginLeft: theme.spacing(1),
+    nameCell: css({
+      gap: theme.spacing(1),
     }),
     typeCell: css({
       gap: theme.spacing(0.5),

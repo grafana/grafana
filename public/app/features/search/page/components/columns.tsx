@@ -19,6 +19,7 @@ import { formatDate, formatDuration } from 'app/core/internationalization/dates'
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
 import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
@@ -130,7 +131,7 @@ export const generateColumns = (
       const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={styles.cell} {...cellProps}>
+        <div key={key} className={cx(styles.cell, styles.nameCell)} {...cellProps}>
           {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
@@ -140,17 +141,7 @@ export const generateColumns = (
               {name}
             </a>
           )}
-          {isLoaded && description ? (
-            <Tooltip content={description} placement="top" interactive>
-              <span className={styles.descriptionTooltip}>
-                <Icon
-                  name="info-circle"
-                  size="sm"
-                  aria-label={t('search.results-table.description-tooltip', 'Description')}
-                />
-              </span>
-            </Tooltip>
-          ) : null}
+          {isLoaded ? <DescriptionTooltip description={description} /> : null}
         </div>
       );
     },

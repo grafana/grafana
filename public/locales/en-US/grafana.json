@@ -4399,7 +4399,6 @@
     },
     "my-team-folders": "My team folders",
     "name-cell": {
-      "description-tooltip": "Description",
       "no-items": "No items"
     },
     "new-folder": {
@@ -14467,6 +14466,9 @@
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
     },
+    "description-tooltip": {
+      "label": "Description"
+    },
     "generate-columns": {
       "score": "Score"
     },
@@ -14478,7 +14480,6 @@
       "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
       "deleted-less-than-1-min": "< 1 min",
       "deleted-remaining-header": "Time remaining",
-      "description-tooltip": "Description",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
