@@ -1,6 +1,5 @@
 import { lastValueFrom } from 'rxjs';
 
-import { config } from '@grafana/runtime';
 import { type SQLQuery } from '@grafana/sql';
 
 import InfluxDatasource from './datasource';
@@ -9,7 +8,6 @@ import { mockInfluxQueryRequest } from './mocks/request';
 import { mockInfluxSQLFetchResponse } from './mocks/response';
 import { InfluxVersion } from './types';
 
-config.featureToggles.influxdbBackendMigration = true;
 mockBackendService(mockInfluxSQLFetchResponse);
 
 describe('InfluxDB SQL Support', () => {

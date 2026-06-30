@@ -2122,6 +2122,87 @@
     },
     {
       "metadata": {
+        "name": "externalSnapshotsDenyLegacyPublicPush",
+        "resourceVersion": "1779379338516",
+        "creationTimestamp": "2026-05-21T16:02:18Z",
+        "deletionTimestamp": "2026-05-21T18:03:59Z"
+      },
+      "spec": {
+        "description": "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, reject anonymous /api/snapshots pushes by routing them through the authenticated k8s create endpoint instead of CreateDashboardSnapshotPublic. Default off: anonymous legacy pushes still work for senders that have not migrated to the authenticated k8s push. Turn on once all senders have migrated, to deprecate the unauthenticated public push.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsK8SAPIPush",
+        "resourceVersion": "1779386639364",
+        "creationTimestamp": "2026-05-19T14:20:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:03:59.364818 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsK8sAPIPush",
+        "resourceVersion": "1779200384255",
+        "creationTimestamp": "2026-05-19T14:19:44Z",
+        "deletionTimestamp": "2026-05-19T14:20:50Z"
+      },
+      "spec": {
+        "description": "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalSnapshotsSupportLegacyAPI",
+        "resourceVersion": "1779389019012",
+        "creationTimestamp": "2026-05-21T18:03:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-05-21 18:43:39.012069 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "externalVizSuggestions",
+        "resourceVersion": "1774877899502",
+        "creationTimestamp": "2025-12-01T23:22:22Z",
+        "deletionTimestamp": "2026-05-08T20:27:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-30 13:38:19.502534 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
+        "stage": "GA",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "faroDatasourceSelector",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-05-05T00:35:10Z"
@@ -5096,6 +5177,21 @@
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.refactorNested",
+        "resourceVersion": "1782413661913",
+        "creationTimestamp": "2026-06-25T18:54:21Z"
+      },
+      "spec": {
+        "description": "Enables the refactored TableNG nested-table implementation",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

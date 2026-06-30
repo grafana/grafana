@@ -110,7 +110,6 @@ datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
-datasource/Parca
 datasource/Phlare
 datasource/Postgres
 datasource/Prometheus

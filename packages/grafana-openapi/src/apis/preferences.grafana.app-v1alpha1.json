@@ -632,6 +632,11 @@
           {
             "group": "preferences.grafana.app",
             "kind": "Preferences",
+            "version": "v1"
+          },
+          {
+            "group": "preferences.grafana.app",
+            "kind": "Preferences",
             "version": "v1alpha1"
           }
         ]
@@ -669,6 +674,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "preferences.grafana.app",
+            "kind": "PreferencesList",
+            "version": "v1"
+          },
           {
             "group": "preferences.grafana.app",
             "kind": "PreferencesList",

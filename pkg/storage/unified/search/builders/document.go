@@ -86,6 +86,19 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
 }
 
+// tableColumnsByName builds a map[fieldName]*ResourceTableColumnDefinition
+// from the given SearchFieldDefinitions. Used by IAM builders that expose
+// the historical XxxTableColumnDefinitions shape for wire-API consumers
+// (legacy SQL search backends) that look fields up by name.
+func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := resource.SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
+	}
+	return out
+}
+
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.
 func NewIndexableDocumentFromValue(key *resourcepb.ResourceKey, rv int64, value []byte, resObj sdkResource.Object, kind sdkResource.Kind) (*resource.IndexableDocument, error) {
 	err := json.NewDecoder(bytes.NewReader(value)).Decode(resObj)

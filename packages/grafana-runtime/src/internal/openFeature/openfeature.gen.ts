@@ -113,6 +113,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
+  /** Enables the refactored TableNG nested-table implementation */
+  TableRefactorNested: "table.refactorNested",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -665,6 +667,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Enables the refactored TableNG nested-table implementation
+ *
+ * **Details:**
+ * - flag key: `table.refactorNested`
+ * - default value: `false`
+ */
+export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refactorNested", false, options).value;
 };
 
 /**

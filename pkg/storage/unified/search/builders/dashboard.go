@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -41,161 +42,47 @@ const DASHBOARD_ERRORS_LAST_30_DAYS = "errors_last_30_days"
 const DASHBOARD_ERRORS_TOTAL = "errors_total"
 const DASHBOARD_ERRORS_TODAY = "errors_today"
 
+// DashboardSearchFields declares the search fields a dashboard document
+// emits. Every entry has Path: "" (computed): the dashboard builder
+// parses the spec itself, so the standard path-based extractor is not
+// used. Non-string fields with [filter, retrieve] fall through to bleve's
+// dynamic mapping (numeric, boolean) so range queries and numeric sort
+// keep working.
+var DashboardSearchFields = []resource.SearchFieldDefinition{
+	{Name: DASHBOARD_SCHEMA_VERSION, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Numeric version saying when the schema was saved"},
+	{Name: DASHBOARD_LINK_COUNT, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "How many links appear on the page"},
+	{Name: DASHBOARD_PANEL_TITLE, Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityRetrieve}, Description: "The panel title text"},
+	{Name: DASHBOARD_PANEL_TYPES, Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The panel types used in this dashboard"},
+	{Name: DASHBOARD_DS_TYPES, Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Data source types referenced by this dashboard's panels"},
+	{Name: DASHBOARD_TRANSFORMATIONS, Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Transformation IDs used in this dashboard's panels"},
+
+	// Usage-insights counters, populated externally by DashboardStats.
+	// Order matches the historical column-definition list (errors, queries,
+	// views) so the wire-API column metadata produced from these SFDs
+	// preserves the sequence clients have always seen.
+	{Name: DASHBOARD_ERRORS_TODAY, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of errors that occurred today"},
+	{Name: DASHBOARD_ERRORS_LAST_1_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of errors that occurred in the last 1 days"},
+	{Name: DASHBOARD_ERRORS_LAST_7_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of errors that occurred in the last 7 days"},
+	{Name: DASHBOARD_ERRORS_LAST_30_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of errors that occurred in the last 30 days"},
+	{Name: DASHBOARD_ERRORS_TOTAL, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Total number of errors"},
+	{Name: DASHBOARD_QUERIES_TODAY, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of queries that occurred today"},
+	{Name: DASHBOARD_QUERIES_LAST_1_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of queries that occurred in the last 1 days"},
+	{Name: DASHBOARD_QUERIES_LAST_7_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of queries that occurred in the last 7 days"},
+	{Name: DASHBOARD_QUERIES_LAST_30_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of queries that occurred in the last 30 days"},
+	{Name: DASHBOARD_QUERIES_TOTAL, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Total number of queries"},
+	{Name: DASHBOARD_VIEWS_TODAY, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of views that occurred today"},
+	{Name: DASHBOARD_VIEWS_LAST_1_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of views that occurred in the last 1 days"},
+	{Name: DASHBOARD_VIEWS_LAST_7_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of views that occurred in the last 7 days"},
+	{Name: DASHBOARD_VIEWS_LAST_30_DAYS, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Number of views that occurred in the last 30 days"},
+	{Name: DASHBOARD_VIEWS_TOTAL, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "Total number of views"},
+}
+
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
-		{
-			Name:        DASHBOARD_SCHEMA_VERSION,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
-			Description: "Numeric version saying when the schema was saved",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				NotNull: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_LINK_COUNT,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
-			Description: "How many links appear on the page",
-		},
-		{
-			Name:        DASHBOARD_PANEL_TITLE,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			IsArray:     true,
-			Description: "The panel title text",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: false, // full text
-				FreeText:   true,
-			},
-		},
-		{
-			Name:        DASHBOARD_PANEL_TYPES,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			IsArray:     true,
-			Description: "The panel types used in this dashboard",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of errors",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of queries",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of views",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-	})
+	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(DashboardSearchFields))
+	if err != nil {
+		return resource.DocumentBuilderInfo{}, err
+	}
+
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
@@ -208,11 +95,24 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			}, nil
 		}
 	}
+	gvr := dashV1.DashboardResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: DashboardSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
+
+	gr := dashV1.DashboardResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: dashV1.DashboardResourceInfo.GroupResource(),
-		Fields:        fields,
-		Namespaced:    namespaced,
-	}, err
+		GroupResource:        gr,
+		Fields:               fields,
+		Namespaced:           namespaced,
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }
 
 type DashboardDocumentBuilder struct {
@@ -354,18 +254,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	return doc, nil
 }
 
-func DashboardFields() []string {
-	baseFields := []string{ //nolint:prealloc
-		DASHBOARD_SCHEMA_VERSION,
-		DASHBOARD_LINK_COUNT,
-		DASHBOARD_PANEL_TYPES,
-		DASHBOARD_DS_TYPES,
-		DASHBOARD_TRANSFORMATIONS,
-	}
-
-	return append(baseFields, UsageInsightsFields()...)
-}
-
 // unmarshalMetadataOnly parses a K8s resource JSON and returns an
 // unstructured.Unstructured with only metadata populated (spec is omitted).
 // This avoids the cost of recursively parsing the (potentially huge) dashboard specs.
@@ -385,24 +273,4 @@ func unmarshalMetadataOnly(data []byte) (*unstructured.Unstructured, error) {
 			"metadata":   partial.Metadata,
 		},
 	}, nil
-}
-
-func UsageInsightsFields() []string {
-	return []string{
-		DASHBOARD_VIEWS_LAST_1_DAYS,
-		DASHBOARD_VIEWS_LAST_7_DAYS,
-		DASHBOARD_VIEWS_LAST_30_DAYS,
-		DASHBOARD_VIEWS_TODAY,
-		DASHBOARD_VIEWS_TOTAL,
-		DASHBOARD_QUERIES_LAST_1_DAYS,
-		DASHBOARD_QUERIES_LAST_7_DAYS,
-		DASHBOARD_QUERIES_LAST_30_DAYS,
-		DASHBOARD_QUERIES_TODAY,
-		DASHBOARD_QUERIES_TOTAL,
-		DASHBOARD_ERRORS_LAST_1_DAYS,
-		DASHBOARD_ERRORS_LAST_7_DAYS,
-		DASHBOARD_ERRORS_LAST_30_DAYS,
-		DASHBOARD_ERRORS_TODAY,
-		DASHBOARD_ERRORS_TOTAL,
-	}
 }

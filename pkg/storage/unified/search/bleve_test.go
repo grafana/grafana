@@ -823,13 +823,17 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
+	dashboardInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+	dashboardFields := dashboardInfo.Fields
+
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"fields.views_total"}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
@@ -838,7 +842,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
@@ -847,7 +851,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "description", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"description"}, sortFields)
 	})
 }
@@ -1062,7 +1066,7 @@ func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
 }
 
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)

@@ -1,3 +1,5 @@
+import { type UnknownAction } from '@reduxjs/toolkit';
+
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
@@ -12,8 +14,6 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
-
-import { type ItemType } from '../types';
 
 import { isManaged } from './managedResource';
 
@@ -39,15 +39,146 @@ interface ResourceListDeps {
 }
 
 /**
- * Per-kind metadata for provisioning resources.
+ * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
+ * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
+ * icons, count labels, resource-ref unions, how to enumerate each kind).
  *
- * This is the single source of truth the UI reads from instead of scattering
- * per-kind knowledge across switch statements (item types, icons, count labels,
- * resource-ref unions, how to enumerate each kind). Adding a new provisioning
- * kind should be one entry here plus, if needed, enabling it on the backend so
- * it appears in the settings endpoint's `availableResources`.
+ * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
+ * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here (plus, if
+ * needed, enabling it on the backend so it appears in the settings endpoint's `availableResources`) —
+ * no parallel unions to keep in sync. Entries are validated against {@link ResourceKindInfo} where
+ * `allKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
+ * the interface references the derived types, which `satisfies` would make a circular reference.
+ */
+export const resourceKindInfos = {
+  folder: {
+    key: 'folder',
+    getLabel: () => t('provisioning.resource-kind.folder', 'folder'),
+    pluralLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
+    group: FOLDER_API_GROUP,
+    kind: 'Folder',
+    resource: 'folders',
+    itemType: 'Folder',
+    icon: getIconForKind('folder'),
+    getRoute: (name: string) => `/dashboards/f/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
+    list: () => listViaSearch('folder'),
+    alwaysAvailable: true,
+  },
+  dashboard: {
+    key: 'dashboard',
+    getLabel: () => t('provisioning.resource-kind.dashboard', 'dashboard'),
+    pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
+    group: DASHBOARD_API_GROUP,
+    kind: 'Dashboard',
+    resource: 'dashboards',
+    itemType: 'Dashboard',
+    icon: getIconForKind('dashboard'),
+    getRoute: (name: string) => `/d/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
+    list: () => listViaSearch('dashboard'),
+    alwaysAvailable: true,
+  },
+  playlist: {
+    key: 'playlist',
+    getLabel: () => t('provisioning.resource-kind.playlist', 'playlist'),
+    pluralLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
+    group: PLAYLIST_API_GROUP,
+    kind: 'Playlist',
+    resource: 'playlists',
+    itemType: 'Playlist',
+    // The search package's getIconForKind doesn't know playlists, so use the
+    // playlist nav icon directly.
+    icon: 'presentation-play',
+    // Link to the edit page (config + items), not /playlists/play, which would
+    // immediately launch the fullscreen slideshow — not a sensible "View" target.
+    getRoute: (name: string) => `/playlists/edit/${name}`,
+    // Playlists aren't folder-contained — they only have their own collection page.
+    listRoute: '/playlists',
+    folderScoped: false,
+    // Playlists aren't in the unified search index; list them through their
+    // generated apiserver client (which carries the v1→v0alpha1 fallback).
+    list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch),
+    // Gated on availableResources — not part of the static folder+dashboard base.
+    alwaysAvailable: false,
+    // The playlist list is fetched elsewhere; invalidate it so a committed change shows up there.
+    invalidateListTags: () => playlistAPIv1.util.invalidateTags(['Playlist']),
+  },
+  librarypanel: {
+    key: 'librarypanel',
+    getLabel: () => t('provisioning.resource-kind.library-panel', 'library panel'),
+    pluralLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
+    // Library panels share the dashboards API group but are keyed by their own
+    // GroupResource (librarypanels.dashboard.grafana.app).
+    group: DASHBOARD_API_GROUP,
+    kind: 'LibraryPanel',
+    resource: 'librarypanels',
+    itemType: 'LibraryPanel',
+    // getIconForKind doesn't know library panels, so use the library-panel icon directly.
+    icon: 'library-panel',
+    // No deep-link route for a single library panel exists; they're only viewable
+    // from the library panels collection page.
+    listRoute: '/library-panels',
+    // Library panels live inside folders on the backend, but the dashboards folder
+    // browse doesn't list them — they have their own collection page — so for
+    // routing they behave like a non-foldered kind and always resolve to listRoute.
+    folderScoped: false,
+    // Library panels aren't in the unified search index; list them through their
+    // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
+    // default — they ship disabled and aren't in the static base — so this only
+    // runs once the backend reports the kind as available.
+    list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
+    alwaysAvailable: false,
+  },
+} as const;
+
+/**
+ * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
+ * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry, the shared
+ * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
+ * so a new kind only needs its registry entry.
+ */
+export type ResourceKindKey = keyof typeof resourceKindInfos;
+
+/**
+ * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
+ * the registry's `itemType`s so the set stays in lockstep with the kinds above. The full tree
+ * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
+ * new kind needs no edit there either.
+ */
+export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+
+/**
+ * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
+ * {@link ResourceKindInfo} carries the kind's identity and tree label without a separate lookup.
+ *
+ * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
+ * across switch statements (item types, icons, count labels, resource-ref unions, how to enumerate
+ * each kind). Adding a new provisioning kind is one {@link resourceKindInfos} entry, plus (if needed)
+ * enabling it on the backend so it appears in the settings `availableResources`.
  */
 export interface ResourceKindInfo {
+  /**
+   * Stable lowercase identifier — equals this entry's key in {@link resourceKindInfos} (e.g.
+   * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
+   * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
+   */
+  key: ResourceKindKey;
+  /**
+   * Returns the localized singular noun for this kind, interpolated into UI copy such as the drawer
+   * title (e.g. "Save provisioned {{resource}}"). It's a function rather than a string because i18n
+   * must resolve at render time, not at module load — and the literal `t()` call inside it is what
+   * the i18n extractor needs, so each kind contributes its translated noun right here on the entry.
+   */
+  getLabel: () => string;
+  /**
+   * Translated, pluralized label for this kind (e.g. "Dashboards"), used wherever
+   * a kind is named to the user — stat cards, the synthetic per-kind migrate
+   * folder, etc. A function so the translation resolves at render, not module load.
+   */
+  pluralLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
   /** Kubernetes Kind, e.g. `Dashboard`. */
@@ -55,13 +186,7 @@ export interface ResourceKindInfo {
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
   resource: string;
   /** Label shown for this kind in the combined files/resources tree. */
-  itemType: ItemType;
-  /**
-   * Translated, pluralized label for this kind (e.g. "Dashboards"), used wherever
-   * a kind is named to the user — stat cards, the synthetic per-kind migrate
-   * folder, etc. A function so the translation resolves at render, not module load.
-   */
-  pluralLabel: () => string;
+  itemType: ResourceItemType;
   /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
@@ -88,88 +213,18 @@ export interface ResourceKindInfo {
    * settings endpoint's `availableResources`; others are gated on it.
    */
   alwaysAvailable: boolean;
+  /**
+   * Builds the action that invalidates this kind's list-view cache, dispatched after a successful
+   * commit so the change shows up when navigating back to the list. Optional — only kinds whose
+   * pages drive `SaveProvisionedResourceDrawer` need it. Defining it couples this registry to the
+   * kind's RTK Query client (the cost of keeping per-kind invalidation here rather than in a hook).
+   */
+  invalidateListTags?: () => UnknownAction;
 }
 
-/**
- * Registry of provisioning resource kinds, keyed by a stable identifier.
- *
- * `satisfies` checks each entry against ResourceKindInfo without widening the
- * value type, so callers still get the concrete record back.
- */
-export const resourceKindInfos = {
-  folder: {
-    group: FOLDER_API_GROUP,
-    kind: 'Folder',
-    resource: 'folders',
-    itemType: 'Folder',
-    pluralLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
-    icon: getIconForKind('folder'),
-    getRoute: (name: string) => `/dashboards/f/${name}`,
-    listRoute: '/dashboards',
-    folderScoped: true,
-    list: () => listViaSearch('folder'),
-    alwaysAvailable: true,
-  },
-  dashboard: {
-    group: DASHBOARD_API_GROUP,
-    kind: 'Dashboard',
-    resource: 'dashboards',
-    itemType: 'Dashboard',
-    pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
-    icon: getIconForKind('dashboard'),
-    getRoute: (name: string) => `/d/${name}`,
-    listRoute: '/dashboards',
-    folderScoped: true,
-    list: () => listViaSearch('dashboard'),
-    alwaysAvailable: true,
-  },
-  playlist: {
-    group: PLAYLIST_API_GROUP,
-    kind: 'Playlist',
-    resource: 'playlists',
-    itemType: 'Playlist',
-    pluralLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
-    // The search package's getIconForKind doesn't know playlists, so use the
-    // playlist nav icon directly.
-    icon: 'presentation-play',
-    // Link to the edit page (config + items), not /playlists/play, which would
-    // immediately launch the fullscreen slideshow — not a sensible "View" target.
-    getRoute: (name: string) => `/playlists/edit/${name}`,
-    // Playlists aren't folder-contained — they only have their own collection page.
-    listRoute: '/playlists',
-    folderScoped: false,
-    // Playlists aren't in the unified search index; list them through their
-    // generated apiserver client (which carries the v1→v0alpha1 fallback).
-    list: ({ dispatch }) => listPlaylists(dispatch),
-    // Gated on availableResources — not part of the static folder+dashboard base.
-    alwaysAvailable: false,
-  },
-  librarypanel: {
-    // Library panels share the dashboards API group but are keyed by their own
-    // GroupResource (librarypanels.dashboard.grafana.app).
-    group: DASHBOARD_API_GROUP,
-    kind: 'LibraryPanel',
-    resource: 'librarypanels',
-    itemType: 'LibraryPanel',
-    pluralLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
-    // getIconForKind doesn't know library panels, so use the library-panel icon directly.
-    icon: 'library-panel',
-    // No deep-link route for a single library panel exists; they're only viewable
-    // from the library panels collection page.
-    listRoute: '/library-panels',
-    // Library panels live inside folders on the backend, but the dashboards folder
-    // browse doesn't list them — they have their own collection page — so for
-    // routing they behave like a non-foldered kind and always resolve to listRoute.
-    folderScoped: false,
-    // Library panels aren't in the unified search index; list them through their
-    // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
-    // default — they ship disabled and aren't in the static base — so this only
-    // runs once the backend reports the kind as available.
-    list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
-    alwaysAvailable: false,
-  },
-} satisfies Record<string, ResourceKindInfo>;
-
+// Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
+// interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
+// each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
@@ -194,8 +249,12 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
   return allKindInfos.find((info) => info.resource === resource);
 }
 
-/** Look up a kind by its tree item type. */
-export function getKindInfoByItemType(itemType: ItemType): ResourceKindInfo | undefined {
+/**
+ * Look up a kind by its tree item type. Accepts any string (tree items can be the `File` fallback,
+ * which has no backing kind and resolves to `undefined`) so callers don't depend on the `ItemType`
+ * union and create an import cycle with `../types`.
+ */
+export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
   return allKindInfos.find((info) => info.itemType === itemType);
 }
 

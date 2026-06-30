@@ -6161,12 +6161,14 @@
     },
     "/org/preferences": {
       "get": {
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "tags": [
           "org",
           "preferences"
         ],
         "summary": "Get Current Org Prefs.",
         "operationId": "getOrgPreferences",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getPreferencesResponse"
@@ -6183,12 +6185,14 @@
         }
       },
       "put": {
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "tags": [
           "org",
           "preferences"
         ],
         "summary": "Update Current Org Prefs.",
         "operationId": "updateOrgPreferences",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -6218,12 +6222,14 @@
         }
       },
       "patch": {
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "tags": [
           "org",
           "preferences"
         ],
         "summary": "Patch Current Org Prefs.",
         "operationId": "patchOrgPreferences",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -10013,12 +10019,14 @@
     },
     "/user/preferences": {
       "get": {
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "tags": [
           "signed_in_user",
           "preferences"
         ],
         "summary": "Get user preferences.",
         "operationId": "getUserPreferences",
+        "deprecated": true,
         "responses": {
           "200": {
             "$ref": "#/responses/getPreferencesResponse"
@@ -10032,13 +10040,14 @@
         }
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "tags": [
           "signed_in_user",
           "preferences"
         ],
         "summary": "Update user preferences.",
         "operationId": "updateUserPreferences",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -10065,12 +10074,14 @@
         }
       },
       "patch": {
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "tags": [
           "signed_in_user",
           "preferences"
         ],
         "summary": "Patch user preferences.",
         "operationId": "patchUserPreferences",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
