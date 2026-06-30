@@ -500,11 +500,18 @@ async function handleHistory(
   Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
   If query history is disabled, we will use local storage for query history as well, and will want to show errors
   */
-    dispatch(addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled));
-    if (config.queryHistoryEnabled) {
-      // write to remote if flag enabled
-      dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false));
-    }
+    // Kick off both writes synchronously, then await them before refreshing below. Adding to
+    // history resolves the data source asynchronously, so a non-awaited write can land after
+    // loadRichHistory has already read stale storage.
+    const localWrite = dispatch(
+      addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled)
+    );
+    // write to remote if flag enabled
+    const remoteWrite = config.queryHistoryEnabled
+      ? dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false))
+      : undefined;
+    await localWrite;
+    await remoteWrite;
 
     // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
     // used filters. Instead, we refresh the query history list.
