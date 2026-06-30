@@ -181,7 +181,8 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 
 		TokenExpirationDayLimit: cfg.SATokenExpirationDayLimit,
 
-		SnapshotEnabled: cfg.SnapshotEnabled,
+		SnapshotEnabled:            cfg.SnapshotEnabled,
+		KubernetesSnapshotsEnabled: cfg.KubernetesSnapshotsEnabled,
 
 		SqlConnectionLimits: dtos.FrontendSettingsSqlConnectionLimitsDTO{
 			MaxOpenConns:    cfg.SqlDatasourceMaxOpenConnsDefault,
