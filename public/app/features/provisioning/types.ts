@@ -2,7 +2,8 @@ import {
   type BitbucketRepositoryConfig,
   type BranchOptions,
   type CommitOptions,
-  type ConnectionSpec,
+  type GitHubConnectionConfig,
+  type GitHubEnterpriseConnectionConfig,
   type GitHubRepositoryConfig,
   type GitLabRepositoryConfig,
   type GitRepositoryConfig,
@@ -41,18 +42,21 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
     branchOptions?: BranchOptions;
   };
 
-// Connection type definition - extracted from API client
-type ConnectionType = ConnectionSpec['type'];
-
-export type ConnectionFormData = {
-  type: ConnectionType;
+// Base fields shared by all connection providers (excludes the `type` discriminant).
+type ConnectionFormDataBase = {
   title: string;
   description: string;
-  appID: string;
-  installationID: string;
   privateKey?: string;
   webhookDisabled?: boolean;
 };
+
+type GitHubConnectionFormData = ConnectionFormDataBase &
+  GitHubConnectionConfig & { type: 'github'; serverUrl?: string };
+
+type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
+  GitHubEnterpriseConnectionConfig & { type: 'githubEnterprise' };
+
+export type ConnectionFormData = GitHubConnectionFormData | GitHubEnterpriseConnectionFormData;
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {

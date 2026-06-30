@@ -259,12 +259,12 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-05-22,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2026-03-10,vizLegendFacetedFilter,GA,@grafana/dataviz-squad,false,false,true
-2025-12-18,heatmapRowsAxisOptions,GA,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 2026-05-22,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
+2026-06-26,iam.onlyStoreDatasourceActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/grafana-catalog,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false

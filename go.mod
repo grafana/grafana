@@ -719,7 +719,7 @@ require (
 
 require (
 	github.com/nats-io/nats-server/v2 v2.14.0 // @grafana/grafana-search-and-storage
-	github.com/nats-io/nats.go v1.52.0 // indirect; @grafana/grafana-search-and-storage
+	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 )
 
 require (
