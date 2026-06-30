@@ -21,6 +21,20 @@ import (
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
 var ErrNotFound = errors.New("annotation not found in new store")
 
+// partialDecodeError signals that one or more optional fields could not be decoded
+// from an annotation. The annotation is still usable without those fields, so callers
+// can return the DTO (minus the affected fields) rather than dropping it.
+type partialDecodeError struct {
+	Fields []string
+	Err    error
+}
+
+func (e *partialDecodeError) Error() string {
+	return fmt.Sprintf("decoding fields %v: %v", e.Fields, e.Err)
+}
+
+func (e *partialDecodeError) Unwrap() error { return e.Err }
+
 // MigrationProxy routes annotation writes to the new API server.
 type MigrationProxy struct {
 	client *annotationAPIClient
@@ -85,8 +99,14 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	for _, anno := range annos {
 		dto, err := annoToItemDTO(anno)
 		if err != nil {
-			h.logger.Warn("failed to convert annotation to DTO, dropping it", "err", err)
-			continue
+			var decodeErr *partialDecodeError
+			if !errors.As(err, &decodeErr) {
+				h.logger.Warn("failed to convert annotation to DTO, dropping it",
+					"namespace", anno.GetNamespace(), "name", anno.GetName(), "err", err)
+				continue
+			}
+			h.logger.Warn("failed to decode fields on annotation, returning it without those fields",
+				"namespace", anno.GetNamespace(), "name", anno.GetName(), "fields", decodeErr.Fields, "err", decodeErr.Err)
 		}
 		if cb := anno.GetCreatedBy(); cb != "" {
 			if u, ok := userMap[cb]; ok {
@@ -183,7 +203,12 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 
 	dto, err := annoToItemDTO(anno)
 	if err != nil {
-		return nil, err
+		var decodeErr *partialDecodeError
+		if !errors.As(err, &decodeErr) {
+			return nil, err
+		}
+		h.logger.Warn("failed to decode fields on annotation, returning it without those fields",
+			"namespace", anno.GetNamespace(), "name", anno.GetName(), "fields", decodeErr.Fields, "err", decodeErr.Err)
 	}
 
 	createdBy := anno.GetCreatedBy()
@@ -225,7 +250,7 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 	if raw, ok := annotationpkg.GetLegacyData(anno); ok && raw != "" {
 		data, err := simplejson.NewJson([]byte(raw))
 		if err != nil {
-			return dto, fmt.Errorf("decoding legacy data: %w", err)
+			return dto, &partialDecodeError{Fields: []string{"data"}, Err: err}
 		}
 		dto.Data = data
 	}

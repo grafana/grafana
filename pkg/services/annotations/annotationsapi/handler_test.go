@@ -105,12 +105,21 @@ func TestItemAnnotationConversion(t *testing.T) {
 		require.Nil(t, dto.Data)
 	})
 
-	t.Run("malformed stored legacy data returns an error", func(t *testing.T) {
+	t.Run("malformed stored legacy data returns a partialDecodeError and a usable DTO", func(t *testing.T) {
 		anno, err := itemToAnnotation(&annotations.Item{Text: "hello"})
 		require.NoError(t, err)
 		annotationpkg.SetLegacyData(anno, "{not json")
 
-		_, err = annoToItemDTO(anno)
+		dto, err := annoToItemDTO(anno)
 		require.Error(t, err)
+
+		var decodeErr *partialDecodeError
+		require.ErrorAs(t, err, &decodeErr)
+		require.Equal(t, []string{"data"}, decodeErr.Fields)
+
+		// The annotation is still usable; only the Data field is dropped.
+		require.NotNil(t, dto)
+		require.Equal(t, "hello", dto.Text)
+		require.Nil(t, dto.Data)
 	})
 }
