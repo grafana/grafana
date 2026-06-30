@@ -14,7 +14,10 @@ import (
 
 type connRole string
 
-const rolePublisher connRole = "publisher"
+const (
+	rolePublisher  connRole = "publisher"
+	roleSubscriber connRole = "subscriber"
+)
 
 // drainTimeout bounds how long close() waits for in-flight work to flush, so a
 // broker that has gone away cannot stall shutdown for the nats.go default of 30s.
@@ -23,7 +26,7 @@ const drainTimeout = 10 * time.Second
 // connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
 	log         log.Logger
-	metrics     *clientMetrics
+	metrics     connectionMetrics
 	role        connRole
 	config      *Config
 	credentials func() string
@@ -33,7 +36,7 @@ type connection struct {
 	closed bool
 }
 
-func newConnection(role connRole, logger log.Logger, m *clientMetrics, config *Config, credentials func() string) *connection {
+func newConnection(role connRole, logger log.Logger, m connectionMetrics, config *Config, credentials func() string) *connection {
 	return &connection{
 		log:         logger,
 		metrics:     m,
@@ -105,7 +108,7 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 		return nil, ctx.Err()
 	case res := <-ch:
 		if res.err != nil {
-			c.metrics.connectionErrors.WithLabelValues(string(c.role)).Inc()
+			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
 		// connectionStatus is driven solely by the connect/reconnect/disconnect
@@ -132,23 +135,23 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		// 8MB default during an outage fail publishes fast.
 		natsclient.ReconnectBufSize(-1),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
-			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(1)
+			c.metrics.connectionStatus.Set(1)
 			c.log.Info("nats connected", "role", roleStr, "url", nc.ConnectedUrl())
 		}),
 		natsclient.DisconnectErrHandler(func(_ *natsclient.Conn, err error) {
-			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(0)
-			c.metrics.disconnects.WithLabelValues(roleStr).Inc()
+			c.metrics.connectionStatus.Set(0)
+			c.metrics.disconnects.Inc()
 			if err != nil {
 				c.log.Warn("nats disconnected", "role", roleStr, "err", err)
 			}
 		}),
 		natsclient.ReconnectHandler(func(nc *natsclient.Conn) {
-			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(1)
-			c.metrics.reconnects.WithLabelValues(roleStr).Inc()
+			c.metrics.connectionStatus.Set(1)
+			c.metrics.reconnects.Inc()
 			c.log.Info("nats reconnected", "role", roleStr, "url", nc.ConnectedUrl())
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
-			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(0)
+			c.metrics.connectionStatus.Set(0)
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {

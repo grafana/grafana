@@ -9,71 +9,110 @@ const (
 	metricsSubsystem = "nats"
 )
 
-const roleLabel = "role"
+// subscriberLabel identifies which logical consumer (e.g. "provisioning-controller")
+// a subscription belongs to, so the per-subscriber delivery counters can be told apart.
+const subscriberLabel = "subscriber"
 
-// clientMetrics covers the NATS client side (connections and publishing). Every
-// series is keyed by the `role` label, so a single registration serves every
-// role an environment actually runs: roles that never connect or publish emit
-// no series at all.
-type clientMetrics struct {
-	connectionStatus *prometheus.GaugeVec
-	reconnects       *prometheus.CounterVec
-	disconnects      *prometheus.CounterVec
-	connectionErrors *prometheus.CounterVec
-	messagesPub      *prometheus.CounterVec
-	publishErrors    *prometheus.CounterVec
+// connectionMetrics covers the lifecycle of a single NATS connection. Publisher
+// and subscriber each own their own connection, so the role is baked into the
+// metric name (grafana_nats_<role>_*) rather than carried as a label.
+type connectionMetrics struct {
+	connectionStatus prometheus.Gauge
+	reconnects       prometheus.Counter
+	disconnects      prometheus.Counter
+	connectionErrors prometheus.Counter
 }
 
-// TODO: we can further break down into per-role metrics, e.g. publisher vs subscriber, if we want to track
-// metrics separately. For now, we just have a single set of metrics for all roles.
-func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
-	m := &clientMetrics{
-		connectionStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+func newConnectionMetrics(role connRole) connectionMetrics {
+	prefix := string(role) + "_"
+	return connectionMetrics{
+		connectionStatus: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "connection_status",
-			Help:      "Current NATS connection status per role (1 = connected, 0 = disconnected).",
-		}, []string{roleLabel}),
-		reconnects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "connection_status",
+			Help:      "Current NATS connection status (1 = connected, 0 = disconnected).",
+		}),
+		reconnects: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "reconnects_total",
-			Help:      "Total number of NATS reconnections per role.",
-		}, []string{roleLabel}),
-		disconnects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "reconnects_total",
+			Help:      "Total number of NATS reconnections.",
+		}),
+		disconnects: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "disconnects_total",
-			Help:      "Total number of NATS disconnections per role.",
-		}, []string{roleLabel}),
-		connectionErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "disconnects_total",
+			Help:      "Total number of NATS disconnections.",
+		}),
+		connectionErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "connection_errors_total",
-			Help:      "Total number of NATS asynchronous connection errors per role.",
-		}, []string{roleLabel}),
-		messagesPub: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "connection_errors_total",
+			Help:      "Total number of NATS asynchronous connection errors.",
+		}),
+	}
+}
+
+func (m connectionMetrics) collectors() []prometheus.Collector {
+	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors}
+}
+
+// publisherMetrics covers the publisher connection plus its publish counters.
+type publisherMetrics struct {
+	connectionMetrics
+	messagesPublished prometheus.Counter
+	publishErrors     prometheus.Counter
+}
+
+func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
+	m := &publisherMetrics{
+		connectionMetrics: newConnectionMetrics(rolePublisher),
+		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "messages_published_total",
-			Help:      "Total number of messages published to NATS per role.",
-		}, []string{roleLabel}),
-		publishErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      "publisher_messages_published_total",
+			Help:      "Total number of messages published to NATS.",
+		}),
+		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "publish_errors_total",
-			Help:      "Total number of NATS publish errors per role.",
-		}, []string{roleLabel}),
+			Name:      "publisher_publish_errors_total",
+			Help:      "Total number of NATS publish errors.",
+		}),
 	}
 
-	reg.MustRegister(
-		m.connectionStatus,
-		m.reconnects,
-		m.disconnects,
-		m.connectionErrors,
-		m.messagesPub,
-		m.publishErrors,
-	)
+	reg.MustRegister(append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)...)
+
+	return m
+}
+
+// subscriberMetrics covers the subscriber connection plus its delivery counters.
+// The delivery counters are keyed by the subscriber identifier so traffic can be
+// attributed to the individual consumer that registered the subscription.
+type subscriberMetrics struct {
+	connectionMetrics
+	messagesReceived *prometheus.CounterVec
+	subscribeErrors  *prometheus.CounterVec
+}
+
+func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
+	m := &subscriberMetrics{
+		connectionMetrics: newConnectionMetrics(roleSubscriber),
+		messagesReceived: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_messages_received_total",
+			Help:      "Total number of messages received from NATS per subscriber.",
+		}, []string{subscriberLabel}),
+		subscribeErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_subscribe_errors_total",
+			Help:      "Total number of NATS subscribe errors per subscriber.",
+		}, []string{subscriberLabel}),
+	}
+
+	reg.MustRegister(append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors)...)
 
 	return m
 }
