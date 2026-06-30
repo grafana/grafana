@@ -66,23 +66,19 @@ publisher_credentials_file = /etc/pub.creds
 func TestNATSAuthCredentialsPrecedence(t *testing.T) {
 	t.Run("per-role overrides shared", func(t *testing.T) {
 		a := NATSAuthSettings{
-			CredentialsFile:           "/shared.creds",
-			PublisherCredentialsFile:  "/pub.creds",
-			SubscriberCredentialsFile: "/sub.creds",
+			CredentialsFile:          "/shared.creds",
+			PublisherCredentialsFile: "/pub.creds",
 		}
 		require.Equal(t, "/pub.creds", a.PublisherCredentials())
-		require.Equal(t, "/sub.creds", a.SubscriberCredentials())
 	})
 
 	t.Run("falls back to shared", func(t *testing.T) {
 		a := NATSAuthSettings{CredentialsFile: "/shared.creds"}
 		require.Equal(t, "/shared.creds", a.PublisherCredentials())
-		require.Equal(t, "/shared.creds", a.SubscriberCredentials())
 	})
 
 	t.Run("empty when nothing set", func(t *testing.T) {
 		a := NATSAuthSettings{}
 		require.Empty(t, a.PublisherCredentials())
-		require.Empty(t, a.SubscriberCredentials())
 	})
 }

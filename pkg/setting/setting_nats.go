@@ -45,14 +45,13 @@ type NATSTLSSettings struct {
 	InsecureSkipVerify bool
 }
 
-// NATSAuthSettings configures the connection identity. Per-role credentials let
-// publisher and subscriber present distinct least-privilege identities; an
-// empty role value falls back to the shared CredentialsFile.
+// NATSAuthSettings configures the connection identity. A per-role publisher
+// credentials file lets the publisher present a least-privilege identity; an
+// empty value falls back to the shared CredentialsFile.
 type NATSAuthSettings struct {
-	Token                     string
-	CredentialsFile           string
-	PublisherCredentialsFile  string
-	SubscriberCredentialsFile string
+	Token                    string
+	CredentialsFile          string
+	PublisherCredentialsFile string
 }
 
 func readNATSSettings(cfg *Cfg) error {
@@ -82,10 +81,9 @@ func readNATSSettings(cfg *Cfg) error {
 			InsecureSkipVerify: section.Key("tls_insecure_skip_verify").MustBool(false),
 		},
 		Auth: NATSAuthSettings{
-			Token:                     section.Key("token").MustString(""),
-			CredentialsFile:           section.Key("credentials_file").MustString(""),
-			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
-			SubscriberCredentialsFile: section.Key("subscriber_credentials_file").MustString(""),
+			Token:                    section.Key("token").MustString(""),
+			CredentialsFile:          section.Key("credentials_file").MustString(""),
+			PublisherCredentialsFile: section.Key("publisher_credentials_file").MustString(""),
 		},
 	}
 	return nil
@@ -99,13 +97,6 @@ func (s NATSSettings) Embedded() bool {
 func (a NATSAuthSettings) PublisherCredentials() string {
 	if a.PublisherCredentialsFile != "" {
 		return a.PublisherCredentialsFile
-	}
-	return a.CredentialsFile
-}
-
-func (a NATSAuthSettings) SubscriberCredentials() string {
-	if a.SubscriberCredentialsFile != "" {
-		return a.SubscriberCredentialsFile
 	}
 	return a.CredentialsFile
 }
