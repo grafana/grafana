@@ -919,13 +919,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
-	natsMetrics := nats.ProvideClientMetrics(registerer)
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
 	}
-	natsConfig := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(cfg, natsConfig, natsMetrics)
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	clientMetrics := nats.ProvideClientMetrics(registerer)
+	publisherService := nats.ProvidePublisher(cfg, config, clientMetrics)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1659,13 +1659,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, server, tracingService)
-	natsMetrics := nats.ProvideClientMetrics(registerer)
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
 	}
-	natsConfig := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(cfg, natsConfig, natsMetrics)
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	clientMetrics := nats.ProvideClientMetrics(registerer)
+	publisherService := nats.ProvidePublisher(cfg, config, clientMetrics)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
