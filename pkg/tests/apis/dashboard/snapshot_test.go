@@ -16,7 +16,6 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -38,13 +37,11 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 		{
 			name:        "mode 0 - legacy only",
 			dualWrite:   grafanarest.Mode0,
-			features:    []string{featuremgmt.FlagKubernetesSnapshots},
 			description: "In mode 0, all operations go through legacy storage only",
 		},
 		{
 			name:        "mode 5 - unified storage read-write",
 			dualWrite:   grafanarest.Mode5,
-			features:    []string{featuremgmt.FlagKubernetesSnapshots},
 			description: "In mode 5, all operations go through unified storage only",
 		},
 	}
@@ -52,9 +49,10 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				EnableFeatureToggles: tc.features,
+				AppModeProduction:          true,
+				DisableAnonymous:           true,
+				KubernetesSnapshotsEnabled: true,
+				EnableFeatureToggles:       tc.features,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					dashv0.SnapshotResourceInfo.GroupResource().String(): {
 						DualWriterMode: tc.dualWrite,
