@@ -678,6 +678,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       switch (key) {
         case 'id':
         case 'gridPos':
+        case 'title': // dashboard stub is always the source of truth for title
         case 'libraryPanel': // recursive?
           continue;
       }

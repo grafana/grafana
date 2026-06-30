@@ -629,6 +629,27 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('initLibraryPanel', () => {
+      it('should not overwrite title from the dashboard stub', () => {
+        model.title = '';
+        model.initLibraryPanel({
+          uid: 'abc',
+          name: 'Shared panel',
+          model: { title: 'Old Server Title', type: 'timeseries', options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+        } as any);
+        expect(model.title).toBe('');
+      });
+
+      it('should apply non-title fields from the server model', () => {
+        model.initLibraryPanel({
+          uid: 'abc',
+          name: 'Shared panel',
+          model: { title: 'Server Title', type: 'timeseries', options: { tooltipMode: 'multi' }, fieldConfig: { defaults: {}, overrides: [] } },
+        } as any);
+        expect((model as any).options?.tooltipMode).toBe('multi');
+      });
+    });
+
     describe('runAllPanelQueries', () => {
       it('when called then it should call all pending queries', () => {
         model.getQueryRunner = jest.fn().mockReturnValue({
