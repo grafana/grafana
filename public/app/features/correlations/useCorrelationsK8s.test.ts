@@ -5,17 +5,16 @@ import { type DataSourceRef } from '@grafana/schema/dist/esm/index';
 
 import { toEnrichedCorrelationDataK8s, useCorrelationsK8s } from './useCorrelationsK8s';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn().mockReturnValue({
-    getInstanceSettings: (ref: DataSourceRef) => {
-      if (ref.uid !== 'notFoundUid') {
-        return typeof ref === 'string' ? { uid: ref, type: ref } : ref;
-      } else {
-        return undefined;
-      }
-    },
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (ref: DataSourceRef | string) => {
+    const uid = typeof ref === 'string' ? ref : ref.uid;
+    if (uid !== 'notFoundUid') {
+      return Promise.resolve(typeof ref === 'string' ? { uid: ref, type: ref } : ref);
+    } else {
+      return Promise.resolve(undefined);
+    }
+  },
 }));
 
 jest.mock('@grafana/api-clients/rtkq/correlations/v0alpha1', () => ({
@@ -31,8 +30,8 @@ describe('useCorrelationsK8s', () => {
   });
 
   describe('toEnrichedCorrelationDataK8s', () => {
-    it('returns undefined if the source datasource is not found', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('returns undefined if the source datasource is not found', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: {
@@ -49,8 +48,8 @@ describe('useCorrelationsK8s', () => {
 
       expect(correlation).toBe(undefined);
     });
-    it('returns undefined if its a query correlation and the targetDS is not found', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('returns undefined if its a query correlation and the targetDS is not found', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: {
@@ -68,8 +67,8 @@ describe('useCorrelationsK8s', () => {
 
       expect(correlation).toBe(undefined);
     });
-    it('returns an external correlation', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('returns an external correlation', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: {
@@ -94,8 +93,8 @@ describe('useCorrelationsK8s', () => {
         uid: 'testUid',
       });
     });
-    it('returns a query correlation', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('returns a query correlation', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: {
@@ -123,8 +122,8 @@ describe('useCorrelationsK8s', () => {
         uid: 'testUid',
       });
     });
-    it('marks a correlation with a manager as provisioned', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('marks a correlation with a manager as provisioned', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: { name: 'testUid', annotations: { 'grafana.app/managedBy': 'something' } },
@@ -151,8 +150,8 @@ describe('useCorrelationsK8s', () => {
       });
     });
 
-    it('marks a correlation with a manager that allows edits as not provisioned', () => {
-      const correlation = toEnrichedCorrelationDataK8s({
+    it('marks a correlation with a manager that allows edits as not provisioned', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
         kind: 'testKind',
         metadata: {
