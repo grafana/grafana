@@ -62,7 +62,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		OrgID:  c.GetOrgID(),
 		Teams:  c.TeamIDs, // nolint:staticcheck
 	}
+	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	prefsSpan.End()
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +147,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			WeekStart:                  weekStart,
 			Locale:                     locale,
 			Language:                   language,
-			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
 			AuthenticatedBy:            c.GetAuthenticatedBy(),
@@ -233,6 +234,9 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	if userID == 0 {
 		return 1
 	}
+
+	c, span := hs.injectSpan(c, "api.getUserOrgCount")
+	defer span.End()
 
 	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
 	if err != nil {

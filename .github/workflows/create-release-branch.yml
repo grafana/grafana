@@ -181,7 +181,7 @@ jobs:
         id: get-enterprise-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-pr-automation
+          github_app: grafana-enterprise-writer
           permission_set: writer-enterprise-main
       # grafana-enterprise has no package.json/version to bump — it just needs a release
       # branch cut at the head of its default branch.

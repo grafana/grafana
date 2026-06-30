@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -213,9 +212,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		timelineDemoContent := helper.LoadFile("../testdata/timeline-demo.json")
 
 		// Modify UIDs to be unique for ResourceRef tests
-		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "moveref1"`, 1)
-		textOptionsModified := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "moveref2"`, 1)
-		timelineDemoModified := strings.Replace(string(timelineDemoContent), `"uid": "mIJjFy8Kz"`, `"uid": "moveref3"`, 1)
+		allPanelsModified := renameDashboard(t, allPanelsContent, "moveref1")
+		textOptionsModified := renameDashboard(t, textOptionsContent, "moveref2")
+		timelineDemoModified := renameDashboard(t, timelineDemoContent, "moveref3")
 
 		// Create temporary files and copy them to the provisioning path
 		tmpDir := t.TempDir()
@@ -311,7 +310,7 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			// Reproduces https://github.com/grafana/git-ui-sync-project/issues/919
 			// Moving a resource from an inner folder to the base folder ("/") should
 			// relocate the file to root, not delete it.
-			rootMoveContent := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "movetoroot1"`, 1)
+			rootMoveContent := renameDashboard(t, allPanelsContent, "movetoroot1")
 			tmpRootMove := filepath.Join(tmpDir, "move-to-root-test.json")
 			require.NoError(t, os.WriteFile(tmpRootMove, []byte(rootMoveContent), 0644))
 			helper.CopyToProvisioningPath(t, tmpRootMove, "inner-folder/move-to-root.json")
@@ -360,8 +359,8 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			tmpMixed1 := filepath.Join(tmpDir, "mixed-move-1.json")
 			tmpMixed2 := filepath.Join(tmpDir, "mixed-move-2.json")
 
-			allPanelsMixed := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "mixedmove1"`, 1)
-			textOptionsMixed := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "mixedmove2"`, 1)
+			allPanelsMixed := renameDashboard(t, allPanelsContent, "mixedmove1")
+			textOptionsMixed := renameDashboard(t, textOptionsContent, "mixedmove2")
 
 			require.NoError(t, os.WriteFile(tmpMixed1, []byte(allPanelsMixed), 0644))
 			require.NoError(t, os.WriteFile(tmpMixed2, []byte(textOptionsMixed), 0644))

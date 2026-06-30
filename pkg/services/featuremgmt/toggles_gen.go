@@ -127,6 +127,14 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagExternalSnapshotsK8SAPIPush
+	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
+
+	// FlagExternalSnapshotsSupportLegacyAPI
+	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
+
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
@@ -134,10 +142,6 @@ const (
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
-
-	// FlagKubernetesShortURLs
-	// Enables k8s short URL API and uses it under the hood when handling legacy /api
-	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
@@ -343,9 +347,9 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
-	// FlagGrafanaOrgDashboardTemplates
-	// Enables org-defined dashboard templates for enterprise
-	FlagGrafanaOrgDashboardTemplates = "grafana.orgDashboardTemplates"
+	// FlagGrafanaCustomDashboardTemplates
+	// Enables custom dashboard templates for enterprise
+	FlagGrafanaCustomDashboardTemplates = "grafana.customDashboardTemplates"
 
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
@@ -714,6 +718,10 @@ const (
 	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
 	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
+	// FlagIamOnlyStoreDatasourceActionSets
+	// When storing datasource resource permissions, only store action sets and not the full list of underlying permissions
+	FlagIamOnlyStoreDatasourceActionSets = "iam.onlyStoreDatasourceActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
@@ -834,10 +842,6 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagFrontendServiceUseSettingsService
-	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
-	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
-
 	// FlagFrontendServiceSettingsSourceFilter
 	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
 	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
@@ -865,10 +869,6 @@ const (
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagLogsTablePanelNG
-	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanelNG = "logsTablePanelNG"
 
 	// FlagFrontendServiceSSOAutoLogin
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
@@ -934,14 +934,6 @@ const (
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 
-	// FlagGrafanaMeticulousAIRecorder
-	// Enable Meticulous AI session recorder for automated UI test generation
-	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
-
-	// FlagGrafanaMeticulousAIRecorderHighVolume
-	// When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.
-	FlagGrafanaMeticulousAIRecorderHighVolume = "grafana.meticulousAIRecorderHighVolume"
-
 	// FlagGrafanaMeticulousAIMode
 	// Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).
 	FlagGrafanaMeticulousAIMode = "grafana.meticulousAIMode"
@@ -973,4 +965,8 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagAuthTokenRotationGracePeriod
+	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
+	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
 )

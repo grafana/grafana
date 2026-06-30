@@ -5,8 +5,8 @@ import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
 import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import { type LinkEdit } from './LinkAddEditableElement';
 import { linkEditActions } from './actions';
@@ -23,7 +23,12 @@ function useLinkState(linkEdit: LinkEdit) {
   return { dashboard, links: allLinks, link, linkIndex };
 }
 
-function commitUpdate(dashboard: DashboardScene, linkIndex: number, oldLink: DashboardLink, newLink: DashboardLink) {
+function commitUpdate(
+  dashboard: DashboardSceneLike,
+  linkIndex: number,
+  oldLink: DashboardLink,
+  newLink: DashboardLink
+) {
   linkEditActions.updateLink({ dashboard, linkIndex, oldLink, newLink });
 }
 

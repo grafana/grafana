@@ -8,12 +8,13 @@ import {
   type EventBusExtended,
   type HistoryItem,
   type PanelData,
+  type ScopedVars,
   getDataSourceRef,
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { type SceneObjectRef, type VizPanel } from '@grafana/scenes';
+import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -248,7 +249,14 @@ export class QueryEditorRows extends PureComponent<Props> {
       queryLibraryRef,
       onCancelQueryLibraryEdit,
       isOpen,
+      panelRef,
     } = this.props;
+
+    // Scene scope for resolving section-scoped (row/tab) datasource variables, which live on a
+    // layout node rather than the dashboard root and so are not reachable from the global scene context.
+    const scopedVars: ScopedVars | undefined = panelRef
+      ? { __sceneObject: new SafeSerializableSceneObject(panelRef.resolve()) }
+      : undefined;
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -257,7 +265,7 @@ export class QueryEditorRows extends PureComponent<Props> {
             return (
               <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const dataSourceSettings = getDataSourceSettings(query, dsSettings);
+                  const dataSourceSettings = getDataSourceSettings(query, dsSettings, scopedVars);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed
                     ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
                     : undefined;
@@ -270,6 +278,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       data={data}
                       query={query}
                       dataSource={dataSourceSettings}
+                      scopedVars={scopedVars}
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onReplace={(query) => this.onReplaceQuery(query, index)}
@@ -307,11 +316,12 @@ export class QueryEditorRows extends PureComponent<Props> {
 
 const getDataSourceSettings = (
   query: DataQuery,
-  groupSettings: DataSourceInstanceSettings
+  groupSettings: DataSourceInstanceSettings,
+  scopedVars?: ScopedVars
 ): DataSourceInstanceSettings => {
   if (!query.datasource) {
     return groupSettings;
   }
-  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource);
+  const querySettings = getDataSourceSrv().getInstanceSettings(query.datasource, scopedVars);
   return querySettings || groupSettings;
 };

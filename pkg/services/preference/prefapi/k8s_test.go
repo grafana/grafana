@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"

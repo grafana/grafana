@@ -1838,6 +1838,109 @@ func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
 	require.Equal(t, rvA, items[2].resourceVersion)
 }
 
+// TestKvStorageBackend_ListTrash_SortOrder verifies that trash listing honors
+// the sort convention: NotOlderThan yields ascending order (so watermark-based
+// callers advance forward), while the default match stays descending (which the
+// Restore Dashboards UI relies on). It also checks that ascending pagination
+// resumes forward via the continue token.
+func TestKvStorageBackend_ListTrash_SortOrder(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	createAndDelete := func(name string) int64 {
+		obj, err := createTestObjectWithName(name, appsNamespace, "data-"+name)
+		require.NoError(t, err)
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name}
+		addRV, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED, Key: key,
+			Value: objectToJSONBytes(t, obj), Object: meta,
+		})
+		require.NoError(t, err)
+		delRV, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_DELETED, Key: key,
+			Value: objectToJSONBytes(t, obj), Object: meta, ObjectOld: meta, PreviousRV: addRV,
+		})
+		require.NoError(t, err)
+		return delRV
+	}
+
+	rvA := createAndDelete("resource-a")
+	rvB := createAndDelete("resource-b")
+	rvC := createAndDelete("resource-c")
+	require.Less(t, rvA, rvB)
+	require.Less(t, rvB, rvC)
+
+	// collect lists (name, rv) and the continue token of the last consumed item,
+	// stopping after at most `limit` items.
+	collect := func(req *resourcepb.ListRequest, limit int) ([]string, []int64, string) {
+		var names []string
+		var rvs []int64
+		var token string
+		_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				names = append(names, iter.Name())
+				rvs = append(rvs, iter.ResourceVersion())
+				token = iter.ContinueToken()
+				if limit > 0 && len(names) >= limit {
+					break
+				}
+			}
+			return iter.Error()
+		})
+		require.NoError(t, err)
+		return names, rvs, token
+	}
+
+	baseReq := func() *resourcepb.ListRequest {
+		return &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources"},
+			},
+			Source: resourcepb.ListRequest_TRASH,
+			Limit:  10,
+		}
+	}
+
+	t.Run("NotOlderThan sorts ascending", func(t *testing.T) {
+		req := baseReq()
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		names, rvs, _ := collect(req, 0)
+		require.Equal(t, []string{"resource-a", "resource-b", "resource-c"}, names)
+		require.Equal(t, []int64{rvA, rvB, rvC}, rvs)
+	})
+
+	t.Run("default match stays descending", func(t *testing.T) {
+		names, _, _ := collect(baseReq(), 0)
+		require.Equal(t, []string{"resource-c", "resource-b", "resource-a"}, names)
+	})
+
+	t.Run("ascending pagination resumes forward", func(t *testing.T) {
+		req := baseReq()
+		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		req.Limit = 1
+		names, _, token := collect(req, 1)
+		require.Equal(t, []string{"resource-a"}, names)
+		require.NotEmpty(t, token)
+
+		// Direction must be pinned in the token so the next page stays ascending.
+		decoded, err := GetContinueToken(token)
+		require.NoError(t, err)
+		require.True(t, decoded.SortAscending)
+
+		next := baseReq()
+		next.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+		next.NextPageToken = token
+		names2, _, _ := collect(next, 0)
+		require.Equal(t, []string{"resource-b", "resource-c"}, names2)
+	})
+}
+
 func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

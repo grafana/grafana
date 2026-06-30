@@ -144,6 +144,7 @@
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
+/pkg/infra/nats/ @grafana/grafana-search-and-storage
 /pkg/infra/network/ @grafana/grafana-backend-group
 /pkg/infra/process/ @grafana/grafana-backend-group
 /pkg/infra/remotecache/ @grafana/grafana-backend-group
@@ -326,7 +327,6 @@
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
-/devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
@@ -363,14 +363,11 @@
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
-/pkg/tsdb/cloud-monitoring/ @grafana/data-sources-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
 /pkg/tsdb/loki/ @grafana/data-sources-plugins
-/pkg/tsdb/tempo/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
-/pkg/tsdb/parca/ @grafana/data-sources-plugins
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
@@ -723,13 +720,11 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/loki @grafana/data-sources-plugins @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
-/packages/grafana-schema/src/**/parca @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
 /packages/grafana-schema/src/**/table @grafana/dataviz-squad
-/packages/grafana-schema/src/**/tempo @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/text @grafana/dataviz-squad
 /packages/grafana-schema/src/**/timeseries @grafana/dataviz-squad
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad
@@ -780,7 +775,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # @grafana/openapi
-/packages/grafana-openapi/ @grafana/grafana-search-navigate-organise @grafana/grafana-frontend-platform
+/packages/grafana-openapi/ @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
 
 
 # root files, mostly frontend
@@ -908,7 +903,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
-/public/app/core/services/theme.ts @grafana/grafana-frontend-platform
+/public/app/core/services/theme* @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/factors.test.ts @grafana/dashboards-squad
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
@@ -1142,10 +1137,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/tempo/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad

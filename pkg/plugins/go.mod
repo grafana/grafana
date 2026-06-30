@@ -9,7 +9,7 @@ require (
 	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
-	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a
+	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
 	github.com/grafana/grafana-plugin-sdk-go v0.292.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
@@ -69,7 +69,7 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
+	github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
@@ -123,7 +123,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
