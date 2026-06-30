@@ -72,7 +72,7 @@ func testGetLegacyID(t *testing.T, anno *annotationV0.Annotation) int64 {
 // testGetLegacyData is a test helper that extracts the legacy data blob from an annotation.
 func testGetLegacyData(t *testing.T, anno *annotationV0.Annotation) string {
 	t.Helper()
-	v, _ := getLegacyData(anno)
+	v, _ := GetLegacyData(anno)
 	return v
 }
 
