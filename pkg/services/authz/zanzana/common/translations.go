@@ -146,6 +146,12 @@ var resourceTranslations = map[string]resourceTranslation{
 			"users:delete":            newMapping(RelationDelete, ""),
 			"users.permissions:read":  newMapping(RelationGetPermissions, ""),
 			"users.permissions:write": newMapping(RelationSetPermissions, ""),
+			// The org.users:* family gates the same iam.grafana.app/users verbs as the
+			// global users:* family (see userManagementMappings in tuple_helpers.go).
+			// org.users:add is intentionally omitted, matching the write-side mapping.
+			"org.users:read":   newMapping(RelationGet, ""),
+			"org.users:write":  newMapping(RelationUpdate, ""),
+			"org.users:remove": newMapping(RelationDelete, ""),
 		},
 	},
 }

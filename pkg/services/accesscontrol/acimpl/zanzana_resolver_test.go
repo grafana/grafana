@@ -886,6 +886,17 @@ func TestListPermissions_UserActions(t *testing.T) {
 		}, perms)
 	})
 
+	// The org.users:* family is org-scoped (users kind), like users.permissions:read.
+	for _, action := range []string{"org.users:read", "org.users:write", "org.users:remove"} {
+		t.Run(action+" All=true produces users:id:* wildcard", func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "users:id:*"},
+			}, perms)
+		})
+	}
+
 	t.Run("items fall back to uid scope when scope resolver is nil", func(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"user-abc"}}, "users:read", "")
 		require.NoError(t, err)
