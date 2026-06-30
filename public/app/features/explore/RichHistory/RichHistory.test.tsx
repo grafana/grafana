@@ -20,6 +20,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: () => ({ isLoading: false, items: [] }),
+}));
+
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: [] }),
