@@ -374,30 +374,58 @@ func newFacetAggregator(facets map[string]*resourcepb.ResourceSearchRequest_Face
 
 func (a *facetAggregator) add(doc *search.DocumentMatch) {
 	for _, f := range a.fields {
-		a.total[f.Field]++
 		v, ok := doc.Fields[f.Field]
 		if !ok || v == nil {
 			a.missing[f.Field]++
 			continue
 		}
-		term := facetTermValue(v)
-		if term == "" {
+		terms := facetTermValues(v)
+		if len(terms) == 0 {
 			a.missing[f.Field]++
 			continue
 		}
-		a.counts[f.Field][term]++
+		// Total is the number of field values, not documents (matches bleve's
+		// TermsFacetBuilder: total counts every term visited).
+		a.total[f.Field] += int64(len(terms))
+		for _, term := range terms {
+			a.counts[f.Field][term]++
+		}
 	}
 }
 
-// facetTermValue stringifies a stored field value for facet counting. Facet
-// fields are tokenized keyword fields stored as strings; non-string values are
-// formatted with fmt.
-func facetTermValue(v any) string {
+// facetTermValues extracts the individual facet terms from a stored field
+// value. Multi-value fields (e.g. tags) are stored as slices, so each element
+// is counted as its own term — matching bleve's native term facets. Empty
+// strings are dropped. Non-string scalars are formatted as a single term.
+func facetTermValues(v any) []string {
 	switch s := v.(type) {
 	case string:
-		return s
+		if s == "" {
+			return nil
+		}
+		return []string{s}
+	case []string:
+		out := make([]string, 0, len(s))
+		for _, t := range s {
+			if t != "" {
+				out = append(out, t)
+			}
+		}
+		return out
+	case []any:
+		out := make([]string, 0, len(s))
+		for _, e := range s {
+			if str, ok := e.(string); ok && str != "" {
+				out = append(out, str)
+			}
+		}
+		return out
 	default:
-		return fmt.Sprintf("%v", v)
+		t := fmt.Sprintf("%v", v)
+		if t == "" {
+			return nil
+		}
+		return []string{t}
 	}
 }
 

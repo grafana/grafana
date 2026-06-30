@@ -1101,6 +1101,12 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 	}
 
+	newDocWithTags := func(name, folder string, tags []string) *resource.BulkIndexItem {
+		d := newDoc(name, folder)
+		d.Doc.Tags = tags
+		return d
+	}
+
 	listQuery := func(limit int64) *resourcepb.ResourceSearchRequest {
 		return &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -1308,6 +1314,37 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Len(t, f.Terms, 1)
 		require.Equal(t, "allowed", f.Terms[0].Term)
 		require.Equal(t, int64(2), f.Terms[0].Count)
+	})
+
+	t.Run("facets split multi-value tag fields into individual terms", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "denied", []string{"prod", "secrets"}),
+			newDocWithTags("doc-2", "allowed", []string{"prod"}),
+			newDocWithTags("doc-3", "allowed", nil), // no tags -> missing
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 100},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		// Authorized docs: doc-0 (prod, latency), doc-2 (prod), doc-3 (none).
+		// Each tag element is its own term: prod=2, latency=1. Total = 3 values.
+		// doc-3 has no tags -> missing=1. The denied doc-1's "secrets" tag must
+		// not appear, and tags must never be stringified as "[prod latency]".
+		require.Equal(t, int64(3), f.Total)
+		require.Equal(t, int64(1), f.Missing)
+		terms := map[string]int64{}
+		for _, term := range f.Terms {
+			terms[term.Term] = term.Count
+			require.NotContains(t, term.Term, "[", "tag must not be stringified as an array")
+		}
+		require.Equal(t, map[string]int64{"prod": 2, "latency": 1}, terms)
+		require.NotContains(t, terms, "secrets", "unauthorized doc's tag must not be counted")
 	})
 
 	t.Run("facets extrapolated by sampling ratio when the scan is capped", func(t *testing.T) {
@@ -1977,8 +2014,9 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		f, ok := res.Facet["region"]
 		require.True(t, ok, "facet should be aggregated app-side")
 		require.NotNil(t, f)
-		// 3 authorized hits considered; the dashboard has no region label -> missing.
-		require.Equal(t, int64(3), f.Total)
+		// 2 authorized hits have a region label (west, east); the dashboard has
+		// none -> missing. Total is the number of field values, not docs.
+		require.Equal(t, int64(2), f.Total)
 		require.Equal(t, int64(1), f.Missing)
 		terms := map[string]int64{}
 		for _, term := range f.Terms {
