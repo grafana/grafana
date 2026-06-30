@@ -39,9 +39,10 @@ type Event struct {
 	Resource  string    `json:"resource"`
 	Namespace string    `json:"namespace"`
 	Name      string    `json:"name"`
-	// ResourceVersion is an opaque string, as Kubernetes itself treats it: it
-	// has no meaning beyond equality/ordering as understood by the storage that
-	// issued it, so it is never parsed as a number here.
-	ResourceVersion string `json:"resourceVersion"`
+	// ResourceVersion is an int64 to match how unified storage issues it on the
+	// kv/storage side (and in resourcepb). It is meaningful only for
+	// equality/ordering as understood by the issuing storage, not as an
+	// arithmetic quantity.
+	ResourceVersion int64  `json:"resourceVersion"`
 	Folder          string `json:"folder,omitempty"`
 }

@@ -15,7 +15,7 @@ func TestEventJSONRoundTrip(t *testing.T) {
 		Resource:        "repositories",
 		Namespace:       "default",
 		Name:            "repo-1",
-		ResourceVersion: "42",
+		ResourceVersion: 42,
 		Folder:          "abc",
 	}
 
@@ -28,7 +28,7 @@ func TestEventJSONRoundTrip(t *testing.T) {
 		"resource": "repositories",
 		"namespace": "default",
 		"name": "repo-1",
-		"resourceVersion": "42",
+		"resourceVersion": 42,
 		"folder": "abc"
 	}`, string(b))
 
