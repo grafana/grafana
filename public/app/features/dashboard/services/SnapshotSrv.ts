@@ -68,7 +68,7 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   },
 };
 
-export function mapK8sSnapshotItem(item: {
+function mapK8sSnapshotItem(item: {
   metadata: { name?: string };
   spec: { title?: string; external?: boolean; externalUrl?: string };
 }): Snapshot {
