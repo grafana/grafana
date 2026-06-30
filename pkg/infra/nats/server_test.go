@@ -5,59 +5,48 @@ import (
 	"testing"
 
 	"github.com/grafana/dskit/services"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *endpoints) {
-	t.Helper()
-	cfg := setting.NewCfg()
-	cfg.NATS = nats
-	ep := ProvideEndpoints(cfg)
-	m := newMetrics(prometheus.NewRegistry())
-	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, ep, m)
-	require.NoError(t, err)
-	return s, ep
-}
-
-func TestServer_Disabled(t *testing.T) {
-	s, _ := newTestServer(t, setting.NATSSettings{Enabled: false})
-	require.True(t, s.IsDisabled())
-	require.ErrorIs(t, s.Health(context.Background()), ErrDisabled)
-}
-
-func TestServer_ExternalMode(t *testing.T) {
-	s, ep := newTestServer(t, setting.NATSSettings{
-		Enabled:    true,
-		Mode:       setting.NATSModeExternal,
-		ClientURLs: []string{"nats://example:4222"},
+func TestServer(t *testing.T) {
+	t.Run("is disabled when NATS is off", func(t *testing.T) {
+		s, _ := newTestServer(t, setting.NATSSettings{Enabled: false})
+		require.True(t, s.IsDisabled())
+		require.ErrorIs(t, s.Health(context.Background()), ErrDisabled)
 	})
 
-	// External mode runs no embedded server; the configured URLs reach the broker.
-	require.True(t, s.IsDisabled())
-	require.Equal(t, []string{"nats://example:4222"}, ep.URLs())
-	require.NoError(t, s.Health(context.Background()))
-}
+	t.Run("external mode runs no embedded server", func(t *testing.T) {
+		s, ep := newTestServer(t, setting.NATSSettings{
+			Enabled:    true,
+			Mode:       setting.NATSModeExternal,
+			ClientURLs: []string{"nats://example:4222"},
+		})
 
-func TestServer_DskitLifecycle_Disabled(t *testing.T) {
-	s, _ := newTestServer(t, setting.NATSSettings{Enabled: false})
+		// External mode runs no embedded server; the configured URLs reach the broker.
+		require.True(t, s.IsDisabled())
+		require.Equal(t, []string{"nats://example:4222"}, ep.URLs())
+		require.NoError(t, s.Health(context.Background()))
+	})
 
-	ctx := context.Background()
-	require.NoError(t, s.StartAsync(ctx))
-	require.NoError(t, s.AwaitRunning(ctx))
-	require.Equal(t, services.Running, s.State())
+	t.Run("dskit lifecycle is a no-op when disabled", func(t *testing.T) {
+		s, _ := newTestServer(t, setting.NATSSettings{Enabled: false})
 
-	s.StopAsync()
-	require.NoError(t, s.AwaitTerminated(ctx))
-	require.Equal(t, services.Terminated, s.State())
-}
+		ctx := context.Background()
+		require.NoError(t, s.StartAsync(ctx))
+		require.NoError(t, s.AwaitRunning(ctx))
+		require.Equal(t, services.Running, s.State())
 
-func TestServer_EmbeddedHealthFailsBeforeStart(t *testing.T) {
-	s, _ := newTestServer(t, setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded})
-	require.False(t, s.IsDisabled())
-	// Embedded server has not been started by Run yet.
-	require.Error(t, s.Health(context.Background()))
+		s.StopAsync()
+		require.NoError(t, s.AwaitTerminated(ctx))
+		require.Equal(t, services.Terminated, s.State())
+	})
+
+	t.Run("embedded health fails before start", func(t *testing.T) {
+		s, _ := newTestServer(t, setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded})
+		require.False(t, s.IsDisabled())
+		// Embedded server has not been started by Run yet.
+		require.Error(t, s.Health(context.Background()))
+	})
 }

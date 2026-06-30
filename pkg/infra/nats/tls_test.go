@@ -18,15 +18,20 @@ func TestBuildTLSConfig(t *testing.T) {
 		require.Empty(t, tc.Certificates)
 	})
 
-	t.Run("client cert requires both halves", func(t *testing.T) {
-		_, err := buildTLSConfig(setting.NATSTLSSettings{CertPath: "/only/cert.pem"})
-		require.Error(t, err)
-		_, err = buildTLSConfig(setting.NATSTLSSettings{KeyPath: "/only/key.pem"})
-		require.Error(t, err)
-	})
-
-	t.Run("bad ca path errors", func(t *testing.T) {
-		_, err := buildTLSConfig(setting.NATSTLSSettings{CACertPath: "/does/not/exist.pem"})
-		require.Error(t, err)
+	t.Run("invalid config errors", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			settings setting.NATSTLSSettings
+		}{
+			{"client cert without key", setting.NATSTLSSettings{CertPath: "/only/cert.pem"}},
+			{"client key without cert", setting.NATSTLSSettings{KeyPath: "/only/key.pem"}},
+			{"missing ca path", setting.NATSTLSSettings{CACertPath: "/does/not/exist.pem"}},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				_, err := buildTLSConfig(tt.settings)
+				require.Error(t, err)
+			})
+		}
 	})
 }
