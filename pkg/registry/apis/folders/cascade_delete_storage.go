@@ -68,7 +68,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 // requested marks the originally requested folder, which preserves NotFound; recursive children
 // suppress it (a stale search-index entry or already-removed subtree node is not an error).
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
-	if err := s.markTerminating(ctx, name); err != nil {
+	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
@@ -189,8 +189,9 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 }
 
 // markTerminating stamps the terminating label on the folder so the in-progress subtree deletion is
-// observable before its leaves are removed.
-func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string) error {
+// observable before its leaves are removed. It honors the delete dry-run so a dry-run folder delete
+// does not actually mutate folders.
+func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
 		// With a nil base object, DefaultUpdatedObjectInfo passes a nil newObj; mutate a copy of the
 		// existing folder instead.
@@ -211,7 +212,11 @@ func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string)
 		return obj, nil
 	})
 
-	_, _, err := s.Update(ctx, name, objInfo, nil, nil, false, &metav1.UpdateOptions{})
+	updateOpts := &metav1.UpdateOptions{}
+	if options != nil {
+		updateOpts.DryRun = options.DryRun
+	}
+	_, _, err := s.Update(ctx, name, objInfo, nil, nil, false, updateOpts)
 	return err
 }
 

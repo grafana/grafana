@@ -45,7 +45,7 @@ type fakeFolderStorage struct {
 	stamped  []string
 }
 
-func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -56,12 +56,15 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 			return nil, false, err
 		}
 	}
+	if isDryRun(options.DryRun) {
+		return fol, false, nil
+	}
 	delete(f.existing, name)
 	f.deleted = append(f.deleted, name)
 	return fol, false, nil
 }
 
-func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	fol, ok := f.existing[name]
 	if !ok {
 		return nil, false, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
@@ -71,11 +74,18 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 		return nil, false, err
 	}
 	updated := obj.(*foldersv1.Folder)
+	if isDryRun(options.DryRun) {
+		return updated, false, nil
+	}
 	f.existing[name] = updated
 	if updated.Labels[folderTerminatingLabel] == folderTerminatingLabelValue {
 		f.stamped = append(f.stamped, name)
 	}
 	return updated, false, nil
+}
+
+func isDryRun(dryRun []string) bool {
+	return len(dryRun) > 0
 }
 
 // fakeCascadeSearcher returns folder children and dashboards by folder UID, keyed off the request's
@@ -351,6 +361,22 @@ func TestCascadeDelete_MissingRequestedFolderReturnsNotFound(t *testing.T) {
 
 	_, _, err := s.Delete(ctxWithNamespace(), "ghost", nil, forceDelete())
 	require.True(t, apierrors.IsNotFound(err))
+}
+
+func TestCascadeDelete_DryRunDoesNotMutate(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// A dry-run force delete must not stamp or delete anything.
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	opts := forceDelete()
+	opts.DryRun = []string{metav1.DryRunAll}
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+	require.NoError(t, err)
+
+	require.Empty(t, store.stamped, "dry-run must not stamp the terminating label")
+	require.Empty(t, store.deleted, "dry-run must not delete the folder")
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {
