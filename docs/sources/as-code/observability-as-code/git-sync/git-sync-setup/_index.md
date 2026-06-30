@@ -236,9 +236,9 @@ In the **Webhook options** menu, you can type in an URL to override the auto-det
 
 You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
-### Advanced commit options
+### Signed commit option
 
-Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys. For more details on how to create your keys for Git authentication, refer to the official documentation at [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
 {{< admonition type="note" >}}
 
