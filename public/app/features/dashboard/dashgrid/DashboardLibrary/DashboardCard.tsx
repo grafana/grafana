@@ -1,5 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import { useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
@@ -21,6 +24,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { ConfirmContent } from '@grafana/ui/internal';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -121,78 +125,39 @@ function DashboardCardComponent({
 
   const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
-  // Create structured context item with template metadata for the Assistant
-  const templateContext = useMemo(
-    () =>
-      createAssistantContextItem('structured', {
-        hidden: false,
-        title: buildTemplateContextTitle(dashboard, kind),
-        data: buildTemplateContextData(dashboard, kind),
-      }),
-    [dashboard, kind]
-  );
-
   const onUseAssistantClick = () => {
-    if (assistantAvailable) {
-      openAssistant?.({
-        origin: 'dashboard-library/use-dashboard',
-        mode: 'dashboarding',
-        prompt: buildAssistantPrompt(kind),
-        context: [templateContext],
-        autoSend: true,
-      });
-      // these both closes the modal and redirects the user the the template dashboard url
-      onClose?.();
-      onClick?.(true);
+    if (!assistantAvailable || kind === 'custom_dashboard_template' || !('slug' in dashboard)) {
+      return;
     }
+    const templateContext = createAssistantContextItem('structured', {
+      hidden: false,
+      title: buildTemplateContextTitle(dashboard, kind),
+      data: buildTemplateContextData(dashboard, kind),
+    });
+    openAssistant?.({
+      origin: 'dashboard-library/use-dashboard',
+      mode: 'dashboarding',
+      prompt: buildAssistantPrompt(kind),
+      context: [templateContext],
+      autoSend: true,
+    });
+    // these both close the modal and redirect the user to the template dashboard url
+    onClose?.();
+    onClick?.(true);
   };
 
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
-  if (showDeleteConfirm) {
-    return (
-      <article className={cx(styles.card, styles.confirmCard)}>
-        <Stack direction="column" gap={2} flex={1}>
-          <Stack direction="column" justifyContent="center" gap={1} flex={1}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Icon name="exclamation-triangle" size="lg" className={styles.confirmIcon} />
-              <Text element="h3" variant="h5">
-                <Trans i18nKey="dashboard-library.card.delete-confirm-title">Delete this template?</Trans>
-              </Text>
-            </Stack>
-            <Text color="secondary" variant="bodySmall">
-              {t(
-                'dashboard-library.card.delete-confirm-body',
-                'This permanently deletes "{{templateTitle}}". This action cannot be undone.',
-                { templateTitle: title }
-              )}
-            </Text>
-          </Stack>
-          <Stack direction="row" justifyContent="flex-end" gap={1}>
-            <Button
-              variant="secondary"
-              fill="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              disabled={isDeleting}
-            >
-              <Trans i18nKey="dashboard-library.card.delete-confirm-cancel">Cancel</Trans>
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={onConfirmDelete}
-              disabled={isDeleting}
-              icon={isDeleting ? 'spinner' : undefined}
-            >
-              <Trans i18nKey="dashboard-library.card.delete-confirm-confirm">Delete</Trans>
-            </Button>
-          </Stack>
-        </Stack>
-      </article>
-    );
-  }
-
   return (
     <article className={styles.card}>
+      {showDeleteConfirm && (
+        <DeleteTemplateConfirm
+          title={title}
+          isDeleting={isDeleting}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={onConfirmDelete}
+        />
+      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -374,6 +339,65 @@ function DashboardCardComponent({
   );
 }
 
+interface DeleteTemplateConfirmProps {
+  title: string;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+/**
+ * Inline delete confirmation rendered as an opaque overlay covering the card.
+ */
+function DeleteTemplateConfirm({ title, isDeleting, onCancel, onConfirm }: DeleteTemplateConfirmProps) {
+  const styles = useStyles2(getStyles);
+  const ref = useRef<HTMLDivElement>(null);
+  const { dialogProps } = useDialog({ role: 'alertdialog' }, ref);
+  const { overlayProps } = useOverlay(
+    { isOpen: true, onClose: onCancel, isDismissable: false, isKeyboardDismissDisabled: isDeleting },
+    ref
+  );
+
+  return (
+    <FocusScope contain restoreFocus>
+      <div
+        ref={ref}
+        className={styles.confirmOverlay}
+        aria-label={t('dashboard-library.card.delete-confirm-title', 'Delete this template?')}
+        {...overlayProps}
+        {...dialogProps}
+      >
+        <ConfirmContent
+          body={
+            <Stack direction="column" gap={1}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Icon name="exclamation-triangle" size="lg" className={styles.confirmIcon} />
+                <Text element="h3" variant="h5">
+                  <Trans i18nKey="dashboard-library.card.delete-confirm-title">Delete this template?</Trans>
+                </Text>
+              </Stack>
+              <Text color="secondary" variant="bodySmall">
+                {t(
+                  'dashboard-library.card.delete-confirm-body',
+                  'This permanently deletes "{{templateTitle}}". This action cannot be undone.',
+                  { templateTitle: title }
+                )}
+              </Text>
+            </Stack>
+          }
+          confirmPromptText={t('dashboard-library.card.delete-confirm-prompt', 'Delete')}
+          confirmButtonLabel={t('dashboard-library.card.delete-confirm-confirm', 'Delete')}
+          confirmButtonVariant="destructive"
+          dismissButtonLabel={t('dashboard-library.card.delete-confirm-cancel', 'Cancel')}
+          dismissButtonVariant="secondary"
+          onConfirm={onConfirm}
+          onDismiss={onCancel}
+        />
+      </div>
+    </FocusScope>
+  );
+}
+
 function DetailsTooltipContent({ details }: { details: Details }) {
   const Section = ({ label, value }: { label: string; value: string }) => {
     return (
@@ -470,8 +494,17 @@ function getStyles(theme: GrafanaTheme2) {
       top: theme.spacing(2),
       right: theme.spacing(1.5),
     }),
-    confirmCard: css({
+    confirmOverlay: css({
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      // Opaque background hides the underlying card content without changing the card's height.
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2),
+      overflowY: 'auto',
     }),
     confirmIcon: css({
       color: theme.colors.warning.text,

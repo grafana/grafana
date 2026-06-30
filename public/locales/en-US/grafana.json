@@ -6444,6 +6444,7 @@
       "delete-confirm-body": "This permanently deletes \"{{templateTitle}}\". This action cannot be undone.",
       "delete-confirm-cancel": "Cancel",
       "delete-confirm-confirm": "Delete",
+      "delete-confirm-prompt": "Delete",
       "delete-confirm-title": "Delete this template?",
       "delete-template-button-label": "Delete template: {{title}}",
       "delete-template-menu-item": "Delete",
