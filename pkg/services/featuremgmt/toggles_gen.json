@@ -993,6 +993,23 @@
     },
     {
       "metadata": {
+        "name": "auth.tokenRotationGracePeriod",
+        "resourceVersion": "1782472850879",
+        "creationTimestamp": "2026-06-26T10:33:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 11:20:50.87964 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-06-13T09:41:35Z"
