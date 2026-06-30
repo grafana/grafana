@@ -40,13 +40,13 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	}
 
 	// Jobs informer and controller (resync ~60s like in register.go)
-	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval(), controllerCfg.natsSubscriber)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
-		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
+		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration, controllerCfg.natsSubscriber)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),

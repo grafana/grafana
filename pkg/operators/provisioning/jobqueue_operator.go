@@ -40,7 +40,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	}
 
 	// Jobs informer and controller for insert notifications
-	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval(), controllerCfg.natsSubscriber)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController := controller.NewJobController()
 	if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {

@@ -35,7 +35,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval(), controllerCfg.natsSubscriber)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {

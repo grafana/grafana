@@ -32,7 +32,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval(), controllerCfg.natsSubscriber)
 
 	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	connInformer := informerFactory.Provisioning().V0alpha1().Connections()

@@ -34,7 +34,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
+	provinformer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -45,9 +45,11 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
@@ -149,24 +151,23 @@ type APIBuilder struct {
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 
-	// natsWatchEnabled routes the provisioning informers' watch through the
-	// informer package's watch swap (currently a not-implemented placeholder)
-	// instead of the apiserver watch, while keeping the LIST-seeded cache.
-	// Internal switch, defaults to false.
-	//
-	// TODO: implement the NATS-based watch (informer.NewNATSInformerFactory) and
-	// enable this; until then it stays false and the apiserver watch is used.
-	natsWatchEnabled bool
+	// natsSubscriber is the NATS subscriber the informers' watch consumes from.
+	// When it is present and NATS is enabled, the informers keep their
+	// LIST-seeded caches but take their watch deltas from NATS; otherwise they
+	// use the apiserver watch.
+	natsSubscriber nats.Subscriber
 }
 
-// newInformerFactory builds the provisioning informer factory. When
-// natsWatchEnabled is set, the informers keep their LIST-seeded caches but their
-// watch is served by the informer package instead of the apiserver watch.
+// newInformerFactory builds the provisioning informer factory. When a NATS
+// subscriber is present and enabled, the informers keep their LIST-seeded caches
+// but their watch is served by a NATS consumer instead of the apiserver watch.
 func (b *APIBuilder) newInformerFactory(c clientset.Interface, resync time.Duration) informers.SharedInformerFactory {
-	if b.natsWatchEnabled {
-		return informer.NewNATSInformerFactory(c, resync)
+	if b.natsSubscriber != nil && b.natsSubscriber.Enabled() {
+		logging.DefaultLogger.Info("provisioning informers using NATS-backed watch")
+		watchFn := informer.NewConsumer(b.natsSubscriber, resync).Watch
+		return informers.NewSharedInformerFactory(provinformer.WrapClient(c, watchFn), resync)
 	}
-	return informer.NewInformerFactory(c, resync)
+	return informers.NewSharedInformerFactory(c, resync)
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -332,6 +333,7 @@ func RegisterAPIService(
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -393,6 +395,7 @@ func RegisterAPIService(
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -434,6 +437,7 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
