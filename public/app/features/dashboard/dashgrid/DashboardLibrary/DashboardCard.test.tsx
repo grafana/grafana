@@ -5,7 +5,11 @@ import { type AssistantHook, useAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
-import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
+import {
+  createMockCustomTemplateDashboard,
+  createMockGnetDashboard,
+  createMockPluginDashboard,
+} from './utils/test-utils';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
@@ -665,7 +669,7 @@ describe('DashboardCard', () => {
 
   describe('Custom template kind', () => {
     it('should render exactly one heading containing the title', () => {
-      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -680,7 +684,7 @@ describe('DashboardCard', () => {
     });
 
     it('should render the description inside the rectangle, not in the bottom section', () => {
-      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+      const dashboard = createMockCustomTemplateDashboard({ description: 'A custom template description' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -696,7 +700,7 @@ describe('DashboardCard', () => {
     });
 
     it('should not render the "No preview available" placeholder', () => {
-      const dashboard = createMockGnetDashboard();
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -710,7 +714,7 @@ describe('DashboardCard', () => {
     });
 
     it('should render "Created by:" line with creator name when createdByName is provided', () => {
-      const dashboard = createMockGnetDashboard();
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -726,7 +730,7 @@ describe('DashboardCard', () => {
     });
 
     it('should not render "Created by:" line when createdByName is undefined', () => {
-      const dashboard = createMockGnetDashboard();
+      const dashboard = createMockCustomTemplateDashboard();
       render(
         <DashboardCard
           title="My Custom Template"
@@ -758,7 +762,7 @@ describe('DashboardCard', () => {
       render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
         />
@@ -775,7 +779,7 @@ describe('DashboardCard', () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onEdit={mockOnEdit}
           kind="custom_dashboard_template"
@@ -791,7 +795,7 @@ describe('DashboardCard', () => {
       render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
           tags={['observability', 'team-a']}
@@ -803,7 +807,7 @@ describe('DashboardCard', () => {
     });
 
     it('should fall back to "No description available" when description is empty', () => {
-      const dashboard = createMockGnetDashboard({ description: '' });
+      const dashboard = createMockCustomTemplateDashboard({ description: '' });
       render(
         <DashboardCard
           title="My Custom Template"
@@ -821,7 +825,7 @@ describe('DashboardCard', () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onEdit={mockOnEdit}
           kind="custom_dashboard_template"
@@ -840,7 +844,7 @@ describe('DashboardCard', () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onDelete={mockOnDelete}
           kind="custom_dashboard_template"
@@ -866,7 +870,7 @@ describe('DashboardCard', () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           onDelete={mockOnDelete}
           kind="custom_dashboard_template"
@@ -886,7 +890,7 @@ describe('DashboardCard', () => {
       const { user } = render(
         <DashboardCard
           title="My Custom Template"
-          dashboard={createMockGnetDashboard()}
+          dashboard={createMockCustomTemplateDashboard()}
           onClick={mockOnClick}
           kind="custom_dashboard_template"
         />

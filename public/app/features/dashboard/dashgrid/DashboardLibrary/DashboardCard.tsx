@@ -43,10 +43,16 @@ interface Details {
   grafanaComUrl?: string;
 }
 
-interface Props {
+/** Lightweight dashboard shape used by custom-template cards. */
+export interface CustomTemplateDashboard {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface BaseProps {
   title: string;
   imageUrl?: string;
-  dashboard: PluginDashboard | GnetDashboard | { id: string; name: string; description: string };
   details?: Details;
   onClick: (customizeWithAssistant?: boolean) => void;
   onClose?: () => void;
@@ -54,7 +60,6 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
   showCompatibilityBadge?: boolean;
   /** State for the compatibility badge (idle, loading, success, error) */
@@ -73,6 +78,13 @@ interface Props {
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
 }
+
+// Discriminated on `kind` so the `dashboard` shape is correlated with the kind of card being rendered.
+type Props = BaseProps &
+  (
+    | { kind: 'template_dashboard' | 'suggested_dashboard'; dashboard: PluginDashboard | GnetDashboard }
+    | { kind: 'custom_dashboard_template'; dashboard: CustomTemplateDashboard }
+  );
 
 function DashboardCardComponent({
   title,
@@ -125,19 +137,24 @@ function DashboardCardComponent({
 
   const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
+  const assistantDashboard: PluginDashboard | GnetDashboard | null =
+    kind === 'custom_dashboard_template' ? null : dashboard;
+  const assistantKind: 'template_dashboard' | 'suggested_dashboard' | null =
+    kind === 'custom_dashboard_template' ? null : kind;
+
   const onUseAssistantClick = () => {
-    if (!assistantAvailable || kind === 'custom_dashboard_template' || !('slug' in dashboard)) {
+    if (!assistantAvailable || !assistantDashboard || !assistantKind) {
       return;
     }
     const templateContext = createAssistantContextItem('structured', {
       hidden: false,
-      title: buildTemplateContextTitle(dashboard, kind),
-      data: buildTemplateContextData(dashboard, kind),
+      title: buildTemplateContextTitle(assistantDashboard, assistantKind),
+      data: buildTemplateContextData(assistantDashboard, assistantKind),
     });
     openAssistant?.({
       origin: 'dashboard-library/use-dashboard',
       mode: 'dashboarding',
-      prompt: buildAssistantPrompt(kind),
+      prompt: buildAssistantPrompt(assistantKind),
       context: [templateContext],
       autoSend: true,
     });
