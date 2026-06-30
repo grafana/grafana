@@ -628,7 +628,7 @@ default_baselayer_config = `{
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Openstreetmap",
+    "attribution": "OpenStreetMap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`

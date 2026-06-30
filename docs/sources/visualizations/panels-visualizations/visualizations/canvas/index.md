@@ -248,7 +248,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 #### Experimental Element types
 
-Toggle the switch to include experimental element types in the available selections, including **Button**, **Wind Turbine**, **Drone Top**, **Drone Front**, and **Drone Side**.
+Toggle the switch to include experimental element types in the available selections, including **Button**, **Wind Turbine**, **Drone Top**, **Drone Front**, and **Drone Side**. This option is on by default.
 
 ### Tooltip options
 
