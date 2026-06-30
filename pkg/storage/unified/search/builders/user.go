@@ -32,55 +32,12 @@ var UserSortableExtraFields = []string{
 	USER_LAST_SEEN_AT,
 }
 
-var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	USER_EMAIL: {
-		Name:        USER_EMAIL,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The email address of the user",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			UniqueValues: true,
-			Filterable:   true,
-		},
-	},
-	USER_LOGIN: {
-		Name:        USER_LOGIN,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The login of the user",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			UniqueValues: true,
-			Filterable:   true,
-		},
-	},
-	USER_LAST_SEEN_AT: {
-		Name:        USER_LAST_SEEN_AT,
-		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-		Description: "The last seen timestamp of the user",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	USER_ROLE: {
-		Name:        USER_ROLE,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The role of the user",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	USER_DISABLED: {
-		Name:        USER_DISABLED,
-		Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-		Description: "Whether the user is disabled",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	USER_CREATED: {
-		Name:        USER_CREATED,
-		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-		Description: "The creation timestamp of the user, in epoch milliseconds",
-	},
-}
+// UserTableColumnDefinitions exposes column-defs by name for wire-API
+// consumers (the IAM legacy SQL backend in user/legacy_search.go).
+// Derived from UserSearchFields via tableColumnsByName. UniqueValues was
+// set on the historical hand-written email/login entries but has no
+// production consumer and is not preserved.
+var UserTableColumnDefinitions = tableColumnsByName(UserSearchFields)
 
 // UserSearchFields declares paths and types for each user search field. The
 // standard document builder uses these to extract spec/status values from the
@@ -94,13 +51,22 @@ var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefin
 // createdAt mirrors the standard IndexableDocument.Created field into the
 // per-kind fields.* sub-document because the top-level created field has no
 // bleve mapping today. See PR #126405 for context.
+//
+// lastSeenAt (int64) and disabled (boolean) declare SearchCapabilityFilter to
+// record that these fields are intended to be filterable, and to drive the
+// bleve mapping (numeric / boolean under dynamic mapping). End-to-end
+// numeric and boolean equality filters in ResourceSearchRequest are still a
+// follow-up: the query path treats filter values as strings, so a request
+// against these fields would not match a numeric-indexed term yet. No
+// in-tree client filters by lastSeenAt or disabled today, so this is a
+// known gap rather than a rollout concern.
 var UserSearchFields = []resource.SearchFieldDefinition{
-	{Name: USER_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-	{Name: USER_LOGIN, Path: "spec.login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-	{Name: USER_LAST_SEEN_AT, Path: "status.lastSeenAt", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
-	{Name: USER_ROLE, Path: "spec.role", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-	{Name: USER_DISABLED, Path: "spec.disabled", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
-	{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+	{Name: USER_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The email address of the user"},
+	{Name: USER_LOGIN, Path: "spec.login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The login of the user"},
+	{Name: USER_LAST_SEEN_AT, Path: "status.lastSeenAt", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "The last seen timestamp of the user"},
+	{Name: USER_ROLE, Path: "spec.role", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The role of the user"},
+	{Name: USER_DISABLED, Path: "spec.disabled", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "Whether the user is disabled"},
+	{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
 }
 
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
@@ -127,9 +93,10 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 
 	gr := iamv0.UserResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:    gr,
-		Fields:           fields,
-		Builder:          resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash: provider.IndexAffectingHash(gr.Group, gr.Resource),
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
 	}, nil
 }

@@ -57,6 +57,7 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "table.protoRowParser"
+    | "table.refactorNested"
     | "grafana.queryVarEditorRedesign"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu";

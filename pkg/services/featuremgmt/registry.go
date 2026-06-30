@@ -99,14 +99,6 @@ var (
 			Expression:  "true", // turned on by default
 		},
 		{
-			Name:        "influxdbBackendMigration",
-			Description: "Query InfluxDB InfluxQL without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
@@ -377,6 +369,24 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:            "externalSnapshotsK8SAPIPush",
+			Description:     "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:            "externalSnapshotsSupportLegacyAPI",
+			Description:     "On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
@@ -3096,6 +3106,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.refactorNested",
+			Description:  "Enables the refactored TableNG nested-table implementation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.queryVarEditorRedesign",
 			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3119,6 +3138,15 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "auth.tokenRotationGracePeriod",
+			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

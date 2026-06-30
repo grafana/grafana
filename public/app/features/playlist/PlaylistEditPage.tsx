@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -91,8 +91,10 @@ export const PlaylistEditPage = () => {
         )}
       </Page.Contents>
       {provisionedPlaylist && (
-        <SaveProvisionedPlaylistDrawer
-          playlist={provisionedPlaylist}
+        <SaveProvisionedResourceDrawer
+          resource={provisionedPlaylist}
+          title={provisionedPlaylist.spec?.title ?? ''}
+          action="update"
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

@@ -194,6 +194,9 @@ export enum AccessControlAction {
   // Saved Queries
   QueriesRead = 'queries:read',
   QueriesWrite = 'queries:write',
+
+  // Provisioning
+  ProvisioningRepositoriesRead = 'provisioning.repositories:read',
 }
 
 export interface Role extends RoleDto {
