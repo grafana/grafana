@@ -105,7 +105,6 @@ const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSearchResul
         </div>
         {result.snippets.map((snippet, index) => (
           <div key={index} className={styles.snippet} title={snippet.text}>
-            <span className={styles.score}>{snippet.score.toFixed(2)}</span>
             {snippet.text}
           </div>
         ))}
