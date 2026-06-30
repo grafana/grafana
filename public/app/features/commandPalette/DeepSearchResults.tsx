@@ -84,7 +84,7 @@ interface DeepSearchResultItemProps {
   onSelect?: () => void;
 }
 
-export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSearchResultItemProps>(
+const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSearchResultItemProps>(
   ({ result, onNavigate, onSelect }, ref) => {
     const styles = useStyles2(getStyles);
 

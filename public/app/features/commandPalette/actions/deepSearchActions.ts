@@ -7,8 +7,8 @@ import { type DeepSearchPanelResult, searchDashboardVector } from '../api/deepSe
 
 // Results are panel-level, so fetch well past the per-dashboard display count
 // to give grouping enough hits to rank dashboards by match count
-export const DEEP_SEARCH_FETCH_LIMIT = 50;
-export const MAX_SNIPPETS_PER_DASHBOARD = 3;
+const DEEP_SEARCH_FETCH_LIMIT = 50;
+const MAX_SNIPPETS_PER_DASHBOARD = 3;
 
 // Relative-to-best cutoff. Keep panels whose distance is within this margin of the closest match.
 const RELEVANCE_MARGIN = 0.2;
@@ -18,7 +18,7 @@ const RELEVANCE_MARGIN = 0.2;
 const DEEP_SEARCH_DEBOUNCE_MS = 500;
 
 /** A single matched panel shown under a dashboard card. */
-export interface DeepSearchSnippet {
+interface DeepSearchSnippet {
   text: string;
   /** Cosine distance for this panel match (lower = closer). */
   score: number;

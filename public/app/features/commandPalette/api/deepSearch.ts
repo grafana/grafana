@@ -5,7 +5,7 @@ import { type SearchAPIResponse, type SearchHit } from 'app/features/search/serv
 // Core unified-storage semantic search, exposed as a sibling of the lexical
 // `/search` route. Gated behind the dashboardVectorSearch feature toggle and
 // only functional when the vector backend is configured (501 otherwise).
-export const DASHBOARD_VECTOR_SEARCH_URL = `${v0alphaBaseURL}/search/vector`;
+const DASHBOARD_VECTOR_SEARCH_URL = `${v0alphaBaseURL}/search/vector`;
 
 /**
  * A single panel-level semantic match. One dashboard can yield multiple results
