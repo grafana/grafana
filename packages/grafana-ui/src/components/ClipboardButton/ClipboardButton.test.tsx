@@ -55,4 +55,20 @@ describe('ClipboardButton', () => {
     expect(clipboardText).toBe(textToCopy);
     expect(onClipboardCopy).toHaveBeenCalledWith(textToCopy);
   });
+
+  it('should call the provided onClick handler in addition to copying', async () => {
+    const onClick = jest.fn();
+    const onClipboardCopy = jest.fn();
+
+    const { user } = setup(
+      <ClipboardButton getText={() => 'Copy me!'} onClick={onClick} onClipboardCopy={onClipboardCopy}>
+        Copy
+      </ClipboardButton>
+    );
+
+    await user.click(screen.getByRole('button'));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClipboardCopy).toHaveBeenCalledWith('Copy me!');
+  });
 });
