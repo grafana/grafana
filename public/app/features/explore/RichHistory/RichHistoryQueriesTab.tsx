@@ -163,7 +163,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     } else {
       return [];
     }
-  }, [richHistorySearchFilters?.datasourceFilters]);
+  }, [richHistorySearchFilters?.datasourceFilters, listOfDatasources]);
 
   if (!richHistorySearchFilters) {
     return (
