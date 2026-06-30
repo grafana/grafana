@@ -119,6 +119,7 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
+      const description = access.description?.values[p.row.index];
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -126,10 +127,11 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
+      const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
         <div key={key} className={styles.cell} {...cellProps}>
-          {!response.isItemLoaded(p.row.index) ? (
+          {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
@@ -138,6 +140,17 @@ export const generateColumns = (
               {name}
             </a>
           )}
+          {isLoaded && description ? (
+            <Tooltip content={description} placement="top" interactive>
+              <span className={styles.descriptionTooltip}>
+                <Icon
+                  name="info-circle"
+                  size="sm"
+                  aria-label={t('search.results-table.description-tooltip', 'Description')}
+                />
+              </span>
+            </Tooltip>
+          ) : null}
         </div>
       );
     },
