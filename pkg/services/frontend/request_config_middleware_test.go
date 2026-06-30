@@ -46,39 +46,10 @@ func setupTestContext(r *http.Request, namespace string) *http.Request {
 
 var openfeatureTestMutex sync.Mutex
 
-func enableSettingsOverridesToggle(t *testing.T) {
+func enableSourceFilterToggle(t *testing.T) {
 	t.Helper()
 	openfeatureTestMutex.Lock()
 
-	flag := memprovider.InMemoryFlag{
-		Key:            featuremgmt.FlagFrontendServiceUseSettingsService,
-		DefaultVariant: "on",
-		Variants:       map[string]any{"on": true, "off": false},
-	}
-
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFrontendServiceUseSettingsService: flag,
-	})
-	require.NoError(t, err)
-
-	err = openfeature.SetProviderAndWait(provider)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
-}
-
-func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
-	t.Helper()
-	openfeatureTestMutex.Lock()
-
-	settingsFlag := memprovider.InMemoryFlag{
-		Key:            featuremgmt.FlagFrontendServiceUseSettingsService,
-		DefaultVariant: "on",
-		Variants:       map[string]any{"on": true, "off": false},
-	}
 	sourceFilterFlag := memprovider.InMemoryFlag{
 		Key:            featuremgmt.FlagFrontendServiceSettingsSourceFilter,
 		DefaultVariant: "on",
@@ -86,7 +57,6 @@ func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
 	}
 
 	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFrontendServiceUseSettingsService:   settingsFlag,
 		featuremgmt.FlagFrontendServiceSettingsSourceFilter: sourceFilterFlag,
 	})
 	require.NoError(t, err)
@@ -205,8 +175,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should fetch and apply tenant overrides from settings service", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		// Create mock settings service that returns CSP overrides
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{
@@ -259,8 +227,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should fallback to base config on settings service error", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		// Create mock that returns an error
 		mockSettingsService := &mockSettingsService{
 			err: assert.AnError,
@@ -310,8 +276,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not call settings service when no namespace is present", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		mockSettingsService := &mockSettingsService{}
 
 		license := &licensing.OSSLicensingService{}
@@ -340,49 +304,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.False(t, mockSettingsService.called)
 	})
 
-	t.Run("should not call settings service when feature toggle is disabled", func(t *testing.T) {
-		// No call to enableSettingsOverridesToggle - toggle defaults to off
-		mockSettingsService := &mockSettingsService{}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:         ini.Empty(),
-			HTTPPort:    "1234",
-			CSPEnabled:  true,
-			CSPTemplate: "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
-			AppURL:      "https://grafana.example.com",
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
-
-		var capturedConfig FSRequestConfig
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			capturedConfig, err = FSRequestConfigFromContext(r.Context())
-			require.NoError(t, err)
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req, "stacks-123")
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-
-		// Settings service should not be called when toggle is off
-		assert.False(t, mockSettingsService.called)
-
-		// Base config should be used unchanged
-		assert.True(t, capturedConfig.CSPEnabled)
-		assert.Equal(t, "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS", capturedConfig.CSPTemplate)
-	})
-
 	t.Run("should include source filter in selector when source filter toggle is enabled", func(t *testing.T) {
-		enableSettingsOverridesAndSourceFilterToggle(t)
+		enableSourceFilterToggle(t)
 
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{},
@@ -421,8 +344,6 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not include source filter in selector when source filter toggle is disabled", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{},
 		}

@@ -1,6 +1,6 @@
 import { resourceKindInfos } from '../utils/resourceKinds';
 
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 import { resolveSelection } from './selection';
 
 // Composite selection keys, matching `resourceKey` — selection is keyed by

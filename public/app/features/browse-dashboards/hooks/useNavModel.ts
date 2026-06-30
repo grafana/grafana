@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { useGetFolderCountsQuery } from 'app/api/clients/folder/v1beta1';
+import { getParsedCounts } from 'app/api/clients/folder/v1beta1/utils';
 import {
   buildNavModel,
   getAlertingTabID,
@@ -25,8 +26,9 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: 'dashbo
   // The counts are not critical to have so we are not dealing with the possible api error state here, we just won't
   // show the numbers in that case.
   if (folderCountsResult.isSuccess) {
-    panelsCount = folderCountsResult.data.counts.find((c) => c.resource === 'library_elements')?.count ?? 0;
-    rulesCount = folderCountsResult.data.counts.find((c) => c.resource === 'alertrules')?.count ?? 0;
+    const counts = getParsedCounts(folderCountsResult.data.counts);
+    panelsCount = counts.librarypanels ?? 0;
+    rulesCount = counts.alertrules ?? 0;
   }
 
   return useMemo(() => {

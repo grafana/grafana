@@ -11,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -692,11 +693,30 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 }
 
 // newTestIndexWithFields creates a test index with custom searchable fields
-// (e.g. keyword-analyzed email/login for IAM-like tests).
+// (e.g. keyword-analyzed email/login for IAM-like tests). Each column
+// becomes a SearchFieldDefinition declaring [filter, retrieve] when the
+// column carries Properties.Filterable, otherwise [retrieve] only; the
+// provider drives the per-kind bleve mapping.
 func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
+	sfds := make([]resource.SearchFieldDefinition, 0, len(columns))
+	for _, c := range columns {
+		caps := []resource.SearchCapability{resource.SearchCapabilityRetrieve}
+		if c.Properties != nil && c.Properties.Filterable && c.Type == resourcepb.ResourceTableColumnDefinition_STRING {
+			caps = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+		}
+		sfds = append(sfds, resource.SearchFieldDefinition{Name: c.Name, Type: resource.SearchFieldTypeString, Array: c.IsArray, Capabilities: caps})
+	}
+	provider := resource.NewMapProvider(
+		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
+	)
+	sfKey := strings.ToLower(key.Group + "/" + key.Resource)
+
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold,
+		Root:                          t.TempDir(),
+		FileThreshold:                 threshold,
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{sfKey: provider},
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
