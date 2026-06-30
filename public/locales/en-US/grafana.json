@@ -5807,6 +5807,7 @@
     },
     "inspect": {
       "data-tab": "Data",
+      "errors-and-notices-tab": "Errors and notices",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -6889,6 +6890,14 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
+    },
+    "errors-and-notices-inspector": {
+      "copy": "Copy to clipboard",
+      "learn-more": "Learn more",
+      "no-issues": "No errors or notices for this query.",
+      "severity-error": "Error",
+      "severity-info": "Info",
+      "severity-warning": "Warning"
     },
     "filters-list": {
       "add-filter": "Add filter",
@@ -10208,6 +10217,8 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
+      "errors-and-notices": "Errors and notices",
+      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
