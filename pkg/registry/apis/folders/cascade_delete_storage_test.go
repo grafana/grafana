@@ -482,13 +482,17 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := &cascadeDeleteStorage{Storage: inner, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient)
 
-	_, err := s.Watch(ctxWithNamespace(), nil)
+	watcher, ok := s.(rest.Watcher)
+	require.True(t, ok, "watch must be exposed when the wrapped store supports it")
+	_, err := watcher.Watch(ctxWithNamespace(), nil)
 	require.NoError(t, err)
 	require.True(t, inner.watched)
 
-	_, err = s.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
+	deleter, ok := s.(rest.CollectionDeleter)
+	require.True(t, ok, "deletecollection must be exposed when the wrapped store supports it")
+	_, err = deleter.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
 	require.NoError(t, err)
 	require.True(t, inner.deletedCollection)
 }
@@ -498,27 +502,27 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := &cascadeDeleteStorage{Storage: inner, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient).(rest.CollectionDeleter)
 
-	_, err := s.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
+	_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
 	require.False(t, inner.deletedCollection, "underlying collection delete must not run")
 
 	// A non-force collection delete still forwards (the per-folder empty check protects it).
-	_, err = s.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
+	_, err = deleter.DeleteCollection(ctxWithNamespace(), nil, &metav1.DeleteOptions{}, nil)
 	require.NoError(t, err)
 	require.True(t, inner.deletedCollection)
 }
 
-func TestCascadeDelete_OptionalInterfacesUnsupported(t *testing.T) {
-	// Wrapped store lacks Watcher/CollectionDeleter: forwarding reports MethodNotSupported.
-	s := &cascadeDeleteStorage{Storage: &fakeFolderStorage{}, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
+	// Wrapped store lacks Watcher/CollectionDeleter: the wrapper must not advertise those verbs.
+	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient)
 
-	_, err := s.Watch(ctxWithNamespace(), nil)
-	require.True(t, apierrors.IsMethodNotSupported(err))
+	_, isWatcher := s.(rest.Watcher)
+	require.False(t, isWatcher)
 
-	_, err = s.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
-	require.True(t, apierrors.IsMethodNotSupported(err))
+	_, isCollectionDeleter := s.(rest.CollectionDeleter)
+	require.False(t, isCollectionDeleter)
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {

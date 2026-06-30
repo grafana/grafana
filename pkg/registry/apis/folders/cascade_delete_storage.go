@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/dynamic"
 
@@ -31,11 +30,7 @@ const (
 // childFolderPageSize bounds each search page when enumerating child folders or dashboards.
 var childFolderPageSize int64 = 1000
 
-var (
-	_ grafanarest.Storage    = (*cascadeDeleteStorage)(nil)
-	_ rest.Watcher           = (*cascadeDeleteStorage)(nil)
-	_ rest.CollectionDeleter = (*cascadeDeleteStorage)(nil)
-)
+var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
 // folder's subtree. Every other REST method is promoted from the embedded storage. It is always
@@ -50,28 +45,35 @@ type cascadeDeleteStorage struct {
 	dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
 }
 
-// Watch forwards to the wrapped storage so the folder watch endpoint survives the wrapper; the
-// apiserver registers it via a type assertion the embedded interface would otherwise hide.
-func (s *cascadeDeleteStorage) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	w, ok := s.Storage.(rest.Watcher)
-	if !ok {
-		return nil, apierrors.NewMethodNotSupported(foldersv1.FolderResourceInfo.GroupResource(), "watch")
+// newCascadeDeleteStorage wraps store, re-exposing the optional REST interfaces the wrapper would
+// otherwise hide. The only wrapped stores are folderStorage (neither) and the MT generic store
+// (both watch and deletecollection), so a single both-or-neither check covers every deployment and
+// keeps the advertised verbs identical to the wrapped store.
+func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)) grafanarest.Storage {
+	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient}
+	watcher, hasWatch := store.(rest.Watcher)
+	collectionDeleter, hasCollectionDelete := store.(rest.CollectionDeleter)
+	if hasWatch && hasCollectionDelete {
+		return &struct {
+			*cascadeDeleteStorage
+			rest.Watcher
+			rest.CollectionDeleter
+		}{base, watcher, cascadeCollectionDeleter{inner: collectionDeleter}}
 	}
-	return w.Watch(ctx, options)
+	return base
 }
 
-// DeleteCollection forwards to the wrapped storage so the collection-delete endpoint survives the
-// wrapper. The cascade only runs through Delete, so a forced collection delete would bypass it and
-// orphan children/dashboards; reject it and require folders to be force-deleted individually.
-func (s *cascadeDeleteStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	d, ok := s.Storage.(rest.CollectionDeleter)
-	if !ok {
-		return nil, apierrors.NewMethodNotSupported(foldersv1.FolderResourceInfo.GroupResource(), "deletecollection")
-	}
+// cascadeCollectionDeleter rejects forced collection deletes (which would bypass the per-folder
+// cascade and orphan children/dashboards) and otherwise forwards to the wrapped store.
+type cascadeCollectionDeleter struct {
+	inner rest.CollectionDeleter
+}
+
+func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	if kubernetesFolderCascadeDeleteEnabled(ctx) && forceDeleteFromDeleteOptions(options) {
 		return nil, apierrors.NewBadRequest("forced collection delete is not supported with folder cascade delete; delete folders individually")
 	}
-	return d.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	return c.inner.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 
 // Delete removes a folder and, when cascade delete is enabled, its entire subtree. The subtree is
