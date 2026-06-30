@@ -27,10 +27,14 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	helper := sharedHelper(t)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:            repoName,
-		SyncTarget:      "folder",
-		ExpectedFolders: 1,
+		Name:       repoName,
+		SyncTarget: "folder",
+		// The namespace-wide count assertion in CreateLocalRepo flakes when a
+		// prior test leaks resources into this shared server; scope the check
+		// to this repo's own managed folder instead.
+		SkipResourceAssertions: true,
 	})
+	helper.RequireRepoFolderCount(t, repoName, 1)
 
 	ctx := t.Context()
 

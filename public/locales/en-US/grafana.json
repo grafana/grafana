@@ -5886,6 +5886,7 @@
           "title": "Change layout"
         }
       },
+      "scroll-content": "Dashboard content",
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
