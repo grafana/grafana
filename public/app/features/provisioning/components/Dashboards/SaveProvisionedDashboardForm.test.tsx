@@ -1252,7 +1252,94 @@ describe('SaveProvisionedDashboardForm', () => {
     await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => expect(folderRequest).not.toBeNull());
-    expect(decodeURIComponent(folderRequest!.url.pathname)).toContain('/repositories/test-repo/files/My Team/');
+    // name is slugified for the path; spaces become hyphens
+    expect(decodeURIComponent(folderRequest!.url.pathname)).toContain('/repositories/test-repo/files/my-team/');
+  });
+
+  it('sends message and omits ref when creating a folder in write workflow', async () => {
+    let folderRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        folderRequest = { url, body };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'Team A' } } },
+        });
+      })
+    );
+
+    const { user } = setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: 'my commit',
+        folder: { uid: '', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByPlaceholderText(/folder name/i), 'Team A');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(folderRequest).not.toBeNull());
+    // message is sent; ref is omitted for write workflow
+    expect(folderRequest!.url.searchParams.get('message')).toBeTruthy();
+    expect(folderRequest!.url.searchParams.get('ref')).toBeNull();
+  });
+
+  it('shows save-at-root button for folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'some-folder', title: 'Some Folder' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+  });
+
+  it('does not show save-at-root button for non-folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /no folder/i })).not.toBeInTheDocument();
+  });
+
+  it('shows save-to-database link when onSaveToDatabase is provided', async () => {
+    const onSaveToDatabase = jest.fn();
+    setup({ onSaveToDatabase });
+
+    expect(await screen.findByRole('button', { name: /save to grafana database instead/i })).toBeInTheDocument();
+  });
+
+  it('does not show save-to-database link when onSaveToDatabase is not provided', async () => {
+    setup();
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /save to grafana database instead/i })).not.toBeInTheDocument();
+  });
+
+  it('calls onSaveToDatabase when the link is clicked', async () => {
+    const onSaveToDatabase = jest.fn();
+    const { user } = setup({ onSaveToDatabase });
+
+    await user.click(await screen.findByRole('button', { name: /save to grafana database instead/i }));
+    expect(onSaveToDatabase).toHaveBeenCalledTimes(1);
   });
 
   it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {

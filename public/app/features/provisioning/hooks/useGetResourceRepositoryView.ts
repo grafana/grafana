@@ -13,6 +13,7 @@ interface GetResourceRepositoryArgs {
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
   includeInstance?: boolean;
+  includeFolderless?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -55,12 +56,14 @@ const useResourceRepositoryViewData = ({
   folderName,
   skipQuery,
   includeInstance,
+  includeFolderless,
 }: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
   const provisioningEnabled = config.featureToggles.provisioning;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
   // `includeInstance` overrides the skip for root-level instance lookups.
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance);
+  const shouldSkipSettings =
+    !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance && !includeFolderless);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -151,6 +154,7 @@ const useResourceRepositoryViewData = ({
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
   const isInstanceManaged = Boolean(instanceRepo);
+  const folderlessRepo = includeFolderless ? items.find((repo) => repo.target === 'folderless') : undefined;
 
   // Find the matching folder repository
   if (folderName) {
@@ -193,12 +197,13 @@ const useResourceRepositoryViewData = ({
     }
   }
 
+  const defaultRepo = instanceRepo ?? folderlessRepo;
   return {
-    repository: instanceRepo,
+    repository: defaultRepo,
     folder,
     isInstanceManaged,
-    isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
-    repoType: instanceRepo?.type,
+    isReadOnlyRepo: getIsReadOnlyRepo(defaultRepo),
+    repoType: defaultRepo?.type,
     status: RepoViewStatus.Ready,
   };
 };

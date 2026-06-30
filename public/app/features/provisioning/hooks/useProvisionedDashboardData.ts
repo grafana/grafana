@@ -36,6 +36,7 @@ export function useDefaultValues({
   const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,
+    includeFolderless: !meta.folderUid,
   });
 
   if (isLoading || status === RepoViewStatus.Loading) {
