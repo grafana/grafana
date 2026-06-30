@@ -52,9 +52,9 @@ func TestEndpoints(t *testing.T) {
 		opts := ep.dialOptions()
 		require.Len(t, opts, 1)
 
-		// Truncating the returned slice must not affect the endpoints' internal state.
-		opts = opts[:0]
-		require.Len(t, ep.dialOptions(), 1)
+		// Mutating the returned slice must not affect the endpoints' internal state.
+		opts[0] = nil
+		require.NotNil(t, ep.dialOptions()[0])
 	})
 
 	t.Run("embedded server url is prepended ahead of peers", func(t *testing.T) {
