@@ -1,4 +1,4 @@
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 import { compareFolders } from './sorting';
 
 function folder(uid: string, title: string, resourceCount: number): FolderRow {

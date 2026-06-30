@@ -6,7 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FolderEntry } from './FolderEntry';
-import { type FolderRow, resourceKey } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey, compareFolders } from './sorting';
 
 interface Props {

@@ -42,6 +42,7 @@ var (
 		"tempo":                        {ID: "tempo"},
 		"zipkin":                       {ID: "zipkin"},
 		"opentsdb":                     {ID: "opentsdb"},
+		"stackdriver":                  {ID: "stackdriver"},
 	}
 )
 

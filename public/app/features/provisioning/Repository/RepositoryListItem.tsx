@@ -13,7 +13,7 @@ import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -79,7 +79,7 @@ export function RepositoryListItem({ repository }: Props) {
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
               {status.stats.map((stat, index) => {
-                const info = getKindInfoByStatGroup(stat.group);
+                const info = getKindInfoByStat(stat);
                 const icon = info?.icon ?? 'file-alt';
                 const label = `${stat.count} ${stat.resource}`;
                 // Known kinds link to where the repository's resources live; unknown

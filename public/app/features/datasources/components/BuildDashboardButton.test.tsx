@@ -197,6 +197,7 @@ describe('BuildDashboardButton', () => {
       expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
         entryPoint: 'datasource_page_build_button',
         contentKind: 'suggested_dashboards',
+        contentKinds: ['suggested_dashboards'],
       });
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
@@ -209,6 +210,7 @@ describe('BuildDashboardButton', () => {
       expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
         entryPoint: 'datasource_list_build_button',
         contentKind: 'suggested_dashboards',
+        contentKinds: ['suggested_dashboards'],
       });
     });
 
