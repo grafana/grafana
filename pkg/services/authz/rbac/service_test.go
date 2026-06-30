@@ -402,7 +402,7 @@ func TestService_checkPermission(t *testing.T) {
 			s.folderCache.Set(context.Background(), folderCacheKey("default"), newFolderTree(tc.folders))
 			tc.check.Namespace = types.NamespaceInfo{Value: "default", OrgID: 1}
 			ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
+			got, err := s.checkPermission(context.Background(), s.getScopeMap(tc.permissions), nil, &tc.check, s.newFolderTreeGetter(context.Background(), ns, false))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		})
@@ -537,7 +537,7 @@ func TestService_checkPermission_folderCacheMissRecovery(t *testing.T) {
 	}
 
 	ns := types.NamespaceInfo{Value: "default", OrgID: 1}
-	got, err := s.checkPermission(ctx, userPermissions, &check, s.newFolderTreeGetter(ctx, ns, false))
+	got, err := s.checkPermission(ctx, userPermissions, nil, &check, s.newFolderTreeGetter(ctx, ns, false))
 	require.NoError(t, err)
 	assert.True(t, got)
 
@@ -3448,6 +3448,87 @@ func TestService_BatchCheck(t *testing.T) {
 		assert.Equal(t, 1, ts.listFoldersCalls,
 			"ListFolders should be called once (single shared getter), not once per group")
 	})
+
+	const extGroup = "widget.ext.grafana.app"
+
+	extCheck := func(id, name, folder string) *authzv1.BatchCheckItem {
+		return &authzv1.BatchCheckItem{
+			CorrelationId: id, Group: extGroup,
+			Resource: "widgets", Verb: "get", Name: name, Folder: folder,
+		}
+	}
+
+	stackRole := func(action string) accesscontrol.Permission {
+		return accesscontrol.Permission{Action: action, Scope: ""}
+	}
+	folderPerm := func(action, folderUID string) accesscontrol.Permission {
+		return accesscontrol.Permission{
+			Action:     action,
+			Scope:      "folders:uid:" + folderUID,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: folderUID,
+		}
+	}
+
+	setupExtBatchCheck := func(t *testing.T, perms []accesscontrol.Permission, folders []store.Folder) (*Service, *trackingPermissionStore, context.Context) {
+		t.Helper()
+		s := setupService()
+		s.folderCache = newCacheWrap[folderTree](nil, log.New("test"), tracing.NewNoopTracerService(), 0)
+		fStore := &fakeStore{
+			disableNsCheck:  true,
+			userID:          &store.UserIdentifiers{UID: "test-uid", ID: 1},
+			basicRole:       &store.BasicRole{Role: "Viewer", IsAdmin: false},
+			userPermissions: perms,
+			folders:         folders,
+		}
+		s.store = fStore
+		ts := &trackingPermissionStore{inner: fStore}
+		s.permissionStore = ts
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{disableNsCheck: true}
+		return s, ts, types.WithAuthInfo(context.Background(), callingService)
+	}
+
+	t.Run("folder authz batch: mixed allowed and denied items", func(t *testing.T) {
+		s, _, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}, {UID: "f2"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("allowed", "widget1", "f1"),
+				extCheck("denied", "widget2", "f2"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["allowed"].Allowed)
+		assert.False(t, resp.Results["denied"].Allowed)
+	})
+
+	t.Run("folder authz batch: one folder permission lookup per group", func(t *testing.T) {
+		s, ts, ctx := setupExtBatchCheck(t, []accesscontrol.Permission{
+			stackRole("widget.ext.grafana.app/widgets:get"),
+			folderPerm("folders:read", "f1"),
+		}, []store.Folder{{UID: "f1"}})
+
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Namespace: "org-12", Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				extCheck("w1", "widget1", "f1"),
+				extCheck("w2", "widget2", "f1"),
+				extCheck("w3", "widget3", "f1"),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Results["w1"].Allowed)
+		assert.True(t, resp.Results["w2"].Allowed)
+		assert.True(t, resp.Results["w3"].Allowed)
+		assert.Equal(t, 1, ts.folderPermCalls,
+			"folder permission lookup should happen once per group, not once per item")
+	})
 }
 
 // trackingFolderStore wraps a folder store and counts ListFolders calls.
@@ -3459,4 +3540,18 @@ type trackingFolderStore struct {
 func (t *trackingFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]store.Folder, error) {
 	t.listFoldersCalls++
 	return t.inner.ListFolders(ctx, ns)
+}
+
+// trackingPermissionStore wraps a permission store and counts folder-action lookups.
+type trackingPermissionStore struct {
+	inner           store.PermissionStore
+	folderPermCalls int
+}
+
+func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
+	switch query.Action {
+	case "folders:read", "folders:write", "folders.permissions:write":
+		t.folderPermCalls++
+	}
+	return t.inner.GetUserPermissions(ctx, ns, query)
 }
