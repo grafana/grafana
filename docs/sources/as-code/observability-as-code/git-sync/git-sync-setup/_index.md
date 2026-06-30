@@ -257,7 +257,7 @@ In order to implement signed commits, make sure that you set up a specific verif
 
 For more details on how to create your keys for Git authentication, refer to the official documentation:
 
-- GitHub: [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+- GitHub: [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification)
 - GitLab: [Signed commits](https://docs.gitlab.com/user/project/repository/signed_commits/)
 - Bitbucket: [Controlling access to code](https://confluence.atlassian.com/bitbucketserver/controlling-access-to-code-776639770.html)
 
