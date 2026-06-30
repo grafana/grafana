@@ -34,8 +34,8 @@ func TestCrossNamespaceIsolation_FolderSync(t *testing.T) {
 	helper := sharedHelper(t)
 
 	// Create scoped helpers for each organization
-	orgAHelper := helper.WithNamespace(helper.Namespacer(helper.Org1.OrgID), helper.Org1.Admin)
-	orgBHelper := helper.WithNamespace(helper.Namespacer(helper.OrgB.OrgID), helper.OrgB.Admin)
+	orgAHelper := helper.WithNamespace(t, helper.Namespacer(helper.Org1.OrgID), helper.Org1.Admin)
+	orgBHelper := helper.WithNamespace(t, helper.Namespacer(helper.OrgB.OrgID), helper.OrgB.Admin)
 
 	// Clean up resources after test
 	defer orgAHelper.Cleanup(t)

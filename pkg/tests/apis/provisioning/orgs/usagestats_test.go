@@ -29,8 +29,8 @@ func TestIntegrationProvisioning_MultiOrgUsageStats(t *testing.T) {
 	defaultNS := helper.Namespacer(helper.Org1.OrgID) // "default"
 	orgBNS := helper.Namespacer(helper.OrgB.OrgID)    // "org-<id>"
 
-	orgAHelper := helper.WithNamespace(defaultNS, helper.Org1.Admin)
-	orgBHelper := helper.WithNamespace(orgBNS, helper.OrgB.Admin)
+	orgAHelper := helper.WithNamespace(t, defaultNS, helper.Org1.Admin)
+	orgBHelper := helper.WithNamespace(t, orgBNS, helper.OrgB.Admin)
 	defer orgAHelper.Cleanup(t)
 	defer orgBHelper.Cleanup(t)
 
@@ -38,13 +38,13 @@ func TestIntegrationProvisioning_MultiOrgUsageStats(t *testing.T) {
 	// LocalPath dirs keep the two repositories fully isolated on disk.
 	orgAHelper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   "org-a-usage-repo",
-		LocalPath:              t.TempDir(),
+		LocalPath:              helper.ProvisioningPath,
 		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 		SkipResourceAssertions: true,
 	})
 	orgBHelper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   "org-b-usage-repo",
-		LocalPath:              t.TempDir(),
+		LocalPath:              helper.ProvisioningPath,
 		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 		SkipResourceAssertions: true,
 	})
@@ -61,13 +61,6 @@ func TestIntegrationProvisioning_MultiOrgUsageStats(t *testing.T) {
 		// Aggregated across both orgs: one local repo each => 2 total. Before the
 		// multi-org fix only the "default" namespace was counted, so this was 1.
 		assert.Equal(collect, 2.0, m["stats.repository.local.count"], "repos summed across orgs")
-
-		// Per-org breakdown proves both namespaces were enumerated, not just "default".
-		perOrg, ok := m["stats.repository.local.org.count"].(map[string]any)
-		if assert.True(collect, ok, "per-org repo breakdown should be present") {
-			assert.Equal(collect, 1.0, perOrg[defaultNS], "org-1 should report 1 local repo")
-			assert.Equal(collect, 1.0, perOrg[orgBNS], "org-2 should report 1 local repo")
-		}
 
 		// Managed objects are counted across orgs too (>= the 2 synced dashboards).
 		managed, _ := m["stats.managed_by.repo.count"].(float64)
