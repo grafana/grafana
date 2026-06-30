@@ -1,5 +1,5 @@
 // Libraries
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 // Components
 import {
@@ -86,13 +86,34 @@ export const DataSourcePicker = memo(function DataSourcePicker({
 }: DataSourcePickerProps) {
   const dataSourceSrv = getDataSourceSrv();
   const [error, setError] = useState<string | undefined>(undefined);
+  const filters = useMemo(
+    () => ({
+      alerting,
+      tracing,
+      metrics,
+      logs,
+      dashboard,
+      mixed,
+      variables,
+      annotations,
+      pluginId,
+      filter,
+      type,
+    }),
+    [alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type]
+  );
+  const dataSources = useMemo(() => dataSourceSrv.getList(filters), [dataSourceSrv, filters]);
 
   useEffect(() => {
     const dsSettings = dataSourceSrv.getInstanceSettings(current);
     if (!dsSettings) {
       setError('Could not find data source ' + current);
+    } else if (!isDataSourceSelectable(dsSettings, dataSources)) {
+      setError('Invalid data source ' + current);
+    } else {
+      setError(undefined);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [current, dataSourceSrv, dataSources]);
 
   function handleChange(item: SelectableValue<string>, actionMeta: ActionMeta) {
     if (actionMeta.action === 'clear' && onClear) {
@@ -112,6 +133,16 @@ export const DataSourcePicker = memo(function DataSourcePicker({
     }
     const ds = dataSourceSrv.getInstanceSettings(current);
     if (ds) {
+      if (!isDataSourceSelectable(ds, dataSources)) {
+        const uid = getDataSourceUID(current);
+        return {
+          label: (uid ?? ds.name) + ' - invalid',
+          value: uid ?? undefined,
+          imgUrl: '',
+          hideText: hideTextValue,
+        };
+      }
+
       return {
         label: ds.name,
         value: ds.uid,
@@ -133,14 +164,12 @@ export const DataSourcePicker = memo(function DataSourcePicker({
   }
 
   function getDataSourceOptions() {
-    return dataSourceSrv
-      .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+    return dataSources.map((ds) => ({
+      value: ds.name,
+      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
   }
 
   const options = getDataSourceOptions();
@@ -184,3 +213,10 @@ export const DataSourcePicker = memo(function DataSourcePicker({
     </div>
   );
 });
+
+function isDataSourceSelectable(
+  current: DataSourceInstanceSettings,
+  selectableDataSources: DataSourceInstanceSettings[]
+): boolean {
+  return selectableDataSources.some((ds) => ds.uid === current.uid || ds.name === current.name);
+}

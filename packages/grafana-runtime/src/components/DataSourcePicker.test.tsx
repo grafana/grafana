@@ -16,6 +16,36 @@ jest.mock('../services/dataSourceSrv', () => ({
   }),
 }));
 
+function createDataSource(name: string, uid: string, type: string): DataSourceInstanceSettings {
+  return {
+    uid,
+    name,
+    type,
+    meta: {
+      id: type,
+      name: type,
+      type: 'datasource',
+      info: {
+        logos: {
+          small: `${type}_logo.svg`,
+          large: `${type}_logo.svg`,
+        },
+        author: { name: 'Grafana Labs' },
+        description: `${type} data source`,
+        links: [],
+        screenshots: [],
+        updated: '2021-01-01',
+        version: '1.0.0',
+      },
+      module: `core:plugin/${type}`,
+      baseUrl: '',
+    } as DataSourcePluginMeta,
+    readOnly: false,
+    jsonData: {},
+    access: 'proxy',
+  };
+}
+
 describe('DataSourcePicker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,33 +57,7 @@ describe('DataSourcePicker', () => {
     it('should display full datasource name without truncation when current is passed as UID', () => {
       const longDatasourceName = 'grafanacloud-demokitcloudamersandbox-prom';
       const currentUid = 'grafanacloud-prom';
-      const mockDs: DataSourceInstanceSettings = {
-        uid: currentUid,
-        name: longDatasourceName,
-        type: 'prometheus',
-        meta: {
-          id: 'prometheus',
-          name: 'Prometheus',
-          type: 'datasource',
-          info: {
-            logos: {
-              small: 'prometheus_logo.svg',
-              large: 'prometheus_logo.svg',
-            },
-            author: { name: 'Grafana Labs' },
-            description: 'Prometheus data source',
-            links: [],
-            screenshots: [],
-            updated: '2021-01-01',
-            version: '1.0.0',
-          },
-          module: 'core:plugin/prometheus',
-          baseUrl: '',
-        } as DataSourcePluginMeta,
-        readOnly: false,
-        jsonData: {},
-        access: 'proxy',
-      };
+      const mockDs = createDataSource(longDatasourceName, currentUid, 'prometheus');
 
       mockGetInstanceSettings.mockReturnValue(mockDs);
       mockGetList.mockReturnValue([mockDs]);
@@ -62,6 +66,27 @@ describe('DataSourcePicker', () => {
 
       // The full name should be visible in the select value
       expect(screen.getByText(longDatasourceName)).toBeInTheDocument();
+    });
+  });
+
+  describe('current data source validation', () => {
+    it('should not display a current data source that is excluded by the picker filter as valid', () => {
+      const tempoDs = createDataSource('tempo', 'tempo-uid', 'tempo');
+      const prometheusDs = createDataSource('prometheus', 'prometheus-uid', 'prometheus');
+
+      mockGetInstanceSettings.mockReturnValue(tempoDs);
+      mockGetList.mockReturnValue([prometheusDs]);
+
+      render(
+        <DataSourcePicker
+          current={tempoDs.uid}
+          onChange={jest.fn()}
+          filter={(dataSource) => dataSource.type === 'prometheus'}
+        />
+      );
+
+      expect(screen.queryByText('tempo')).not.toBeInTheDocument();
+      expect(screen.getByText('tempo-uid - invalid')).toBeInTheDocument();
     });
   });
 
