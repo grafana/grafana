@@ -37,6 +37,7 @@ tls_enabled = true
 tls_ca_cert_path = /etc/ca.pem
 token = s3cret
 publisher_credentials_file = /etc/pub.creds
+subscriber_credentials_file = /etc/sub.creds
 `))
 		require.NoError(t, err)
 		cfg.Raw = f
@@ -51,6 +52,7 @@ publisher_credentials_file = /etc/pub.creds
 		require.Equal(t, "/etc/ca.pem", cfg.NATS.TLS.CACertPath)
 		require.Equal(t, "s3cret", cfg.NATS.Auth.Token)
 		require.Equal(t, "/etc/pub.creds", cfg.NATS.Auth.PublisherCredentialsFile)
+		require.Equal(t, "/etc/sub.creds", cfg.NATS.Auth.SubscriberCredentialsFile)
 	})
 
 	t.Run("rejects invalid mode", func(t *testing.T) {
@@ -80,5 +82,23 @@ func TestNATSAuthCredentialsPrecedence(t *testing.T) {
 	t.Run("empty when nothing set", func(t *testing.T) {
 		a := NATSAuthSettings{}
 		require.Empty(t, a.PublisherCredentials())
+	})
+
+	t.Run("subscriber per-role overrides shared", func(t *testing.T) {
+		a := NATSAuthSettings{
+			CredentialsFile:           "/shared.creds",
+			SubscriberCredentialsFile: "/sub.creds",
+		}
+		require.Equal(t, "/sub.creds", a.SubscriberCredentials())
+	})
+
+	t.Run("subscriber falls back to shared", func(t *testing.T) {
+		a := NATSAuthSettings{CredentialsFile: "/shared.creds"}
+		require.Equal(t, "/shared.creds", a.SubscriberCredentials())
+	})
+
+	t.Run("subscriber empty when nothing set", func(t *testing.T) {
+		a := NATSAuthSettings{}
+		require.Empty(t, a.SubscriberCredentials())
 	})
 }
