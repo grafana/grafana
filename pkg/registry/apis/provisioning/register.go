@@ -1019,7 +1019,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
 			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
-				return err
+				return fmt.Errorf("add job controller event handler: %w", err)
 			}
 
 			// Add any extra workers
@@ -1099,7 +1099,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
 			if err != nil {
-				return err
+				return fmt.Errorf("add repository controller event handler: %w", err)
 			}
 
 			// Wait for the cache to sync off the hot path so we don't block
@@ -1128,7 +1128,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
 			if err != nil {
-				return err
+				return fmt.Errorf("add connection controller event handler: %w", err)
 			}
 
 			// Same as the repository controller above: wait for cache sync off
@@ -1153,7 +1153,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					historyJobExpiration,
 				)
 				if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
-					return fmt.Errorf("create history job controller: %w", err)
+					return fmt.Errorf("add history job controller event handler: %w", err)
 				}
 			}
 

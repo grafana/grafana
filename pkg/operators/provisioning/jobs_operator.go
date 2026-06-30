@@ -60,7 +60,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			controllerCfg.historyExpiration,
 		)
 		if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
-			return fmt.Errorf("failed to create history job controller: %w", err)
+			return fmt.Errorf("failed to add history job event handler: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
 		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
