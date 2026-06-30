@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { MAX_FIELDS_A11Y_TABLE, MAX_ROWS_A11Y_TABLE, UPlotA11y } from './UPlotA11y';
+import { FRAMES_PER_PAGE, ROWS_PER_PAGE, UPlotA11y } from './UPlotA11y';
 
 describe('UPlotA11y', () => {
   it('renders a no-data message when there are no frames', () => {
@@ -51,28 +52,51 @@ describe('UPlotA11y', () => {
     expect(screen.getAllByRole('table')).toHaveLength(2);
   });
 
-  it('bails out when there are too many fields', () => {
-    const fields = Array.from({ length: MAX_FIELDS_A11Y_TABLE + 1 }, (_, i) => ({
-      name: `f${i}`,
-      type: FieldType.number,
-      values: [1],
-    }));
-    const frame = createDataFrame({ fields });
-
-    render(<UPlotA11y frames={[frame]} id="a11y" />);
-
-    expect(screen.getByText('Chart has too much data to display in a table for accessibility.')).toBeInTheDocument();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  it('bails out when there are too many rows', () => {
+  it('paginates rows, rendering only one page at a time', async () => {
+    const rowCount = ROWS_PER_PAGE + 5;
     const frame = createDataFrame({
-      fields: [{ name: 'x', type: FieldType.number, values: Array.from({ length: MAX_ROWS_A11Y_TABLE + 1 }, () => 1) }],
+      fields: [{ name: 'x', type: FieldType.number, values: Array.from({ length: rowCount }, (_, i) => i) }],
     });
 
     render(<UPlotA11y frames={[frame]} id="a11y" />);
 
-    expect(screen.getByText('Chart has too much data to display in a table for accessibility.')).toBeInTheDocument();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    // first page shows ROWS_PER_PAGE rows (no header row in tbody), not the whole frame
+    expect(screen.getAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1); // +1 for the header row
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.queryByText(String(ROWS_PER_PAGE))).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    // second page reveals the remaining rows
+    expect(screen.getByText(String(ROWS_PER_PAGE))).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  it('does not paginate rows at or below the page size', () => {
+    const frame = createDataFrame({
+      fields: [{ name: 'x', type: FieldType.number, values: Array.from({ length: ROWS_PER_PAGE }, (_, i) => i) }],
+    });
+
+    render(<UPlotA11y frames={[frame]} id="a11y" />);
+
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+  });
+
+  it('paginates frames, rendering only one page of tables at a time', async () => {
+    const frames = Array.from({ length: FRAMES_PER_PAGE + 2 }, (_, i) =>
+      createDataFrame({ name: `frame-${i}`, fields: [{ name: 'x', type: FieldType.number, values: [i] }] })
+    );
+
+    render(<UPlotA11y frames={frames} id="a11y" />);
+
+    expect(screen.getAllByRole('table')).toHaveLength(FRAMES_PER_PAGE);
+    expect(screen.getByText('frame-0')).toBeInTheDocument();
+    expect(screen.queryByText(`frame-${FRAMES_PER_PAGE}`)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+    // second page renders the remaining frames
+    expect(screen.getAllByRole('table')).toHaveLength(2);
+    expect(screen.getByText(`frame-${FRAMES_PER_PAGE}`)).toBeInTheDocument();
   });
 });
