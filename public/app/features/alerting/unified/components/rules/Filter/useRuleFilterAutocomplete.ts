@@ -3,12 +3,13 @@ import { useCallback } from 'react';
 
 import { type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, logError, logWarning } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../../api/prometheusApi';
 import { getRulesDataSources } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 
 type FetchGrafanaGroups = ReturnType<typeof prometheusApi.useLazyGetGrafanaGroupsQuery>[0];
 type FetchExternalGroups = ReturnType<typeof prometheusApi.useLazyGetGroupsQuery>[0];
@@ -91,7 +92,9 @@ async function fetchGrafanaFolderNames(
     }).unwrap();
     return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
   } catch (error) {
-    console.warn('Failed to load Grafana folders for namespace autocomplete', error);
+    logWarning('Failed to load Grafana folders for namespace autocomplete', {
+      error: stringifyErrorLike(error),
+    });
     return [];
   }
 }
@@ -211,7 +214,7 @@ export function useNamespaceAndGroupOptions(): {
 
         return options;
       } catch (error) {
-        console.error('Error fetching groups:', error);
+        logError(new Error('Error fetching groups', { cause: error }));
         return [createInfoOption(t('alerting.rules-filter.group-search-error', 'Error searching groups'))];
       }
     },
