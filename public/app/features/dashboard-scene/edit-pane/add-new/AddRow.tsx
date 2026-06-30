@@ -4,8 +4,8 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
-import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
+import { useNestingRestrictions } from '../../scene/layouts-shared/utils';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
