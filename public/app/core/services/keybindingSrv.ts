@@ -68,7 +68,7 @@ export class KeybindingSrv {
       // 'change pseudo locale'
       this.bind('c p l', () => togglePseudoLocale());
     }
-    this.bind('d k', () => {
+    this.bind('g k', () => {
       this.chromeService.onToggleKioskMode();
     });
   }
