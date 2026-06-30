@@ -45,6 +45,14 @@ type fakeFolderStorage struct {
 	stamped  []string
 }
 
+func (f *fakeFolderStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	fol, ok := f.existing[name]
+	if !ok {
+		return nil, apierrors.NewNotFound(foldersv1.FolderResourceInfo.GroupResource(), name)
+	}
+	return fol, nil
+}
+
 func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	fol, ok := f.existing[name]
 	if !ok {
@@ -377,6 +385,30 @@ func TestCascadeDelete_DryRunDoesNotMutate(t *testing.T) {
 
 	require.Empty(t, store.stamped, "dry-run must not stamp the terminating label")
 	require.Empty(t, store.deleted, "dry-run must not delete the folder")
+}
+
+func TestCascadeDelete_RootValidationRejectsBeforeCascade(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root"), "child": newFolder("child")}}
+	searcher := &fakeCascadeSearcher{
+		childrenByParent:   map[string][]string{"root": {"child"}},
+		dashboardsByFolder: map[string][]string{"root": {"dash-1"}},
+	}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	// Root admission rejects: nothing in the subtree may be touched.
+	reject := func(context.Context, runtime.Object) error { return errors.New("not allowed") }
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", reject, forceDelete())
+	require.Error(t, err)
+	require.Empty(t, store.deleted)
+	require.Empty(t, store.stamped)
+	require.Contains(t, store.existing, "child", "child must survive a rejected root delete")
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	_, getErr := dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
+	require.NoError(t, getErr, "dashboard must survive a rejected root delete")
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {
