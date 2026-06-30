@@ -164,8 +164,9 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 // runPostFilterAuthz implements postFilter mode: bleve ranks without the authz
 // wrapper, the runner fetches bounded windows (paging via SearchAfter),
 // authorizes hits in rank order, and stops once the page is filled (no facets)
-// or the candidate budget is hit. The first window's res.Total is TotalHits
-// (unfiltered match count). Facets are aggregated app-side over the authorized
+// or the candidate budget is hit. TotalHits is the exact authorized count when
+// the scan exhausts the index (small sets), else the unfiltered match count
+// (page filled early / cap hit — fast over exact). Facets are aggregated app-side over the authorized
 // sample. index may be a single bleve index or an IndexAlias (dashboards +
 // folders); the globally-unique doc ID keeps the SortDocID tie-breaker a total
 // order across the merged set. SearchBefore is a reversed-sort SearchAfter
@@ -211,7 +212,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	var candidates int64
 	var authorized int64
-	var capped bool
+	var exhausted bool
 	var firstRes *bleve.SearchResult
 	// Facet scans sample to FacetSampleSize; page-fill scans use the larger
 	// MaxCandidates budget so low authorized fractions can still fill the page.
@@ -290,15 +291,17 @@ func (b *bleveIndex) runPostFilterAuthz(
 		// sparse user does not get an empty first page just because the first
 		// authorized hit sorted beyond MaxCandidates.
 		if candidates >= maxCandidates && (wantFacets || len(page) > 0) {
-			capped = true
 			break
 		}
-		// Window returned fewer hits than requested -> no more matches.
+		// Window returned fewer hits than requested -> no more matches: every
+		// matching doc has been seen and authorized, so `authorized` is exact.
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
+			exhausted = true
 			break
 		}
 		last := res.Hits[len(res.Hits)-1]
 		if len(last.Sort) == 0 {
+			exhausted = true
 			break // no sort values -> cannot build a SearchAfter cursor
 		}
 		// Page on a shallow copy of the current request: only the cursor and
@@ -311,7 +314,18 @@ func (b *bleveIndex) runPostFilterAuthz(
 		windowReq = &next
 	}
 
-	response.TotalHits = int64(firstRes.Total)
+	// When the scan exhausted the index (small result sets) for a page query,
+	// every match was seen and authorized, so `authorized` is the exact total —
+	// report it so offset pagers don't loop past a partial page (e.g. totalHits=2
+	// but only 1 authorized). Count-only queries (limit==0) keep the unfiltered
+	// match count: they authorize nothing and only need a fast total. When the
+	// scan stopped early (page filled, or candidate cap hit), the authorized
+	// total is unknown, so fall back to the unfiltered count — fast over exact.
+	if exhausted && limit > 0 {
+		response.TotalHits = authorized
+	} else {
+		response.TotalHits = int64(firstRes.Total)
+	}
 	response.QueryCost = float64(firstRes.Cost)
 	response.MaxScore = firstRes.MaxScore
 	stats.AddReturnedDocuments(len(page))
@@ -332,11 +346,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 	response.Results = results
 	if wantFacets {
-		// When the scan hit the candidate cap before exhausting the index,
-		// extrapolate counts by the inverse sampling fraction (TotalHits /
-		// candidates) so facet magnitudes reflect the full matching set rather
-		// than just the bounded sample. Exact when the scan was not capped.
-		response.Facet = agg.build(candidates, int64(firstRes.Total), capped)
+		// Counts are the exact authorized term counts within the bounded sample;
+		// see facetAggregator.build for why we don't extrapolate.
+		response.Facet = agg.build()
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 
@@ -430,15 +442,15 @@ func facetTermValues(v any) []string {
 }
 
 // build assembles the response facets, keeping the top req.Facet[f].Limit terms
-// per field (by count desc, then term asc for determinism). When capped is true
-// and totalHits > candidates, counts are extrapolated by the inverse sampling
-// fraction (totalHits / candidates) to estimate the full-set magnitudes from the
-// bounded authorized sample; otherwise counts are exact.
-func (a *facetAggregator) build(candidates, totalHits int64, capped bool) map[string]*resourcepb.ResourceSearchResponse_Facet {
-	scale := int64(1)
-	if capped && totalHits > candidates {
-		scale = totalHits / candidates
-	}
+// per field (by count desc, then term asc for determinism). Counts are the exact
+// number of authorized hits with that term within the bounded sample
+// (<= FacetSampleSize candidates). We deliberately do NOT extrapolate to the
+// full set: scaling by totalHits/candidates estimates the unfiltered term count,
+// not the authorized one, and over-counts badly for low-access-fraction users
+// (e.g. a tag on 2 authorized docs reported as 42). Exhausted scans are fully
+// exact; capped scans are a conservative lower bound — never more than what the
+// sample saw.
+func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_Facet {
 	out := make(map[string]*resourcepb.ResourceSearchResponse_Facet, len(a.fields))
 	for k, f := range a.fields {
 		terms := a.counts[f.Field]
@@ -447,7 +459,7 @@ func (a *facetAggregator) build(candidates, totalHits int64, capped bool) map[st
 		for term, count := range terms {
 			sorted = append(sorted, &resourcepb.ResourceSearchResponse_TermFacet{
 				Term:  term,
-				Count: count * scale,
+				Count: count,
 			})
 		}
 		sort.Slice(sorted, func(i, j int) bool {
@@ -461,8 +473,8 @@ func (a *facetAggregator) build(candidates, totalHits int64, capped bool) map[st
 		}
 		out[k] = &resourcepb.ResourceSearchResponse_Facet{
 			Field:   f.Field,
-			Total:   a.total[f.Field] * scale,
-			Missing: a.missing[f.Field] * scale,
+			Total:   a.total[f.Field],
+			Missing: a.missing[f.Field],
 			Terms:   sorted,
 		}
 	}

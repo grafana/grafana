@@ -1201,7 +1201,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		names, res := searchNames(t, index, ac, listQuery(10))
 		require.Equal(t, []string{"doc-0", "doc-2"}, names)
-		require.Equal(t, int64(4), res.TotalHits)
+		// The scan exhausts the 4-doc index, so the authorized count (2) is
+		// exact and reported as TotalHits — matching the returned page, not the
+		// unfiltered match count.
+		require.Equal(t, int64(2), res.TotalHits)
 	})
 
 	t.Run("no authorized documents returns empty", func(t *testing.T) {
@@ -1347,9 +1350,11 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.NotContains(t, terms, "secrets", "unauthorized doc's tag must not be counted")
 	})
 
-	t.Run("facets extrapolated by sampling ratio when the scan is capped", func(t *testing.T) {
-		// FacetSampleSize below the dataset size forces a capped scan; counts
-		// are then scaled by TotalHits/candidates to estimate the full set.
+	t.Run("facets report exact sample counts when the scan is capped (no extrapolation)", func(t *testing.T) {
+		// FacetSampleSize below the dataset size forces a capped scan. Counts
+		// are the exact authorized term counts within the bounded sample, NOT
+		// extrapolated: scaling by TotalHits/candidates would estimate the
+		// unfiltered count and over-count for low-access-fraction users.
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
 			FacetSampleSize: 20,
 		})
@@ -1367,12 +1372,44 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		_, res := searchNames(t, index, ac, q)
 		f := res.Facet["folder"]
 		require.NotNil(t, f)
-		// 20 candidates sampled out of 100 total -> scale = 5. All sampled
-		// docs are in "allowed", so the extrapolated count is 20*5 = 100.
-		require.Equal(t, int64(100), f.Total, "Total extrapolated by TotalHits/candidates")
+		// 20 candidates sampled (FacetSampleSize cap); all 20 are "allowed".
+		// Counts reflect only the sample, not the full 100-doc set.
+		require.Equal(t, int64(20), f.Total, "Total is the sample count, not extrapolated")
 		require.Len(t, f.Terms, 1)
 		require.Equal(t, "allowed", f.Terms[0].Term)
-		require.Equal(t, int64(100), f.Terms[0].Count, "term count extrapolated by TotalHits/candidates")
+		require.Equal(t, int64(20), f.Terms[0].Count, "term count is the sample count, not extrapolated")
+	})
+
+	t.Run("facets do not over-count for low-access-fraction users", func(t *testing.T) {
+		// Reproduces the reported UI bug: a tag appears on 2 authorized docs
+		// but extrapolation (totalHits/candidates) reported 42. With a 2%-access
+		// user, the exact sample count must match what the tag-filtered search
+		// actually delivers, not the unfiltered total.
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			FacetSampleSize: 100, MaxCandidates: 100,
+		})
+		docs := make([]*resource.BulkIndexItem, 0, 200)
+		for i := 0; i < 200; i++ {
+			folder := "denied"
+			if i < 4 { // 4 allowed of 200 -> 2% authorized fraction
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), folder, []string{"graceful-simply"}))
+		}
+		indexDocs(t, index, docs)
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+
+		q := listQuery(0)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		require.Equal(t, "graceful-simply", f.Terms[0].Term)
+		// Only the 4 allowed docs are authorized; the facet counts those, not
+		// the 200 unfiltered matches.
+		require.Equal(t, int64(4), f.Terms[0].Count, "facet count is the authorized count, not extrapolated to the unfiltered total")
 	})
 
 	t.Run("offset skips authorized hits on postFilter path", func(t *testing.T) {
@@ -1388,6 +1425,30 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		names, _ := searchNames(t, index, ac, q)
 		// postFilter applies the offset over the authorized, sorted hits.
 		require.Equal(t, []string{"doc-1", "doc-2"}, names)
+	})
+
+	t.Run("exhausted scan reports authorized total so offset pagers don't loop", func(t *testing.T) {
+		// Reproduces the reported UI bug: a tag filter matches 2 docs but the
+		// user is authorized for only 1. The unfiltered total (2) would make the
+		// UI keep requesting offset=1 forever; the exhausted scan must report
+		// the exact authorized total (1) instead.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+
+		q0 := listQuery(50)
+		names0, res0 := searchNames(t, index, ac, q0)
+		require.Equal(t, []string{"doc-0"}, names0)
+		require.Equal(t, int64(1), res0.TotalHits, "exhausted scan reports exact authorized total")
+
+		q1 := listQuery(50)
+		q1.Offset = 1
+		names1, res1 := searchNames(t, index, ac, q1)
+		require.Empty(t, names1)
+		require.Equal(t, int64(1), res1.TotalHits, "total stays exact at offset=1 — no phantom 2nd result")
 	})
 
 	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
