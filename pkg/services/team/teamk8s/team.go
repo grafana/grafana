@@ -459,10 +459,6 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
-	// Partial update: an empty Name or ExternalUID means "leave unchanged", matching
-	// the legacy store (xorm skips zero-value columns; only email is MustCols). Without
-	// this, a partial command — e.g. SCIM updating only externalUID — would blank the
-	// title and the update would fail validation ("the team must have a title").
 	if cmd.Name != "" {
 		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
 			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)

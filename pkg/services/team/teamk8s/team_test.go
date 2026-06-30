@@ -574,7 +574,6 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				var body map[string]any
 				_ = json.NewDecoder(r.Body).Decode(&body)
 				spec := body["spec"].(map[string]any)
-				// empty Name in the command must NOT blank the existing title
 				assert.Equal(t, "Existing Title", spec["title"])
 				assert.Equal(t, "new-ext-uid", spec["externalUID"])
 				_ = json.NewEncoder(w).Encode(body)
@@ -610,7 +609,6 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 				_ = json.NewDecoder(r.Body).Decode(&body)
 				spec := body["spec"].(map[string]any)
 				assert.Equal(t, "New Title", spec["title"])
-				// empty ExternalUID in the command must NOT blank the existing externalUID
 				assert.Equal(t, "keep-ext-uid", spec["externalUID"])
 				_ = json.NewEncoder(w).Encode(body)
 			},
