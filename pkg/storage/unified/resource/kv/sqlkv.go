@@ -29,6 +29,8 @@ const (
 	LeasesSection                 = "unified/leases"
 	SearchSnapshotManifestSection = "search/snapshot-manifest"
 	SearchSnapshotDataSection     = "search/snapshot-data"
+	StatsDailySection             = "stats/daily"
+	StatsAggregatesSection        = "stats/aggregates"
 )
 
 // validSaveSections is the set of sections accepted by SqlKV.Save.
@@ -40,6 +42,8 @@ var validSaveSections = map[string]bool{
 	LeasesSection:                 true,
 	SearchSnapshotManifestSection: true,
 	SearchSnapshotDataSection:     true,
+	StatsDailySection:             true,
+	StatsAggregatesSection:        true,
 }
 
 var _ KV = &SqlKV{}
@@ -121,6 +125,10 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "search_snapshot_manifest"
 	case SearchSnapshotDataSection:
 		tableName = "search_snapshot_data"
+	case StatsDailySection:
+		tableName = "resource_stats_daily"
+	case StatsAggregatesSection:
+		tableName = "resource_stats_aggregates"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}

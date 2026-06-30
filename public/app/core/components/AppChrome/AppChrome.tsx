@@ -7,6 +7,7 @@ import { type PropsWithChildren, useEffect } from 'react';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -22,16 +23,20 @@ import {
   MIN_EXTENSION_SIDEBAR_WIDTH,
 } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { FeatureControlFloating } from './FeatureControl/FeatureControlFloating';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
+export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
+
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
@@ -47,9 +52,10 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
+  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
@@ -140,31 +146,38 @@ export function AppChrome({ children }: Props) {
               [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
+              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
             })}
             id="pageContent"
             tabIndex={-1}
           >
             {children}
           </main>
-          {!state.chromeless && isExtensionSidebarOpen && (
-            <Resizable
-              className={styles.sidebarContainer}
-              defaultSize={{ width: extensionSidebarWidth }}
-              enable={{ left: true }}
-              onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-              handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-              minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
-              maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
-            >
-              <ExtensionSidebar />
-            </Resizable>
-          )}
+          {!state.chromeless &&
+            isExtensionSidebarOpen &&
+            (isSmallScreen ? (
+              <div className={styles.sidebarContainerFloating} data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}>
+                <ExtensionSidebar />
+              </div>
+            ) : (
+              <Resizable
+                className={styles.sidebarContainer}
+                defaultSize={{ width: extensionSidebarWidth }}
+                enable={{ left: true }}
+                onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
+                handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+                minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+                maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+              >
+                <ExtensionSidebar />
+              </Resizable>
+            ))}
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
+      {!state.chromeless && <FeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
@@ -196,7 +209,7 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number) => {
+const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       label: 'page-content',
@@ -214,8 +227,8 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       paddingTop: 0,
     }),
     dockedMegaMenu: css({
-      background: theme.colors.background.primary,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
+      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'none',
       height: '100%',
       position: 'fixed',
@@ -242,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
@@ -294,6 +307,14 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
+    }),
+    sidebarContainerFloating: css({
+      position: 'fixed',
+      top: headerLevels * headerHeight,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: theme.zIndex.navbarFixed + 1,
     }),
   };
 };

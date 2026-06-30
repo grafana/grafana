@@ -32,7 +32,7 @@ const MarkerShapePath = {
   x: 'img/icons/marker/x-mark.svg',
 };
 
-function getFillColor(cfg: StyleConfigValues) {
+export function getFillColor(cfg: StyleConfigValues) {
   const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
   if (opacity === 1) {
     return new Fill({ color: cfg.color });
@@ -44,7 +44,7 @@ function getFillColor(cfg: StyleConfigValues) {
   return undefined;
 }
 
-function getStrokeStyle(cfg: StyleConfigValues) {
+export function getStrokeStyle(cfg: StyleConfigValues) {
   const opacity = cfg.opacity == null ? 0.8 : cfg.opacity;
   if (opacity === 1) {
     return new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });

@@ -1,7 +1,6 @@
 package github
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -122,10 +121,17 @@ func TestParseWebhooks(t *testing.T) {
 					GenerateDashboardPreviews: true,
 				},
 			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{},
+			},
 		},
-		owner: "grafana",
-		repo:  "git-ui-sync-demo",
+		owner:       "grafana",
+		repo:        "git-ui-sync-demo",
+		secret:      common.RawSecureValue("webhook-secret"),
+		replayCache: newReplayCache(time.Hour),
 	}
+	gh.WebhookHandler = repo.NewWebhookHandler(gh.processRequest, gh.config.Status.Webhook, gh.config.GetName(),
+		"grafana/git-ui-sync-demo", gh.config.Spec.GitHub.Branch, gh.config.Spec.Sync.Enabled, repo.IncrementalSyncPolicy{})
 
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
@@ -134,7 +140,7 @@ func TestParseWebhooks(t *testing.T) {
 			payload, err := os.ReadFile(path.Join("testdata", name))
 			require.NoError(t, err)
 
-			rsp, err := gh.parseWebhook(context.Background(), tt.messageType, payload)
+			rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected.Code, rsp.Code)
@@ -158,17 +164,23 @@ func TestParsePushEvent_LargeDiffForcesFullSync(t *testing.T) {
 					Branch: "main",
 				},
 			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{},
+			},
 		},
-		owner:             "grafana",
-		repo:              "git-ui-sync-demo",
-		incrementalPolicy: repo.NewIncrementalSyncPolicy(false, 5),
+		owner:       "grafana",
+		repo:        "git-ui-sync-demo",
+		secret:      common.RawSecureValue("webhook-secret"),
+		replayCache: newReplayCache(time.Hour),
 	}
+	gh.WebhookHandler = repo.NewWebhookHandler(gh.processRequest, gh.config.Status.Webhook, gh.config.GetName(),
+		"grafana/git-ui-sync-demo", gh.config.Spec.GitHub.Branch, gh.config.Spec.Sync.Enabled, repo.NewIncrementalSyncPolicy(false, 5))
 
 	// nolint:gosec
 	payload, err := os.ReadFile(path.Join("testdata", "webhook-push-large_diff.json"))
 	require.NoError(t, err)
 
-	rsp, err := gh.parseWebhook(context.Background(), "push", payload)
+	rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "", string(payload)))
 	require.NoError(t, err)
 
 	require.Equal(t, http.StatusAccepted, rsp.Code)
@@ -196,27 +208,8 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 
 	const defaultSecret = "webhook-secret"
 
-	// newSignedRequest signs payload with secret and sets the headers GitHub
-	// sends. deliveryID populates X-GitHub-Delivery; it is intentionally
-	// independent of the signature so tests can vary it freely.
-	newSignedRequest := func(payload, deliveryID, secret string) *http.Request {
-		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-		req.Header.Set("X-GitHub-Event", "push")
-		req.Header.Set("Content-Type", "application/json")
-		if deliveryID != "" {
-			req.Header.Set("X-GitHub-Delivery", deliveryID)
-		}
-
-		mac := hmac.New(sha256.New, []byte(secret))
-		mac.Write([]byte(payload))
-		signature := hex.EncodeToString(mac.Sum(nil))
-		req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-		return req
-	}
-
 	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
-		return &githubWebhookRepository{
+		r := &githubWebhookRepository{
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
@@ -232,12 +225,15 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 			secret:      common.RawSecureValue(secret),
 			replayCache: cache,
 		}
+		r.WebhookHandler = repo.NewWebhookHandler(r.processRequest, r.config.Status.Webhook, r.config.GetName(),
+			"grafana/grafana", r.config.Spec.GitHub.Branch, r.config.Spec.Sync.Enabled, repo.IncrementalSyncPolicy{})
+		return r
 	}
 
 	t.Run("first delivery is accepted", func(t *testing.T) {
 		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1", defaultSecret))
+		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -246,14 +242,14 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
 		// First delivery succeeds with the normal accepted-job response.
-		first, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup", defaultSecret))
+		first, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, first.Code)
 
 		// Replaying the same signed request returns a generic 200 OK — same
 		// shape as other no-op paths so an attacker can't tell from the
 		// response whether the payload was previously processed.
-		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup", defaultSecret))
+		dup, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, dup.Code)
 		require.Equal(t, "ok", dup.Message)
@@ -266,10 +262,10 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		// delivery ID. Keying on the signature must still catch it.
 		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
+		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
 		require.NoError(t, err)
 
-		dup, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-B", defaultSecret))
+		dup, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, dup.Code, "same signed body under a different delivery id is still a replay")
 		require.Nil(t, dup.Job)
@@ -278,11 +274,11 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	t.Run("distinct payloads are independent", func(t *testing.T) {
 		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
 
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
+		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
 		require.NoError(t, err)
 
 		// A different body yields a different signature, so it is processed.
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(otherPayload, "delivery-B", defaultSecret))
+		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", otherPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -295,10 +291,10 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		repoA := newRepo(cache, "secret-a")
 		repoB := newRepo(cache, "secret-b")
 
-		_, err := repoA.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", "secret-a"))
+		_, err := repoA.Webhook(t.Context(), signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
 		require.NoError(t, err)
 
-		rsp, err := repoB.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-B", "secret-b"))
+		rsp, err := repoB.Webhook(t.Context(), signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -310,10 +306,10 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		first := newRepo(cache, defaultSecret)
 		second := newRepo(cache, defaultSecret)
 
-		_, err := first.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1", defaultSecret))
+		_, err := first.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
 		require.NoError(t, err)
 
-		dup, err := second.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-2", defaultSecret))
+		dup, err := second.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-2", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, dup.Code)
 		require.Equal(t, "ok", dup.Message)
@@ -324,12 +320,12 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		const ttl = 50 * time.Millisecond
 		gh := newRepo(newReplayCache(ttl), defaultSecret)
 
-		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
+		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
 		require.NoError(t, err)
 
 		// Once the entry expires, the same signed request is processed again.
 		time.Sleep(ttl + 20*time.Millisecond)
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
+		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -343,12 +339,12 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		req.Header.Set("X-GitHub-Delivery", "delivery-bad-sig")
 		req.Header.Set("X-Hub-Signature-256", "sha256=deadbeef")
 
-		_, err := gh.Webhook(context.Background(), req)
+		_, err := gh.Webhook(t.Context(), req)
 		require.Error(t, err)
 
 		// A subsequent valid request must still succeed — a failed signature
 		// must not poison the replay cache.
-		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-good", defaultSecret))
+		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-good", pushPayload))
 		require.NoError(t, err)
 		require.Equal(t, http.StatusAccepted, rsp.Code)
 	})
@@ -725,7 +721,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			},
 			expected: &provisioning.WebhookResponse{
 				Code:    http.StatusAccepted,
-				Message: "pull request: synchronize",
+				Message: "pull request: updated",
 				Job: &provisioning.JobSpec{
 					Repository: "test-repo",
 					Action:     provisioning.JobActionPullRequest,
@@ -872,48 +868,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				return req
 			},
 			expectedError: fmt.Errorf("missing repository in pull request event"),
-		},
-		{
-			name: "pull request event with missing GitHub config",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					// GitHub config is intentionally missing
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"action": "opened",
-					"pull_request": {
-						"html_url": "https://github.com/grafana/grafana/pull/123",
-						"number": 123,
-						"head": {
-							"ref": "feature-branch",
-							"sha": "abcdef1234567890"
-						},
-						"base": {
-							"ref": "main"
-						}
-					},
-					"repository": {
-						"full_name": "grafana/grafana"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "pull_request")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expectedError: fmt.Errorf("missing GitHub config"),
 		},
 		{
 			name: "pull request event with repository mismatch",
@@ -1112,26 +1066,29 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
-			repo := &githubWebhookRepository{
+			r := &githubWebhookRepository{
 				config:      tt.config,
 				owner:       "grafana",
 				repo:        "grafana",
 				secret:      common.RawSecureValue("webhook-secret"),
 				replayCache: newReplayCache(time.Hour),
 			}
+			r.WebhookHandler = repo.NewWebhookHandler(
+				r.processRequest, tt.config.Status.Webhook, tt.config.GetName(),
+				"grafana/grafana", tt.config.Spec.GitHub.Branch, tt.config.Spec.Sync.Enabled,
+				repo.IncrementalSyncPolicy{},
+			)
 
-			// Call the Webhook method
-			response, err := repo.Webhook(context.Background(), tt.setupRequest())
+			response, err := r.Webhook(t.Context(), tt.setupRequest())
 
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
-					var actualStatusErr *apierrors.StatusError
-					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type: %T", err)
-					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
-					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
+				if expected, ok := errors.AsType[*apierrors.StatusError](tt.expectedError); ok {
+					actual, ok := errors.AsType[*apierrors.StatusError](err)
+					require.True(t, ok, "Expected StatusError but got different error type: %T", err)
+					require.Equal(t, expected.Status().Message, actual.Status().Message)
+					require.Equal(t, expected.Status().Code, actual.Status().Code)
 				} else {
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
@@ -1171,7 +1128,7 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 		{
 			name: "successfully comment on pull request",
 			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 123, "Test comment").
+				m.On("CreatePullRequestComment", mock.Anything, 123, "Test comment").
 					Return(nil)
 			},
 			prNumber:      123,
@@ -1181,7 +1138,7 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 		{
 			name: "error commenting on pull request",
 			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 456, "Error comment").
+				m.On("CreatePullRequestComment", mock.Anything, 456, "Error comment").
 					Return(fmt.Errorf("failed to create comment"))
 			},
 			prNumber:      456,
@@ -1211,7 +1168,7 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 			}
 
 			// Call the CommentPullRequest method
-			err := repo.CommentPullRequest(context.Background(), tt.prNumber, tt.comment)
+			err := repo.CommentPullRequest(t.Context(), tt.prNumber, tt.comment)
 
 			// Check results
 			if tt.expectedError != nil {
@@ -1239,7 +1196,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 		{
 			name: "successfully create webhook",
 			setupMock: func(m *MockClient) {
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(cfg WebhookConfig) bool {
 					return cfg.URL == "https://example.com/webhook" &&
 						cfg.ContentType == "json" &&
 						cfg.Active == true
@@ -1283,7 +1240,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 		{
 			name: "error creating webhook",
 			setupMock: func(m *MockClient) {
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{}, fmt.Errorf("failed to create webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1313,6 +1270,22 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			expectedHook:  nil,
 			expectedError: nil,
 		},
+		{
+			name:      "no webhook when webhookDisabled is true",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1331,7 +1304,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			}
 
 			// Call the OnCreate method
-			hookOps, err := repo.OnCreate(context.Background())
+			hookOps, err := repo.OnCreate(t.Context())
 
 			// Check results
 			if tt.expectedError != nil {
@@ -1382,7 +1355,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "successfully update webhook when webhook exists",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1390,7 +1363,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					}, nil)
 
 				// Mock editing the webhook
-				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("EditWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.ID == 123 && hook.URL == "https://example.com/webhook-updated" &&
 						slices.Equal(hook.Events, subscribedEvents)
 				})).Return(nil)
@@ -1421,11 +1394,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when it doesn't exist",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1471,7 +1444,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 		{
 			name: "error getting webhook",
 			setupMock: func(m *MockClient) {
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, fmt.Errorf("failed to get webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1496,7 +1469,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error editing webhook",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1504,7 +1477,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					}, nil)
 
 				// Mock editing the webhook with error
-				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("EditWebhook", mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to edit webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1529,7 +1502,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when webhook status is nil",
 			setupMock: func(m *MockClient) {
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{
 						ID:          456,
 						URL:         "https://example.com/webhook",
@@ -1561,7 +1534,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when webhook ID is zero",
 			setupMock: func(m *MockClient) {
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{
 						ID:          789,
 						URL:         "https://example.com/webhook",
@@ -1596,7 +1569,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error when creating webhook fails",
 			setupMock: func(m *MockClient) {
 				// Mock webhook creation failure
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{}, fmt.Errorf("failed to create webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1618,11 +1591,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "creates webhook when repo.ErrFileNotFound",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1659,11 +1632,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error on create when not found",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock error when creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1692,7 +1665,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "no update needed when URL and events match",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook with matching URL and events
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1726,7 +1699,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 		{
 			name: "delete webhook when workflows are removed",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -1766,6 +1739,51 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			expectedHook:  nil,
 			expectedError: nil,
 		},
+		{
+			name: "delete stale webhook when webhookDisabled is true",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
+					Return(nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:      "",
+			expectedHook:    nil,
+			expectedCleanup: true,
+			expectedError:   nil,
+		},
+		{
+			name:      "no-op when webhookDisabled is true and no existing webhook",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil,
+				},
+			},
+			webhookURL:    "",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1784,7 +1802,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			}
 
 			// Call the OnUpdate method
-			hookOps, err := repo.OnUpdate(context.Background())
+			hookOps, err := repo.OnUpdate(t.Context())
 
 			// Check results
 			if tt.expectedError != nil {
@@ -1839,7 +1857,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "successfully delete webhook",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -1864,7 +1882,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "webhook not found during deletion",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(repo.ErrFileNotFound)
 			},
 			config: &provisioning.Repository{
@@ -1890,7 +1908,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "unauthorized to delete the webhook",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(repo.ErrUnauthorized)
 			},
 			config: &provisioning.Repository{
@@ -1954,7 +1972,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			name: "error deleting webhook",
 			setupMock: func(m *MockClient) {
 				// Mock webhook deletion failure
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1996,7 +2014,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			}
 
 			// Call the OnDelete method
-			err := repo.OnDelete(context.Background())
+			err := repo.OnDelete(t.Context())
 
 			// Check results
 			if tt.expectedError != nil {
@@ -2015,9 +2033,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 	t.Run("successful rotation returns status and secure patch ops", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook", Events: []string{"push"}}, nil)
-		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg WebhookConfig) bool {
+		mockGH.On("EditWebhook", mock.Anything, mock.MatchedBy(func(cfg WebhookConfig) bool {
 			return cfg.ID == 123 && cfg.Secret != ""
 		})).Return(nil)
 
@@ -2034,7 +2052,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := repo.RotateWebhookSecret(t.Context())
 		require.NoError(t, err)
 		require.Len(t, ops, 2)
 		require.Equal(t, "replace", ops[0]["op"])
@@ -2048,7 +2066,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 		r := &githubWebhookRepository{
@@ -2061,7 +2079,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			},
 		}
 
-		ops, err := r.RotateWebhookSecret(context.Background())
+		ops, err := r.RotateWebhookSecret(t.Context())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found on remote")
 		require.Len(t, ops, 1)
@@ -2072,7 +2090,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("get webhook error returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{}, fmt.Errorf("api error"))
 
 		repo := &githubWebhookRepository{
@@ -2085,7 +2103,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := repo.RotateWebhookSecret(t.Context())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "get webhook for rotation")
 		require.Nil(t, ops)
@@ -2093,9 +2111,9 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("edit webhook error returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook"}, nil)
-		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+		mockGH.On("EditWebhook", mock.Anything, mock.Anything).
 			Return(fmt.Errorf("edit failed"))
 
 		repo := &githubWebhookRepository{
@@ -2108,7 +2126,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := repo.RotateWebhookSecret(t.Context())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "edit webhook during rotation")
 		require.Nil(t, ops)
@@ -2119,7 +2137,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			config: &provisioning.Repository{},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := repo.RotateWebhookSecret(t.Context())
 		require.NoError(t, err)
 		require.Nil(t, ops)
 	})
@@ -2133,8 +2151,23 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 			},
 		}
 
-		ops, err := repo.RotateWebhookSecret(context.Background())
+		ops, err := repo.RotateWebhookSecret(t.Context())
 		require.NoError(t, err)
 		require.Nil(t, ops)
 	})
+}
+
+func signedWebhookRequest(t *testing.T, eventType, secret, deliveryID, payload string) *http.Request {
+	t.Helper()
+	req, err := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+	require.NoError(t, err)
+	req.Header.Set("X-GitHub-Event", eventType)
+	req.Header.Set("Content-Type", "application/json")
+	if deliveryID != "" {
+		req.Header.Set("X-GitHub-Delivery", deliveryID)
+	}
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(payload))
+	req.Header.Set("X-Hub-Signature-256", "sha256="+hex.EncodeToString(mac.Sum(nil)))
+	return req
 }

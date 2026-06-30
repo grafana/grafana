@@ -33,16 +33,16 @@ import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
-import { dataToSpec } from '../utils/data';
+import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
-import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -85,7 +85,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
-  const [type, readOnly] = watch(['type', 'readOnly']);
+  const [type, readOnly, watchedConnectionName] = watch(['type', 'readOnly', 'connectionName']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
@@ -95,7 +95,20 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const connectionName = data?.spec?.connection?.name;
   const usesGitHubApp = Boolean(connectionName && type === 'github');
 
-  const { options: connectionOptions, isLoading: connectionsLoading } = useConnectionOptions(usesGitHubApp);
+  const {
+    options: connectionOptions,
+    isLoading: connectionsLoading,
+    connections,
+  } = useConnectionOptions(usesGitHubApp);
+
+  const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
+  const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   const {
     data: refsData,
@@ -139,7 +152,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      await submitData(spec, form.token);
+      const signingKeySecret = deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name));
+      await submitData(spec, form.token, signingKeySecret);
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -390,8 +404,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
             />
             <CommitOptionsSection<RepositoryFormData>
               register={register}
+              control={control}
+              setValue={setValue}
               messageTemplateName="commit.singleResourceMessageTemplate"
               enforceTemplateName="commit.enforceTemplate"
+              type={type}
+              signingMethodName="signingMethod"
+              signingKeyName="commitSigningKey"
+              smimeCertificateName="smimeCertificate"
+              signerNameName="commit.signerName"
+              signerEmailName="commit.signerEmail"
+              defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
             />
             {/* Pull requests are not supported by the pure git type. */}
             {type !== 'git' && (
@@ -399,11 +422,22 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 register={register}
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
+                repoType={type}
+                dashboardPreviewName="generateDashboardPreviews"
               />
             )}
           </>
         )}
-        {type === 'github' && <ConfigFormGithubCollapse register={register} />}
+        {type === 'github' && (
+          <WebhookSection<RepositoryFormData>
+            register={register}
+            control={control}
+            name="webhook.baseUrl"
+            disabledName="webhook.disabled"
+            connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledError={errors?.webhook?.disabled?.message}
+          />
+        )}
 
         {isGitBased && (
           <ControlledCollapse

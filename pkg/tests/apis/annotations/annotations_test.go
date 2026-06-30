@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,7 +62,7 @@ func newAnnotation(text string, tags ...string) *unstructured.Unstructured {
 			},
 			"spec": map[string]any{
 				"text": text,
-				"time": int64(1700000000000),
+				"time": time.Now().UnixMilli(),
 				"tags": tagSlice,
 			},
 		},

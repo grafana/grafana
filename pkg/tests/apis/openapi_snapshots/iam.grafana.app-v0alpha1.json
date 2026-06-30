@@ -4595,6 +4595,10 @@
             "type": "string",
             "default": ""
           },
+          "internalId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "memberCount": {
             "type": "integer",
             "format": "int64"
@@ -4662,6 +4666,9 @@
           "lastSeenAt",
           "lastSeenAtAge",
           "provisioned",
+          "disabled",
+          "internalId",
+          "created",
           "score"
         ],
         "properties": {
@@ -4672,9 +4679,25 @@
               "default": false
             }
           },
+          "created": {
+            "description": "Creation timestamp, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
           "email": {
             "type": "string",
             "default": ""
+          },
+          "internalId": {
+            "description": "Deprecated internal (legacy SQL) id of the user.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",
@@ -6173,6 +6196,26 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo": {
+        "type": "object",
+        "required": [
+          "module",
+          "authID"
+        ],
+        "properties": {
+          "authID": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserList": {
         "type": "object",
         "required": [
@@ -6240,6 +6283,17 @@
           "emailVerified": {
             "type": "boolean",
             "default": false
+          },
+          "externalAuthInfo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo"
+                }
+              ]
+            }
           },
           "grafanaAdmin": {
             "type": "boolean",

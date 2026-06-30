@@ -6,7 +6,6 @@ type RootPanelsState = Record<string, PanelState>;
 
 interface PanelState {
   plugin?: PanelPlugin;
-  instanceState?: unknown | null;
 }
 
 const initialState: RootPanelsState = {};
@@ -27,12 +26,6 @@ const panelsSlice = createSlice({
     removePanel: (state, action: PayloadAction<{ key: string }>) => {
       delete state[action.payload.key];
     },
-    removeAllPanels: (state) => {
-      Object.keys(state).forEach((key) => delete state[key]);
-    },
-    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
-      state[action.payload.key].instanceState = action.payload.value;
-    },
   },
 });
 
@@ -41,12 +34,7 @@ interface PanelModelAndPluginReadyPayload {
   plugin: PanelPlugin;
 }
 
-interface SetPanelInstanceStatePayload {
-  key: string;
-  value: unknown;
-}
-
-export const { panelModelAndPluginReady, setPanelInstanceState, removePanel, removeAllPanels } = panelsSlice.actions;
+export const { panelModelAndPluginReady, removePanel } = panelsSlice.actions;
 
 const panelsReducer = panelsSlice.reducer;
 

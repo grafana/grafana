@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
@@ -23,6 +23,8 @@ const defaultDsSettings = {
   type: 'test',
   meta: { id: 'test', name: 'Test' },
 };
+
+const Wrapper = getWrapper({ renderWithRouter: true });
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -166,18 +168,18 @@ describe('VariableTypeChangePane', () => {
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
 
-  return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
+  return (
+    <Wrapper>
+      <Sidebar contextValue={sidebarContext}>{children}</Sidebar>
+    </Wrapper>
+  );
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
-  const editPane = dashboard.state.editPane;
-
   render(
-    <TestProvider>
-      <WrapSidebar>
-        <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-      </WrapSidebar>
-    </TestProvider>
+    <WrapSidebar>
+      <DashboardEditPaneRenderer dashboard={dashboard} />
+    </WrapSidebar>
   );
 }
 

@@ -78,6 +78,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
@@ -170,6 +171,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(_ bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
+		service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 
 		return testServer, service

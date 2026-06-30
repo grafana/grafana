@@ -197,6 +197,31 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 3, cfg.IndexWorkers)
 	})
 
+	t.Run("chunked writes config defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.False(t, cfg.MigrationChunkedWrites)
+		assert.Equal(t, int64(256*1024*1024), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("chunked writes config from env vars", func(t *testing.T) {
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CHUNKED_WRITES", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CHUNK_MAX_BYTES", "134217728")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.MigrationChunkedWrites)
+		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
 	t.Run("vector_embedder bedrock config", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, key, value string) {
 			section := cfg.Raw.Section("vector_embedder")

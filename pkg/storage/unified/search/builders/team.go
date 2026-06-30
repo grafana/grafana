@@ -1,8 +1,6 @@
 package builders
 
 import (
-	"context"
-
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -24,40 +22,20 @@ var TeamSortableExtraFields = []string{
 	TEAM_SEARCH_EMAIL,
 }
 
-var TeamSearchTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	TEAM_SEARCH_EMAIL: {
-		Name:        TEAM_SEARCH_EMAIL,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "Email of the team",
-	},
-	TEAM_SEARCH_PROVISIONED: {
-		Name:        TEAM_SEARCH_PROVISIONED,
-		Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
-		Description: "Whether the team is provisioned",
-	},
-	TEAM_SEARCH_EXTERNAL_UID: {
-		Name:        TEAM_SEARCH_EXTERNAL_UID,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "External UID of the team",
-	},
-	TEAM_SEARCH_MEMBERS: {
-		Name:        TEAM_SEARCH_MEMBERS,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		IsArray:     true,
-		Description: "UIDs of users that are members of the team",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	TEAM_SEARCH_EXTERNAL_GROUPS: {
-		Name:        TEAM_SEARCH_EXTERNAL_GROUPS,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		IsArray:     true,
-		Description: "External group identifiers mapped to the team",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
+// TeamSearchTableColumnDefinitions exposes column-defs by name for the
+// IAM legacy SQL backend in team/legacy_search.go.
+var TeamSearchTableColumnDefinitions = tableColumnsByName(TeamSearchFields)
+
+// TeamSearchFields declares paths and types for each team search field. The
+// standard document builder uses these to extract spec values from the raw
+// JSON, avoiding a custom builder. Members is a projection over
+// spec.members[*].name so the indexed array contains member UIDs only.
+var TeamSearchFields = []resource.SearchFieldDefinition{
+	{Name: TEAM_SEARCH_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Email of the team"},
+	{Name: TEAM_SEARCH_PROVISIONED, Path: "spec.provisioned", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Whether the team is provisioned"},
+	{Name: TEAM_SEARCH_EXTERNAL_UID, Path: "spec.externalUID", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "External UID of the team"},
+	{Name: TEAM_SEARCH_MEMBERS, Path: "spec.members[*].name", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "UIDs of users that are members of the team"},
+	{Name: TEAM_SEARCH_EXTERNAL_GROUPS, Path: "spec.externalGroups", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "External group identifiers mapped to the team"},
 }
 
 func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
@@ -66,47 +44,26 @@ func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 		values = append(values, v)
 	}
 	fields, err := resource.NewSearchableDocumentFields(values)
-
-	return resource.DocumentBuilderInfo{
-		GroupResource: schema.GroupResource{
-			Group:    v0alpha1.TeamResourceInfo.GroupResource().Group,
-			Resource: v0alpha1.TeamResourceInfo.GroupResource().Resource,
-		},
-		Fields:  fields,
-		Builder: new(teamSearchBuilder),
-	}, err
-}
-
-var _ resource.DocumentBuilder = new(teamSearchBuilder)
-
-type teamSearchBuilder struct{}
-
-func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	team := &v0alpha1.Team{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, team, v0alpha1.TeamKind())
 	if err != nil {
-		return nil, err
+		return resource.DocumentBuilderInfo{}, err
 	}
 
-	if team.Spec.Email != "" {
-		doc.Fields[TEAM_SEARCH_EMAIL] = team.Spec.Email
-	}
-	if team.Spec.Provisioned {
-		doc.Fields[TEAM_SEARCH_PROVISIONED] = team.Spec.Provisioned
-	}
-	if team.Spec.ExternalUID != "" {
-		doc.Fields[TEAM_SEARCH_EXTERNAL_UID] = team.Spec.ExternalUID
-	}
-	if len(team.Spec.Members) > 0 {
-		uids := make([]string, 0, len(team.Spec.Members))
-		for _, m := range team.Spec.Members {
-			uids = append(uids, m.Name)
-		}
-		doc.Fields[TEAM_SEARCH_MEMBERS] = uids
-	}
-	if len(team.Spec.ExternalGroups) > 0 {
-		doc.Fields[TEAM_SEARCH_EXTERNAL_GROUPS] = team.Spec.ExternalGroups
-	}
+	gvr := v0alpha1.TeamResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: TeamSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
 
-	return doc, nil
+	gr := v0alpha1.TeamResourceInfo.GroupResource()
+	return resource.DocumentBuilderInfo{
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }

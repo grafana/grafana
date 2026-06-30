@@ -1476,6 +1476,10 @@ export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
 };
+export type ConnectionWebhookConfig = {
+  /** Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
+};
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
@@ -1499,6 +1503,8 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
+  /** Webhook configuration for this connection */
+  webhook?: ConnectionWebhookConfig;
 };
 export type Condition = {
   /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
@@ -1644,6 +1650,8 @@ export type FixFolderMetadataJobOptions = {
   ref?: string;
 };
 export type MigrateJobOptions = {
+  /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written. */
+  generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
@@ -1678,6 +1686,8 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written. */
+  generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
@@ -1909,6 +1919,8 @@ export type SyncOptions = {
 export type WebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
   baseUrl?: string;
+  /** Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
 };
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
@@ -2170,12 +2182,16 @@ export type SupportedResource = {
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
+  /** Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name. */
+  branchOptions?: BranchOptions;
   /** Commit message options. Mirrors the same-named field on the repository spec. */
   commit?: CommitOptions;
   /** The k8s name for this repository */
   name: string;
   /** For git, this is the target path */
   path?: string;
+  /** Pull request options. Mirrors the same-named field on the repository spec. */
+  pullRequest?: PullRequestOptions;
   /** When syncing, where values are saved
     
     Possible enum values:

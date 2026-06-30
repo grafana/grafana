@@ -1,7 +1,7 @@
-import { ResourceDimensionMode } from '@grafana/schema';
+import { ResourceDimensionMode, TextDimensionMode } from '@grafana/schema';
 
 import { HorizontalAlign, VerticalAlign, type StyleConfig, type SymbolAlign } from './types';
-import { getDisplacement, getRGBValues, getStyleConfigState } from './utils';
+import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from './utils';
 
 describe('style utils', () => {
   it('should fill in default values', async () => {
@@ -93,5 +93,76 @@ describe('style utils', () => {
     const colorString = 'rgba(0, 0, 0, 0)';
     const colorValues = getRGBValues(colorString);
     expect(colorValues).toEqual({ r: 0, g: 0, b: 0, a: 0 });
+  });
+
+  describe('styleUsesText', () => {
+    it('returns false when text is undefined', () => {
+      expect(styleUsesText({} as StyleConfig)).toBe(false);
+    });
+
+    it('returns false when text.mode is Fixed but fixed value is empty', () => {
+      expect(styleUsesText({ text: { mode: TextDimensionMode.Fixed, fixed: '' } } as StyleConfig)).toBe(false);
+    });
+
+    it('returns true when text.mode is Fixed and a fixed value is set', () => {
+      expect(styleUsesText({ text: { mode: TextDimensionMode.Fixed, fixed: 'hello' } } as StyleConfig)).toBe(true);
+    });
+
+    it('returns true when text.mode is Field and a field is set', () => {
+      expect(styleUsesText({ text: { mode: TextDimensionMode.Field, fixed: '', field: 'name' } } as StyleConfig)).toBe(
+        true
+      );
+    });
+  });
+
+  describe('getDisplacement — full alignment grid', () => {
+    const radius = 10;
+    it.each([
+      // horizontal: Left
+      [{ horizontal: HorizontalAlign.Left, vertical: VerticalAlign.Top }, [-10, 10]],
+      [{ horizontal: HorizontalAlign.Left, vertical: VerticalAlign.Center }, [-10, 0]],
+      [{ horizontal: HorizontalAlign.Left, vertical: VerticalAlign.Bottom }, [-10, -10]],
+      // horizontal: Center
+      [{ horizontal: HorizontalAlign.Center, vertical: VerticalAlign.Top }, [0, 10]],
+      [{ horizontal: HorizontalAlign.Center, vertical: VerticalAlign.Bottom }, [0, -10]],
+      // horizontal: Right
+      [{ horizontal: HorizontalAlign.Right, vertical: VerticalAlign.Top }, [10, 10]],
+      [{ horizontal: HorizontalAlign.Right, vertical: VerticalAlign.Center }, [10, 0]],
+    ])('aligns %o to %j', (symbolAlign: SymbolAlign, expected: number[]) => {
+      expect(getDisplacement(symbolAlign, radius)).toEqual(expected);
+    });
+  });
+
+  describe('getRGBValues — extra parsing branches', () => {
+    let warnSpy: jest.SpyInstance;
+    beforeEach(() => {
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('parses rgba(...) with decimal alpha via parseFloat', () => {
+      expect(getRGBValues('rgba(255, 128, 0, 0.5)')).toEqual({ r: 255, g: 128, b: 0, a: 0.5 });
+    });
+
+    it('parses rgb( ... ) tolerant of internal whitespace', () => {
+      expect(getRGBValues('rgb( 255 , 128 , 0 )')).toEqual({ r: 255, g: 128, b: 0 });
+    });
+
+    it('returns null and warns for malformed rgb input', () => {
+      expect(getRGBValues('rgb(')).toBeNull();
+      expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it('returns null and warns for 5+ value rgba inputs', () => {
+      expect(getRGBValues('rgba(1, 2, 3, 4, 5)')).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported color format'));
+    });
+
+    it('returns null and warns for non-hex / non-rgb color strings', () => {
+      expect(getRGBValues('hsl(0, 100%, 50%)')).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unsupported color format'));
+    });
   });
 });

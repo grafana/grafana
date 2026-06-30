@@ -1,11 +1,14 @@
 import { within } from '@testing-library/react';
+import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -173,6 +176,7 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.FoldersRead,
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstanceRead,
@@ -439,6 +443,37 @@ describe('RuleViewer', () => {
       await screen.findByText('Test alert');
       expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
     });
+
+    it('should not show a stale "Inhibited" badge while re-fetching after the rule is no longer inhibited', async () => {
+      // Seed the cache: the rule currently has an inhibited instance, so the badge shows.
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+        }),
+      ]);
+
+      // Share a single store so the cached "inhibited" result survives the refetch we trigger below.
+      const store = configureStore();
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query, store);
+      expect(await screen.findByText('Inhibited')).toBeInTheDocument();
+
+      // The rule is no longer inhibited, but the refetch hangs so we can observe the in-flight state.
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', async () => {
+          await delay('infinite');
+          return HttpResponse.json([]);
+        })
+      );
+
+      // Something invalidates the shared alerts cache (e.g. a mutation or poll), starting a background refetch.
+      store.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerAlerts']));
+
+      // While the refetch is in flight we must not keep rendering the stale "inhibited" state.
+      await waitFor(() => {
+        expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('Data source managed alert rule', () => {
@@ -654,13 +689,18 @@ describe('RuleViewer', () => {
   });
 });
 
-const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
+const renderRuleViewer = async (
+  rule: CombinedRule,
+  identifier: RuleIdentifier,
+  tab: ActiveTab = ActiveTab.Query,
+  store?: ReturnType<typeof configureStore>
+) => {
   const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
   const view = render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
-    { historyOptions: { initialEntries: [path] } }
+    { historyOptions: { initialEntries: [path] }, store }
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());

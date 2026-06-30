@@ -34,10 +34,10 @@ test.describe(
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
       await dataSourcePicker.click();
 
-      const tempoOption = page.getByText('gdev-tempo');
-      await tempoOption.scrollIntoViewIfNeeded();
-      await expect(tempoOption).toBeVisible();
-      await tempoOption.click();
+      const jaegerOption = page.getByText('gdev-jaeger');
+      await jaegerOption.scrollIntoViewIfNeeded();
+      await expect(jaegerOption).toBeVisible();
+      await jaegerOption.click();
 
       // Save the data source
       const saveAndTestButton = page.getByTestId(selectors.pages.DataSource.saveAndTest);
@@ -61,7 +61,7 @@ test.describe(
             contentType: 'application/json',
             body: JSON.stringify(require('../fixtures/exemplars-query-response.json')),
           });
-        } else if (datasourceType === 'tempo') {
+        } else if (datasourceType === 'jaeger') {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -117,7 +117,7 @@ test.describe(
       const exemplarMarker = page.getByTestId(selectors.components.DataSource.Prometheus.exemplarMarker).first();
       await exemplarMarker.hover();
 
-      const queryWithTempoLink = page.getByText('Query with gdev-tempo');
+      const queryWithTempoLink = page.getByText('Query with gdev-jaeger');
       await queryWithTempoLink.click();
 
       // Verify trace viewer has span bars

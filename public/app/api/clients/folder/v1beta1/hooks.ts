@@ -552,9 +552,9 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
   const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
   const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
 
-  // TODO: Remove constant condition here once we have a solution for the app platform counts
-  // As of now, the counts are not calculated recursively, so we need to use the legacy API
-  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
+  // nested folders but both are good enough to report whether folder is empty or not.
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {

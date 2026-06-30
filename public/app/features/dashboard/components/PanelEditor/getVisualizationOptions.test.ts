@@ -241,6 +241,11 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -303,6 +308,11 @@ describe('getVisualizationOptions', () => {
         eventBus: new EventBusSrv(),
         plugin: plugin,
         instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -371,6 +381,8 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
       });
 
       expect(vizOptions.length).toEqual(1);
@@ -401,6 +413,8 @@ describe('getVisualizationOptions', () => {
             },
           ],
         },
+        currentOptions: {},
+        currentFieldConfig: fieldConfig,
       });
 
       expect(vizOptions.length).toEqual(1);

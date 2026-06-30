@@ -28,10 +28,7 @@ export function BranchOptionsSection<T extends FieldValues>({
   }
 
   return (
-    <ControlledCollapse
-      label={t('provisioning.branch-options.label-branch-options', 'Branch options (advanced)')}
-      isOpen={false}
-    >
+    <ControlledCollapse label={t('provisioning.branch-options.label-branch-options', 'Branch options')} isOpen={false}>
       <Stack direction="column" gap={2}>
         <Field
           noMargin

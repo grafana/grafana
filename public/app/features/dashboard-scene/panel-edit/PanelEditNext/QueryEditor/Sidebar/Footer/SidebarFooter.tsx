@@ -13,6 +13,7 @@ import {
   useQueryRunnerContext,
 } from '../../QueryEditorContext';
 import { BulkActionsBar, getBulkActionsVisibility } from '../BulkActionsBar';
+import { useCompactOnOverflow } from '../useCompactOnOverflow';
 
 export function SidebarFooter() {
   const { queries } = useQueryRunnerContext();
@@ -56,6 +57,10 @@ export function SidebarFooter() {
     trackMultiSelectToggle('enter');
   };
 
+  // The Select button drops its label when the counts row runs out of room. Only the left
+  // group is measured; the eye counts are pinned outside it so they never affect the decision.
+  const { containerRef, contentRef, compact } = useCompactOnOverflow(`${suffixText}|${isAlertView}`);
+
   return (
     <div className={styles.footer}>
       <div
@@ -63,24 +68,28 @@ export function SidebarFooter() {
         aria-hidden={hasBulkActions}
         {...(hasBulkActions && { inert: '' })}
       >
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <Text weight="medium" variant="bodySmall">
-            {suffixText}
-          </Text>
-          {!isAlertView && (
-            <Button
-              fill="text"
-              size="sm"
-              variant="secondary"
-              icon="checkbox-multiple"
-              disabled={total === 0}
-              onClick={handleSelectClick}
-              aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
-            >
-              {t('query-editor-next.sidebar.footer-select', 'Select...')}
-            </Button>
-          )}
-        </Stack>
+        <div ref={containerRef} className={styles.measuredRegion}>
+          <div ref={contentRef}>
+            <Stack direction="row" alignItems="center" gap={0.5}>
+              <Text weight="medium" variant="bodySmall">
+                {suffixText}
+              </Text>
+              {!isAlertView && (
+                <Button
+                  fill="text"
+                  size="sm"
+                  variant="secondary"
+                  icon="checkbox-multiple"
+                  disabled={total === 0}
+                  onClick={handleSelectClick}
+                  aria-label={t('query-editor-next.sidebar.footer-select-label', 'Select multiple items')}
+                >
+                  {compact ? undefined : t('query-editor-next.sidebar.footer-select', 'Select...')}
+                </Button>
+              )}
+            </Stack>
+          </div>
+        </div>
         {!isAlertView && (
           <Stack direction="row" alignItems="center" gap={1}>
             <Stack direction="row" alignItems="center" gap={0.5}>
@@ -129,13 +138,28 @@ function getStyles(theme: GrafanaTheme2) {
     icon: css({
       color: theme.colors.text.secondary,
     }),
+    // Grid items default to min-width: auto — without this, the wider view (the counts row)
+    // props the shared cell open past the footer, breaking the bar's overflow-based compact mode.
+    // nowrap + overflow: hidden make a squeezed view clip on the right instead of wrapping
+    // taller than the fixed-height footer (which would leak out from under the bar overlay).
     viewSlot: css({
       gridArea: 'view',
       display: 'flex',
       alignItems: 'center',
+      minWidth: 0,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
     }),
     countsLayout: css({
       justifyContent: 'space-between',
+      gap: theme.spacing(1),
+    }),
+    // The space left of the eye counts — what the items text + Select button must fit into.
+    measuredRegion: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      display: 'flex',
     }),
     // Opaque background + explicit stacking so the bar fully obscures the counts
     // beneath it. Parked off-screen by default; `barOpen` slides it over. No
