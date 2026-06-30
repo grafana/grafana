@@ -10,9 +10,9 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
-	historianApp "github.com/grafana/grafana/apps/alerting/historian/pkg/app"
-	historianAppConfig "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
+	"github.com/grafana/alerting/apps/historian/pkg/apis"
+	historianApp "github.com/grafana/alerting/apps/historian/pkg/app"
+	historianAppConfig "github.com/grafana/alerting/apps/historian/pkg/app/config"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"

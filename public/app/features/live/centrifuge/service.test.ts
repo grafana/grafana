@@ -126,4 +126,29 @@ describe('CentrifugeService', () => {
     expect(mockCentrifuge.newSubscription).toHaveBeenCalled();
     expect(mockSubscription.subscribe).toHaveBeenCalled();
   });
+
+  it('resolves channel id when the address uses the legacy `namespace` field', async () => {
+    mockCentrifugeState = State.Connected;
+
+    const service = new CentrifugeService(makeDeps());
+
+    // Older plugin builds (e.g. @grafana/llm <=1.0.2) still construct
+    // addresses with `namespace` instead of `stream`. The subscription id
+    // must resolve without an `undefined` segment so the backend can route
+    // the subscription.
+    const legacyAddr = {
+      scope: LiveChannelScope.Plugin,
+      namespace: 'grafana-llm-app',
+      path: 'stream/chat-completions',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    service.getStream(legacyAddr).subscribe();
+
+    expect(mockCentrifuge.newSubscription).toHaveBeenCalledTimes(1);
+    expect(mockCentrifuge.newSubscription).toHaveBeenCalledWith(
+      'default/plugin/grafana-llm-app/stream/chat-completions',
+      expect.anything()
+    );
+  });
 });

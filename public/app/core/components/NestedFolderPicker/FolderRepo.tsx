@@ -1,23 +1,26 @@
 import { memo } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Badge, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import { ViewRepositoryButton } from 'app/features/provisioning/components/ViewRepositoryButton';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type FolderDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderDTO | DashboardViewItem;
+  /** When true, render a "View repository" link next to the badge. Opt-in so the folder picker dropdown stays non-interactive. */
+  enableRepositoryLink?: boolean;
 }
 
-export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
+export const FolderRepo = memo(function FolderRepo({ folder, enableRepositoryLink = false }: Props) {
   // Check if we can skip early without needing the useIsProvisionedInstance query
   // This reduces RTK Query subscriptions and prevents re-render loops on API errors
   const canSkipEarly = getCanSkipEarly(folder);
@@ -43,14 +46,9 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && (
-        <Badge
-          color="darkgrey"
-          text={t('folder-repo.read-only-badge', 'Read only')}
-          tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-        />
-      )}
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
+      {enableRepositoryLink && <ViewRepositoryButton repositoryName={repository?.name} />}
     </Stack>
   );
 });
@@ -65,7 +63,7 @@ function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boo
   if (hasParent) {
     return true;
   }
-  const isNotManaged = folder.managedBy !== ManagerKind.Repo;
+  const isNotManaged = !isItemManagedByRepository(folder);
   if (isNotManaged) {
     return true;
   }

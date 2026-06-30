@@ -1,0 +1,10 @@
+import { type ComponentProps } from 'react';
+
+import { Box } from '@grafana/ui';
+
+type Props = Omit<ComponentProps<typeof Box>, 'backgroundColor' | 'borderRadius' | 'padding'>;
+
+/** Canvas-colored card container used for homepage sections. */
+export function HomeSection(props: Props) {
+  return <Box backgroundColor="canvas" borderRadius="default" padding={4} {...props} />;
+}

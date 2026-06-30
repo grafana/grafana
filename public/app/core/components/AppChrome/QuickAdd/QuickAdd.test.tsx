@@ -1,45 +1,86 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
+import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
+
+jest.mock(
+  'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
+  () => ({
+    getDashboardTemplatesTab: jest.fn(() => null),
+  })
+);
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-    getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
-    }),
   };
 });
 
-const setup = () => {
-  const navBarTree: NavModelItem[] = [
-    {
-      text: 'Dashboards',
-      id: 'dashboards/browse',
-      url: '/dashboards',
-      children: [
-        { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
-        { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import', isCreateAction: true },
-        { text: 'Browse', id: 'dashboards-browse', url: '/dashboards' },
-      ],
-    },
-    {
-      text: 'Alerting',
-      id: 'alerting',
-      url: '/alerting',
-      children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
-    },
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/analytics/main', () => ({
+  NewDashboardLibraryInteractions: { entryPointClicked: jest.fn() },
+}));
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/interactions', () => ({
+  DashboardLibraryInteractions: { entryPointClicked: jest.fn() },
+}));
+
+const useBooleanFlagValueMock = jest.mocked(useBooleanFlagValue);
+
+const dashboardsNavItem: NavModelItem = {
+  text: 'Dashboards',
+  id: 'dashboards/browse',
+  url: '/dashboards',
+  children: [
+    { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true },
+    { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import', isCreateAction: true },
+    { text: 'Browse', id: 'dashboards-browse', url: '/dashboards' },
+  ],
+};
+
+const alertingNavItem: NavModelItem = {
+  text: 'Alerting',
+  id: 'alerting',
+  url: '/alerting',
+  children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
+};
+
+const setup = (navBarTree?: NavModelItem[]) => {
+  const tree: NavModelItem[] = navBarTree ?? [
+    dashboardsNavItem,
+    alertingNavItem,
     // Synthetic top-level create action — not in production navtree today, but exercises the ungrouped code path
     {
       text: 'New import',
@@ -48,11 +89,13 @@ const setup = () => {
       isCreateAction: true,
     },
   ];
-  const store = configureStore({ navBarTree });
+  const store = configureStore({ navBarTree: tree });
   return render(<QuickAdd />, { store });
 };
 
 describe('QuickAdd', () => {
+  const originalDashboardTemplates = config.featureToggles.dashboardTemplates;
+
   beforeAll(() => {
     jest.spyOn(window, 'matchMedia').mockImplementation(
       () =>
@@ -62,6 +105,20 @@ describe('QuickAdd', () => {
           matches: true,
         }) as unknown as MediaQueryList
     );
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // analyticsFramework defaults to enabled in production
+    useBooleanFlagValueMock.mockReturnValue(true);
+    config.featureToggles.dashboardTemplates = false;
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+    mockGetDashboardTemplatesTab.mockReturnValue(null);
+    setTestFlags({ 'grafana.customDashboardTemplates': false });
+  });
+
+  afterEach(() => {
+    config.featureToggles.dashboardTemplates = originalDashboardTemplates;
   });
 
   it('renders a `New` button', () => {
@@ -121,19 +178,50 @@ describe('QuickAdd', () => {
   describe('Use template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
+      // Reset to defaults: a test datasource is available, custom templates are off.
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
+      mockGetDashboardTemplatesTab.mockReturnValue(null);
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
     });
 
-    it('shows a `Use template` button when the feature flag is enabled', async () => {
+    it('shows a `Use template` button when the feature flag is enabled and a test data source exists', async () => {
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('does not show a `Use template` button when the feature flag is disabled', async () => {
+    it('does not show a `Use template` button when there is no dashboard group', async () => {
+      setup([alertingNavItem]);
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('does not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+      mockGetDashboardTemplatesTab.mockReturnValue(null);
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('does not show a `Use template` button when the dashboardTemplates flag is on but there are no test data sources', async () => {
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('shows a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+      mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {
@@ -142,6 +230,42 @@ describe('QuickAdd', () => {
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
+    });
+
+    it('reports the new analytics framework interaction when clicked and the framework is enabled', async () => {
+      // Clicking the menu item navigates via its href, which jsdom logs as unimplemented
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup();
+
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Use template' }));
+
+      expect(NewDashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
+        entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+        contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+        contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+      });
+      expect(DashboardLibraryInteractions.entryPointClicked).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it('reports the legacy interaction when clicked and the analytics framework is disabled', async () => {
+      // Clicking the menu item navigates via its href, which jsdom logs as unimplemented
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+      useBooleanFlagValueMock.mockReturnValue(false);
+      setup();
+
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Use template' }));
+
+      expect(DashboardLibraryInteractions.entryPointClicked).toHaveBeenCalledWith({
+        entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
+        contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+        contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+      });
+      expect(NewDashboardLibraryInteractions.entryPointClicked).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 });

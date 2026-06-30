@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"strings"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -315,9 +316,16 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 	})
 
 	t.Run("move directory on configured branch should return MethodNotAllowed", func(t *testing.T) {
-		// Create some files in a directory first using existing testdata files
-		helper.CopyToProvisioningPath(t, "testdata/timeline-demo.json", "source-dir/timeline-demo.json")
-		helper.CopyToProvisioningPath(t, "testdata/text-options.json", "source-dir/text-options.json")
+		// Create some files in a directory first using existing testdata files.
+		// Rewrite their UIDs to be unique: the default timeline-demo/text-options
+		// UIDs already exist in the repo from earlier subtests (deep/nested/timeline.json
+		// and updated/content-updated.json). Two files mapping to the same dashboard UID
+		// are written in parallel by the full sync below and would race into an
+		// optimistic-lock conflict ("the object has been modified").
+		timelineContent := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"name": "mIJjFy8Kz"`, `"name": "move-dir-timeline"`, 1)
+		helper.WriteToProvisioningPath(t, "source-dir/timeline-demo.json", []byte(timelineContent))
+		textOptionsContent := strings.Replace(string(helper.LoadFile("testdata/text-options.json")), `"name": "WZ7AhQiVz"`, `"name": "move-dir-text"`, 1)
+		helper.WriteToProvisioningPath(t, "source-dir/text-options.json", []byte(textOptionsContent))
 
 		// Sync to ensure files are recognized
 		helper.SyncAndWait(t, repo, nil)

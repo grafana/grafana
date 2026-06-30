@@ -1,7 +1,7 @@
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { createDashboardEditViewFor } from '../settings/utils';
+import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 

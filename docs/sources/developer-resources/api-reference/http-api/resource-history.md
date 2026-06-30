@@ -56,7 +56,7 @@ The following request retrieves the version history for a dashboard with `metada
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response**:
@@ -138,7 +138,7 @@ You can paginate through history using `limit` and `continue`, the same way you 
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview&limit=2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 If the response includes a `metadata.continue` field, pass it as the `continue` query parameter in the next request to fetch the next page. When the response doesn't include a `continue` field, you've reached the last page.
@@ -149,7 +149,7 @@ If the response includes a `metadata.continue` field, pass it as the `continue` 
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=production-overview&limit=2&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ## Retrieve a specific version
@@ -162,7 +162,7 @@ To retrieve the full resource at a specific historical version, use the standard
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/production-overview?resourceVersion=1758777451428100 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 This returns the complete resource as it existed at that version.

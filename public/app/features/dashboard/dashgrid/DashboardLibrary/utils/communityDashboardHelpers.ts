@@ -22,7 +22,6 @@ import { type GnetDashboard, type Link } from '../types';
 import { type InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 import type { AssistantSource } from './templateDashboardHelpers';
 
-export const SEARCH_DEBOUNCE_MS = 500;
 export const DEFAULT_SORT_ORDER = 'downloads';
 export const DEFAULT_SORT_DIRECTION = 'desc';
 export const INCLUDE_LOGO = true;
@@ -50,7 +49,7 @@ export function getLogoUrl(dashboard: GnetDashboard): string {
 /**
  * Format date string for display
  */
-export function formatDate(dateString?: string): string {
+function formatDate(dateString?: string): string {
   if (!dateString) {
     return 'N/A';
   }
@@ -276,7 +275,7 @@ export async function onUseCommunityDashboard({
     const constantInputs = parseConstantInputs(dashboardJson.__inputs || []);
 
     // Try auto-mapping datasources
-    const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+    const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
     // Decide whether to show mapping form or navigate directly
     // Show mapping form if: (a) there are unmapped datasources OR (b) there are constants
@@ -354,7 +353,7 @@ export async function interpolateDashboardForCompatibilityCheck(
   const dsInputs: DataSourceInput[] = dashboardJson.__inputs?.filter(isDataSourceInput) || [];
 
   // 3. Auto-map datasources using existing utility
-  const mappingResult = tryAutoMapDatasources(dsInputs, datasourceUid);
+  const mappingResult = await tryAutoMapDatasources(dsInputs, datasourceUid);
 
   // 4. Check if auto-mapping was successful
   // Compatibility check requires all datasource variables to be resolved

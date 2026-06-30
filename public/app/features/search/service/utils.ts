@@ -1,18 +1,17 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
 import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
+import {
+  isSharedWithMe,
+  isVirtualStarredFolder,
+  isVirtualTeamFolder,
+} from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
 import { isRootFolderUID } from '../constants';
-import {
-  type DashboardSearchHit,
-  DashboardSearchItemType,
-  type DashboardViewItem,
-  type DashboardViewItemKind,
-} from '../types';
+import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 import { type SearchHit } from './unified';
@@ -96,6 +95,10 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
     return 'user-arrows';
+  }
+
+  if (item && isVirtualStarredFolder(item.uid)) {
+    return 'favorite';
   }
 
   if (item && isVirtualTeamFolder(item.uid)) {
@@ -196,26 +199,6 @@ export function resourceToSearchResult(
     };
 
     return hit;
-  });
-}
-
-export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
-  return searchHits.map((hit) => {
-    const dashboardHit: DashboardSearchHit = {
-      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-      title: hit.title,
-      uid: hit.name, // k8s name is the uid
-      url: hit.url,
-      tags: hit.tags || [],
-      isDeleted: true, // All results from trash are deleted
-      sortMeta: 0, // Default value for deleted items
-    };
-
-    if (!isRootFolderUID(hit.folder)) {
-      dashboardHit.folderUid = hit.folder;
-    }
-
-    return dashboardHit;
   });
 }
 

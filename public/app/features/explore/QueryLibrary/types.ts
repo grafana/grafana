@@ -1,12 +1,15 @@
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
-export type User = {
+type User = {
   uid: string;
   displayName?: string;
   avatarUrl?: string;
 };
 
 export type OnSelectQueryType = (query: DataQuery, title?: string) => void;
+
+// Multi-query selection (e.g. a recent-queries entry that ran several queries together).
+export type OnSelectQueriesType = (queries: DataQuery[], title?: string) => void;
 
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 

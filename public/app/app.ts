@@ -48,6 +48,7 @@ import {
   getPanelPluginMetas,
   initDataSourceInstanceSettings,
   initOpenFeature,
+  setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
@@ -93,7 +94,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
-import { instanceSettings as expressionInstanceSettings } from './features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -262,10 +263,8 @@ export class GrafanaApp {
       // Init async data source services (populates cache from boot data so
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
-      initDataSourceInstanceSettings(
-        { ...config.datasources, [expressionInstanceSettings.name]: expressionInstanceSettings },
-        config.defaultDatasource
-      );
+      setExpressionDataSourceInstance(expressionDatasource);
+      initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)

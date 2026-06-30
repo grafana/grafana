@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/flamegraph",
-  "version": "13.1.0-pre",
+  "version": "13.2.0-pre",
   "description": "Grafana flamegraph visualization component",
   "keywords": [
     "grafana",
@@ -52,13 +52,13 @@
   ],
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "13.1.0-pre",
-    "@grafana/ui": "13.1.0-pre",
+    "@grafana/data": "13.2.0-pre",
+    "@grafana/ui": "13.2.0-pre",
     "@leeoniya/ufuzzy": "1.0.19",
     "d3-scale": "^4.0.2",
     "lodash": "^4.17.23",
     "react": "18.3.1",
-    "react-use": "17.6.0",
+    "react-use": "17.6.1",
     "react-virtualized-auto-sizer": "1.0.26",
     "tinycolor2": "1.6.0"
   },

@@ -9,7 +9,7 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-import { config, type FetchResponse } from '@grafana/runtime';
+import { type FetchResponse } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 import { getMockDSInstanceSettings, getMockInfluxDS } from './mocks/datasource';
@@ -364,7 +364,6 @@ describe('influxdb response parser', () => {
         return of(annotationMockResponse);
       });
 
-      config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
 

@@ -13,6 +13,7 @@ import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableS
 import { SlatePrism } from '../../slate-plugins/slate-prism';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
+import { SelectionReference } from '../../utils/SelectionReference';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { SCHEMA, makeValue } from '../../utils/slate';
 import { getInputStyles } from '../Input/Input';
@@ -20,7 +21,6 @@ import { Portal } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { DataLinkSuggestions } from './DataLinkSuggestions';
-import { SelectionReference } from './SelectionReference';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 

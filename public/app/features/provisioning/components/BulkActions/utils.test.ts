@@ -1,6 +1,8 @@
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import {
+  getBulkActionInitialValues,
   getTargetFolderPathInRepo,
   getNestedFolderPath,
   getResourceTargetPath,
@@ -107,5 +109,55 @@ describe('isResourceAlreadyInTarget', () => {
 
   it('returns false when the resource would move to a different path', () => {
     expect(isResourceAlreadyInTarget('test/dashboard.json', 'test2/')).toBe(false);
+  });
+});
+
+describe('getBulkActionInitialValues', () => {
+  const branchFirstRepo: RepositoryView = {
+    name: 'repo',
+    type: 'github',
+    title: 'Test Repository',
+    target: 'folder',
+    workflows: ['branch', 'write'],
+  };
+  const writeFirstRepo: RepositoryView = {
+    name: 'repo',
+    type: 'github',
+    title: 'Test Repository',
+    target: 'folder',
+    branch: 'main',
+    workflows: ['write', 'branch'],
+  };
+  const writeOnlyRepo: RepositoryView = {
+    name: 'repo',
+    type: 'github',
+    title: 'Test Repository',
+    target: 'folder',
+    branch: 'main',
+    workflows: ['write'],
+  };
+
+  it('generates a prefixed branch ref when the default workflow is branch', () => {
+    const result = getBulkActionInitialValues(branchFirstRepo, 'bulk-x');
+
+    expect(result.comment).toBe('');
+    expect(result.workflow).toBe('branch');
+    expect(result.ref).toMatch(/^bulk-x\//);
+  });
+
+  it('uses the configured branch when write is the default workflow', () => {
+    const result = getBulkActionInitialValues(writeFirstRepo, 'bulk-x');
+
+    expect(result.comment).toBe('');
+    expect(result.workflow).toBe('write');
+    expect(result.ref).toBe('main');
+  });
+
+  it('uses the configured branch for write-only repositories', () => {
+    const result = getBulkActionInitialValues(writeOnlyRepo, 'bulk-x');
+
+    expect(result.comment).toBe('');
+    expect(result.workflow).toBe('write');
+    expect(result.ref).toBe('main');
   });
 });

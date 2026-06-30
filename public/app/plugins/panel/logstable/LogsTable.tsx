@@ -241,8 +241,10 @@ export const LogsTable = ({
 
   const tableOptions = useMemo(
     () => ({
-      sortOrder: LogsSortOrder.Descending,
-      sortBy: [{ displayName: timeFieldName, desc: true }],
+      sortOrder: options.sortOrder ?? LogsSortOrder.Descending,
+      sortBy: [
+        { displayName: timeFieldName, desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true },
+      ],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
       logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
       ...options,
@@ -253,13 +255,7 @@ export const LogsTable = ({
 
   const logRows = useMemo(() => {
     const logs = rawTableFrame
-      ? dataFrameToLogsModel(
-          [rawTableFrame],
-          panelData.request?.intervalMs,
-          undefined,
-          panelData.request?.targets,
-          false
-        ).rows.map(
+      ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
           (logRow) =>
             new LogListModel(logRow, {
               escape: false,
@@ -269,7 +265,7 @@ export const LogsTable = ({
         )
       : null;
     return logs ?? [];
-  }, [panelData.request?.intervalMs, panelData.request?.targets, rawTableFrame, timeZone]);
+  }, [panelData.request?.targets, rawTableFrame, timeZone]);
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;

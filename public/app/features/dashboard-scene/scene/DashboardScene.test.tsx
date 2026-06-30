@@ -137,6 +137,44 @@ describe('DashboardScene', () => {
       });
     });
 
+    describe('Edit session start tracking', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('reports edit_session_started with source "user" when entering edit mode manually', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+      });
+
+      it('reports source "assistant" when the assistant enters edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode('assistant');
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+      });
+
+      it('does not report again when already in edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        scene.onEnterEditMode();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
+
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;
@@ -688,11 +726,6 @@ describe('DashboardScene', () => {
 
         beforeEach(() => {
           store.delete(LS_STYLES_COPY_KEY);
-          config.featureToggles.panelStyleActions = true;
-        });
-
-        afterEach(() => {
-          config.featureToggles.panelStyleActions = false;
         });
 
         it('Should copy panel styles when feature flag is enabled', () => {
@@ -706,15 +739,6 @@ describe('DashboardScene', () => {
           expect(stored.panelType).toBe('timeseries');
           expect(stored.styles).toBeDefined();
           expect(spy).not.toHaveBeenCalled(); // Analytics only called from menu
-        });
-
-        it('Should not copy panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-
-          scene.copyPanelStyles(timeseriesPanel);
-
-          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
         });
 
         it('Should not copy styles for unsupported panel types', () => {
@@ -1381,13 +1405,6 @@ describe('DashboardScene', () => {
           expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
         });
 
-        it('Should return false for hasPanelStylesToPaste when feature flag is disabled', () => {
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
-          config.featureToggles.panelStyleActions = false;
-
-          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
-        });
-
         it('Should return true for hasPanelStylesToPaste when styles exist for matching panel type', () => {
           store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
 
@@ -1427,23 +1444,6 @@ describe('DashboardScene', () => {
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
           expect(spy).not.toHaveBeenCalled();
-        });
-
-        it('Should not paste panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-          const mockOnFieldConfigChange = jest.fn();
-          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
-
-          const styles = {
-            panelType: 'timeseries',
-            styles: { fieldConfig: { defaults: {} } },
-          };
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
-
-          scene.pastePanelStyles(timeseriesPanel);
-
-          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
         });
 
         it('Should not paste styles when no styles are copied', () => {
