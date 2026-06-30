@@ -461,7 +461,7 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	navigationAppConfig := map[string]NavigationAppConfig{
 		"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Application"},
+		"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
 	}
 
 	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
