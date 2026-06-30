@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"context"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -13,23 +13,17 @@ const (
 	EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP = "external_group"
 )
 
-var ExternalGroupMappingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
-	EXTERNAL_GROUP_MAPPING_TEAM: {
-		Name:        EXTERNAL_GROUP_MAPPING_TEAM,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The team name associated with the external group mapping",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
-	EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP: {
-		Name:        EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP,
-		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-		Description: "The external group name/id associated with the external group mapping",
-		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-			Filterable: true,
-		},
-	},
+// ExternalGroupMappingTableColumnDefinitions exposes column-defs by name.
+// No legacy SQL backend currently consumes this map for this kind; it is
+// kept for symmetry with the other IAM builders.
+var ExternalGroupMappingTableColumnDefinitions = tableColumnsByName(ExternalGroupMappingSearchFields)
+
+// ExternalGroupMappingSearchFields declares paths and types for each external
+// group mapping search field. The standard document builder uses these to
+// extract spec values from the raw JSON, avoiding a custom builder.
+var ExternalGroupMappingSearchFields = []resource.SearchFieldDefinition{
+	{Name: EXTERNAL_GROUP_MAPPING_TEAM, Path: "spec.teamRef.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The team name associated with the external group mapping"},
+	{Name: EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP, Path: "spec.externalGroupId", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The external group name/id associated with the external group mapping"},
 }
 
 func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
@@ -37,33 +31,27 @@ func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
 	for _, v := range ExternalGroupMappingTableColumnDefinitions {
 		values = append(values, v)
 	}
-
 	fields, err := resource.NewSearchableDocumentFields(values)
-	return resource.DocumentBuilderInfo{
-		GroupResource: iamv0.ExternalGroupMappingResourceInfo.GroupResource(),
-		Fields:        fields,
-		Builder:       new(extGroupMappingDocumentBuilder),
-	}, err
-}
-
-var _ resource.DocumentBuilder = new(extGroupMappingDocumentBuilder)
-
-type extGroupMappingDocumentBuilder struct{}
-
-// BuildDocument implements resource.DocumentBuilder.
-func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	extGroupMapping := &iamv0.ExternalGroupMapping{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, extGroupMapping, iamv0.ExternalGroupMappingKind())
 	if err != nil {
-		return nil, err
+		return resource.DocumentBuilderInfo{}, err
 	}
 
-	if extGroupMapping.Spec.TeamRef.Name != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM] = extGroupMapping.Spec.TeamRef.Name
-	}
-	if extGroupMapping.Spec.ExternalGroupId != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP] = extGroupMapping.Spec.ExternalGroupId
-	}
+	gvr := iamv0.ExternalGroupMappingResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: ExternalGroupMappingSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
 
-	return doc, nil
+	gr := iamv0.ExternalGroupMappingResourceInfo.GroupResource()
+	return resource.DocumentBuilderInfo{
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }

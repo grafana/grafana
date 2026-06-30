@@ -108,6 +108,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid EditPaneHeader paste',
     },
   },
+  ViewPanelSidePane: {
+    goBackButton: {
+      '13.0.1': 'data-testid view-panel-side-pane-back-button',
+    },
+  },
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
@@ -540,9 +545,6 @@ export const versionedComponents = {
         container: {
           ['13.1.0']: 'data-testid viz-layout',
         },
-        legend: {
-          ['13.1.0']: 'data-testid viz-layout-legend',
-        },
       },
       PieChart: {
         svgSlice: {
@@ -616,6 +618,9 @@ export const versionedComponents = {
   VizLegend: {
     seriesName: {
       '10.3.0': (name: string) => `data-testid VizLegend series ${name}`,
+    },
+    legend: {
+      ['13.1.0']: 'data-testid viz-layout-legend',
     },
   },
   Drawer: {
@@ -843,6 +848,11 @@ export const versionedComponents = {
     },
     intervalButtonV2: {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker interval button',
+    },
+  },
+  ResourcePicker: {
+    card: {
+      '13.2.0': 'data-testid resource-picker-card',
     },
   },
   QueryTab: {

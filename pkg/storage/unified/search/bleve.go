@@ -30,16 +30,14 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/selection"
 
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -86,6 +84,19 @@ type BleveOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
+
+	// Map "group/resource" -> hash of the SearchFieldDefinition slices
+	// registered for that (group, resource), across every version. The
+	// value is recorded in each new index's IndexBuildInfo so a future run
+	// can detect drift and rebuild. Keys must be lower-case.
+	SearchFieldsHashesForKinds map[string]string
+
+	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
+	// mapping for that (group, resource). When a provider is registered
+	// for a kind, the bleve mapping is built from the provider's
+	// SearchFieldDefinitions rather than from the legacy column-definition
+	// list carried by SearchableDocumentFields. Keys must be lower-case.
+	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -170,7 +181,9 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields map[string][]string
+	selectableFields     map[string][]string
+	searchFieldsHashes   map[string]string
+	searchFieldsProvider map[string]resource.SearchFieldsProvider
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -251,6 +264,8 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
 		selectableFields:        opts.SelectableFieldsForKinds,
+		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
+		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -615,7 +630,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string, searchFieldsHash string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -630,6 +645,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildTime:        buildTime.Unix(),
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
+		SearchFieldsHash: searchFieldsHash,
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -646,9 +662,10 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                  // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`               // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
+	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
+	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
+	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
+	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
 }
 
 type buildIndexSource int
@@ -727,9 +744,12 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	selectableFields := b.selectableFields[strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))]
+	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
+	selectableFields := b.selectableFields[sfKey]
+	searchFieldsHash := b.searchFieldsHashes[sfKey]
+	searchFieldsProvider := b.searchFieldsProvider[sfKey]
 
-	mapper, err := GetBleveMappings(fields, selectableFields)
+	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
 		return nil, err
 	}
@@ -745,7 +765,7 @@ func (b *bleveBackend) BuildIndex(
 	resourceDir := b.getResourceDir(key)
 	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
+	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -891,6 +911,7 @@ func (b *bleveBackend) prepareIndex(
 	snapshotEnabled bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
+	searchFieldsHash string,
 	rebuild bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
@@ -904,7 +925,7 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, lastImportTime, snapshotEnabled, logger)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger)
 	}
 
 	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
@@ -926,7 +947,7 @@ func (b *bleveBackend) prepareIndex(
 				source:        buildIndexSourceDownloadedSnapshot,
 			}, nil
 		} else if lock != nil {
-			prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+			prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 			if err != nil {
 				if releaseErr := lock.Release(); releaseErr != nil {
 					logger.Warn("Releasing rebuild build lock", "err", releaseErr)
@@ -939,7 +960,7 @@ func (b *bleveBackend) prepareIndex(
 		}
 	}
 
-	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 }
 
 func (b *bleveBackend) prepareUncachedFileIndex(
@@ -948,6 +969,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	resourceDir string,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
+	searchFieldsHash string,
 	lastImportTime time.Time,
 	snapshotEnabled bool,
 	logger log.Logger,
@@ -967,7 +989,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	}
 
 	if !snapshotEnabled {
-		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
 	idx, name, rv, err = b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logger)
@@ -1000,7 +1022,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
 	} else if lock != nil {
-		prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+		prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 		if err != nil {
 			if releaseErr := lock.Release(); releaseErr != nil {
 				logger.Warn("Releasing cold-start build lock", "err", releaseErr)
@@ -1012,7 +1034,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		return prepared, nil
 	}
 
-	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 }
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
@@ -1044,21 +1066,21 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	return nil, "", 0, nil
 }
 
-func (b *bleveBackend) createEmptyBuildIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+func (b *bleveBackend) createEmptyBuildIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
 	if b.opts.FileThreshold <= 0 {
-		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
-	return b.createEmptyMemoryIndex(mapper, selectableFields, logger)
+	return b.createEmptyMemoryIndex(mapper, selectableFields, searchFieldsHash, logger)
 }
 
-func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
 	for {
 		indexDir, fileIndexName, err := b.reserveIndexDir(resourceDir)
 		if err != nil {
 			return preparedBuildIndex{}, err
 		}
 
-		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
 		if errors.Is(err, bleve.ErrorIndexPathExists) {
 			b.unregisterInFlightBuildDir(indexDir)
 			continue
@@ -1079,8 +1101,8 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 	}
 }
 
-func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
-	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
+	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
 	if err != nil {
 		return preparedBuildIndex{}, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 	}
@@ -1786,6 +1808,7 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildTime:        bt,
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
+		SearchFieldsHash: bi.SearchFieldsHash,
 	}, nil
 }
 
@@ -2097,11 +2120,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields.
-	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
+	// Convert resource-specific fields to bleve fields. Any field declared
+	// on this index's per-kind SearchableDocumentFields lives under the
+	// fields.* sub-document and must be prefixed before the bleve query.
+	// Skip inputs that already carry the prefix.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(builders.DashboardFields(), f) {
+		if b.fields != nil && !strings.HasPrefix(f, resource.SEARCH_FIELD_PREFIX) && b.fields.Field(f) != nil {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -2147,6 +2172,32 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if v.Key == resource.SEARCH_FIELD_FOLDER &&
+				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(v.Values)+1)
+				for _, val := range v.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					v.Operator = string(selection.In)
+					v.Values = values
+				}
+			}
+
 			// Fields should already have correct prefix (either "fields." or "selectableFields.")
 			q, err := requirementQuery(v, "")
 			if err != nil {
@@ -2154,6 +2205,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			}
 			queries = append(queries, q)
 		}
+	}
+
+	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
+	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
+	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
+	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
+	// alone.
+	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
+		req.Query = q + "*"
 	}
 
 	if len(req.Query) > 1 {
@@ -2212,7 +2272,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = standard.Name               // analyze the text
+					// Match the analyzer used to index each field: the ngram field
+					// must be analyzed with TITLE_ANALYZER, not the standard analyzer
+					// (which splits on punctuation and drops sub-ngram-length fragments).
+					if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						q.Analyzer = TITLE_ANALYZER
+					} else {
+						q.Analyzer = standard.Name
+					}
 					q.Operator = query.MatchQueryOperatorAnd // all terms must match
 					disjoin.AddQuery(q)
 
@@ -2276,7 +2343,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// Add the sort fields
-	sorting := getSortFields(req)
+	sorting := getSortFields(req, b.fields)
 	searchrequest.SortBy(sorting)
 
 	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
@@ -2483,7 +2550,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
+func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
 	sorting := make([]string, 0, len(req.SortBy))
 	for _, sort := range req.SortBy {
 		input := sort.Field
@@ -2491,8 +2558,11 @@ func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 			input = field
 		}
 
-		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
-		if slices.Contains(builders.DashboardFields(), input) {
+		// Per-kind sort fields live under the fields.* sub-document, prefix
+		// them by consulting this index's SearchableDocumentFields. Skip
+		// inputs that already carry the prefix (Field() would strip it and
+		// match again, leading to a double prefix).
+		if fields != nil && !strings.HasPrefix(input, resource.SEARCH_FIELD_PREFIX) && fields.Field(input) != nil {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 

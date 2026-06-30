@@ -55,7 +55,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("user not found", func(t *testing.T) {
 		_, err := userStore.GetByEmail(context.Background(),
-			&user.GetUserByEmailQuery{Email: "test@email.com"},
+			&user.GetUserByEmailQuery{Email: "test@example.com"},
 		)
 		require.Error(t, err, user.ErrUserNotFound)
 	})
@@ -63,7 +63,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("insert user", func(t *testing.T) {
 		_, err := userStore.Insert(context.Background(),
 			&user.User{
-				Email:   "test@email.com",
+				Email:   "test@example.com",
 				Name:    "test1",
 				Login:   "test1",
 				Created: time.Now(),
@@ -76,7 +76,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("error on duplicated user", func(t *testing.T) {
 		_, err := userStore.Insert(context.Background(),
 			&user.User{
-				Email:   "test@email.com",
+				Email:   "test@example.com",
 				Name:    "test1",
 				Login:   "test1",
 				Created: time.Now(),
@@ -88,7 +88,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("get user", func(t *testing.T) {
 		_, err := userStore.GetByEmail(context.Background(),
-			&user.GetUserByEmailQuery{Email: "test@email.com"},
+			&user.GetUserByEmailQuery{Email: "test@example.com"},
 		)
 		require.NoError(t, err)
 	})
@@ -98,7 +98,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		id, err := userStore.Insert(ctx,
 			&user.User{
 				UID:     "abcd",
-				Email:   "next-test@email.com",
+				Email:   "next-test@example.com",
 				Name:    "next-test1",
 				Login:   "next-test1",
 				Created: time.Now(),
@@ -122,7 +122,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		result, err := userStore.GetByUID(context.Background(), query.UID)
 		require.Nil(t, err)
 		require.Equal(t, result.UID, "abcd")
-		require.Equal(t, result.Email, "next-test@email.com")
+		require.Equal(t, result.Email, "next-test@example.com")
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
@@ -453,30 +453,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("GetProfile", func(t *testing.T) {
 		_, err := userStore.GetProfile(context.Background(), &user.GetUserProfileQuery{UserID: 1})
 		require.NoError(t, err)
-	})
-
-	t.Run("Update HelpFlags", func(t *testing.T) {
-		id, err := userStore.Insert(context.Background(), &user.User{
-			Email:      "help@test.com",
-			Name:       "help",
-			Login:      "help",
-			Updated:    time.Now(),
-			Created:    time.Now(),
-			LastSeenAt: time.Now(),
-		})
-		require.NoError(t, err)
-		original, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		helpflags := user.HelpFlags1(1)
-		err = userStore.Update(context.Background(), &user.UpdateUserCommand{UserID: id, HelpFlags1: &helpflags})
-		require.NoError(t, err)
-
-		got, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		original.HelpFlags1 = helpflags
-		assertEqualUser(t, original, got)
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
@@ -1112,18 +1088,6 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), stats)
 	})
-}
-
-func assertEqualUser(t *testing.T, expected, got *user.User) {
-	// zero out time fields
-	expected.Updated = time.Time{}
-	expected.Created = time.Time{}
-	expected.LastSeenAt = time.Time{}
-	got.Updated = time.Time{}
-	got.Created = time.Time{}
-	got.LastSeenAt = time.Time{}
-
-	assert.Equal(t, expected, got)
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {

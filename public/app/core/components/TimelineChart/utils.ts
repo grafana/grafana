@@ -274,7 +274,7 @@ function getSpanNulls(field: Field) {
 /**
  * Merge values by the threshold
  */
-export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
+function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undefined {
   const thresholds = field.config.thresholds;
   if (field.type !== FieldType.number || !thresholds || !thresholds.steps.length) {
     return undefined;
@@ -611,7 +611,7 @@ export function prepareTimelineLegendItems(
   return getFieldLegendItem(allNonTimeFields(frames), theme);
 }
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
+function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }

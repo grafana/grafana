@@ -22,7 +22,6 @@ import {
   colorManipulator,
   type MapLayerOptions,
 } from '@grafana/data';
-import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -47,18 +46,7 @@ const defaultOptions: RouteConfig = {
   arrow: 0,
 };
 
-export const ROUTE_LAYER_ID = 'route';
-
-// Used by default when nothing is configured
-export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
-  type: ROUTE_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-  tooltip: false,
-};
+const ROUTE_LAYER_ID = 'route';
 
 enum mapIndex {
   x1 = 0,

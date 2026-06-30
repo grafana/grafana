@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -706,7 +707,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 }
 
 func TestGetQuotaUsage(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
 		s := &server{
@@ -738,26 +739,30 @@ func TestGetQuotaUsage(t *testing.T) {
 `
 		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 
-		// Create a real OverridesService with the temp file
 		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
 			FilePath: tmpFile,
 		})
 		require.NoError(t, err)
-		require.NoError(t, overridesService.init(ctx))
-		defer func() {
-			_ = overridesService.stop(ctx)
-		}()
 
-		// Create a mock backend that returns resource stats (reusing mockStorageBackend from search_test.go)
-		mockBackend := &mockStorageBackend{
-			resourceStats: []ResourceStats{{Count: 42}},
+		// Stats flow through GetStats -> searchClient.
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Count:    42,
+			}},
 		}
 
-		s := &server{
-			backend:          mockBackend,
-			overridesService: overridesService,
-			log:              log.NewNopLogger(),
-		}
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
 
 		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
@@ -770,6 +775,49 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.Nil(t, resp.Error)
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
+	})
+
+	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		content := `overrides:
+  "123":
+    quotas:
+      dashboard.grafana.app/dashboards:
+        limit: 500
+`
+		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
+			FilePath: tmpFile,
+		})
+		require.NoError(t, err)
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
+
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-123",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		assert.Equal(t, "stats blew up", resp.Error.Message)
 	})
 }
 
@@ -808,7 +856,7 @@ func TestCheckQuotas(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
 			overrides := fmt.Sprintf(`overrides:
@@ -831,13 +879,18 @@ func TestCheckQuotas(t *testing.T) {
 				Resource:  "dashboards",
 			}
 
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+					Group:    nsr.Group,
+					Resource: nsr.Resource,
+					Count:    1,
+				}},
+			}
+
 			server, err := NewResourceServer(ResourceServerOptions{
-				Backend: &mockStorageBackend{
-					resourceStats: []ResourceStats{{
-						NamespacedResource: nsr,
-						Count:              1,
-					}},
-				},
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
 				OverridesService: overridesService,
 				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
 			})
@@ -854,6 +907,92 @@ func TestCheckQuotas(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+
+	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
+		ctx := t.Context()
+
+		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+		tcr := tracing.NewNoopTracerService()
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+			FilePath: overridesFile,
+		})
+		require.NoError(t, err)
+
+		nsr := NamespacedResource{
+			Namespace: "stacks-123",
+			Group:     "grafana.dashboard.app",
+			Resource:  "dashboards",
+		}
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+			StorageMetrics:   metrics,
+			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+
+		require.NoError(t, server.checkQuota(ctx, nsr))
+		require.Equal(t, float64(1), testutil.ToFloat64(
+			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+	})
+}
+
+func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
+	ctx := t.Context()
+
+	overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+	overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+	require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+	tcr := tracing.NewNoopTracerService()
+	overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+		FilePath: overridesFile,
+	})
+	require.NoError(t, err)
+
+	t.Run("errors when neither search server nor search client is configured", func(t *testing.T) {
+		_, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			OverridesService: overridesService,
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("succeeds when a search client is configured", func(t *testing.T) {
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     newFakeResourceIndexClient(),
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+	})
 }
 
 func TestShouldEnforce(t *testing.T) {
@@ -1371,6 +1510,86 @@ func TestPeriodicBookmarks(t *testing.T) {
 		require.NoError(t, eg.Wait())
 
 		require.Empty(t, bookmarks)
+	})
+}
+
+// stubWatchServer is a ResourceStore_WatchServer mock whose Send returns a
+// caller-supplied error. It is used to exercise Watch's error handling without
+// relying on races between the watch context and concrete Send failures.
+type stubWatchServer struct {
+	grpc.ServerStream
+	ctx     context.Context
+	sendErr error
+}
+
+func (s *stubWatchServer) Send(*resourcepb.WatchEvent) error { return s.sendErr }
+func (s *stubWatchServer) Context() context.Context          { return s.ctx }
+func (s *stubWatchServer) SetHeader(metadata.MD) error       { return nil }
+func (s *stubWatchServer) SendHeader(metadata.MD) error      { return nil }
+func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
+func (s *stubWatchServer) SendMsg(any) error                 { return nil }
+func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
+
+// TestWatchContextCancellation pins down how Watch translates errors that
+// surface during context cancellation. The watch loop has an explicit
+// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
+// when the context is canceled we may instead run a Send/Read that returns
+// the context error. Watch must treat that as a clean shutdown, while still
+// surfacing unrelated errors and context errors that did not originate from
+// our own context.
+func TestWatchContextCancellation(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+		// SendInitialEvents forces Watch to call Send during the backfill, so
+		// the configured stub error path is hit deterministically without
+		// having to race with the bookmark ticker or the broadcaster.
+		SendInitialEvents: true,
+	}
+
+	setup := func(t *testing.T) *server {
+		t.Helper()
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		require.NoError(t, createTestPlaylist(authlib.WithAuthInfo(t.Context(), testUser), srv))
+		return srv
+	}
+
+	t.Run("returns nil when own context is canceled", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		cancel()
+
+		// Whatever sendErr we configure, Watch should swallow it because the
+		// context error from our own ctx will always be the proximate cause.
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		require.NoError(t, srv.Watch(watchReq, stub))
+	})
+
+	t.Run("propagates non-context Send errors", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		sentinel := errors.New("send failed")
+		stub := &stubWatchServer{ctx: ctx, sendErr: sentinel}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, sentinel)
+	})
+
+	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
+		srv := setup(t)
+		// Own context is alive; a Send returning context.Canceled here must
+		// have come from somewhere else and is a real error to report.
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, context.Canceled)
 	})
 }
 
@@ -2257,4 +2476,26 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
 	require.NoError(t, err)
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+}
+
+func TestClassifyAuthError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"nil", nil, ""},
+		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
+		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
+		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
+		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
+		{"permission denied", status.Error(codes.PermissionDenied, "no"), "auth_rejected"},
+		{"invalid argument", status.Error(codes.InvalidArgument, "bad"), "auth_rejected"},
+		{"unknown", errors.New("boom"), "auth_error"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, classifyAuthError(tt.err))
+		})
+	}
 }

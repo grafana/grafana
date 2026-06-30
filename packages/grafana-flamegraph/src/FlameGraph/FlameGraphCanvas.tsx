@@ -289,7 +289,7 @@ export const convertPixelCoordinatesToBarCoordinates = (
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
-  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const levelIndex = Math.floor(pos.y / PIXELS_PER_LEVEL);
   let found = undefined;
 
   while (next) {

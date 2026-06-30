@@ -1,8 +1,12 @@
 import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -14,18 +18,27 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
   useIsProvisionedInstance: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
-    }),
-  };
-});
+jest.mock(
+  'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
+  () => ({
+    getDashboardTemplatesTab: jest.fn(() => null),
+  })
+);
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
@@ -147,6 +160,10 @@ describe('NewActionsButton', () => {
   describe('Dashboard from template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
+      // Reset to defaults: a test datasource is available, custom templates are off.
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
+      mockGetDashboardTemplatesTab.mockReturnValue(null);
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
     });
 
     it('should show a `Use template` button when the feature flag is enabled', async () => {
@@ -154,10 +171,21 @@ describe('NewActionsButton', () => {
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('should not show a `Use template` button when the feature flag is disabled', async () => {
+    it('should not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       await renderAndOpen();
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('should show a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+      mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+
+      await renderAndOpen();
+      expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
     it('should redirect the user to the dashboard from template page when the button is clicked', async () => {

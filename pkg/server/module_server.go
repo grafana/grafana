@@ -34,12 +34,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/otel"
 )
+
+// SearchSupport bundles the document builder supplier with the dashboard
+// stats instance it was built from, so both can be shared by the
+// storage-server module.
+type SearchSupport struct {
+	DocBuilders    resource.DocumentBuilderSupplier
+	DashboardStats builders.DashboardStats
+}
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
@@ -60,7 +69,7 @@ func NewModule(opts Options,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, storageBackend, hooksService, storeProvider, reconcileCRDs)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +90,7 @@ func newModuleServer(opts Options,
 	vectorMetrics *resource.VectorMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
+	tracer tracing.Tracer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	storageBackend resource.StorageBackend,
@@ -114,6 +124,7 @@ func newModuleServer(opts Options,
 		vectorMetrics:    vectorMetrics,
 		promGatherer:     promGatherer,
 		registerer:       reg,
+		tracer:           tracer,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
@@ -159,6 +170,7 @@ type ModuleServer struct {
 
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
+	tracer       tracing.Tracer
 
 	MemberlistKVConfig         kv.Config
 	httpServerRouter           *mux.Router
@@ -248,7 +260,7 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -294,17 +306,33 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
 		// Only set docBuilders and indexMetrics if enable_search is true
 		var docBuilders resource.DocumentBuilderSupplier
+		var dashboardStats builders.DashboardStats
 		var indexMetrics *resource.BleveIndexMetrics
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
-			var err error
-			docBuilders, err = InitializeDocumentBuilders(s.cfg)
+			// The document builders and the vector backfiller share one
+			// stats instance; building them from one graph also avoids
+			// registering the sprinkles metrics twice.
+			support, err := InitializeSearchSupport(s.cfg, s.features, s.tracer, s.registerer)
 			if err != nil {
 				return nil, err
 			}
+			docBuilders = support.DocBuilders
+			dashboardStats = support.DashboardStats
 			indexMetrics = s.indexMetrics
+		} else if s.cfg.VectorIndexingEnabled {
+			// The vector backfiller views filter needs dashboard stats.
+			var err error
+			dashboardStats, err = InitializeDashboardStats(s.cfg, s.features, s.tracer, s.registerer)
+			if err != nil {
+				return nil, err
+			}
 		}
-		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.searchClient, s.grpcService, s.StorageServiceOptions...)
+		serviceOptions := s.StorageServiceOptions
+		if dashboardStats != nil {
+			serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
+		}
+		svc, err := sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.storageMetrics, indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.searchClient, s.grpcService, serviceOptions...)
 		if err != nil {
 			return nil, err
 		}
@@ -331,11 +359,11 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
-		docBuilders, err := InitializeDocumentBuilders(s.cfg)
+		support, err := InitializeSearchSupport(s.cfg, s.features, s.tracer, s.registerer)
 		if err != nil {
 			return nil, err
 		}
-		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.grpcService, s.StorageServiceOptions...)
+		svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.grpcService, s.StorageServiceOptions...)
 		if err != nil {
 			return nil, err
 		}

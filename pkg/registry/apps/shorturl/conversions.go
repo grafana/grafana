@@ -64,13 +64,30 @@ func UnstructuredToLegacyShortURLDTO(item unstructured.Unstructured, appURL stri
 	}
 }
 
-func UnstructuredToLegacyShortURL(item unstructured.Unstructured) *shorturls.ShortUrl {
-	spec := item.Object["spec"].(map[string]interface{})
-	status := item.Object["status"].(map[string]interface{})
+func UnstructuredToLegacyShortURL(item unstructured.Unstructured) (*shorturls.ShortUrl, error) {
+	path, found, err := unstructured.NestedString(item.Object, "spec", "path")
+	if err != nil {
+		return nil, fmt.Errorf("shorturl %q: invalid spec.path: %w", item.GetName(), err)
+	}
+	if !found {
+		return nil, fmt.Errorf("shorturl %q: missing spec.path", item.GetName())
+	}
+
+	// lastSeenAt is optional. Numbers in an Unstructured may be decoded as either int64
+	// (k8s codec) or float64 (plain JSON unmarshal), so accept both rather than asserting
+	// a single concrete type.
+	lastSeen, found, err := unstructured.NestedNumberAsFloat64(item.Object, "status", "lastSeenAt")
+	if err != nil {
+		return nil, fmt.Errorf("shorturl %q: invalid status.lastSeenAt: %w", item.GetName(), err)
+	}
+	var lastSeenAt int64
+	if found {
+		lastSeenAt = int64(lastSeen)
+	}
 
 	return &shorturls.ShortUrl{
 		Uid:        item.GetName(),
-		Path:       spec["path"].(string),
-		LastSeenAt: status["lastSeenAt"].(int64),
-	}
+		Path:       path,
+		LastSeenAt: lastSeenAt,
+	}, nil
 }

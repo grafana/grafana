@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -57,6 +59,109 @@ func TestBleveBackend(t *testing.T) {
 	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
+}
+
+func TestBleveSearchRootFolderExpansion(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
+	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &builders.DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			Stats:            make(map[string]map[string]int64),
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(t, err)
+
+	// Index three dashboards: one at the root using the legacy empty sentinel,
+	// one at the root using the canonical "general" sentinel, and one nested.
+	doc := func(name, folder string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:     1,
+				Name:   name,
+				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: key.Group, Resource: key.Resource},
+				Title:  name,
+				Folder: folder,
+				Fields: map[string]any{},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, 3, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("legacy-root", ""),
+				doc("general-root", foldermodel.GeneralFolderUID),
+				doc("nested", "other"),
+			},
+		}); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	searchFolder := func(operator string, values ...string) []string {
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: operator,
+					Values:   values,
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		names := make([]string, 0, len(rsp.Results.Rows))
+		for _, row := range rsp.Results.Rows {
+			names = append(names, row.Key.Name)
+		}
+		return names
+	}
+
+	t.Run("querying the canonical root matches both root sentinels", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), foldermodel.GeneralFolderUID)
+		require.ElementsMatch(t, []string{"legacy-root", "general-root"}, names)
+	})
+
+	t.Run("querying the legacy root matches both root sentinels", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), "")
+		require.ElementsMatch(t, []string{"legacy-root", "general-root"}, names)
+	})
+
+	t.Run("a non-root folder is not expanded", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), "other")
+		require.ElementsMatch(t, []string{"nested"}, names)
+	})
+
+	t.Run("root is expanded inside an in-list alongside other folders", func(t *testing.T) {
+		names := searchFolder(string(selection.In), "other", foldermodel.GeneralFolderUID)
+		require.ElementsMatch(t, []string{"legacy-root", "general-root", "nested"}, names)
+	})
 }
 
 func testBleveBackend(t *testing.T, backend *bleveBackend) {
@@ -718,13 +823,17 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
+	dashboardInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+	dashboardFields := dashboardInfo.Fields
+
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"fields.views_total"}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
@@ -733,7 +842,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
@@ -742,7 +851,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "description", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"description"}, sortFields)
 	})
 }
@@ -950,13 +1059,19 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
+func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
+	return func(options *BleveOptions) {
+		options.SearchFieldsHashesForKinds = m
+	}
+}
+
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields)
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -2028,6 +2143,35 @@ func TestIndexBuildInfo(t *testing.T) {
 	require.NotNil(t, buildInfo)
 	require.Equal(t, buildVersion, buildInfo.BuildVersion)
 	require.InDelta(t, float64(time.Now().Unix()), buildInfo.BuildTime, 30) // allow 30 seconds of drift
+}
+
+func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+	hash := "deadbeefcafef00d"
+	hashes := map[string]string{
+		strings.ToLower(ns.Group + "/" + ns.Resource): hash,
+	}
+
+	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))
+	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	buildInfo, err := index.BuildInfo()
+	require.NoError(t, err)
+	assert.Equal(t, hash, buildInfo.SearchFieldsHash)
+
+	// Indexes built without a registered hash record an empty string.
+	nsOther := resource.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
+	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, nil, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	buildInfoOther, err := indexOther.BuildInfo()
+	require.NoError(t, err)
+	assert.Equal(t, "", buildInfoOther.SearchFieldsHash)
 }
 
 func TestInvalidBuildVersion(t *testing.T) {

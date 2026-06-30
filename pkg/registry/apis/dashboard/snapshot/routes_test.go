@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -159,6 +160,59 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	}
 }
 
+func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID:   "valid-uid",
+		OrgID: orgID,
+	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
+
+	// The storage Create is the seam the real SnapshotLegacyStore -> service -> store
+	// chain collapses to; returning the sentinel simulates a duplicate-key collision.
+	mockStorage := grafanarest.NewMockStorage(t)
+	mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists.Errorf("snapshot with the same key already exists"))
+
+	routes := GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]common.OpenAPIDefinition{},
+		func() rest.Storage { return mockStorage },
+		dashboardService,
+	)
+
+	require.NotEmpty(t, routes.Namespace)
+	handler := routes.Namespace[0].Handler
+
+	bodyBytes, err := json.Marshal(map[string]any{
+		"dashboard": map[string]any{"uid": "valid-uid", "title": "test"},
+		"name":      "test snapshot",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+	req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+	recorder := httptest.NewRecorder()
+	handler(recorder, req)
+
+	assert.Equal(t, http.StatusConflict, recorder.Code)
+	var resp map[string]any
+	err = json.Unmarshal(recorder.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "dashboardsnapshots.keyAlreadyExists", resp["messageId"])
+}
+
 func TestCreateSnapshotPublicMode(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
@@ -286,6 +340,9 @@ func TestCreateExternalSnapshot(t *testing.T) {
 		UserID: 1,
 		OrgID:  orgID,
 	}
+
+	// externalSnapshotsK8SAPIPush ON: handler pushes to the external K8s endpoint.
+	setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 	t.Run("sends request to external server K8s endpoint with Bearer token", func(t *testing.T) {
 		var receivedReq *http.Request
@@ -530,6 +587,206 @@ func TestCreateExternalSnapshot(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.Empty(t, receivedReq.Header.Get("Authorization"))
+	})
+}
+
+func TestCreateExternalSnapshotLegacy(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	// externalSnapshotsK8SAPIPush OFF: handler pushes to the legacy /api/snapshots
+	// endpoint on the external server.
+	setExternalSnapshotsK8SAPIPushToggle(t, false)
+
+	t.Run("sends unauthenticated request to external server legacy endpoint", func(t *testing.T) {
+		var receivedReq *http.Request
+		var receivedBody map[string]any
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			_ = json.NewDecoder(r.Body).Decode(&receivedBody)
+			w.Header().Set("Content-Type", "application/json")
+			// Legacy response shape uses `url` / `deleteUrl` (lowercase).
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"key":       "ext-key",
+				"deleteKey": "ext-delete-key",
+				"url":       "https://external.example.com/dashboard/snapshot/ext-key",
+				"deleteUrl": "https://external.example.com/api/snapshots-delete/ext-delete-key",
+			})
+		}))
+		defer externalServer.Close()
+
+		// Even if a token is configured, the legacy /api/snapshots endpoint is fully
+		// public and the handler must not send Authorization.
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:      true,
+			ExternalEnabled:       true,
+			ExternalSnapshotURL:   externalServer.URL,
+			ExternalSnapshotToken: "ignored-token",
+		}
+
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&dashv0.Snapshot{}, nil)
+
+		routes := GetRoutes(
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return mockStorage },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"name":      "external snapshot",
+			"expires":   3600,
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.Empty(t, receivedReq.Header.Get("Authorization"))
+		assert.Equal(t, "/api/snapshots", receivedReq.URL.Path)
+		assert.Equal(t, "external snapshot", receivedBody["name"])
+
+		// The legacy response shape should be mapped onto DashboardCreateResponse.
+		var resp dashv0.DashboardCreateResponse
+		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+		assert.Equal(t, "ext-delete-key", resp.DeleteKey)
+		assert.Equal(t, "https://external.example.com/dashboard/snapshot/ext-key", resp.URL)
+	})
+
+	t.Run("returns 502 on non-200 response from external server", func(t *testing.T) {
+		externalServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer externalServer.Close()
+
+		options := dashv0.SnapshotSharingOptions{
+			SnapshotsEnabled:    true,
+			ExternalEnabled:     true,
+			ExternalSnapshotURL: externalServer.URL,
+		}
+
+		dashboardService := dashboards.NewFakeDashboardService(t)
+		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+			UID:   "dash-1",
+			OrgID: orgID,
+		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
+
+		routes := GetRoutes(
+			options,
+			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+			map[string]common.OpenAPIDefinition{},
+			func() rest.Storage { return nil },
+			dashboardService,
+		)
+
+		body, _ := json.Marshal(map[string]any{
+			"dashboard": map[string]any{"uid": "dash-1", "title": "test"},
+			"external":  true,
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+
+		assert.Equal(t, http.StatusBadGateway, recorder.Code)
+	})
+}
+
+func TestDeleteExternalSnapshotLegacy(t *testing.T) {
+	t.Run("rebuilds K8s-format URL into legacy GET endpoint", func(t *testing.T) {
+		var receivedReq *http.Request
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		// URL is in K8s format — function must strip the path and rebuild as legacy.
+		err := deleteExternalSnapshotLegacy(server.URL + "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/abc")
+		require.NoError(t, err)
+		require.NotNil(t, receivedReq)
+		assert.Equal(t, http.MethodGet, receivedReq.Method)
+		assert.Equal(t, "/api/snapshots-delete/abc", receivedReq.URL.Path)
+	})
+
+	t.Run("passes through legacy-format URL unchanged", func(t *testing.T) {
+		var receivedReq *http.Request
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			receivedReq = r
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/xyz")
+		require.NoError(t, err)
+		assert.Equal(t, "/api/snapshots-delete/xyz", receivedReq.URL.Path)
+	})
+
+	t.Run("returns auth error on 401", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/k")
+		require.Error(t, err)
+	})
+
+	t.Run("treats 404 as success for idempotent double-delete", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/already-gone")
+		require.NoError(t, err)
+	})
+
+	t.Run("treats 500 'Failed to get dashboard snapshot' as success for older hosts", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": "Failed to get dashboard snapshot"})
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/already-gone")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error on 500 with a different message", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": "some other error"})
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/k")
+		require.Error(t, err)
 	})
 }
 

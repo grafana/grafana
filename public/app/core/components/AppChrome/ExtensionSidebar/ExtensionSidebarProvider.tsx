@@ -7,10 +7,14 @@ import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/a
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
-import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
+import {
+  DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MIN_EXTENSION_SIDEBAR_WIDTH,
+} from './ExtensionSidebar';
 
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
-export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
+const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
   'grafana-dash-app',
@@ -50,7 +54,7 @@ export type ExtensionSidebarContextType = {
   props?: Record<string, unknown>;
 };
 
-export const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
+const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
   isOpen: false,
   dockedComponentId: undefined,
   setDockedComponentId: () => {},
@@ -241,7 +245,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         setDockedComponentId: (componentId) => setDockedComponentWithProps(componentId, undefined),
         availableComponents,
         extensionSidebarWidth: Math.min(
-          extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH,
+          Math.max(extensionSidebarWidth ?? DEFAULT_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH),
           MAX_EXTENSION_SIDEBAR_WIDTH
         ),
         setExtensionSidebarWidth,

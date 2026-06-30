@@ -63,10 +63,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagRefactorVariablesTimeRange
-	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
-	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -94,6 +90,10 @@ const (
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
+
+	// FlagProvisioningGitConventions
+	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -127,6 +127,14 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagExternalSnapshotsK8SAPIPush
+	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
+
+	// FlagExternalSnapshotsSupportLegacyAPI
+	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
+
 	// FlagKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
@@ -134,10 +142,6 @@ const (
 	// FlagKubernetesFolderCascadeDelete
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
-
-	// FlagKubernetesShortURLs
-	// Enables k8s short URL API and uses it under the hood when handling legacy /api
-	FlagKubernetesShortURLs = "kubernetesShortURLs"
 
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
@@ -195,10 +199,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagCachingOptimizeSerializationMemoryUsage
-	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -234,6 +234,10 @@ const (
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
+
+	// FlagCanvasExternalPlugin
+	// Load Canvas panel from an external plugin instead of the bundled core plugin
+	FlagCanvasExternalPlugin = "canvasExternalPlugin"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -343,9 +347,9 @@ const (
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
 
-	// FlagGrafanaOrgDashboardTemplates
-	// Enables org-defined dashboard templates for enterprise
-	FlagGrafanaOrgDashboardTemplates = "grafana.orgDashboardTemplates"
+	// FlagGrafanaCustomDashboardTemplates
+	// Enables custom dashboard templates for enterprise
+	FlagGrafanaCustomDashboardTemplates = "grafana.customDashboardTemplates"
 
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
@@ -402,10 +406,6 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
-	// FlagDataplaneAggregator
-	// Enable grafana dataplane aggregator
-	FlagDataplaneAggregator = "dataplaneAggregator"
 
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
@@ -530,10 +530,6 @@ const (
 	// FlagFetchRulesInCompactMode
 	// Add compact=true when fetching rules
 	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
-
-	// FlagGrafanaconThemes
-	// Enables the temporary themes for GrafanaCon
-	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
 	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
@@ -738,10 +734,6 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
-	// FlagOpentsdbBackendMigration
-	// Run queries through the data source backend
-	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
-
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
@@ -807,7 +799,7 @@ const (
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
 	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple alerting policies
+	// Enables the ability to create multiple notification policies in alerting
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer
@@ -842,10 +834,6 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagFrontendServiceUseSettingsService
-	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
-	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
-
 	// FlagFrontendServiceSettingsSourceFilter
 	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
 	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
@@ -873,10 +861,6 @@ const (
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagLogsTablePanelNG
-	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanelNG = "logsTablePanelNG"
 
 	// FlagFrontendServiceSSOAutoLogin
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
@@ -914,10 +898,6 @@ const (
 	// Enables the query service to do query caching
 	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
 
-	// FlagCompiledBootScript
-	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-	FlagCompiledBootScript = "compiledBootScript"
-
 	// FlagInfluxDBConfigValidation
 	// Enables validation on the InfluxDB data source configuration page
 	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
@@ -925,6 +905,10 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagGrafanaNewPreferencesPage
+	// Whether to use the new SharedPreferences functional component
+	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
 
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
@@ -941,14 +925,6 @@ const (
 	// FlagGrafanaCorrelationsSkipLegacy
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
-
-	// FlagGrafanaMeticulousAIRecorder
-	// Enable Meticulous AI session recorder for automated UI test generation
-	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
-
-	// FlagGrafanaMeticulousAIRecorderHighVolume
-	// When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.
-	FlagGrafanaMeticulousAIRecorderHighVolume = "grafana.meticulousAIRecorderHighVolume"
 
 	// FlagGrafanaMeticulousAIMode
 	// Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).
@@ -973,4 +949,12 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagDashboardVectorSearch
+	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagSplunkUseLegacyResultsApi
+	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
+	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 )

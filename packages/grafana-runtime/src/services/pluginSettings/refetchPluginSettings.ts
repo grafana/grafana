@@ -6,6 +6,7 @@ import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
 
 import { getAppPluginSettings, getLegacySettings } from './getPluginSettings';
+import { logPluginSettingsDebug } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { getCacheKey, getLegacyCacheKey } from './utils';
 
@@ -16,6 +17,7 @@ export async function refetchPluginSettings(pluginId: string): Promise<PluginMet
 
   const meta = await refetchPluginMeta(pluginId);
   if (!meta) {
+    logPluginSettingsDebug('PluginSettings: falling back to refetching legacy plugin settings', { pluginId });
     return refetchCachedLegacySettings(pluginId, false);
   }
 

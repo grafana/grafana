@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { type Folder } from '../../types/rule-form';
 
-export type ButtonFill = 'solid' | 'outline' | 'text';
+type ButtonFill = 'solid' | 'outline' | 'text';
 
 export interface CreateNewFolderProps {
   onCreate: (folder: Folder) => void;

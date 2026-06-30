@@ -249,7 +249,7 @@ func getDistributorResponse[Req any, Resp any](t *testing.T, req *Req, fn func(c
 
 func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 	go func() {
-		// this next line is to avoid double registration, as both InitializeDocumentBuilders as well as ProvideUnifiedStorageGrpcService
+		// this next line is to avoid double registration, as both InitializeSearchSupport as well as ProvideUnifiedStorageGrpcService
 		// are hard-coded to use prometheus.DefaultRegisterer
 		// the alternative would be to get the registry from wire, in which case the tests would receive a new
 		// registry automatically, but that _may_ change metric names
@@ -393,15 +393,14 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.EnableSearch = true
 	features := featuremgmt.WithFeatures()
-	docBuilders, err := InitializeDocumentBuilders(cfg)
+	support, err := InitializeSearchSupport(cfg, features, tracing.InitializeTracerForTest(), prometheus.NewRegistry())
 	require.NoError(t, err)
-	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, support.DocBuilders, nil, nil, nil)
 	require.NoError(t, err)
 	cfg.DisablePruner = dbType == "sqlite3"
 	eDB, err := sql.ProvideResourceDB(cfg, nil)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
