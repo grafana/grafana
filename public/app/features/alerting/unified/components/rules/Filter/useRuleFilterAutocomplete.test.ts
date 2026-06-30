@@ -166,9 +166,9 @@ describe('useNamespaceAndGroupOptions', () => {
       expect(options).toContainEqual({ label: 'big-namespace', value: 'big-namespace', description: 'mimir-capped' });
     });
 
-    it('silently degrades to external namespaces when the Grafana folder fetch fails', async () => {
-      // A failing Grafana folder request must not discard the external namespace suggestions:
-      // the two fetches degrade independently and the failure is swallowed.
+    it('degrades to external namespaces when the Grafana folder fetch fails', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
       server.use(http.get(GRAFANA_RULES_URL, () => HttpResponse.json({}, { status: 500 })));
       const externalDs = buildExternalDataSource('mimir-ext');
       setPrometheusRules(externalDs, [{ name: 'g1', file: 'external-namespace', interval: 60, rules: [] }]);
@@ -179,6 +179,9 @@ describe('useNamespaceAndGroupOptions', () => {
 
       // No Grafana folders (the fetch failed), but the external namespace is preserved.
       expect(options).toEqual([{ label: 'external-namespace', value: 'external-namespace', description: 'mimir-ext' }]);
+      expect(consoleWarnSpy).toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
     });
 
     it('formats external namespaces: yaml paths use the filename, long names are truncated, described by data source', async () => {

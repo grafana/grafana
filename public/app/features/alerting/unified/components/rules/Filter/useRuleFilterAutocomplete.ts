@@ -90,7 +90,8 @@ async function fetchGrafanaFolderNames(
       searchFolder: searchFolder || undefined,
     }).unwrap();
     return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
-  } catch {
+  } catch (error) {
+    console.warn('Failed to load Grafana folders for namespace autocomplete', error);
     return [];
   }
 }
