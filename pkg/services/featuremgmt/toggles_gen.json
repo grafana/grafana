@@ -5432,11 +5432,14 @@
     {
       "metadata": {
         "name": "unifiedStorageSearchPostRankAuthz",
-        "resourceVersion": "1782748277478",
-        "creationTimestamp": "2026-06-29T15:51:17Z"
+        "resourceVersion": "1782809144915",
+        "creationTimestamp": "2026-06-29T15:51:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-30 08:45:44.915126 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Authorize bleve search hits after ranking with concurrent BatchCheck batches and early-exit at the requested limit, instead of filtering inside the bleve searcher",
+        "description": "Authorize bleve search hits after ranking, stopping early once the page is filled, instead of filtering inside the bleve searcher",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "expression": "false"

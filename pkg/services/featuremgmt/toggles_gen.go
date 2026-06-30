@@ -12,7 +12,7 @@ const (
 	FlagPanelTitleSearch = "panelTitleSearch"
 
 	// FlagUnifiedStorageSearchPostRankAuthz
-	// Authorize bleve search hits after ranking with concurrent BatchCheck batches and early-exit at the requested limit, instead of filtering inside the bleve searcher
+	// Authorize bleve search hits after ranking, stopping early once the page is filled, instead of filtering inside the bleve searcher
 	FlagUnifiedStorageSearchPostRankAuthz = "unifiedStorageSearchPostRankAuthz"
 
 	// FlagPublicDashboardsEmailSharing

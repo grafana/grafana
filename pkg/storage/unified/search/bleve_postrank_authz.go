@@ -24,16 +24,24 @@ import (
 // PostRankAuthzConfig tunes the post-filter authorization path: bleve ranks
 // without the in-searcher authz wrapper, a bounded window of hits is fetched,
 // and authorization runs app-side in rank order, paging via SearchAfter until
-// the page is filled or MaxCandidates is hit.
+// the page is filled or the candidate budget is hit.
 type PostRankAuthzConfig struct {
 	// OverFetchFactor multiplies the requested limit to size each bleve window.
 	OverFetchFactor int
 	// MinWindow / MaxWindow clamp the per-window bleve Size.
 	MinWindow int
 	MaxWindow int
-	// MaxCandidates is the total number of candidate hits scanned across all
-	// windows before the scan stops. Bounds work for low authorized fractions.
+	// MaxCandidates is the page-fill candidate budget: the scan stops after
+	// authorizing this many ranked hits. Bounds work for low authorized
+	// fractions. Trade-off: authorized docs sorting beyond the budget yield a
+	// short/empty page for sparse-access users (the in-searcher path is the
+	// exact alternative).
 	MaxCandidates int
+	// FacetSampleSize is the candidate budget when aggregating facets. Facet
+	// counts reflect a sample of up to this many ranked hits, not the full
+	// authorized set. Smaller than MaxCandidates since facets are a
+	// distribution that stabilizes with a modest sample.
+	FacetSampleSize int
 }
 
 // effective fills zero/negative fields with the defaults used by the post-filter
@@ -51,10 +59,13 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 	if c.MaxCandidates <= 0 {
 		c.MaxCandidates = 50000
 	}
+	if c.FacetSampleSize <= 0 {
+		c.FacetSampleSize = 10000
+	}
 	return c
 }
 
-// windowSize returns the per-window bleve Size for the post-filter path:
+// windowSize returns the per-window bleve Size for facet/distinct queries:
 // limit * OverFetchFactor clamped to [MinWindow, MaxWindow].
 func (c PostRankAuthzConfig) windowSize(limit int) int {
 	w := limit * c.OverFetchFactor
@@ -65,6 +76,26 @@ func (c PostRankAuthzConfig) windowSize(limit int) int {
 		w = c.MaxWindow
 	}
 	return w
+}
+
+// scanWindowSize returns the bleve Size for scan window `window`.
+// Facet/distinct queries need a stable sample, so they use the fixed window.
+// Page-fill queries start just over the page and grow geometrically on each
+// miss, so the common high-authorized-fraction case loads far fewer stored
+// fields. Ranking is unaffected: bleve ranks the full match set and returns
+// the top-N regardless of Size.
+func (c PostRankAuthzConfig) scanWindowSize(limit, offset, window int, wantFacets bool) int {
+	if wantFacets {
+		return c.windowSize(limit)
+	}
+	size := limit + offset
+	for i := 0; i < window && size < c.MaxWindow; i++ {
+		size *= c.OverFetchFactor
+	}
+	if size > c.MaxWindow {
+		size = c.MaxWindow
+	}
+	return size
 }
 
 // ensureSearchFields makes bleve load every stored field when the caller did not
@@ -99,12 +130,10 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
-// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values from the index
-// reader mid-search), the hit here already has its external ID and stored
-// fields populated by bleve. The doc ID format is
-// <namespace>/<group>/<resourceType>/<name>; the resourceType segment is what
-// distinguishes dashboards from folders in a federated alias, and is used to
-// look up the verb in the resources map.
+// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values mid-search),
+// the hit here already has its ID and stored fields populated by bleve. The doc
+// ID is <namespace>/<group>/<resourceType>/<name>; the resourceType segment
+// distinguishes dashboards from folders in a federated alias and keys the verb.
 func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
 	parts := strings.Split(doc.ID, "/")
 	if len(parts) != 4 {
@@ -132,24 +161,15 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 	}, true
 }
 
-// runPostFilterAuthz implements the postFilter mode: bleve ranks without the
-// authz wrapper, the runner fetches bounded windows (paging via SearchAfter),
-// authorizes each window's hits in rank order with authz.FilterAuthorized, and
-// stops once the page is filled (no facets) or the MaxCandidates cap is hit
-// (facets, or a low authorized fraction). The first window's res.Total is used
-// for TotalHits (the unfiltered match count). Facets, when requested, are
-// aggregated app-side over the authorized hits seen during the bounded scan.
-//
-// The index argument may be a single bleve index or a bleve.IndexAlias merging
-// several (e.g. dashboards + folders); in either case the doc ID
-// {namespace}/{group}/{resource}/{name} is globally unique, so the SortDocID
-// tie-breaker keeps SearchAfter cursors deterministic across the merged set.
-//
-// SearchBefore is handled by transforming it into a reversed-sort SearchAfter
-// (see the reverseSort block below): the scan walks away from the cursor in
-// reversed order and the page is reversed back to forward order before
-// returning, so callers see the same result shape as bleve's native
-// SearchBefore.
+// runPostFilterAuthz implements postFilter mode: bleve ranks without the authz
+// wrapper, the runner fetches bounded windows (paging via SearchAfter),
+// authorizes hits in rank order, and stops once the page is filled (no facets)
+// or the candidate budget is hit. The first window's res.Total is TotalHits
+// (unfiltered match count). Facets are aggregated app-side over the authorized
+// sample. index may be a single bleve index or an IndexAlias (dashboards +
+// folders); the globally-unique doc ID keeps the SortDocID tie-breaker a total
+// order across the merged set. SearchBefore is a reversed-sort SearchAfter
+// (see the reverseSort block).
 func (b *bleveIndex) runPostFilterAuthz(
 	ctx context.Context,
 	access authlib.AccessClient,
@@ -191,36 +211,25 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	var candidates int64
 	var authorized int64
+	var capped bool
 	var firstRes *bleve.SearchResult
+	// Facet scans sample to FacetSampleSize; page-fill scans use the larger
+	// MaxCandidates budget so low authorized fractions can still fill the page.
 	maxCandidates := int64(cfg.MaxCandidates)
+	if wantFacets {
+		maxCandidates = int64(cfg.FacetSampleSize)
+	}
 
-	// SearchBefore is implemented as a reversed-sort SearchAfter, mirroring
-	// bleve's native SearchBefore handling (index_impl.go: reverse Sort, treat
-	// SearchBefore as SearchAfter, collect, then re-sort forward). The forward
-	// bounded scan below then walks away from the cursor in reversed order and
-	// early-exits at the limit; we reverse the page back to the caller's forward
-	// order before returning. Reversing the whole Sort (not just req.SortBy)
-	// keeps the SortDocID tie-breaker a total order in the reversed direction,
-	// so deterministic paging holds for federated aliases too.
-	searchBefore := req.SearchBefore
-	reverseSort := len(searchBefore) > 0
+	// SearchBefore is a reversed-sort SearchAfter (mirrors bleve's native
+	// SearchBefore): reverse the whole Sort once so the SortDocID tie-breaker
+	// stays a total order in the reversed direction, walk away from the cursor,
+	// then reverse the page back to forward order before returning.
+	reverseSort := len(req.SearchBefore) > 0
 	if reverseSort {
-		req.SearchAfter = searchBefore
-		req.SearchBefore = nil
 		firstReq.Sort.Reverse()
 		firstReq.SearchAfter = firstReq.SearchBefore
 		firstReq.SearchBefore = nil
 	}
-
-	// Subsequent windows are built by re-running toBleveSearchRequest with
-	// req.SearchAfter set from the previous window's last hit. Restore the
-	// caller's cursors afterwards so we don't mutate the inbound request.
-	prevSearchAfter := req.SearchAfter
-	prevSearchBefore := req.SearchBefore
-	defer func() {
-		req.SearchAfter = prevSearchAfter
-		req.SearchBefore = prevSearchBefore
-	}()
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
@@ -235,8 +244,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		}
 
 		// Authorize this window's hits in rank order. The candidate iterator
-		// stops feeding FilterAuthorized once the candidate cap is reached, so
-		// the total scan stays bounded even at a near-zero authorized fraction.
+		// stops feeding FilterAuthorized once the candidate budget is reached.
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range windowHits {
@@ -267,13 +275,8 @@ func (b *bleveIndex) runPostFilterAuthz(
 			if authorized > int64(offset) && len(page) < limit {
 				page = append(page, info.doc)
 			}
-			// No facets requested: stop as soon as the page is full (early-exit).
+			// No facets: stop as soon as the page is full (early-exit).
 			if !wantFacets && len(page) >= limit {
-				stop = true
-				break
-			}
-			// Facets requested, or page not yet full: stop at the candidate cap.
-			if candidates >= maxCandidates {
 				stop = true
 				break
 			}
@@ -281,7 +284,15 @@ func (b *bleveIndex) runPostFilterAuthz(
 		if stop {
 			break
 		}
-		// Window exhausted with fewer hits than requested -> no more matches.
+		// Candidate budget exhausted (sparse authorized fraction). Hoisted out
+		// of the FilterAuthorized loop: that loop only yields authorized hits,
+		// so an all-unauthorized capping window would otherwise never set stop
+		// and the scan would keep paging until bleve exhausted the whole index.
+		if candidates >= maxCandidates {
+			capped = true
+			break
+		}
+		// Window returned fewer hits than requested -> no more matches.
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
 			break
 		}
@@ -289,19 +300,14 @@ func (b *bleveIndex) runPostFilterAuthz(
 		if len(last.Sort) == 0 {
 			break // no sort values -> cannot build a SearchAfter cursor
 		}
-		req.SearchAfter = last.Sort
-		nextReq, e := b.toBleveSearchRequest(ctx, req, access, true)
-		if e != nil {
-			response.Error = e
-			return response, nil
-		}
-		if reverseSort {
-			nextReq.Sort.Reverse()
-		}
-		if err := b.ensureSearchFields(nextReq, req); err != nil {
-			return nil, err
-		}
-		windowReq = nextReq
+		// Page on a shallow copy of the current request: only the cursor and
+		// the adaptive window Size change between windows; query, sort (already
+		// reversed once for SearchBefore), facets, and fields are identical.
+		next := *windowReq
+		next.SearchAfter = last.Sort
+		next.SearchBefore = nil
+		next.Size = cfg.scanWindowSize(limit, offset, window+1, wantFacets)
+		windowReq = &next
 	}
 
 	response.TotalHits = int64(firstRes.Total)
@@ -325,7 +331,11 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 	response.Results = results
 	if wantFacets {
-		response.Facet = agg.build()
+		// When the scan hit the candidate cap before exhausting the index,
+		// extrapolate counts by the inverse sampling fraction (TotalHits /
+		// candidates) so facet magnitudes reflect the full matching set rather
+		// than just the bounded sample. Exact when the scan was not capped.
+		response.Facet = agg.build(candidates, int64(firstRes.Total), capped)
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 
@@ -336,9 +346,8 @@ func (b *bleveIndex) runPostFilterAuthz(
 	return response, nil
 }
 
-// facetAggregator computes facet counts app-side over authorized hits. Counts
-// reflect only the authorized hits seen during the bounded post-filter scan
-// (<= PostRankAuthzConfig.MaxCandidates), not the full authorized set.
+// facetAggregator computes facet counts app-side over the authorized sample
+// (<= FacetSampleSize candidates), not the full authorized set.
 type facetAggregator struct {
 	fields map[string]*resourcepb.ResourceSearchRequest_Facet
 	// field -> term -> count
@@ -392,8 +401,15 @@ func facetTermValue(v any) string {
 }
 
 // build assembles the response facets, keeping the top req.Facet[f].Limit terms
-// per field (by count desc, then term asc for determinism).
-func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_Facet {
+// per field (by count desc, then term asc for determinism). When capped is true
+// and totalHits > candidates, counts are extrapolated by the inverse sampling
+// fraction (totalHits / candidates) to estimate the full-set magnitudes from the
+// bounded authorized sample; otherwise counts are exact.
+func (a *facetAggregator) build(candidates, totalHits int64, capped bool) map[string]*resourcepb.ResourceSearchResponse_Facet {
+	scale := int64(1)
+	if capped && totalHits > candidates {
+		scale = totalHits / candidates
+	}
 	out := make(map[string]*resourcepb.ResourceSearchResponse_Facet, len(a.fields))
 	for k, f := range a.fields {
 		terms := a.counts[f.Field]
@@ -402,7 +418,7 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 		for term, count := range terms {
 			sorted = append(sorted, &resourcepb.ResourceSearchResponse_TermFacet{
 				Term:  term,
-				Count: count,
+				Count: count * scale,
 			})
 		}
 		sort.Slice(sorted, func(i, j int) bool {
@@ -416,8 +432,8 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 		}
 		out[k] = &resourcepb.ResourceSearchResponse_Facet{
 			Field:   f.Field,
-			Total:   a.total[f.Field],
-			Missing: a.missing[f.Field],
+			Total:   a.total[f.Field] * scale,
+			Missing: a.missing[f.Field] * scale,
 			Terms:   sorted,
 		}
 	}

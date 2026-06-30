@@ -1310,6 +1310,34 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, int64(2), f.Terms[0].Count)
 	})
 
+	t.Run("facets extrapolated by sampling ratio when the scan is capped", func(t *testing.T) {
+		// FacetSampleSize below the dataset size forces a capped scan; counts
+		// are then scaled by TotalHits/candidates to estimate the full set.
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			FacetSampleSize: 20,
+		})
+		docs := make([]*resource.BulkIndexItem, 0, 100)
+		for i := 0; i < 100; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"folder": {Field: "folder", Limit: 10},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["folder"]
+		require.NotNil(t, f)
+		// 20 candidates sampled out of 100 total -> scale = 5. All sampled
+		// docs are in "allowed", so the extrapolated count is 20*5 = 100.
+		require.Equal(t, int64(100), f.Total, "Total extrapolated by TotalHits/candidates")
+		require.Len(t, f.Terms, 1)
+		require.Equal(t, "allowed", f.Terms[0].Term)
+		require.Equal(t, int64(100), f.Terms[0].Count, "term count extrapolated by TotalHits/candidates")
+	})
+
 	t.Run("offset skips authorized hits on postFilter path", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
@@ -1541,6 +1569,107 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// doc-12, doc-14, doc-16.
 		names, _ := backwardNames(t, index, ac, cursor, 3)
 		require.Equal(t, []string{"doc-12", "doc-14", "doc-16"}, names)
+	})
+
+	t.Run("limit=0 with facets goes through postFilter and returns sampled facets", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(0) // count/facets-only: no page to fill
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"folder": {Field: "folder", Limit: 10},
+		}
+		names, res := searchNames(t, index, ac, q)
+		// No page requested -> empty result set, but facets are still sampled
+		// app-side over the authorized hits.
+		require.Empty(t, names, "limit=0 returns no rows")
+		f := res.Facet["folder"]
+		require.NotNil(t, f, "facets must be aggregated even with limit=0")
+		require.Equal(t, int64(2), f.Total)
+		require.Len(t, f.Terms, 1)
+		require.Equal(t, "allowed", f.Terms[0].Term)
+		require.Equal(t, int64(2), f.Terms[0].Count)
+	})
+
+	t.Run("limit=0 with no facets returns the unfiltered total via postFilter", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
+			newDoc("doc-3", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(0) // pure count-only: no page, no facets
+		names, res := searchNames(t, index, ac, q)
+		// postFilter is flag-gated, so count-only also runs through it and
+		// reports the unfiltered match count (by design — fast over exact
+		// totals), with no rows.
+		require.Empty(t, names)
+		require.Equal(t, int64(4), res.TotalHits, "count-only query returns the unfiltered total under postFilter")
+	})
+
+	t.Run("sparse-access scan terminates at the candidate budget", func(t *testing.T) {
+		// Tiny budget, many denied docs: the scan must stop after authorizing at
+		// most MaxCandidates hits, not page through the whole index.
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			MaxCandidates: 10,
+		})
+		docs := make([]*resource.BulkIndexItem, 0, 500)
+		for i := 0; i < 500; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, _ := searchNames(t, index, ac, listQuery(50))
+		require.Empty(t, names, "no authorized docs -> empty page")
+		require.LessOrEqual(t, ac.checked, 10, "scan must stop at the candidate budget")
+	})
+
+	t.Run("adaptive window fills a high-fraction page from the first small window", func(t *testing.T) {
+		// All authorized: the first adaptive window is limit+offset (not the old
+		// fixed 500), so the page fills and early-exits after authorizing ~limit
+		// hits, not the whole window.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 700)
+		for i := 0; i < 700; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		names, _ := searchNames(t, index, ac, listQuery(10))
+		require.Len(t, names, 10)
+		// First adaptive window = limit+offset = 10; page fills at 10 and
+		// early-exits, so we authorize ~10 candidates, not 500.
+		require.LessOrEqual(t, ac.checked, 10, "high-fraction query should not over-fetch")
+	})
+
+	t.Run("adaptive window grows to fill the page at a low authorized fraction", func(t *testing.T) {
+		// ~10% authorized: the first small window won't fill the page, so the
+		// scan grows the window geometrically until the page is full.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 1000)
+		want := make([]string, 0, 10)
+		for i := 0; i < 1000; i++ {
+			folder := "denied"
+			if i%10 == 0 {
+				folder = "allowed"
+				want = append(want, fmt.Sprintf("doc-%04d", i))
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, _ := searchNames(t, index, ac, listQuery(10))
+		// The first 10 authorized docs in title order.
+		require.Equal(t, want[:10], names, "low-fraction query must still fill the page by growing the window")
 	})
 }
 

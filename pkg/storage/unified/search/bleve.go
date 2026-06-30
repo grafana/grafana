@@ -2003,11 +2003,11 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// postRankAuthz (postFilter mode): rank in bleve without the in-searcher
-	// authz wrapper, fetch a bounded window, authorize app-side in rank order,
-	// and page via SearchAfter/SearchBefore until the page is filled or the
-	// candidate cap is hit. Facets are aggregated app-side. See runPostFilterAuthz.
-	postRank := b.postRankAuthzFn != nil && b.postRankAuthzFn() && access != nil && req.Limit > 0
+	// postFilter is purely flag-gated: when on, every search with an access
+	// client ranks in bleve and authorizes app-side. TotalHits is the unfiltered
+	// match count (by design — fast over exact totals); pure count-only queries
+	// (Limit==0, no facets) return that unfiltered total too.
+	postRank := b.postRankAuthzFn != nil && b.postRankAuthzFn() && access != nil
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
@@ -2162,13 +2162,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
 	// authorization (and offset/facet aggregation) happen afterward in
-	// bleveIndex.Search. The window is sized from the limit via
-	// PostRankAuthzConfig.windowSize and paged with SearchAfter. From/offset are
-	// applied app-side (over authorized hits), so bleve always starts at 0.
+	// bleveIndex.Search. The first window is sized via scanWindowSize (adaptive
+	// for page-fill, fixed for facets) and paged with SearchAfter. From/offset
+	// are applied app-side (over authorized hits), so bleve always starts at 0.
 	reqSize := size
 	reqFrom := offset
 	if postRankAuthz {
-		reqSize = b.postRankAuthz.windowSize(size)
+		reqSize = b.postRankAuthz.scanWindowSize(size, offset, 0, len(req.Facet) > 0)
 		reqFrom = 0
 	}
 
@@ -2342,9 +2342,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	// When postRankAuthz is set, authorization is applied after ranking in
-	// bleveIndex.Search (postRankAuthzFilter), so the in-searcher wrapper is
-	// skipped here and bleve returns unfiltered ranked hits.
+	// postFilter applies authorization after ranking in runPostFilterAuthz, so
+	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
 	if access != nil && !postRankAuthz {
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
 			access:    access,
@@ -2354,9 +2353,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		})
 	}
 
-	// On the post-filter path facets are aggregated app-side over the authorized
-	// hits, so do not ask bleve to compute them (its facets would run over the
-	// unfiltered searcher and include unauthorized docs).
+	// postFilter aggregates facets app-side over authorized hits; bleve's facets
+	// would run over the unfiltered searcher and count unauthorized docs.
 	if postRankAuthz {
 		searchrequest.Facets = nil
 	} else {
@@ -2387,17 +2385,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if postRankAuthz {
-		// Total-order tie-breaker so SearchAfter cursors are stable across
-		// windows: the doc ID is {namespace}/{group}/{resource}/{name}, which is
-		// globally unique across a federated index alias (e.g. dashboards +
-		// folders differ by the resource segment), so the SortDocID tie-breaker
-		// guarantees a deterministic rank with no skips/dupes over the merged
-		// result set.
+		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
+		// {namespace}/{group}/{resource}/{name} is globally unique across a
+		// federated alias (dashboards + folders differ by the resource segment),
+		// so this guarantees no skips/dupes over the merged result set.
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
 
-		// The post-filter path reads the folder (to authorize) and every facet
-		// field (to aggregate counts app-side) from each hit's stored fields,
-		// so make sure bleve loads them regardless of the caller's field set.
+		// Ensure bleve loads the folder (to authorize) and facet fields (to
+		// aggregate app-side) regardless of the caller's requested field set.
 		needed := []string{resource.SEARCH_FIELD_FOLDER}
 		for _, f := range req.Facet {
 			needed = append(needed, f.Field)
