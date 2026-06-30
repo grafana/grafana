@@ -214,6 +214,35 @@ describe('CommandPalette', () => {
       expect(input).toHaveFocus();
     });
 
+    it('supports Ctrl+N / Ctrl+P as down / up (legacy kbar shortcuts)', async () => {
+      server.use(
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      const input = screen.getByPlaceholderText('Search or jump to...');
+      await user.type(input, 'latency');
+      await screen.findByText('API latency', {}, { timeout: 3000 });
+
+      // Ctrl+N from the input moves focus into the results, like ArrowDown
+      await user.keyboard('{Control>}n{/Control}');
+      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
+
+      // Ctrl+N moves down, Ctrl+P moves back up
+      await user.keyboard('{Control>}n{/Control}');
+      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
+      await user.keyboard('{Control>}p{/Control}');
+      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
+
+      // Ctrl+P past the first item returns focus to the input
+      await user.keyboard('{Control>}p{/Control}');
+      expect(input).toHaveFocus();
+    });
+
     it('moves focus between the keyword and deep search panes', async () => {
       server.use(
         getVectorSearchHandler([{ name: 'dash-1', title: 'Dark dashboards', snippet: 'dark mode panels', score: 0.1 }])

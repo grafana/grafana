@@ -268,6 +268,10 @@ const RenderResults = ({
       const deepCount = deepNav?.getCount() ?? 0;
       const deepFocusedIndex = deepNav?.getFocusedIndex() ?? -1;
 
+      // Ctrl+N / Ctrl+P mirror ArrowDown / ArrowUp (legacy kbar shortcuts)
+      const isDown = event.key === 'ArrowDown' || (event.ctrlKey && event.key === 'n');
+      const isUp = event.key === 'ArrowUp' || (event.ctrlKey && event.key === 'p');
+
       const focusInput = () => {
         query.setActiveIndex(-1);
         input.focus();
@@ -301,14 +305,27 @@ const RenderResults = ({
         return;
       }
 
+      // A lone modifier keydown (Ctrl/Shift/Alt/Meta) while focus is in a results
+      // zone must not reach kbar's focus guard, which refocuses the input. Otherwise
+      // a chord like Ctrl+N breaks: the Control keydown bounces focus to the input,
+      // then the following N is read in the input zone and re-enters the list at the
+      // top instead of moving down. Swallow it; the chord's letter is handled next.
+      if (
+        zone !== 'input' &&
+        (event.key === 'Control' || event.key === 'Shift' || event.key === 'Alt' || event.key === 'Meta')
+      ) {
+        event.stopImmediatePropagation();
+        return;
+      }
+
       let handled = false;
       if (zone === 'input') {
-        if (event.key === 'ArrowDown') {
+        if (isDown) {
           handled = focusKeywordList() || focusDeepSearch();
         }
       } else if (zone === 'keyword') {
         const current = activeIndexRef.current;
-        if (event.key === 'ArrowDown') {
+        if (isDown) {
           let next = current + 1;
           while (next < currentItems.length && typeof currentItems[next] === 'string') {
             next++;
@@ -317,7 +334,7 @@ const RenderResults = ({
             query.setActiveIndex(next);
           }
           handled = true;
-        } else if (event.key === 'ArrowUp') {
+        } else if (isUp) {
           let previous = current - 1;
           while (previous >= 0 && typeof currentItems[previous] === 'string') {
             previous--;
@@ -345,12 +362,12 @@ const RenderResults = ({
           handled = true;
         }
       } else {
-        if (event.key === 'ArrowDown') {
+        if (isDown) {
           if (deepFocusedIndex < deepCount - 1) {
             deepNav?.focusIndex(deepFocusedIndex + 1);
           }
           handled = true;
-        } else if (event.key === 'ArrowUp') {
+        } else if (isUp) {
           if (deepFocusedIndex === 0) {
             focusInput();
           } else {
