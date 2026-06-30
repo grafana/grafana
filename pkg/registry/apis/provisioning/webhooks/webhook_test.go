@@ -21,7 +21,6 @@ import (
 type stubWebhookRepo struct {
 	cfg       *provisioning.Repository
 	slug      string
-	branch    string
 	replayKey string
 	event     repository.WebhookEvent
 	verifyErr error
@@ -32,8 +31,7 @@ func (s stubWebhookRepo) Config() *provisioning.Repository { return s.cfg }
 func (s stubWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
 	return nil, nil
 }
-func (s stubWebhookRepo) Slug() string             { return s.slug }
-func (s stubWebhookRepo) GetCurrentBranch() string { return s.branch }
+func (s stubWebhookRepo) Slug() string { return s.slug }
 func (s stubWebhookRepo) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
 	if s.verifyErr != nil {
 		return nil, s.verifyErr
@@ -160,12 +158,16 @@ func TestWebhookConnector_webhook(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: !tt.syncDisabled}},
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+					Sync:   provisioning.SyncOptions{Enabled: !tt.syncDisabled},
+				},
 			}
 			if !tt.noStatus {
 				cfg.Status.Webhook = &provisioning.WebhookStatus{}
 			}
-			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: tt.event, verifyErr: tt.verifyErr, err: tt.processErr}
+			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", event: tt.event, verifyErr: tt.verifyErr, err: tt.processErr}
 
 			s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
 			rsp, err := s.webhook(t.Context(), &http.Request{}, hooks)
@@ -194,11 +196,15 @@ func TestWebhookConnector_webhook(t *testing.T) {
 func TestWebhookConnector_webhook_replay(t *testing.T) {
 	cfg := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
-		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			Sync:   provisioning.SyncOptions{Enabled: true},
+		},
+		Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
 	}
 	event := repository.WebhookEvent{Type: repository.WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
-	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", replayKey: "sig", event: event}
+	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", replayKey: "sig", event: event}
 
 	s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
 
