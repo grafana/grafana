@@ -1071,69 +1071,100 @@ func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo,
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
+// postRankKey is the resource key shared by the post-rank authz tests.
+var postRankKey = resource.NamespacedResource{
+	Namespace: "default",
+	Group:     "dashboard.grafana.app",
+	Resource:  "dashboards",
+}
+
+// Post-rank authz test helpers. They are package-level (not closures inside
+// TestSearchPostRankAuthz) so their bodies don't roll up into that test's
+// cyclomatic complexity.
+
+func indexDocs(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
+	t.Helper()
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+}
+
+func newDoc(name, folder string) *resource.BulkIndexItem {
+	return &resource.BulkIndexItem{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:    1,
+			Name:  name,
+			Title: name,
+			Key: &resourcepb.ResourceKey{
+				Name:      name,
+				Namespace: postRankKey.Namespace,
+				Group:     postRankKey.Group,
+				Resource:  postRankKey.Resource,
+			},
+			Folder: folder,
+		},
+	}
+}
+
+func newDocWithTags(name, folder string, tags []string) *resource.BulkIndexItem {
+	d := newDoc(name, folder)
+	d.Doc.Tags = tags
+	return d
+}
+
+func listQuery(limit int64) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: postRankKey.Namespace,
+				Group:     postRankKey.Group,
+				Resource:  postRankKey.Resource,
+			},
+		},
+		Limit: limit,
+	}
+}
+
+func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([]string, *resourcepb.ResourceSearchResponse) {
+	t.Helper()
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+	ctx := authlib.WithAuthInfo(context.Background(), requester)
+	res, err := index.Search(ctx, ac, q, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	names := make([]string, 0, len(res.Results.GetRows()))
+	for _, row := range res.Results.GetRows() {
+		names = append(names, row.Key.Name)
+	}
+	return names, res
+}
+
+// pageAll walks SearchAfter cursors until a short/empty page, returning the
+// names in the order they were returned across pages.
+func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
+	t.Helper()
+	var all []string
+	var after []string
+	for page := 0; ; page++ {
+		require.Less(t, page, 1000, "pagination did not terminate")
+		q := listQuery(limit)
+		q.SearchAfter = after
+		names, res := searchNames(t, index, ac, q)
+		require.LessOrEqual(t, len(names), int(limit))
+		all = append(all, names...)
+		rows := res.Results.GetRows()
+		if len(rows) == 0 {
+			break
+		}
+		after = rows[len(rows)-1].SortFields
+		require.NotEmpty(t, after, "every returned row must carry sort values for the next cursor")
+		if len(rows) < int(limit) {
+			break
+		}
+	}
+	return all
+}
+
 func TestSearchPostRankAuthz(t *testing.T) {
-	key := resource.NamespacedResource{
-		Namespace: "default",
-		Group:     "dashboard.grafana.app",
-		Resource:  "dashboards",
-	}
-
-	indexDocs := func(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
-		t.Helper()
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
-	}
-
-	newDoc := func(name, folder string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
-				RV:    1,
-				Name:  name,
-				Title: name,
-				Key: &resourcepb.ResourceKey{
-					Name:      name,
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
-				},
-				Folder: folder,
-			},
-		}
-	}
-
-	newDocWithTags := func(name, folder string, tags []string) *resource.BulkIndexItem {
-		d := newDoc(name, folder)
-		d.Doc.Tags = tags
-		return d
-	}
-
-	listQuery := func(limit int64) *resourcepb.ResourceSearchRequest {
-		return &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
-				},
-			},
-			Limit: limit,
-		}
-	}
-
-	searchNames := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([]string, *resourcepb.ResourceSearchResponse) {
-		t.Helper()
-		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace}
-		ctx := authlib.WithAuthInfo(context.Background(), requester)
-		res, err := index.Search(ctx, ac, q, nil, nil)
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		names := make([]string, 0, len(res.Results.GetRows()))
-		for _, row := range res.Results.GetRows() {
-			names = append(names, row.Key.Name)
-		}
-		return names, res
-	}
-
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// More than one BatchCheck batch (500) worth of docs, all authorized.
@@ -1228,32 +1259,6 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		names, _ := searchNames(t, index, ac, listQuery(1000))
 		require.ElementsMatch(t, []string{"doc-0", "doc-1"}, names)
 	})
-
-	// pageAll walks SearchAfter cursors until a short/empty page, returning the
-	// names in the order they were returned across pages.
-	pageAll := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
-		t.Helper()
-		var all []string
-		var after []string
-		for page := 0; ; page++ {
-			require.Less(t, page, 1000, "pagination did not terminate")
-			q := listQuery(limit)
-			q.SearchAfter = after
-			names, res := searchNames(t, index, ac, q)
-			require.LessOrEqual(t, len(names), int(limit))
-			all = append(all, names...)
-			rows := res.Results.GetRows()
-			if len(rows) == 0 {
-				break
-			}
-			after = rows[len(rows)-1].SortFields
-			require.NotEmpty(t, after, "every returned row must carry sort values for the next cursor")
-			if len(rows) < int(limit) {
-				break
-			}
-		}
-		return all
-	}
 
 	t.Run("SearchAfter pages contiguously when all authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
@@ -1499,9 +1504,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 					Title: "same-title", // identical sort key for every doc
 					Key: &resourcepb.ResourceKey{
 						Name:      name,
-						Namespace: key.Namespace,
-						Group:     key.Group,
-						Resource:  key.Resource,
+						Namespace: postRankKey.Namespace,
+						Group:     postRankKey.Group,
+						Resource:  postRankKey.Resource,
 					},
 					Folder: "allowed",
 				},

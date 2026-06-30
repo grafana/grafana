@@ -225,12 +225,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// SearchBefore): reverse the whole Sort once so the SortDocID tie-breaker
 	// stays a total order in the reversed direction, walk away from the cursor,
 	// then reverse the page back to forward order before returning.
-	reverseSort := len(req.SearchBefore) > 0
-	if reverseSort {
-		firstReq.Sort.Reverse()
-		firstReq.SearchAfter = firstReq.SearchBefore
-		firstReq.SearchBefore = nil
-	}
+	reverseSort := applySearchBefore(req, firstReq)
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
@@ -314,6 +309,45 @@ func (b *bleveIndex) runPostFilterAuthz(
 		windowReq = &next
 	}
 
+	span.SetAttributes(
+		attribute.Int64("search.candidates", candidates),
+		attribute.Int64("search.authorized", authorized),
+	)
+	return response, b.finalizePostFilter(ctx, response, page, firstReq.Fields, req, firstRes,
+		authorized, exhausted, reverseSort, wantFacets, agg, stats)
+}
+
+// applySearchBefore converts a SearchBefore request into a reversed-sort
+// SearchAfter: the whole Sort is reversed once so the SortDocID tie-breaker
+// stays a total order in the reversed direction. Returns whether the request
+// was a SearchBefore (the page is reversed back to forward order in
+// finalizePostFilter).
+func applySearchBefore(req *resourcepb.ResourceSearchRequest, firstReq *bleve.SearchRequest) bool {
+	if len(req.SearchBefore) == 0 {
+		return false
+	}
+	firstReq.Sort.Reverse()
+	firstReq.SearchAfter = firstReq.SearchBefore
+	firstReq.SearchBefore = nil
+	return true
+}
+
+// finalizePostFilter sets TotalHits (exact authorized count when the scan
+// exhausted the index, else the unfiltered match count), reverses the page for
+// SearchBefore, and converts hits + facets into the response. See runPostFilterAuthz
+// for the TotalHits / facet-count semantics.
+func (b *bleveIndex) finalizePostFilter(
+	ctx context.Context,
+	response *resourcepb.ResourceSearchResponse,
+	page search.DocumentMatchCollection,
+	fields []string,
+	req *resourcepb.ResourceSearchRequest,
+	firstRes *bleve.SearchResult,
+	authorized int64,
+	exhausted, reverseSort, wantFacets bool,
+	agg *facetAggregator,
+	stats *resource.SearchStats,
+) error {
 	// When the scan exhausted the index (small result sets) for a page query,
 	// every match was seen and authorized, so `authorized` is the exact total —
 	// report it so offset pagers don't loop past a partial page (e.g. totalHits=2
@@ -321,7 +355,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// match count: they authorize nothing and only need a fast total. When the
 	// scan stopped early (page filled, or candidate cap hit), the authorized
 	// total is unknown, so fall back to the unfiltered count — fast over exact.
-	if exhausted && limit > 0 {
+	if exhausted && req.Limit > 0 {
 		response.TotalHits = authorized
 	} else {
 		response.TotalHits = int64(firstRes.Total)
@@ -340,9 +374,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, firstReq.Fields, page, req.Explain)
+	results, err := b.hitsToTable(ctx, fields, page, req.Explain)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	response.Results = results
 	if wantFacets {
@@ -351,12 +385,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		response.Facet = agg.build()
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
-
-	span.SetAttributes(
-		attribute.Int64("search.candidates", candidates),
-		attribute.Int64("search.authorized", authorized),
-	)
-	return response, nil
+	return nil
 }
 
 // facetAggregator computes facet counts app-side over the authorized sample
