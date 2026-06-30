@@ -2,7 +2,9 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	natsclient "github.com/nats-io/nats.go"
@@ -27,11 +29,10 @@ type Subscription interface {
 // Subscriber hides nats.go types so callers can mock it.
 type Subscriber interface {
 	Enabled() bool
-	// Subscribe delivers every matching message to handler. subscriber identifies
-	// the logical consumer (e.g. "provisioning-controller") and labels its
-	// delivery metrics. By default each running subscriber receives its own copy;
-	// pass WithQueueGroup to load-balance delivery across a group instead.
-	Subscribe(ctx context.Context, subscriber, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
+	// Subscribe delivers every matching message to handler. By default each
+	// running subscriber receives its own copy; pass WithQueueGroup to
+	// load-balance delivery across a group instead.
+	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.
@@ -58,6 +59,12 @@ type SubscriberService struct {
 
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config, credentials func() string) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, credentials)
+	// A slow consumer means the broker dropped messages the client could not drain in time.
+	conn.onAsyncError = func(err error) {
+		if errors.Is(err, natsclient.ErrSlowConsumer) {
+			m.slowConsumers.Inc()
+		}
+	}
 	s := &SubscriberService{connection: conn, metrics: m}
 	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
 	return s
@@ -98,12 +105,12 @@ func (s *SubscriberService) Health(_ context.Context) error {
 	return s.healthy()
 }
 
-func (s *SubscriberService) Subscribe(ctx context.Context, subscriber, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error) {
+func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error) {
 	var cfg subscribeConfig
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	return s.subscribe(ctx, subscriber, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
+	return s.subscribe(ctx, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
 		if cfg.queue != "" {
 			return nc.QueueSubscribe(subject, cfg.queue, cb)
 		}
@@ -114,18 +121,20 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subscriber, subject s
 // subscribe centralises the connection lookup, the metrics-instrumented handler
 // wrapper, and error accounting shared by Subscribe and QueueSubscribe. The nats
 // client re-establishes the subscription automatically on reconnect.
-func (s *SubscriberService) subscribe(ctx context.Context, subscriber, subject string, sub func(*natsclient.Conn, natsclient.MsgHandler) (*natsclient.Subscription, error), handler MessageHandler) (Subscription, error) {
+func (s *SubscriberService) subscribe(ctx context.Context, subject string, sub func(*natsclient.Conn, natsclient.MsgHandler) (*natsclient.Subscription, error), handler MessageHandler) (Subscription, error) {
 	nc, err := s.get(ctx)
 	if err != nil {
 		return nil, err
 	}
 	cb := func(msg *natsclient.Msg) {
-		s.metrics.messagesReceived.WithLabelValues(subscriber).Inc()
+		s.metrics.messagesReceived.Inc()
+		start := time.Now()
 		handler(msg.Subject, msg.Data)
+		s.metrics.handlerDuration.Observe(time.Since(start).Seconds())
 	}
 	natsSub, err := sub(nc, cb)
 	if err != nil {
-		s.metrics.subscribeErrors.WithLabelValues(subscriber).Inc()
+		s.metrics.subscribeErrors.Inc()
 		return nil, fmt.Errorf("subscribe to %q: %w", subject, err)
 	}
 	return natsSub, nil

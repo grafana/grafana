@@ -6,11 +6,28 @@ import (
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// histogramSampleCount reads the number of observations recorded by a single
+// histogram (e.g. one label combination of a HistogramVec).
+func histogramSampleCount(t *testing.T, h prometheus.Observer) uint64 {
+	t.Helper()
+	collector, ok := h.(prometheus.Collector)
+	require.True(t, ok, "observer is not a collector")
+
+	ch := make(chan prometheus.Metric, 1)
+	collector.Collect(ch)
+	close(ch)
+
+	var m dto.Metric
+	require.NoError(t, (<-ch).Write(&m))
+	return m.GetHistogram().GetSampleCount()
+}
 
 // startTestServer starts an in-process embedded NATS server (no TCP listener),
 // exercising the same in-process path the embedded production mode uses. This

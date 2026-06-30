@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	natsclient "github.com/nats-io/nats.go"
@@ -30,6 +31,14 @@ type connection struct {
 	role        connRole
 	config      *Config
 	credentials func() string
+
+	// onAsyncError, when set, is invoked from the NATS async error handler after logging.
+	onAsyncError func(error)
+
+	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
+	// reconnect handler can record how long the connection was down. Accessed only
+	// from the NATS callback goroutine, but kept atomic to stay race-free.
+	disconnectedAt atomic.Int64
 
 	mu     sync.Mutex
 	conn   *natsclient.Conn
@@ -141,6 +150,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.DisconnectErrHandler(func(_ *natsclient.Conn, err error) {
 			c.metrics.connectionStatus.Set(0)
 			c.metrics.disconnects.Inc()
+			c.disconnectedAt.Store(time.Now().UnixNano())
 			if err != nil {
 				c.log.Warn("nats disconnected", "role", roleStr, "err", err)
 			}
@@ -148,6 +158,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.ReconnectHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(1)
 			c.metrics.reconnects.Inc()
+			if down := c.disconnectedAt.Swap(0); down != 0 {
+				c.metrics.disconnectedSeconds.Observe(time.Since(time.Unix(0, down)).Seconds())
+			}
 			c.log.Info("nats reconnected", "role", roleStr, "url", nc.ConnectedUrl())
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
@@ -160,6 +173,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 				subject = sub.Subject
 			}
 			c.log.Warn("nats async error", "role", roleStr, "subject", subject, "err", err)
+			if c.onAsyncError != nil {
+				c.onAsyncError(err)
+			}
 		}),
 	}
 
