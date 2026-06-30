@@ -100,4 +100,18 @@ describe('usePullRequestParam', () => {
       expect(result.current.action).toBeUndefined();
     });
   });
+
+  describe('prTitle', () => {
+    it('reads pr_title and collapses whitespace to single spaces', () => {
+      setParams({ pr_title: 'update:  My   Dashboard' });
+      const { result } = renderHook(() => usePullRequestParam());
+      expect(result.current.prTitle).toBe('update: My Dashboard');
+    });
+
+    it('returns undefined when pr_title is missing', () => {
+      setParams({});
+      const { result } = renderHook(() => usePullRequestParam());
+      expect(result.current.prTitle).toBeUndefined();
+    });
+  });
 });

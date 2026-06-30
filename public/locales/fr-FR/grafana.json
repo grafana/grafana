@@ -9898,10 +9898,16 @@
         },
         "name-limit": "Limiter",
         "name-mode": "Mode",
+        "name-overflow": "",
         "name-placement": "Placement",
         "name-values": "Valeurs",
         "name-visibility": "Visibilité",
         "name-width": "Largeur",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Bas",
           "label-right": "Aligné à droite"
@@ -11226,6 +11232,8 @@
         }
       },
       "fields-section": "Champs",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
       "inline-no-scrolls": "",
@@ -11971,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Gérer les mappages des groupes de fournisseurs d'identité aux rôles Grafana"
     },
     "help": {
       "title": "Aide"
@@ -14263,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Échec du chargement de la source de données pour cette requête",
     "loading-datasource": "Chargement de la source de données en cours",
     "no-query-editor-component": "Le plugin de source de données n’exporte aucun composant de l’éditeur de requêtes"

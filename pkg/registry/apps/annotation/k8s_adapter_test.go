@@ -65,7 +65,7 @@ func newTestAdapterWithLegacyID(store Store, ac authtypes.AccessClient) *k8sREST
 // testGetLegacyID is a test helper that extracts the legacy ID from an annotation.
 func testGetLegacyID(t *testing.T, anno *annotationV0.Annotation) int64 {
 	t.Helper()
-	return getLegacyID(anno)
+	return GetLegacyID(anno)
 }
 
 // testGetLegacyData is a test helper that extracts the legacy data blob from an annotation.

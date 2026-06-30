@@ -160,9 +160,10 @@ Plugin ID: `grafana-cmab-app`
 
 Plugin ID: `grafana-dbo11y-app`
 
-| Plugin role                        | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `plugins:grafana-dbo11y-app:admin` | Read/write access to everything in Database Observability plugin |
+| Plugin role                         | Description                                                      |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `plugins:grafana-dbo11y-app:admin`  | Read/write access to everything in Database Observability plugin |
+| `plugins:grafana-dbo11y-app:reader` | Read access to everything in Database Observability plugin       |
 
 ## Easystart / Integrations plugin
 

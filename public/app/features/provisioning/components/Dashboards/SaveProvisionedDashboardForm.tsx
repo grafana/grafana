@@ -23,7 +23,9 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -112,6 +114,16 @@ export function SaveProvisionedDashboardForm({
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
@@ -132,7 +144,6 @@ export function SaveProvisionedDashboardForm({
     setError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.save-provisioned-dashboard-form.error-saving', 'An error occurred while saving.')
       )
     );
@@ -160,10 +171,11 @@ export function SaveProvisionedDashboardForm({
         paramName: 'ref',
         paramValue: ref,
         repoType,
+        prTitle,
       });
       navigate(url);
     },
-    [navigate, defaultValues.repo]
+    [navigate, defaultValues.repo, prTitle]
   );
 
   const handleDismiss = useCallback(
@@ -365,6 +377,7 @@ export function SaveProvisionedDashboardForm({
             allowPathEdit={!isNew && !readOnly}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {saveAsCopy && (

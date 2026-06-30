@@ -1,6 +1,15 @@
 import { HttpResponse, http } from 'msw';
 
-import { mockStarredDashboardsMap } from '../../../../fixtures/starred';
+import { mockStarredDashboardsMap, mockStarredFoldersMap } from '../../../../fixtures/starred';
+
+// Maps a stars resource (keyed by `${group}/${kind}`) to the in-memory set backing it
+const STARRED_RESOURCE_MAPS = {
+  'dashboard.grafana.app/Dashboard': mockStarredDashboardsMap,
+  'folder.grafana.app/Folder': mockStarredFoldersMap,
+};
+
+const getStarsMapFor = (group: string, kind: string) =>
+  STARRED_RESOURCE_MAPS[`${group}/${kind}` as keyof typeof STARRED_RESOURCE_MAPS];
 
 const getStarsHandler = () =>
   http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () => {
@@ -19,13 +28,10 @@ const getStarsHandler = () =>
             creationTimestamp: '2025-05-14T14:02:10Z',
           },
           spec: {
-            resource: [
-              {
-                group: 'dashboard.grafana.app',
-                kind: 'Dashboard',
-                names: Array.from(mockStarredDashboardsMap.keys()),
-              },
-            ],
+            resource: Object.entries(STARRED_RESOURCE_MAPS).map(([key, map]) => {
+              const [group, kind] = key.split('/');
+              return { group, kind, names: Array.from(map.keys()) };
+            }),
           },
           status: {},
         },
@@ -54,15 +60,15 @@ const successResponse = {
 
 const addStarHandler = () =>
   http.put<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
-    const { id } = params;
-    mockStarredDashboardsMap.set(id, true);
+    const { id, group, kind } = params;
+    getStarsMapFor(group, kind).set(id, true);
     return HttpResponse.json(successResponse);
   });
 
 const removeStarHandler = () =>
   http.delete<UpdateOrDeleteStarsParams>(UPDATE_STARS_URL, ({ params }) => {
-    const { id } = params;
-    mockStarredDashboardsMap.delete(id);
+    const { id, group, kind } = params;
+    getStarsMapFor(group, kind).delete(id);
     return HttpResponse.json(successResponse);
   });
 

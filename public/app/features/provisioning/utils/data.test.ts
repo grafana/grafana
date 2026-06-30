@@ -188,7 +188,29 @@ describe('provisioning data mapping', () => {
       expect(spec.webhook).toBeUndefined();
     });
 
-    it('reads webhook from spec to form data', () => {
+    it('sets disabled:true and omits baseUrl when disabled is true', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+      expect(spec.webhook).not.toHaveProperty('baseUrl');
+    });
+
+    it('sets disabled:true and omits baseUrl when disabled is true and baseUrl is absent', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+    });
+
+    it('omits disabled when disabled is false and includes baseUrl', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: false, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ baseUrl: 'https://grafana.example.com' });
+    });
+
+    it('reads webhook baseUrl from spec to form data', () => {
       const spec: RepositorySpec = {
         type: 'github',
         title: 'repo',
@@ -199,6 +221,20 @@ describe('provisioning data mapping', () => {
       };
       const data = specToData(spec);
       expect(data.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+
+    it('reads webhook disabled:true from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        webhook: { disabled: true },
+      };
+      const data = specToData(spec);
+      expect(data.webhook?.disabled).toBe(true);
+      expect(data.webhook?.baseUrl).toBeUndefined();
     });
   });
 
