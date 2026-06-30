@@ -16721,6 +16721,9 @@
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
     },
+    "variables-dependencies-button": {
+      "show-dependencies": "Show dependencies"
+    },
     "variables-unknown-button": {
       "usage-title": "Showing usages for: {{variableId}}",
       "VariablesUnknownButton-tooltip-show-usages": "Show usages"
