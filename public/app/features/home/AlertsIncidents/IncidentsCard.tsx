@@ -43,7 +43,12 @@ type IncidentsCardInnerProps = {
  * the availability gate lives in the parent wrapper.
  */
 function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
-  const { data: incidents = [], isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
+  const {
+    data: incidents = [],
+    isLoading,
+    error,
+    refetch,
+  } = incidentsApi.useGetActiveIncidentsQuery({ pluginId }, { refetchOnMountOrArgChange: true });
   const incidentCount = incidents?.length ?? 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other

@@ -10,6 +10,7 @@ import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { configureStore } from 'app/store/configureStore';
 
 import { IncidentsCard } from './IncidentsCard';
 
@@ -243,5 +244,26 @@ describe('IncidentsCard', () => {
     expect(await screen.findByText('Warning but newer')).toBeInTheDocument();
 
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Warning but newer');
+  });
+
+  it('refetches active incidents on remount so a newly declared incident appears without a page refresh', async () => {
+    // A shared store persists the RTK Query cache across unmount/remount, exactly like
+    // navigating away from Home to declare an incident and back.
+    const store = configureStore();
+    mockIncidents([]);
+
+    const { unmount } = render(<IncidentsCard />, { store });
+    // The declare CTA only renders once the first query resolves as empty (not while loading).
+    expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
+
+    unmount();
+
+    // Incident declared out-of-band in the IRM plugin; user returns to Home (card remounts).
+    mockIncidents([activeIncidents[0]]);
+    render(<IncidentsCard />, { store });
+
+    // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
+    // cache would persist and this assertion would time out.
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
   });
 });
