@@ -93,6 +93,10 @@ export const useShortcuts = () => {
         description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
       },
       { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },
+      {
+        keys: ['d', 'k'],
+        description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
+      },
     ];
 
     // Add assistant shortcut only if assistant is available
@@ -164,10 +168,6 @@ export const useShortcuts = () => {
           {
             keys: ['d', 'v'],
             description: t('help-modal.shortcuts-description.toggle-active-mode', 'Toggle in-active / view mode'),
-          },
-          {
-            keys: ['d', 'k'],
-            description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
           },
           {
             keys: ['d', '⇧ + e'],
