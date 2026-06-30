@@ -46,9 +46,9 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		controllerCfg.ResyncInterval(),
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-	jobController, err := controller.NewJobController(jobInformer)
-	if err != nil {
-		return fmt.Errorf("failed to create job controller: %w", err)
+	jobController := controller.NewJobController()
+	if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
