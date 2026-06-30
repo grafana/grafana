@@ -14,13 +14,13 @@ import (
 )
 
 // WebhookEventType classifies a normalized inbound webhook delivery.
-type WebhookEventType int
+type WebhookEventType string
 
 const (
-	WebhookEventUnsupported WebhookEventType = iota
-	WebhookEventPing
-	WebhookEventPush
-	WebhookEventPullRequest
+	WebhookEventUnsupported WebhookEventType = "unsupported"
+	WebhookEventPing        WebhookEventType = "ping"
+	WebhookEventPush        WebhookEventType = "push"
+	WebhookEventPullRequest WebhookEventType = "pull_request"
 )
 
 type PullRequestAction string
@@ -72,6 +72,11 @@ func NewWebhookManager(client WebhookClient, status *provisioning.WebhookStatus,
 		webhookDisabled: webhookDisabled,
 		workflows:       workflows,
 	}
+}
+
+// WebhookURL returns the URL this repository is configured to register its webhook at.
+func (m *WebhookManager) WebhookURL() string {
+	return m.webhookURL
 }
 
 func (m *WebhookManager) OnCreate(ctx context.Context) ([]map[string]any, error) {
@@ -302,4 +307,25 @@ func clearStatusPatch() []map[string]any {
 		"path":  "/status/webhook",
 		"value": nil,
 	}}
+}
+
+// ToLog returns a context whose logger carries the event's populated fields.
+func (e WebhookEvent) ToLog(ctx context.Context) context.Context {
+	args := []any{"type", e.Type}
+	if e.Action != "" {
+		args = append(args, "action", e.Action)
+	}
+	if e.RepoSlug != "" {
+		args = append(args, "slug", e.RepoSlug)
+	}
+	if e.Branch != "" {
+		args = append(args, "branch", e.Branch)
+	}
+	if e.PRNumber != 0 {
+		args = append(args, "pr", e.PRNumber)
+	}
+	if e.TotalChanges != 0 {
+		args = append(args, "changes", e.TotalChanges)
+	}
+	return logging.Context(ctx, logging.FromContext(ctx).With(args...))
 }

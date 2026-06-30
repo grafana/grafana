@@ -312,7 +312,7 @@ replace (
 
 // Indirect references
 require (
-	cel.dev/expr v0.25.1 // indirect
+	cel.dev/expr v0.25.2 // indirect
 	cloud.google.com/go v0.123.0 // indirect
 	cloud.google.com/go/auth v0.20.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
@@ -470,7 +470,7 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.28.0 // indirect
+	github.com/google/cel-go v0.28.1 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic v0.7.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
@@ -731,6 +731,8 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 )
+
+require gitlab.com/gitlab-org/api/client-go/v2 v2.42.0
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

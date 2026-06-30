@@ -217,12 +217,15 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", hooks.Slug(), "ref", hooks.Branch()))
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("provider", hooks.Config().Spec.Type, "slug", hooks.Slug(), "ref", hooks.Branch()))
 
 	event, err := hooks.ProcessRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = event.ToLog(ctx)
+	logging.FromContext(ctx).Debug("webhook event received")
 
 	// Silently drop a delivery whose replay key we have already processed within
 	// the cache TTL — returning a generic 200 avoids confirming to a replay
@@ -307,6 +310,27 @@ func watchedPullRequestAction(action repository.PullRequestAction) bool {
 	default:
 		return false
 	}
+}
+
+// eventLogContext returns a context whose logger carries the event's populated fields.
+func eventLogContext(ctx context.Context, e repository.WebhookEvent) context.Context {
+	args := []any{"type", e.Type}
+	if e.Action != "" {
+		args = append(args, "action", e.Action)
+	}
+	if e.RepoSlug != "" {
+		args = append(args, "slug", e.RepoSlug)
+	}
+	if e.Branch != "" {
+		args = append(args, "branch", e.Branch)
+	}
+	if e.PRNumber != 0 {
+		args = append(args, "pr", e.PRNumber)
+	}
+	if e.TotalChanges != 0 {
+		args = append(args, "changes", e.TotalChanges)
+	}
+	return logging.Context(ctx, logging.FromContext(ctx).With(args...))
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.

@@ -34,10 +34,10 @@ export const FinishStep = memo(function FinishStep() {
     'githubAuthType',
   ]);
 
-  const isGithub = type === 'github';
+  const supportsWebhook = type === 'github' || type === 'gitlab';
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(isGithub && githubAuthType === 'github-app' ? {} : skipToken);
+  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
     if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
       return false;
@@ -169,7 +169,7 @@ export const FinishStep = memo(function FinishStep() {
         </>
       )}
 
-      {isGithub && (
+      {supportsWebhook && (
         <WebhookSection<WizardFormData>
           register={register}
           control={control}
