@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 
 interface DashboardControlsChromeProps {
   children: React.ReactNode;
@@ -26,7 +28,8 @@ interface DashboardControlsChromeProps {
  */
 export function DashboardControlsChrome({ children, onPointerDown }: DashboardControlsChromeProps) {
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
 
   return (
     <div className={styles.chrome} onPointerDown={onPointerDown}>
@@ -35,22 +38,32 @@ export function DashboardControlsChrome({ children, onPointerDown }: DashboardCo
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
-    chrome: css({
-      label: 'dashboard-controls-chrome',
-      // The dashboard canvas extends its scroll clip box up under this bar (clip-bleed, see
-      // scrollContainer in DashboardEditPaneSplitter), so the bar must paint over that strip on
-      // every viewport: opaque background plus its own paint order.
-      position: 'relative',
-      zIndex: 1,
-      background: theme.colors.background.canvas,
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
-        zIndex: theme.zIndex.sidemenu,
-        top: headerHeight,
+    chrome: css(
+      {
+        label: 'dashboard-controls-chrome',
+        // The dashboard canvas extends its scroll clip box up under this bar (clip-bleed, see
+        // scrollContainer in DashboardEditPaneSplitter), so the bar must paint over that strip on
+        // every viewport: opaque background plus its own paint order.
+        position: 'relative',
+        zIndex: 1,
+        background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+        [theme.breakpoints.up('md')]: {
+          position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
+          top: headerHeight,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+      }
+    ),
   };
 }
