@@ -23,6 +23,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -128,9 +129,11 @@ type fakeCascadeSearcher struct {
 	resourcepb.ResourceIndexClient
 	childrenByParent   map[string][]string
 	dashboardsByFolder map[string][]string
+	searchCtx          context.Context
 }
 
-func (s *fakeCascadeSearcher) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	s.searchCtx = ctx
 	var names []string
 	for _, uid := range folderFilterValues(req) {
 		switch req.Options.Key.Resource {
@@ -523,6 +526,23 @@ func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T)
 
 	_, isCollectionDeleter := s.(rest.CollectionDeleter)
 	require.False(t, isCollectionDeleter)
+}
+
+func TestCascadeDelete_SearchesRunUnderServiceIdentity(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// The cascade search must run with an injected service identity, not the (unfiltered) request
+	// context, so it enumerates resources the requester can't individually see.
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	searcher := &fakeCascadeSearcher{dashboardsByFolder: map[string][]string{"root": {"dash-1"}}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+
+	require.NotNil(t, searcher.searchCtx)
+	_, err = identity.GetRequester(searcher.searchCtx)
+	require.NoError(t, err, "cascade search should carry the injected service identity")
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {

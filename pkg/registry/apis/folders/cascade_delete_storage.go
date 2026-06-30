@@ -14,6 +14,7 @@ import (
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -109,7 +110,11 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	return s.cascadeDelete(ctx, ns.Value, name, cascadeDeleteOptions(options), true)
+	// Run the cascade under a service identity: searcher.Search is GET-scoped to the requester, so a
+	// user authorized to force-delete the folder but not to see every contained resource would
+	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
+	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
+	return s.cascadeDelete(cascadeCtx, ns.Value, name, cascadeDeleteOptions(options), true)
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
