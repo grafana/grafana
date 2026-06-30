@@ -107,7 +107,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			event: repository.WebhookEvent{Type: repository.WebhookEventPullRequest, RepoSlug: "grafana/grafana", Branch: "develop"},
 			expected: &provisioning.WebhookResponse{
 				Code:    http.StatusOK,
-				Message: "ignoring pull request event as develop is not  the configured branch",
+				Message: "ignoring pull request event as develop is not the configured branch",
 			},
 		},
 		{

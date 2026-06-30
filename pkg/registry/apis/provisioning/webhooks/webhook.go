@@ -273,7 +273,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		if event.Branch != repo.GetCurrentBranch() {
 			return &provisioning.WebhookResponse{
 				Code:    http.StatusOK,
-				Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", event.Branch),
+				Message: fmt.Sprintf("ignoring pull request event as %s is not the configured branch", event.Branch),
 			}, nil
 		}
 		if !watchedPullRequestAction(event.Action) {
