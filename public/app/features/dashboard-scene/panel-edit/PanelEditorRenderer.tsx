@@ -49,13 +49,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
-    <div className={styles.pageContainer}>
+    <div className={styles.pageContainer} data-testid={selectors.components.PanelEditor.General.content}>
       {controls && <controls.Component model={controls} />}
-      <div
-        {...containerProps}
-        className={cx(containerProps.className, styles.content)}
-        data-testid={selectors.components.PanelEditor.General.content}
-      >
+      <div {...containerProps} className={cx(containerProps.className, styles.content)}>
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>

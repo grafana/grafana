@@ -20,15 +20,11 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
   const styles = useStyles2(getWrapperStyles);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={selectors.components.PanelEditor.General.content}>
       {controls && <controls.Component model={controls} />}
       <LibraryPanelEditModals model={model} />
       <div className={styles.contentRegion}>
-        <div
-          {...containerProps}
-          className={cx(containerProps.className, styles.content)}
-          data-testid={selectors.components.PanelEditor.General.content}
-        >
+        <div {...containerProps} className={cx(containerProps.className, styles.content)}>
           <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
             <VizAndDataPaneNext model={model} />
           </div>

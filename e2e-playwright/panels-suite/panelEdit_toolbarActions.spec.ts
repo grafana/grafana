@@ -25,7 +25,9 @@ test.describe('Panel edit: toolbar actions', { tag: ['@panels'] }, () => {
     await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
     await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
 
-    const back = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton);
+    const back = dashboardPage.getByGrafanaSelector(
+      selectors.components.NavToolbar.editDashboard.backToDashboardButton
+    );
     const discard = dashboardPage.getByGrafanaSelector(
       selectors.components.NavToolbar.editDashboard.discardChangesButton
     );
@@ -41,7 +43,9 @@ test.describe('Panel edit: toolbar actions', { tag: ['@panels'] }, () => {
   test('shortens the action labels, keeping the full text in tooltips', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
-    const back = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton);
+    const back = dashboardPage.getByGrafanaSelector(
+      selectors.components.NavToolbar.editDashboard.backToDashboardButton
+    );
     const discard = dashboardPage.getByGrafanaSelector(
       selectors.components.NavToolbar.editDashboard.discardChangesButton
     );
@@ -58,7 +62,9 @@ test.describe('Panel edit: toolbar actions', { tag: ['@panels'] }, () => {
     const content = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content);
     await expect(content).toBeVisible();
 
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton).click();
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      .click();
 
     await expect(content).toBeHidden();
     await expect(page).toHaveURL(/^(?!.*editPanel).*$/);
