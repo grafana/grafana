@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,19 +40,13 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	}
 
 	// Jobs informer and controller (resync ~60s like in register.go)
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
+	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
-		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			provisioningClient,
-			controllerCfg.historyExpiration,
-		)
+		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),

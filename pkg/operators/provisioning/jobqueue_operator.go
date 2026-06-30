@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,10 +40,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	}
 
 	// Jobs informer and controller for insert notifications
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
+	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController := controller.NewJobController()
 	if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
