@@ -120,8 +120,9 @@ var RelationsSubresource = []string{
 	RelationSubresourceSetPermissions,
 }
 
-// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
-var RelationsTyped = append(
+// RelationsFolder are the relations valid on type "folder" (schema_folder.fga). Folders are the
+// one typed object with a full per-object relation set; the flat IAM types use the vars below.
+var RelationsFolder = append(
 	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
@@ -129,6 +130,44 @@ var RelationsTyped = append(
 	RelationDelete,
 	RelationGetPermissions,
 	RelationSetPermissions,
+)
+
+// RelationsSubresourceTyped are the subresource relations valid on the flat IAM types.
+// Unlike folders, these types have no resource_get_permissions / resource_set_permissions.
+var RelationsSubresourceTyped = []string{
+	RelationSubresourceGet,
+	RelationSubresourceUpdate,
+	RelationSubresourceCreate,
+	RelationSubresourceDelete,
+}
+
+// RelationsTeam are the relations valid on type "team". Teams keep a per-object `create`
+// (granted to admins), unlike user / service-account.
+var RelationsTeam = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationCreate,
+	RelationUpdate,
+	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
+)
+
+// RelationsUser are the relations valid on type "user": no per-object `create`
+// (governed by the group_resource), but get_permissions / set_permissions exist.
+var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
+)
+
+// RelationsServiceAccount are the relations valid on type "service-account":
+// no per-object `create`, and no get_permissions / set_permissions.
+var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
+	RelationGet,
+	RelationUpdate,
+	RelationDelete,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
