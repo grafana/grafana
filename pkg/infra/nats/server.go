@@ -30,12 +30,7 @@ var (
 	ErrClosed   = errors.New("nats connection is closed")
 )
 
-// Server owns the embedded NATS server lifecycle, which is an On-Prem concern
-// only: in external/Cloud mode it is a no-op. It is the source of truth for the
-// embedded server: once ready, the shared endpoints reads its local URL and
-// in-process dial option from here, which is how publisher/consumer clients
-// reach it. It is a dskit service that bridges to the monolith background-service
-// contract via Run.
+// Server owns the embedded NATS server lifecycle (On-Prem only; no-op in external/Cloud mode).
 type Server struct {
 	services.NamedService
 

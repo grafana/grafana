@@ -18,10 +18,7 @@ type Publisher interface {
 	Publish(ctx context.Context, subject string, data []byte) error
 }
 
-// PublisherService is a NATS client built on the shared endpoints, which resolve
-// the bus URLs and dial options for the current mode (embedded or external). It
-// is a dskit service so its connection drains on shutdown, and bridges to the
-// monolith background-service contract via Run.
+// PublisherService owns the publisher lifecycle and implements Publisher. It is a dskit service that bridges to the monolith background-service contract via Run.
 type PublisherService struct {
 	services.NamedService
 	*connection

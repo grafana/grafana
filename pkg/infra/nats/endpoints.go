@@ -7,17 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// endpoints is the single, shared, client-facing view of the NATS bus: it owns
-// everything a client needs to connect — the immutable configuration plus the
-// runtime-resolved URLs and dial options — so clients (publisher, consumer)
-// depend only on it and never carry their own copy of the config.
-//
-// It interprets the deployment mode itself by reading from the Server. In
-// external mode (no embedded server) it simply exposes the configured client
-// URLs. In embedded mode it reads the in-process server from the Server lazily
-// at connect time, since that server is only known once it has started: the
-// local URL is prepended ahead of any configured peers and the in-process dial
-// option is added so the local hop bypasses TCP/TLS.
+// endpoints resolves NATS URLs and dial options based on deployment mode (embedded or external).
 type endpoints struct {
 	cfg  setting.NATSSettings
 	urls []string

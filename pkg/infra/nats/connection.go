@@ -20,8 +20,7 @@ const rolePublisher connRole = "publisher"
 // broker that has gone away cannot stall shutdown for the nats.go default of 30s.
 const drainTimeout = 10 * time.Second
 
-// connection lazily establishes and reuses a single NATS connection per role,
-// so each role can present distinct least-privilege credentials.
+// connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
 	log         log.Logger
 	metrics     *metrics
