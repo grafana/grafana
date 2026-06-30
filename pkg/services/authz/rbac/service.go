@@ -385,7 +385,7 @@ func (s *Service) processBatchCheckGroup(
 		return
 	}
 
-	var folderScopeGetter map[string]folderScopeGetter = make(map[string]folderScopeGetter)
+	var folderScopeGetter = make(map[string]folderScopeGetter)
 
 	for i, item := range group.items {
 		checkReq := group.checkReqs[i]
