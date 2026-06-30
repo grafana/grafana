@@ -2,7 +2,6 @@ package annotation
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +15,6 @@ func newTestPostgresStore(t *testing.T) *PostgreSQLStore {
 
 	cfg := PostgreSQLStoreConfig{
 		ConnectionString: dsn,
-		RetentionTTL:     200 * 365 * 24 * time.Hour,
 	}
 
 	store, err := NewPostgreSQLStore(t.Context(), cfg, nil)
