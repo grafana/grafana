@@ -79,7 +79,9 @@ test.describe('Panels test: uPlot accessibility table', { tag: ['@panels', '@a11
     const framePager = a11yTable.locator('[role="group"][aria-label="Data tables"]');
     await expect(framePager).toContainText('Page 1 of 2');
 
-    await framePager.locator('button', { hasText: 'Next page' }).click({ force: true });
+    // navigate via keyboard, mirroring how a screen-reader user operates these sr-only controls
+    await framePager.locator('button', { hasText: 'Next page' }).focus();
+    await page.keyboard.press('Enter');
 
     // second page shows the remaining 3 tables
     await expect(a11yTable.locator('table')).toHaveCount(8 - FRAMES_PER_PAGE);
@@ -106,7 +108,9 @@ test.describe('Panels test: uPlot accessibility table', { tag: ['@panels', '@a11
     const rowPager = a11yTable.locator('[role="group"][aria-label="Table rows"]');
     await expect(rowPager).toContainText('Page 1 of');
 
-    await rowPager.locator('button', { hasText: 'Next page' }).click({ force: true });
+    // navigate via keyboard, mirroring how a screen-reader user operates these sr-only controls
+    await rowPager.locator('button', { hasText: 'Next page' }).focus();
+    await page.keyboard.press('Enter');
 
     await expect(rowPager).toContainText('Page 2 of');
     await expect(a11yTable.locator('tbody tr')).toHaveCount(ROWS_PER_PAGE);
