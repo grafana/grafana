@@ -342,6 +342,17 @@ func TestCascadeDelete_NonForceDoesNotEmptyFolder(t *testing.T) {
 	require.NoError(t, err, "dashboard must not be deleted without the force opt-in")
 }
 
+func TestCascadeDelete_MissingRequestedFolderReturnsNotFound(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// Deleting a folder that doesn't exist must still return 404, not a fake success.
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "ghost", nil, forceDelete())
+	require.True(t, apierrors.IsNotFound(err))
+}
+
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 

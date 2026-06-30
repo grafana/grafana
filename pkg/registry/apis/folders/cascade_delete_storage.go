@@ -59,18 +59,17 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	return s.cascadeDelete(ctx, ns.Value, name, deleteValidation, options)
+	return s.cascadeDelete(ctx, ns.Value, name, deleteValidation, options, true)
 }
 
 // cascadeDelete performs the depth-first deletion of the folder identified by name and all of its
 // descendants. deleteValidation is only applied to the originally requested folder; recursive child
 // deletes reuse the delete options (e.g. the force opt-in) but skip the request-bound validation.
-func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+// requested marks the originally requested folder, which preserves NotFound; recursive children
+// suppress it (a stale search-index entry or already-removed subtree node is not an error).
+func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
 	if err := s.markTerminating(ctx, name); err != nil {
-		// Already gone (e.g. a resumed delete reaching a stale search-index entry, or the folder
-		// removed concurrently). Post-order deletion guarantees its subtree was already removed,
-		// so there is nothing left to do for this node.
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -82,7 +81,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, namespace, child, nil, options); err != nil {
+		if _, _, err := s.cascadeDelete(ctx, namespace, child, nil, options, false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -92,10 +91,10 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 		return nil, false, err
 	}
 
-	// No remaining child folders: delete this folder. A NotFound here means it was already
-	// deleted, which is success for an idempotent (resumable) cascade.
+	// No remaining child folders: delete this folder. For children a NotFound means already-deleted
+	// (idempotent/resumable); the requested folder preserves the API's missing-resource error.
 	obj, async, err := s.Storage.Delete(ctx, name, deleteValidation, options)
-	if apierrors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
 	return obj, async, err
