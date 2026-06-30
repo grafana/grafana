@@ -77,9 +77,7 @@ func (c cascadeCollectionDeleter) DeleteCollection(ctx context.Context, deleteVa
 // walked depth-first: each folder is stamped with a terminating label on the way down, and folders
 // are deleted on the way back up once they have no remaining child folders (i.e. leaves first).
 func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// Only cascade behind the same force opt-in that validateOnDelete uses to bypass its empty
-	// check. Otherwise delegate so deleteValidation runs against the still-populated folder and
-	// rejects a non-empty delete, instead of us emptying it first.
+	// Delegate when the cascade flag is disabled or the user is not forcing the deletion
 	if !kubernetesFolderCascadeDeleteEnabled(ctx) || !forceDeleteFromDeleteOptions(options) {
 		return s.Storage.Delete(ctx, name, deleteValidation, options)
 	}
@@ -90,8 +88,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	}
 
 	// Validate and check preconditions up-front, as the requesting user, before any destructive
-	// cascade. markTerminating bumps the root's resourceVersion, so an RV precondition can't be
-	// deferred to the final delete; the cascade then runs without preconditions.
+	// cascade.
 	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -145,8 +142,11 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 }
 
 // cascadeDelete deletes the folder and its descendants depth-first (validation already ran in
-// Delete). requested marks the originally requested folder, which preserves NotFound; recursive
-// children suppress it (already-deleted or a stale search-index entry is not an error).
+// Delete).
+//
+// requested param marks wheter we are deleting the requested folder or not. We suppress
+// NotFound errors for children, since they might be already deleted or a stale search-index entry,
+// but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
 	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
