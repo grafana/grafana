@@ -76,7 +76,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
             label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
             description={t(
               'provisioning.github-enterprise.server-url-description',
-              'The custom server URL where your Github Enterprise is hosted'
+              'The custom server URL where your GitHub Enterprise is hosted'
             )}
             invalid={!!errors.serverUrl}
             error={errors.serverUrl?.message}
@@ -88,7 +88,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
                 required: requiredValidation,
               })}
               // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              placeholder="https://your-ghe-url.com or https://<enterprise-slug>.ghe.com"
+              placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"
             />
           </Field>
         )}

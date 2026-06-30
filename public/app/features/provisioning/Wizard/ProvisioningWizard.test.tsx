@@ -695,7 +695,9 @@ describe('ProvisioningWizard', () => {
       // Auth step fields: GHE uses the GitHub PAT placeholder and a GHE-specific URL placeholder
       expect(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx')).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText('https://your-ghe-url.com or https://<slug>.ghe.com/owner/repository')
+        screen.getByPlaceholderText(
+          'https://your-enterprise-url.com/owner/repository or https://<slug>.ghe.com/owner/repository'
+        )
       ).toBeInTheDocument();
 
       await navigateToConnectionStep(user, 'githubEnterprise', {

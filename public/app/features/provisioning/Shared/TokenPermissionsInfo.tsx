@@ -160,12 +160,11 @@ function connectStepInstruction({ type, serverUrl }: { type: InstructionAvailabi
     case 'githubEnterprise':
       // GitHub Enterprise hosts the token settings on its own server, derived from the repository URL.
       // GitHub UI is English only, so these strings are not translated.
-      const instruction = {
+      return {
         createTokenButtonText: 'Fine-grained token',
         createTokenLink: serverUrl ? `${serverUrl}/settings/personal-access-tokens/new` : '',
         tokenText: 'Settings -> Personal Access Tokens',
       };
-      return instruction;
     case 'github':
     default:
       // GitHub UI is English only, so these strings are not translated

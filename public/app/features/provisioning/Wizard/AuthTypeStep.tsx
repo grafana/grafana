@@ -63,7 +63,6 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined
   );
 
-  // const repositoryUrl = watch('repository.url')
   const isGit = repoType === 'git';
 
   return (

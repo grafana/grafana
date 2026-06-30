@@ -419,3 +419,22 @@ export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
 
   return { hasUrl: !!url, url };
 }
+
+// Returns the provider-specific config block (which carries `url`, `branch`, `path`)
+// for whichever Git provider the repository uses.
+export function getRemoteConfig(spec?: RepositorySpec) {
+  switch (spec?.type) {
+    case 'github':
+      return spec.github;
+    case 'githubEnterprise':
+      return spec.githubEnterprise;
+    case 'gitlab':
+      return spec.gitlab;
+    case 'bitbucket':
+      return spec.bitbucket;
+    case 'git':
+      return spec.git;
+    default:
+      return undefined;
+  }
+}
