@@ -55,12 +55,11 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			controllerCfg.historyExpiration,
 		)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
-		_, err = controller.NewHistoryJobController(
+		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
-			historyJobInformer,
 			controllerCfg.historyExpiration,
 		)
-		if err != nil {
+		if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to create history job controller: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
@@ -87,9 +86,9 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	var wg sync.WaitGroup
 
 	if controllerCfg.jobProcessingEnabled {
-		jobController, err := controller.NewJobController(jobInformer)
-		if err != nil {
-			return fmt.Errorf("failed to create job controller: %w", err)
+		jobController := controller.NewJobController()
+		if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add job event handler: %w", err)
 		}
 
 		driver, err := buildDriver(
