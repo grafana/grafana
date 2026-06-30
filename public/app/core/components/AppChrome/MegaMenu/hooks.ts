@@ -127,7 +127,7 @@ export const useNavCustomization = () => {
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
   // dedicated Bookmarks section is also dropped — pinned items are re-presented at the top.
   const baseItems = navTree.filter(
-    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
+    (item) => !NON_MENU_NAV_IDS[item.id ?? ''] && !(canCustomise && item.id === 'bookmarks')
   );
 
   const pinnedSet = new Set(pinnedUrls);
@@ -160,17 +160,14 @@ export const useNavCustomization = () => {
     }
   }
 
-  const homeItem = navItems.find((item) => item.id === 'home');
-  const unpinnedItems = navItems.filter((item) => item.id !== 'home');
-
   // The non-pinned items become collapsible once something is pinned.
   const unpinnedCollapsible = canCustomise && pinnedNavItems.length > 0;
   const showUnpinnedItems = !unpinnedCollapsible || (unpinnedExpanded ?? true);
 
   // Resolve the active item across the pinned rows and the rest in one search. A pinned section is
   // moved out of `navItems`, so searching `navItems` alone would fail to find it and walk up the
-  // parent chain to wrongly highlight Home; searching the combined list finds the (rendered) pinned
-  // node and stops there. Reference equality then highlights whichever row actually renders.
+  // parent chain to wrongly highlight an ancestor section; searching the combined list finds the
+  // (rendered) pinned node and stops there. Reference equality then highlights whichever row renders.
   const activeItem = getActiveItem([...pinnedNavItems, ...navItems], state.sectionNav.node, location.pathname);
 
   const isPinned = useCallback((url?: string) => Boolean(url && pinnedUrls.includes(url)), [pinnedUrls]);
@@ -214,8 +211,6 @@ export const useNavCustomization = () => {
     canCustomise,
     isLoading,
     navItems,
-    homeItem,
-    unpinnedItems,
     pinnedNavItems,
     activeItem,
     isPinned,

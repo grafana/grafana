@@ -178,8 +178,6 @@ type Config struct {
 	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
 	// client-go default.
 	IdleConnTimeout time.Duration
-	// EnableHTTP2 allows HTTP/2 for the client connection. It is disabled by default.
-	EnableHTTP2 bool
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -565,13 +563,6 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
 
-	// When HTTP/2 is disabled we restrict ALPN to HTTP/1.1 unconditionally.
-	// ALPN only applies to TLS; plain HTTP already uses HTTP/1.1.
-	tlsClientConfig := config.TLSClientConfig
-	if !config.EnableHTTP2 {
-		tlsClientConfig.NextProtos = []string{"http/1.1"}
-	}
-
 	// Create the rate limiter explicitly so we can wrap it with instrumentation
 	rateLimiter := &instrumentedRateLimiter{
 		RateLimiter: flowcontrol.NewTokenBucketRateLimiter(qps, burst),
@@ -580,7 +571,7 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 
 	restConfig := &rest.Config{
 		Host:            config.URL,
-		TLSClientConfig: tlsClientConfig,
+		TLSClientConfig: config.TLSClientConfig,
 		WrapTransport:   wrapTransport,
 		RateLimiter:     rateLimiter,
 		UserAgent:       userAgent,

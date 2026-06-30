@@ -161,12 +161,6 @@
       "import": "./dist/esm/raw/composable/nodegraph/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/nodegraph/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/parca/dataquery/x/ParcaDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/parca/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/parca/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/parca/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/parca/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/piechart/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/piechart/panelcfg/x/types.gen.d.ts",
