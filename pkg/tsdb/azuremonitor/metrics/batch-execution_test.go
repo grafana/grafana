@@ -45,14 +45,6 @@ func batchCtx() context.Context {
 	return config.WithGrafanaConfig(context.Background(), cfg)
 }
 
-// batchFallbackCtx enables both the batch API and the ARM /batch fallback flags.
-func batchFallbackCtx() context.Context {
-	cfg := config.NewGrafanaCfg(map[string]string{
-		featuretoggles.EnabledFeatures: "azureMonitorBatchAPI,azureMonitor.batchFallback",
-	})
-	return config.WithGrafanaConfig(context.Background(), cfg)
-}
-
 // makeBatchDsInfo builds a minimal DatasourceInfo with batch mode enabled and
 // a mock HTTP client that redirects all requests to srv.
 func makeBatchDsInfo(srv *httptest.Server) types.DatasourceInfo {
@@ -373,34 +365,13 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 
-		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		assert.True(t, batchHit, "metrics:getBatch should have been attempted")
 		assert.True(t, fallbackHit, "ARM /batch fallback should have been called")
 		dr := resp.Responses["A"]
 		assert.Nil(t, dr.Error)
 		assert.NotEmpty(t, dr.Frames, "fallback should have produced frames")
-	})
-
-	t.Run("fallback flag off: error surfaced, no ARM /batch call", func(t *testing.T) {
-		var fallbackHit bool
-		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasSuffix(r.URL.Path, "/batch") {
-				fallbackHit = true
-			}
-			http.Error(w, `{"error":{"code":"TooManyRequests"}}`, http.StatusTooManyRequests)
-		}))
-		defer srv.Close()
-
-		dsInfo := makeBatchDsInfo(srv)
-		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
-		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
-
-		// batchCtx() enables the batch API but NOT the fallback flag.
-		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
-		require.NoError(t, err)
-		assert.False(t, fallbackHit, "fallback must not run when the flag is off")
-		assert.NotNil(t, resp.Responses["A"].Error, "the batch error should be surfaced")
 	})
 
 	t.Run("non-retryable failure (400): no fallback", func(t *testing.T) {
@@ -417,7 +388,7 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 
-		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		assert.False(t, fallbackHit, "400 is not retryable; fallback must not run")
 		assert.NotNil(t, resp.Responses["A"].Error)
@@ -447,7 +418,7 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 
-		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		assert.False(t, individualHit, "must not fan out to individual /metrics when ARM /batch fails")
 		assert.NotNil(t, resp.Responses["A"].Error, "query should fail when the ARM /batch fallback fails")
@@ -485,7 +456,7 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 		q := makeBatchQuery("A", "sub-123", "eastus", resources)
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 
-		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		assert.Equal(t, 2, batchCalls, "25 resources should chunk into two ARM /batch calls (20 + 5)")
 		dr := resp.Responses["A"]
@@ -540,7 +511,7 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 		q := makeBatchQuery("A", "sub-123", "eastus", resources)
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
 
-		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		dr := resp.Responses["A"]
 		assert.NotNil(t, dr.Error, "the failed sub-response should surface an error")

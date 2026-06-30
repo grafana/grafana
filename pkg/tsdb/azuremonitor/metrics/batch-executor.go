@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -271,9 +270,8 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	batchResults := executeBatchRequests(ctx, batches, batchClient)
 
 	// When a batch fails with a retryable error, fall back to re-fetching that batch's
-	// resources via the ARM /batch endpoint (gated behind a flag). Build a RefID to original
-	// query map so the fallback can rebuild per-resource queries.
-	fallbackEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitor.batchFallback")
+	// resources via the ARM /batch endpoint. Build a RefID to original query map so the
+	// fallback can rebuild per-resource queries.
 	originalByRefID := make(map[string]backend.DataQuery, len(batchableQueries))
 	for _, q := range batchableQueries {
 		originalByRefID[q.RefID] = q
@@ -285,11 +283,10 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	azurePortalURL := dsInfo.Routes[types.RouteAzurePortal].URL
 	for _, br := range batchResults {
 		if br.Err != nil {
-			if fallbackEnabled && isRetryableStatus(br.StatusCode) {
+			if isRetryableStatus(br.StatusCode) {
 				e.fallbackBatch(ctx, br, originalByRefID, dsInfo, client, armURL, azurePortalURL, result)
 			} else {
-				// Not retryable (or fallback disabled): attribute the error to every
-				// query in the batch.
+				// Not retryable: attribute the error to every query in the batch.
 				for _, q := range br.Batch.Queries {
 					attachErr(result, q.RefID, br.Err)
 				}
