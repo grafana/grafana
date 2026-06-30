@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { config, useAppPluginEnabled } from '@grafana/runtime';
+import { config, useAppPluginEnabledState } from '@grafana/runtime';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
@@ -309,10 +309,8 @@ function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const pluginOrigin = getRulePluginOrigin(rule);
-  // Check plugin installation - only fires when pluginOrigin is present (empty string returns false)
-  const { value: isPluginInstalled = false, loading: pluginCheckLoading } = useAppPluginEnabled(
-    pluginOrigin?.pluginId ?? ''
-  );
+  // Only fires when pluginOrigin is present (empty string returns 'not-an-enabled-app' immediately)
+  const { value: pluginState, loading: pluginCheckLoading } = useAppPluginEnabledState(pluginOrigin?.pluginId ?? '');
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
@@ -321,11 +319,12 @@ function useAllRulerRuleAbilities(
     const isFederated = false;
     const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
 
-    // Treat as plugin-provided only if:
-    // 1. Rule has origin label (pluginOrigin exists)
-    // 2. Plugin is currently installed (or still loading to be safe)
-    // If no pluginOrigin, short-circuit to false without checking plugin installation
-    const isPluginManaged = pluginOrigin ? pluginCheckLoading || isPluginInstalled : false;
+    // Treat as plugin-provided when the rule has an origin label and the owning app is not definitively
+    // a non-enabled app. We keep it managed while loading, when the app is enabled, and — crucially —
+    // when the check could not be determined ('unknown', e.g. a transient request failure), so a
+    // failed check can no longer wrongly expose Edit/Delete. Only a definitive 'not-an-enabled-app'
+    // (disabled / non-app / not installed) releases the rule as the intended escape hatch.
+    const isPluginManaged = pluginOrigin ? pluginCheckLoading || pluginState !== 'not-an-enabled-app' : false;
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginManaged;
@@ -367,7 +366,7 @@ function useAllRulerRuleAbilities(
     exportAllowed,
     pluginOrigin,
     pluginCheckLoading,
-    isPluginInstalled,
+    pluginState,
   ]);
 
   return abilities;
@@ -386,8 +385,8 @@ function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): A
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
   const promPluginOrigin = getRulePluginOrigin(rule);
-  // Check plugin installation - only fires when promPluginOrigin is present (empty string returns false)
-  const { value: isPromPluginInstalled = false, loading: promPluginCheckLoading } = useAppPluginEnabled(
+  // Only fires when promPluginOrigin is present (empty string returns 'not-an-enabled-app' immediately)
+  const { value: promPluginState, loading: promPluginCheckLoading } = useAppPluginEnabledState(
     promPluginOrigin?.pluginId ?? ''
   );
 
@@ -399,9 +398,13 @@ function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): A
     const isFederated = false;
     // All GrafanaPromRuleDTO rules are Grafana-managed by definition
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
-    // Treat as plugin-provided only if both: has origin label AND plugin is currently installed
-    // During loading, default to immutable for safety
-    const isPluginProvided = Boolean(promPluginOrigin && (promPluginCheckLoading || isPromPluginInstalled));
+    // Treat as plugin-provided when the rule has an origin label and the owning app is not definitively
+    // a non-enabled app. Managed while loading, when enabled, and when the check is 'unknown' (e.g. a
+    // transient failure) so a failed check can't wrongly expose Edit/Delete; only a definitive
+    // 'not-an-enabled-app' (disabled / non-app / not installed) releases it as the intended escape hatch.
+    const isPluginProvided = Boolean(
+      promPluginOrigin && (promPluginCheckLoading || promPluginState !== 'not-an-enabled-app')
+    );
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginProvided;
@@ -442,7 +445,7 @@ function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): A
     silenceSupported,
     promPluginOrigin,
     promPluginCheckLoading,
-    isPromPluginInstalled,
+    promPluginState,
   ]);
 
   return abilities;
