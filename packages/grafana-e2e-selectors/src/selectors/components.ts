@@ -756,6 +756,9 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
+      showDependenciesButton: {
+        '13.1.0': 'data-testid show dependencies button',
+      },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
       },
@@ -767,11 +770,6 @@ export const versionedComponents = {
       },
       variableLabelInput: {
         '12.0.0': 'data-testid variable label input',
-      },
-      CustomVariable: {
-        customValueInput: {
-          [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-input',
-        },
       },
       AutoGridLayout: {
         minColumnWidth: {

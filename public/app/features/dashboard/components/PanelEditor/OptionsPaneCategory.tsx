@@ -67,7 +67,7 @@ export const OptionsPaneCategory = React.memo(
       }
     }, [isExpanded, isOpenFromUrl, forceOpen]);
 
-    // remove effect when feature flag grafanaDasboardSettingsRedesign is removed
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
     useEffect(
       function highlightPaneCategory() {
         if (!isHighlightedFromUrl) {
@@ -81,9 +81,12 @@ export const OptionsPaneCategory = React.memo(
           ref.current?.scrollIntoView();
         }, 200);
 
-        const highlightTimeout = window.setTimeout(() => setIsHighlighted(false), 2000);
-
-        updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
+        // Clear the URL param only after the highlight completes. Clearing it synchronously
+        // flips isHighlightedFromUrl, which re-runs this effect and cancels both timers early.
+        const highlightTimeout = window.setTimeout(() => {
+          setIsHighlighted(false);
+          updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
+        }, 2000);
 
         return () => {
           window.clearTimeout(scrollTimeout);
