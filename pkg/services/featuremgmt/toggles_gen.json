@@ -1046,20 +1046,6 @@
     },
     {
       "metadata": {
-        "name": "azureMonitor.batchFallback",
-        "resourceVersion": "1782263807585",
-        "creationTimestamp": "2026-06-24T01:16:47Z",
-        "deletionTimestamp": "2026-06-30T20:28:13Z"
-      },
-      "spec": {
-        "description": "Falls back to the ARM batch endpoint when an Azure Monitor Metrics Batch API request fails with a retryable error",
-        "stage": "experimental",
-        "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "azureMonitorBatchAPI",
         "resourceVersion": "1780343527990",
         "creationTimestamp": "2026-06-01T19:52:07Z"
