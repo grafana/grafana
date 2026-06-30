@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { type AssistantHook, useAssistant } from '@grafana/assistant';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
@@ -853,6 +854,7 @@ describe('DashboardCard', () => {
       expect(screen.getByText('Delete this template?')).toBeInTheDocument();
       expect(mockOnDelete).not.toHaveBeenCalled();
 
+      await user.type(await screen.findByTestId(selectors.pages.ConfirmModal.input), 'Delete');
       await user.click(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockOnDelete).toHaveBeenCalledTimes(1);
