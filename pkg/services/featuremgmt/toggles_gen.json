@@ -1398,21 +1398,6 @@
     },
     {
       "metadata": {
-        "name": "dashboard.variablesBlockOnError",
-        "resourceVersion": "1782232057582",
-        "creationTimestamp": "2026-06-23T16:27:37Z",
-        "deletionTimestamp": "2026-06-23T16:30:10Z"
-      },
-      "spec": {
-        "description": "Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -1617,11 +1602,7 @@
       "metadata": {
         "name": "dashboardVariablesBlockOnError",
         "resourceVersion": "1782232210390",
-        "creationTimestamp": "2026-06-23T16:26:20Z",
-        "deletionTimestamp": "2026-06-23T16:27:37Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-06-23 16:30:10.390291 +0000 UTC"
-        }
+        "creationTimestamp": "2026-06-23T16:26:20Z"
       },
       "spec": {
         "description": "Prevents dependent variables and panels from refreshing when a template variable fails to update, avoiding unscoped backend queries",
