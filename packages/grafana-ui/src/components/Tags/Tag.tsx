@@ -78,7 +78,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
     wrapper: css({
       appearance: 'none',
       borderStyle: 'none',
-      fontWeight: visualRefreshEnabled ? 'unset' : theme.typography.fontWeightMedium,
+      fontWeight: visualRefreshEnabled ? theme.typography.fontWeightRegular : theme.typography.fontWeightMedium,
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
