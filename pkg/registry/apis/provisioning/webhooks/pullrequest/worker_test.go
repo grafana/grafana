@@ -53,6 +53,12 @@ func TestPullRequestWorker_IsSupported(t *testing.T) {
 	}
 }
 
+func TestPullRequestMergeRef(t *testing.T) {
+	require.Equal(t, "refs/pull/123/merge", pullRequestMergeRef(123))
+	require.Empty(t, pullRequestMergeRef(0))
+	require.Empty(t, pullRequestMergeRef(-1))
+}
+
 func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 	evaluator := NewMockEvaluator(t)
 	commenter := NewMockCommenter(t)
@@ -200,7 +206,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(nil, errors.New("failed to list files"))
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(nil, errors.New("failed to list files"))
 			},
 			expectedError: "failed to list pull request files: failed to list files",
 		},
@@ -221,7 +227,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return([]repository.VersionedFileChange{}, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return([]repository.VersionedFileChange{}, nil)
 				progress.On("SetFinalMessage", mock.Anything, "no files to process").Return()
 			},
 			expectedError: "",
@@ -251,7 +257,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: "another.yaml"}, // Supported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(files, nil)
 
 				// Only non-ignored files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -291,7 +297,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: ".github/something"},    // Unsupported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(files, nil)
 
 				// Only supported files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -324,7 +330,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, errors.New("evaluation failed"))
 			},
 			expectedError: "calculate changes: evaluation failed",
@@ -349,11 +355,38 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("comment failed"))
 			},
 			expectedError: "comment pull request: comment failed",
+		},
+		{
+			name: "falls back to head ref when merge ref is missing",
+			opts: &provisioning.PullRequestJobOptions{
+				PR:  123,
+				Ref: "test-ref",
+			},
+			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
+				repo.MockRepository.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title:  "test-repo",
+						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+					},
+				})
+				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
+				files := []repository.VersionedFileChange{
+					{Path: "test.yaml", Ref: "test-ref"},
+				}
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(nil, repository.ErrRefNotFound)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, files, mock.Anything).Return(changeInfo{}, nil)
+				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			expectedError: "",
 		},
 		{
 			name: "successful process",
@@ -373,10 +406,10 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
 				files := []repository.VersionedFileChange{
-					{Path: "test.yaml"},
+					{Path: "test.yaml", Ref: "refs/pull/123/merge"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
-				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge").Return(files, nil)
+				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, files, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: "",

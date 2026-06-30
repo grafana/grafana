@@ -153,7 +153,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	progress.SetMessage(ctx, "listing pull request files")
 	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
 	base := cfg.GitHub.Branch
-	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
+	files, err := comparePullRequestFiles(ctx, prRepo, base, *opts, logger)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)
@@ -180,6 +180,28 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger.Info("preview comment added")
 
 	return nil
+}
+
+func comparePullRequestFiles(ctx context.Context, repo PullRequestRepo, base string, opts provisioning.PullRequestJobOptions, logger logging.Logger) ([]repository.VersionedFileChange, error) {
+	mergeRef := pullRequestMergeRef(opts.PR)
+	if mergeRef == "" {
+		return repo.CompareFiles(ctx, base, opts.Ref)
+	}
+
+	files, err := repo.CompareFiles(ctx, base, mergeRef)
+	if err == nil || !errors.Is(err, repository.ErrRefNotFound) {
+		return files, err
+	}
+
+	logger.Info("pull request merge ref not found, falling back to head ref", "merge_ref", mergeRef, "head_ref", opts.Ref)
+	return repo.CompareFiles(ctx, base, opts.Ref)
+}
+
+func pullRequestMergeRef(pr int) string {
+	if pr <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("refs/pull/%d/merge", pr)
 }
 
 // Remove files we should not try to process
