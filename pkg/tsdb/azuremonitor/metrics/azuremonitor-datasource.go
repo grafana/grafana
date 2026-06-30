@@ -11,14 +11,17 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -31,6 +34,50 @@ import (
 type AzureMonitorDatasource struct {
 	Proxy  types.ServiceProxy
 	Logger log.Logger
+
+	// subscriptionCache maps cacheKey (see subscriptionCacheKey) to a
+	// subscriptionCacheEntry. Values are inserted on successful fetch and
+	// served until expiresAt. Zero-value-ready.
+	subscriptionCache sync.Map
+
+	// subscriptionFlights coalesces concurrent lookups for the same cacheKey
+	// so that a burst of queries against the same subscription only performs
+	// one upstream HTTP call.
+	subscriptionFlights singleflight.Group
+}
+
+// subscriptionCacheTTL is the lifetime of a cached subscription display name.
+// Display names change rarely and are only used for legend formatting, so
+// brief staleness after a rename is acceptable.
+const subscriptionCacheTTL = 5 * time.Minute
+
+type subscriptionCacheEntry struct {
+	displayName string
+	expiresAt   time.Time
+}
+
+// subscriptionCacheKey composes the fields that disambiguate a subscription
+// lookup. orgId and dsId scope to a single Grafana datasource; baseUrl
+// disambiguates across Azure clouds (public, government, china) configured
+// on the same datasource over time.
+func subscriptionCacheKey(orgId, dsId int64, baseUrl, subscriptionId string) string {
+	return fmt.Sprintf("%d|%d|%s|%s", orgId, dsId, baseUrl, subscriptionId)
+}
+
+// isUserScopedAuth reports whether the datasource issues requests with an
+// identity that varies per Grafana user. In those modes persistent caching
+// is unsafe: a user who has lost access to a subscription would continue to
+// receive a cached display name until the TTL expires. Singleflight
+// coalescing within a single burst is still safe and still applied.
+func isUserScopedAuth(creds azcredentials.AzureCredentials) bool {
+	if creds == nil {
+		return false
+	}
+	switch creds.AzureAuthType() {
+	case azcredentials.AzureAuthCurrentUserIdentity, azcredentials.AzureAuthClientSecretObo:
+		return true
+	}
+	return false
 }
 
 var (
@@ -71,19 +118,16 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 
 func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*types.AzureMonitorQuery, error) {
 	var target string
-	queryJSONModel := dataquery.AzureMonitorQuery{}
+	// GrafanaSql is not present on the generated AzureMonitorQuery type yet;
+	// embedding lets us pick it up in the same Unmarshal pass.
+	// TODO: Move GrafanaSql to the generated type.
+	var queryJSONModel struct {
+		dataquery.AzureMonitorQuery
+		GrafanaSql bool `json:"grafanaSql"`
+	}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
-	}
-
-	// TODO: Move this to the generated type
-	var queryEnvelope struct {
-		GrafanaSql bool `json:"grafanaSql"`
-	}
-	err = json.Unmarshal(query.JSON, &queryEnvelope)
-	if err != nil {
-		queryEnvelope.GrafanaSql = false
 	}
 
 	azJSONModel := queryJSONModel.AzureMonitor
@@ -106,7 +150,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 	filterInBody := true
 	resourceIDs := []string{}
 	resourceMap := map[string]dataquery.AzureMonitorResource{}
-	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
+	if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel.AzureMonitorQuery); hasOne {
 		ub := UrlBuilder{
 			ResourceURI: azJSONModel.ResourceUri,
 			// Alternative, used to reconstruct resource URI if it's not present
@@ -212,7 +256,7 @@ func (e *AzureMonitorDatasource) buildQuery(query backend.DataQuery, dsInfo type
 		Dimensions:   azJSONModel.DimensionFilters,
 		Resources:    resourceMap,
 		Subscription: sub,
-		GrafanaSql:   queryEnvelope.GrafanaSql,
+		GrafanaSql:   queryJSONModel.GrafanaSql,
 	}
 	if filterString != "" {
 		if filterInBody {
@@ -264,7 +308,69 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64, creds azcredentials.AzureCredentials) (string, error) {
+	userScoped := isUserScopedAuth(creds)
+	cacheKey := subscriptionCacheKey(orgId, dsId, baseUrl, subscriptionId)
+
+	// Persistent caching is only safe in auth modes where every request from
+	// this datasource uses the same Azure identity. In user-scoped modes the
+	// request is authorised on behalf of the current Grafana user, so a
+	// cached display name could be served to a user who has since lost
+	// access. Singleflight coalescing of concurrent callers is still applied
+	// in both modes.
+	if !userScoped {
+		if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+			return entry.displayName, nil
+		}
+	}
+
+	// Coalesce concurrent misses for the same cacheKey. Callers that arrive
+	// while a fetch is in flight will share its result (and its error), which
+	// is acceptable for this short-lived lookup.
+	result, err, _ := e.subscriptionFlights.Do(cacheKey, func() (any, error) {
+		if !userScoped {
+			// Re-check under the flight: another caller may have refreshed
+			// the entry between the fast-path miss and acquiring the flight
+			// slot.
+			if entry, ok := e.loadSubscriptionCacheEntry(cacheKey); ok {
+				return entry.displayName, nil
+			}
+		}
+
+		displayName, err := e.fetchSubscriptionDisplayName(cli, ctx, subscriptionId, baseUrl, dsId, orgId)
+		if err != nil {
+			return "", err
+		}
+
+		if !userScoped {
+			e.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+				displayName: displayName,
+				expiresAt:   time.Now().Add(subscriptionCacheTTL),
+			})
+		}
+		return displayName, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
+// loadSubscriptionCacheEntry returns the unexpired cache entry for cacheKey,
+// if one exists.
+func (e *AzureMonitorDatasource) loadSubscriptionCacheEntry(cacheKey string) (subscriptionCacheEntry, bool) {
+	v, ok := e.subscriptionCache.Load(cacheKey)
+	if !ok {
+		return subscriptionCacheEntry{}, false
+	}
+	entry := v.(subscriptionCacheEntry)
+	if time.Now().After(entry.expiresAt) {
+		return subscriptionCacheEntry{}, false
+	}
+	return entry, true
+}
+
+func (e *AzureMonitorDatasource) fetchSubscriptionDisplayName(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
@@ -353,7 +459,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		return nil, err
 	}
 
-	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID, dsInfo.Credentials)
 	if err != nil {
 		return nil, err
 	}

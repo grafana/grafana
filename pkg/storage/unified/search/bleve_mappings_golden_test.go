@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -40,50 +39,17 @@ var updateGolden = flag.Bool("update-golden", false, "regenerate bleve mapping g
 // The per-kind cases (dashboard, user, team, team_binding,
 // external_group_mapping) call each in-tree builder and feed the resulting
 // DocumentBuilderInfo through GetBleveMappings the same way BuildIndex does
-// in production: when DocumentBuilderInfo.SearchFieldsProvider is non-nil,
-// the test passes it through, exercising the provider-driven mapping path.
-// Dashboard's builder does not set a provider yet, so it continues to drive
-// the mapping from its column-definition-derived Fields. The per-kind
-// snapshots guard against accidental shape drift while the manifest-driven
-// search-fields work moves the source of truth from column definitions to
-// SearchFieldsProvider declarations.
-//
-// Because the IAM builders return a non-nil provider, the user, team,
-// team_binding, and external_group_mapping goldens prove that turning the
-// provider on for these kinds produces the same on-disk mapping shape as
-// the legacy column-definition path. Search server and client can deploy
-// separately, so this byte-identical guarantee matters.
+// in production: the test reads SearchFieldsProvider, Group, and Resource
+// off the builder info and passes them through, exercising the
+// provider-driven mapping path. Each per-kind case sets providerExpected so
+// a future regression in builder wiring (silently dropping the provider) is
+// caught here. Search server and client can deploy separately, so the
+// byte-identical guarantee from these goldens matters.
 func TestBleveMappingsGoldenJSON(t *testing.T) {
-	filterableStringFields := func(t *testing.T) resource.SearchableDocumentFields {
-		t.Helper()
-		f, err := resource.NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				// A typical per-kind custom field: filterable STRING. Today's
-				// inner-loop output is a single keyword mapping at fields.<name>.
-				Name: "panel_types",
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					Filterable: true,
-				},
-			},
-			{
-				// A non-filterable STRING: no explicit mapping today.
-				Name: "panel_title",
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			},
-			{
-				// A non-string column: no explicit mapping today.
-				Name: "schema_version",
-				Type: resourcepb.ResourceTableColumnDefinition_INT32,
-			},
-		})
-		require.NoError(t, err)
-		return f
-	}
-
 	// builderInfoFor returns the DocumentBuilderInfo for an in-tree kind so
-	// the test can mirror BuildIndex: pass Fields, SearchFieldsProvider,
-	// Group, and Resource through to GetBleveMappings together.
+	// the test can mirror BuildIndex: pull SearchFieldsProvider, Group, and
+	// Resource off the builder info and pass them through to
+	// GetBleveMappings together.
 	builderInfoFor := func(t *testing.T, fn func() (resource.DocumentBuilderInfo, error)) resource.DocumentBuilderInfo {
 		t.Helper()
 		info, err := fn()
@@ -109,15 +75,14 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 	cases := []struct {
 		name string
 		// builder returns the DocumentBuilderInfo for a real in-tree kind.
-		// When set, the test passes info.Fields, info.SearchFieldsProvider,
-		// info.GroupResource.{Group,Resource} to GetBleveMappings together,
+		// When set, the test passes info.SearchFieldsProvider,
+		// info.GroupResource.{Group,Resource} to GetBleveMappings,
 		// matching production.
 		builder func(t *testing.T) resource.DocumentBuilderInfo
 		// providerExpected, when true, asserts builder() returns a non-nil
 		// SearchFieldsProvider so a future regression in builder wiring
 		// (silently dropping the provider) is caught here.
 		providerExpected bool
-		fields           func(t *testing.T) resource.SearchableDocumentFields
 		provider         func(t *testing.T) (resource.SearchFieldsProvider, string, string)
 		selectableFields []string
 		path             string
@@ -127,23 +92,14 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 			path: "testdata/bleve_mapping_empty.json",
 		},
 		{
-			name:   "filterable_string_field",
-			fields: filterableStringFields,
-			path:   "testdata/bleve_mapping_filterable_string.json",
-		},
-		{
 			name:             "selectable_fields",
 			selectableFields: []string{"spec.title", "spec.description"},
 			path:             "testdata/bleve_mapping_selectable_fields.json",
 		},
 		{
-			// Dashboard's builder does not set SearchFieldsProvider yet (a
-			// follow-up migration will). Until then the mapping is driven by
-			// the column-definition-derived Fields, so providerExpected stays
-			// false and this case keeps the legacy path covered.
 			name:             "dashboard",
 			builder:          dashboardInfo,
-			providerExpected: false,
+			providerExpected: true,
 			path:             "testdata/bleve_mapping_dashboard.json",
 		},
 		{
@@ -171,10 +127,10 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 			path:             "testdata/bleve_mapping_external_group_mapping.json",
 		},
 		{
-			// Provider-driven path: a kind whose bleve mapping comes from
-			// SearchFieldDefinitions rather than column definitions. Exercises
-			// the type-aware filter rule: string+filter emits an explicit
-			// keyword mapping, non-string+filter falls back to dynamic.
+			// Provider-driven path with a synthetic kind: exercises the
+			// type-aware filter rule (string+filter emits an explicit keyword
+			// mapping, non-string+filter falls back to dynamic) on
+			// declarations that no in-tree builder produces.
 			name: "provider_driven",
 			provider: func(t *testing.T) (resource.SearchFieldsProvider, string, string) {
 				t.Helper()
@@ -200,14 +156,12 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			var fields resource.SearchableDocumentFields
 			var provider resource.SearchFieldsProvider
 			var group, kindResource string
 
 			switch {
 			case tc.builder != nil:
 				info := tc.builder(t)
-				fields = info.Fields
 				provider = info.SearchFieldsProvider
 				group = info.GroupResource.Group
 				kindResource = info.GroupResource.Resource
@@ -216,11 +170,9 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 				}
 			case tc.provider != nil:
 				provider, group, kindResource = tc.provider(t)
-			case tc.fields != nil:
-				fields = tc.fields(t)
 			}
 
-			mappings, err := search.GetBleveMappings(fields, provider, group, kindResource, tc.selectableFields)
+			mappings, err := search.GetBleveMappings(provider, group, kindResource, tc.selectableFields)
 			require.NoError(t, err)
 
 			got, err := json.MarshalIndent(mappings, "", "  ")
