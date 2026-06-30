@@ -6432,8 +6432,7 @@
         "tooltip": "Dashboard settings"
       },
       "discard-library-panel-changes": "Discard library panel changes",
-      "discard-panel": "Discard panel changes",
-      "discard-panel-new": "Discard panel",
+      "discard-library-panel-changes-short": "Discard",
       "edit": {
         "label": "Edit",
         "tooltip": "Enter edit mode"
@@ -6458,9 +6457,6 @@
         "dashboard-settings": {
           "tooltip": "Dashboard settings"
         },
-        "discard-library-panel-changes": "Discard library panel changes",
-        "discard-panel": "Discard panel changes",
-        "discard-panel-new": "Discard panel",
         "edit-dashboard-v2-schema": {
           "tooltip": "Edit dashboard v2 schema"
         },
@@ -6487,7 +6483,6 @@
           "tooltip": "Save as copy"
         },
         "save-dashboard-short": "Save",
-        "save-library-panel": "Save library panel",
         "save-template": {
           "label": "Save",
           "tooltip": "Save template changes"
@@ -6495,10 +6490,13 @@
         "share": {
           "arrow": "Share",
           "tooltip": "Copy link"
-        },
-        "unlink-library-panel": "Unlink library panel"
+        }
       },
       "open-original": "Open original dashboard",
+      "panel-edit-back": "Back",
+      "panel-edit-back-tooltip": "Back to dashboard view",
+      "panel-edit-discard": "Discard",
+      "panel-edit-discard-tooltip": "Discard panel changes",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
@@ -6518,6 +6516,7 @@
       },
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
+      "save-library-panel-short": "Save",
       "settings": "Dashboard settings",
       "share-button": "Share",
       "snapshot": {
@@ -6527,7 +6526,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel"
+      "unlink-library-panel": "Unlink library panel",
+      "unlink-library-panel-short": "Unlink"
     },
     "transformation-editor": {
       "input-data": "Input data",

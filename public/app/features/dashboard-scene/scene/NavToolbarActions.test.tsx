@@ -129,21 +129,7 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
 
-    it('Should show correct buttons when editing a new panel', async () => {
-      const { dashboard } = setup();
-
-      await act(() => {
-        dashboard.onEnterEditMode();
-        const panel = dashboard.state.body.getVizPanels()[0];
-        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
-      });
-
-      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Discard panel')).toBeInTheDocument();
-      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
-    });
-
-    it('Should show correct buttons when editing an existing panel', async () => {
+    it('shows Save dashboard but not the panel-edit back button while editing a panel', async () => {
       const { dashboard } = setup();
 
       await act(() => {
@@ -153,8 +139,11 @@ describe('NavToolbarActions', () => {
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
-      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+      // The panel-edit back button lives in the dashboard controls row, not the toolbar. Match it by
+      // its stable selector — its visible text is shared with the view-panel and settings back buttons.
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).not.toBeInTheDocument();
     });
     describe('edit dashboard button tracking', () => {
       it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {

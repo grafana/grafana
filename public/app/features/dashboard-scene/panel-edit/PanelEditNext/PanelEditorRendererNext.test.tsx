@@ -13,10 +13,6 @@ jest.mock('./hooks', () => ({
   usePanelEditorShell: jest.fn(),
 }));
 
-jest.mock('../../scene/NavToolbarActions', () => ({
-  NavToolbarActions: () => <div data-testid="nav-toolbar" />,
-}));
-
 jest.mock('./VizAndDataPaneNext', () => ({
   VizAndDataPaneNext: () => <div data-testid="viz-and-data-pane" />,
 }));

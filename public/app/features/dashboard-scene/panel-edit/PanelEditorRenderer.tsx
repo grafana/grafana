@@ -48,11 +48,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   return (
     <div className={styles.pageContainer}>
-      {controls && (
-        <div className={styles.controlsWrapper}>
-          <controls.Component model={controls} />
-        </div>
-      )}
+      {controls && <controls.Component model={controls} />}
       <div
         {...containerProps}
         className={cx(containerProps.className, styles.content)}
@@ -113,7 +109,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   return (
     <div {...containerProps}>
-      <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
+      <div {...primaryProps}>
         <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
       </div>
       <LibraryPanelEditModals model={model} />
@@ -160,15 +156,6 @@ function getStyles(theme: GrafanaTheme2) {
       flex: '1 1 0',
       minHeight: 0,
     }),
-    canvasContent: css({
-      label: 'canvas-content',
-      display: 'flex',
-      flexDirection: 'column',
-      flexBasis: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      width: '100%',
-    }),
     content: css({
       width: '100%',
       overflow: 'hidden',
@@ -209,12 +196,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotate180: css({
       rotate: '180deg',
-    }),
-    controlsWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 0,
-      gridArea: 'controls',
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

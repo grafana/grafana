@@ -132,6 +132,8 @@ export function useQueryEditorBanner() {
 export function usePanelEditorShell(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
+  // Subscribe to controls so the controls row appears/updates if it's set after mount.
+  const { controls } = dashboard.useState();
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
   const isScrollingLayout = useScrollReflowLimit();
   const theme = useTheme2();
@@ -156,7 +158,7 @@ export function usePanelEditorShell(model: PanelEditor) {
     optionsPane,
     isScrollingLayout,
     splitter,
-    controls: dashboard.state.controls,
+    controls,
   };
 }
 
@@ -186,7 +188,6 @@ export function useVizAndDataPaneLayout(
 ) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
-  const { controls } = dashboard.useState();
   const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
     SidebarSize.Mini
@@ -229,7 +230,6 @@ export function useVizAndDataPaneLayout(
       dataPane,
       panel: model.getPanel(),
       tableView,
-      controls,
       dashboard,
     },
     layout: {

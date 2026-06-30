@@ -22,7 +22,6 @@ jest.mock('../PanelEditor', () => ({}));
 
 describe('buildVizAndDataPaneGrid', () => {
   const base = {
-    controlsEnabled: false,
     hasDataPane: true,
     isSidebarFullWidth: false,
     showBanner: true,
@@ -36,19 +35,10 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(gridTemplateAreas).toBe('"viz viz"');
   });
 
-  it('places the controls row above the viz when controls are enabled', () => {
-    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true });
-
-    expect(gridTemplateAreas).toBe(
-      '"controls controls"\n"viz viz"\n"version-toggle version-toggle"\n"sidebar data-pane"'
-    );
-    expect(gridTemplateRows).toBe('auto 1fr auto 1fr');
-  });
-
   it('makes sidebar span every row when isSidebarFullWidth is true', () => {
-    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
+    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, isSidebarFullWidth: true });
 
-    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+    expect(gridTemplateAreas).toBe('"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
   });
 
   it('omits version-toggle row when showBanner is false', () => {
