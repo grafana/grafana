@@ -64,7 +64,7 @@ In the **X field** option, select a numeric field that contains ascending values
 
 ### Graph styles options
 
-The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options). These options apply to non-time x-axis series.
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options). These options apply to numeric-x series.
 
 {{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
