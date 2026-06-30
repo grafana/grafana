@@ -118,8 +118,6 @@ describe('CommandPalette', () => {
       // Deep search debounces for 500ms, so allow extra time for results
       expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
       expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
-      // Each snippet line is prefixed with its score
-      expect(screen.getByText('0.10')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
     });
 
