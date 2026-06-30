@@ -26,7 +26,6 @@ const (
 	Added    EventType = "ADDED"
 	Modified EventType = "MODIFIED"
 	Deleted  EventType = "DELETED"
-	Bookmark EventType = "BOOKMARK"
 )
 
 // Event is the wire envelope published on a resource subject. It carries only
