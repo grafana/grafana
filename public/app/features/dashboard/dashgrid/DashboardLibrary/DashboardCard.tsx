@@ -150,14 +150,6 @@ function DashboardCardComponent({
 
   return (
     <article className={styles.card}>
-      {showDeleteConfirm && (
-        <DeleteTemplateConfirm
-          title={title}
-          isDeleting={isDeleting}
-          onCancel={() => setShowDeleteConfirm(false)}
-          onConfirm={onConfirmDelete}
-        />
-      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -335,6 +327,14 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
+      {showDeleteConfirm && (
+        <DeleteTemplateConfirm
+          title={title}
+          isDeleting={isDeleting}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={onConfirmDelete}
+        />
+      )}
     </article>
   );
 }
