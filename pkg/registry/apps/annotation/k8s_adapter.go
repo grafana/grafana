@@ -143,12 +143,23 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
 
-	opts := ListOptions{}
-	if err := parseFieldSelector(options.FieldSelector, &opts); err != nil {
+	ff, err := parseFieldSelector(options.FieldSelector)
+	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
-	if err := parseLabelSelector(options.LabelSelector, &opts); err != nil {
+	lf, err := parseLabelSelector(options.LabelSelector)
+	if err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
+	}
+
+	opts := ListOptions{
+		// from field selector
+		DashboardUID: ff.DashboardUID,
+		PanelID:      ff.PanelID,
+		From:         ff.From,
+		To:           ff.To,
+		// from label selector
+		LegacyID: lf.LegacyID,
 	}
 
 	opts.Limit = 100
@@ -379,69 +390,87 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	return nil, false, nil
 }
 
-// parseFieldSelector translates K8s field selectors into Store ListOptions.
-func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
+// fieldFilters holds the filters derived from a K8s field selector.
+type fieldFilters struct {
+	DashboardUID string
+	PanelID      int64
+	From         int64
+	To           int64
+}
+
+// labelFilters holds the filters derived from a K8s label selector.
+type labelFilters struct {
+	LegacyID int64
+}
+
+// parseFieldSelector translates K8s field selectors into field filters.
+func parseFieldSelector(fs fields.Selector) (fieldFilters, error) {
+	var f fieldFilters
 	if fs == nil {
-		return nil
+		return f, nil
 	}
 	for _, r := range fs.Requirements() {
 		if r.Operator != selection.Equals && r.Operator != selection.DoubleEquals {
-			return fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field)
+			return f, fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator, r.Field)
 		}
 		switch r.Field {
 		case "spec.dashboardUID":
-			opts.DashboardUID = r.Value
+			f.DashboardUID = r.Value
 		case "spec.panelID":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid panelID value %q: %w", r.Value, err)
 			}
-			opts.PanelID = v
+			f.PanelID = v
 		case "spec.time":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid time value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid time value %q: %w", r.Value, err)
 			}
-			opts.From = v
+			f.From = v
 		case "spec.timeEnd":
 			v, err := strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
+				return f, fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
-			opts.To = v
+			f.To = v
 		default:
-			return fmt.Errorf("unsupported field selector: %s", r.Field)
+			return f, fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
 	}
-	return nil
+	return f, nil
 }
 
-// parseLabelSelector translates K8s label selectors into Store ListOptions.
-func parseLabelSelector(ls labels.Selector, opts *ListOptions) error {
+// parseLabelSelector translates K8s label selectors into label filters.
+func parseLabelSelector(ls labels.Selector) (labelFilters, error) {
+	var f labelFilters
 	if ls == nil {
-		return nil
+		return f, nil
 	}
-	requirements, _ := ls.Requirements()
+	requirements, selectable := ls.Requirements()
+	if !selectable {
+		return f, fmt.Errorf("label selector cannot match anything")
+	}
 	for _, r := range requirements {
 		if r.Operator() != selection.Equals && r.Operator() != selection.DoubleEquals {
-			return fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator(), r.Key())
+			return f, fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator(), r.Key())
 		}
 		switch r.Key() {
 		case LabelKeyLegacyID:
 			value, ok := r.Values().PopAny()
 			if !ok {
-				return fmt.Errorf("missing value for label selector %s", r.Key())
+				return f, fmt.Errorf("missing value for label selector %s", r.Key())
 			}
 			v, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid legacyID value %q: %w", value, err)
+				return f, fmt.Errorf("invalid legacyID value %q: %w", value, err)
 			}
-			opts.LegacyID = v
+			f.LegacyID = v
 		default:
-			return fmt.Errorf("unsupported label selector: %s", r.Key())
+			return f, fmt.Errorf("unsupported label selector: %s", r.Key())
 		}
 	}
-	return nil
+	return f, nil
 }
 
 func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error {
