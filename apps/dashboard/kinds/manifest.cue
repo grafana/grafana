@@ -104,6 +104,7 @@ manifest: {
 					}
 				},
 				globalVariableV2beta1,
+				notebookV2beta1,
 			]
 		}
 		"v2": {
