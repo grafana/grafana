@@ -9,7 +9,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertingRuleGroupSortByFolderFullpath,experimental,@grafana/alerting-squad,false,false,false
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 2023-02-09,lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-2022-02-09,influxdbBackendMigration,GA,@grafana/data-sources-plugins,false,false,true
 2026-05-22,live.runAPIServer,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-05-22,live.keepHAPrefixInCloud,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,starsFromAPIServer,experimental,@grafana/grafana-frontend-navigation,false,false,true
@@ -260,12 +259,12 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-05-22,nestedFramesFieldOverrides,preview,@grafana/dataviz-squad,false,false,true
 2026-03-10,vizLegendFacetedFilter,GA,@grafana/dataviz-squad,false,false,true
-2025-12-18,heatmapRowsAxisOptions,GA,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
 2026-05-22,onlyStoreServiceAccountActionSets,experimental,@grafana/identity-access-team,false,false,false
+2026-06-26,iam.onlyStoreDatasourceActionSets,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,excludeRedundantManagedPermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-16,pluginInsights,experimental,@grafana/grafana-catalog,false,false,true
 2025-10-29,panelTimeSettings,preview,@grafana/dashboards-squad,false,false,false
@@ -365,3 +364,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-06-26,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false

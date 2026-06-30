@@ -231,7 +231,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
   const variables = useUserDefinedVariables(model);
 
   const variableNames: ComboboxOption[] = useMemo(
-    () => variables.map((v) => ({ value: v.state.name, label: v.state.label ?? v.state.name })),
+    () => variables.map((v) => ({ value: v.state.name, label: v.state.label || v.state.name })),
     [variables]
   );
 

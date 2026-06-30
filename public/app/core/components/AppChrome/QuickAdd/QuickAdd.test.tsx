@@ -3,8 +3,9 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -23,19 +24,25 @@ jest.mock(
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
 
-let mockTestDataSources: Array<{ name: string; uid: string; type: string }> = [
-  { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-];
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-    getDataSourceSrv: () => ({
-      getList: jest.fn(() => mockTestDataSources),
-    }),
   };
 });
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
@@ -105,7 +112,7 @@ describe('QuickAdd', () => {
     // analyticsFramework defaults to enabled in production
     useBooleanFlagValueMock.mockReturnValue(true);
     config.featureToggles.dashboardTemplates = false;
-    mockTestDataSources = [];
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
     setTestFlags({ 'grafana.customDashboardTemplates': false });
   });
@@ -172,9 +179,7 @@ describe('QuickAdd', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
       // Reset to defaults: a test datasource is available, custom templates are off.
-      mockTestDataSources = [
-        { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-      ];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
       mockGetDashboardTemplatesTab.mockReturnValue(null);
       setTestFlags({ 'grafana.customDashboardTemplates': false });
     });
@@ -193,7 +198,7 @@ describe('QuickAdd', () => {
 
     it('does not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
-      mockTestDataSources = [];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       mockGetDashboardTemplatesTab.mockReturnValue(null);
       setTestFlags({ 'grafana.customDashboardTemplates': false });
       setup();
@@ -202,7 +207,7 @@ describe('QuickAdd', () => {
     });
 
     it('does not show a `Use template` button when the dashboardTemplates flag is on but there are no test data sources', async () => {
-      mockTestDataSources = [];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
@@ -210,7 +215,7 @@ describe('QuickAdd', () => {
 
     it('shows a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
       config.featureToggles.dashboardTemplates = false;
-      mockTestDataSources = [];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       mockGetDashboardTemplatesTab.mockReturnValue(() => null);
       setTestFlags({ 'grafana.customDashboardTemplates': true });
 

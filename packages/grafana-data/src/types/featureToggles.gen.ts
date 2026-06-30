@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -1225,11 +1220,6 @@ export interface FeatureToggles {
   * @default true
   */
   vizLegendFacetedFilter?: boolean;
-  /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
-  */
-  heatmapRowsAxisOptions?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false

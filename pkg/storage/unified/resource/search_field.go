@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -210,11 +211,17 @@ type SearchFieldsProvider interface {
 	// With a non-empty Version only that version's fields are returned.
 	// With an empty Version Fields returns every field declared by any
 	// version of (group, resource); a field declared in multiple versions
-	// appears once, with the preferred version's shape.
+	// appears once, with the preferred version's declaration.
 	//
-	// Two versions declaring a field with different shapes are not yet
-	// validated; a later check will reject mismatches. The returned slice
-	// is owned by the provider; do not mutate it.
+	// When the same field name is declared in multiple served versions of
+	// (group, resource), all declarations must agree on Type, Array, and
+	// Capabilities — the attributes that feed into the kind's bleve
+	// mapping. NewMapProvider rejects diverging declarations at
+	// construction time. Path, EmitZeroIfAbsent, CopyFromStandard, and
+	// Description may differ across versions: they are extractor- or
+	// presentation-side and the extractor applies them per-document with
+	// the document's own version's declaration. The returned slice is
+	// owned by the provider; do not mutate it.
 	Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition
 
 	// PreferredVersion returns the served version that callers should use
@@ -268,6 +275,9 @@ func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 			panic("invalid SearchFieldDefinitions for " + gvr.String() + ": " + err.Error())
 		}
 	}
+	if err := validateCrossVersionConsistency(fields); err != nil {
+		panic("inconsistent SearchFieldDefinitions across versions: " + err.Error())
+	}
 	return &mapProvider{
 		fields:           fields,
 		preferredVersion: preferredVersions,
@@ -290,6 +300,137 @@ var stringOnlyCapabilities = []SearchCapability{
 	SearchCapabilityText,
 	SearchCapabilityPartial,
 	SearchCapabilityFacet,
+}
+
+// mappingAttributes is the bleve-mapping-affecting projection of a
+// SearchFieldDefinition used for cross-version equality. Only Type, Array,
+// and Capabilities count: those are what GetBleveMappings reads to produce
+// the kind's mapping, which is built once per (group, resource) from the
+// union across versions. Path, EmitZeroIfAbsent, and CopyFromStandard are
+// extractor-side concerns applied per-document with the document's own
+// version's declaration, so they may legitimately differ between versions.
+// Description is presentation-only.
+//
+// Capabilities are sorted, deduplicated, and joined into a single string so
+// the struct is directly comparable with ==.
+type mappingAttributes struct {
+	Type         SearchFieldType
+	Array        bool
+	Capabilities string
+}
+
+func mappingAttributesOf(sfd SearchFieldDefinition) mappingAttributes {
+	caps := slices.Clone(sfd.Capabilities)
+	slices.Sort(caps)
+	caps = slices.Compact(caps)
+	capStrs := make([]string, len(caps))
+	for i, c := range caps {
+		capStrs[i] = string(c)
+	}
+	return mappingAttributes{
+		Type:         sfd.Type,
+		Array:        sfd.Array,
+		Capabilities: strings.Join(capStrs, ","),
+	}
+}
+
+// diffMappingAttributes returns the names of the attributes that differ
+// between two projections, in a fixed order so error messages are
+// deterministic.
+func diffMappingAttributes(a, b mappingAttributes) []string {
+	var diffs []string
+	if a.Type != b.Type {
+		diffs = append(diffs, "type")
+	}
+	if a.Array != b.Array {
+		diffs = append(diffs, "array")
+	}
+	if a.Capabilities != b.Capabilities {
+		diffs = append(diffs, "capabilities")
+	}
+	return diffs
+}
+
+// validateCrossVersionConsistency rejects declarations where two served
+// versions of the same (group, resource) declare a field with the same
+// name but a different Type, Array flag, or Capabilities set. The bleve
+// mapping for a kind is built once per (group, resource) from the union
+// across versions: divergence on a mapping-affecting attribute would
+// silently pick one and lose the other, producing different query results
+// depending on which version's declaration the indexer happened to read
+// first.
+//
+// A field declared by only one version is fine: union without conflict.
+// Path, EmitZeroIfAbsent, CopyFromStandard, and Description may differ
+// across versions: they do not feed into the mapping and the extractor
+// applies them per-document with the document's own version's declaration.
+func validateCrossVersionConsistency(fields map[schema.GroupVersionResource][]SearchFieldDefinition) error {
+	type versionedField struct {
+		version    string
+		attributes mappingAttributes
+	}
+	perGroupResource := map[schema.GroupResource]map[string][]versionedField{}
+	for gvr, sfds := range fields {
+		gr := gvr.GroupResource()
+		if perGroupResource[gr] == nil {
+			perGroupResource[gr] = map[string][]versionedField{}
+		}
+		for _, sfd := range sfds {
+			perGroupResource[gr][sfd.Name] = append(perGroupResource[gr][sfd.Name], versionedField{
+				version:    gvr.Version,
+				attributes: mappingAttributesOf(sfd),
+			})
+		}
+	}
+	var violations []string
+	grs := make([]schema.GroupResource, 0, len(perGroupResource))
+	for gr := range perGroupResource {
+		grs = append(grs, gr)
+	}
+	slices.SortFunc(grs, func(a, b schema.GroupResource) int {
+		if c := strings.Compare(a.Group, b.Group); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	})
+	for _, gr := range grs {
+		names := perGroupResource[gr]
+		sortedNames := make([]string, 0, len(names))
+		for name := range names {
+			sortedNames = append(sortedNames, name)
+		}
+		slices.Sort(sortedNames)
+		for _, name := range sortedNames {
+			entries := names[name]
+			if len(entries) < 2 {
+				continue
+			}
+			slices.SortFunc(entries, func(a, b versionedField) int { return strings.Compare(a.version, b.version) })
+			// Compare every other version against the first sorted entry and
+			// collect the union of differing attributes. The first entry is
+			// just the reference point.
+			var diffs []string
+			for _, e := range entries[1:] {
+				for _, d := range diffMappingAttributes(entries[0].attributes, e.attributes) {
+					if !slices.Contains(diffs, d) {
+						diffs = append(diffs, d)
+					}
+				}
+			}
+			if len(diffs) == 0 {
+				continue
+			}
+			versions := make([]string, len(entries))
+			for i, e := range entries {
+				versions[i] = e.version
+			}
+			violations = append(violations, fmt.Sprintf("field %q on %s diverges across versions [%s] on %s", name, gr.String(), strings.Join(versions, ", "), strings.Join(diffs, ", ")))
+		}
+	}
+	if len(violations) == 0 {
+		return nil
+	}
+	return errors.New(strings.Join(violations, "; "))
 }
 
 // validateSearchFieldDefinitions returns a non-nil error when any declaration
@@ -327,8 +468,10 @@ func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefin
 	}
 	// Empty version: return the union across every registered version of
 	// (gvr.Group, gvr.Resource), deduplicated by Name. Preferred version
-	// goes first so its shape wins on collisions; other versions are
-	// iterated in sorted order for determinism.
+	// goes first, other versions are iterated in sorted order, so the
+	// returned slice is deterministic. Cross-version consistency on Type,
+	// Array, and Capabilities is enforced by NewMapProvider, so the dedup
+	// never has to choose between conflicting mappings for the same name.
 	var out []SearchFieldDefinition
 	seen := map[string]bool{}
 	appendNew := func(sfds []SearchFieldDefinition) {
