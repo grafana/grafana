@@ -338,7 +338,7 @@ func TestFramesFromBatchResponseValueAlias(t *testing.T) {
 // TestParseResponseLegacyBatchEquivalence is the key guard for the shared-builder
 // refactor: for the same logical resource/metric/series, the single-resource ARM
 // parser and the batch parser must produce equivalent frames (field names,
-// labels, config, and values) — for both default and GrafanaSql queries.
+// labels, config, and values); for both default and GrafanaSql queries.
 func TestParseResponseLegacyBatchEquivalence(t *testing.T) {
 	const fullID = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1"
 	const lowerID = "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"

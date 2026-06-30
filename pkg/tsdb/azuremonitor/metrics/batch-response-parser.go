@@ -17,7 +17,7 @@ func parseBatchResponse(result batchResult, azurePortalURL string) (data.Frames,
 	var frames data.Frames
 	var errs []error
 
-	// Build a lookup from lowercase resource ID -> query.
+	// Build a lookup from lowercase resource ID to query.
 	// Keys in query.Resources are already stored lowercase (see buildQuery).
 	resourceToQuery := make(map[string]*types.AzureMonitorQuery)
 	for _, query := range result.Batch.Queries {

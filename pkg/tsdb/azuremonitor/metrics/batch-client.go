@@ -21,7 +21,7 @@ const batchAPIVersion = "2023-10-01"
 
 // validRegionRe matches valid Azure region names: non-empty sequences of ASCII
 // letters and digits (e.g. "eastus", "westeurope", "northcentralus").
-// An empty string is also accepted — it maps to the global endpoint.
+// An empty string is also accepted; it maps to the global endpoint.
 var validRegionRe = regexp.MustCompile(`^[a-zA-Z0-9]*$`)
 
 // maxConcurrentBatches limits how many Metrics Batch API requests run in parallel.
@@ -48,8 +48,8 @@ func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client
 		go func(idx int, b Batch) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			resp, err := executeBatchRequest(ctx, b, cli)
-			results[idx] = batchResult{Batch: b, Response: resp, Err: err}
+			resp, status, err := executeBatchRequest(ctx, b, cli)
+			results[idx] = batchResult{Batch: b, Response: resp, StatusCode: status, Err: err}
 		}(i, batch)
 	}
 	wg.Wait()
@@ -120,41 +120,46 @@ type batchMetric struct {
 	ErrorCode string `json:"errorCode"`
 }
 
-// batchResult holds the outcome of executing a single batch request.
+// batchResult holds the outcome of executing a single batch request. StatusCode is the
+// HTTP status of the batch response (0 if the request never completed, e.g. a network
+// error); it is used to decide whether a failure is retryable via the fallback path.
 type batchResult struct {
-	Batch    Batch
-	Response *batchResponse
-	Err      error
+	Batch      Batch
+	Response   *batchResponse
+	StatusCode int
+	Err        error
 }
 
 // executeBatchRequest sends a single Metrics Batch API request and parses the response.
-func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*batchResponse, error) {
+// It returns the HTTP status code alongside the result so callers can classify failures
+// (0 means the request never completed).
+func executeBatchRequest(ctx context.Context, batch Batch, cli *http.Client) (*batchResponse, int, error) {
 	req, err := buildBatchRequest(ctx, batch)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	resp, err := cli.Do(req)
 	if err != nil {
-		return nil, backend.DownstreamError(err)
+		return nil, 0, backend.DownstreamError(err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBatchResponseBodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("failed to read batch response body: %w", err)
+		return nil, resp.StatusCode, fmt.Errorf("failed to read batch response body: %w", err)
 	}
 
 	if resp.StatusCode/100 != 2 {
-		return nil, utils.CreateResponseErrorFromStatusCode(resp.StatusCode, resp.Status, body)
+		return nil, resp.StatusCode, utils.CreateResponseErrorFromStatusCode(resp.StatusCode, resp.Status, body)
 	}
 
 	var result batchResponse
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal batch response: %w", err)
+		return nil, resp.StatusCode, fmt.Errorf("failed to unmarshal batch response: %w", err)
 	}
 
-	return &result, nil
+	return &result, resp.StatusCode, nil
 }
 
 // buildBatchRequest creates the HTTP POST request for a Metrics Batch API call.
