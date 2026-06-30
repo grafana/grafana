@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Avatar, Icon, IconButton, Link, Spinner, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 import { getIconForItem } from 'app/features/search/service/utils';
 
@@ -112,6 +112,18 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
 
         <FolderRepo folder={item} />
 
+        {item.description && (
+          <Tooltip content={item.description} placement="top" interactive={false}>
+            <span className={styles.description}>
+              <Icon
+                name="info-circle"
+                size="sm"
+                aria-label={t('browse-dashboards.name-cell.description-tooltip', 'Description')}
+              />
+            </span>
+          </Tooltip>
+        )}
+
         {ownerReference && (
           <div className={styles.ownerReference}>
             {ownerReference.avatarUrl && <Avatar src={ownerReference.avatarUrl} alt={ownerReference.title} />}
@@ -144,6 +156,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       overflow: 'hidden',
+    }),
+    description: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      flex: '0 0 auto',
     }),
     link: css({
       '&:hover': {

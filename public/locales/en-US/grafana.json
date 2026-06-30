@@ -4399,6 +4399,7 @@
     },
     "my-team-folders": "My team folders",
     "name-cell": {
+      "description-tooltip": "Description",
       "no-items": "No items"
     },
     "new-folder": {
