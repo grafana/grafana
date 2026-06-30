@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -122,7 +122,7 @@ func putUserPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, user apis.User, n
 	t.Helper()
 	ctx := context.Background()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Body([]byte(body)).Do(ctx)
 
@@ -134,7 +134,7 @@ func patchUserPrefsK8s(t *testing.T, _ *apis.K8sTestHelper, user apis.User, body
 	ctx := context.Background()
 	name := "user-" + user.Identity.GetIdentifier()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Body([]byte(body)).Do(ctx)
 }
@@ -143,7 +143,7 @@ func getUserPrefsK8s(t *testing.T, _ *apis.K8sTestHelper, user apis.User, name s
 	t.Helper()
 	ctx := context.Background()
 	client := user.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", name).Do(ctx)
 
@@ -159,7 +159,7 @@ func putOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, body string) rest.
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Body([]byte(body)).Do(ctx)
 }
@@ -168,7 +168,7 @@ func patchOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, body string) res
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Patch(types.MergePatchType).AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Body([]byte(body)).Do(ctx)
 }
@@ -177,7 +177,7 @@ func getOrgPrefsK8s(t *testing.T, helper *apis.K8sTestHelper) *preferences.Prefe
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "namespace").Do(ctx)
 	raw, err := resp.Raw()
@@ -191,7 +191,7 @@ func putTeamPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, teamUID string, b
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	return client.Put().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "team-"+teamUID).Body([]byte(body)).Do(ctx)
 }
@@ -200,7 +200,7 @@ func getTeamPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, teamUID string) *
 	t.Helper()
 	ctx := context.Background()
 	client := helper.Org1.Admin.RESTClient(t, &preferences.GroupVersion)
-	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
+	resp := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
 		"namespaces", "default",
 		"preferences", "team-"+teamUID).Do(ctx)
 	raw, err := resp.Raw()

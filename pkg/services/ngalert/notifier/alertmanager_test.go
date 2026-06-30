@@ -168,7 +168,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 		}
 	}
 
-	grafanaTmpl := v1.NewTemplateGroup("grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
+	grafanaTmpl := v1.NewTemplateGroup("", "grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
 	testCases := []struct {
 		name          string
 		features      featuremgmt.FeatureToggles
@@ -320,7 +320,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				tmpl := v1.NewTemplateGroup("new.tmpl", "{{ define \"new\" }}b{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
+				tmpl := v1.NewTemplateGroup("", "new.tmpl", "{{ define \"new\" }}b{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
 				cfg.Templates[tmpl.UID] = tmpl
 			},
 		},

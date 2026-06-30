@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
@@ -54,6 +54,9 @@ const DefaultQPS = float32(200)
 const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
+
+// DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
+const DefaultIdleConnTimeout = 30 * time.Second
 
 const (
 	ApiGroup   = "setting.grafana.app"
@@ -171,6 +174,10 @@ type Config struct {
 	CacheTTL time.Duration
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
+	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
+	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
+	// client-go default.
+	IdleConnTimeout time.Duration
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -244,7 +251,7 @@ func New(config Config) (Service, error) {
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -266,7 +273,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 
 func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -526,9 +533,17 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		}
 	}
 
+	idleConnTimeout := DefaultIdleConnTimeout
+	if config.IdleConnTimeout != 0 {
+		idleConnTimeout = config.IdleConnTimeout
+	}
+
 	// Wrap with tracing middleware to propagate trace context to all outbound requests
 	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		if baseTransport, ok := rt.(*http.Transport); ok && idleConnTimeout > 0 {
+			baseTransport.IdleConnTimeout = idleConnTimeout
+		}
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return authTransport(tracingRT)
 	}

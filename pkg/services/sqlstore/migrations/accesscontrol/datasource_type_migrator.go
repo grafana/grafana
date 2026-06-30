@@ -29,9 +29,8 @@ const backfillDatasourceTypeSQL = `
 UPDATE permission AS p
 SET datasource_type = (
 	SELECT ds.type
-	FROM data_source AS ds
-	INNER JOIN role AS r ON r.id = p.role_id
-	WHERE ds.uid = p.identifier AND ds.org_id = r.org_id
+	FROM data_source AS ds, role AS r
+	WHERE r.id = p.role_id AND ds.uid = p.identifier AND ds.org_id = r.org_id
 	LIMIT 1
 )
 WHERE p.kind = 'datasources' AND p.attribute = 'uid'`

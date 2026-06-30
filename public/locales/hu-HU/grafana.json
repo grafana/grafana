@@ -2812,7 +2812,9 @@
           "alerting": "Kapcsolja be az ehhez a riasztási szabályhoz tartozó értékelés szüneteltetéséhez.",
           "recording": "Kapcsolja be az ehhez a felvételi szabályhoz tartozó értékelés szüneteltetéséhez."
         },
-        "select-folder-before": "Válasszon egy mappát az értékelési csoport és intervallum beállítása előtt"
+        "select-folder-before": "Válasszon egy mappát az értékelési csoport és intervallum beállítása előtt",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -6028,9 +6030,6 @@
       "placeholder-search-options": "Keresési beállítások",
       "visualization-button-tooltip": "Keresési beállítások"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panelhivatkozások"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Vissza a lekérdezésekhez"
     },
@@ -8706,7 +8705,9 @@
       "query-history-button": "Lekérdezési előzmények",
       "query-history-button-aria-label": "Lekérdezési előzmények",
       "query-inspector-button": "Lekérdezés-ellenőrző",
-      "query-inspector-button-aria-label": "Lekérdezés-ellenőrző"
+      "query-inspector-button-aria-label": "Lekérdezés-ellenőrző",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Az összes tartomány megjelenítése",
     "span-bar": {
@@ -9897,10 +9898,16 @@
         },
         "name-limit": "Korlát",
         "name-mode": "Mód",
+        "name-overflow": "",
         "name-placement": "Elhelyezés",
         "name-values": "Értékek",
         "name-visibility": "Láthatóság",
         "name-width": "Szélesség",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Lent",
           "label-right": "Jobbra"
@@ -11225,6 +11232,8 @@
         }
       },
       "fields-section": "Mezők",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Naplósor elrejtése",
       "inline-mode": "Megjelenítés sorban",
       "inline-no-scrolls": "",
@@ -11970,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Identitásszolgáltató-csoportok Grafana-szerepkörökhöz rendeléseinek kezelése"
     },
     "help": {
       "title": "Súgó"
@@ -13041,9 +13047,6 @@
       "description-clear-repository-connection": "Ez a név lesz használatban az adattárkapcsolathoz és a felhasználói felületen megjelenített mappához",
       "empty": "Üres",
       "error-field-required": "A mező kitöltése kötelező.",
-      "error-quota-exceeded-message": "Ez az adattármappa {{fileCount}} erőforrást tartalmaz, ami meghaladja a fiókja korlátját: {{limit}}. Az adattár szinkronizálásához bővítse a fiókját, vagy csökkentse a szinkronizálandó erőforrások számát.",
-      "error-quota-exceeded-message-onprem": "Ez az adattármappa {{fileCount}} erőforrást tartalmaz, ami meghaladja az Ön példánykorlátját: {{limit}}. Az adattár szinkronizálásához frissítse a Grafana-konfigurációját, vagy csökkentse a szinkronizálandó erőforrások számát.",
-      "error-quota-exceeded-title": "Erőforráskvóta túllépve",
       "error-repository-status-unhealthy-message": "Hiba történt az adattárhoz való kapcsolódás során. Ellenőrizze az adattár beállításait, és próbálkozzon újra.",
       "error-repository-status-unhealthy-title": "Az adattár állapota nem megfelelő",
       "external-storage-label": "Külső tárhely",
@@ -13054,6 +13057,9 @@
       "unmanaged-resources-label": "Nem felügyelt erőforrások",
       "update-configuration-action": "Konfigurációs dokumentáció megtekintése",
       "upgrade-action": "Fiókbővítés",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} irányítópult",
       "dashboards-count_other": "{{count}} irányítópult",
       "files-count_one": "{{count}} fájl",
@@ -14262,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "A lekérdezés adatforrásának betöltése nem sikerült",
     "loading-datasource": "Adatforrás betöltése",
     "no-query-editor-component": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
@@ -14283,6 +14290,56 @@
       "show-response": "Válasz megjelenítése"
     },
     "query-editor-not-exported": "Az adatforrás-bővítmény nem exportál egyetlen lekérdezésszerkesztő-komponenst sem"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

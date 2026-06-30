@@ -626,9 +626,8 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 // pipeline. The status label tracked through the function powers the
 // reconciler_process_duration histogram observed in the deferred closure.
 //
-// TODO: only re-embed subresources whose content actually changed
-// since the last write. Today every dashboard write re-embeds every
-// panel, which is wasteful when only one panel changed.
+// On a write, only panels whose content changed are re-embedded;
+// unchanged panels stay and stale ones are deleted.
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
@@ -693,36 +692,82 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		items = items[:maxItems]
 	}
 
+	model := s.batchEmbedder.Model()
+
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
+		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
 		return nil
 	}
 
-	vectors, err := s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, items)
+	uid := items[0].UID
+
+	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
 	if err != nil {
-		statusLabel = "embed_error"
-		return fmt.Errorf("embed: %w", err)
+		statusLabel = "get_content_error"
+		return fmt.Errorf("get stored content: %w", err)
 	}
-	if len(vectors) == 0 {
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
-			statusLabel = "delete_error"
-			return err
+
+	// A folder move refreshes the stored folder (search authz) without
+	// changing content, so force a re-embed when it differs.
+	folderMoved := len(stored) > 0 && storedFolder != items[0].Folder
+
+	desired := make([]string, 0, len(items))
+	toEmbed := make([]embed.Item, 0, len(items))
+	present := make(map[string]struct{}, len(items))
+	for _, it := range items {
+		desired = append(desired, it.Subresource)
+		prev, ok := stored[it.Subresource]
+		if ok {
+			present[it.Subresource] = struct{}{}
 		}
+		if folderMoved || !ok || prev != it.Content {
+			toEmbed = append(toEmbed, it)
+		}
+	}
+
+	extracted, embedded, deleted := len(desired), len(toEmbed), len(stored)-len(present)
+	span.SetAttributes(
+		attribute.Int("subresources.extracted", extracted),
+		attribute.Int("subresources.embedded", embedded),
+		attribute.Int("subresources.deleted", deleted),
+	)
+	recordCounts := func() {
+		if s.metrics == nil {
+			return
+		}
+		s.metrics.ReconcilerSubresourcesExtractedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(extracted))
+		s.metrics.ReconcilerSubresourcesEmbeddedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(embedded))
+		s.metrics.ReconcilerSubresourcesDeletedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(deleted))
+	}
+
+	if embedded == 0 && deleted == 0 {
+		recordCounts()
 		return nil
+	}
+
+	var changed []vector.Vector
+	if len(toEmbed) > 0 {
+		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, toEmbed)
+		if err != nil {
+			statusLabel = "embed_error"
+			return fmt.Errorf("embed: %w", err)
+		}
 	}
 
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, vectors); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}
+	recordCounts()
 	return nil
 }
 

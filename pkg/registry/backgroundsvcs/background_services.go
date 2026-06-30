@@ -3,6 +3,7 @@ package backgroundsvcs
 import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
@@ -78,9 +79,10 @@ func ProvideBackgroundServiceRegistry(
 	fixedRolesLoader *accesscontrol.FixedRolesLoader,
 	noopIAMRolesSyncer *accesscontrol.NoopIAMRolesSyncer,
 	noopGlobalRoleSeeder *accesscontrol.NoopGlobalRoleSeeder,
-	noopBasicRoleAggregator *accesscontrol.NoopBasicRoleAggregator,
 	installSync installsync.Syncer,
 	zanzanaService *authz.EmbeddedZanzanaService,
+	natsServer *infranats.Server,
+	natsPublisher *infranats.PublisherService,
 	sqlStore *sqlstore.SQLStore,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
@@ -106,6 +108,8 @@ func ProvideBackgroundServiceRegistry(
 		statsCollector,
 		tracing,
 		remoteCache,
+		natsServer,
+		natsPublisher,
 		secretsService,
 		StorageService,
 		grpcServerProvider,
@@ -130,7 +134,6 @@ func ProvideBackgroundServiceRegistry(
 		fixedRolesLoader,
 		noopIAMRolesSyncer,
 		noopGlobalRoleSeeder,
-		noopBasicRoleAggregator,
 		installSync,
 		zanzanaService,
 		sqlStore,

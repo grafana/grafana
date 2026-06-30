@@ -86,18 +86,10 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		result, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return result, nil
-		}
-		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
+		return s.k8sService.GetByID(s.k8sCtxForSelfRead(ctx, cmd.ID, ""), cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByID(ctx, cmd)
 }
 
@@ -107,37 +99,18 @@ func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*u
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		result, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return result, nil
-		}
-		ctxLogger.Warn("k8s GetByUID failed, falling back to legacy", "userUID", cmd.UID, "err", err)
+		return s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByUID(ctx, cmd)
 }
 
 func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.wrapper.ListByIdOrUID")
-	defer span.End()
-
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		result, err := s.k8sService.ListByIdOrUID(s.k8sCtxWithIdentity(ctx), uids, ids)
-		if err == nil {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return result, nil
-		}
-		ctxLogger.Warn("k8s ListByIdOrUID failed, falling back to legacy", "err", err)
+		return s.k8sService.ListByIdOrUID(s.k8sCtxWithIdentity(ctx), uids, ids)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 
@@ -219,7 +192,7 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 
 func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetProfile(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.GetProfile(s.k8sCtxForSelfRead(ctx, cmd.UserID, cmd.UID), cmd)
 	}
 
 	return s.legacyService.GetProfile(ctx, cmd)
@@ -236,8 +209,33 @@ func (s *Service) k8sCtxWithIdentity(ctx context.Context) context.Context {
 	if id, ok := identity.OrgIDFrom(ctx); ok && id != 0 {
 		orgID = id
 	}
-	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
-	return ctx
+	return identity.WithServiceIdentityContext(ctx, orgID)
+}
+
+// k8sCtxForSelfRead elevates ctx to the service identity when the caller is a
+// user reading their own profile.
+func (s *Service) k8sCtxForSelfRead(ctx context.Context, targetID int64, targetUID string) context.Context {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil || requester.GetIdentityType() != claims.TypeUser {
+		return s.k8sCtxWithIdentity(ctx)
+	}
+	if !isSelfUser(requester, targetID, targetUID) {
+		return s.k8sCtxWithIdentity(ctx)
+	}
+	return identity.WithServiceIdentityContext(ctx, requester.GetOrgID())
+}
+
+// isSelfUser reports whether targetID/targetUID identify the requester itself.
+func isSelfUser(requester identity.Requester, targetID int64, targetUID string) bool {
+	if targetUID != "" {
+		return targetUID == requester.GetRawIdentifier()
+	}
+	if targetID != 0 {
+		if internalID, err := requester.GetInternalID(); err == nil {
+			return internalID == targetID
+		}
+	}
+	return false
 }
 
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {

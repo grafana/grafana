@@ -850,6 +850,11 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker interval button',
     },
   },
+  ResourcePicker: {
+    card: {
+      '13.2.0': 'data-testid resource-picker-card',
+    },
+  },
   QueryTab: {
     content: {
       '13.1.0': 'data-testid Query editor tab content',
