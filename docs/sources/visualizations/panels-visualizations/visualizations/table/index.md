@@ -231,6 +231,7 @@ You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking th
 
 To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
 For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
+
 ## Configuration options
 
 ### Panel options
@@ -626,4 +627,3 @@ To target columns inside a nested table, set the **Target fields** option on the
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="650px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
-
