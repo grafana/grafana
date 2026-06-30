@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
 import { useListCorrelationQuery } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { SupportedTransformationType } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema/dist/esm/index';
 
 import { toEnrichedCorrelationDataK8s, useCorrelationsK8s } from './useCorrelationsK8s';
@@ -122,6 +123,37 @@ describe('useCorrelationsK8s', () => {
         uid: 'testUid',
       });
     });
+    it('maps non-regex transformations to logfmt and defaults a missing target url', async () => {
+      const correlation = await toEnrichedCorrelationDataK8s({
+        apiVersion: 'testApiVer',
+        kind: 'testKind',
+        metadata: {
+          name: 'testUid',
+        },
+        spec: {
+          label: 'testLabel',
+          description: 'testDesc',
+          source: { group: 'notFoundGroup', name: 'foundUid' },
+          type: 'external',
+          config: { field: 'testField', target: {}, transformations: [{ type: 'logfmt' }] },
+        },
+      });
+
+      expect(correlation).toStrictEqual({
+        config: {
+          field: 'testField',
+          target: { url: '' },
+          transformations: [{ type: SupportedTransformationType.Logfmt }],
+        },
+        description: 'testDesc',
+        label: 'testLabel',
+        provisioned: false,
+        source: { type: 'foundUid', uid: 'foundUid' },
+        type: 'external',
+        uid: 'testUid',
+      });
+    });
+
     it('marks a correlation with a manager as provisioned', async () => {
       const correlation = await toEnrichedCorrelationDataK8s({
         apiVersion: 'testApiVer',
@@ -189,5 +221,11 @@ describe('useCorrelationsK8s', () => {
     useListCorrelationMock.mockReturnValue({ data: [] });
     renderHook(() => useCorrelationsK8s(10, 5));
     expect(useListCorrelationMock).toHaveBeenCalledWith({ limit: 50 });
+  });
+
+  it('returns a formatted error when the list query fails', async () => {
+    useListCorrelationMock.mockReturnValue({ error: { status: 500 } });
+    const { result } = renderHook(() => useCorrelationsK8s(10, 1));
+    expect(result.current.error).toBeDefined();
   });
 });
