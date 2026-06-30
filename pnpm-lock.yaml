@@ -59,6 +59,7 @@ overrides:
 packageExtensionsChecksum: sha256-04murJCRVJfblI9ghcRKSuYi1CLnjL93/V3DUNT9t/U=
 
 patchedDependencies:
+  fork-ts-checker-webpack-plugin@9.1.0: 2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d
   react-grid-layout@1.4.4: f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d
   react-split-pane@0.1.92: afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01
@@ -874,7 +875,7 @@ importers:
         version: 2.4.0
       fork-ts-checker-webpack-plugin:
         specifier: 9.1.0
-        version: 9.1.0(typescript@6.0.2)(webpack@5.107.2)
+        version: 9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2)
       github-codeowners:
         specifier: ^0.2.1
         version: 0.2.1
@@ -1860,7 +1861,7 @@ importers:
         version: 5.0.2(eslint@9.32.0(jiti@2.7.0))(webpack@5.107.2)
       fork-ts-checker-webpack-plugin:
         specifier: 9.1.0
-        version: 9.1.0(typescript@6.0.2)(webpack@5.107.2)
+        version: 9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2)
       identity-obj-proxy:
         specifier: ^3.0.0
         version: 3.0.0
@@ -9121,6 +9122,7 @@ packages:
   conventional-changelog-core@5.0.1:
     resolution: {integrity: sha512-Rvi5pH+LvgsqGwZPZ3Cq/tz4ty7mjijhr3qR4m9IBXNbxGGYgTVVO+duXzz9aArmHxFtwZ+LRkrNIMDQzgoY4A==}
     engines: {node: '>=14'}
+    deprecated: Deprecated and no longer maintained. Please use conventional-changelog instead.
 
   conventional-changelog-preset-loader@3.0.0:
     resolution: {integrity: sha512-qy9XbdSLmVnwnvzEisjxdDiLA4OmV3o8db+Zdg4WiFw14fP3B6XNz98X0swPPpkTd/pc1K7+adKgEDM1JCUMiA==}
@@ -17682,7 +17684,7 @@ snapshots:
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
       publint: 0.3.21
       react: 18.3.1
-      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs: 7.8.2
       semver: 7.7.3
       uuid: 14.0.0
@@ -17726,7 +17728,7 @@ snapshots:
       react-calendar: 4.8.0(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-dom: 18.3.1(react@18.3.1)
       react-popper-tooltip: 4.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-virtualized-auto-sizer: 1.0.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs: 7.8.2
       sql-formatter-plus: 1.3.6
@@ -20708,7 +20710,7 @@ snapshots:
       cjs-module-lexer: 1.4.3
       css-loader: 7.1.2(webpack@5.107.2)
       es-module-lexer: 1.7.0
-      fork-ts-checker-webpack-plugin: 9.1.0(typescript@6.0.2)(webpack@5.107.2)
+      fork-ts-checker-webpack-plugin: 9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2)
       html-webpack-plugin: 5.6.7(webpack@5.107.2)
       magic-string: 0.30.21
       storybook: 10.3.6(patch_hash=a5fb83bc68b91e3a91cc274cf3404ebe78e191bcc68fdf36467a97964f6ac972)(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -20744,7 +20746,7 @@ snapshots:
       cjs-module-lexer: 1.4.3
       css-loader: 7.1.2(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2)))
       es-module-lexer: 1.7.0
-      fork-ts-checker-webpack-plugin: 9.1.0(typescript@6.0.2)(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2)))
+      fork-ts-checker-webpack-plugin: 9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2)))
       html-webpack-plugin: 5.6.7(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2)))
       magic-string: 0.30.21
       storybook: 10.3.6(patch_hash=a5fb83bc68b91e3a91cc274cf3404ebe78e191bcc68fdf36467a97964f6ac972)(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -25640,7 +25642,7 @@ snapshots:
     dependencies:
       signal-exit: 4.1.0
 
-  fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.2)(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2))):
+  fork-ts-checker-webpack-plugin@9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2))):
     dependencies:
       '@babel/code-frame': 7.29.7
       chalk: 4.1.2
@@ -25657,7 +25659,7 @@ snapshots:
       typescript: 6.0.2
       webpack: 5.107.2(patch_hash=cfa054a0d22d64e548bde504c33742101928fec6609e3c3c9df48ce368d2cab6)(@swc/core@1.15.41(@swc/helpers@0.5.17))(esbuild@0.25.8)(postcss@8.5.10)(webpack-cli@6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.107.2))
 
-  fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.2)(webpack@5.107.2):
+  fork-ts-checker-webpack-plugin@9.1.0(patch_hash=2bb5f8988eb4d7bcb87211d6360fad4d3e6c30de98e8f6bc1e5f0abd17cd22d5)(typescript@6.0.2)(webpack@5.107.2):
     dependencies:
       '@babel/code-frame': 7.29.7
       chalk: 4.1.2

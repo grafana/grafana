@@ -49,7 +49,10 @@ export default (env: Env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: ['/node_modules/', ...decoupledPlugins],
+      // Match node_modules at any depth: pnpm's nested .pnpm store would otherwise
+      // exhaust the OS file-handle limit (EMFILE) when the watcher walks it. Workspace
+      // packages resolve to their real paths outside node_modules, so they stay watched.
+      ignored: ['**/node_modules/**', ...decoupledPlugins],
     },
 
     resolve: {

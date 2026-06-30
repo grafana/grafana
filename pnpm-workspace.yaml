@@ -68,6 +68,11 @@ packageExtensions:
 
 # Patches — moved from .yarn/patches/ to patches/ and renamed to pnpm convention.
 patchedDependencies:
+  # fork-ts-checker's inclusive watcher matches its ignore globs with minimatch but
+  # without `dot: true`, so `**/node_modules/**` never matches pnpm's `.pnpm` store.
+  # The type-checker then chokidar-watches all of node_modules, exhausting the OS
+  # file-handle limit (EMFILE) on `pnpm start`. Enable dot matching so the ignore works.
+  fork-ts-checker-webpack-plugin@9.1.0: patches/fork-ts-checker-webpack-plugin@9.1.0.patch
   history@4.10.1: patches/history@4.10.1.patch
   react-grid-layout@1.4.4: patches/react-grid-layout@1.4.4.patch
   react-split-pane@0.1.92: patches/react-split-pane@0.1.92.patch

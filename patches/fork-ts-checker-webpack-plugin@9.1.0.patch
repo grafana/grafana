@@ -1,0 +1,13 @@
+diff --git a/lib/watch/inclusive-node-watch-file-system.js b/lib/watch/inclusive-node-watch-file-system.js
+index 433744b..83fe0af 100644
+--- a/lib/watch/inclusive-node-watch-file-system.js
++++ b/lib/watch/inclusive-node-watch-file-system.js
+@@ -16,7 +16,7 @@ function createIsIgnored(ignored, excluded) {
+     const ignoredFunctions = ignoredPatterns.map((pattern) => {
+         // ensure patterns are valid - see https://github.com/TypeStrong/fork-ts-checker-webpack-plugin/issues/594
+         if (typeof pattern === 'string') {
+-            return (path) => (0, minimatch_1.default)(path, pattern);
++            return (path) => (0, minimatch_1.default)(path, pattern, { dot: true });
+         }
+         else if (pattern instanceof RegExp) {
+             return (path) => pattern.test(path);
