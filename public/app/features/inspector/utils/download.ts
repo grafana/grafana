@@ -10,10 +10,10 @@ import {
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';
-import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
 
+import { transformToOTLP } from './transformToOTLP';
 import { transformToZipkin } from './transformToZipkin';
 
 /**

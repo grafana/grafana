@@ -36,26 +36,13 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 
 	testinfra.SQLiteIntegrationTest(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	grafanaListedAddr, _ := getStandardSharedEnv(t)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "default", "default")
+	const folderUID = "prom-rules"
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -151,7 +138,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		err := enc.Encode(&rules)
 		require.NoError(t, err)
 
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/%s", grafanaListedAddr, folderUID)
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
@@ -207,7 +194,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		err := enc.Encode(&rules)
 		require.NoError(t, err)
 
-		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/%s", grafanaListedAddr, folderUID)
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
@@ -247,14 +234,14 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "default",
-			"folderUid": "default",
+			"file": "prom-rules",
+			"folderUid": "prom-rules",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
-				"folderUid": "default",
+				"folderUid": "prom-rules",
 				"uid": "%s",
 				"annotations": {
 					"annotation1": "val1"
@@ -271,7 +258,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
-				"folderUid": "default",
+				"folderUid": "prom-rules",
 				"uid": "%s",
 				"health": "ok",
 				"isPaused": false,
@@ -312,14 +299,14 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 	"data": {
 		"groups": [{
 			"name": "arulegroup",
-			"file": "default",
-			"folderUid": "default",
+			"file": "prom-rules",
+			"folderUid": "prom-rules",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
 				"duration": 10,
-				"folderUid": "default",
+				"folderUid": "prom-rules",
 				"uid": "%s",
 				"annotations": {
 					"annotation1": "val1"
@@ -336,7 +323,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}}]",
-				"folderUid": "default",
+				"folderUid": "prom-rules",
 				"uid": "%s",
 				"health": "ok",
 				"isPaused": false,
@@ -364,23 +351,13 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	grafanaListedAddr, _ := getStandardSharedEnv(t)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
-	apiClient.CreateFolder(t, "default", "default")
+
+	const folderUID = "prom-pagination"
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -437,7 +414,7 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 			Rules: rules,
 		}
 
-		apiClient.PostRulesGroup(t, "default", &ruleGroup, false)
+		apiClient.PostRulesGroup(t, folderUID, &ruleGroup, false)
 	}
 
 	t.Run("with group_limit should return only 2 groups", func(t *testing.T) {
@@ -912,29 +889,18 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 func TestIntegrationPrometheusPluginsFilter(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	grafanaListedAddr, _ := getStandardSharedEnv(t)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	apiClient.CreateFolder(t, "folder1", "folder1")
+	const folderUID = "prom-plugins"
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	// Create a regular alert rule
-	createRule(t, apiClient, "folder1", withRuleGroup("group1"))
+	createRule(t, apiClient, folderUID, withRuleGroup("group1"))
 	// Create a rule from plugin
-	createRule(t, apiClient, "folder1", withRuleGroup("group2"), withLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}))
+	createRule(t, apiClient, folderUID, withRuleGroup("group2"), withLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}))
 
 	verifyRulesResponse := func(t *testing.T, b []byte, expectedGroupName string, shouldHaveOriginLabel bool) {
 		t.Helper()
@@ -995,38 +961,30 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 
 	testinfra.SQLiteIntegrationTest(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
+	grafanaListedAddr, env := getStandardSharedEnv(t)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	userID := standardGrafanaUserID
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
 	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder1", "folder1")
-
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder2", "folder2")
+	const folderUID1 = "prom-perm-f1"
+	const folderUID2 = "prom-perm-f2"
+	apiClient.CreateFolder(t, folderUID1, folderUID1)
+	apiClient.CreateFolder(t, folderUID2, folderUID2)
+	// Use deleteFolder (admin credentials) since grafana user's folder access is revoked mid-test.
+	t.Cleanup(func() {
+		deleteFolder(t, grafanaListedAddr, folderUID1)
+		deleteFolder(t, grafanaListedAddr, folderUID2)
+	})
 
 	// Create rule under folder1
-	createRule(t, apiClient, "folder1")
+	createRule(t, apiClient, folderUID1)
 
 	// Create rule under folder2
-	createRule(t, apiClient, "folder2")
+	createRule(t, apiClient, folderUID2)
 
 	// Now, let's see how this looks like.
 	{
@@ -1050,15 +1008,15 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Len(t, body.Data.Groups, 2)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
 		require.Len(t, body.Data.Groups[1].Rules, 1)
-		require.Equal(t, "folder1", body.Data.Groups[0].File)
-		require.Equal(t, "folder2", body.Data.Groups[1].File)
+		require.Equal(t, folderUID1, body.Data.Groups[0].File)
+		require.Equal(t, folderUID2, body.Data.Groups[1].File)
 	}
 
-	// remove permissions from folder2org.ROLE
-	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
+	// remove permissions from folderUID2.
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID2)
 	apiClient.ReloadCachedPermissions(t)
 
-	// make sure that folder2 is not included in the response
+	// make sure that folderUID2 is not included in the response.
 	{
 		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -1076,11 +1034,11 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "success", body.Status)
 		require.Len(t, body.Data.Groups, 1)
 		require.Len(t, body.Data.Groups[0].Rules, 1)
-		require.Equal(t, "folder1", body.Data.Groups[0].File)
+		require.Equal(t, folderUID1, body.Data.Groups[0].File)
 	}
 
-	// remove permissions from folder1org.ROLE
-	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+	// remove permissions from folderUID1.
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID1)
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response

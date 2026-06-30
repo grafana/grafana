@@ -129,4 +129,6 @@ export interface TestDataDataQuery extends common.DataQuery {
   errorProbability?: number;
   errorMessage?: string;
   errorStatusCode?: number;
+  queryDelay?: string;
+  queryDelayVariability?: number;
 }

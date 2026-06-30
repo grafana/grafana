@@ -19,17 +19,17 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
+    | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
-    | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
-    | "newLogsPanel"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
-    | "newLogContext"
+    | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
@@ -41,6 +41,7 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
@@ -54,7 +55,11 @@ declare module "@openfeature/core" {
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
-    | "grafana.visualDesignRefresh";
+    | "grafana.visualDesignRefresh"
+    | "table.protoRowParser"
+    | "table.refactorNested"
+    | "dataviz.experimentalColorSchemes"
+    | "grafana.customizableMegaMenu";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

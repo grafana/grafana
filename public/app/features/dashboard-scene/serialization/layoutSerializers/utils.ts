@@ -100,6 +100,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   // Set up Angular migration handler if migration data is present
@@ -122,8 +123,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
       compareWith: queryOptions.timeCompare,
     });
   }
-
-  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   return new VizPanel(vizPanelState);
 }
@@ -171,6 +170,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       defaults: {},
       overrides: [],
     },
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -178,8 +178,6 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       $behaviors: [panelMenuBehavior],
     });
   }
-
-  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
 
   return new VizPanel(vizPanelState);
 }

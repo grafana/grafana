@@ -194,7 +194,7 @@ func TestTestdataScenarios(t *testing.T) {
 						Interval:      100 * time.Millisecond,
 						MaxDataPoints: 100,
 						JSON: []byte(fmt.Sprintf(
-							`{"stringInput":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
+							`{"queryDelay":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
 							probability,
 						)),
 					},
@@ -282,6 +282,37 @@ func TestTestdataScenarios(t *testing.T) {
 			require.NotNil(t, errNotice)
 			require.Equal(t, data.InspectTypeError, errNotice.Inspect)
 		})
+	})
+}
+
+func TestFlakyQueryDelay(t *testing.T) {
+	t.Run("returns 0 for non-positive base", func(t *testing.T) {
+		require.Equal(t, time.Duration(0), flakyQueryDelay(0, 100))
+		require.Equal(t, time.Duration(0), flakyQueryDelay(-time.Second, 100))
+	})
+
+	t.Run("returns base unchanged with 0 variability", func(t *testing.T) {
+		base := time.Second
+		for i := 0; i < 100; i++ {
+			require.Equal(t, base, flakyQueryDelay(base, 0))
+		}
+	})
+
+	t.Run("stays within +/- variability percentage of base", func(t *testing.T) {
+		base := time.Second
+		// 100% variability => uniform in [0, 2*base]
+		for i := 0; i < 1000; i++ {
+			delay := flakyQueryDelay(base, 100)
+			require.GreaterOrEqual(t, delay, time.Duration(0))
+			require.LessOrEqual(t, delay, 2*base)
+		}
+
+		// 50% variability => uniform in [0.5*base, 1.5*base]
+		for i := 0; i < 1000; i++ {
+			delay := flakyQueryDelay(base, 50)
+			require.GreaterOrEqual(t, delay, base/2)
+			require.LessOrEqual(t, delay, base+base/2)
+		}
 	})
 }
 

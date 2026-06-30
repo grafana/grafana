@@ -212,7 +212,13 @@ export {
 } from './field/overrides/processors';
 
 // Utils
-export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
+export {
+  PanelOptionsEditorBuilder,
+  FieldConfigEditorBuilder,
+  type NestedValueAccess,
+  type NestedPanelOptions,
+  isNestedPanelOptions,
+} from './utils/OptionsUIBuilders';
 export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
 export { locationUtil } from './utils/location';
 export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './utils/url';
@@ -440,6 +446,7 @@ export {
 export { LayoutModes, type LayoutMode } from './types/layout';
 export {
   PanelPlugin,
+  type PanelOptionsSupplier,
   type SetFieldConfigOptionsArgs,
   type StandardOptionConfig,
   type PanelScreenshotContext,
@@ -709,6 +716,7 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,

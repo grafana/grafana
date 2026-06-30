@@ -31,9 +31,9 @@ refs:
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
   global-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/global-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
@@ -214,13 +214,15 @@ You can also use template variables in your data links or actions URLs. For more
 
 These variables allow you to include the current time range in the data link or action URL:
 
-| Variable           | Description                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`)      |
-| `__from`           | For more information, refer to [Global variables](ref:global-variables). |
-| `__to`             | For more information, refer to [Global variables](ref:global-variables). |
+| Variable           | Description                                                          |
+| ------------------ | -------------------------------------------------------------------- |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`). |
+| `__from`           | A specific start time.                                               |
+| `__to`             | A specific end time.                                                 |
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
+
+For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
 
 ### Series variables
 
@@ -340,6 +342,7 @@ To add a data link, follow these steps:
    | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
+   | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
    | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
    | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                                                                   |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
