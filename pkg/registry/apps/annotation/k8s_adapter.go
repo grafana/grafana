@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -144,6 +145,9 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 	opts := ListOptions{}
 	if err := parseFieldSelector(options.FieldSelector, &opts); err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	if err := parseLabelSelector(options.LabelSelector, &opts); err != nil {
 		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
@@ -405,14 +409,36 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
 			opts.To = v
-		case "metadata.legacyID":
-			v, err := strconv.ParseInt(r.Value, 10, 64)
+		default:
+			return fmt.Errorf("unsupported field selector: %s", r.Field)
+		}
+	}
+	return nil
+}
+
+// parseLabelSelector translates K8s label selectors into Store ListOptions.
+func parseLabelSelector(ls labels.Selector, opts *ListOptions) error {
+	if ls == nil {
+		return nil
+	}
+	requirements, _ := ls.Requirements()
+	for _, r := range requirements {
+		if r.Operator() != selection.Equals && r.Operator() != selection.DoubleEquals {
+			return fmt.Errorf("unsupported operator %s for %s (only = supported)", r.Operator(), r.Key())
+		}
+		switch r.Key() {
+		case LabelKeyLegacyID:
+			value, ok := r.Values().PopAny()
+			if !ok {
+				return fmt.Errorf("missing value for label selector %s", r.Key())
+			}
+			v, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
-				return fmt.Errorf("invalid legacyID value %q: %w", r.Value, err)
+				return fmt.Errorf("invalid legacyID value %q: %w", value, err)
 			}
 			opts.LegacyID = v
 		default:
-			return fmt.Errorf("unsupported field selector: %s", r.Field)
+			return fmt.Errorf("unsupported label selector: %s", r.Key())
 		}
 	}
 	return nil
