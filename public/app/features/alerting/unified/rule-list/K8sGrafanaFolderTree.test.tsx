@@ -37,6 +37,13 @@ function installAutoFiringIntersectionObserver() {
   })) as unknown as typeof IntersectionObserver;
 }
 
+beforeAll(() => {
+  // jsdom implements neither, but the window virtualizer touches both. A tall viewport keeps all
+  // fixture rows within the virtualizer's rendered window so assertions for "off-screen" rows hold.
+  window.scrollTo = jest.fn();
+  Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 4000 });
+});
+
 beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]);
   resetSearchRules();

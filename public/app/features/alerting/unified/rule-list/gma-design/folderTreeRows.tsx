@@ -9,7 +9,6 @@ import { makeFolderAlertsLink } from '../../utils/misc';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { GrafanaRuleListItem } from '../GrafanaRuleListItem';
 import LoadMoreHelper from '../LoadMoreHelper';
-import { STICKY_SECTION_HEADER_HEIGHT } from '../components/DataSourceSection';
 import { type TreeRow } from '../hooks/useFolderTreeModel';
 import { useK8sFolderCounts } from '../hooks/useK8sFolderCounts';
 
@@ -111,15 +110,7 @@ function FolderHeaderRow({ row, onToggle }: FolderHeaderRowProps) {
   const { alertRuleCount, recordingRuleCount } = useK8sFolderCounts(row.uid);
 
   return (
-    <div
-      className={styles.folderHead}
-      style={{
-        paddingLeft: indentFor(row.level),
-        // Stack below the pinned section header, then one header height per nesting level.
-        top: STICKY_SECTION_HEADER_HEIGHT + row.level * HEADER_HEIGHT,
-        zIndex: 100 - row.level,
-      }}
-    >
+    <div className={styles.folderHead} style={{ paddingLeft: indentFor(row.level) }}>
       <Stack alignItems="center" gap={0.5}>
         <IconButton
           name={row.isOpen ? 'angle-down' : 'angle-right'}
@@ -215,14 +206,13 @@ function indentFor(level: number): number {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   folderHead: css({
-    position: 'sticky',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
     height: HEADER_HEIGHT,
     padding: theme.spacing(0, 1.5),
-    // Use the page container background so the header is opaque (rows don't show through when it's
-    // pinned) while still matching the surrounding page surface.
+    // Use the page container background so the header is opaque (rows don't show through when the
+    // virtualizer pins it) while still matching the surrounding page surface.
     background: theme.colors.background.page,
     '&:hover': {
       background: theme.colors.action.hover,
