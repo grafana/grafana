@@ -460,8 +460,8 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 
 	updated := result.DeepCopy()
 	// Partial update: Name and ExternalUID are written only when set, so a
-	// single-field command (e.g. a SCIM externalUID-only patch) doesn't blank the
-	// others. Matches the legacy store, where xorm skips zero-value columns.
+	// single-field command doesn't clear the others. Matches the legacy store,
+	// where xorm skips zero-value columns.
 	if cmd.Name != "" {
 		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
 			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
