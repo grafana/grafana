@@ -75,4 +75,24 @@ describe('PanelEditorRendererNext', () => {
 
     expect(screen.getByRole('dialog', { name: 'Do you really want to unlink this panel?' })).toBeInTheDocument();
   });
+
+  it('renders the dashboard controls row when controls are present', () => {
+    const editor = setupLibraryPanelEditor();
+    const controls = { Component: () => <div data-testid="panel-controls" /> };
+    jest.mocked(usePanelEditorShell).mockReturnValue({ ...shell, controls } as unknown as ReturnType<
+      typeof usePanelEditorShell
+    >);
+
+    render(<PanelEditorRendererNext model={editor} />);
+
+    expect(screen.getByTestId('panel-controls')).toBeInTheDocument();
+  });
+
+  it('does not render a controls row when controls are absent', () => {
+    const editor = setupLibraryPanelEditor();
+
+    render(<PanelEditorRendererNext model={editor} />);
+
+    expect(screen.queryByTestId('panel-controls')).not.toBeInTheDocument();
+  });
 });
