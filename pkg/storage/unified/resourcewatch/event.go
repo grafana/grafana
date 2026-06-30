@@ -12,8 +12,10 @@
 // format never has to know about versions and there is no per-version fan-out.
 //
 // The contract is generic over any group/version/resource; it does not know
-// about any particular API. It lives here, under pkg/infra/nats, for now because
-// it is owned alongside the NATS platform rather than by any one consumer.
+// about any particular API. It lives under pkg/storage/unified because it is
+// expressed in unified-storage terms — group/resource and an opaque
+// resourceVersion — and is shared by both sides of the watch, like the other
+// storage contracts.
 package resourcewatch
 
 // EventType is the kind of change a notification announces. Its values mirror
