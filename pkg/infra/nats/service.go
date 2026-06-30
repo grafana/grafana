@@ -130,7 +130,7 @@ func (s *Service) Health(_ context.Context) error {
 			return fmt.Errorf("embedded nats server is not running")
 		}
 	}
-	return nil
+	return s.publisher.healthy()
 }
 
 func (s *Service) ClientURLs() []string {

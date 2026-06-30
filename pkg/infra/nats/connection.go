@@ -17,6 +17,10 @@ type connRole string
 
 const rolePublisher connRole = "publisher"
 
+// drainTimeout bounds how long close() waits for in-flight work to flush, so a
+// broker that has gone away cannot stall shutdown for the nats.go default of 30s.
+const drainTimeout = 10 * time.Second
+
 // connection lazily establishes and reuses a single NATS connection per role,
 // so each role can present distinct least-privilege credentials.
 type connection struct {
@@ -67,6 +71,10 @@ func (c *connection) getExtraOptions() []natsclient.Option {
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
 		return nil, ErrDisabled
+	}
+	// Honour cancellation even on the warm path, where no dial happens.
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -123,7 +131,10 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.WithLabelValues(string(c.role)).Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		c.metrics.connectionStatus.WithLabelValues(string(c.role)).Set(1)
+		// connectionStatus is driven solely by the connect/reconnect/disconnect
+		// handlers: with RetryOnFailedConnect the conn returned here may still be
+		// dialing in the background, so setting it to 1 now would report a healthy
+		// connection that is not yet established.
 		return res.conn, nil
 	}
 }
@@ -139,6 +150,14 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.ReconnectJitter(100*time.Millisecond, time.Second),
 		natsclient.PingInterval(20 * time.Second),
 		natsclient.MaxPingsOutstanding(3),
+		natsclient.DrainTimeout(drainTimeout),
+		// Disable the reconnect buffer: rather than silently buffering up to the
+		// 8MB default during an outage fail publishes fast.
+		natsclient.ReconnectBufSize(-1),
+		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
+			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(1)
+			c.log.Info("nats connected", "role", roleStr, "url", nc.ConnectedUrl())
+		}),
 		natsclient.DisconnectErrHandler(func(_ *natsclient.Conn, err error) {
 			c.metrics.connectionStatus.WithLabelValues(roleStr).Set(0)
 			c.metrics.disconnects.WithLabelValues(roleStr).Inc()
@@ -181,6 +200,27 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	}
 
 	return options, nil
+}
+
+// healthy reports whether the connection is usable. It tolerates the lazy state
+// before first use (conn == nil): an idle service that has never published is
+// not a failure. Once a connection exists, it must actually be connected.
+func (c *connection) healthy() error {
+	if !c.Enabled() {
+		return ErrDisabled
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed {
+		return ErrClosed
+	}
+	if c.conn == nil {
+		return nil
+	}
+	if !c.conn.IsConnected() {
+		return fmt.Errorf("nats %s connection is not connected (status=%s)", c.role, c.conn.Status())
+	}
+	return nil
 }
 
 // close drains the connection so in-flight work flushes before shutdown. It is
