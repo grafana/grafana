@@ -14,7 +14,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent, type LayoutParent } from '../types/LayoutParent';
 
-import { getNestingRestrictions } from './CanvasGridAddActions';
+import { getNestingRestrictions } from './nestingRestrictions';
 import { generateUniqueTitle } from './utils';
 
 export type GroupTarget = 'row' | 'tab';

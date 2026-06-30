@@ -11,9 +11,9 @@ import { getDefaultVizPanel } from '../../utils/utils';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { useNestingRestrictions } from './nestingRestrictions';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
-import { useNestingRestrictions } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;

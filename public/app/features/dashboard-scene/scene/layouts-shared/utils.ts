@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
 export interface EditPaneInputAutoFocusProps {
@@ -83,36 +81,4 @@ export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
-}
-
-const MAX_NESTING_DEPTH = 3;
-
-export function getNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  if (config.featureToggles.unlimitedLayoutsNesting) {
-    return { disableGrouping: false, disableTabs: false };
-  }
-
-  const layouts: string[] = [];
-  let parent = layoutManager.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      layouts.push(parent.descriptor.id);
-    }
-
-    if (layouts.length === MAX_NESTING_DEPTH) {
-      break;
-    }
-
-    parent = parent.parent;
-  }
-
-  const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
-  const disableTabs = disableGrouping || layouts.includes(TabsLayoutManager.descriptor.id);
-
-  return { disableGrouping, disableTabs };
-}
-
-export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  return useMemo(() => getNestingRestrictions(layoutManager), [layoutManager]);
 }
