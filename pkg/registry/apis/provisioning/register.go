@@ -61,7 +61,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -107,11 +106,8 @@ type APIBuilder struct {
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
-	features   featuremgmt.FeatureToggles
-	usageStats usagestats.Service
-	// usageNamespaceLister enumerates the namespaces to collect usage stats for
-	// (one per org). Nil on the multi-tenant standalone path, where the collector
-	// falls back to the default namespace.
+	features             featuremgmt.FeatureToggles
+	usageStats           usagestats.Service
 	usageNamespaceLister usage.NamespaceLister
 
 	tracer              tracing.Tracer
@@ -316,30 +312,6 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	return &JobHistoryConfig{}
 }
 
-// listOrgNamespaces returns a function that lists the namespaces for the orgs of given instance.
-func listOrgNamespaces(orgSvc org.Service, namespacer request.NamespaceMapper) func(ctx context.Context) ([]string, error) {
-	return func(ctx context.Context) ([]string, error) {
-		orgs, err := orgSvc.Search(ctx, &org.SearchOrgsQuery{})
-		if err != nil {
-			return nil, err
-		}
-
-		// Deduplicate the namespaces.
-		seen := make(map[string]struct{}, len(orgs))
-		out := make([]string, 0, len(orgs))
-		for _, o := range orgs {
-			ns := namespacer(o.ID)
-			if _, ok := seen[ns]; ok {
-				continue
-			}
-			seen[ns] = struct{}{}
-			out = append(out, ns)
-		}
-
-		return out, nil
-	}
-}
-
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
@@ -420,7 +392,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	builder.usageNamespaceLister = listOrgNamespaces(orgSvc, request.GetNamespaceMapper(cfg))
+	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -461,7 +433,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
-	v1beta1Builder.usageNamespaceLister = listOrgNamespaces(orgSvc, request.GetNamespaceMapper(cfg))
+	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
