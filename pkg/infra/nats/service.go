@@ -29,9 +29,8 @@ const (
 var ErrDisabled = errors.New("nats is disabled")
 
 // Service owns the NATS platform lifecycle: the optional embedded server and
-// the shared Bus. It is a dskit service (so it composes with the module server)
-// that also bridges to the monolith background-service contract via Run. It is
-// a no-op when NATS is disabled.
+// the publisher connection. It is a dskit service that also bridges to the
+// monolith background-service contract via Run, and a no-op when NATS is disabled.
 type Service struct {
 	services.NamedService
 
@@ -39,7 +38,7 @@ type Service struct {
 	log     log.Logger
 	metrics *metrics
 
-	bus *bus
+	publisher *publisher
 
 	mu         sync.RWMutex
 	server     *natsserver.Server
@@ -58,15 +57,15 @@ func ProvideService(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Regis
 		clientURLs: append([]string(nil), cfg.NATS.ClientURLs...),
 	}
 
-	s.bus = newBus(cfg.NATS, logger, m, s.ClientURLs)
+	s.publisher = newPublisher(cfg.NATS, logger, m, s.ClientURLs)
 	s.opts = s.serverOptions()
 	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serviceName)
 
 	return s, nil
 }
 
-func ProvideBus(service *Service) Bus {
-	return service.bus
+func ProvidePublisher(service *Service) Publisher {
+	return service.publisher
 }
 
 func (s *Service) IsDisabled() bool {
@@ -81,7 +80,6 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.AwaitTerminated(ctx)
 }
 
-// starting runs once; ctx is the service context, live until the service stops.
 func (s *Service) starting(ctx context.Context) error {
 	if !s.cfg.Enabled {
 		return nil
@@ -114,7 +112,6 @@ func (s *Service) stopping(_ error) error {
 	return nil
 }
 
-// Health reports whether the platform is operational.
 func (s *Service) Health(_ context.Context) error {
 	if !s.cfg.Enabled {
 		return ErrDisabled
@@ -162,7 +159,7 @@ func (s *Service) startEmbeddedServer(_ context.Context) error {
 	s.mu.Unlock()
 
 	// Local hop connects in-process; peers still cluster over TCP routes.
-	s.bus.setExtraOptions(natsclient.InProcessServer(server))
+	s.publisher.setExtraOptions(natsclient.InProcessServer(server))
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)
@@ -187,7 +184,7 @@ func (s *Service) serverOptions() *natsserver.Options {
 
 func (s *Service) shutdown(_ context.Context) {
 	// Drain clients before the embedded server goes away.
-	s.bus.close()
+	s.publisher.close()
 
 	s.mu.RLock()
 	server := s.server

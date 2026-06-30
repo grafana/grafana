@@ -9,7 +9,6 @@ const (
 	metricsSubsystem = "nats"
 )
 
-// roleLabel distinguishes the publisher and subscriber connections.
 const roleLabel = "role"
 
 type metrics struct {
@@ -19,8 +18,6 @@ type metrics struct {
 	connectionErrors *prometheus.CounterVec
 	messagesPub      prometheus.Counter
 	publishErrors    prometheus.Counter
-	messagesRecv     prometheus.Counter
-	slowConsumers    prometheus.Counter
 	embeddedServerUp prometheus.Gauge
 }
 
@@ -62,18 +59,6 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:      "publish_errors_total",
 			Help:      "Total number of NATS publish errors.",
 		}),
-		messagesRecv: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "messages_received_total",
-			Help:      "Total number of messages received from NATS subscriptions.",
-		}),
-		slowConsumers: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "slow_consumer_errors_total",
-			Help:      "Total number of NATS slow-consumer errors (dropped messages).",
-		}),
 		embeddedServerUp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
@@ -89,8 +74,6 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 		m.connectionErrors,
 		m.messagesPub,
 		m.publishErrors,
-		m.messagesRecv,
-		m.slowConsumers,
 		m.embeddedServerUp,
 	)
 

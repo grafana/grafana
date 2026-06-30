@@ -311,7 +311,7 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	infranats.ProvideService,
-	infranats.ProvideBus,
+	infranats.ProvidePublisher,
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
