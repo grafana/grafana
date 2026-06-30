@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	openfgaconfig "github.com/openfga/openfga/pkg/server/config"
 	"github.com/openfga/openfga/pkg/storage/migrate"
 	"github.com/pressly/goose/v3"
 
@@ -50,6 +51,13 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 	migrationConfig := migrate.MigrationConfig{
 		URI:    connStr,
 		Engine: dbType,
+		// openfga v1.18+ pings the datastore in a backoff.Retry loop before
+		// running migrations. When these are left at zero, PingTimeout produces
+		// an already-expired context (so every ping fails instantly) and Timeout
+		// maps to backoff MaxElapsedTime=0, which retries forever. Use openfga's
+		// own CLI defaults so the ping loop is bounded.
+		PingTimeout: openfgaconfig.DefaultDatastorePingTimeout,
+		Timeout:     openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime,
 	}
 
 	if err := runOpenFGAMigrationsLocked(engine, m.Dialect, cfg, migrationConfig, logger); err != nil {
