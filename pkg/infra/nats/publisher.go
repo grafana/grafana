@@ -24,17 +24,17 @@ type PublisherService struct {
 	*connection
 }
 
-func newPublisher(logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *PublisherService {
-	conn := newConnection(rolePublisher, logger, m, ep, credentials)
+func newPublisher(logger log.Logger, m *clientMetrics, config *Config, credentials func() string) *PublisherService {
+	conn := newConnection(rolePublisher, logger, m, config, credentials)
 	p := &PublisherService{connection: conn}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
-// ProvidePublisher builds the publisher from the shared endpoints (which carry
-// the bus config and resolve the mode) plus its per-role credentials.
-func ProvidePublisher(cfg *setting.Cfg, ep *endpoints, m *metrics) *PublisherService {
-	return newPublisher(log.New("infra.nats.publisher"), m, ep, cfg.NATS.Auth.PublisherCredentials)
+// ProvidePublisher builds the publisher from the shared connection config (which
+// carries the bus config and resolves the mode) plus its per-role credentials.
+func ProvidePublisher(cfg *setting.Cfg, config *Config, m *clientMetrics) *PublisherService {
+	return newPublisher(log.New("infra.nats.publisher"), m, config, cfg.NATS.Auth.PublisherCredentials)
 }
 
 func (p *PublisherService) IsDisabled() bool {

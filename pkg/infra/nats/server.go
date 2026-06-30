@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -36,24 +37,35 @@ type Server struct {
 
 	cfg     setting.NATSSettings
 	log     log.Logger
-	metrics *metrics
+	metrics *serverMetrics
 
 	mu     sync.RWMutex
 	server *natsserver.Server
 	opts   *natsserver.Options
 }
 
-func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, m *metrics) (*Server, error) {
+func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Server, error) {
 	s := &Server{
-		cfg:     cfg.NATS,
-		log:     log.New("infra.nats.server"),
-		metrics: m,
+		cfg: cfg.NATS,
+		log: log.New("infra.nats.server"),
+	}
+
+	// Only register the embedded-server metrics when this instance actually runs
+	// the embedded server; external/Cloud mode owns nothing here.
+	if !s.IsDisabled() {
+		s.metrics = newServerMetrics(reg)
 	}
 
 	s.opts = s.serverOptions()
 	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serverName)
 
 	return s, nil
+}
+
+// ProvideClientMetrics registers the role-labeled client metrics shared by the
+// publisher and (eventually) subscriber connections.
+func ProvideClientMetrics(reg prometheus.Registerer) *clientMetrics {
+	return newClientMetrics(reg)
 }
 
 // IsDisabled reports whether the embedded server should run. It is disabled when
@@ -78,14 +90,28 @@ func (s *Server) starting(ctx context.Context) error {
 	return s.startEmbeddedServer(ctx)
 }
 
-// embeddedServer returns the running embedded NATS server, or nil when NATS runs
-// against an external broker or the embedded server has not yet started. The
-// shared endpoints reads this lazily to resolve the in-process client URL and
-// dial hop.
-func (s *Server) embeddedServer() *natsserver.Server {
+func (s *Server) clientURL() string {
+	if s == nil {
+		return ""
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.server
+	if s.server == nil {
+		return ""
+	}
+	return s.server.ClientURL()
+}
+
+func (s *Server) dialOptions() []natsclient.Option {
+	if s == nil {
+		return nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.server == nil {
+		return nil
+	}
+	return []natsclient.Option{natsclient.InProcessServer(s.server)}
 }
 
 func (s *Server) running(ctx context.Context) error {
@@ -170,12 +196,6 @@ func (s *Server) shutdown() {
 		server.WaitForShutdown()
 		s.metrics.embeddedServerUp.Set(0)
 	}
-}
-
-// ProvideMetrics registers the NATS metrics once so the Server and the client
-// components can share a single registration.
-func ProvideMetrics(reg prometheus.Registerer) *metrics {
-	return newMetrics(reg)
 }
 
 func randomSuffix() string {

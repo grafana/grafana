@@ -31,17 +31,16 @@ func startTestServer(t *testing.T) *natsserver.Server {
 	return srv
 }
 
-// newTestEndpoints wires a shared endpoints provider to the in-process test
-// server, mirroring how the endpoints reads the embedded server from the Server
-// at runtime.
-func newTestEndpoints(srv *natsserver.Server, cfg setting.NATSSettings) *endpoints {
-	return newEndpoints(cfg, &Server{server: srv})
+// newTestConfig wires a shared connection config to the in-process test server,
+// mirroring how the Config reads the embedded server from the Server at runtime.
+func newTestConfig(srv *natsserver.Server, cfg setting.NATSSettings) *Config {
+	return newConfig(cfg, &Server{server: srv})
 }
 
 func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	c := newConnection(rolePublisher, log.NewNopLogger(), newMetrics(prometheus.NewRegistry()), newTestEndpoints(srv, cfg), func() string { return "" })
+	c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(c.close)
 	return c
 }
@@ -49,18 +48,18 @@ func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	p := newPublisher(log.NewNopLogger(), newMetrics(prometheus.NewRegistry()), newTestEndpoints(srv, cfg), func() string { return "" })
+	p := newPublisher(log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(p.close)
 	return p
 }
 
-func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *endpoints) {
+func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = nats
 	// sqlStore is not touched here, so nil is acceptable.
-	s, err := ProvideServer(cfg, nil, newMetrics(prometheus.NewRegistry()))
+	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
-	ep := ProvideEndpoints(cfg, s)
+	ep := ProvideNATSConfig(cfg, s)
 	return s, ep
 }

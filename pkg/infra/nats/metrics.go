@@ -11,18 +11,23 @@ const (
 
 const roleLabel = "role"
 
-type metrics struct {
+// clientMetrics covers the NATS client side (connections and publishing). Every
+// series is keyed by the `role` label, so a single registration serves every
+// role an environment actually runs: roles that never connect or publish emit
+// no series at all.
+type clientMetrics struct {
 	connectionStatus *prometheus.GaugeVec
 	reconnects       *prometheus.CounterVec
 	disconnects      *prometheus.CounterVec
 	connectionErrors *prometheus.CounterVec
 	messagesPub      *prometheus.CounterVec
 	publishErrors    *prometheus.CounterVec
-	embeddedServerUp prometheus.Gauge
 }
 
-func newMetrics(reg prometheus.Registerer) *metrics {
-	m := &metrics{
+// TODO: we can further break down into per-role metrics, e.g. publisher vs subscriber, if we want to track
+// metrics separately. For now, we just have a single set of metrics for all roles.
+func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
+	m := &clientMetrics{
 		connectionStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
@@ -59,12 +64,6 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Name:      "publish_errors_total",
 			Help:      "Total number of NATS publish errors per role.",
 		}, []string{roleLabel}),
-		embeddedServerUp: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "embedded_server_up",
-			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
-		}),
 	}
 
 	reg.MustRegister(
@@ -74,8 +73,29 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 		m.connectionErrors,
 		m.messagesPub,
 		m.publishErrors,
-		m.embeddedServerUp,
 	)
+
+	return m
+}
+
+// serverMetrics covers the embedded NATS server. It is registered only in
+// environments that actually run the embedded server, so external/Cloud
+// deployments never export a misleading `embedded_server_up 0`.
+type serverMetrics struct {
+	embeddedServerUp prometheus.Gauge
+}
+
+func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
+	m := &serverMetrics{
+		embeddedServerUp: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "embedded_server_up",
+			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
+		}),
+	}
+
+	reg.MustRegister(m.embeddedServerUp)
 
 	return m
 }

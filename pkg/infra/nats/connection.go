@@ -23,9 +23,9 @@ const drainTimeout = 10 * time.Second
 // connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
 	log         log.Logger
-	metrics     *metrics
+	metrics     *clientMetrics
 	role        connRole
-	endpoints   *endpoints
+	config      *Config
 	credentials func() string
 
 	mu     sync.Mutex
@@ -33,17 +33,17 @@ type connection struct {
 	closed bool
 }
 
-func newConnection(role connRole, logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *connection {
+func newConnection(role connRole, logger log.Logger, m *clientMetrics, config *Config, credentials func() string) *connection {
 	return &connection{
 		log:         logger,
 		metrics:     m,
 		role:        role,
-		endpoints:   ep,
+		config:      config,
 		credentials: credentials,
 	}
 }
 
-func (c *connection) Enabled() bool { return c.endpoints.enabled() }
+func (c *connection) Enabled() bool { return c.config.Enabled() }
 
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
@@ -70,7 +70,7 @@ func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 }
 
 func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
-	urls := c.endpoints.URLs()
+	urls := c.config.URLs()
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("no nats client urls configured")
 	}
@@ -79,7 +79,7 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, c.endpoints.dialOptions()...)
+	options = append(options, c.config.DialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
 	type result struct {
@@ -160,7 +160,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if tls := c.endpoints.tls(); tls.Enabled {
+	if tls := c.config.TLS(); tls.Enabled {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
 			return nil, err
@@ -172,8 +172,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	switch creds := c.credentials(); {
 	case creds != "":
 		options = append(options, natsclient.UserCredentials(creds))
-	case c.endpoints.token() != "":
-		options = append(options, natsclient.Token(c.endpoints.token()))
+	case c.config.Token() != "":
+		options = append(options, natsclient.Token(c.config.Token()))
 	}
 
 	return options, nil
