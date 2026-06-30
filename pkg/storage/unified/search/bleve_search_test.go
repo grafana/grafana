@@ -1353,23 +1353,26 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, []string{"doc-1", "doc-2"}, names)
 	})
 
-	t.Run("low auth fraction stops at MaxCandidates cap and is deterministic", func(t *testing.T) {
-		// Small cap so the scan terminates well before scanning everything.
+	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
+		// Small cap, with the first authorized hit beyond it. The scan should
+		// keep going until it finds that hit, then stop short of the full index.
 		cfg := search.PostRankAuthzConfig{MinWindow: 1, MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
 		for i := 0; i < 2000; i++ {
-			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "denied"))
+			folder := "denied"
+			if i == 120 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), folder))
 		}
 		indexDocs(t, index, docs)
 
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		q := listQuery(10)
 		names1, res1 := searchNames(t, index, ac, q)
-		// Nothing authorized -> empty page, but the scan is bounded by the cap.
-		require.Empty(t, names1)
-		require.LessOrEqual(t, ac.checked, 50+authlib.MaxBatchCheckItems,
-			"scan must stop near MaxCandidates, not authorize all 2000")
+		require.Equal(t, []string{"doc-0120"}, names1)
+		require.Greater(t, ac.checked, 50, "scan must continue past MaxCandidates while the page is empty")
 		require.Less(t, ac.checked, 2000)
 
 		// Determinism: the same bounded scan yields the same partial result.
@@ -1613,22 +1616,27 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, int64(4), res.TotalHits, "count-only query returns the unfiltered total under postFilter")
 	})
 
-	t.Run("sparse-access scan terminates at the candidate budget", func(t *testing.T) {
-		// Tiny budget, many denied docs: the scan must stop after authorizing at
-		// most MaxCandidates hits, not page through the whole index.
+	t.Run("sparse-access scan continues past the candidate budget until first hit", func(t *testing.T) {
+		// Tiny budget, with the first authorized hit beyond it: keep scanning
+		// until that hit exists, then stop with a short page.
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
 			MaxCandidates: 10,
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 500)
 		for i := 0; i < 500; i++ {
-			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
+			folder := "denied"
+			if i == 20 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), folder))
 		}
 		indexDocs(t, index, docs)
 
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		names, _ := searchNames(t, index, ac, listQuery(50))
-		require.Empty(t, names, "no authorized docs -> empty page")
-		require.LessOrEqual(t, ac.checked, 10, "scan must stop at the candidate budget")
+		require.Equal(t, []string{"doc-020"}, names)
+		require.Greater(t, ac.checked, 10, "scan must continue past the budget while the page is empty")
+		require.Less(t, ac.checked, 500)
 	})
 
 	t.Run("adaptive window fills a high-fraction page from the first small window", func(t *testing.T) {

@@ -243,12 +243,13 @@ func (b *bleveIndex) runPostFilterAuthz(
 			stats.AddTotalHits(int(res.Total))
 		}
 
-		// Authorize this window's hits in rank order. The candidate iterator
-		// stops feeding FilterAuthorized once the candidate budget is reached.
+		// Authorize this window's hits in rank order. Facets always stop at the
+		// sample budget; page-fill scans keep going past MaxCandidates until at
+		// least one row is found, so sparse users don't get an empty first page.
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range windowHits {
-				if candidates >= maxCandidates {
+				if candidates >= maxCandidates && (wantFacets || len(page) > 0) {
 					return
 				}
 				info, ok := parseHitDocInfo(hit, resources)
@@ -284,11 +285,11 @@ func (b *bleveIndex) runPostFilterAuthz(
 		if stop {
 			break
 		}
-		// Candidate budget exhausted (sparse authorized fraction). Hoisted out
-		// of the FilterAuthorized loop: that loop only yields authorized hits,
-		// so an all-unauthorized capping window would otherwise never set stop
-		// and the scan would keep paging until bleve exhausted the whole index.
-		if candidates >= maxCandidates {
+		// Candidate budget exhausted. For page-fill scans, only enforce the
+		// budget after the first authorized row; otherwise keep scanning so a
+		// sparse user does not get an empty first page just because the first
+		// authorized hit sorted beyond MaxCandidates.
+		if candidates >= maxCandidates && (wantFacets || len(page) > 0) {
 			capped = true
 			break
 		}
