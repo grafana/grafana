@@ -4,10 +4,9 @@ import { useEffect, useRef } from 'react';
 import { isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import {
-  type Job,
   type RepositoryView,
   useGetRepositoryFilesWithPathQuery,
-  useListJobQuery,
+  useListRepositoryQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
@@ -26,32 +25,6 @@ export interface UseFolderReadmeResult {
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
-}
-
-/**
- * Only `pull`/`migrate` replicate remote content into Grafana, so only they can
- * change the locally served README; other actions touch the remote alone.
- * `warning` still counts — it's a completion that wrote content.
- */
-export function isReadmeRefreshingJob(job: Job): boolean {
-  const action = job.spec?.action;
-  const state = job.status?.state;
-  return (action === 'pull' || action === 'migrate') && (state === 'success' || state === 'warning');
-}
-
-/**
- * `handled` dedupes by job name so a finished pull lingering in the watched list
- * refetches only once; names are unique per repository.
- */
-export function readmeRefetchJobNames(jobs: Job[], handled: ReadonlySet<string>): string[] {
-  const names: string[] = [];
-  for (const job of jobs) {
-    const name = job.metadata?.name;
-    if (name && !handled.has(name) && isReadmeRefreshingJob(job)) {
-      names.push(name);
-    }
-  }
-  return names;
 }
 
 /**
@@ -88,21 +61,33 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
 
   const isLoading = isRepoLoading || isFileLoading;
 
-  // Show pulled-in README edits without a manual page reload (#1223). Watch the
-  // repo's jobs over the existing stream rather than polling, which is too
-  // API-heavy for the browse-dashboards page.
-  const { data: jobsData } = useListJobQuery(
-    repository?.name
-      ? { labelSelector: `provisioning.grafana.app/repository=${repository.name}`, watch: true }
-      : skipToken
+  // Watch repo sync, not the Job: the Job is deleted on completion so its
+  // terminal state is never observed (#1223).
+  const { data: repoData } = useListRepositoryQuery(
+    repository?.name ? { fieldSelector: `metadata.name=${repository.name}`, watch: true } : skipToken
   );
-  const handledJobsRef = useRef<Set<string>>(new Set());
+  const repo = repoData?.items?.[0];
+  const sync = repo?.status?.sync;
+  const syncFinished = sync?.finished;
+
+  // `finished` advances once per completed sync; dedupes repeat watch events and
+  // seeds a baseline so mount-loaded content isn't refetched.
+  const lastFinishedRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    for (const name of readmeRefetchJobNames(jobsData?.items ?? [], handledJobsRef.current)) {
-      handledJobsRef.current.add(name);
+    if (!repo) {
+      return;
+    }
+    const finished = syncFinished ?? 0;
+    if (lastFinishedRef.current === undefined) {
+      lastFinishedRef.current = finished;
+      return;
+    }
+    // sync only advances on pull, so push/pr/move/delete never reach here.
+    if (finished > lastFinishedRef.current && (sync?.state === 'success' || sync?.state === 'warning')) {
+      lastFinishedRef.current = finished;
       refetch();
     }
-  }, [jobsData, refetch]);
+  }, [repo, sync, syncFinished, refetch]);
 
   let status: FolderReadmeStatus;
   if (isLoading) {
