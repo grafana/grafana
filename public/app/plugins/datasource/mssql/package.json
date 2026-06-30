@@ -26,9 +26,9 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "@types/react": "18.3.18",
-    "i18next-cli": "^1.48.0",
+    "i18next-cli": "1.58.0",
     "typescript": "6.0.2",
-    "webpack": "^5.105.0"
+    "webpack": "5.105.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
