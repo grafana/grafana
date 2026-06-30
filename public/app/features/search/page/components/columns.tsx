@@ -131,7 +131,7 @@ export const generateColumns = (
       const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={cx(styles.cell, styles.nameCell)} {...cellProps}>
+        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
           {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
