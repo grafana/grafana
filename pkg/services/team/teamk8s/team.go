@@ -459,11 +459,17 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
-	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
-		ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	// Partial update: an empty Name or ExternalUID means "leave unchanged", matching
+	// the legacy store (xorm skips zero-value columns; only email is MustCols). Without
+	// this, a partial command — e.g. SCIM updating only externalUID — would blank the
+	// title and the update would fail validation ("the team must have a title").
+	if cmd.Name != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
 		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
@@ -471,11 +477,13 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
-		ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	if cmd.ExternalUID != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+			ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
