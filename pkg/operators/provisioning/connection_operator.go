@@ -52,9 +52,9 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	connController, err := controller.NewConnectionController(
+	connController := controller.NewConnectionController(
 		provisioningClient.ProvisioningV0alpha1(),
-		connInformer,
+		connInformer.Lister(),
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),
@@ -66,12 +66,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		controllerCfg.Registry(),
 	)
 
+	reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
 	if err != nil {
-		return fmt.Errorf("failed to create connection controller: %w", err)
+		return fmt.Errorf("failed to add connection event handler: %w", err)
 	}
 
 	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("connection controller cache sync failed")
 	}
 
