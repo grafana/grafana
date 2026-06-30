@@ -76,6 +76,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   return {
     pageContainer: css({
       display: 'grid',
+      width: '100%',
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),

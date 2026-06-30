@@ -79,9 +79,9 @@ describe('PanelEditorRendererNext', () => {
   it('renders the dashboard controls row when controls are present', () => {
     const editor = setupLibraryPanelEditor();
     const controls = { Component: () => <div data-testid="panel-controls" /> };
-    jest.mocked(usePanelEditorShell).mockReturnValue({ ...shell, controls } as unknown as ReturnType<
-      typeof usePanelEditorShell
-    >);
+    jest
+      .mocked(usePanelEditorShell)
+      .mockReturnValue({ ...shell, controls } as unknown as ReturnType<typeof usePanelEditorShell>);
 
     render(<PanelEditorRendererNext model={editor} />);
 

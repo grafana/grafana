@@ -334,7 +334,7 @@ function DashboardControlActions({
   const isEditable = Boolean(editable);
   const isEditingLibraryPanel = Boolean(editPanel && isLibraryPanel(editPanel.state.panelRef.resolve()));
 
-  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const showSaveButton = isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel;
   const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
