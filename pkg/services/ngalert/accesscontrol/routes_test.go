@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -23,7 +22,7 @@ func (r testRoute) GetUID() string {
 }
 
 func TestRouteAccess(t *testing.T) {
-	defaultRoute := testRoute{name: legacy_storage.UserDefinedRoutingTreeName}
+	defaultRoute := testRoute{name: models.DefaultRoutingTreeName}
 	route1 := testRoute{name: "route-1"}
 	route2 := testRoute{name: "route-2"}
 
@@ -387,7 +386,7 @@ func TestRouteAccess(t *testing.T) {
 }
 
 func TestRouteAccessFilterRead(t *testing.T) {
-	defaultRoute := testRoute{name: legacy_storage.UserDefinedRoutingTreeName}
+	defaultRoute := testRoute{name: models.DefaultRoutingTreeName}
 	route1 := testRoute{name: "route-1"}
 	route2 := testRoute{name: "route-2"}
 
@@ -486,7 +485,7 @@ func TestRouteAccessFilterRead(t *testing.T) {
 }
 
 func TestRouteAccessAuthorizeLegacy(t *testing.T) {
-	defaultRoute := testRoute{name: legacy_storage.UserDefinedRoutingTreeName}
+	defaultRoute := testRoute{name: models.DefaultRoutingTreeName}
 	route1 := testRoute{name: "route-1"}
 
 	user := func(perms ...ac.Permission) identity.Requester {
@@ -880,7 +879,7 @@ func TestRouteAccessAuthorizeScoped(t *testing.T) {
 }
 
 func TestRouteAccessAuthorizeProvisioning(t *testing.T) {
-	defaultRoute := testRoute{name: legacy_storage.UserDefinedRoutingTreeName}
+	defaultRoute := testRoute{name: models.DefaultRoutingTreeName}
 	route1 := testRoute{name: "route-1"}
 
 	user := func(perms ...ac.Permission) identity.Requester {

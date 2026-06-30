@@ -9,6 +9,7 @@ import (
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -38,6 +39,12 @@ const (
 const (
 	KindDashboards string = dashboardV1.DASHBOARD_RESOURCE
 	KindFolders    string = folderV1.RESOURCE
+)
+
+var (
+	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
+	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
+	KindServiceAccounts string = iamv0.ServiceAccountKind().GroupVersionResource().Resource
 )
 
 const (
@@ -269,19 +276,32 @@ func NewObjectEntry(objectType, group, resource, subresource, name string) strin
 	return obj
 }
 
+// lookupActionMapping finds the translation and action mapping for the given kind and action.
+// When kind is empty (unscoped permission), it searches all translations for a skipScope match.
+func lookupActionMapping(kind, action string) (resourceTranslation, actionMapping, bool) {
+	if kind != "" {
+		translation, ok := resourceTranslations[kind]
+		if !ok {
+			return resourceTranslation{}, actionMapping{}, false
+		}
+		m, ok := translation.mapping[action]
+		return translation, m, ok
+	}
+	for _, translation := range resourceTranslations {
+		if m, ok := translation.mapping[action]; ok && m.skipScope {
+			return translation, m, true
+		}
+	}
+	return resourceTranslation{}, actionMapping{}, false
+}
+
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
-	translation, ok := resourceTranslations[kind]
-
+	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false
 	}
 
-	m, ok := translation.mapping[action]
-	if !ok {
-		return nil, false
-	}
-
-	if name == "*" {
+	if m.skipScope || name == "*" {
 		if m.group != "" && m.resource != "" {
 			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
 		}

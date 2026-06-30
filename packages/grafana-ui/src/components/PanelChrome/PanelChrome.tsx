@@ -159,6 +159,7 @@ export function PanelChrome({
   subHeaderContent,
 }: PanelChromeProps) {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -455,7 +456,9 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone)}
+            className={cx(styles.content, height === undefined && styles.containNone, {
+              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
+            })}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -516,7 +519,8 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
+  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   return {
     container: css({
@@ -532,7 +536,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
+      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -573,6 +577,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         border: `1px solid ${borderColor}`,
       },
     }),
+    contentTransparent: css({
+      backgroundColor: 'transparent',
+      border: '1px solid transparent',
+    }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
@@ -586,11 +594,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css({
-      label: 'panel-content',
-      flexGrow: 1,
-      contain: 'size layout',
-    }),
+    content: css(
+      {
+        label: 'panel-content',
+        flexGrow: 1,
+        contain: 'size layout',
+      },
+      visualRefreshEnabled && {
+        backgroundColor: contentBackground,
+        border: `1px solid ${contentBorderColor}`,
+        borderRadius: theme.shape.radius.lg,
+        overflow: 'hidden',
+        margin: '-1px', // to overlay the nested borders nicely
+      }
+    ),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',

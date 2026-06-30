@@ -148,6 +148,10 @@ type ConnectionSpec struct {
 	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
 }
 
+func (c *ConnectionSpec) IsGitHub() bool {
+	return c.GitHub != nil || c.GitHubEnterprise != nil
+}
+
 func (ConnectionSpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionSpec"
 }
