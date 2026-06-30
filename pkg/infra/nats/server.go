@@ -31,30 +31,28 @@ var (
 )
 
 // Server owns the embedded NATS server lifecycle, which is an On-Prem concern
-// only: in external/Cloud mode it is a no-op and need not be wired at all. Once
-// the embedded server is ready it publishes its local URL and in-process dial
-// option to the shared endpoints, which is how publisher/consumer clients reach
-// it. It is a dskit service that bridges to the monolith background-service
+// only: in external/Cloud mode it is a no-op. It is the source of truth for the
+// embedded server: once ready, the shared endpoints reads its local URL and
+// in-process dial option from here, which is how publisher/consumer clients
+// reach it. It is a dskit service that bridges to the monolith background-service
 // contract via Run.
 type Server struct {
 	services.NamedService
 
-	cfg       setting.NATSSettings
-	log       log.Logger
-	metrics   *metrics
-	endpoints *endpoints
+	cfg     setting.NATSSettings
+	log     log.Logger
+	metrics *metrics
 
 	mu     sync.RWMutex
 	server *natsserver.Server
 	opts   *natsserver.Options
 }
 
-func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, ep *endpoints, m *metrics) (*Server, error) {
+func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, m *metrics) (*Server, error) {
 	s := &Server{
-		cfg:       cfg.NATS,
-		log:       log.New("infra.nats.server"),
-		metrics:   m,
-		endpoints: ep,
+		cfg:     cfg.NATS,
+		log:     log.New("infra.nats.server"),
+		metrics: m,
 	}
 
 	s.opts = s.serverOptions()
@@ -82,16 +80,17 @@ func (s *Server) starting(ctx context.Context) error {
 		return nil
 	}
 
-	if err := s.startEmbeddedServer(ctx); err != nil {
-		return err
-	}
+	return s.startEmbeddedServer(ctx)
+}
 
-	if len(s.endpoints.URLs()) == 0 {
-		return fmt.Errorf("nats embedded server started but no client urls are available")
-	}
-
-	s.log.Info("embedded nats server started", "client_urls", s.endpoints.URLs())
-	return nil
+// embeddedServer returns the running embedded NATS server, or nil when NATS runs
+// against an external broker or the embedded server has not yet started. The
+// shared endpoints reads this lazily to resolve the in-process client URL and
+// dial hop.
+func (s *Server) embeddedServer() *natsserver.Server {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.server
 }
 
 func (s *Server) running(ctx context.Context) error {
@@ -144,10 +143,6 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.server = server
 	s.opts = &opts
 	s.mu.Unlock()
-
-	// Publish the local endpoint so clients connect in-process; peers still
-	// cluster over TCP routes.
-	s.endpoints.setEmbedded(server, s.cfg.ClientURLs)
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)

@@ -10,7 +10,6 @@ import (
 	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type connRole string
@@ -24,12 +23,9 @@ const drainTimeout = 10 * time.Second
 // connection lazily establishes and reuses a single NATS connection per role,
 // so each role can present distinct least-privilege credentials.
 type connection struct {
-	cfg     setting.NATSSettings
-	log     log.Logger
-	metrics *metrics
-	role    connRole
-	// endpoints and credentials are resolved at connect time: the embedded server
-	// URL and in-process dial option are only known once it has started.
+	log         log.Logger
+	metrics     *metrics
+	role        connRole
 	endpoints   *endpoints
 	credentials func() string
 
@@ -38,9 +34,8 @@ type connection struct {
 	closed bool
 }
 
-func newConnection(role connRole, cfg setting.NATSSettings, logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *connection {
+func newConnection(role connRole, logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *connection {
 	return &connection{
-		cfg:         cfg,
 		log:         logger,
 		metrics:     m,
 		role:        role,
@@ -49,7 +44,7 @@ func newConnection(role connRole, cfg setting.NATSSettings, logger log.Logger, m
 	}
 }
 
-func (c *connection) Enabled() bool { return c.cfg.Enabled }
+func (c *connection) Enabled() bool { return c.endpoints.enabled() }
 
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
@@ -166,8 +161,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if c.cfg.TLS.Enabled {
-		tc, err := buildTLSConfig(c.cfg.TLS)
+	if tls := c.endpoints.tls(); tls.Enabled {
+		tc, err := buildTLSConfig(tls)
 		if err != nil {
 			return nil, err
 		}
@@ -178,8 +173,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	switch creds := c.credentials(); {
 	case creds != "":
 		options = append(options, natsclient.UserCredentials(creds))
-	case c.cfg.Auth.Token != "":
-		options = append(options, natsclient.Token(c.cfg.Auth.Token))
+	case c.endpoints.token() != "":
+		options = append(options, natsclient.Token(c.endpoints.token()))
 	}
 
 	return options, nil

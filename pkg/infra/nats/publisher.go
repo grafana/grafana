@@ -18,31 +18,30 @@ type Publisher interface {
 	Publish(ctx context.Context, subject string, data []byte) error
 }
 
-// PublisherService is an independent NATS client: it depends only on the shared
-// endpoints and never on the embedded Server, so in Cloud it is built straight
-// from configuration. It is a dskit service so its connection drains on
-// shutdown, and bridges to the monolith background-service contract via Run.
+// PublisherService is a NATS client built on the shared endpoints, which resolve
+// the bus URLs and dial options for the current mode (embedded or external). It
+// is a dskit service so its connection drains on shutdown, and bridges to the
+// monolith background-service contract via Run.
 type PublisherService struct {
 	services.NamedService
 	*connection
 }
 
-func newPublisher(cfg setting.NATSSettings, logger log.Logger, m *metrics, ep *endpoints) *PublisherService {
-	conn := newConnection(rolePublisher, cfg, logger, m, ep, cfg.Auth.PublisherCredentials)
+func newPublisher(logger log.Logger, m *metrics, ep *endpoints, credentials func() string) *PublisherService {
+	conn := newConnection(rolePublisher, logger, m, ep, credentials)
 	p := &PublisherService{connection: conn}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
-// ProvidePublisher builds the publisher from configuration and the shared
-// endpoints. It is independent of the embedded Server: Cloud wires this without
-// a Server, On-Prem wires both.
+// ProvidePublisher builds the publisher from the shared endpoints (which carry
+// the bus config and resolve the mode) plus its per-role credentials.
 func ProvidePublisher(cfg *setting.Cfg, ep *endpoints, m *metrics) *PublisherService {
-	return newPublisher(cfg.NATS, log.New("infra.nats.publisher"), m, ep)
+	return newPublisher(log.New("infra.nats.publisher"), m, ep, cfg.NATS.Auth.PublisherCredentials)
 }
 
 func (p *PublisherService) IsDisabled() bool {
-	return !p.cfg.Enabled
+	return !p.Enabled()
 }
 
 // Run bridges the dskit service into the monolith background-service contract.

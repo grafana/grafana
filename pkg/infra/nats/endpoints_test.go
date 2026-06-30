@@ -14,20 +14,20 @@ func TestEndpoints(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.NATS = setting.NATSSettings{ClientURLs: []string{"nats://a:4222", "nats://b:4222"}}
 
-		ep := ProvideEndpoints(cfg)
+		ep := ProvideEndpoints(cfg, nil)
 
 		require.Equal(t, []string{"nats://a:4222", "nats://b:4222"}, ep.URLs())
 		require.Empty(t, ep.dialOptions())
 	})
 
 	t.Run("no configured urls", func(t *testing.T) {
-		ep := newEndpoints(setting.NATSSettings{})
+		ep := newEndpoints(setting.NATSSettings{}, nil)
 		require.Empty(t, ep.URLs())
 		require.Empty(t, ep.dialOptions())
 	})
 
 	t.Run("URLs returns a defensive copy", func(t *testing.T) {
-		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://a:4222"}})
+		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://a:4222"}}, nil)
 
 		// Mutating the returned slice must not affect the endpoints' internal state.
 		got := ep.URLs()
@@ -38,7 +38,7 @@ func TestEndpoints(t *testing.T) {
 
 	t.Run("decoupled from the config slice", func(t *testing.T) {
 		configured := []string{"nats://a:4222"}
-		ep := newEndpoints(setting.NATSSettings{ClientURLs: configured})
+		ep := newEndpoints(setting.NATSSettings{ClientURLs: configured}, nil)
 
 		// Mutating the original config slice must not leak into the endpoints.
 		configured[0] = "nats://tampered:4222"
@@ -47,8 +47,7 @@ func TestEndpoints(t *testing.T) {
 	})
 
 	t.Run("dialOptions returns a defensive copy", func(t *testing.T) {
-		ep := newEndpoints(setting.NATSSettings{})
-		ep.setEmbedded(startTestServer(t), nil)
+		ep := newEndpoints(setting.NATSSettings{}, &Server{server: startTestServer(t)})
 
 		opts := ep.dialOptions()
 		require.Len(t, opts, 1)
@@ -58,11 +57,9 @@ func TestEndpoints(t *testing.T) {
 		require.Len(t, ep.dialOptions(), 1)
 	})
 
-	t.Run("setEmbedded prepends the embedded url ahead of peers", func(t *testing.T) {
+	t.Run("embedded server url is prepended ahead of peers", func(t *testing.T) {
 		srv := startTestServer(t)
-		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://peer:4222"}})
-
-		ep.setEmbedded(srv, []string{"nats://peer:4222"})
+		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://peer:4222"}}, &Server{server: srv})
 
 		// The embedded server's local URL is prepended ahead of the configured peers.
 		require.Equal(t, []string{srv.ClientURL(), "nats://peer:4222"}, ep.URLs())
@@ -70,26 +67,32 @@ func TestEndpoints(t *testing.T) {
 		require.Len(t, ep.dialOptions(), 1)
 	})
 
-	t.Run("setEmbedded without peers", func(t *testing.T) {
+	t.Run("embedded server without peers", func(t *testing.T) {
 		srv := startTestServer(t)
-		ep := newEndpoints(setting.NATSSettings{})
-
-		ep.setEmbedded(srv, nil)
+		ep := newEndpoints(setting.NATSSettings{}, &Server{server: srv})
 
 		require.Equal(t, []string{srv.ClientURL()}, ep.URLs())
 		require.Len(t, ep.dialOptions(), 1)
 	})
 
+	t.Run("external mode without an embedded server", func(t *testing.T) {
+		// A Server that never started (external mode) exposes no embedded server, so
+		// the endpoints fall back to the configured client URLs.
+		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://peer:4222"}}, &Server{})
+
+		require.Equal(t, []string{"nats://peer:4222"}, ep.URLs())
+		require.Empty(t, ep.dialOptions())
+	})
+
 	t.Run("concurrent access is race-free", func(t *testing.T) {
 		srv := startTestServer(t)
-		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://a:4222"}})
+		ep := newEndpoints(setting.NATSSettings{ClientURLs: []string{"nats://a:4222"}}, &Server{server: srv})
 
 		var wg sync.WaitGroup
 		for i := 0; i < 50; i++ {
-			wg.Add(3)
+			wg.Add(2)
 			go func() { defer wg.Done(); _ = ep.URLs() }()
 			go func() { defer wg.Done(); _ = ep.dialOptions() }()
-			go func() { defer wg.Done(); ep.setEmbedded(srv, []string{"nats://a:4222"}) }()
 		}
 		wg.Wait()
 
