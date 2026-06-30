@@ -6665,7 +6665,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:3.5.31, @react-aria/dialog@npm:^3.5.31":
+"@react-aria/dialog@npm:3.5.31":
   version: 3.5.31
   resolution: "@react-aria/dialog@npm:3.5.31"
   dependencies:
@@ -6682,7 +6682,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:^3.6.0":
+"@react-aria/dialog@npm:^3.5.31, @react-aria/dialog@npm:^3.6.0":
   version: 3.6.1
   resolution: "@react-aria/dialog@npm:3.6.1"
   dependencies:
