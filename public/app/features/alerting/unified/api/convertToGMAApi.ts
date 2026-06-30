@@ -82,8 +82,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         headers: {
           // The config identifier is the name of the extra configuration (policy tree name)
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           'X-Grafana-Alerting-Promote': 'true',
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
         },
@@ -119,8 +117,6 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         },
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
-          // TODO: Remove this header once the backend no longer requires it
-          'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
           'X-Grafana-Alerting-Dry-Run': 'true',
           // Always force-replace during dry-run to avoid 409 conflicts —
           // we want to validate the config regardless of existing identifiers
