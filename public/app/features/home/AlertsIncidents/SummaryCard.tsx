@@ -1,15 +1,11 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, type BadgeColor, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-import { HomeSection } from '../HomeSection';
-
-import { CARD_LIST_MAX_HEIGHT } from './constants';
+import { HomeDataCard } from './HomeDataCard';
 
 interface SummaryCardProps<T> {
   title: string;
@@ -17,6 +13,8 @@ interface SummaryCardProps<T> {
   // reads `${countLimit}+` (server-capped data); otherwise the exact count.
   count: number;
   countLimit?: number;
+  // Tone of the header count badge; defaults to 'red' (positive count = bad). Set 'blue' for neutral counts.
+  countColor?: BadgeColor;
   // Right-aligned header content (e.g. a severity breakdown). Hidden while loading.
   headerExtra?: ReactNode;
   loading: boolean;
@@ -34,6 +32,7 @@ export function SummaryCard<T>({
   title,
   count,
   countLimit,
+  countColor,
   headerExtra,
   loading,
   error,
@@ -48,59 +47,24 @@ export function SummaryCard<T>({
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
-    <HomeSection display="flex" direction="column">
-      <Stack direction="column" gap={2} grow={1}>
-        <Stack direction="column" gap={2} grow={1}>
-          <Stack alignItems="center" justifyContent="space-between">
-            <Stack alignItems="center">
-              <Text element="h2" variant="h5">
-                {title}
-              </Text>
-              {!loading && count > 0 && <Badge text={countText} color="red" />}
-            </Stack>
-            {!loading && headerExtra}
-          </Stack>
-
-          {loading && (
-            <Stack direction="column">
-              {Array.from({ length: 3 }, (_, i) => (
-                <Skeleton key={i} height={20} />
-              ))}
-            </Stack>
-          )}
-
-          {error && (
-            <Alert
-              severity="warning"
-              title={error.title}
-              action={
-                <Button onClick={error.onRetry} variant="secondary" size="sm">
-                  <Trans i18nKey="home.summary-card.retry">Retry</Trans>
-                </Button>
-              }
-            />
-          )}
-
-          {!loading && !error && items.length === 0 && (
-            <Stack direction="column" alignItems="center">
-              <Text color="secondary">{emptyMessage}</Text>
-            </Stack>
-          )}
-
-          {!loading && !error && items.length > 0 && (
-            <ul className={styles.list}>
-              {items.map((item) => (
-                <li key={getItemKey(item)} className={styles.row}>
-                  {renderItem(item)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Stack>
-
-        {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
-      </Stack>
-    </HomeSection>
+    <HomeDataCard
+      title={title}
+      titleBadge={count > 0 ? <Badge text={countText} color={countColor ?? 'red'} /> : undefined}
+      headerActions={headerExtra}
+      loading={loading}
+      error={error}
+      isEmpty={items.length === 0}
+      emptyMessage={emptyMessage}
+      footer={footer}
+    >
+      <ul className={styles.list}>
+        {items.map((item) => (
+          <li key={getItemKey(item)} className={styles.row}>
+            {renderItem(item)}
+          </li>
+        ))}
+      </ul>
+    </HomeDataCard>
   );
 }
 
@@ -137,7 +101,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.5),
-    maxHeight: CARD_LIST_MAX_HEIGHT,
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
     // Negative margin + matching padding gives the scrollbar a gutter clear of the age column
     // while keeping that column's right edge aligned with the sibling cards.

@@ -11,7 +11,8 @@ import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardP
 const DashboardPageProxy = lazy(
   () => import(/* webpackChunkName: "DashboardPageProxy" */ '../dashboard/containers/DashboardPageProxy')
 );
-const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
+const homePageImport = () => import(/* webpackChunkName: "HomePage" */ './HomePage');
+const HomePage = lazy(homePageImport);
 
 function HomeRouteInner(props: DashboardPageProxyProps) {
   const flagOn = useFlagGrafanaUnifiedHomepage({ suspend: true });
@@ -21,6 +22,12 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
 function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
+
+  // Warm the HomePage chunk in parallel with the preferences probe, so the
+  // lazy component resolves instantly once the probe finishes
+  useEffect(() => {
+    homePageImport();
+  }, []);
 
   useEffect(() => {
     if (!redirectUri) {

@@ -41,6 +41,50 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
+interface OnCallNowUser {
+  pk: string;
+  username: string;
+}
+
+export interface OnCallSchedule {
+  id: string;
+  name: string;
+  on_call_now: OnCallNowUser[];
+}
+
+export interface OnCallCurrentUserEventsParams {
+  pluginId: string;
+  date: string;
+  days: string;
+  user_tz: string;
+}
+
+interface OnCallScheduleEventShift {
+  id?: string;
+  pk?: string;
+  name?: string;
+  type?: number;
+}
+
+interface OnCallScheduleEvent {
+  start?: string;
+  end?: string;
+  is_empty?: boolean;
+  is_gap?: boolean;
+  shift?: OnCallScheduleEventShift | null;
+}
+
+interface OnCallCurrentUserEventsSchedule {
+  id: string;
+  name: string;
+  events: OnCallScheduleEvent[];
+}
+
+export interface OnCallCurrentUserEventsResponse {
+  is_oncall: boolean;
+  schedules: OnCallCurrentUserEventsSchedule[];
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
@@ -88,6 +132,23 @@ export const onCallApi = alertingApi.injectEndpoints({
     onCallConfigChecks: build.query<OnCallConfigChecks, { pluginId: string }>({
       query: ({ pluginId }) => ({
         url: getProxyApiUrl('/organization/config-checks/', pluginId),
+        showErrorAlert: false,
+      }),
+    }),
+    getOnCallSchedules: build.query<OnCallSchedule[], { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/schedules/', pluginId),
+        params: { perpage: 100 },
+        method: 'GET',
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: OnCallPaginatedResult<OnCallSchedule>) => response.results ?? [],
+    }),
+    getCurrentUserOnCallEvents: build.query<OnCallCurrentUserEventsResponse, OnCallCurrentUserEventsParams>({
+      query: ({ pluginId, ...params }) => ({
+        url: getProxyApiUrl('/schedules/current_user_events/', pluginId),
+        params,
+        method: 'GET',
         showErrorAlert: false,
       }),
     }),

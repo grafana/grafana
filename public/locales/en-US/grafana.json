@@ -10638,6 +10638,9 @@
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
+    "data-card": {
+      "retry": "Retry"
+    },
     "firing-alerts-card": {
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
@@ -10668,6 +10671,31 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "hosted-logs-card": {
+      "error-title": "Could not load logs",
+      "healthy": "Healthy",
+      "idle": "No recent ingest",
+      "ingested": "{{bytes}} ingested (7d)",
+      "open": "Open Explore",
+      "sources_one": "{{count}} source connected",
+      "sources_other": "{{count}} sources connected",
+      "title": "Hosted Logs",
+      "window": "ingested · 7d"
+    },
+    "hosted-metrics-card": {
+      "error-title": "Could not load metrics",
+      "healthy": "Healthy",
+      "ingest": "{{rate}}/s ingested",
+      "ingesting": "Ingesting {{rate}}/s",
+      "open": "Open metrics",
+      "series-unit": "series",
+      "targets-down_one": "{{count}} target down",
+      "targets-down_other": "{{count}} targets down",
+      "targets-some-down": "{{up}} of {{total}} targets up",
+      "targets-up_one": "All {{count}} target up",
+      "targets-up_other": "All {{count}} targets up",
+      "title": "Hosted Metrics"
+    },
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
@@ -10675,11 +10703,60 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "kubernetes-card": {
+      "clusters_one": "{{count}} cluster",
+      "clusters_other": "{{count}} clusters",
+      "empty": "No Kubernetes metrics found.",
+      "error-title": "Could not load Kubernetes data",
+      "healthy": "Healthy",
+      "issues_one": "{{count}} issue",
+      "issues_other": "{{count}} issues",
+      "no-restarts": "No recent container restarts",
+      "nodes-not-ready_one": "{{count}} node not ready",
+      "nodes-not-ready_other": "{{count}} nodes not ready",
+      "nodes-ready": "All nodes ready",
+      "open-app": "Open Kubernetes app",
+      "pods-healthy": "All pods healthy",
+      "pods-unhealthy_one": "{{count}} pod pending or failed",
+      "pods-unhealthy_other": "{{count}} pods pending or failed",
+      "pods-unit": "pods",
+      "restarts_one": "{{count}} container restart (1h)",
+      "restarts_other": "{{count}} container restarts (1h)",
+      "title": "Kubernetes Monitoring"
+    },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
+    },
+    "oncall-card": {
+      "empty": "No upcoming shifts found.",
+      "error-title": "Could not load on-call shifts",
+      "title": "On-call shifts",
+      "view-schedules": "View schedules"
+    },
+    "presets": {
+      "dashboards": {
+        "description": "Your recent, most-used and starred dashboards",
+        "title": "Dashboards"
+      },
+      "incident-response": {
+        "description": "Active incidents, on-call shifts, SLOs and alerts",
+        "title": "Incident response"
+      },
+      "included-widgets": "Includes {{widgets}}",
+      "infrastructure-monitoring": {
+        "description": "Kubernetes, hosted metrics, logs, alerts and dashboards",
+        "title": "Infrastructure monitoring"
+      },
+      "service-reliability": {
+        "description": "SLOs, alerts, telemetry and dashboards",
+        "title": "Service reliability"
+      },
+      "start-blank": "Start blank",
+      "subtitle": "Choose a starting point for your homepage. You can customize it later.",
+      "title": "Get started"
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
@@ -10690,14 +10767,82 @@
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
     },
+    "slos-card": {
+      "above-target": "{{value}} above target (1 day)",
+      "below-target-badge_one": "{{count}} below target",
+      "below-target-badge_other": "{{count}} below target",
+      "defined": "SLOs defined",
+      "empty": "No SLOs defined.",
+      "error-title": "Could not load SLOs",
+      "healthy": "Healthy",
+      "open": "Open SLOs",
+      "recording": "{{value}} SLOs recording",
+      "sli-series": "{{value}} recorded SLI series",
+      "title": "SLOs"
+    },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
     },
-    "summary-card": {
-      "retry": "Retry"
+    "widgets": {
+      "add": {
+        "action": "Add",
+        "empty": "All available widgets are already on your homepage.",
+        "group": {
+          "built-in": "Built-in",
+          "plugins": "Plugins"
+        },
+        "subtitle": "Pick widgets to add to your homepage",
+        "title": "Add a widget"
+      },
+      "alerts": {
+        "description": "Alerts currently firing across your instance",
+        "title": "Firing alerts"
+      },
+      "dashboards": {
+        "description": "Your recent, most-used and starred dashboards",
+        "title": "Dashboards"
+      },
+      "frame": {
+        "remove": "Remove widget"
+      },
+      "hosted-logs": {
+        "description": "Ingestion and sources from your Loki",
+        "title": "Hosted Logs"
+      },
+      "hosted-metrics": {
+        "description": "Active series and ingest from your Prometheus",
+        "title": "Hosted Metrics"
+      },
+      "incidents": {
+        "description": "Incidents currently active in your IRM app",
+        "title": "Active incidents"
+      },
+      "kubernetes": {
+        "description": "Overview of clusters monitored by the Kubernetes app",
+        "title": "Kubernetes Monitoring"
+      },
+      "oncall": {
+        "description": "Who is on call right now",
+        "title": "On-call shifts"
+      },
+      "panel": {
+        "description": "Pinned from a dashboard",
+        "loading": "Loading panel…",
+        "unavailable": "This panel is no longer available.",
+        "untitled": "Dashboard panel"
+      },
+      "slos": {
+        "description": "Availability and error budget",
+        "title": "SLOs"
+      },
+      "toolbar": {
+        "add": "Add widget",
+        "customize": "Customize",
+        "done": "Done"
+      }
     }
   },
   "import-overview": {
@@ -12337,6 +12482,9 @@
       }
     },
     "header-menu": {
+      "add-to-home": "Add to home page",
+      "add-to-home-error": "Failed to add panel to home page",
+      "add-to-home-success": "Panel added to your home page",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "duplicate": "Duplicate",

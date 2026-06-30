@@ -1,22 +1,28 @@
 import { css } from '@emotion/css';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { GRID_CELL_VMARGIN, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
-import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
-import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
+import { AddWidgetDrawer } from './widgets/AddWidgetDrawer';
+import { PersonaPicker } from './widgets/PersonaPicker';
+import { WidgetFrame } from './widgets/WidgetFrame';
+import { WidgetGrid } from './widgets/WidgetGrid';
+import { usePanelWidgetEntries } from './widgets/panel/usePanelWidgetEntries';
+import { type WidgetLayoutItem } from './widgets/types';
+import { useHomeWidgetCatalog } from './widgets/useHomeWidgetCatalog';
+import { useWidgetLayout } from './widgets/useWidgetLayout';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -29,6 +35,15 @@ const getEdition = () => {
 
   return t('home.home-page.edition.open-source', 'Grafana');
 };
+
+function normalizeGridItems(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
+  if (items.length === 0) {
+    return items;
+  }
+
+  const minY = Math.min(...items.map((item) => item.y));
+  return minY > 0 ? items.map((item) => ({ ...item, y: item.y - minY })) : items;
+}
 
 export default function HomePage() {
   const styles = useStyles2(getStyles);
@@ -46,22 +61,39 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isLoadingTabs;
-  // SetupGuide injects assorted sections for Cloud users. Computed once so showExtra matches
-  // what actually renders below.
+  const { entries, isLoading: catalogLoading } = useHomeWidgetCatalog({ assistantComponents, tabComponents });
+  const { layout, isLoading: layoutLoading, addWidget, removeWidget, setPositions, applyPreset } = useWidgetLayout();
+
+  const [editing, setEditing] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const items = layout?.items ?? [];
+  // Pinned dashboard panels are a dynamic catalog source derived from the layout itself.
+  const panelEntries = usePanelWidgetEntries(items);
+  const allEntries = [...entries, ...panelEntries];
+  const loading = catalogLoading || layoutLoading || isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  const dashboardEntry = allEntries.find((entry) => entry.id === 'dashboards');
+  const fixedDashboardItem = dashboardEntry ? items.find((item) => item.id === dashboardEntry.id) : undefined;
+  const gridItems = normalizeGridItems(
+    fixedDashboardItem ? items.filter((item) => item.id !== fixedDashboardItem.id) : items
+  );
+  // First run (no saved widgets) shows the persona chooser; "Start blank" enters edit mode with an empty grid.
+  const showPersona = !loading && items.length === 0 && !editing;
+  const onGridChange = (nextItems: WidgetLayoutItem[]) => {
+    setPositions(fixedDashboardItem ? [fixedDashboardItem, ...nextItems] : nextItems);
+  };
+
   const extraContent = renderLimitedComponents({
     props: {},
     components: extraComponents,
     pluginId: SETUPGUIDE_PLUGIN_ID,
     wrapper: ({ children }) => (
-      <div className={styles.extra}>
+      <div className={styles.gridAlignedSection}>
         <HomeSection>{children}</HomeSection>
       </div>
     ),
   });
-  const showExtra = extraContent !== null;
-  const showAlertsCard = canViewFiringAlerts();
-  const skeleton = <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />;
+  const skeleton = <HomePageSkeleton showAlertsCard={canViewFiringAlerts()} showExtra={extraContent !== null} />;
 
   return (
     <Page
@@ -74,30 +106,76 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        {isLoadingExtensions ? (
+        {loading ? (
           skeleton
         ) : (
           <Suspense fallback={skeleton}>
             <Stack direction="column" gap={2}>
-              <HomeSection direction="column" display="flex" gap={2}>
-                {/* Assistant injects an Assistant-based prompt input when available */}
-                {renderLimitedComponents({
-                  props: {},
-                  limit: 1,
-                  components: assistantComponents,
-                  pluginId: ASSISTANT_PLUGIN_ID,
-                })}
-                <DashboardTabs extensionComponents={tabComponents} />
-              </HomeSection>
+              {showPersona ? (
+                <PersonaPicker
+                  catalog={entries}
+                  onApply={(widgetIds) => applyPreset(widgetIds, entries)}
+                  onStartBlank={() => {
+                    setEditing(true);
+                    setDrawerOpen(true);
+                  }}
+                />
+              ) : (
+                <Stack direction="column" gap={2}>
+                  <Stack justifyContent="flex-end" gap={1}>
+                    {editing ? (
+                      <>
+                        <Button variant="secondary" icon="plus" onClick={() => setDrawerOpen(true)}>
+                          {t('home.widgets.toolbar.add', 'Add widget')}
+                        </Button>
+                        <Button variant="primary" onClick={() => setEditing(false)}>
+                          {t('home.widgets.toolbar.done', 'Done')}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="secondary" icon="pen" onClick={() => setEditing(true)}>
+                        {t('home.widgets.toolbar.customize', 'Customize')}
+                      </Button>
+                    )}
+                  </Stack>
 
-              <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                <FiringAlertsCard />
-                <IncidentsCard />
-              </Grid>
+                  {fixedDashboardItem && dashboardEntry && (
+                    <div className={styles.gridAlignedSection}>
+                      <WidgetFrame
+                        id={fixedDashboardItem.id}
+                        editing={editing}
+                        onRemove={removeWidget}
+                        showDragHandle={false}
+                      >
+                        {dashboardEntry.render()}
+                      </WidgetFrame>
+                    </div>
+                  )}
+
+                  {gridItems.length > 0 && (
+                    <WidgetGrid
+                      items={gridItems}
+                      catalog={allEntries}
+                      editing={editing}
+                      onChange={onGridChange}
+                      onRemove={removeWidget}
+                    />
+                  )}
+                </Stack>
+              )}
 
               {extraContent}
             </Stack>
           </Suspense>
+        )}
+
+        {drawerOpen && (
+          <AddWidgetDrawer
+            catalog={allEntries}
+            layoutIds={items.map((item) => item.id)}
+            onAdd={addWidget}
+            onClose={() => setDrawerOpen(false)}
+          />
         )}
       </Page.Contents>
     </Page>
@@ -105,8 +183,8 @@ export default function HomePage() {
 }
 
 const getStyles = () => ({
-  extra: css({
-    display: 'contents',
+  gridAlignedSection: css({
+    paddingInline: GRID_CELL_VMARGIN,
 
     '> div': {
       '&:empty': {
