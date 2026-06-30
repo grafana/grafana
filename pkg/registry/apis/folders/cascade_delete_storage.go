@@ -144,7 +144,7 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // cascadeDelete deletes the folder and its descendants depth-first (validation already ran in
 // Delete).
 //
-// requested param marks wheter we are deleting the requested folder or not. We suppress
+// requested param marks whether we are deleting the requested folder or not. We suppress
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
