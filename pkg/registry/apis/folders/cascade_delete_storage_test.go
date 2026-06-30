@@ -8,11 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/dynamic"
@@ -101,6 +103,23 @@ func (f *fakeFolderStorage) Update(ctx context.Context, name string, objInfo res
 
 func isDryRun(dryRun []string) bool {
 	return len(dryRun) > 0
+}
+
+// watchableFolderStorage adds the optional Watcher/CollectionDeleter interfaces to the fake.
+type watchableFolderStorage struct {
+	*fakeFolderStorage
+	watched           bool
+	deletedCollection bool
+}
+
+func (w *watchableFolderStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
+	w.watched = true
+	return watch.NewEmptyWatch(), nil
+}
+
+func (w *watchableFolderStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+	w.deletedCollection = true
+	return nil, nil
 }
 
 // fakeCascadeSearcher returns folder children and dashboards by folder UID, keyed off the request's
@@ -457,6 +476,30 @@ func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
 	require.NoError(t, err)
 	require.Equal(t, []string{"child", "root"}, store.deleted)
+}
+
+func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
+	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
+	s := &cascadeDeleteStorage{Storage: inner, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	_, err := s.Watch(ctxWithNamespace(), nil)
+	require.NoError(t, err)
+	require.True(t, inner.watched)
+
+	_, err = s.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
+	require.NoError(t, err)
+	require.True(t, inner.deletedCollection)
+}
+
+func TestCascadeDelete_OptionalInterfacesUnsupported(t *testing.T) {
+	// Wrapped store lacks Watcher/CollectionDeleter: forwarding reports MethodNotSupported.
+	s := &cascadeDeleteStorage{Storage: &fakeFolderStorage{}, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+
+	_, err := s.Watch(ctxWithNamespace(), nil)
+	require.True(t, apierrors.IsMethodNotSupported(err))
+
+	_, err = s.DeleteCollection(ctxWithNamespace(), nil, nil, nil)
+	require.True(t, apierrors.IsMethodNotSupported(err))
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {
