@@ -34,22 +34,18 @@ var childFolderPageSize int64 = 1000
 var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
-// folder's subtree. Every other REST method is promoted from the embedded storage. It is always
-// wired around the underlying storage (both single-tenant and multi-tenant) so the behaviour is
-// identical in both deployments.
+// folder's subtree; all other REST methods are promoted from the embedded storage.
 type cascadeDeleteStorage struct {
 	grafanarest.Storage
 	searcher resourcepb.ResourceIndexClient
-	// dashboardClient resolves the dashboard apiserver client used to delete dashboards contained in
-	// a folder. May return nil when no client is configured, in which case dashboard cleanup is
-	// skipped.
+	// dashboardClient resolves the dashboard apiserver client; nil when none is configured, in which
+	// case dashboard cleanup is skipped.
 	dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
 }
 
-// newCascadeDeleteStorage wraps store, re-exposing the optional REST interfaces the wrapper would
-// otherwise hide. The only wrapped stores are folderStorage (neither) and the MT generic store
-// (both watch and deletecollection), so a single both-or-neither check covers every deployment and
-// keeps the advertised verbs identical to the wrapped store.
+// newCascadeDeleteStorage wraps store, re-exposing the watch/deletecollection interfaces the wrapper
+// would otherwise hide. The wrapped store implements both (MT generic store) or neither
+// (folderStorage), so one check keeps the advertised verbs unchanged.
 func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)) grafanarest.Storage {
 	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient}
 	watcher, hasWatch := store.(rest.Watcher)
@@ -93,10 +89,9 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	// Validate and enforce preconditions on the requested folder up-front, before any destructive
-	// cascade: a rejected delete must not first destroy descendants, and markTerminating changes the
-	// root's resourceVersion so an RV precondition can't be deferred to the final delete. The cascade
-	// then runs without preconditions (they're folder-specific and already enforced here).
+	// Validate and check preconditions up-front, as the requesting user, before any destructive
+	// cascade. markTerminating bumps the root's resourceVersion, so an RV precondition can't be
+	// deferred to the final delete; the cascade then runs without preconditions.
 	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -149,10 +144,9 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 	return nil
 }
 
-// cascadeDelete performs the depth-first deletion of the folder identified by name and all of its
-// descendants. The requested folder is validated by Delete before this runs, so deletes here skip
-// validation. requested marks the originally requested folder, which preserves NotFound; recursive
-// children suppress it (a stale search-index entry or already-removed subtree node is not an error).
+// cascadeDelete deletes the folder and its descendants depth-first (validation already ran in
+// Delete). requested marks the originally requested folder, which preserves NotFound; recursive
+// children suppress it (already-deleted or a stale search-index entry is not an error).
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
 	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
@@ -177,9 +171,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 		return nil, false, err
 	}
 
-	// No remaining child folders: delete this folder (validation already ran in Delete). For children
-	// a NotFound means already-deleted (idempotent/resumable); the requested folder preserves the
-	// API's missing-resource error.
+	// Delete this folder last. NotFound is success for children (idempotent), but the requested
+	// folder keeps its missing-resource error.
 	obj, async, err := s.Storage.Delete(ctx, name, nil, options)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
@@ -187,10 +180,8 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	return obj, async, err
 }
 
-// deleteDashboardsInFolder removes every dashboard whose grafana.app/folder annotation points at
-// folderUID. Deletes go through the dashboard apiserver (so its admission and delete hooks run); a
-// NotFound for an individual dashboard is treated as already-done so the sweep is idempotent and
-// resumable.
+// deleteDashboardsInFolder deletes every dashboard in folderUID via the dashboard apiserver (so its
+// hooks run). A NotFound is treated as already-done, keeping the sweep idempotent and resumable.
 func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error {
 	svc, err := s.dashboardClient(ctx)
 	if err != nil {

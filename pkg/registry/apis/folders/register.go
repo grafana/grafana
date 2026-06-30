@@ -75,18 +75,15 @@ type FolderAPIBuilder struct {
 	restConfigProvider       apiserver.RestConfigProvider
 	resourcePermissionsSvcMu sync.Mutex
 
-	// Dashboard apiserver client used by cascade delete to remove dashboards in a deleted folder.
-	// Built lazily from cascadeConfigProvider; do not access directly, use `dashboardClient(ctx)`.
-	// cascadeConfigProvider is set independently of the authz flag so dashboard cleanup works
-	// whenever cascade delete is enabled.
+	// Dashboard client for cascade delete, built lazily from cascadeConfigProvider; access via
+	// dashboardClient(ctx). Set independently of the authz flag so cleanup works whenever cascade is on.
 	cascadeConfigProvider apiserver.RestConfigProvider
 	dashboardSvc          *dynamic.NamespaceableResourceInterface
 	dashboardSvcMu        sync.Mutex
 }
 
-// dashboardClient returns the dashboard dynamic client, building it lazily from restConfigProvider.
-// Returns nil when no client is configured (e.g. no restConfigProvider), in which case cascade
-// delete skips dashboard cleanup.
+// dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
+// set, in which case cascade delete skips dashboard cleanup.
 func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
 	if b.cascadeConfigProvider == nil {
 		return b.dashboardSvc, nil
