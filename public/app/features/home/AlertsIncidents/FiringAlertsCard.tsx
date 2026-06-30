@@ -123,6 +123,9 @@ function FiringAlertsCardInner() {
     return { displayed: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
   }, [alerts]);
 
+  const canCreate = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const hasAlerts = (alerts?.length ?? 0) > 0;
+
   return (
     <SummaryCard
       title={t('home.firing-alerts-card.title', 'Firing alerts')}
@@ -182,23 +185,37 @@ function FiringAlertsCardInner() {
           </>
         );
       }}
+      emptyAction={
+        canCreate ? (
+          <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
+            <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+          </LinkButton>
+        ) : undefined
+      }
       footer={
-        <LinkButton
-          variant="secondary"
-          size="sm"
-          fill="text"
-          href={
-            alerts?.length
-              ? `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`
-              : `/alerting/list?search=source:${GRAFANA_RULES_SOURCE_NAME}`
-          }
-        >
-          {alerts?.length ? (
-            <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
-          ) : (
-            <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
+        <>
+          {hasAlerts && canCreate && (
+            <LinkButton variant="secondary" size="sm" fill="text" icon="plus" href="/alerting/new/alerting">
+              <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+            </LinkButton>
           )}
-        </LinkButton>
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            fill="text"
+            href={
+              hasAlerts
+                ? `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`
+                : `/alerting/list?search=source:${GRAFANA_RULES_SOURCE_NAME}`
+            }
+          >
+            {hasAlerts ? (
+              <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
+            ) : (
+              <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
+            )}
+          </LinkButton>
+        </>
       }
     />
   );

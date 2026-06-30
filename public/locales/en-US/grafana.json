@@ -10640,6 +10640,7 @@
       "starred-active": "Starred dashboards"
     },
     "firing-alerts-card": {
+      "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",

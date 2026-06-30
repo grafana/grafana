@@ -95,17 +95,17 @@ describe('IncidentsCard', () => {
       '/a/grafana-incident-app/incidents/101'
     );
 
-    // Populated card links to all incidents, not the declare flow.
+    // Populated card footer shows both the declare action and the view-all link.
     expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
   });
 
-  it('shows the empty state when there are no active incidents', async () => {
+  it('shows the declare CTA in the empty state', async () => {
     mockIncidents([]);
 
     render(<IncidentsCard />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
@@ -114,7 +114,7 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCard />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
   });
 
@@ -189,13 +189,11 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCard />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
-
-    expect(screen.getByRole('link', { name: /declare an incident/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /declare an incident/i })).toHaveAttribute(
       'href',
       '/a/grafana-incident-app/incidents?declare=new'
     );
-    expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
   });
 
   it('hides the Declare CTA when the user cannot declare incidents', async () => {

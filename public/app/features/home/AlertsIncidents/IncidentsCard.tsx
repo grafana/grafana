@@ -84,24 +84,32 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
           <SummaryCardAge date={new Date(incident.createdTime)} />
         </>
       )}
+      emptyAction={
+        canDeclare ? (
+          <LinkButton variant="primary" icon="fire" href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}>
+            <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+          </LinkButton>
+        ) : undefined
+      }
       footer={
-        !incidentCount
-          ? canDeclare && (
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="fire"
-                href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-              >
-                <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-              </LinkButton>
-            )
-          : canAccess && (
-              <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
-                <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-              </LinkButton>
-            )
+        <>
+          {incidentCount > 0 && canDeclare && (
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              icon="fire"
+              href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+            >
+              <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+            </LinkButton>
+          )}
+          {canAccess && (
+            <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
+              <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
+            </LinkButton>
+          )}
+        </>
       }
     />
   );

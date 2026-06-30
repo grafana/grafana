@@ -225,4 +225,53 @@ describe('FiringAlertsCard', () => {
     // ...but the severity badge still counts every alert.
     expect(screen.getByText(new RegExp(`${HOME_CARD_MAX_ITEMS + 1} critical`, 'i'))).toBeInTheDocument();
   });
+
+  it('shows the create action next to view-all when permitted and alerts exist', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([criticalAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/alerting/new/alerting'
+    );
+    expect(screen.getByRole('link', { name: /view all firing alerts/i })).toBeInTheDocument();
+  });
+
+  it('shows the create CTA in the empty state when permitted', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/alerting/new/alerting'
+    );
+    expect(screen.queryByText('You have no firing alerts.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
+  });
+
+  it('hides the create action when the user lacks rule-create permission', async () => {
+    mockTeams([]);
+    mockAlerts([criticalAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /create an alert rule/i })).not.toBeInTheDocument();
+  });
 });
