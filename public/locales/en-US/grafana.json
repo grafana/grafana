@@ -3083,7 +3083,8 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
+      "namespace-multiple-datasources": "Multiple data sources",
+      "namespace-search-incomplete": "Due to a large number of groups, search might not be complete in external data sources.",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -5807,6 +5808,7 @@
     },
     "inspect": {
       "data-tab": "Data",
+      "errors-and-notices-tab": "Errors and notices",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -5885,6 +5887,7 @@
           "title": "Change layout"
         }
       },
+      "scroll-content": "Dashboard content",
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
@@ -6888,6 +6891,14 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
+    },
+    "errors-and-notices-inspector": {
+      "copy": "Copy to clipboard",
+      "learn-more": "Learn more",
+      "no-issues": "No errors or notices for this query.",
+      "severity-error": "Error",
+      "severity-info": "Info",
+      "severity-warning": "Warning"
     },
     "filters-list": {
       "add-filter": "Add filter",
@@ -10207,6 +10218,8 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
+      "errors-and-notices": "Errors and notices",
+      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10639,6 +10652,7 @@
       "starred-active": "Starred dashboards"
     },
     "firing-alerts-card": {
+      "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",

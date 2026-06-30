@@ -113,8 +113,7 @@ import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { type LayoutParent } from './types/LayoutParent';
-import { type DashboardSceneLike, type DashboardSceneState as DashboardSceneStateBase } from './types/dashboard';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -151,10 +150,7 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-// Temp re-export, will follup with a specific circular dependency fix in separate PR
-export type DashboardSceneState = DashboardSceneStateBase;
-
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent, DashboardSceneLike {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements DashboardSceneLike {
   static Component = DashboardSceneRenderer;
   public isDashboardScene = true;
 

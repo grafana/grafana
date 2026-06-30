@@ -2280,6 +2280,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "iam.onlyStoreDatasourceActionSets",
+			Description:  "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
 			Name:         "excludeRedundantManagedPermissions",
 			Description:  "Exclude redundant individual dashboard/folder permissions from managed roles at query time",
 			Stage:        FeatureStageExperimental,
@@ -3130,6 +3139,15 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "auth.tokenRotationGracePeriod",
+			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
