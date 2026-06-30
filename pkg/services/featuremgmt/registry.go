@@ -2230,14 +2230,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "heatmapRowsAxisOptions",
-			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
@@ -2273,6 +2265,15 @@ var (
 		{
 			Name:         "onlyStoreServiceAccountActionSets",
 			Description:  "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
+			Name:         "iam.onlyStoreDatasourceActionSets",
+			Description:  "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
 			Stage:        FeatureStageExperimental,
 			Generate:     Generate{LegacyGo: true},
 			HideFromDocs: true,
@@ -3130,6 +3131,15 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "auth.tokenRotationGracePeriod",
+			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

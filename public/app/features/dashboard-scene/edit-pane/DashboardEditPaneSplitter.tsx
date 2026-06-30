@@ -4,6 +4,7 @@ import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import {
@@ -201,12 +202,17 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          // The dashboard scrolls inside this element rather than the document body, so make it
+          // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
           {body}
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          <DashboardEditPaneRenderer dashboard={dashboard} />
         </Sidebar>
       </div>
     );
@@ -330,6 +336,8 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
+      // the tabIndex is only here to allow keyboard scrolling, so suppress the focus outline.
+      outline: 'none',
       // Clip-bleed: top padding + matching negative margin cancel out visually but extend the
       // clip box under the controls bar, so top-row selection outlines aren't sheared off. The
       // bar paints over the overlap — see DashboardControlsChrome.
