@@ -714,6 +714,10 @@ const (
 	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
 	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
+	// FlagIamOnlyStoreDatasourceActionSets
+	// When storing datasource resource permissions, only store action sets and not the full list of underlying permissions
+	FlagIamOnlyStoreDatasourceActionSets = "iam.onlyStoreDatasourceActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
@@ -957,4 +961,8 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagAuthTokenRotationGracePeriod
+	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
+	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
 )

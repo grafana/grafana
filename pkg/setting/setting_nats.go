@@ -30,6 +30,29 @@ type NATSSettings struct {
 	ClientPort       int
 	ClusterPort      int
 	AdvertiseAddress string
+
+	TLS  NATSTLSSettings
+	Auth NATSAuthSettings
+}
+
+type NATSTLSSettings struct {
+	Enabled    bool
+	CACertPath string
+	CertPath   string
+	KeyPath    string
+	ServerName string
+	// InsecureSkipVerify is for testing only; never enable in production.
+	InsecureSkipVerify bool
+}
+
+// NATSAuthSettings configures the connection identity. A per-role credentials
+// file lets each role present a least-privilege identity; an empty value falls
+// back to the shared CredentialsFile.
+type NATSAuthSettings struct {
+	Token                     string
+	CredentialsFile           string
+	PublisherCredentialsFile  string
+	SubscriberCredentialsFile string
 }
 
 func readNATSSettings(cfg *Cfg) error {
@@ -50,6 +73,20 @@ func readNATSSettings(cfg *Cfg) error {
 		ClientPort:       section.Key("client_port").MustInt(4222),
 		ClusterPort:      section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress: section.Key("advertise_address").MustString(""),
+		TLS: NATSTLSSettings{
+			Enabled:            section.Key("tls_enabled").MustBool(false),
+			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),
+			CertPath:           section.Key("tls_cert_path").MustString(""),
+			KeyPath:            section.Key("tls_key_path").MustString(""),
+			ServerName:         section.Key("tls_server_name").MustString(""),
+			InsecureSkipVerify: section.Key("tls_insecure_skip_verify").MustBool(false),
+		},
+		Auth: NATSAuthSettings{
+			Token:                     section.Key("token").MustString(""),
+			CredentialsFile:           section.Key("credentials_file").MustString(""),
+			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
+			SubscriberCredentialsFile: section.Key("subscriber_credentials_file").MustString(""),
+		},
 	}
 	return nil
 }
@@ -57,4 +94,18 @@ func readNATSSettings(cfg *Cfg) error {
 // Embedded reports whether an in-process Core NATS server should run.
 func (s NATSSettings) Embedded() bool {
 	return s.Mode == NATSModeEmbedded
+}
+
+func (a NATSAuthSettings) PublisherCredentials() string {
+	if a.PublisherCredentialsFile != "" {
+		return a.PublisherCredentialsFile
+	}
+	return a.CredentialsFile
+}
+
+func (a NATSAuthSettings) SubscriberCredentials() string {
+	if a.SubscriberCredentialsFile != "" {
+		return a.SubscriberCredentialsFile
+	}
+	return a.CredentialsFile
 }
