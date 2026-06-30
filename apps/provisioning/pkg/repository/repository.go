@@ -186,7 +186,11 @@ type WebhookRepository interface {
 	Slug() string
 	GetCurrentBranch() string
 
-	ProcessRequest(ctx context.Context, req *http.Request) (WebhookEvent, error)
+	// VerifyRequest authenticates the inbound request and returns its verified form.
+	VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error)
+
+	// ProcessRequest normalizes an already-verified request into an event.
+	ProcessRequest(ctx context.Context, req *VerifiedWebhookRequest) (WebhookEvent, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

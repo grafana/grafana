@@ -120,10 +120,9 @@ func TestParseWebhooks(t *testing.T) {
 			payload, err := os.ReadFile(path.Join("testdata", name))
 			require.NoError(t, err)
 
-			event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
+			event, err := verifyAndProcess(t, gh, signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
 			require.NoError(t, err)
 
-			event.ReplayKey = "" // signature keying is covered by TestGitHubRepository_ProcessRequest_ReplayKey
 			require.Equal(t, tt.expected, event)
 		})
 	}
@@ -168,26 +167,26 @@ func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 		gh := newRepo("webhook-secret")
 		req := signedWebhookRequest(t, "push", "webhook-secret", "delivery-1", pushPayload)
 
-		event, err := gh.ProcessRequest(t.Context(), req)
+		verified, err := gh.VerifyRequest(req)
 		require.NoError(t, err)
-		require.NotEmpty(t, event.ReplayKey)
-		require.Equal(t, req.Header.Get("X-Hub-Signature-256"), event.ReplayKey)
+		require.NotEmpty(t, verified.ReplayKey)
+		require.Equal(t, req.Header.Get("X-Hub-Signature-256"), verified.ReplayKey)
 	})
 
 	t.Run("distinct payloads yield distinct replay keys", func(t *testing.T) {
 		gh := newRepo("webhook-secret")
 
-		a, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "delivery-A", pushPayload))
+		a, err := gh.VerifyRequest(signedWebhookRequest(t, "push", "webhook-secret", "delivery-A", pushPayload))
 		require.NoError(t, err)
-		b, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "delivery-B", otherPayload))
+		b, err := gh.VerifyRequest(signedWebhookRequest(t, "push", "webhook-secret", "delivery-B", otherPayload))
 		require.NoError(t, err)
 		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
 
 	t.Run("identical body under distinct secrets yields distinct replay keys", func(t *testing.T) {
-		a, err := newRepo("secret-a").ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
+		a, err := newRepo("secret-a").VerifyRequest(signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
 		require.NoError(t, err)
-		b, err := newRepo("secret-b").ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
+		b, err := newRepo("secret-b").VerifyRequest(signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
 		require.NoError(t, err)
 		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
@@ -627,7 +626,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				secret: common.RawSecureValue("webhook-secret"),
 			}
 
-			event, err := r.ProcessRequest(t.Context(), tt.setupRequest())
+			event, err := verifyAndProcess(t, r, tt.setupRequest())
 
 			// Check the error
 			if tt.expectedError != nil {
@@ -642,7 +641,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				event.ReplayKey = "" // signature keying is covered by TestGitHubRepository_ProcessRequest_ReplayKey
 				require.Equal(t, tt.expected, event)
 			}
 		})
@@ -1702,4 +1700,13 @@ func signedWebhookRequest(t *testing.T, eventType, secret, deliveryID, payload s
 	mac.Write([]byte(payload))
 	req.Header.Set("X-Hub-Signature-256", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 	return req
+}
+
+func verifyAndProcess(t *testing.T, gh *githubWebhookRepository, req *http.Request) (repo.WebhookEvent, error) {
+	t.Helper()
+	verified, err := gh.VerifyRequest(req)
+	if err != nil {
+		return repo.WebhookEvent{}, err
+	}
+	return gh.ProcessRequest(t.Context(), verified)
 }

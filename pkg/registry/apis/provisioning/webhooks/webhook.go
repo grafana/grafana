@@ -231,7 +231,8 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 
 	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.GetCurrentBranch()))
 
-	event, err := repo.ProcessRequest(ctx, req)
+	// Authenticate the request before parsing anything.
+	verified, err := repo.VerifyRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -239,9 +240,14 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 	// Silently drop a delivery whose replay key we have already processed within
 	// the cache TTL — returning a generic 200 avoids confirming to a replay
 	// attacker that the captured payload was a real previously-processed delivery.
-	if s.replayCache.seenOrAdd(event.ReplayKey) {
+	if s.replayCache.seenOrAdd(verified.ReplayKey) {
 		logging.FromContext(ctx).Debug("dropping replayed webhook delivery")
 		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
+	}
+
+	event, err := repo.ProcessRequest(ctx, verified)
+	if err != nil {
+		return nil, err
 	}
 
 	switch event.Type {

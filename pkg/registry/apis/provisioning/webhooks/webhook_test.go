@@ -19,11 +19,13 @@ import (
 )
 
 type stubWebhookRepo struct {
-	cfg    *provisioning.Repository
-	slug   string
-	branch string
-	event  repository.WebhookEvent
-	err    error
+	cfg       *provisioning.Repository
+	slug      string
+	branch    string
+	replayKey string
+	event     repository.WebhookEvent
+	verifyErr error
+	err       error
 }
 
 func (s stubWebhookRepo) Config() *provisioning.Repository { return s.cfg }
@@ -32,7 +34,13 @@ func (s stubWebhookRepo) Test(context.Context) (*provisioning.TestResults, error
 }
 func (s stubWebhookRepo) Slug() string             { return s.slug }
 func (s stubWebhookRepo) GetCurrentBranch() string { return s.branch }
-func (s stubWebhookRepo) ProcessRequest(context.Context, *http.Request) (repository.WebhookEvent, error) {
+func (s stubWebhookRepo) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
+	if s.verifyErr != nil {
+		return nil, s.verifyErr
+	}
+	return &repository.VerifiedWebhookRequest{ReplayKey: s.replayKey}, nil
+}
+func (s stubWebhookRepo) ProcessRequest(context.Context, *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
 	return s.event, s.err
 }
 
@@ -42,6 +50,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 		noStatus      bool
 		syncDisabled  bool
 		event         repository.WebhookEvent
+		verifyErr     error
 		processErr    error
 		expected      *provisioning.WebhookResponse
 		expectedError error
@@ -53,7 +62,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 		},
 		{
 			name:          "verification failure",
-			processErr:    apierrors.NewUnauthorized("invalid signature"),
+			verifyErr:     apierrors.NewUnauthorized("invalid signature"),
 			expectedError: apierrors.NewUnauthorized("invalid signature"),
 		},
 		{
@@ -156,7 +165,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			if !tt.noStatus {
 				cfg.Status.Webhook = &provisioning.WebhookStatus{}
 			}
-			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: tt.event, err: tt.processErr}
+			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: tt.event, verifyErr: tt.verifyErr, err: tt.processErr}
 
 			s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
 			rsp, err := s.webhook(t.Context(), &http.Request{}, hooks)
@@ -188,8 +197,8 @@ func TestWebhookConnector_webhook_replay(t *testing.T) {
 		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
 		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
 	}
-	event := repository.WebhookEvent{Type: repository.WebhookEventPush, ReplayKey: "sig", RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
-	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: event}
+	event := repository.WebhookEvent{Type: repository.WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
+	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", replayKey: "sig", event: event}
 
 	s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
 
@@ -204,7 +213,7 @@ func TestWebhookConnector_webhook_replay(t *testing.T) {
 	require.Nil(t, dup.Job)
 
 	// An empty replay key is never treated as a duplicate.
-	hooks.event.ReplayKey = ""
+	hooks.replayKey = ""
 	for i := 0; i < 2; i++ {
 		rsp, err := s.webhook(t.Context(), &http.Request{}, hooks)
 		require.NoError(t, err)

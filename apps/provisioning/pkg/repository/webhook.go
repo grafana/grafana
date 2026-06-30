@@ -1,5 +1,16 @@
 package repository
 
+import "net/http"
+
+// VerifiedWebhookRequest is an inbound webhook request whose signature has been
+// authenticated.
+type VerifiedWebhookRequest struct {
+	Payload []byte
+	Header  http.Header
+	// ReplayKey deduplicates retried deliveries; an empty key disables the check.
+	ReplayKey string
+}
+
 // WebhookEventType classifies a normalized inbound webhook delivery.
 type WebhookEventType int
 
@@ -32,8 +43,4 @@ type WebhookEvent struct {
 	SourceRef    string
 	Hash         string
 	Message      string
-	// ReplayKey deduplicates retried deliveries. The provider sets it to its
-	// validated request signature; an empty key disables the replay check for
-	// that event.
-	ReplayKey string
 }

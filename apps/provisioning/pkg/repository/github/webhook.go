@@ -63,14 +63,14 @@ func (r *githubWebhookRepository) Slug() string {
 	return fmt.Sprintf("%s/%s", r.owner, r.repo)
 }
 
-func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.Request) (repository.WebhookEvent, error) {
+func (r *githubWebhookRepository) VerifyRequest(req *http.Request) (*repository.VerifiedWebhookRequest, error) {
 	if r.secret.IsZero() {
-		return repository.WebhookEvent{}, fmt.Errorf("missing webhook secret")
+		return nil, fmt.Errorf("missing webhook secret")
 	}
 
 	payload, err := github.ValidatePayload(req, []byte(r.secret))
 	if err != nil {
-		return repository.WebhookEvent{}, apierrors.NewUnauthorized("invalid signature")
+		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
 	// Replay key: the validated signature, not the X-GitHub-Delivery header.
@@ -84,7 +84,16 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		signature = req.Header.Get(github.SHA1SignatureHeader)
 	}
 
-	event, err := github.ParseWebHook(github.WebHookType(req), payload)
+	return &repository.VerifiedWebhookRequest{
+		Payload:   payload,
+		Header:    req.Header,
+		ReplayKey: signature,
+	}, nil
+}
+
+func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	eventType := req.Header.Get(github.EventTypeHeader)
+	event, err := github.ParseWebHook(eventType, req.Payload)
 	if err != nil {
 		return repository.WebhookEvent{}, apierrors.NewBadRequest("invalid payload")
 	}
@@ -102,7 +111,6 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		}
 		return repository.WebhookEvent{
 			Type:         repository.WebhookEventPush,
-			ReplayKey:    signature,
 			RepoSlug:     event.GetRepo().GetFullName(),
 			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
 			DeletedPaths: deletedPaths,
@@ -118,7 +126,6 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		}
 		return repository.WebhookEvent{
 			Type:      repository.WebhookEventPullRequest,
-			ReplayKey: signature,
 			RepoSlug:  event.GetRepo().GetFullName(),
 			Branch:    pr.GetBase().GetRef(),
 			Action:    normalizeGitHubAction(event.GetAction()),
@@ -128,12 +135,11 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 			Hash:      pr.GetHead().GetSHA(),
 		}, nil
 	case *github.PingEvent:
-		return repository.WebhookEvent{Type: repository.WebhookEventPing, ReplayKey: signature}, nil
+		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil
 	default:
 		return repository.WebhookEvent{
-			Type:      repository.WebhookEventUnsupported,
-			ReplayKey: signature,
-			Message:   fmt.Sprintf("unsupported messageType: %s", github.WebHookType(req)),
+			Type:    repository.WebhookEventUnsupported,
+			Message: fmt.Sprintf("unsupported messageType: %s", eventType),
 		}, nil
 	}
 }
