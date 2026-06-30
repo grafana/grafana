@@ -65,6 +65,12 @@ func (f *fakeFolderStorage) Delete(ctx context.Context, name string, deleteValid
 			return nil, false, err
 		}
 	}
+	// Mirror generic storage enforcing preconditions against the target object.
+	if pre := options.Preconditions; pre != nil {
+		if (pre.UID != nil && *pre.UID != fol.UID) || (pre.ResourceVersion != nil && *pre.ResourceVersion != fol.ResourceVersion) {
+			return nil, false, apierrors.NewConflict(foldersv1.FolderResourceInfo.GroupResource(), name, errors.New("precondition failed"))
+		}
+	}
 	if isDryRun(options.DryRun) {
 		return fol, false, nil
 	}
@@ -435,10 +441,14 @@ func TestCascadeDelete_StalePreconditionAbortsBeforeCascade(t *testing.T) {
 func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, true)
 
+	// Root precondition matches; the child (different uid) must not inherit it and still be deleted.
 	root := newFolder("root")
 	root.UID = "uid-1"
-	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root}}
-	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient}
+	child := newFolder("child")
+	child.UID = "uid-2"
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": child}}
+	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient}
 
 	uid := apitypes.UID("uid-1")
 	opts := forceDelete()
@@ -446,7 +456,7 @@ func TestCascadeDelete_MatchingPreconditionProceeds(t *testing.T) {
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
 	require.NoError(t, err)
-	require.Equal(t, []string{"root"}, store.deleted)
+	require.Equal(t, []string{"child", "root"}, store.deleted)
 }
 
 func TestCascadeDelete_DisabledDelegates(t *testing.T) {

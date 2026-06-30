@@ -77,7 +77,19 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 		return nil, false, err
 	}
 
-	return s.cascadeDelete(ctx, ns.Value, name, withoutPreconditions(options), true)
+	return s.cascadeDelete(ctx, ns.Value, name, cascadeDeleteOptions(options), true)
+}
+
+// cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
+// cascade-relevant fields (dry-run and grace period). Folder-specific fields like preconditions are
+// dropped so they aren't applied to children, whose uid/resourceVersion differ from the root.
+func cascadeDeleteOptions(options *metav1.DeleteOptions) *metav1.DeleteOptions {
+	out := &metav1.DeleteOptions{}
+	if options != nil {
+		out.DryRun = options.DryRun
+		out.GracePeriodSeconds = options.GracePeriodSeconds
+	}
+	return out
 }
 
 // checkDeletePreconditions enforces DeleteOptions.Preconditions (uid/resourceVersion) against obj.
@@ -98,17 +110,6 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 		return apierrors.NewConflict(gr, meta.GetName(), fmt.Errorf("precondition resourceVersion %q does not match %q", *pre.ResourceVersion, meta.GetResourceVersion()))
 	}
 	return nil
-}
-
-// withoutPreconditions returns options with Preconditions cleared, so the cascade's updates/deletes
-// don't fail on the root's (now-stale after markTerminating) RV or on children's differing uid/RV.
-func withoutPreconditions(options *metav1.DeleteOptions) *metav1.DeleteOptions {
-	if options == nil || options.Preconditions == nil {
-		return options
-	}
-	cp := *options
-	cp.Preconditions = nil
-	return &cp
 }
 
 // cascadeDelete performs the depth-first deletion of the folder identified by name and all of its
@@ -164,13 +165,8 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 	}
 	client := (*svc).Namespace(namespace)
 
-	// Carry dry-run and the force opt-in to dashboard deletes; folder-specific preconditions don't
-	// apply to dashboards so they are not propagated.
-	dashOpts := metav1.DeleteOptions{}
-	if options != nil {
-		dashOpts.DryRun = options.DryRun
-		dashOpts.GracePeriodSeconds = options.GracePeriodSeconds
-	}
+	// options are already the sanitized cascade options (dry-run + grace period only).
+	dashOpts := cascadeDeleteOptions(options)
 
 	// Enumerate fully before deleting: offset paging is only valid against a stable collection, and
 	// deleting mid-pagination would shift later pages and skip dashboards.
@@ -180,7 +176,7 @@ func (s *cascadeDeleteStorage) deleteDashboardsInFolder(ctx context.Context, nam
 	}
 
 	for _, name := range names {
-		if err := client.Delete(ctx, name, dashOpts); err != nil && !apierrors.IsNotFound(err) {
+		if err := client.Delete(ctx, name, *dashOpts); err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("delete dashboard %q: %w", name, err)
 		}
 	}
