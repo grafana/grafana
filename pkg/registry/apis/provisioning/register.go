@@ -1128,7 +1128,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// the single repository fresh from the API; the quota count reads the
 			// NATS informer's last re-list snapshot, which tolerates staleness.
 			// Without NATS the informer's cache-backed getter is authoritative.
-			var reconcileRepoGetter controller.RepositoryGetter = controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			reconcileRepoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
 			var repoNatsInformer *informer.Informer
 			if natsWatch {
 				repoNatsInformer = informer.NewRepositoryInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
@@ -1185,7 +1185,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			var connGetter controller.ConnectionGetter = controller.NewCachedConnectionGetter(connInformer.Lister())
+			connGetter := controller.NewCachedConnectionGetter(connInformer.Lister())
 			if natsWatch {
 				connGetter = controller.NewClientConnectionGetter(b.GetClient())
 			}
