@@ -1125,5 +1125,39 @@
     "grants": [
       "Admin"
     ]
+  },
+  {
+    "name": "fixed:alerting.rules.config:reader",
+    "displayName": "Alerting Rules Config Reader",
+    "description": "Read the alerting rules configuration, including external ruler sync state.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.rules.config:writer",
+    "displayName": "Alerting Rules Config Writer",
+    "description": "Update the alerting rules configuration, including the external ruler sync target.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "rules.alerting.grafana.app/configs:get",
+        "scope": "rules-configs:*"
+      },
+      {
+        "action": "rules.alerting.grafana.app/configs:update",
+        "scope": "rules-configs:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
   }
 ]
