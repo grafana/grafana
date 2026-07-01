@@ -1,4 +1,4 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { type SceneObject, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -11,7 +11,7 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { canGroupSelection, groupSelectedInto } from './groupSelectedItems';
+import { buildGroupEdit, canGroupSelection } from './groupLayout';
 
 let lastUndo: (() => void) | undefined;
 
@@ -36,6 +36,14 @@ jest.mock('../../edit-pane/shared', () => ({
 beforeEach(() => {
   lastUndo = undefined;
 });
+
+// In production the layout managers forward buildGroupEdit to the undo/redo stack; here we
+// exercise the pure builder and apply the edit directly, capturing undo for the round-trip checks.
+function groupSelectedInto(items: SceneObject[], target: 'row' | 'tab') {
+  const edit = buildGroupEdit(items, target);
+  edit?.perform();
+  lastUndo = edit?.undo;
+}
 
 function buildPanel(key: string): VizPanel {
   return new VizPanel({ key, title: key, pluginId: 'timeseries' });
