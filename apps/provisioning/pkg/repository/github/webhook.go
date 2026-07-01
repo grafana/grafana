@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -23,9 +22,6 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config     *provisioning.Repository
-	owner      string
-	repo       string
 	webhookURL string
 	secret     common.RawSecureValue
 }
@@ -37,9 +33,6 @@ func NewGithubWebhookRepository(
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
-		config:           basic.Config(),
-		owner:            basic.Owner(),
-		repo:             basic.Repo(),
 		webhookURL:       webhookURL,
 		secret:           secret,
 	}
@@ -127,7 +120,7 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 }
 
 func (r *githubWebhookRepository) Slug() string {
-	return fmt.Sprintf("%s/%s", r.owner, r.repo)
+	return fmt.Sprintf("%s/%s", r.Owner(), r.Repo())
 }
 
 func (r *githubWebhookRepository) WebhookClient() repository.WebhookClient {

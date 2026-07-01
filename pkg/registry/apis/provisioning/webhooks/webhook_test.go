@@ -42,8 +42,8 @@ func (s stubWebhookRepo) ProcessRequest(context.Context, *repository.VerifiedWeb
 	return s.event, s.err
 }
 func (s stubWebhookRepo) WebhookClient() repository.WebhookClient { return nil }
-func (s stubWebhookRepo) WebhookURL() string                     { return "" }
-func (s stubWebhookRepo) SubscribedEvents() []string             { return nil }
+func (s stubWebhookRepo) WebhookURL() string                      { return "" }
+func (s stubWebhookRepo) SubscribedEvents() []string              { return nil }
 
 func TestWebhookConnector_webhook(t *testing.T) {
 	tests := []struct {

@@ -15,9 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repo "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -87,27 +85,6 @@ func TestParseWebhooks(t *testing.T) {
 	}
 
 	gh := &githubWebhookRepository{
-		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "unit-test-repo",
-			},
-			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Enabled: true, // required to accept sync job
-				},
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL:    "https://github.com/grafana/git-ui-sync-demo",
-					Branch: "main",
-
-					GenerateDashboardPreviews: true,
-				},
-			},
-			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{},
-			},
-		},
-		owner:  "grafana",
-		repo:   "git-ui-sync-demo",
 		secret: common.RawSecureValue("webhook-secret"),
 	}
 
@@ -145,18 +122,6 @@ func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 
 	newRepo := func(secret string) *githubWebhookRepository {
 		return &githubWebhookRepository{
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					Sync:   provisioning.SyncOptions{Enabled: true},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			owner:  "grafana",
-			repo:   "grafana",
 			secret: common.RawSecureValue(secret),
 		}
 	}
@@ -193,23 +158,12 @@ func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 func TestGitHubRepository_Webhook(t *testing.T) {
 	tests := []struct {
 		name          string
-		config        *provisioning.Repository
 		setupRequest  func() *http.Request
 		expected      repo.WebhookEvent
 		expectedError error
 	}{
 		{
 			name: "invalid signature",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader("invalid payload"))
 				req.Header.Set("X-Hub-Signature-256", "invalid")
@@ -220,16 +174,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "ping event",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -248,22 +192,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "push event for main branch",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-					Sync: provisioning.SyncOptions{
-						Enabled: true,
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -291,16 +219,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "push event with missing repository",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main"
@@ -321,19 +239,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "pull request event - opened",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -377,19 +282,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "pull request event - synchronize",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "synchronize",
@@ -433,16 +325,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "pull request event missing repository",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -474,16 +356,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "pull request event missing pull request info",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"action": "opened",
@@ -507,19 +379,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "ping event with new secrets store",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -538,23 +397,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "push event for main branch with new secrets store",
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-					Sync: provisioning.SyncOptions{
-						Enabled: true,
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{
 					"ref": "refs/heads/main",
@@ -582,16 +424,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		},
 		{
 			name: "unsupported event type",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
 			setupRequest: func() *http.Request {
 				payload := `{}`
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
@@ -618,9 +450,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			r := &githubWebhookRepository{
-				config: tt.config,
-				owner:  "grafana",
-				repo:   "grafana",
 				secret: common.RawSecureValue("webhook-secret"),
 			}
 
@@ -687,15 +516,6 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 			// Create repository with mock
 			repo := &githubWebhookRepository{
 				GithubRepository: mockRepo,
-				config: &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							Branch: "main",
-						},
-					},
-				},
-				owner: "grafana",
-				repo:  "grafana",
 			}
 
 			// Call the CommentPullRequest method
