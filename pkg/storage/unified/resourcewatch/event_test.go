@@ -1,14 +1,16 @@
 package resourcewatch
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestEventJSONRoundTrip(t *testing.T) {
+func TestEventProtoRoundTrip(t *testing.T) {
 	ev := Event{
 		Type:            Modified,
 		Group:           "provisioning.grafana.app",
@@ -19,26 +21,38 @@ func TestEventJSONRoundTrip(t *testing.T) {
 		Folder:          "abc",
 	}
 
-	b, err := json.Marshal(ev)
+	b, err := ev.Marshal()
 	require.NoError(t, err)
-	// The custom EventType serializes as its bare verb string.
-	assert.JSONEq(t, `{
-		"type": "MODIFIED",
-		"group": "provisioning.grafana.app",
-		"resource": "repositories",
-		"namespace": "default",
-		"name": "repo-1",
-		"resourceVersion": 42,
-		"folder": "abc"
-	}`, string(b))
 
-	var got Event
-	require.NoError(t, json.Unmarshal(b, &got))
+	// The bytes are a valid resourcepb.WatchNotification, with the verb mapped
+	// onto the proto enum.
+	var n resourcepb.WatchNotification
+	require.NoError(t, proto.Unmarshal(b, &n))
+	assert.Equal(t, resourcepb.WatchNotification_MODIFIED, n.GetType())
+	assert.Equal(t, "provisioning.grafana.app", n.GetGroup())
+	assert.Equal(t, int64(42), n.GetResourceVersion())
+
+	got, err := UnmarshalEvent(b)
+	require.NoError(t, err)
 	assert.Equal(t, ev, got)
 }
 
-func TestEventFolderOmitted(t *testing.T) {
-	b, err := json.Marshal(Event{Type: Added})
+// An unrecognized or unset verb round-trips through UNKNOWN rather than
+// masquerading as a real change.
+func TestEventUnknownType(t *testing.T) {
+	b, err := Event{Type: "NONSENSE"}.Marshal()
 	require.NoError(t, err)
-	assert.NotContains(t, string(b), "folder")
+
+	var n resourcepb.WatchNotification
+	require.NoError(t, proto.Unmarshal(b, &n))
+	assert.Equal(t, resourcepb.WatchNotification_UNKNOWN, n.GetType())
+
+	got, err := UnmarshalEvent(b)
+	require.NoError(t, err)
+	assert.Equal(t, EventType(""), got.Type)
+}
+
+func TestUnmarshalEventInvalid(t *testing.T) {
+	_, err := UnmarshalEvent([]byte("not a proto"))
+	require.Error(t, err)
 }
