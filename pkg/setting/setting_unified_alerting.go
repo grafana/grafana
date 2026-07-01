@@ -170,6 +170,14 @@ type UnifiedAlertingSettings struct {
 	// Configured via the [unified_alerting] ini key "external_alertmanager_uid" or the
 	// GF_UNIFIED_ALERTING_EXTERNAL_ALERTMANAGER_UID environment variable.
 	ExternalAlertmanagerUID string
+
+	// ExternalRulerUID is the operator-level override for the Mimir/Cortex Prometheus
+	// (ruler) datasource UID to sync alert rules from into Grafana. When non-empty, it
+	// applies to all orgs and overrides any per-org value stored on the AlertingConfig
+	// resource.
+	// Configured via the [unified_alerting] ini key "external_ruler_uid" or the
+	// GF_UNIFIED_ALERTING_EXTERNAL_RULER_UID environment variable.
+	ExternalRulerUID string
 }
 
 type RecordingRuleSettings struct {
@@ -629,6 +637,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
 	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
+	uaCfg.ExternalRulerUID = ua.Key("external_ruler_uid").MustString("")
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
