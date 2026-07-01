@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"slices"
 	"sort"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -3567,18 +3568,180 @@ func TestNewDBRuleMutator(t *testing.T) {
 	})
 }
 
-// countingAlertInstanceManager wraps AlertInstanceManager and counts GetStatesForRuleUID calls.
+// TestRouteGetRuleStatuses_DBMode_BatchesStateLoad verifies that listing rules with the
+// DB rule mutator (HA single-node eval mode) loads all of the org's alert states in a
+// single GetAll call instead of one GetStatesForRuleUID per rule (the N+1 in #124004),
+// while still producing correct per-rule state.
+func TestRouteGetRuleStatuses_DBMode_BatchesStateLoad(t *testing.T) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+
+	newReqContext := func() *contextmodel.ReqContext {
+		req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+		require.NoError(t, err)
+		return &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+	}
+
+	setup := func(t *testing.T) (PrometheusSrv, *int, *int, ngmodels.RulesGroup) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+		gen := ngmodels.RuleGen
+		groupKey := ngmodels.GenerateGroupKey(orgID)
+		rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(20)
+		ruleStore.PutRule(context.Background(), rules...)
+		for _, r := range rules {
+			fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, withAlertingState())
+		}
+
+		callCount, getAllCount := 0, 0
+		counting := &countingAlertInstanceManager{inner: fakeAIM, callCount: &callCount, getAllCount: &getAllCount}
+
+		api := NewPrometheusSrv(
+			log.NewNopLogger(),
+			counting,
+			NewDBRuleMutator(counting),
+			ruleStore,
+			&fakeRuleAccessControlService{},
+			fakes.NewFakeProvisioningStore(),
+		)
+		return *api, &callCount, &getAllCount, rules
+	}
+
+	t.Run("loads state once for the whole org, not per rule", func(t *testing.T) {
+		api, callCount, getAllCount, rules := setup(t)
+
+		resp := api.RouteGetRuleStatuses(newReqContext())
+		require.Equal(t, http.StatusOK, resp.Status())
+
+		assert.Equal(t, 1, *getAllCount, "GetAll should be called exactly once per request")
+		assert.Equal(t, 0, *callCount, "GetStatesForRuleUID should not be called (batched via GetAll)")
+
+		result := &apimodels.RuleResponse{}
+		require.NoError(t, json.Unmarshal(resp.Body(), result))
+		require.Len(t, result.Data.RuleGroups, 1)
+		require.Len(t, result.Data.RuleGroups[0].Rules, len(rules))
+		for _, r := range result.Data.RuleGroups[0].Rules {
+			assert.Equal(t, "firing", r.State, "each rule should reflect its firing state from the batched load")
+		}
+	})
+
+	t.Run("reloads state on every request (no cross-request caching)", func(t *testing.T) {
+		api, _, getAllCount, _ := setup(t)
+
+		require.Equal(t, http.StatusOK, api.RouteGetRuleStatuses(newReqContext()).Status())
+		require.Equal(t, http.StatusOK, api.RouteGetRuleStatuses(newReqContext()).Status())
+
+		assert.Equal(t, 2, *getAllCount, "each request must load fresh state; states must not be cached across requests")
+	})
+}
+
+// sleepingInstanceReader is a state.InstanceReader that returns pre-generated instances and
+// sleeps a fixed delay per call to simulate DB round-trip latency. It counts calls so a
+// benchmark can report DB round trips per op.
+type sleepingInstanceReader struct {
+	instances []*ngmodels.AlertInstance
+	delay     time.Duration
+	calls     *int64
+}
+
+func (r *sleepingInstanceReader) ListAlertInstances(_ context.Context, cmd *ngmodels.ListAlertInstancesQuery) ([]*ngmodels.AlertInstance, error) {
+	atomic.AddInt64(r.calls, 1)
+	if r.delay > 0 {
+		time.Sleep(r.delay)
+	}
+	out := make([]*ngmodels.AlertInstance, 0, len(r.instances))
+	for _, in := range r.instances {
+		if in.RuleOrgID != cmd.RuleOrgID {
+			continue
+		}
+		if cmd.RuleUID != "" && in.RuleUID != cmd.RuleUID {
+			continue
+		}
+		out = append(out, in)
+	}
+	return out, nil
+}
+
+// BenchmarkRouteGetRuleStatuses_DBMode probes the N+1 in the HA single-node DB path by
+// injecting a per-query latency and reporting the number of store round trips per op.
+// Before the fix db_calls/op scales with rule count; after it is 1.
+func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
+	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
+	orgID := int64(1)
+	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
+	const perQueryLatency = 1 * time.Millisecond
+
+	for _, ruleCount := range []int{10, 100, 500, 1000, 5000} {
+		b.Run(fmt.Sprintf("rules=%d", ruleCount), func(b *testing.B) {
+			// fakes.NewRuleStore requires *testing.T; build the store directly since the
+			// methods exercised here don't use the embedded testing handle.
+			ruleStore := &fakes.RuleStore{
+				Rules:   map[int64][]*ngmodels.AlertRule{},
+				Folders: map[int64][]*folder.Folder{},
+				History: map[string][]*ngmodels.AlertRuleVersion{},
+				Hook:    func(any) error { return nil },
+			}
+			gen := ngmodels.RuleGen
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			rules := gen.With(gen.WithOrgID(orgID), gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(ruleCount)
+			ruleStore.PutRule(context.Background(), rules...)
+
+			m := ngmodels.AlertInstanceMutators{}
+			instances := make([]*ngmodels.AlertInstance, 0, ruleCount)
+			for _, r := range rules {
+				instances = append(instances, ngmodels.AlertInstanceGen(m.WithOrgID(orgID), m.WithRuleUID(r.UID)))
+			}
+
+			var calls int64
+			reader := &sleepingInstanceReader{instances: instances, delay: perQueryLatency, calls: &calls}
+			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger())
+
+			api := NewPrometheusSrv(
+				log.NewNopLogger(),
+				storeReader,
+				NewDBRuleMutator(storeReader),
+				ruleStore,
+				&fakeRuleAccessControlService{},
+				fakes.NewFakeProvisioningStore(),
+			)
+
+			req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+				resp := api.RouteGetRuleStatuses(c)
+				if resp.Status() != http.StatusOK {
+					b.Fatalf("unexpected status %d", resp.Status())
+				}
+			}
+			b.StopTimer()
+			b.ReportMetric(float64(atomic.LoadInt64(&calls))/float64(b.N), "db_calls/op")
+		})
+	}
+}
+
+// countingAlertInstanceManager wraps AlertInstanceManager and counts calls to
+// GetStatesForRuleUID (callCount) and GetAll (getAllCount). Both counters are optional.
 type countingAlertInstanceManager struct {
-	inner     state.AlertInstanceManager
-	callCount *int
+	inner       state.AlertInstanceManager
+	callCount   *int
+	getAllCount *int
 }
 
 func (c *countingAlertInstanceManager) GetAll(ctx context.Context, orgID int64) []*state.State {
+	if c.getAllCount != nil {
+		*c.getAllCount++
+	}
 	return c.inner.GetAll(ctx, orgID)
 }
 
 func (c *countingAlertInstanceManager) GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*state.State {
-	*c.callCount++
+	if c.callCount != nil {
+		*c.callCount++
+	}
 	return c.inner.GetStatesForRuleUID(ctx, orgID, alertRuleUID)
 }
 

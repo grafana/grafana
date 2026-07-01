@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -295,6 +296,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 	ctx, span := tracer.Start(c.Req.Context(), "api.prometheus.RouteGetRuleStatuses")
 	defer span.End()
+	// Attach a request-scoped batch state loader so the rule mutator loads all of the org's
+	// alert states in a single query instead of one per rule (N+1). Only NewDBRuleMutator
+	// reads it; NewInMemoryRuleMutator ignores it.
+	ctx = withBatchStateLoader(ctx)
 	// Propagate the new context so child spans can attach to it.
 	c.Req = c.Req.WithContext(ctx)
 	orgID := c.GetOrgID()
@@ -380,12 +385,52 @@ func NewInMemoryRuleMutator(statusReader StatusReader, manager state.AlertInstan
 	}
 }
 
-// NewDBRuleMutator creates a RuleMutator that performs a single GetStatesForRuleUID
-// call and derives both status and alert state from the result. Used in HA single-node eval
-// mode, where we don't have in-memory data to get rule state.
+type batchStateLoaderKey struct{}
+
+// batchStateLoader loads all of an org's alert states once per request and serves per-rule
+// lookups from memory, avoiding an N+1 query against the store when listing many rules.
+// It is scoped to a single request (see withBatchStateLoader), so the states it serves are
+// always freshly loaded and never shared across requests.
+type batchStateLoader struct {
+	mu     sync.Mutex
+	loaded bool
+	byUID  map[string][]*state.State
+}
+
+// withBatchStateLoader attaches an empty per-request batch loader to ctx.
+func withBatchStateLoader(ctx context.Context) context.Context {
+	return context.WithValue(ctx, batchStateLoaderKey{}, &batchStateLoader{})
+}
+
+// statesForRule returns the alert states for a single rule. When a request-scoped
+// batchStateLoader is present on ctx, it loads all of the org's states once (a single
+// GetAll) and serves subsequent rules from memory. Without a loader it falls back to a
+// per-rule query, preserving behaviour for callers that don't set one up.
+func statesForRule(ctx context.Context, manager state.AlertInstanceManager, orgID int64, ruleUID string) []*state.State {
+	l, ok := ctx.Value(batchStateLoaderKey{}).(*batchStateLoader)
+	if !ok {
+		return manager.GetStatesForRuleUID(ctx, orgID, ruleUID)
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if !l.loaded {
+		l.byUID = make(map[string][]*state.State)
+		for _, s := range manager.GetAll(ctx, orgID) {
+			l.byUID[s.AlertRuleUID] = append(l.byUID[s.AlertRuleUID], s)
+		}
+		l.loaded = true
+	}
+	return l.byUID[ruleUID]
+}
+
+// NewDBRuleMutator creates a RuleMutator that reads alert state once and derives both status
+// and alert state from the result. Used in HA single-node eval mode, where we don't have
+// in-memory data to get rule state. When listing rules it uses a request-scoped batch loader
+// (see statesForRule) to avoid an N+1 query.
 func NewDBRuleMutator(manager state.AlertInstanceManager) RuleMutator {
 	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
-		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
+		states := statesForRule(ctx, manager, source.OrgID, source.UID)
 
 		status := state.StatesToRuleStatus(states)
 		if len(states) == 0 {
