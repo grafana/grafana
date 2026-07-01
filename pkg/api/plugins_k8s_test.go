@@ -12,19 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// setupPluginEndpointMetrics builds a fresh prometheus registry + pluginEndpointRedirects
-// counter for isolated tests.
-func setupPluginEndpointMetrics() (prometheus.Registerer, prometheus.Collector, *prometheus.CounterVec) {
-	promRegister := prometheus.NewRegistry()
-	pluginEndpointRedirects := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Name:      "plugin_endpoint_redirects_total",
-		Help:      "Total number of app plugin endpoint redirects by route and target (legacy/remote)",
-	}, []string{"route", "target"})
-	promRegister.MustRegister(pluginEndpointRedirects)
-	return promRegister, nil, pluginEndpointRedirects
-}
-
 func TestCallK8sAppPluginResourceHandler(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -260,4 +247,17 @@ func newAppPluginTestServer(configProvider *mockDirectRestConfigProvider) *HTTPS
 	}
 	_, _, hs.pluginEndpointRedirects = setupPluginEndpointMetrics()
 	return hs
+}
+
+// setupPluginEndpointMetrics builds a fresh prometheus registry + pluginEndpointRedirects
+// counter for isolated tests.
+func setupPluginEndpointMetrics() (prometheus.Registerer, prometheus.Collector, *prometheus.CounterVec) {
+	promRegister := prometheus.NewRegistry()
+	pluginEndpointRedirects := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "plugin_endpoint_redirects_total",
+		Help:      "Total number of app plugin endpoint redirects by route and target (legacy/remote)",
+	}, []string{"route", "target"})
+	promRegister.MustRegister(pluginEndpointRedirects)
+	return promRegister, nil, pluginEndpointRedirects
 }

@@ -67,6 +67,7 @@ func TestIntegrationCallResource(t *testing.T) {
 		hs.pluginStore = testCtx.PluginStore
 		hs.pluginClient = testCtx.PluginClient
 		hs.log = log.New("test")
+		hs.pluginEndpointRedirects = prometheus.NewCounterVec(prometheus.CounterOpts{Name: ""}, []string{"", ""})
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
@@ -189,6 +190,7 @@ func TestIntegrationCallResource(t *testing.T) {
 		hs.pluginStore = testCtx.PluginStore
 		hs.pluginClient = pc
 		hs.log = log.New("test")
+		hs.pluginEndpointRedirects = prometheus.NewCounterVec(prometheus.CounterOpts{Name: ""}, []string{"", ""})
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {
