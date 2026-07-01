@@ -39,13 +39,11 @@ permissions: {}
 
 jobs:
   # Publishing behaviour by version_type:
-  # - 'stable':                    build + publish ALL @grafana/* packages to NPM.
-  # - 'nightly' / 'canary' (pre-releases): we no longer publish pre-releases of the
-  #   @grafana/* packages to the public NPM registry. The single exception is
-  #   @grafana/e2e-selectors, which plugin e2e tooling follows via the 'nightly'
-  #   dist-tag. It is published (and only that package, tagged 'nightly') when it has
-  #   actually changed since the last 'nightly' publish, so we stop churning out
-  #   unnecessary versions.
+  # - 'stable':  build + publish ALL @grafana/* packages to NPM.
+  # - 'nightly': only @grafana/e2e-selectors is published if it changed since
+  #              the last published nightly, for plugin-e2e tooling.
+  #              no other packages are published.
+  # - 'canary':  do nothing - canary releases are no longer pubblished
 
   publish:
     name: Publish NPM packages
@@ -54,7 +52,7 @@ jobs:
     # https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
     runs-on: github-hosted-ubuntu-x64-small
 
-    if: inputs.version_type == 'stable' || inputs.version_type == 'nightly' || inputs.version_type == 'canary'
+    if: inputs.version_type == 'nightly' || inputs.version_type == 'stable'
     # Required for this workflow to have permission to publish NPM packages
     environment: npm-publish
     permissions:
@@ -94,9 +92,9 @@ jobs:
           fetch-depth: 1
 
       # Decide what this run publishes:
-      # - stable:          all packages, dist-tag resolved from the version.
-      # - nightly/canary:  @grafana/e2e-selectors only, tagged 'nightly', and only if
-      #                    it changed since the last 'nightly' publish.
+      # - stable:   all packages, dist-tag resolved from the version.
+      # - nightly:  @grafana/e2e-selectors only, tagged 'nightly', and only if it
+      #             changed since the last 'nightly' publish.
       - name: Plan publish
         id: plan
         env:
@@ -175,4 +173,3 @@ jobs:
         env:
           NPM_TAG: ${{ steps.plan.outputs.npm_tag }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
-
