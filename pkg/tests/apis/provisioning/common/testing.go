@@ -111,7 +111,6 @@ func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, u
 
 	return &ProvisioningTestHelper{
 		ProvisioningPath: h.ProvisioningPath,
-		Namespace:        namespace,
 		K8sTestHelper:    h.K8sTestHelper,
 
 		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
@@ -143,11 +142,6 @@ func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, u
 			User:      user,
 			Namespace: namespace,
 			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
-		}),
-		DashboardsV2: h.GetResourceClient(apis.ResourceClientArgs{
-			User:      user,
-			Namespace: namespace,
-			GVR:       dashboardsV2.DashboardResourceInfo.GroupVersionResource(),
 		}),
 		DashboardsV2alpha1: h.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
@@ -187,7 +181,7 @@ func (h *ProvisioningTestHelper) Cleanup(t *testing.T) {
 	}
 
 	// Delete all dashboards (V0, V1, V2, V2alpha1, V2beta1)
-	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
+	for _, client := range []*apis.K8sResourceClient{h.DashboardsV0, h.DashboardsV1, h.DashboardsV2alpha1, h.DashboardsV2beta1} {
 		if client != nil {
 			if err := client.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{}); err != nil && !apierrors.IsNotFound(err) {
 				t.Logf("warning: failed to delete dashboards: %v", err)
