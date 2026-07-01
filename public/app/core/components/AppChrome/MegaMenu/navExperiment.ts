@@ -8,8 +8,8 @@ import { reportExperimentView } from '@grafana/runtime';
  * is recursive and called in several places). The exposure (denominator) event is fired once per
  * page load via {@link reportNavExperimentViewOnce}.
  */
-export const NAV_EXPERIMENT_ID = 'navCustomization';
-export const NAV_EXPERIMENT_GROUP = 'rollout';
+const NAV_EXPERIMENT_ID = 'navCustomization';
+const NAV_EXPERIMENT_GROUP = 'rollout';
 
 export type NavExperimentVariant = 'treatment' | 'control';
 
