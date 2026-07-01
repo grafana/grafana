@@ -858,36 +858,33 @@ receivers:
 		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
 
+	// The following tests verify RBAC middleware enforcement. The middleware rejects before any DB
+	// access, so no staged config is needed — 403 is returned regardless of whether the config exists.
 	t.Run("user with no permissions gets 403", func(t *testing.T) {
-		stageConfig(t)
 		client := createUser(t, nil, nil)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ImportsRead gets 403", func(t *testing.T) {
-		stageConfig(t)
 		client := createUser(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsDelete})
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ImportsDelete gets 403", func(t *testing.T) {
-		stageConfig(t)
 		client := createUser(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsRead})
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ReceiversCreate gets 403", func(t *testing.T) {
-		stageConfig(t)
 		client := createUser(t, []string{accesscontrol.ActionAlertingManagedRoutesCreate}, allImports)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ManagedRoutesCreate gets 403", func(t *testing.T) {
-		stageConfig(t)
 		client := createUser(t, []string{accesscontrol.ActionAlertingReceiversCreate}, allImports)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")

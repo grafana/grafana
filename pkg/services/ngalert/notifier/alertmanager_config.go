@@ -506,7 +506,7 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 func (moa *MultiOrgAlertmanager) PromoteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) (merge.MergeResult, error) {
 	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, func(configurations []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
 		if len(configurations) == 0 || configurations[0].Identifier != identifier { // TODO when we support multiple extra configs, this will need to be changed.
-			return nil, ErrAlertmanagerExtraConfigNotFound
+			return nil, ErrAlertmanagerExtraConfigNotFound.Errorf("extra configuration with identifier %q not found", identifier)
 		}
 		return configurations, nil
 	}, false, true)
