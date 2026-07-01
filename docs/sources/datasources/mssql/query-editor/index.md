@@ -57,7 +57,7 @@ The following components help you build a T-SQL query:
 
 - **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option, you must include a `time` column.
 
-- **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a default database is configured in the Data Source Configuration page or via a provisioning file, users are limited to querying only that predefined database.
+- **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a database is set in the **Database** field on the data source configuration page or via a provisioning file, users are limited to querying only that database.
 
   Note that `tempdb`, `model`, `msdb`, and `master` system databases are not included in the query editor drop-down.
 
