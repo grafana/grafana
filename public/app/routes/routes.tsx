@@ -67,6 +67,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/notebook/:uid/:slug?',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
       path: '/dashboard/new-with-ds/:datasourceUid',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       component: SafeDynamicImport(
