@@ -27,7 +27,7 @@ describe('pluginBackend urls', () => {
     });
 
     it('buildAppPluginProxyUrl returns the legacy URL', () => {
-      expect(buildAppPluginProxyUrl(pluginId, '/foo/bar')).toBe('/api/plugins/myorg-test-app/proxy/foo/bar');
+      expect(buildAppPluginProxyUrl(pluginId, '/foo/bar')).toBe('/api/plugin-proxy/myorg-test-app/foo/bar');
     });
   });
 

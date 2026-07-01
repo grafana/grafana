@@ -48,7 +48,7 @@ export function buildAppPluginHealthUrl(pluginId: string): string {
  */
 export function buildAppPluginProxyUrl(pluginId: string, path: string): string {
   if (!isMTBackendEnabled()) {
-    return `/api/plugins/${pluginId}/proxy${path}`;
+    return `/api/plugin-proxy/${pluginId}${path}`;
   }
   return `${k8sBase(pluginId)}/proxy${path}`;
 }

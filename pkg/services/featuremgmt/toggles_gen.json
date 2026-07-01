@@ -4195,6 +4195,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginBackendRedirect",
+        "resourceVersion": "1782909792891",
+        "creationTimestamp": "2026-07-01T12:43:12Z"
+      },
+      "spec": {
+        "description": "Redirects legacy app plugin backend calls to new apis",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

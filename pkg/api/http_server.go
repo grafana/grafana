@@ -227,6 +227,7 @@ type HTTPServer struct {
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
 	dsEndpointRedirects             *prometheus.CounterVec
+	pluginEndpointRedirects         *prometheus.CounterVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
 }
@@ -401,12 +402,18 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_endpoint_redirects_total",
 			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
 		}, []string{"route", "plugin_type", "target"}),
+		pluginEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "plugin_endpoint_redirects_total",
+			Help:      "Total number of app plugin endpoint redirects by route and target (legacy/remote)",
+		}, []string{"route", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsEndpointRedirects)
+	promRegister.MustRegister(hs.pluginEndpointRedirects)
 
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

@@ -2776,8 +2776,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-<<<<<<< Updated upstream
-=======
 			Name:         "plugins.useMTPluginBackend",
 			Description:  "Enables app plugin backend calls from new apis",
 			Stage:        FeatureStageExperimental,
@@ -2787,16 +2785,15 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "frontendServiceSSOAutoLogin",
-			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
+			Name:         "plugins.useMTPluginBackendRedirect",
+			Description:  "Redirects legacy app plugin backend calls to new apis",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			HideFromDocs: true,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true},
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			HideFromDocs: true,
 		},
 		{
->>>>>>> Stashed changes
 			Name:        "splashScreen",
 			Description: "Enables the splash screen modal for introducing new Grafana features on first session",
 			Stage:       FeatureStagePublicPreview,

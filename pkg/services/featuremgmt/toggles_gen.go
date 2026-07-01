@@ -866,6 +866,10 @@ const (
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
+	// FlagPluginsUseMTPluginBackendRedirect
+	// Redirects legacy app plugin backend calls to new apis
+	FlagPluginsUseMTPluginBackendRedirect = "plugins.useMTPluginBackendRedirect"
+
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
 	FlagStreamingForwardTeamHeadersTempo = "streamingForwardTeamHeadersTempo"
