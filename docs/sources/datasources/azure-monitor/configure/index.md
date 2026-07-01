@@ -468,6 +468,20 @@ Toggle **Enable Basic Logs** to allow queries against [Basic Logs tables](https:
 Querying Basic Logs tables incurs additional costs on a per-query basis.
 {{< /admonition >}}
 
+### Enable Batch API
+
+Toggle **Enable Batch API** to query metrics for multiple resources in a single request using the [Azure Monitor Metrics Batch API](https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/migrate-to-batch-api). Instead of sending one request per resource, Grafana groups eligible metric queries and sends them together. This reduces the number of calls to Azure, which improves query performance and lowers the chance of throttling on dashboards that query many resources.
+
+Using the Batch API requires the [Monitoring Reader](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/rest-api-walkthrough#retrieve-metric-values-multi-dimensional-api) role at the subscription scope, because requests are sent to the `metrics.monitor.azure.com` data plane endpoint.
+
+{{< admonition type="note" >}}
+The Metrics Batch API includes 1,000,000 free API calls per month. Additional calls are billed at $0.01 per 1,000 calls.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+This setting is only available when the `azureMonitorBatchAPI` feature toggle is enabled.
+{{< /admonition >}}
+
 ### Private data source connect (Grafana Cloud only)
 
 If you're using Grafana Cloud and need to connect to Azure resources in a private network, use Private Data Source Connect (PDC).
