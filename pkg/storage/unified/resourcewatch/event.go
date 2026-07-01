@@ -1,22 +1,13 @@
 // Package resourcewatch defines the NATS wire contract for watching Kubernetes
-// resources: the subject a resource's change notifications are published on
-// (see subject.go), and the envelope that carries each one (see event.go). It
-// is the single source of truth shared by publishers and consumers so both
-// derive the same subject and payload.
+// resources: the subject (see subject.go) and the envelope (see event.go),
+// shared by publishers and consumers so both derive the same subject and payload.
 //
 // The envelope carries only version-agnostic metadata (group, resource,
-// namespace, name, resourceVersion, folder), never the object itself. This is
-// deliberate: a single publisher can announce a change once, and each consumer
-// materializes the object by issuing a GET (or Search) at whatever API version
-// it needs. Conversion happens through the apiserver on that GET, so the wire
-// format never has to know about versions and there is no per-version fan-out.
-//
-// The envelope is serialized as the resourcepb.WatchNotification protobuf
-// message: the proto is the actual wire contract and Event is the ergonomic
-// Go form of it, converted on Marshal/Unmarshal. It lives under
-// pkg/storage/unified because it is expressed in unified-storage terms —
-// group/resource and an opaque resourceVersion — and is shared by both sides of
-// the watch, like the other storage contracts.
+// namespace, name, resourceVersion, folder), never the object itself: the
+// publisher announces a change once and each consumer re-fetches the object via
+// GET at its own API version, so the wire format is version-agnostic with no
+// per-version fan-out. It is serialized as the resourcepb.WatchNotification
+// proto — the actual wire contract — of which Event is the ergonomic Go form.
 package resourcewatch
 
 import (
@@ -28,9 +19,9 @@ import (
 )
 
 // EventType is the kind of change a notification announces. Its values mirror
-// the verbs of k8s.io/apimachinery/pkg/watch.EventType so a consumer can map
-// them onto a watch.Interface without translation, but it is defined here to
-// keep the wire contract self-contained and free of a k8s watch dependency.
+// the verbs of k8s.io/apimachinery watch.EventType so consumers map them onto a
+// watch stream without translation, but it is defined here to keep the contract
+// free of a k8s watch dependency.
 type EventType string
 
 const (
@@ -39,43 +30,36 @@ const (
 	Deleted  EventType = "DELETED"
 )
 
-// Event is the wire envelope published on a resource subject. It carries only
-// the metadata needed to identify what changed; the consumer fetches the object
-// itself. It is the Go form of resourcepb.WatchNotification, which is the proto
-// wire contract Marshal/Unmarshal round-trip through.
+// Event is the Go form of the resourcepb.WatchNotification envelope published on
+// a resource subject; Marshal/Unmarshal round-trip through the proto.
 type Event struct {
 	Type      EventType
 	Group     string
 	Resource  string
 	Namespace string
 	Name      string
-	// ResourceVersion is an int64 to match how unified storage issues it on the
-	// kv/storage side (and in resourcepb). It is meaningful only for
-	// equality/ordering as understood by the issuing storage, not as an
-	// arithmetic quantity.
+	// ResourceVersion is an int64 to match how unified storage issues it. It is
+	// meaningful only for equality/ordering as understood by the issuing
+	// storage, not as an arithmetic quantity.
 	ResourceVersion int64
 	Folder          string
 }
 
-// eventTypeToProto maps the k8s-style verb onto the WatchNotification enum. An
-// unrecognized verb becomes UNKNOWN so an unset/garbage type never masquerades
-// as a real change.
+// An unmapped verb becomes UNKNOWN so an unset/garbage type never masquerades
+// as a real change; the reverse yields the empty EventType.
 var eventTypeToProto = map[EventType]resourcepb.WatchNotification_Type{
 	Added:    resourcepb.WatchNotification_ADDED,
 	Modified: resourcepb.WatchNotification_MODIFIED,
 	Deleted:  resourcepb.WatchNotification_DELETED,
 }
 
-// eventTypeFromProto is the inverse of eventTypeToProto; UNKNOWN (and anything
-// unmapped) yields the empty EventType.
 var eventTypeFromProto = map[resourcepb.WatchNotification_Type]EventType{
 	resourcepb.WatchNotification_ADDED:    Added,
 	resourcepb.WatchNotification_MODIFIED: Modified,
 	resourcepb.WatchNotification_DELETED:  Deleted,
 }
 
-// Marshal encodes the event into the proto wire contract
-// (resourcepb.WatchNotification) for publishing on a resource subject.
+// Marshal encodes the event as a resourcepb.WatchNotification for publishing.
 func (e Event) Marshal() ([]byte, error) {
 	return proto.Marshal(&resourcepb.WatchNotification{
 		Type:            eventTypeToProto[e.Type],
@@ -88,8 +72,7 @@ func (e Event) Marshal() ([]byte, error) {
 	})
 }
 
-// UnmarshalEvent decodes a proto-encoded WatchNotification received on a
-// resource subject back into an Event.
+// UnmarshalEvent decodes a proto-encoded WatchNotification back into an Event.
 func UnmarshalEvent(data []byte) (Event, error) {
 	var n resourcepb.WatchNotification
 	if err := proto.Unmarshal(data, &n); err != nil {
