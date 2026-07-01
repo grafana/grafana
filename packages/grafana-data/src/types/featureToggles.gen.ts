@@ -454,11 +454,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
@@ -1216,6 +1211,11 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
+  */
+  heatmapNegativeLogBuckets?: boolean;
+  /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
   */
@@ -1550,4 +1550,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }

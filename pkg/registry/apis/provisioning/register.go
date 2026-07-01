@@ -725,6 +725,10 @@ func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
+func (b *APIBuilder) GetIncrementalPolicy() repository.IncrementalSyncPolicy {
+	return b.incrementalPolicy
+}
+
 func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 	return b.healthChecker
 }
@@ -1101,9 +1105,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
+			cachedRepoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				repoInformer.Lister(),
+				cachedRepoGetter,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1118,6 +1123,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
+				controller.NewRepositoryQuotaChecker(cachedRepoGetter),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
@@ -1142,8 +1148,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
 			connController := controller.NewConnectionController(
-				b.GetClient(),
-				connInformer.Lister(),
+				controller.NewCachedConnectionGetter(connInformer.Lister()),
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,

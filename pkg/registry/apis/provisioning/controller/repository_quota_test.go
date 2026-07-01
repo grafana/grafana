@@ -150,7 +150,7 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockRepoLister)
+			checker := NewRepositoryQuotaChecker(NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.QuotaStatus{
 				MaxRepositories:           tt.maxRepos,
@@ -264,7 +264,7 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
 			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
-			checker := NewRepositoryQuotaChecker(mockRepoLister)
+			checker := NewRepositoryQuotaChecker(NewCachedRepositoryGetter(mockRepoLister))
 
 			quotaStatus := provisioning.QuotaStatus{
 				MaxRepositories:           tt.maxRepos,

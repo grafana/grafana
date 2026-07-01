@@ -49,8 +49,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	connController := controller.NewConnectionController(
-		provisioningClient.ProvisioningV0alpha1(),
-		connInformer.Lister(),
+		controller.NewCachedConnectionGetter(connInformer.Lister()),
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),
