@@ -2812,7 +2812,9 @@
           "alerting": "Bu uyarı kuralı için değerlendirmeyi duraklatmak için açın.",
           "recording": "Bu kayıt kuralı için değerlendirmeyi duraklatmak için açın."
         },
-        "select-folder-before": "Değerlendirme grubunu ve aralığını ayarlamadan önce bir klasör seçin"
+        "select-folder-before": "Değerlendirme grubunu ve aralığını ayarlamadan önce bir klasör seçin",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4272,6 +4274,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Kaynaklar silinirken hata oluştu",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4297,7 @@
       "error-no-target-folder-path": "Hedef klasör yolu geçersiz veya boş, lütfen tekrar seçin.",
       "move-warning": "Bu işlem, seçilen klasörleri ve alt ögelerini taşıyacaktır. Kullanılabilir hedef klasörler, seçilen kaynaklara bağlıdır.",
       "move-warning-tooltip": "Sağlanan kaynakları yalnızca kendi klasörlerinde, yerel kaynakları ise yerel klasörlerde taşıyabilirsiniz.",
+      "success-title": "",
       "target-folder": "Hedef Klasör",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6026,9 +6030,6 @@
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panel bağlantıları"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Sorgulara geri dön"
     },
@@ -6212,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Orijinal panoyu aç"
       },
-      "undo": "Geri al"
+      "undo": "Geri al",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Kaynak ({{provider}})",
@@ -6471,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": "Panel bulunamadı"
     },
     "viz-panel": {
@@ -8693,7 +8705,9 @@
       "query-history-button": "Sorgu geçmişi",
       "query-history-button-aria-label": "Sorgu geçmişi",
       "query-inspector-button": "Sorgu denetçisi",
-      "query-inspector-button-aria-label": "Sorgu denetçisi"
+      "query-inspector-button-aria-label": "Sorgu denetçisi",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Tüm aralıkları göster",
     "span-bar": {
@@ -9884,10 +9898,16 @@
         },
         "name-limit": "Sınırlama",
         "name-mode": "Mod",
+        "name-overflow": "",
         "name-placement": "Yerleşim",
         "name-values": "Değerler",
         "name-visibility": "Görünürlük",
         "name-width": "Genişlik",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Alt",
           "label-right": "Sağ"
@@ -10658,10 +10678,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10676,6 +10716,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10683,15 +10728,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -11189,6 +11232,8 @@
         }
       },
       "fields-section": "Alanlar",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Günlük satırını gizle",
       "inline-mode": "Satır içi görüntüle",
       "inline-no-scrolls": "",
@@ -11934,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Kimlik Sağlayıcı gruplarının Grafana Rolleri ile eşlemelerini yönetin"
     },
     "help": {
       "title": "Yardım"
@@ -13005,9 +13047,6 @@
       "description-clear-repository-connection": "Bu ad, depo bağlantısı ve kullanıcı arayüzünde görüntülenen klasör için kullanılacaktır.",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
-      "error-quota-exceeded-message": "Bu depo klasörü, {{limit}} olan hesap sınırınızı aşacak şekilde {{fileCount}} kaynak içeriyor. Bu depoyu senkronize etmek için hesabınızı yükseltin veya senkronize edilecek kaynak sayısını azaltın.",
-      "error-quota-exceeded-message-onprem": "Bu depo klasörü, {{limit}} olan örnek sınırınızı aşacak şekilde {{fileCount}} kaynak içeriyor. Bu depoyu senkronize etmek için Grafana yapılandırmanızı güncelleyin veya senkronize edilecek kaynak sayısını azaltın.",
-      "error-quota-exceeded-title": "Kaynak kotası aşıldı",
       "error-repository-status-unhealthy-message": "Depoya bağlanırken bir sorun oluştu. Lütfen depo ayarlarını kontrol edin ve tekrar deneyin.",
       "error-repository-status-unhealthy-title": "Depo durumu sorunlu",
       "external-storage-label": "Haricî depolama",
@@ -13018,6 +13057,9 @@
       "unmanaged-resources-label": "Yönetilmeyen kaynaklar",
       "update-configuration-action": "Yapılandırma belgelerini göster",
       "upgrade-action": "Hesabı yükselt",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
       "files-count_one": "{{count}} dosya",
@@ -13032,6 +13074,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Kurulumu atlayın ve <2>sonsuza kadar ücretsiz Grafana Cloud planı</2> ile Git Senkronizasyonunun tamamen Grafana Cloud üzerinde yönetilmesini ve barındırılmasını sağlayın.",
@@ -13420,9 +13465,26 @@
       "truncated": "İleti kısaltıldı"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Bu klasörün bir meta veri dosyasına sahip olup olmadığı doğrulanamadı. Lütfen daha sonra tekrar deneyin.",
@@ -14064,9 +14126,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",
@@ -14205,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Bu sorgu için veri kaynağı yüklenemedi",
     "loading-datasource": "Veri kaynağı yükleniyor",
     "no-query-editor-component": "Veri kaynağı eklentisi herhangi bir sorgu düzenleyici bileşeni sunmuyor/içermiyor"
@@ -14226,6 +14290,56 @@
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

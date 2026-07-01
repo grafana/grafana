@@ -1,8 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { type FolderDTO } from 'app/types/folders';
@@ -26,10 +27,6 @@ jest.mock('@grafana/runtime', () => {
     },
   };
 });
-
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   validationSrv: {
@@ -217,7 +214,7 @@ describe('NewProvisionedFolderForm', () => {
       })
     );
 
-    const { user } = setup();
+    const { user, props } = setup();
 
     const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
@@ -240,6 +237,11 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('New%20Test%20Folder');
     expect(request.url.searchParams.get('message')).toBe('Creating a new test folder');
     expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
+
+    // The real request handler dismisses the form after a successful save
+    await waitFor(() => {
+      expect(props.onDismiss).toHaveBeenCalled();
+    });
   });
 
   it('should not produce double slashes when folder annotation has trailing slash', async () => {
@@ -367,9 +369,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.searchParams.get('message')).toBe('chore(folders): create Templated Folder');
   });
 
-  // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.
-  // This test verifies the correct request is sent; the handler mock prevents response side-effects.
-  it('should send correct request body when folder creation fails', async () => {
+  it('should send correct request body and show the error when folder creation fails', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -378,7 +378,7 @@ describe('NewProvisionedFolderForm', () => {
       })
     );
 
-    const { user } = setup();
+    const { user, props } = setup();
 
     const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
@@ -396,6 +396,10 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('Error%20Folder');
     expect(request.url.searchParams.get('message')).toBe('Create folder: Error Folder');
     expect(request.body).toEqual({ title: 'Error Folder', type: 'folder' });
+
+    // The form catches the error and surfaces it in an alert; it stays open
+    expect(await screen.findByText('Failed to create folder')).toBeInTheDocument();
+    expect(props.onDismiss).not.toHaveBeenCalled();
   });
 
   it('should disable create button when form is submitting', async () => {
@@ -455,5 +459,36 @@ describe('NewProvisionedFolderForm', () => {
     );
 
     expect(await screen.findByText('This repository is read only')).toBeInTheDocument();
+  });
+});
+
+describe('NewProvisionedFolderForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+        initialValues: { ...mockHookData.initialValues!, title: 'Reports' },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
+    expect(comment).not.toHaveAttribute('readonly');
   });
 });

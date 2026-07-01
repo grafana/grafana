@@ -2794,7 +2794,9 @@
           "alerting": "開啟以暫停評估此警報規則。",
           "recording": "開啟以暫停評估此錄製規則。"
         },
-        "select-folder-before": "在設定評估群組和間隔之前，請選擇一個資料夾"
+        "select-folder-before": "在設定評估群組和間隔之前，請選擇一個資料夾",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4245,6 +4247,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "刪除資源時發生錯誤",
+      "success-title": "",
       "folder-empty_other": "",
       "folder-not-empty_other": ""
     },
@@ -4265,6 +4268,7 @@
       "error-no-target-folder-path": "目標資料夾路徑無效或空白，請再選擇一次。",
       "move-warning": "這將移動所選資料夾及其子資料夾。可用的目標資料夾取決於所選資源。",
       "move-warning-tooltip": "您只能將已佈建的資源移動到其佈建的資料夾中，並將本機資源移動到本機資料夾中。",
+      "success-title": "",
       "target-folder": "目標資料夾",
       "folder-not-empty_other": ""
     },
@@ -5992,9 +5996,6 @@
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
     },
-    "panel-links": {
-      "aria-label-panel-links": "面板連結"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "返回查詢"
     },
@@ -6178,7 +6179,17 @@
       "snapshot": {
         "tooltip": "開啟原始儀表板"
       },
-      "undo": "還原"
+      "undo": "還原",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "來源（{{provider}}）",
@@ -6437,6 +6448,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8642,7 +8654,9 @@
       "query-history-button": "查詢歷史記錄",
       "query-history-button-aria-label": "查詢歷史記錄",
       "query-inspector-button": "查詢檢查器",
-      "query-inspector-button-aria-label": "查詢檢查器"
+      "query-inspector-button-aria-label": "查詢檢查器",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "顯示所有跨度",
     "span-bar": {
@@ -9823,10 +9837,16 @@
         },
         "name-limit": "限制",
         "name-mode": "模式",
+        "name-overflow": "",
         "name-placement": "放置",
         "name-values": "值",
         "name-visibility": "可見性",
         "name-width": "寬度",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "靠右"
@@ -10597,10 +10617,28 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_other": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10615,6 +10653,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10622,15 +10665,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -11120,6 +11161,8 @@
         }
       },
       "fields-section": "欄位",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "隱藏記錄行",
       "inline-mode": "顯示內嵌",
       "inline-no-scrolls": "",
@@ -11865,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "管理身分識別提供者群組對應至 Grafana 角色"
     },
     "help": {
       "title": "說明"
@@ -12933,9 +12973,6 @@
       "description-clear-repository-connection": "此名稱將用於儲存庫連線以及使用者介面中顯示的資料夾",
       "empty": "空",
       "error-field-required": "此為必填欄位。",
-      "error-quota-exceeded-message": "此儲存庫資料夾包含 {{fileCount}} 個資源，超過了您帳戶的 {{limit}} 上限。若要同步此儲存庫，請升級您的帳戶或減少要同步的資源數量。",
-      "error-quota-exceeded-message-onprem": "此儲存庫資料夾包含 {{fileCount}} 個資源，超過了您執行個體的 {{limit}} 上限。若要同步此儲存庫，請更新您的 Grafana 設定或減少要同步的資源數量。",
-      "error-quota-exceeded-title": "已超過資源配額",
       "error-repository-status-unhealthy-message": "連接到儲存庫時發生問題。請檢查儲存庫設定，然後再試一次。",
       "error-repository-status-unhealthy-title": "儲存庫狀態不佳",
       "external-storage-label": "外部儲存空間",
@@ -12946,6 +12983,9 @@
       "unmanaged-resources-label": "未受管理的資源",
       "update-configuration-action": "檢視設定文件",
       "upgrade-action": "升級帳戶",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
@@ -12957,6 +12997,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "跳過設定步驟，並透過<2>永久免費的 Grafana Cloud 計劃</2>在 Grafana Cloud 上取得完全受管理及託管的 Git 同步。",
@@ -13342,9 +13385,26 @@
       "truncated": "訊息已截斷"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "無法驗證此資料夾是否具有中繼資料檔案，請稍後再試一次。",
@@ -13977,9 +14037,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",
@@ -14112,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "無法載入此查詢項目的資料來源",
     "loading-datasource": "正在載入資料來源",
     "no-query-editor-component": "資料來源外掛程式無法匯出任何查詢編輯器元件"
@@ -14133,6 +14195,55 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

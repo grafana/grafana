@@ -11,4 +11,13 @@ export class Controls extends PageObject {
         .click();
     });
   }
+
+  // Same control as enterEditMode: while editing, the edit button acts as "Exit edit"
+  async exitEditMode() {
+    await test.step('Exit edit mode', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
+        .click();
+    });
+  }
 }

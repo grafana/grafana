@@ -29,6 +29,28 @@ jest.mock('./hooks/useConnectionList', () => ({
 }));
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeletecollectionRepositoryMutation: jest.fn(() => [jest.fn(), {}]),
+  // The Migrate tab renders for real (see note above) and queries resource
+  // stats; return an empty result so it falls through to its empty state.
+  useGetResourceStatsQuery: jest.fn(() => ({
+    data: { instance: [], managed: [] },
+    isLoading: false,
+    isError: false,
+    error: undefined,
+  })),
+  // Migrate reads availableResources to gate optional kinds (e.g. playlists);
+  // no settings means those kinds stay off here.
+  useGetFrontendSettingsQuery: jest.fn(() => ({ data: undefined })),
+}));
+// The Migrate tab also enumerates resources from the unified searcher; return
+// an already-resolved empty list so its render is synchronous here.
+jest.mock('./Migrate/hooks/useMigrationData', () => ({
+  useMigrationData: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    failedKinds: [],
+    refetch: jest.fn(),
+  })),
 }));
 
 // Page resolves navId against the nav index; seed the provisioning node so it

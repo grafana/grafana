@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -822,13 +823,17 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
+	dashboardInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+	dashboardFields := dashboardInfo.Fields
+
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "views_total", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"fields.views_total"}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
@@ -837,7 +842,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
@@ -846,7 +851,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "description", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq)
+		sortFields := getSortFields(searchReq, dashboardFields)
 		assert.Equal(t, []string{"description"}, sortFields)
 	})
 }
@@ -1054,13 +1059,19 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
+func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
+	return func(options *BleveOptions) {
+		options.SearchFieldsHashesForKinds = m
+	}
+}
+
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
-	mapper, err := GetBleveMappings(nil, nil)
+	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields)
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -2132,6 +2143,35 @@ func TestIndexBuildInfo(t *testing.T) {
 	require.NotNil(t, buildInfo)
 	require.Equal(t, buildVersion, buildInfo.BuildVersion)
 	require.InDelta(t, float64(time.Now().Unix()), buildInfo.BuildTime, 30) // allow 30 seconds of drift
+}
+
+func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+	hash := "deadbeefcafef00d"
+	hashes := map[string]string{
+		strings.ToLower(ns.Group + "/" + ns.Resource): hash,
+	}
+
+	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))
+	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	buildInfo, err := index.BuildInfo()
+	require.NoError(t, err)
+	assert.Equal(t, hash, buildInfo.SearchFieldsHash)
+
+	// Indexes built without a registered hash record an empty string.
+	nsOther := resource.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
+	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, nil, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	buildInfoOther, err := indexOther.BuildInfo()
+	require.NoError(t, err)
+	assert.Equal(t, "", buildInfoOther.SearchFieldsHash)
 }
 
 func TestInvalidBuildVersion(t *testing.T) {

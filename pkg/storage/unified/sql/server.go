@@ -159,7 +159,9 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
+			Registry: opts.Reg,
+		})
 	}
 	return nil
 }

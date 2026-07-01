@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`fieldValueColors (golden baseline) RangeToText mapping 1`] = `
+{
+  "colors": [
+    "#5794f2ff",
+    "#f2495cff",
+    null,
+  ],
+  "palette": [
+    "#5794f2ff",
+    "#f2495cff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) RegexToText is currently a no-op (documents pre-migration behavior) 1`] = `
+{
+  "colors": [
+    null,
+    null,
+  ],
+  "palette": [],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) SpecialValue mapping (NaN / Null) 1`] = `
+{
+  "colors": [
+    "#ff9830ff",
+    "#b877d9ff",
+    null,
+  ],
+  "palette": [
+    "#ff9830ff",
+    "#b877d9ff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) ValueToText mapping 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#fade2aff",
+    "#f2495cff",
+    null,
+  ],
+  "palette": [
+    "#73bf69ff",
+    "#fade2aff",
+    "#f2495cff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) absolute thresholds 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#fade2aff",
+    "#fade2aff",
+    "#f2495cff",
+    "#f2495cff",
+  ],
+  "palette": [
+    "#73bf69ff",
+    "#fade2aff",
+    "#f2495cff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) continuous gradient (needs min/max) 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#e4be3dff",
+    "#f2495cff",
+  ],
+  "palette": [
+    "#73bf69ff",
+    "#7cc165ff",
+    "#84c361ff",
+    "#8dc55dff",
+    "#95c659ff",
+    "#9ec855ff",
+    "#a6c952ff",
+    "#aeca4eff",
+    "#b5cb4bff",
+    "#bdcb48ff",
+    "#c4cb45ff",
+    "#caca43ff",
+    "#d0c941ff",
+    "#d6c73fff",
+    "#dbc53eff",
+    "#e0c23dff",
+    "#e4be3dff",
+    "#e8b93dff",
+    "#ebb43dff",
+    "#edae3eff",
+    "#efa83fff",
+    "#f1a141ff",
+    "#f29a43ff",
+    "#f39245ff",
+    "#f38a47ff",
+    "#f4814aff",
+    "#f4784dff",
+    "#f46f4fff",
+    "#f36652ff",
+    "#f35c56ff",
+    "#f35359ff",
+    "#f2495cff",
+  ],
+}
+`;

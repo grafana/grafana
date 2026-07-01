@@ -18,7 +18,6 @@ import {
 } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
-import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
@@ -30,6 +29,7 @@ import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from 
 import { LogLineDetails, type Props } from './LogLineDetails';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -240,6 +240,53 @@ describe('LogLineDetails', () => {
       );
     });
   });
+  describe('Filtering by log line string', () => {
+    test('calls onClickFilterString with the log line and refId', async () => {
+      const onClickFilterString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter for this log line'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('calls onClickFilterOutString with the log line and refId', async () => {
+      const onClickFilterOutString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterOutString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter out this log line'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('does not render the filter buttons when the callbacks are not provided', async () => {
+      await setup(undefined, { labels: { key1: 'label1' } });
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.queryByLabelText('Filter for this log line')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out this log line')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });

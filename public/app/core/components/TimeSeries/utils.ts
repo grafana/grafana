@@ -269,6 +269,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       theme,
       grid: { show: custom?.axisGridShow },
       formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
+      decimals: xField.config.decimals,
     });
   }
 

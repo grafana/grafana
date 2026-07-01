@@ -5,8 +5,9 @@ import { arrayToDataFrame, createDataFrame, FieldType } from '@grafana/data';
 import { DataHoverView, getDisplayValuesAndLinks } from './DataHoverView';
 import { isHttpUrl, renderValue } from './renderValue';
 
-jest.mock('app/plugins/panel/status-history/utils', () => ({
-  getDataLinks: jest.fn().mockReturnValue([]),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  getFieldDisplayLinks: jest.fn().mockReturnValue([]),
 }));
 
 describe('isHttpUrl', () => {
@@ -78,15 +79,15 @@ describe('getDisplayValuesAndLinks', () => {
   });
 
   it('deduplicates links with the same title and href across fields', () => {
-    const { getDataLinks } = jest.requireMock('app/plugins/panel/status-history/utils');
+    const { getFieldDisplayLinks } = jest.requireMock('@grafana/ui');
     const sharedLink = { title: 'Dashboard', href: 'https://grafana.com', target: '_blank' };
-    getDataLinks.mockReturnValue([sharedLink]);
+    getFieldDisplayLinks.mockReturnValue([sharedLink]);
 
     const data = arrayToDataFrame([{ a: 1, b: 2 }]);
     const result = getDisplayValuesAndLinks(data, 0);
     expect(result!.links).toHaveLength(1);
 
-    getDataLinks.mockReturnValue([]);
+    getFieldDisplayLinks.mockReturnValue([]);
   });
 });
 

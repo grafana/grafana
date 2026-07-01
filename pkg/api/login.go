@@ -246,6 +246,9 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
+	// Cap the request body up-front so any downstream consumer inherits the limit.
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
+
 	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req})
 	if err != nil {
 		tokenErr := &auth.CreateTokenErr{}

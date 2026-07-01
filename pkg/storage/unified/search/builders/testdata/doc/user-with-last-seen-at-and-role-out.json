@@ -7,6 +7,9 @@
   },
   "name": "with-last-seen-at-and-role",
   "rv": 1234,
+  "title": "with-last-seen-at-and-role",
+  "title_ngram": "with-last-seen-at-and-role",
+  "title_phrase": "with-last-seen-at-and-role",
   "fields": {
     "createdAt": 0,
     "disabled": false,

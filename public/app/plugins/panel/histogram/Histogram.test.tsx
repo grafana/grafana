@@ -217,15 +217,13 @@ describe('Histogram', () => {
 
         expect(screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container)).toBeInTheDocument();
         expect(screen.getByTestId(selectors.components.UPlotChart.container)).toBeInTheDocument();
-        expect(
-          screen.queryByTestId(selectors.components.Panels.Visualization.Histogram.legend)
-        ).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.VizLegend.legend)).not.toBeInTheDocument();
       });
 
       it('renders with combine: false', async () => {
         setUp(undefined, { combine: false });
 
-        const legend = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+        const legend = screen.getByTestId(selectors.components.VizLegend.legend);
         const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
         expect(container).toBeInTheDocument();
         expect(legend).toBeInTheDocument();
@@ -242,7 +240,7 @@ describe('Histogram', () => {
       it('renders with combine: true', async () => {
         setUp(undefined, { combine: true });
 
-        const legend = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.legend);
+        const legend = screen.getByTestId(selectors.components.VizLegend.legend);
         const container = screen.getByTestId(selectors.components.Panels.Visualization.Histogram.container);
         expect(container).toBeInTheDocument();
         expect(legend).toBeInTheDocument();

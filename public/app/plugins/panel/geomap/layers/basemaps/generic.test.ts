@@ -58,6 +58,8 @@ describe('XYZ tile layer', () => {
     expect(replaceMock).toHaveBeenCalledWith(rawUrl);
     expect(replaceMock).toHaveBeenCalledWith(rawAttr);
     expect(source.getUrls()).toContain(interpolatedUrl);
+    // attribution and url are normalized before use
+    expect(source.getAttributions()).toBeDefined();
   });
 
   describe('noRepeat functionality', () => {

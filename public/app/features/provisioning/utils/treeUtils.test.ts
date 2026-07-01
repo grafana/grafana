@@ -2,7 +2,15 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type TreeItem } from '../types';
 
-import { buildTree, filterTree, flattenTree, getItemType, getStatus, mergeFilesAndResources } from './treeUtils';
+import {
+  buildTree,
+  filterTree,
+  flattenTree,
+  getIconName,
+  getItemType,
+  getStatus,
+  mergeFilesAndResources,
+} from './treeUtils';
 
 // Mock data
 const mockFileDetails = {
@@ -29,6 +37,16 @@ const mockFolderResource: ResourceListItem = {
   hash: 'xyz789',
   folder: '',
   group: 'folder.grafana.app',
+};
+
+const mockPlaylistResource: ResourceListItem = {
+  path: 'my-playlist.json',
+  name: 'playlist-uid',
+  title: 'My Playlist',
+  resource: 'playlists',
+  hash: 'pl123',
+  folder: '',
+  group: 'playlist.grafana.app',
 };
 
 describe('mergeFilesAndResources', () => {
@@ -164,6 +182,12 @@ describe('getItemType', () => {
     expect(result).toBe('Folder');
   });
 
+  it('should return Playlist for playlist resources', () => {
+    const result = getItemType('my-playlist.json', mockPlaylistResource);
+
+    expect(result).toBe('Playlist');
+  });
+
   it('should return File for unsynced files regardless of extension', () => {
     const result = getItemType('some/path/file.json', undefined);
 
@@ -185,6 +209,21 @@ describe('getItemType', () => {
     const result = getItemType('some/path', unknownResource);
 
     expect(result).toBe('File');
+  });
+});
+
+describe('getIconName', () => {
+  it('should return the icon for a known resource-backed item type', () => {
+    expect(getIconName('Dashboard')).toBe('apps');
+    expect(getIconName('Folder')).toBe('folder');
+  });
+
+  it('should return the icon for a playlist item type', () => {
+    expect(getIconName('Playlist')).toBe('presentation-play');
+  });
+
+  it('should fall back to the file icon for the non-resource File type', () => {
+    expect(getIconName('File')).toBe('file-alt');
   });
 });
 
@@ -281,6 +320,20 @@ describe('buildTree', () => {
     expect(result[0].title).toBe('apple.json');
     expect(result[1].title).toBe('mango.json');
     expect(result[2].title).toBe('zebra.json');
+  });
+
+  it('should treat a nested item as a root when its parent folder is absent', () => {
+    // buildTree does not infer parent folders (mergeFilesAndResources does); given a nested
+    // path whose parent is not in the merged set, the node falls back to a root.
+    const mergedItems = [
+      { path: 'orphans/dashboard.json', file: { path: 'orphans/dashboard.json', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('orphans/dashboard.json');
+    expect(result[0].children).toHaveLength(0);
   });
 
   it('should handle root-level items', () => {
@@ -395,6 +448,36 @@ describe('buildTree', () => {
 
     const result = buildTree(mergedItems);
 
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should set synced status for a playlist when file and resource hashes match', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'pl123' },
+        resource: mockPlaylistResource, // mockPlaylistResource has hash: 'pl123'
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should set pending status for a playlist when file and resource hashes differ', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'different-hash' },
+        resource: mockPlaylistResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
     expect(result[0].status).toBe('pending');
   });
 
