@@ -61,6 +61,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
@@ -76,6 +77,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
