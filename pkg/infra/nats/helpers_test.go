@@ -6,11 +6,28 @@ import (
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// histogramSampleCount reads the number of observations recorded by a single
+// histogram (e.g. one label combination of a HistogramVec).
+func histogramSampleCount(t *testing.T, h prometheus.Observer) uint64 {
+	t.Helper()
+	collector, ok := h.(prometheus.Collector)
+	require.True(t, ok, "observer is not a collector")
+
+	ch := make(chan prometheus.Metric, 1)
+	collector.Collect(ch)
+	close(ch)
+
+	var m dto.Metric
+	require.NoError(t, (<-ch).Write(&m))
+	return m.GetHistogram().GetSampleCount()
+}
 
 // startTestServer starts an in-process embedded NATS server (no TCP listener),
 // exercising the same in-process path the embedded production mode uses. This
@@ -40,7 +57,7 @@ func newTestConfig(srv *natsserver.Server, cfg setting.NATSSettings) *Config {
 func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
+	c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(c.close)
 	return c
 }
@@ -48,9 +65,17 @@ func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	p := newPublisher(log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
+	p := newPublisher(log.NewNopLogger(), newPublisherMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(p.close)
 	return p
+}
+
+func newTestSubscriber(t *testing.T, srv *natsserver.Server) *SubscriberService {
+	t.Helper()
+	cfg := setting.NATSSettings{Enabled: true}
+	s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
+	t.Cleanup(s.close)
+	return s
 }
 
 func newTestServer(t *testing.T, nats setting.NATSSettings) (*Server, *Config) {

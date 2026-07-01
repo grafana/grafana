@@ -88,9 +88,10 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
+	repoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
-		repoInformer.Lister(),
+		repoGetter,
 		repoFactory,
 		connectionFactory,
 		resourceLister,
@@ -105,6 +106,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
+		controller.NewRepositoryQuotaChecker(repoGetter),
 		repository.NewIncrementalSyncPolicy(
 			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),

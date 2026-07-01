@@ -3083,7 +3083,8 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
+      "namespace-multiple-datasources": "Multiple data sources",
+      "namespace-search-incomplete": "Due to a large number of groups, search might not be complete in external data sources.",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -4922,6 +4923,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4936,6 +4942,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
@@ -10651,6 +10658,7 @@
       "starred-active": "Starred dashboards"
     },
     "firing-alerts-card": {
+      "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
@@ -13259,6 +13267,10 @@
       "url-description": "The GitHub repository URL",
       "url-required": "Repository URL is required"
     },
+    "github-enterprise": {
+      "server-url-description": "The custom server URL where your GitHub Enterprise is hosted",
+      "server-url-label": "Custom server URL"
+    },
     "gitlab": {
       "branch-required": "Branch is required",
       "permissions": {
@@ -13615,6 +13627,9 @@
       "bitbucket-tooltip": "Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
+      "github-enterprise": "GitHub Enterprise",
+      "github-enterprise-description": "Connect to GitHub Enterprise Server or GitHub Enterprise Cloud repositories",
+      "github-enterprise-tooltip": "Enhanced GitHub integration for self-hosted GitHub Enterprise Server or GitHub Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
@@ -13835,8 +13850,6 @@
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
       "github-app-select-connection": "Select a GitHub App connection",
-      "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
-      "github-enterprise-alert-title": "GitHub Enterprise Server",
       "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
@@ -14477,6 +14490,9 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
+    },
+    "description-tooltip": {
+      "label": "Description"
     },
     "generate-columns": {
       "score": "Score"

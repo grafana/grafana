@@ -17,8 +17,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -42,9 +40,8 @@ type ConnectionStatusPatcher interface {
 
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
-	client     client.ProvisioningV0alpha1Interface
-	connLister listers.ConnectionLister
-	logger     logging.Logger
+	conns  ConnectionGetter
+	logger logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
 	healthChecker     ConnectionHealthCheckerInterface
@@ -61,8 +58,7 @@ type ConnectionController struct {
 
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
-	provisioningClient client.ProvisioningV0alpha1Interface,
-	connLister listers.ConnectionLister,
+	conns ConnectionGetter,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
@@ -71,8 +67,7 @@ func NewConnectionController(
 	registry prometheus.Registerer,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		client:     provisioningClient,
-		connLister: connLister,
+		conns: conns,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
@@ -207,10 +202,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	conn, err := cc.connLister.Connections(namespace).Get(name)
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the ConnectionGetter's concern, not the controller's.
+	conn, err := cc.conns.Get(namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found in cache")
+		return errors.New("connection not found")
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err
