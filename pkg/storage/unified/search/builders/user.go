@@ -4,12 +4,10 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // iamManifests is the slice the IAM builders pass to the standard document
@@ -34,14 +32,7 @@ var UserSortableExtraFields = []string{
 	USER_LAST_SEEN_AT,
 }
 
-// UserTableColumnDefinitions exposes column-defs by name for wire-API
-// consumers (the IAM legacy SQL backend in user/legacy_search.go).
-// Derived from UserSearchFields via tableColumnsByName. UniqueValues was
-// set on the historical hand-written email/login entries but has no
-// production consumer and is not preserved.
-var UserTableColumnDefinitions = tableColumnsByName(UserSearchFields)
-
-// UserSearchFields are read from the generated IAM manifest (declared in
+// userSearchFields are read from the generated IAM manifest (declared in
 // apps/iam/kinds/user.cue), plus the createdAt field appended below.
 //
 // lastSeenAt (int64) and disabled (boolean) declare the filter capability to
@@ -52,7 +43,7 @@ var UserTableColumnDefinitions = tableColumnsByName(UserSearchFields)
 // would not match a numeric-indexed term yet. No in-tree client filters by
 // lastSeenAt or disabled today, so this is a known gap rather than a rollout
 // concern.
-var UserSearchFields = slices.Concat(
+var userSearchFields = slices.Concat(
 	resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource()),
 	[]resource.SearchFieldDefinition{
 		// createdAt reads from the standard document's Created value rather than a
@@ -63,34 +54,13 @@ var UserSearchFields = slices.Concat(
 	},
 )
 
+// UserTableColumnDefinitions exposes column-defs by name for wire-API
+// consumers (the IAM legacy SQL backend in user/legacy_search.go).
+// Derived from userSearchFields via tableColumnsByName. UniqueValues was
+// set on the historical hand-written email/login entries but has no
+// production consumer and is not preserved.
+var UserTableColumnDefinitions = tableColumnsByName(userSearchFields)
+
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
-	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(UserTableColumnDefinitions))
-	for _, v := range UserTableColumnDefinitions {
-		values = append(values, v)
-	}
-	fields, err := resource.NewSearchableDocumentFields(values)
-	if err != nil {
-		return resource.DocumentBuilderInfo{}, err
-	}
-
-	gvr := iamv0.UserResourceInfo.GroupVersionResource()
-	provider := resource.NewMapProvider(
-		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
-			gvr: UserSearchFields,
-		},
-		// Documents stored without an explicit apiVersion fall back to the
-		// served version so extraction still happens for legacy payloads.
-		map[schema.GroupResource]string{
-			gvr.GroupResource(): gvr.Version,
-		},
-	)
-
-	gr := iamv0.UserResourceInfo.GroupResource()
-	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Fields:               fields,
-		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
-		SearchFieldsProvider: provider,
-	}, nil
+	return iamBuilder(iamv0.UserResourceInfo, userSearchFields)
 }
