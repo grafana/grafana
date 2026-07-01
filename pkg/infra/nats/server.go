@@ -16,9 +16,10 @@ import (
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
@@ -38,16 +39,26 @@ type Server struct {
 	cfg     setting.NATSSettings
 	log     log.Logger
 	metrics *serverMetrics
+	kv      kv.KV
 
-	mu     sync.RWMutex
-	server *natsserver.Server
-	opts   *natsserver.Options
+	mu        sync.RWMutex
+	server    *natsserver.Server
+	opts      *natsserver.Options
+	discovery *discovery
 }
 
-func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Server, error) {
+func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
 	s := &Server{
 		cfg: cfg.NATS,
 		log: log.New("infra.nats.server"),
+	}
+
+	if !s.IsDisabled() && sqlStore != nil {
+		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+		if err != nil {
+			return nil, fmt.Errorf("create nats discovery kv: %w", err)
+		}
+		s.kv = sqlKV
 	}
 
 	// Only register the embedded-server metrics when this instance actually runs
@@ -109,13 +120,29 @@ func (s *Server) dialOptions() []natsclient.Option {
 }
 
 func (s *Server) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d == nil {
+		<-ctx.Done()
+		return nil
+	}
+	return d.run(ctx)
 }
 
 func (s *Server) stopping(_ error) error {
 	if s.IsDisabled() {
 		return nil
+	}
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d != nil {
+		// running's ctx is already cancelled by now, so deregister on a fresh
+		// bounded context. Best-effort: the TTL prune is the backstop.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		d.deregister(ctx)
 	}
 	s.shutdown()
 	return nil
@@ -157,6 +184,21 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
+	if s.kv != nil {
+		s.discovery = newDiscovery(
+			s.log,
+			server,
+			newKVPeerStore(s.kv, opts.Cluster.Name),
+			peer{ServerName: opts.ServerName, RouteURL: routeURL},
+			discoveryOptions{
+				baseOpts: opts,
+				interval: s.cfg.DiscoveryInterval,
+				ttl:      s.cfg.DiscoveryTTL,
+			},
+		)
+	} else {
+		s.log.Warn("nats clustering disabled: no KV backend (enable_sqlkv_backend); running single-node")
+	}
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)

@@ -2,6 +2,7 @@ package setting
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,6 +31,13 @@ type NATSSettings struct {
 	ClientPort       int
 	ClusterPort      int
 	AdvertiseAddress string
+
+	// DiscoveryInterval is how often an embedded node refreshes its registry
+	// heartbeat and reconciles cluster routes. DiscoveryTTL is how long a peer is
+	// trusted after its last heartbeat before its route is dropped and row pruned;
+	// keep it a comfortable multiple of DiscoveryInterval.
+	DiscoveryInterval time.Duration
+	DiscoveryTTL      time.Duration
 
 	TLS  NATSTLSSettings
 	Auth NATSAuthSettings
@@ -73,6 +81,9 @@ func readNATSSettings(cfg *Cfg) error {
 		ClientPort:       section.Key("client_port").MustInt(4222),
 		ClusterPort:      section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress: section.Key("advertise_address").MustString(""),
+
+		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
+		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),
