@@ -38,18 +38,9 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // that is never announced, is reconciled on the next list.
 type ListFunc func(ctx context.Context) ([]runtime.Object, error)
 
-const (
-	// queueGroup makes every replica's subscription join one NATS queue group, so
-	// the broker round-robins each notification to a single replica instead of
-	// broadcasting to all. A replica therefore sees only a subset of the live
-	// events, which is why the periodic re-list — not the live stream — is what
-	// keeps every replica reconciled.
-	queueGroup = "provisioning-informer"
-
-	// defaultResync is the fallback re-list cadence when a caller passes a
-	// non-positive interval.
-	defaultResync = 5 * time.Minute
-)
+// defaultResync is the fallback re-list cadence when a caller passes a
+// non-positive interval.
+const defaultResync = 5 * time.Minute
 
 // Informer drives a controller's informer event handlers from NATS instead of an
 // apiserver-backed SharedInformer. It keeps no live per-object cache: on each
@@ -75,6 +66,7 @@ type Informer struct {
 	gvr        schema.GroupVersionResource
 	namespace  string
 	resync     time.Duration
+	queueGroup string
 	newObject  ObjectFunc
 	list       ListFunc
 	log        log.Logger
@@ -85,13 +77,21 @@ type Informer struct {
 	synced   atomic.Bool
 }
 
-// NewInformer builds a Informer for one resource kind. namespace scopes the NATS
+// NewInformer builds an Informer for one resource kind. namespace scopes the NATS
 // subscription (empty watches every namespace); list reads that kind from the
-// API. newObject builds the minimal object delivered on a live notification; a
-// nil newObject disables live notifications, leaving only the periodic re-list.
-// resync is how often the full set is re-listed; a non-positive value falls back
-// to defaultResync.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, newObject ObjectFunc, list ListFunc) *Informer {
+// API. resync is how often the full set is re-listed; a non-positive value falls
+// back to defaultResync.
+//
+// queueGroup is the NATS queue group the subscription joins: the broker
+// round-robins each notification to a single replica in the group instead of
+// broadcasting to all, so a replica sees only a subset of the live events (which
+// is why the periodic re-list, not the live stream, is what keeps every replica
+// reconciled). An empty queueGroup subscribes without one, so every replica
+// receives every notification.
+//
+// newObject builds the minimal object delivered on a live notification; a nil
+// newObject disables live notifications, leaving only the periodic re-list.
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, newObject ObjectFunc, list ListFunc) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
@@ -100,6 +100,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		gvr:        gvr,
 		namespace:  namespace,
 		resync:     resync,
+		queueGroup: queueGroup,
 		newObject:  newObject,
 		list:       list,
 		log:        log.New("provisioning.informer.nats"),
@@ -129,7 +130,7 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // any write-throughs since (see Update/Delete) — meant for counts and other
 // reconcile-non-critical reads, not for fetching the object a reconcile acts on.
 // It returns nil until the initial list has completed.
-func (n *Informer) List() []runtime.Object {
+func (n *Informer) List(_ context.Context) []runtime.Object {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	out := make([]runtime.Object, 0, len(n.store))
@@ -145,7 +146,7 @@ func (n *Informer) List() []runtime.Object {
 // staleness-tolerant List reflects the change without waiting for the next
 // resync. A re-list overwrites the store wholesale, so writes are authoritative
 // only until then.
-func (n *Informer) Update(obj runtime.Object) {
+func (n *Informer) Update(_ context.Context, obj runtime.Object) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
 		return
@@ -161,7 +162,7 @@ func (n *Informer) Update(obj runtime.Object) {
 // Delete removes an object from the store, the write-through counterpart to
 // Update for a caller that has just observed the object is gone (e.g. a
 // reconcile GET returning NotFound).
-func (n *Informer) Delete(namespace, name string) {
+func (n *Informer) Delete(_ context.Context, namespace, name string) {
 	key := name
 	if namespace != "" {
 		key = namespace + "/" + name
@@ -172,24 +173,18 @@ func (n *Informer) Delete(namespace, name string) {
 }
 
 // Run subscribes to the resource's NATS subject (unless live notifications are
-// disabled) and delivers events to the registered handlers until stopCh is
-// closed. It performs the initial list (marking HasSynced), then serves live
-// notifications and a periodic re-list. It blocks until stopCh is closed, so
+// disabled) and delivers events to the registered handlers until ctx is
+// cancelled. It performs the initial list (marking HasSynced), then serves live
+// notifications and a periodic re-list. It blocks until ctx is cancelled, so
 // call it in its own goroutine after registering handlers.
-func (n *Informer) Run(stopCh <-chan struct{}) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go func() {
-		select {
-		case <-stopCh:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-
+func (n *Informer) Run(ctx context.Context) {
 	if n.newObject != nil {
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
-		sub, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), nats.WithQueueGroup(queueGroup))
+		opts := []nats.SubscribeOption{}
+		if n.queueGroup != "" {
+			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
+		}
+		sub, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 		if err != nil {
 			n.log.Error("nats informer: subscribe failed", "subject", subject, "error", err)
 			return

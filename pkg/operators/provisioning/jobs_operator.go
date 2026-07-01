@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	provisioninginformers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -42,8 +44,6 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 
 	// Jobs informer and controller (resync ~60s like in register.go)
 	natsWatch := controllerCfg.natsWatch()
-	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
@@ -59,10 +59,10 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add history job event handler: %w", err)
 			}
-			startHistoryInformers = func() { go historyNatsInformer.Run(ctx.Done()) }
+			startHistoryInformers = func() { go historyNatsInformer.Run(ctx) }
 		} else {
 			// History jobs informer and controller (separate factory with resync == expiration)
-			historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
+			historyInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.historyExpiration)
 			historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 			if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add history job event handler: %w", err)
@@ -91,15 +91,19 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 
 	var wg sync.WaitGroup
 
-	// Under the NATS watch a NATS-backed informer drives the job handler from direct API
-	// reads; otherwise the apiserver-backed informer does. When job processing is
-	// disabled there is no job handler, so under NATS there is nothing to start or
-	// sync (a bare informer would only add an apiserver watch we are avoiding).
-	jobHasSynced := jobInformer.Informer().HasSynced
-	startJobInformers := func() { go jobInformerFactory.Start(ctx.Done()) }
-	if natsWatch {
-		jobHasSynced = func() bool { return true }
-		startJobInformers = func() {}
+	// Under the NATS watch a NATS-backed informer drives the job handler from
+	// direct API reads (wired below when job processing is enabled); otherwise the
+	// apiserver-backed informer does, and is the only case that creates one. When
+	// job processing is disabled under NATS there is no job handler, so nothing to
+	// start or sync.
+	jobHasSynced := func() bool { return true }
+	startJobInformers := func() {}
+	var jobInformer provisioninginformers.JobInformer
+	if !natsWatch {
+		jobInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+		jobInformer = jobInformerFactory.Provisioning().V0alpha1().Jobs()
+		jobHasSynced = jobInformer.Informer().HasSynced
+		startJobInformers = func() { go jobInformerFactory.Start(ctx.Done()) }
 	}
 
 	if controllerCfg.jobProcessingEnabled {
@@ -110,7 +114,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 				return fmt.Errorf("failed to add job event handler: %w", err)
 			}
 			jobHasSynced = jobNatsInformer.HasSynced
-			startJobInformers = func() { go jobNatsInformer.Run(ctx.Done()) }
+			startJobInformers = func() { go jobNatsInformer.Run(ctx) }
 		} else {
 			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add job event handler: %w", err)

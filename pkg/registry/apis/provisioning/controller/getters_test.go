@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 )
 
-// fakeStore is a minimal RepositorySnapshotStore for asserting the getter's
+// fakeStore is a minimal RepositoryCache for asserting the getter's
 // write-through behaviour.
 type fakeStore struct {
 	objs    map[string]runtime.Object
@@ -28,7 +29,7 @@ func newFakeStore(objs ...*provisioning.Repository) *fakeStore {
 	return s
 }
 
-func (s *fakeStore) List() []runtime.Object {
+func (s *fakeStore) List(_ context.Context) []runtime.Object {
 	out := make([]runtime.Object, 0, len(s.objs))
 	for _, o := range s.objs {
 		out = append(out, o)
@@ -36,12 +37,12 @@ func (s *fakeStore) List() []runtime.Object {
 	return out
 }
 
-func (s *fakeStore) Update(obj runtime.Object) {
+func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
 	repo := obj.(*provisioning.Repository)
 	s.objs[repo.Namespace+"/"+repo.Name] = repo
 }
 
-func (s *fakeStore) Delete(namespace, name string) {
+func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
 	key := namespace + "/" + name
 	delete(s.objs, key)
 	s.deleted = append(s.deleted, key)
@@ -54,10 +55,10 @@ func repo(namespace, name string) *provisioning.Repository {
 // A successful reconcile Get returns the fresh object and writes it back into the
 // store, so a later List (the quota count) reflects it without waiting for a
 // re-list.
-func TestSnapshotListRepositoryGetter_GetWritesThrough(t *testing.T) {
+func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	client := fake.NewClientset(repo("ns", "fresh"))
 	store := newFakeStore()
-	g := NewSnapshotListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	got, err := g.Get("ns", "fresh")
 	require.NoError(t, err)
@@ -71,10 +72,10 @@ func TestSnapshotListRepositoryGetter_GetWritesThrough(t *testing.T) {
 
 // A reconcile Get for a vanished object returns NotFound and removes it from the
 // store, so the count drops it without waiting for a re-list.
-func TestSnapshotListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
+func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
-	g := NewSnapshotListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	_, err := g.Get("ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
@@ -86,9 +87,9 @@ func TestSnapshotListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 }
 
 // List reads only the requested namespace out of the store.
-func TestSnapshotListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
+func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
 	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewSnapshotListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
 
 	list, err := g.List("ns-a")
 	require.NoError(t, err)

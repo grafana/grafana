@@ -70,47 +70,48 @@ func (g cachedConnectionGetter) Get(namespace, name string) (*provisioning.Conne
 // read. Each call uses context.Background() because the getter seam carries no
 // context.
 
-// RepositorySnapshotStore is the NATS informer's snapshot the getter reads the
+// RepositoryCache is the NATS informer's snapshot the getter reads the
 // quota list from and writes fresh reconcile reads back into. It is a
 // staleness-tolerant store — refreshed wholesale on each re-list — not a source
 // of truth for the reconcile read.
-type RepositorySnapshotStore interface {
-	List() []runtime.Object
-	Update(obj runtime.Object)
-	Delete(namespace, name string)
+type RepositoryCache interface {
+	List(ctx context.Context) []runtime.Object
+	Update(ctx context.Context, obj runtime.Object)
+	Delete(ctx context.Context, namespace, name string)
 }
 
-// NewSnapshotListRepositoryGetter backs Get with the API client — fresh, for the
+// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh, for the
 // reconcile — and List with the NATS informer's snapshot. The quota count is the
 // only List caller and tolerates the snapshot's staleness (as stale as the
 // resync interval), so reading it avoids an API LIST on every quota check. Each
 // reconcile Get is written back into the store (or removed on NotFound), keeping
 // the count warm between re-lists rather than only as fresh as the last resync.
-func NewSnapshotListRepositoryGetter(c client.ProvisioningV0alpha1Interface, store RepositorySnapshotStore) RepositoryGetter {
-	return snapshotListRepositoryGetter{client: c, store: store}
+func NewClientGetCachedListRepositoryGetter(c client.ProvisioningV0alpha1Interface, store RepositoryCache) RepositoryGetter {
+	return clientGetCachedListRepositoryGetter{client: c, store: store}
 }
 
-type snapshotListRepositoryGetter struct {
+type clientGetCachedListRepositoryGetter struct {
 	client client.ProvisioningV0alpha1Interface
-	store  RepositorySnapshotStore
+	store  RepositoryCache
 }
 
-func (g snapshotListRepositoryGetter) Get(namespace, name string) (*provisioning.Repository, error) {
-	repo, err := g.client.Repositories(namespace).Get(context.Background(), name, metav1.GetOptions{})
+func (g clientGetCachedListRepositoryGetter) Get(namespace, name string) (*provisioning.Repository, error) {
+	ctx := context.Background()
+	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		g.store.Delete(namespace, name)
+		g.store.Delete(ctx, namespace, name)
 		return nil, err
 	}
 	if err != nil {
 		return nil, err
 	}
-	g.store.Update(repo)
+	g.store.Update(ctx, repo)
 	return repo, nil
 }
 
-func (g snapshotListRepositoryGetter) List(namespace string) ([]*provisioning.Repository, error) {
+func (g clientGetCachedListRepositoryGetter) List(namespace string) ([]*provisioning.Repository, error) {
 	var out []*provisioning.Repository
-	for _, obj := range g.store.List() {
+	for _, obj := range g.store.List(context.Background()) {
 		repo, ok := obj.(*provisioning.Repository)
 		if !ok || repo.Namespace != namespace {
 			continue

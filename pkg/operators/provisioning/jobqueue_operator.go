@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -41,13 +42,12 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	}
 
 	// Jobs informer and controller for insert notifications
-	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController := controller.NewJobController()
 
-	// Under the NATS watch a NATS-backed informer drives the handler from direct API reads;
-	// otherwise the apiserver-backed informer does. startJobInformers launches the
-	// chosen source and jobHasSynced reports its initial sync.
+	// Under the NATS watch a NATS-backed informer drives the handler from direct
+	// API reads and no apiserver informer is created; otherwise the apiserver-backed
+	// informer does. startJobInformers launches the chosen source and jobHasSynced
+	// reports its initial sync.
 	var jobHasSynced cache.InformerSynced
 	var startJobInformers func()
 	if controllerCfg.natsWatch() {
@@ -56,8 +56,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			return fmt.Errorf("failed to add job event handler: %w", err)
 		}
 		jobHasSynced = jobNatsInformer.HasSynced
-		startJobInformers = func() { go jobNatsInformer.Run(ctx.Done()) }
+		startJobInformers = func() { go jobNatsInformer.Run(ctx) }
 	} else {
+		jobInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+		jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 		if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add job event handler: %w", err)
 		}

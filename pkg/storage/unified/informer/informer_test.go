@@ -19,7 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-const testNamespace = "default"
+const (
+	testNamespace  = "default"
+	testQueueGroup = "test-informer"
+)
 
 var testGVR = schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
 
@@ -145,12 +148,12 @@ func subject() string {
 func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) *Informer {
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, newObject, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObject, list)
 	require.NoError(t, n.AddEventHandler(handler))
 
-	stop := make(chan struct{})
-	go n.Run(stop)
-	t.Cleanup(func() { close(stop) })
+	ctx, cancel := context.WithCancel(context.Background())
+	go n.Run(ctx)
+	t.Cleanup(cancel)
 
 	if newObject != nil {
 		sub.waitForSubscription(t, subject())
@@ -232,7 +235,7 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 		}
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, list)
 	require.NoError(t, n.AddEventHandler(handler))
 
 	n.relist(context.Background(), true)  // initial: adds a, b; no deletes
@@ -243,6 +246,6 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 }
 
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, nil)
 	require.Error(t, n.AddEventHandler(nil))
 }
