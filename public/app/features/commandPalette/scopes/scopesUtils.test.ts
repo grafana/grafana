@@ -77,6 +77,7 @@ describe('mapScopeNodeToAction', () => {
       keywords: 'Scope 1 scope1',
       priority: SCOPES_PRIORITY,
       section: 'Scopes',
+      sectionId: 'scopes',
       subtitle: 'Parent Scope',
       perform: expect.any(Function),
     });

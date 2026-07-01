@@ -2696,6 +2696,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.vectorSearchCmdk",
+        "resourceVersion": "1782378994121",
+        "creationTimestamp": "2026-06-25T09:16:34Z"
+      },
+      "spec": {
+        "description": "Enables semantic (vector) dashboard search in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.viewPanelPane",
         "resourceVersion": "1778761195995",
         "creationTimestamp": "2026-05-14T12:19:55Z"
@@ -2868,6 +2882,20 @@
         "description": "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "heatmapNegativeLogBuckets",
+        "resourceVersion": "1780479590437",
+        "creationTimestamp": "2026-06-03T09:39:50Z"
+      },
+      "spec": {
+        "description": "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

@@ -2229,6 +2229,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "heatmapNegativeLogBuckets",
+			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
@@ -3076,7 +3084,15 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.vectorSearchCmdk",
+			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "splunk.useLegacyResultsApi",
