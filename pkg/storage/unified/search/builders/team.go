@@ -10,6 +10,9 @@ const (
 	TEAM_SEARCH_PROVISIONED  = "provisioned"
 	TEAM_SEARCH_EXTERNAL_UID = "externalUID"
 	TEAM_SEARCH_MEMBERS      = "members"
+	// TEAM_SEARCH_EXTERNAL_GROUPS names the team index column that the
+	// enterprise external-group-mapping search reads.
+	TEAM_SEARCH_EXTERNAL_GROUPS = "externalGroups"
 )
 
 // TeamSortableExtraFields are the additional fields that can be used for sorting team search results.
