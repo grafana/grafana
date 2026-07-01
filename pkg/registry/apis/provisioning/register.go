@@ -388,7 +388,6 @@ func RegisterAPIService(
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(v1beta1Builder)
 
-	apiregistration.RegisterAPI(v1beta1Builder)
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
