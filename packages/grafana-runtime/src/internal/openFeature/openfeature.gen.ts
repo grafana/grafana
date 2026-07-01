@@ -81,7 +81,7 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
-  /** Enables app plugin backend calls from new apis */
+  /** Enables app plugin backend calls from new apis (frontend + legacy-route redirect) */
   PluginsUseMTPluginBackend: "plugins.useMTPluginBackend",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
@@ -494,7 +494,7 @@ export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluation
 };
 
 /**
- * Enables app plugin backend calls from new apis
+ * Enables app plugin backend calls from new apis (frontend + legacy-route redirect)
  *
  * **Details:**
  * - flag key: `plugins.useMTPluginBackend`

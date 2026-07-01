@@ -20,7 +20,7 @@ const (
 // callK8sAppPluginResourceHandler returns a handler that redirects
 // /api/plugins/:pluginId/resources[/*] to
 // /apis/<pluginId>/v0alpha1/namespaces/<ns>/app/instance/resources[/*]
-// when plugins.useMTPluginBackendRedirect is enabled.
+// when plugins.useMTPluginBackend is enabled.
 func (hs *HTTPServer) callK8sAppPluginResourceHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if !hs.appPluginRedirectEnabled(c) {
@@ -52,7 +52,7 @@ func (hs *HTTPServer) callK8sAppPluginResourceHandler() web.Handler {
 // callK8sAppPluginHealthHandler returns a handler that redirects
 // GET /api/plugins/:pluginId/health to
 // /apis/<pluginId>/v0alpha1/namespaces/<ns>/app/instance/health
-// when plugins.useMTPluginBackendRedirect is enabled.
+// when plugins.useMTPluginBackend is enabled.
 func (hs *HTTPServer) callK8sAppPluginHealthHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if !hs.appPluginRedirectEnabled(c) {
@@ -77,7 +77,7 @@ func (hs *HTTPServer) callK8sAppPluginHealthHandler() web.Handler {
 // callK8sAppPluginProxyHandler returns a handler that redirects
 // /api/plugin-proxy/:pluginId[/*] to
 // /apis/<pluginId>/v0alpha1/namespaces/<ns>/app/instance/proxy[/*]
-// when plugins.useMTPluginBackendRedirect is enabled.
+// when plugins.useMTPluginBackend is enabled.
 func (hs *HTTPServer) callK8sAppPluginProxyHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if !hs.appPluginRedirectEnabled(c) {
@@ -109,7 +109,7 @@ func (hs *HTTPServer) callK8sAppPluginProxyHandler() web.Handler {
 func (hs *HTTPServer) appPluginRedirectEnabled(c *contextmodel.ReqContext) bool {
 	enabled, _ := openfeature.NewDefaultClient().BooleanValue(
 		c.Req.Context(),
-		featuremgmt.FlagPluginsUseMTPluginBackendRedirect,
+		featuremgmt.FlagPluginsUseMTPluginBackend,
 		false,
 		openfeature.TransactionContext(c.Req.Context()),
 	)

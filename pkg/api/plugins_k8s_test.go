@@ -66,7 +66,7 @@ func TestCallK8sAppPluginResourceHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackendRedirect, true)
+			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackend, true)
 
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
@@ -101,7 +101,7 @@ func TestCallK8sAppPluginResourceHandler_PreservesHTTPMethod(t *testing.T) {
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackendRedirect, true)
+			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackend, true)
 
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
@@ -142,7 +142,7 @@ func TestCallK8sAppPluginHealthHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackendRedirect, true)
+			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackend, true)
 
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
@@ -188,7 +188,7 @@ func TestCallK8sAppPluginProxyHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackendRedirect, true)
+			setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackend, true)
 
 			configProvider := &mockDirectRestConfigProvider{
 				host:      "http://localhost",
@@ -212,7 +212,7 @@ func TestCallK8sAppPluginProxyHandler(t *testing.T) {
 }
 
 func TestCallK8sAppPluginHandlers_FlagDisabled(t *testing.T) {
-	setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackendRedirect, false)
+	setupOpenFeatureFlag(t, featuremgmt.FlagPluginsUseMTPluginBackend, false)
 
 	configProvider := &mockDirectRestConfigProvider{
 		host:      "http://localhost",
