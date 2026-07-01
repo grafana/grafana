@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type DraggableProvided } from '@hello-pangea/dnd';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
@@ -34,6 +35,8 @@ interface Props {
   ancestorHidden?: boolean;
   /** This item is a pinned row rendered at the top of the menu */
   pinned?: boolean;
+  /** When set (top-level pinned rows in edit mode), makes the row draggable and shows a drag handle */
+  draggableProvided?: DraggableProvided;
   /** Customisation is enabled — gates the new pin/hide behaviour; off restores the legacy bookmarks UI */
   canCustomise?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
@@ -57,6 +60,7 @@ export function MegaMenuItem({
   onToggleHidden,
   ancestorHidden,
   pinned,
+  draggableProvided,
   canCustomise,
   loadingChildren,
   childrenLoadError,
@@ -82,7 +86,13 @@ export function MegaMenuItem({
   const showExpandButton =
     level < MAX_DEPTH && Boolean(hasRenderableChildren || link.emptyMessage || loadingChildren || childrenLoadError);
   const childrenVisible = showExpandButton && sectionExpanded;
-  const item = useRef<HTMLLIElement>(null);
+  const item = useRef<HTMLLIElement | null>(null);
+
+  // Keep the local ref (used for scroll-into-view) while also handing the node to the draggable.
+  const setItemRef = (node: HTMLLIElement | null) => {
+    item.current = node;
+    draggableProvided?.innerRef(node);
+  };
 
   const styles = useStyles2(getStyles);
 
@@ -132,8 +142,19 @@ export function MegaMenuItem({
   const showPin = !canCustomise || (isPinnableItem && isPinnableRow);
 
   return (
-    <li ref={item} className={styles.listItem}>
+    <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
       <div className={styles.menuItem}>
+        {draggableProvided && (
+          <div
+            className={styles.dragHandle}
+            {...draggableProvided.dragHandleProps}
+            aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
+              itemName: link.text,
+            })}
+          >
+            <Icon name="draggabledots" size="lg" />
+          </div>
+        )}
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -151,7 +172,8 @@ export function MegaMenuItem({
             itemName={link.text}
             canCustomise={canCustomise}
             editMode={editMode}
-            isHideable={isHideable?.(link)}
+            // Pinned rows offer unpin (the pin control), never the hide/eye control.
+            isHideable={pinned ? false : isHideable?.(link)}
             isHidden={effectivelyHidden}
             onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
           >
@@ -205,7 +227,7 @@ export function MegaMenuItem({
                   level={level + 1}
                   onPin={onPin}
                   isPinned={isPinned}
-                  editMode={pinned ? false : editMode}
+                  editMode={editMode}
                   isHideable={isHideable}
                   isHidden={isHidden}
                   onToggleHidden={onToggleHidden}
@@ -255,6 +277,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({
     flex: 1,
     maxWidth: '100%',
+  }),
+  dragHandle: css({
+    alignItems: 'center',
+    color: theme.colors.text.secondary,
+    cursor: 'grab',
+    display: 'flex',
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
   }),
   menuItem: css({
     display: 'flex',

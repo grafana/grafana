@@ -6,6 +6,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
+  customPatchUserPreferencesHandler,
   getFolderFixtures,
   mockUserPreferences,
   setMockStarredDashboards,
@@ -370,20 +371,24 @@ describe('MegaMenu', () => {
       it('pins a whole section by its own url and shows its children', async () => {
         const { user } = renderMegaMenu();
 
+        // Pinning is only available while customising
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         await screen.findByRole('link', { name: 'Dashboards' });
-        // The pin control in the normal nav is hover-only (visibility:hidden), so select it by label
+        // Several icon buttons per row, so select the pin control by its label
         const pinButton = screen
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Pin Dashboards');
         await user.click(pinButton!);
 
-        // The section is pinned by its own url (not by enumerating children)
-        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
-        // ...and shows up in the pinned area with its children, and no longer in the normal nav
+        // Staged in the pinned-area preview with its children, and no longer in the normal nav
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
         expect(pinned.getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
         expect(screen.getAllByRole('link', { name: 'Dashboards' })).toHaveLength(1);
+
+        // Persisted on Done — by the section's own url, not by enumerating children
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
       });
 
       it('keeps a section with children pinned by its own url (e.g. Starred)', async () => {
@@ -401,8 +406,9 @@ describe('MegaMenu', () => {
       });
 
       it('offers an unpin control on the section and every pinned child', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
 
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         const labels = pinned.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(labels).toContain('Unpin Dashboards');
@@ -413,11 +419,13 @@ describe('MegaMenu', () => {
       it('unpinning the top-level section removes the whole group', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
 
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         const sectionUnpin = pinned
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Unpin Dashboards');
         await user.click(sectionUnpin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
         await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
@@ -426,11 +434,13 @@ describe('MegaMenu', () => {
       it('unpinning one child of a whole-pinned section expands to the remaining siblings', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
 
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         const childUnpin = pinned
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
         await user.click(childUnpin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
         // The section is replaced by its remaining (still-pinned) sibling
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/snapshots']));
@@ -439,12 +449,14 @@ describe('MegaMenu', () => {
       it('unpins from the pinned area and restores the item', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
 
-        // The unpin control is hover-only (visibility:hidden), so select it by label
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        // Several icon buttons per row, so select the unpin control by its label
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         const unpinButton = pinned
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Unpin Settings');
         await user.click(unpinButton!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
         await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
@@ -510,6 +522,8 @@ describe('MegaMenu', () => {
       it('does not offer a pin control on individual starred items, only the Starred section', async () => {
         const { user } = renderMegaMenu();
 
+        // Pin controls only appear while customising
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
         expect(await screen.findByRole('link', { name: STARRED_DASHBOARD.name })).toBeInTheDocument();
 
@@ -585,25 +599,95 @@ describe('MegaMenu', () => {
       it('resets the collapse when all items are unpinned, so re-pinning starts expanded', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/explore'] });
 
-        // Collapse the rest
+        // Collapse the rest (outside edit mode)
         await user.click(await screen.findByRole('button', { name: 'Hide unpinned items' }));
         expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
 
-        // Unpin everything
+        // Unpin everything (pinning is edit-mode only; staged, persisted on Done)
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         const unpin = within(screen.getByRole('list', { name: 'Pinned' }))
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Unpin Explore');
         await user.click(unpin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
         await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
 
         // Re-pin — the menu must not still be collapsed
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
         const rePin = screen
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Pin Explore');
         await user.click(rePin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
         expect(await screen.findByRole('list', { name: 'Pinned' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+      });
+    });
+
+    describe('edit-mode-only controls', () => {
+      it('reveals the pin control, feedback button and only-pinned toggle only while editing', async () => {
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/explore'] });
+
+        // Outside edit mode: no pin/unpin controls, no feedback, no only-pinned toggle
+        await screen.findByRole('list', { name: 'Pinned' });
+        const beforeLabels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(beforeLabels.some((label) => label?.startsWith('Pin ') || label?.startsWith('Unpin '))).toBe(false);
+        expect(screen.queryByRole('button', { name: 'Feedback' })).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Only show pinned items')).not.toBeInTheDocument();
+
+        // Entering edit mode reveals them all
+        await user.click(screen.getByRole('button', { name: 'Customise menu' }));
+        expect(screen.getByRole('button', { name: 'Feedback' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Only show pinned items')).toBeInTheDocument();
+        const afterLabels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(afterLabels).toContain('Unpin Explore');
+      });
+
+      it('"only show pinned items" hides the unpinned items, keeping the pinned block', async () => {
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/explore'] });
+
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+
+        // Turn it on — the unpinned items drop away, the pinned block stays
+        await user.click(screen.getByLabelText('Only show pinned items'));
+        expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
+        expect(
+          within(screen.getByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Explore' })
+        ).toBeInTheDocument();
+
+        // Turn it off — they come back
+        await user.click(screen.getByLabelText('Only show pinned items'));
+        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+      });
+
+      it('shows a saving state on Done while the pins are being persisted', async () => {
+        // Hold the preferences PATCH pending so the saving state stays observable
+        server.use(customPatchUserPreferencesHandler(() => new Promise(() => {})));
+
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        // Stage a pin so there's something to save
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Explore');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        // Done switches to a disabled saving state, and we stay in edit mode until it resolves
+        const saving = await screen.findByRole('button', { name: 'Saving…' });
+        expect(saving).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+      });
+
+      it('does not offer "only show pinned items" until something is pinned', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        // Feedback is available, but the only-pinned toggle isn't while nothing is pinned
+        expect(screen.getByRole('button', { name: 'Feedback' })).toBeInTheDocument();
+        expect(screen.queryByLabelText('Only show pinned items')).not.toBeInTheDocument();
       });
     });
   });

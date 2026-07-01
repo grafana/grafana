@@ -12095,11 +12095,13 @@
       "customise-cancel": "Cancel",
       "customise-done": "Done",
       "customise-reset": "Reset to default",
+      "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
       "feedback": "Feedback",
       "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
+      "only-pinned": "Only show pinned items",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned",
@@ -12110,7 +12112,8 @@
       "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
-      "loading-aria-label": "Loading {{sectionName}}"
+      "loading-aria-label": "Loading {{sectionName}}",
+      "reorder-aria-label": "Reorder {{itemName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"

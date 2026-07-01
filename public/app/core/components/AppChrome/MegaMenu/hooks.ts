@@ -32,6 +32,7 @@ import {
   normalizePinnedUrls,
   partitionNavForPinning,
   removeHiddenItems,
+  reorderPinnedBlocks,
   revealItem,
 } from './utils';
 
@@ -91,22 +92,21 @@ export const useNavCustomization = () => {
   // on, otherwise the legacy endpoint.
   // TODO drop the legacy branch once newPrefsEnabled is fully rolled out.
   const persistBookmarkUrls = useCallback(
-    (bookmarkUrls: string[], onSuccess?: () => void) => {
-      const onResult = (result: { error?: unknown }) => {
+    (bookmarkUrls: string[], onSuccess?: () => void): Promise<boolean> => {
+      const onResult = (result: { error?: unknown }): boolean => {
         if (result.error) {
           notifyApp.error(t('navigation.megamenu.pin-error', 'Failed to update pinned menu items'));
-          return;
+          return false;
         }
         onSuccess?.();
+        return true;
       };
-      if (newPrefsEnabled) {
-        patchPreferencesK8s({
-          name: `user-${contextSrv.user.uid}`,
-          patch: { spec: { navbar: { bookmarkUrls } } },
-        }).then(onResult);
-      } else {
-        patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
-      }
+      return newPrefsEnabled
+        ? patchPreferencesK8s({
+            name: `user-${contextSrv.user.uid}`,
+            patch: { spec: { navbar: { bookmarkUrls } } },
+          }).then(onResult)
+        : patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
     },
     [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
   );
@@ -117,6 +117,8 @@ export const useNavCustomization = () => {
   const isLoading = canCustomise && (pinnedLoading || hiddenLoading);
 
   const [editMode, setEditMode] = useState(false);
+  // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
+  const [isSaving, setIsSaving] = useState(false);
 
   // The applied hidden set; draftHiddenIds holds the in-progress edits until the user saves.
   const [draftHiddenIds, setDraftHiddenIds] = useState<string[]>(hiddenItemIds);
@@ -150,6 +152,16 @@ export const useNavCustomization = () => {
     hadPinnedItems.current = pinnedUrls.length > 0;
   }, [pinnedUrls.length, setUnpinnedExpanded]);
 
+  // A separate persisted preference: when on, the menu shows only the pinned block and drops the
+  // unpinned items entirely. Toggled from the edit-mode footer; applies immediately (like the
+  // collapse toggle above), not staged behind Save/Cancel.
+  const [onlyShowPinned, setOnlyShowPinned] = useLocalStorage('grafana.navigation.megamenu.only-pinned', false);
+  const onToggleOnlyShowPinned = useCallback(() => {
+    const next = !onlyShowPinned;
+    reportInteraction('grafana_nav_only_pinned_toggled', { enabled: next });
+    setOnlyShowPinned(next);
+  }, [onlyShowPinned, setOnlyShowPinned]);
+
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
   // dedicated Bookmarks section is also dropped — pinned items are re-presented at the top.
   const baseItems = navTree.filter(
@@ -160,7 +172,7 @@ export const useNavCustomization = () => {
   const effectivePinnedUrls = editMode ? draftPinnedUrls : pinnedUrls;
   const pinnedSet = new Set(effectivePinnedUrls);
 
-  const { pinned: pinnedTree, rest: movedRest } = partitionNavForPinning(baseItems, pinnedSet);
+  const { pinned: pinnedTree, rest: movedRest } = partitionNavForPinning(baseItems, pinnedSet, effectivePinnedUrls);
 
   // Pinned subtree shown at the top of the menu. Pinning a child pulls in its ancestor chain
   // (e.g. "Dashboards → Playlists"); pinned items are "moved" here and removed from the rest below.
@@ -193,9 +205,13 @@ export const useNavCustomization = () => {
   }
 
   // The non-pinned items become collapsible once something is pinned (but stay expanded while
-  // editing, so every item is reachable to toggle its visibility).
-  const unpinnedCollapsible = canCustomise && pinnedNavItems.length > 0 && !editMode;
-  const showUnpinnedItems = !unpinnedCollapsible || (unpinnedExpanded ?? true);
+  // editing, so every item is reachable to toggle its visibility). The chevron toggle is suppressed
+  // while "only show pinned" is on, so the two settings don't fight over the unpinned list.
+  // "Only show pinned items" only takes effect when something is pinned, so it can never hide the
+  // whole menu (and its toggle is likewise only offered when there's a pinned item).
+  const onlyPinnedActive = onlyShowPinned && pinnedNavItems.length > 0;
+  const unpinnedCollapsible = canCustomise && pinnedNavItems.length > 0 && !editMode && !onlyPinnedActive;
+  const showUnpinnedItems = !onlyPinnedActive && (!unpinnedCollapsible || (unpinnedExpanded ?? true));
 
   // Resolve the active item across the pinned rows and the rest in one search. A pinned section is
   // moved out of `navItems`, so searching `navItems` alone would fail to find it and walk up the
@@ -228,7 +244,7 @@ export const useNavCustomization = () => {
       }
       const effective = expandPinnedUrls(effectivePinnedUrls, baseItems);
       leaves.forEach((leaf) => (isUnpin ? effective.delete(leaf) : effective.add(leaf)));
-      const next = normalizePinnedUrls(effective, baseItems);
+      const next = normalizePinnedUrls(effective, baseItems, effectivePinnedUrls);
       reportInteraction(isUnpin ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
       // In edit mode stage the change for the next save; otherwise persist immediately.
       if (editMode) {
@@ -278,16 +294,32 @@ export const useNavCustomization = () => {
     setEditMode(false);
   }, [hiddenItemIds, pinnedUrls]);
 
-  const onSaveEdit = useCallback(() => {
+  const onSaveEdit = useCallback(async () => {
     reportInteraction('grafana_nav_customise_saved', {
       hiddenCount: draftHiddenIds.length,
       pinnedCount: draftPinnedUrls.length,
     });
-    // Hidden state persists to localStorage; pins persist to preferences.
+    // Pins persist to preferences (async) — keep editing and show the saving state until it lands.
+    setIsSaving(true);
+    const ok = await persistBookmarkUrls(draftPinnedUrls, () => setPinnedUrls(draftPinnedUrls));
+    setIsSaving(false);
+    if (!ok) {
+      // The error toast has fired; stay in edit mode so nothing is lost and the user can retry.
+      return;
+    }
+    // Hidden state persists to localStorage only once the pins have saved.
     setHiddenItemIds(draftHiddenIds);
-    persistBookmarkUrls(draftPinnedUrls, () => setPinnedUrls(draftPinnedUrls));
     setEditMode(false);
   }, [draftHiddenIds, draftPinnedUrls, persistBookmarkUrls, setHiddenItemIds]);
+
+  // Reorder the pinned blocks (staged like the other edits; persisted on save).
+  const onReorderPinned = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      reportInteraction('grafana_nav_pinned_reordered');
+      setDraftPinnedUrls((current) => reorderPinnedBlocks(current, baseItems, fromIndex, toIndex));
+    },
+    [baseItems]
+  );
 
   // Only offer a reset when there is something staged to reset.
   const canReset = draftHiddenIds.length > 0 || draftPinnedUrls.length > 0;
@@ -311,13 +343,17 @@ export const useNavCustomization = () => {
     isHidden,
     onToggleHidden,
     editMode,
+    isSaving,
     canReset,
     onEnterEditMode,
     onCancelEdit,
     onSaveEdit,
     onResetToDefault,
+    onReorderPinned,
     unpinnedCollapsible,
     showUnpinnedItems,
     setUnpinnedExpanded,
+    onlyShowPinned: Boolean(onlyShowPinned),
+    onToggleOnlyShowPinned,
   };
 };

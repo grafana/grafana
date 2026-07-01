@@ -10,10 +10,12 @@ interface Props {
   onCancelEdit?: () => void;
   /** Save the staged customisation and leave customise mode */
   onSaveEdit?: () => void;
+  /** The save is in flight — show a spinner on Done and lock the controls */
+  saving?: boolean;
 }
 
 /** The mega menu header controls shown while customising: Reset / Cancel / Done. */
-export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancelEdit, onSaveEdit }: Props) {
+export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancelEdit, onSaveEdit, saving }: Props) {
   return (
     <Stack alignItems="center" gap={1}>
       {canReset && (
@@ -22,13 +24,16 @@ export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancel
           tooltip={t('navigation.megamenu.customise-reset', 'Reset to default')}
           onClick={onResetToDefault}
           variant="secondary"
+          disabled={saving}
         />
       )}
-      <Button size="sm" variant="secondary" fill="text" onClick={onCancelEdit}>
+      <Button size="sm" variant="secondary" fill="text" onClick={onCancelEdit} disabled={saving}>
         {t('navigation.megamenu.customise-cancel', 'Cancel')}
       </Button>
-      <Button size="sm" variant="primary" onClick={onSaveEdit}>
-        {t('navigation.megamenu.customise-done', 'Done')}
+      <Button size="sm" variant="primary" onClick={onSaveEdit} icon={saving ? 'spinner' : undefined} disabled={saving}>
+        {saving
+          ? t('navigation.megamenu.customise-saving', 'Saving…')
+          : t('navigation.megamenu.customise-done', 'Done')}
       </Button>
     </Stack>
   );

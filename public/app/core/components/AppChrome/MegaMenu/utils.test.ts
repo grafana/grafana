@@ -9,6 +9,7 @@ import {
   getActiveItem,
   findByUrl,
   partitionNavForPinning,
+  reorderPinnedBlocks,
   getPinnableLeafUrls,
   expandPinnedUrls,
   normalizePinnedUrls,
@@ -273,6 +274,67 @@ describe('pinning helpers', () => {
       expect(pinned.find((i) => i.id === 'cfg')).toBeDefined();
       expect(rest.find((i) => i.id === 'cfg')).toBeUndefined();
     });
+
+    it('orders the pinned blocks by the supplied order, not the nav-tree order', () => {
+      const set = new Set(['/explore', '/admin/settings']);
+      // Without an order, blocks follow the nav tree (Explore before Administration)
+      expect(partitionNavForPinning(tree, set).pinned.map((i) => i.text)).toEqual(['Explore', 'Administration']);
+      // With a user order, the blocks follow it
+      expect(partitionNavForPinning(tree, set, ['/admin/settings', '/explore']).pinned.map((i) => i.text)).toEqual([
+        'Administration',
+        'Explore',
+      ]);
+    });
+  });
+
+  describe('reorderPinnedBlocks', () => {
+    it("moves a top-level block, keeping each block's urls grouped", () => {
+      expect(reorderPinnedBlocks(['/explore', '/dashboards'], tree, 1, 0)).toEqual(['/dashboards', '/explore']);
+    });
+
+    it('moves a partially-pinned block by its leaves', () => {
+      // Blocks are [Dashboards(→Playlists), Explore]; move Explore (index 1) to the front
+      expect(reorderPinnedBlocks(['/playlists', '/explore'], tree, 1, 0)).toEqual(['/explore', '/playlists']);
+    });
+
+    it('is a no-op for out-of-range indices', () => {
+      expect(reorderPinnedBlocks(['/explore', '/dashboards'], tree, 0, 5)).toEqual(['/explore', '/dashboards']);
+    });
+  });
+});
+
+describe('More apps hoisting', () => {
+  const tree: NavModelItem[] = [
+    { text: 'Explore', id: 'explore', url: '/explore' },
+    {
+      text: 'More apps',
+      id: 'apps',
+      children: [
+        {
+          text: 'My App',
+          id: 'plugin-page-my-app',
+          url: '/a/my-app',
+          children: [
+            { text: 'Page one', id: 'plugin-page-my-app-1', url: '/a/my-app/one' },
+            { text: 'Page two', id: 'plugin-page-my-app-2', url: '/a/my-app/two' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it('surfaces a pinned app at the top level, not under a "More apps" parent', () => {
+    const { pinned, rest } = partitionNavForPinning(tree, new Set(['/a/my-app/one']));
+    // The pinned block is the app itself (carrying the pinned page) — no "More apps" wrapper
+    expect(pinned.map((i) => i.text)).toEqual(['My App']);
+    expect(pinned[0].children?.map((c) => c.text)).toEqual(['Page one']);
+    expect(pinned.find((i) => i.id === 'apps')).toBeUndefined();
+    // "More apps" stays in the normal nav for the un-pinned pages
+    expect(rest.find((i) => i.id === 'apps')).toBeDefined();
+  });
+
+  it('stores the pinned app page by its own url, never a "More apps" url', () => {
+    expect(normalizePinnedUrls(new Set(['/a/my-app/one']), tree)).toEqual(['/a/my-app/one']);
   });
 });
 
@@ -343,6 +405,16 @@ describe('canonical pin set helpers', () => {
         '/explore',
         '/dashboards',
       ]);
+    });
+
+    it('keeps the block order given by orderUrls', () => {
+      const leaves = new Set(['/explore', '/playlists', '/snapshots']);
+      expect(normalizePinnedUrls(leaves, tree, ['/dashboards', '/explore'])).toEqual(['/dashboards', '/explore']);
+    });
+
+    it('appends newly-pinned blocks after the ones already in the order', () => {
+      const leaves = new Set(['/explore', '/playlists', '/snapshots']);
+      expect(normalizePinnedUrls(leaves, tree, ['/explore'])).toEqual(['/explore', '/dashboards']);
     });
   });
 });

@@ -31,6 +31,8 @@ export interface Props {
   onCancelEdit?: () => void;
   /** Stage a reset of all customisation back to defaults */
   onResetToDefault?: () => void;
+  /** The save is in flight — show a spinner on the Done control */
+  saving?: boolean;
 }
 
 export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
@@ -47,6 +49,7 @@ export function MegaMenuHeader({
   onSaveEdit,
   onCancelEdit,
   onResetToDefault,
+  saving,
 }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
@@ -69,6 +72,7 @@ export function MegaMenuHeader({
           onResetToDefault={onResetToDefault}
           onCancelEdit={onCancelEdit}
           onSaveEdit={onSaveEdit}
+          saving={saving}
         />
       ) : (
         <>
