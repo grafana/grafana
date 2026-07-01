@@ -9,11 +9,36 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// isAPISourcedManager reports whether a manager kind pushes state into Grafana
+// through the API (Terraform, kubectl, and the classic shims for API and
+// Prometheus-converted provisioning) as opposed to being backed by an external
+// source of truth that Grafana mirrors (file provisioning, git repo sync).
+//
+// Only API-sourced managers may relinquish management back to Grafana: their
+// authoritative state already lives in Grafana, so resetting to unmanaged does
+// not orphan anything. File- and repo-backed resources are owned by an external
+// system (a provisioning file, a git repository); letting an in-Grafana write
+// silently reset them to unmanaged would diverge Grafana from that source of
+// truth, so it is not allowed.
+func isAPISourcedManager(k utils.ManagerKind) bool {
+	switch k { //nolint:staticcheck // classic shim kinds are intentionally handled here
+	case utils.ManagerKindClassicAPI,
+		utils.ManagerKindClassicConvertedPrometheus,
+		utils.ManagerKindTerraform,
+		utils.ManagerKindKubectl:
+		return true
+	default:
+		// ManagerKindClassicFP and ManagerKindRepo are backed by an external
+		// source of truth and must not be reset to unmanaged from within Grafana.
+		return false
+	}
+}
+
 // CanUpdateManagerInRuleGroup checks if a manager can be updated for a rule group and its alerts.
 // Preserves the same transition semantics as CanUpdateProvenanceInRuleGroup:
 //   - same kind is always allowed
 //   - unmanaged (unknown kind) stored → allow any incoming manager
-//   - resetting to unmanaged → only allowed from api-like managers, not file/repo managers
+//   - resetting to unmanaged → only allowed from API-sourced managers (see isAPISourcedManager)
 func CanUpdateManagerInRuleGroup(stored, incoming utils.ManagerProperties) bool {
 	if stored.Kind == incoming.Kind {
 		return true
@@ -22,13 +47,7 @@ func CanUpdateManagerInRuleGroup(stored, incoming utils.ManagerProperties) bool 
 		return true
 	}
 	if incoming.Kind == utils.ManagerKindUnknown {
-		// Can reset to unmanaged only from api-style managers (not file/repo).
-		switch stored.Kind {
-		case utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus, utils.ManagerKindTerraform, utils.ManagerKindKubectl: //nolint:staticcheck // only api-style managers may reset to unmanaged
-			return true
-		default:
-			return false
-		}
+		return isAPISourcedManager(stored.Kind)
 	}
 	return false
 }
