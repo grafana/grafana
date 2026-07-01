@@ -76,6 +76,11 @@ export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/p
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
+export {
+  buildAppPluginResourceUrl,
+  buildAppPluginHealthUrl,
+  buildAppPluginProxyUrl,
+} from '../services/pluginBackend/urls';
 
 export { initDataSourceInstanceSettings, syncDataSourceInstanceSettings } from '../services/dataSource/settings';
 export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';

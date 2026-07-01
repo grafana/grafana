@@ -4177,6 +4177,24 @@
     },
     {
       "metadata": {
+        "name": "plugins.useMTPluginBackend",
+        "resourceVersion": "1782902343185",
+        "creationTimestamp": "2026-07-01T09:51:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 10:39:03.185037 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables app plugin backend calls from new apis",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
