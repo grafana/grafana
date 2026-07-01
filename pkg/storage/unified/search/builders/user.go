@@ -1,6 +1,8 @@
 package builders
 
 import (
+	"slices"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -39,35 +41,27 @@ var UserSortableExtraFields = []string{
 // production consumer and is not preserved.
 var UserTableColumnDefinitions = tableColumnsByName(UserSearchFields)
 
-// UserSearchFields declares paths and types for each user search field. The
-// standard document builder uses these to extract spec/status values from the
-// raw JSON, avoiding a custom builder.
+// UserSearchFields are read from the generated IAM manifest (declared in
+// apps/iam/kinds/user.cue), plus the createdAt field appended below.
 //
-// lastSeenAt and disabled set EmitZeroIfAbsent so every indexed user document
-// carries those fields. The user-search API sorts on lastSeenAt and missing
-// values would otherwise sort last, putting never-seen users in a different
-// position than the historical "sort by epoch 0" behaviour.
-//
-// createdAt mirrors the standard IndexableDocument.Created field into the
-// per-kind fields.* sub-document because the top-level created field has no
-// bleve mapping today. See PR #126405 for context.
-//
-// lastSeenAt (int64) and disabled (boolean) declare SearchCapabilityFilter to
-// record that these fields are intended to be filterable, and to drive the
-// bleve mapping (numeric / boolean under dynamic mapping). End-to-end
-// numeric and boolean equality filters in ResourceSearchRequest are still a
-// follow-up: the query path treats filter values as strings, so a request
-// against these fields would not match a numeric-indexed term yet. No
-// in-tree client filters by lastSeenAt or disabled today, so this is a
-// known gap rather than a rollout concern.
-var UserSearchFields = []resource.SearchFieldDefinition{
-	{Name: USER_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The email address of the user"},
-	{Name: USER_LOGIN, Path: "spec.login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The login of the user"},
-	{Name: USER_LAST_SEEN_AT, Path: "status.lastSeenAt", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "The last seen timestamp of the user"},
-	{Name: USER_ROLE, Path: "spec.role", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The role of the user"},
-	{Name: USER_DISABLED, Path: "spec.disabled", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true, Description: "Whether the user is disabled"},
-	{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
-}
+// lastSeenAt (int64) and disabled (boolean) declare the filter capability to
+// record that they are meant to be filterable and to drive the bleve mapping
+// (numeric / boolean under dynamic mapping). End-to-end numeric and boolean
+// equality filters in ResourceSearchRequest are still a follow-up: the query
+// path treats filter values as strings, so a request against these fields
+// would not match a numeric-indexed term yet. No in-tree client filters by
+// lastSeenAt or disabled today, so this is a known gap rather than a rollout
+// concern.
+var UserSearchFields = slices.Concat(
+	resource.NewManifestBackedProvider(iamManifests).Fields(iamv0.UserResourceInfo.GroupVersionResource()),
+	[]resource.SearchFieldDefinition{
+		// createdAt reads from the standard document's Created value rather than a
+		// resource path, so it cannot be declared in the manifest and stays here.
+		// It mirrors that value into the per-kind fields.* sub-document because
+		// the top-level created field has no bleve mapping today.
+		{Name: USER_CREATED, CopyFromStandard: resource.StandardFieldCreated, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "The creation timestamp of the user, in epoch milliseconds"},
+	},
+)
 
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(UserTableColumnDefinitions))

@@ -45,7 +45,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
       queries: newRichHistoryQuery.queries,
     });
     return {
-      richHistoryQuery: fromDTO(result),
+      richHistoryQuery: await fromDTO(result),
     };
   }
 
@@ -76,7 +76,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     );
 
     const data = queryHistory.data;
-    const richHistory = (data.result.queryHistory || []).map(fromDTO);
+    const richHistory = await Promise.all((data.result.queryHistory || []).map(fromDTO));
     const total = data.result.totalCount || 0;
 
     return { richHistory, total };

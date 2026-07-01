@@ -1032,10 +1032,11 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				MockStore: jobs.NewMockStore(t),
 			}
 
+			repoGetter := NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
-				repoLister:    repoLister,
+				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
-				quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 				healthChecker: healthChecker,
 				statusPatcher: patcher,
 				repoFactory:   repoFactory,
@@ -1129,10 +1130,11 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	patcher := &capturePatcher{}
 
+	repoGetter := NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
-		repoLister:    mockLister,
+		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(mockLister),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: healthChecker,
 		repoFactory:   mockFactory,
 		statusPatcher: patcher,
@@ -1278,10 +1280,11 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
+	repoGetter := NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repoLister:        repoLister,
+		repos:             repoGetter,
 		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
 		statusPatcher:     patcher,
 		connectionFactory: mockConnFactory,
 		client:            provClient,
@@ -1489,10 +1492,11 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		MockStore: jobs.NewMockStore(t),
 	}
 
+	repoGetter := NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repoLister:    repoLister,
+		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: healthChecker,
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
@@ -1547,10 +1551,11 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 		MockStore: jobs.NewMockStore(t),
 	}
 
+	repoGetter := NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
-		repoLister:    repoLister,
+		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: healthChecker,
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
@@ -1707,7 +1712,6 @@ func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 				Name: "test-dedup",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1762,7 +1766,6 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 				Name: "test-dedup-before",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1807,7 +1810,6 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 				Name: "test-retry",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
@@ -1848,7 +1850,6 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 				Name: "test-no-retry",
 			},
 		),
-		repoSynced:   func() bool { return true },
 		logger:       logging.DefaultLogger.With("logger", "test"),
 		drainTimeout: 5 * time.Second,
 	}
