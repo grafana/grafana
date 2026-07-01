@@ -29,6 +29,9 @@ var (
 	rawSchemaRuleSequencev0alpha1      = []byte(`{"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"RuleRef":{"additionalProperties":false,"properties":{"name":{"$ref":"#/components/schemas/RuleUID","description":"name is the metadata.name of an AlertRule or RecordingRule resource."}},"required":["name"],"type":"object"},"RuleSequence":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RuleUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"spec":{"additionalProperties":false,"properties":{"alertingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"recordingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["trigger","recordingRules"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaRuleSequencev0alpha1  app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaRuleSequencev0alpha1, &versionSchemaRuleSequencev0alpha1)
+	rawSchemaConfigv0alpha1            = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"externalRulerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to\nsync alert rules from. Empty means no sync is configured for the current\norg. The operator ini setting ` + "`" + `unified_alerting.external_ruler_uid` + "`" + `\noverrides this when set; see status.externalRulerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalRulerSynced: True after a successful sync, False after a\n    failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalRulerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_ruler_uid) wins over \"api\"\n(spec.externalRulerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaConfigv0alpha1        app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaConfigv0alpha1, &versionSchemaConfigv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -123,6 +126,22 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaRuleSequencev0alpha1,
 				},
+
+				{
+					Kind:       "Config",
+					Plural:     "Configs",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaConfigv0alpha1,
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{},
@@ -145,6 +164,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"AlertRule/v0alpha1":     v0alpha1.AlertRuleKind(),
 	"RecordingRule/v0alpha1": v0alpha1.RecordingRuleKind(),
 	"RuleSequence/v0alpha1":  v0alpha1.RuleSequenceKind(),
+	"Config/v0alpha1":        v0alpha1.ConfigKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
