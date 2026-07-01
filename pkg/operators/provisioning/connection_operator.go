@@ -77,11 +77,12 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	var hasSynced cache.InformerSynced
 	if controllerCfg.natsWatch() {
 		natsInformer := informer.NewConnectionInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
-		if err := natsInformer.AddEventHandler(connController.EventHandler()); err != nil {
+		reg, err := natsInformer.AddEventHandler(connController.EventHandler())
+		if err != nil {
 			return fmt.Errorf("failed to add connection event handler: %w", err)
 		}
 		natsInformer.Start(ctx.Done())
-		hasSynced = natsInformer.HasSynced
+		hasSynced = reg.HasSynced
 	} else {
 		reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
 		if err != nil {

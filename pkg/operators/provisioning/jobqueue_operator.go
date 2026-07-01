@@ -52,10 +52,11 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	var startJobInformers func()
 	if controllerCfg.natsWatch() {
 		jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
-		if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
+		reg, err := jobNatsInformer.AddEventHandler(jobController.EventHandler())
+		if err != nil {
 			return fmt.Errorf("failed to add job event handler: %w", err)
 		}
-		jobHasSynced = jobNatsInformer.HasSynced
+		jobHasSynced = reg.HasSynced
 		startJobInformers = func() { jobNatsInformer.Start(ctx.Done()) }
 	} else {
 		jobInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())

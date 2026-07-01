@@ -75,6 +75,7 @@ type Informer struct {
 	handlers []cache.ResourceEventHandler
 	store    map[string]runtime.Object
 	synced   atomic.Bool
+	syncedCh chan struct{} // closed once the initial list completes
 }
 
 // NewInformer builds an Informer for one resource kind. namespace scopes the NATS
@@ -104,26 +105,46 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		newObject:  newObject,
 		list:       list,
 		log:        log.New("provisioning.informer.nats"),
+		syncedCh:   make(chan struct{}),
 	}
 }
 
-// AddEventHandler registers a handler to receive add/update deltas. Register all
-// handlers before Run; there is no cache to replay, so a handler added after Run
-// only starts seeing events from the next notification or re-list. Wait on
-// HasSynced (via cache.WaitForCacheSync) before starting the controller, exactly
-// as with an informer registration.
-func (n *Informer) AddEventHandler(handler cache.ResourceEventHandler) error {
+// AddEventHandler registers a handler to receive add/update/delete deltas,
+// mirroring cache.SharedIndexInformer.AddEventHandler: it returns a registration
+// whose HasSynced reports the informer's initial-list state, so callers wait on
+// it with cache.WaitForCacheSync exactly as they would an apiserver informer's.
+// Register all handlers before Start; there is no cache to replay, so a handler
+// added after Start only sees events from the next notification or re-list.
+func (n *Informer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
 	if handler == nil {
-		return fmt.Errorf("nats informer: nil handler for %s", n.gvr.String())
+		return nil, fmt.Errorf("nats informer: nil handler for %s", n.gvr.String())
 	}
 	n.mu.Lock()
 	n.handlers = append(n.handlers, handler)
 	n.mu.Unlock()
-	return nil
+	return registration{informer: n}, nil
 }
 
 // HasSynced reports whether the initial full list has completed at least once.
 func (n *Informer) HasSynced() bool { return n.synced.Load() }
+
+// registration implements cache.ResourceEventHandlerRegistration by deferring to
+// the informer's sync state, so a NATS informer registration is interchangeable
+// with an apiserver one at the wiring seam.
+type registration struct{ informer *Informer }
+
+var _ cache.ResourceEventHandlerRegistration = registration{}
+
+func (r registration) HasSynced() bool { return r.informer.HasSynced() }
+
+func (r registration) HasSyncedChecker() cache.DoneChecker {
+	return syncedChecker{informer: r.informer}
+}
+
+type syncedChecker struct{ informer *Informer }
+
+func (c syncedChecker) Name() string          { return "nats-informer:" + c.informer.gvr.String() }
+func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 
 // List returns a snapshot of the objects in the store. It is a
 // staleness-tolerant read — the set is only as fresh as the last re-list plus
@@ -217,6 +238,7 @@ func (n *Informer) run(stopCh <-chan struct{}) {
 	// the full set — the same contract as an informer's LIST-seeded cache.
 	n.relist(ctx, true)
 	n.synced.Store(true)
+	close(n.syncedCh)
 
 	ticker := time.NewTicker(n.resync)
 	defer ticker.Stop()

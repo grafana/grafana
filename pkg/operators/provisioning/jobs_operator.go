@@ -56,7 +56,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			// re-list delivers each job as an update so the handler can act on its
 			// age. There is no apiserver informer to start.
 			historyNatsInformer := informer.NewHistoricJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.historyExpiration)
-			if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
+			if _, err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add history job event handler: %w", err)
 			}
 			startHistoryInformers = func() { historyNatsInformer.Start(ctx.Done()) }
@@ -110,10 +110,11 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		jobController := controller.NewJobController()
 		if natsWatch {
 			jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
-			if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
+			reg, err := jobNatsInformer.AddEventHandler(jobController.EventHandler())
+			if err != nil {
 				return fmt.Errorf("failed to add job event handler: %w", err)
 			}
-			jobHasSynced = jobNatsInformer.HasSynced
+			jobHasSynced = reg.HasSynced
 			startJobInformers = func() { jobNatsInformer.Start(ctx.Done()) }
 		} else {
 			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {

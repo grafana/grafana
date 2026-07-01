@@ -149,7 +149,8 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
 	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObject, list)
-	require.NoError(t, n.AddEventHandler(handler))
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
 
 	stopCh := make(chan struct{})
 	n.Start(stopCh)
@@ -236,7 +237,8 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 		return []runtime.Object{obj("a")}, nil
 	}
 	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, list)
-	require.NoError(t, n.AddEventHandler(handler))
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
 
 	n.relist(context.Background(), true)  // initial: adds a, b; no deletes
 	n.relist(context.Background(), false) // resync: b is gone -> delete
@@ -247,5 +249,6 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
 	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, nil)
-	require.Error(t, n.AddEventHandler(nil))
+	_, err := n.AddEventHandler(nil)
+	require.Error(t, err)
 }

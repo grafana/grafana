@@ -1059,7 +1059,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobController := appcontroller.NewJobController()
 			if natsWatch {
 				jobNatsInformer := informer.NewJobInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
-				if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
+				if _, err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
 					return fmt.Errorf("add job controller event handler: %w", err)
 				}
 				jobNatsInformer.Start(postStartHookCtx.Done())
@@ -1159,11 +1159,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			var repoHasSynced cache.InformerSynced
 			if natsWatch {
-				if err := repoNatsInformer.AddEventHandler(repoController.EventHandler()); err != nil {
+				repoReg, err := repoNatsInformer.AddEventHandler(repoController.EventHandler())
+				if err != nil {
 					return fmt.Errorf("add repository controller event handler: %w", err)
 				}
 				repoNatsInformer.Start(postStartHookCtx.Done())
-				repoHasSynced = repoNatsInformer.HasSynced
+				repoHasSynced = repoReg.HasSynced
 			} else {
 				repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
 				if err != nil {
@@ -1204,11 +1205,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			var connHasSynced cache.InformerSynced
 			if natsWatch {
 				connNatsInformer := informer.NewConnectionInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
-				if err := connNatsInformer.AddEventHandler(connController.EventHandler()); err != nil {
+				connReg, err := connNatsInformer.AddEventHandler(connController.EventHandler())
+				if err != nil {
 					return fmt.Errorf("add connection controller event handler: %w", err)
 				}
 				connNatsInformer.Start(postStartHookCtx.Done())
-				connHasSynced = connNatsInformer.HasSynced
+				connHasSynced = connReg.HasSynced
 			} else {
 				connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
 				if err != nil {
@@ -1237,7 +1239,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				)
 				if natsWatch {
 					historyNatsInformer := informer.NewHistoricJobInformer(b.natsSubscriber, c, "", historyJobExpiration)
-					if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
+					if _, err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 						return fmt.Errorf("add history job controller event handler: %w", err)
 					}
 					historyNatsInformer.Start(postStartHookCtx.Done())
