@@ -18,13 +18,11 @@ const (
 // kept for symmetry with the other IAM builders.
 var ExternalGroupMappingTableColumnDefinitions = tableColumnsByName(ExternalGroupMappingSearchFields)
 
-// ExternalGroupMappingSearchFields declares paths and types for each external
-// group mapping search field. The standard document builder uses these to
-// extract spec values from the raw JSON, avoiding a custom builder.
-var ExternalGroupMappingSearchFields = []resource.SearchFieldDefinition{
-	{Name: EXTERNAL_GROUP_MAPPING_TEAM, Path: "spec.teamRef.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The team name associated with the external group mapping"},
-	{Name: EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP, Path: "spec.externalGroupId", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "The external group name/id associated with the external group mapping"},
-}
+// ExternalGroupMappingSearchFields are read from the generated IAM manifest,
+// where they are declared in apps/iam/kinds/externalgroupmapping.cue.
+var ExternalGroupMappingSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
+	iamv0.ExternalGroupMappingResourceInfo.GroupVersionResource(),
+)
 
 func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(ExternalGroupMappingTableColumnDefinitions))
