@@ -177,6 +177,8 @@ type RepositoryWithURLs interface {
 
 // WebhookRepository is implemented by repositories that can receive and handle
 // incoming webhook requests from their git provider.
+//
+//go:generate mockery --name WebhookRepository --structname MockWebhookRepository --inpackage --filename webhook_repository_mock.go --with-expecter
 type WebhookRepository interface {
 	Repository
 
