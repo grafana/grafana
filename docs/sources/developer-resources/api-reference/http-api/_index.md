@@ -59,7 +59,7 @@ The following table lists all available HTTP API reference pages. New APIs are l
 | [Secrets Management HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/)                            | New    | Not available       |
 | [Admin HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/admin/)                                           | Legacy | Not Applicable      |
 | [Alerting Provisioning HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/alerting_provisioning/)           | Legacy | Not Applicable      |
-| [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/)                                          | Legacy | Not Applicable      |
+| [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/annotations/)                               | Legacy | Not Applicable      |
 | [Correlations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/correlations/)                             | Legacy | Not Applicable      |
 | [Dashboard Permissions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_permissions/)           | Legacy | Not Applicable      |
 | [Dashboard Versions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/)                 | Legacy | Not Applicable      |
@@ -78,7 +78,7 @@ The following table lists all available HTTP API reference pages. New APIs are l
 | [RBAC HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/access_control/)                                   | Legacy | Not Applicable      |
 | [Reporting API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/reporting/)                                        | Legacy | Not Applicable      |
 | [Service account HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/serviceaccount/)                        | Legacy | Not Applicable      |
-| [Shared Dashboards HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_public/)                               | Legacy | Not Applicable      |
+| [Shared Dashboards HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_public/)                    | Legacy | Not Applicable      |
 | [Short URL HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/short_url/)                                   | Legacy | Not Applicable      |
 | [Snapshot API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/snapshot/)                                          | Legacy | Not Applicable      |
 | [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/sso-settings/)                                  | Legacy | Not Applicable      |
