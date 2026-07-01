@@ -10712,6 +10712,9 @@
     },
     "recommendations": {
       "hide": "Hide",
+      "next": "Next",
+      "previous": "Previous",
+      "recommended": "Recommended",
       "show": "Show",
       "title": "Recommendations for your stack"
     },
