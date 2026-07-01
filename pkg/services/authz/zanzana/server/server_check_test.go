@@ -286,11 +286,11 @@ func TestIntegrationServerCheck(t *testing.T) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:21 (team admin) create check on their team is allowed via per-object team create", func(t *testing.T) {
-		// teams keep a per-object `create` granted to admins, so this resolves allowed.
+	t.Run("user:21 (team admin) create check on their team is denied: team create is group_resource only", func(t *testing.T) {
+		// teams have no per-object `create`; being admin of a team does not grant creating it.
 		res, err := server.Check(newContextWithNamespace(), newReq("user:21", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"))
 		require.NoError(t, err)
-		assert.True(t, res.GetAllowed())
+		assert.False(t, res.GetAllowed())
 	})
 
 	// Subresource `create` must still resolve even though the base `create` relation does not
