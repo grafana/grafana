@@ -156,17 +156,14 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
-	// natsPublisher publishes resource watch notifications. Built by the NATS
-	// module and read by the UnifiedBackend module. Nil until the NATS module
-	// initializes; disabled (Enabled()==false) unless [nats] enabled=true.
-	natsPublisher  nats.Publisher
-	vectorBackend  vector.VectorBackend
-	embedder       *embedder.Embedder
-	searchClient   resourcepb.ResourceIndexClient
-	storageMetrics *resource.StorageMetrics
-	indexMetrics   *resource.BleveIndexMetrics
-	vectorMetrics  *resource.VectorMetrics
-	license        licensing.Licensing
+	natsPublisher    nats.Publisher
+	vectorBackend    vector.VectorBackend
+	embedder         *embedder.Embedder
+	searchClient     resourcepb.ResourceIndexClient
+	storageMetrics   *resource.StorageMetrics
+	indexMetrics     *resource.BleveIndexMetrics
+	vectorMetrics    *resource.VectorMetrics
+	license          licensing.Licensing
 
 	pidFile     string
 	version     string

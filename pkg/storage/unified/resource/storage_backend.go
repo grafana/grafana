@@ -81,10 +81,8 @@ type kvStorageBackend struct {
 	dataStore               *dataStore
 	eventStore              *eventStore
 	notifier                notifier
-	// eventPublisher, when set, announces committed writes on an external bus
-	// (NATS) as a best-effort side-effect. Nil disables external publishing.
-	eventPublisher EventPublisher
-	log            log.Logger
+	eventPublisher          EventPublisher
+	log                     log.Logger
 	disablePruner           bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration

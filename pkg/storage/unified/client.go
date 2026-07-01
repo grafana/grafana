@@ -57,10 +57,7 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
-	// NATSPublisher publishes resource watch notifications to NATS. It is always
-	// injected (disabled unless [nats] enabled=true), so publishing is gated on
-	// its Enabled() rather than on nil.
-	NATSPublisher nats.Publisher
+	NATSPublisher  nats.Publisher
 }
 
 type clientMetrics struct {
