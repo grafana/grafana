@@ -56,8 +56,8 @@ type SubscriberService struct {
 	metrics *subscriberMetrics
 }
 
-func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config, credentials func() string) *SubscriberService {
-	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, credentials)
+func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
+	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	// A slow consumer means the broker dropped messages the client could not drain in time.
 	conn.onAsyncError = func(err error) {
 		if errors.Is(err, natsclient.ErrSlowConsumer) {
@@ -77,7 +77,7 @@ func ProvideSubscriber(config *Config, reg prometheus.Registerer) *SubscriberSer
 	if config.Enabled() {
 		reg.MustRegister(m.collectors()...)
 	}
-	return newSubscriber(log.New("infra.nats.subscriber"), m, config, config.SubscriberCredentials)
+	return newSubscriber(log.New("infra.nats.subscriber"), m, config)
 }
 
 func (s *SubscriberService) IsDisabled() bool {

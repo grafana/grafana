@@ -13,7 +13,7 @@ import (
 func TestPublisher(t *testing.T) {
 	t.Run("is disabled when NATS is off", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: false}
-		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil), func() string { return "" })
+		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
 
 		require.False(t, p.Enabled())
 		require.True(t, p.IsDisabled())

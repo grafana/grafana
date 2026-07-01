@@ -15,9 +15,6 @@ type Config struct {
 }
 
 func newConfig(cfg setting.NATSSettings, server *Server) *Config {
-	// Copy the URL slice so later mutation of the caller's settings cannot leak
-	// into a live connection config (settings structs are shared process-wide).
-	cfg.ClientURLs = append([]string(nil), cfg.ClientURLs...)
 	return &Config{
 		cfg:    cfg,
 		server: server,

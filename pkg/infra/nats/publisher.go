@@ -25,8 +25,8 @@ type PublisherService struct {
 	metrics *publisherMetrics
 }
 
-func newPublisher(logger log.Logger, m *publisherMetrics, config *Config, credentials func() string) *PublisherService {
-	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, credentials)
+func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
+	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
 	p := &PublisherService{connection: conn, metrics: m}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p
@@ -40,7 +40,7 @@ func ProvidePublisher(config *Config, reg prometheus.Registerer) *PublisherServi
 	if config.Enabled() {
 		reg.MustRegister(m.collectors()...)
 	}
-	return newPublisher(log.New("infra.nats.publisher"), m, config, config.PublisherCredentials)
+	return newPublisher(log.New("infra.nats.publisher"), m, config)
 }
 
 func (p *PublisherService) IsDisabled() bool {

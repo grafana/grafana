@@ -17,7 +17,7 @@ import (
 func TestSubscriber(t *testing.T) {
 	t.Run("is disabled when NATS is off", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: false}
-		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil), func() string { return "" })
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
 
 		require.False(t, s.Enabled())
 		require.True(t, s.IsDisabled())
@@ -103,7 +103,7 @@ func TestSubscriber(t *testing.T) {
 		srv := startTestServer(t)
 		m := newSubscriberMetrics()
 		cfg := setting.NATSSettings{Enabled: true}
-		sub := newSubscriber(log.NewNopLogger(), m, newTestConfig(srv, cfg), func() string { return "" })
+		sub := newSubscriber(log.NewNopLogger(), m, newTestConfig(srv, cfg))
 		t.Cleanup(sub.close)
 		pub := newTestPublisher(t, srv)
 
@@ -133,7 +133,7 @@ func TestSubscriber(t *testing.T) {
 	t.Run("counts slow-consumer async errors", func(t *testing.T) {
 		m := newSubscriberMetrics()
 		cfg := setting.NATSSettings{Enabled: true}
-		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil), func() string { return "" })
+		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil))
 
 		// Drive the connection's async error hook directly: slow-consumer errors are
 		// counted, unrelated async errors are ignored.
