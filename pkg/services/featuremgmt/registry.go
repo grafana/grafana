@@ -3139,6 +3139,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+
+			Name:        "cujTracking",
+			Description: "Enables Critical User Journey (CUJ) tracking",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "auth.tokenRotationGracePeriod",
 			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
 			Stage:        FeatureStageExperimental,
