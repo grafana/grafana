@@ -52,36 +52,36 @@ The following table lists all available HTTP API reference pages. New APIs are l
 
 | API                                                                               | Type   |
 | --------------------------------------------------------------------------------- | ------ |
-| [Dashboard HTTP API](./dashboard.md)                                              | New    |
-| [Folder HTTP API](./folder.md)                                                    | New    |
-| [Playlist HTTP API](./playlist.md)                                                | New    |
-| [Resource history HTTP API](./resource-history.md)                                | New    |
-| [Secrets Management HTTP API](./secrets_management.md)                            | New    |
-| [Admin HTTP API](./api-legacy/admin.md)                                           | Legacy |
-| [Alerting Provisioning HTTP API](./api-legacy/alerting_provisioning.md)           | Legacy |
-| [Annotations HTTP API](./api-legacy/annotations.md)                               | Legacy |
-| [Correlations HTTP API](./api-legacy/correlations.md)                             | Legacy |
-| [Dashboard Permissions HTTP API](./api-legacy/dashboard_permissions.md)           | Legacy |
-| [Dashboard Versions HTTP API](./api-legacy/dashboard_versions.md)                 | Legacy |
-| [Data source HTTP API](./api-legacy/data_source.md)                               | Legacy |
-| [Data source LBAC rules HTTP API](./api-legacy/datasource_lbac_rules.md)          | Legacy |
-| [Data source permissions HTTP API](./api-legacy/datasource_permissions.md)        | Legacy |
-| [Folder/Dashboard Search HTTP API](./api-legacy/folder_dashboard_search.md)       | Legacy |
-| [Folder Permissions HTTP API](./api-legacy/folder_permissions.md)                 | Legacy |
-| [Library Element HTTP API](./api-legacy/library_element.md)                       | Legacy |
-| [Licensing HTTP API](./api-legacy/licensing.md)                                   | Legacy |
-| [Organization HTTP API](./api-legacy/org.md)                                      | Legacy |
-| [Other HTTP API](./api-legacy/other.md)                                           | Legacy |
-| [Preferences API](./api-legacy/preferences.md)                                    | Legacy |
-| [Query and Resource Caching HTTP API](./api-legacy/query_and_resource_caching.md) | Legacy |
-| [Query History HTTP API](./api-legacy/query_history.md)                           | Legacy |
-| [RBAC HTTP API](./api-legacy/access_control.md)                                   | Legacy |
-| [Reporting API](./api-legacy/reporting.md)                                        | Legacy |
-| [Service account HTTP API](./api-legacy/serviceaccount.md)                        | Legacy |
-| [Shared Dashboards HTTP API](./api-legacy/dashboard_public.md)                    | Legacy |
-| [Short URL HTTP API](./api-legacy/short_url.md)                                   | Legacy |
-| [Snapshot API](./api-legacy/snapshot.md)                                          | Legacy |
-| [SSO Settings API](./api-legacy/sso-settings.md)                                  | Legacy |
-| [Team HTTP API](./api-legacy/team.md)                                             | Legacy |
-| [Team Sync HTTP API](./api-legacy/team_sync.md)                                   | Legacy |
-| [User HTTP API](./api-legacy/user.md)                                             | Legacy |
+| [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/) | New    |
+| [Folder HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder/) | New    |
+| [Playlist HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist/) | New    |
+| [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/) | New    |
+| [Secrets Management HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/) | New    |
+| [Admin HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/admin/) | Legacy |
+| [Alerting Provisioning HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/alerting_provisioning/) | Legacy |
+| [Annotations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/annotations/) | Legacy |
+| [Correlations HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/correlations/) | Legacy |
+| [Dashboard Permissions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_permissions/) | Legacy |
+| [Dashboard Versions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/) | Legacy |
+| [Data source HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/data_source/) | Legacy |
+| [Data source LBAC rules HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/datasource_lbac_rules/) | Legacy |
+| [Data source permissions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/datasource_permissions/) | Legacy |
+| [Folder/Dashboard Search HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/) | Legacy |
+| [Folder Permissions HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/folder_permissions/) | Legacy |
+| [Library Element HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/library_element/) | Legacy |
+| [Licensing HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/licensing/) | Legacy |
+| [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/org/) | Legacy |
+| [Other HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/other/) | Legacy |
+| [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/preferences/) | Legacy |
+| [Query and Resource Caching HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_and_resource_caching/) | Legacy |
+| [Query History HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history/) | Legacy |
+| [RBAC HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/access_control/) | Legacy |
+| [Reporting API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/reporting/) | Legacy |
+| [Service account HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/serviceaccount/) | Legacy |
+| [Shared Dashboards HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_public/) | Legacy |
+| [Short URL HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/short_url/) | Legacy |
+| [Snapshot API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/snapshot/) | Legacy |
+| [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/sso-settings/) | Legacy |
+| [Team HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team/) | Legacy |
+| [Team Sync HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team_sync/) | Legacy |
+| [User HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/user/) | Legacy |
