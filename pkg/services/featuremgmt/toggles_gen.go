@@ -223,6 +223,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardNotebookLayout
+	// Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+	FlagDashboardNotebookLayout = "dashboardNotebookLayout"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
