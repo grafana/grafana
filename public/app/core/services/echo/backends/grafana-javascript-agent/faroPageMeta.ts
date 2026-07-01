@@ -19,24 +19,35 @@ export function setupFaroPageMeta(faro: Faro): void {
   // Captured once: the external source for this load stays constant across internal navigation.
   const referrer = document.referrer;
 
-  // Undefined until the first navigation completes; that first page is the session's landing page.
+  // Undefined until the first navigation to a different page; that first page is the session's landing page.
   let previousUrl: string | undefined;
 
-  const updatePageMeta = (currentPath: string) => {
+  // Pathname of the page currently being viewed. Query-param-only changes (time range, variables,
+  // orgId) keep this the same, so they must not be treated as leaving the page.
+  let currentPath = locationService.getLocation().pathname;
+
+  const updatePageMeta = () => {
     const attributes: Record<string, string> = { referrer };
     if (previousUrl !== undefined) {
       attributes.previousUrl = previousUrl;
     }
 
     faro.api.setPage({ url: window.location.href, attributes });
-    previousUrl = currentPath;
   };
 
   // Landing page - emitted before any internal navigation.
-  updatePageMeta(locationService.getLocation().pathname);
+  updatePageMeta();
 
   // Subsequent internal navigations within the SPA.
   locationService.getHistory().listen((location) => {
-    updatePageMeta(location.pathname);
+    // Only a pathname change means the user actually left the page. Query-param-only navigations
+    // (time range, variables) keep the same pathname; advancing previousUrl on those would make it
+    // point at the current page instead of the one the user came from.
+    if (location.pathname !== currentPath) {
+      previousUrl = currentPath;
+      currentPath = location.pathname;
+    }
+
+    updatePageMeta();
   });
 }

@@ -70,4 +70,46 @@ describe('setupFaroPageMeta', () => {
       attributes: { referrer: 'https://issues.example.com/123', previousUrl: '/d/abc' },
     });
   });
+
+  it('does not overwrite previousUrl on query-param-only navigations that keep the same pathname', () => {
+    setReferrer('https://issues.example.com/123');
+
+    setupFaroPageMeta(faro);
+
+    // Real navigation to a dashboard - previousUrl becomes the landing page.
+    navigate({ pathname: '/d/abc' });
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { referrer: 'https://issues.example.com/123', previousUrl: '/search' },
+    });
+
+    // Query params settling (time range, variables) fire with the same pathname; previousUrl must
+    // stay as '/search' rather than pointing '/d/abc' at itself.
+    navigate({ pathname: '/d/abc' });
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { referrer: 'https://issues.example.com/123', previousUrl: '/search' },
+    });
+
+    // The next real navigation still reports the page the user actually came from.
+    navigate({ pathname: '/d/xyz' });
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { referrer: 'https://issues.example.com/123', previousUrl: '/d/abc' },
+    });
+  });
+
+  it('keeps the landing page as a session entry point after its query params settle', () => {
+    setReferrer('https://issues.example.com/123');
+
+    setupFaroPageMeta(faro);
+
+    // The landing URL settling with query params must not introduce a self-referential previousUrl.
+    navigate({ pathname: '/search' });
+
+    expect(setPage).toHaveBeenLastCalledWith({
+      url: window.location.href,
+      attributes: { referrer: 'https://issues.example.com/123' },
+    });
+  });
 });
