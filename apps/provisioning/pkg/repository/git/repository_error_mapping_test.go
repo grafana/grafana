@@ -70,6 +70,17 @@ func TestMapNanogitError(t *testing.T) {
 	}
 }
 
+// TestMapNanogitError_ResponseTooLarge verifies that nanogit's response byte
+// limit error is surfaced as a 413 Request Entity Too Large.
+func TestMapNanogitError_ResponseTooLarge(t *testing.T) {
+	got := mapNanogitError(&client.ErrResponseTooLarge{Limit: 1024, Op: "fetch"})
+	require.Error(t, got)
+
+	var statusErr apierrors.APIStatus
+	require.True(t, errors.As(got, &statusErr), "mapped error should implement APIStatus interface")
+	require.Equal(t, int32(http.StatusRequestEntityTooLarge), statusErr.Status().Code)
+}
+
 // TestMapNanogitError_HTTPStatusCodes verifies that mapped errors have correct HTTP status codes
 func TestMapNanogitError_HTTPStatusCodes(t *testing.T) {
 	tests := []struct {
