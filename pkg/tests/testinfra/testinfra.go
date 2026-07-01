@@ -449,6 +449,22 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.AnnotationMigrationPhase != "" {
+		migrationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_migration_phase", opts.AnnotationMigrationPhase)
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_server_url", opts.AnnotationAPIServerURL)
+		require.NoError(t, err)
+	}
+
+	if opts.AnnotationProxyStaticToken != "" {
+		grpcClientSect, err := cfg.NewSection("grpc_client_authentication")
+		require.NoError(t, err)
+		_, err = grpcClientSect.NewKey("token", opts.AnnotationProxyStaticToken)
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -1087,6 +1103,18 @@ type GrafanaOpts struct {
 	HASingleNodeEvaluation bool
 
 	EnableAnnotationAppPlatform bool
+
+	// AnnotationMigrationPhase sets [annotations.app_platform] api_migration_phase
+	// (off, proxy-writes, proxy-all). Empty leaves the default (off).
+	AnnotationMigrationPhase string
+	// AnnotationAPIServerURL sets [annotations.app_platform] api_server_url, the
+	// address of the standalone annotation API server the legacy proxy targets.
+	AnnotationAPIServerURL string
+	// AnnotationProxyStaticToken sets [grpc_client_authentication] token without a
+	// token_exchange_url, so the proxy authenticates with a static token instead
+	// of exchanging one. Use when the target API server does not verify the token
+	// (e.g. it runs with --skip-auth).
+	AnnotationProxyStaticToken string
 
 	// Enables Scope Api
 	ScopesApiEnabled bool

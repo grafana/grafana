@@ -41,24 +41,14 @@ type annotationAPIClient struct {
 }
 
 // newAnnotationAPIClient returns nil when APIServerURL is empty (proxy disabled).
-func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service) (*annotationAPIClient, error) {
+// exchanger authenticates outbound calls to the new API server (see ProvideTokenExchanger).
+func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger authnlib.TokenExchanger) *annotationAPIClient {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
-		return nil, nil
+		return nil
 	}
 
-	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
-	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
-
-	if token == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token and token_exchange_url are required when api_server_url is set")
-	}
-
-	restCfg, err := buildRESTConfig(url, token, tokenExchangeURL, cfg.Env == setting.Dev)
-	if err != nil {
-		return nil, err
-	}
+	restCfg := buildRESTConfig(url, exchanger, cfg.Env == setting.Dev)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
@@ -69,7 +59,39 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service) (*annotation
 			nil,
 		),
 		restCfg: restCfg,
-	}, nil
+	}
+}
+
+// ProvideTokenExchanger builds the token exchanger the migration proxy uses to
+// authenticate outbound calls to the new annotation API server. It returns nil
+// when the proxy is disabled (no api_server_url), so the proxy provider can also
+// return nil.
+//
+// When grpc_client_authentication.token_exchange_url is set, it builds the real
+// HTTP-backed exchanger. When the URL is omitted but a token is present, it
+// builds a static exchanger that returns that token verbatim — for pointing the
+// proxy at a peer that does not verify the token (e.g. an apiserver running with
+// --skip-auth in integration tests). Mirrors the standalone apiserver factory's
+// --grafana.authz.skip-user-logic path, which likewise swaps in a static
+// exchanger when there is nothing to exchange against.
+func ProvideTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
+	if strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
+		return nil, nil // proxy disabled
+	}
+
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
+	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
+
+	if token == "" {
+		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token is required when api_server_url is set")
+	}
+
+	if tokenExchangeURL == "" {
+		return authnlib.NewStaticTokenExchanger(token), nil
+	}
+
+	return newTokenExchangeClient(token, tokenExchangeURL, cfg.Env == setting.Dev)
 }
 
 func (s *annotationAPIClient) Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
@@ -206,7 +228,7 @@ func (s *annotationAPIClient) getRESTClient() (*rest.RESTClient, error) {
 	return rc, nil
 }
 
-func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*rest.Config, error) {
+func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) (authnlib.TokenExchanger, error) {
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if allowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
@@ -223,14 +245,17 @@ func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*
 	if err != nil {
 		return nil, fmt.Errorf("annotation proxy: creating token exchange client: %w", err)
 	}
+	return tc, nil
+}
 
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, allowInsecure bool) *rest.Config {
 	return &rest.Config{
 		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(tc),
+		WrapTransport: newBearerTokenExchangeWrapper(exchanger),
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: allowInsecure,
 		},
-	}, nil
+	}
 }
 
 type bearerTokenExchangeRT struct {
