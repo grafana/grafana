@@ -30,7 +30,7 @@ func NewHistoricJobDeltaSource(subscriber nats.Subscriber, client versioned.Inte
 // the cleanup handler reads each job's creation timestamp directly (it does not
 // re-fetch), so a minimal live-event object would make it act on a job that has
 // no age. Cleanup is resync-driven anyway, so live notifications add nothing.
-func NewHistoricJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *usinformer.Store) *usinformer.Informer {
+func NewHistoricJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	list := func(ctx context.Context) ([]runtime.Object, error) {
 		l, err := c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})

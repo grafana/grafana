@@ -36,7 +36,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 }
 
 // NewConnectionInformer builds an Informer for connections.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *usinformer.Store) *usinformer.Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}

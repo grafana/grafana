@@ -71,7 +71,7 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
-	store *Store
+	store Store
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -102,7 +102,7 @@ type Informer struct {
 // store is the snapshot the informer refreshes on each re-list. Pass the same
 // Store to a reader (e.g. a getter serving a quota count) to share it; the
 // informer never reads it, so an unshared informer can be given its own.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store *Store, newObject ObjectFunc, list ListFunc) *Informer {
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
