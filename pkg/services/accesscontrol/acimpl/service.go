@@ -424,10 +424,8 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 	span.AddEvent("cache miss")
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 
-	var permissions []accesscontrol.Permission
 	getValue := func() (any, error) {
-		var err error
-		permissions, err = getPermissionsFn(ctx)
+		permissions, err := getPermissionsFn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -436,8 +434,21 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 		return permissions, nil
 	}
 
-	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+	var permissionsVal any
+	var err error
+	if options.ReloadCache {
+		permissionsVal, err = s.cache.ExclusiveSet(key, getValue, cacheTTL)
+	} else {
+		permissionsVal, err = s.cache.ExclusiveGetOrSet(key, getValue, cacheTTL)
+	}
+
+	if err != nil {
 		return nil, err
+	}
+
+	permissions, ok := permissionsVal.([]accesscontrol.Permission)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type in permissions cache: %T", permissionsVal)
 	}
 
 	return permissions, nil
