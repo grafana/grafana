@@ -62,7 +62,8 @@ declare module "@openfeature/core" {
     | "table.protoRowParser"
     | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
-    | "grafana.customizableMegaMenu";
+    | "grafana.customizableMegaMenu"
+    | "grafana.growthHomepage";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
