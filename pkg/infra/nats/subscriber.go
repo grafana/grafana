@@ -28,18 +28,11 @@ type Subscription interface {
 
 // Subscriber hides nats.go types so callers can mock it.
 type Subscriber interface {
-	Enabled() bool
+	Enabler
 	// Subscribe delivers every matching message to handler. By default each
 	// running subscriber receives its own copy; pass WithQueueGroup to
 	// load-balance delivery across a group instead.
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
-}
-
-// Enabled reports whether the subscriber is present and NATS is enabled. It is
-// nil-safe (a nil Subscriber is not enabled), so callers can use it to choose
-// between the NATS path and a fallback without repeating the check.
-func Enabled(subscriber Subscriber) bool {
-	return subscriber != nil && subscriber.Enabled()
 }
 
 // subscribeConfig holds the resolved options for a Subscribe call.

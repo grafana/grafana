@@ -15,7 +15,7 @@ const publisherName = "nats-publisher"
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
-	Enabled() bool
+	Enabler
 	Publish(ctx context.Context, subject string, data []byte) error
 }
 
