@@ -386,6 +386,7 @@ func (s *Service) processBatchCheckGroup(
 		return
 	}
 
+	// Used by checkPermissionsWithFolderAuthZ (mapper miss cas). In order to fetch folder permissions once.
 	var folderScopeGetter = make(map[string]folderScopeGetter)
 
 	for i, item := range group.items {
