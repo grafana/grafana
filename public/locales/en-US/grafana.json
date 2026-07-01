@@ -10710,6 +10710,11 @@
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
     },
+    "recommendations": {
+      "hide": "Hide",
+      "show": "Show",
+      "title": "Recommendations for your stack"
+    },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
