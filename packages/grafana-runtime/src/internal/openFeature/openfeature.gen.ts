@@ -15,6 +15,8 @@ import {
 export const FlagKeys = {
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana */
+  AlertingSyncExternalRuler: "alerting.syncExternalRuler",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
@@ -130,6 +132,17 @@ export const FlagKeys = {
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana
+ *
+ * **Details:**
+ * - flag key: `alerting.syncExternalRuler`
+ * - default value: `false`
+ */
+export const useFlagAlertingSyncExternalRuler = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.syncExternalRuler", false, options).value;
 };
 
 /**
