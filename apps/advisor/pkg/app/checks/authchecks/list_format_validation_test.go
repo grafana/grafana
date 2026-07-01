@@ -252,14 +252,18 @@ func TestListFormatValidation_Run(t *testing.T) {
 }
 
 func generateExpectedLinks(provider string) []advisor.CheckErrorLink {
+	docsKey := "advisor.ssosetting.sso-list-format-validation.link.check-the-documentation"
+	configKey := "advisor.ssosetting.sso-list-format-validation.link.configure-provider"
 	return []advisor.CheckErrorLink{
 		{
-			Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
-			Message: "Check the documentation",
+			Url:        fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
+			Message:    "Check the documentation",
+			MessageKey: &docsKey,
 		},
 		{
-			Url:     fmt.Sprintf("/admin/authentication/%s", provider),
-			Message: "Configure provider",
+			Url:        fmt.Sprintf("/admin/authentication/%s", provider),
+			Message:    "Configure provider",
+			MessageKey: &configKey,
 		},
 	}
 }

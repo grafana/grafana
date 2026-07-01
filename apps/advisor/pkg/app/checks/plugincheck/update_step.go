@@ -64,10 +64,11 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
-				{
-					Message: "Upgrade",
-					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
-				},
+				checks.NewCheckErrorLink(
+					"Upgrade",
+					"advisor.plugin.update.link.upgrade",
+					fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
+				),
 			},
 		)}, nil
 	}

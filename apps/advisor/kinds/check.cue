@@ -20,6 +20,8 @@ checkv0alpha1: {
 			url: string
 			// Human readable error message
 			message: string
+			// i18n key for the message. Frontend uses this with @grafana/i18n's t(key, fallback).
+			messageKey?: string
 		}
 		#ReportFailure: {
 			// Severity of the failure

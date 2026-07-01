@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -176,6 +177,32 @@ func New(cfg app.Config) (app.App, error) {
 						},
 						CreateRegisterBody: advisorv0alpha1.CreateRegisterBody{
 							Message: "Check types registered successfully",
+						},
+					})
+				},
+				{
+					Namespaced: true,
+					Path:       "translations",
+					Method:     "GET",
+				}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+					logger := log.WithContext(ctx)
+					lang := req.URL.Query().Get("lang")
+					if lang == "" {
+						lang = "en-US"
+					}
+					trans, err := translations.Get(lang)
+					if err != nil {
+						logger.Error("Failed to load translations", "lang", lang, "error", err)
+						w.WriteHeader(http.StatusBadRequest)
+						return json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+					}
+					w.Header().Set("Content-Type", "application/json")
+					return json.NewEncoder(w).Encode(advisorv0alpha1.GetTranslationsResponse{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: fmt.Sprintf("%s/%s", advisorv0alpha1.APIGroup, advisorv0alpha1.APIVersion),
+						},
+						GetTranslationsBody: advisorv0alpha1.GetTranslationsBody{
+							Translations: trans,
 						},
 					})
 				},

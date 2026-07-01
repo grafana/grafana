@@ -69,8 +69,9 @@ func TestTwinmakerSceneViewerStep_Run(t *testing.T) {
 				require.Len(t, failures, 1)
 				assert.Equal(t, advisor.CheckReportFailureSeverityLow, failures[0].Severity)
 				assert.Contains(t, failures[0].Item, tt.wantFailureMessage)
+				viewPluginKey := "advisor.plugin.twinmaker_sceneviewer.link.view-plugin"
 				assert.Equal(t, []advisor.CheckErrorLink{
-					{Message: "View plugin", Url: "/plugins/" + twinmakerAppPluginID},
+					{Message: "View plugin", MessageKey: &viewPluginKey, Url: "/plugins/" + twinmakerAppPluginID},
 				}, failures[0].Links)
 			} else {
 				assert.Len(t, failures, 0)
