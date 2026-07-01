@@ -3,6 +3,7 @@ package informer
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -251,4 +252,47 @@ func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
 	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
 	_, err := n.AddEventHandler(nil)
 	require.Error(t, err)
+}
+
+// A reconnect signal drives an out-of-band re-list, so events missed while the
+// round-robin subscription was down are reconciled without waiting for the resync
+// tick. The resync is set far in the future so only the reconnect can trigger the
+// second list.
+func TestInformer_ReconnectTriggersRelist(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	var calls atomic.Int64
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls.Add(1)
+		return []runtime.Object{obj("a")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+
+	stopCh := make(chan struct{})
+	go n.Run(stopCh)
+	t.Cleanup(func() { close(stopCh) })
+
+	sub.waitForSubscription(t, subject())
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
+	require.EqualValues(t, 1, calls.Load(), "only the initial list should have run")
+
+	n.signalReconnect()
+
+	require.Eventually(t, func() bool { return calls.Load() >= 2 }, 5*time.Second, 5*time.Millisecond,
+		"reconnect must trigger a re-list")
+}
+
+// signalReconnect never blocks: a pending signal coalesces additional reconnects
+// so a burst of reconnects while the run loop is busy cannot deadlock the client's
+// reconnect goroutine.
+func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	// The run loop is not started, so nothing drains the channel; every call must
+	// still return immediately.
+	for i := 0; i < 100; i++ {
+		n.signalReconnect()
+	}
 }

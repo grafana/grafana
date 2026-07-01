@@ -157,4 +157,30 @@ func TestSubscriber(t *testing.T) {
 		_, err = sub.Subscribe(ctx, "grafana.test.b", func(string, []byte) {})
 		require.ErrorIs(t, err, context.Canceled)
 	})
+
+	t.Run("WithOnReconnect records the callback on the config", func(t *testing.T) {
+		var called atomic.Bool
+		var cfg subscribeConfig
+		WithOnReconnect(func() { called.Store(true) })(&cfg)
+
+		require.NotNil(t, cfg.onReconnect, "WithOnReconnect must set the callback")
+		cfg.onReconnect()
+		require.True(t, called.Load(), "the stored callback must be the one passed in")
+	})
+
+	t.Run("WithOnReconnect fires on reconnect and stops after unsubscribe", func(t *testing.T) {
+		sub := newTestSubscriber(t, startTestServer(t))
+
+		var fired atomic.Int64
+		s, err := sub.Subscribe(context.Background(), "grafana.test.reconnect", func(string, []byte) {},
+			WithOnReconnect(func() { fired.Add(1) }))
+		require.NoError(t, err)
+
+		sub.fireReconnect()
+		require.EqualValues(t, 1, fired.Load())
+
+		require.NoError(t, s.Unsubscribe())
+		sub.fireReconnect()
+		require.EqualValues(t, 1, fired.Load(), "callback must not fire after unsubscribe")
+	})
 }

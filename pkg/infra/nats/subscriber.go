@@ -37,7 +37,8 @@ type Subscriber interface {
 
 // subscribeConfig holds the resolved options for a Subscribe call.
 type subscribeConfig struct {
-	queue string
+	queue       string
+	onReconnect func()
 }
 
 // SubscribeOption customises a single Subscribe call.
@@ -48,6 +49,15 @@ type SubscribeOption func(*subscribeConfig)
 // handled once per group rather than once per subscriber.
 func WithQueueGroup(queue string) SubscribeOption {
 	return func(c *subscribeConfig) { c.queue = queue }
+}
+
+// WithOnReconnect registers a callback invoked after the connection
+// re-establishes. The nats client auto-resumes the subscription, but events
+// published while it was down are missed; a caller uses this to reconcile them
+// (e.g. re-list). fn must not block — it runs on the client's reconnect
+// goroutine. The callback is removed when the subscription is unsubscribed.
+func WithOnReconnect(fn func()) SubscribeOption {
+	return func(c *subscribeConfig) { c.onReconnect = fn }
 }
 
 // SubscriberService owns the subscriber lifecycle and implements Subscriber. It is a dskit service that bridges to the monolith background-service contract via Run.
@@ -110,12 +120,32 @@ func (s *SubscriberService) Subscribe(ctx context.Context, subject string, handl
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	return s.subscribe(ctx, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
+	sub, err := s.subscribe(ctx, subject, func(nc *natsclient.Conn, cb natsclient.MsgHandler) (*natsclient.Subscription, error) {
 		if cfg.queue != "" {
 			return nc.QueueSubscribe(subject, cfg.queue, cb)
 		}
 		return nc.Subscribe(subject, cb)
 	}, handler)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.onReconnect != nil {
+		// Fire the callback on every reconnect, and stop firing it once this
+		// subscription is unsubscribed.
+		sub = &reconnectingSubscription{Subscription: sub, remove: s.onReconnect(cfg.onReconnect)}
+	}
+	return sub, nil
+}
+
+// reconnectingSubscription unregisters its reconnect callback when unsubscribed.
+type reconnectingSubscription struct {
+	Subscription
+	remove func()
+}
+
+func (s *reconnectingSubscription) Unsubscribe() error {
+	s.remove()
+	return s.Subscription.Unsubscribe()
 }
 
 // subscribe centralises the connection lookup, the metrics-instrumented handler

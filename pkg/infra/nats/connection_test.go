@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -182,6 +183,44 @@ func TestConnection(t *testing.T) {
 
 			_, err := c.connectOptions()
 			require.Error(t, err)
+		})
+	})
+
+	// The reconnect registry is pure bookkeeping — it never dials — so a disabled
+	// connection is enough to exercise it.
+	t.Run("reconnect callbacks", func(t *testing.T) {
+		t.Run("fireReconnect invokes every registered callback", func(t *testing.T) {
+			c := newDisabledConnection()
+
+			var first, second atomic.Int64
+			removeFirst := c.onReconnect(func() { first.Add(1) })
+			c.onReconnect(func() { second.Add(1) })
+
+			c.fireReconnect()
+			require.EqualValues(t, 1, first.Load())
+			require.EqualValues(t, 1, second.Load())
+
+			// Removing the first callback stops only it from firing.
+			removeFirst()
+			c.fireReconnect()
+			require.EqualValues(t, 1, first.Load(), "removed callback must not fire again")
+			require.EqualValues(t, 2, second.Load(), "remaining callback must keep firing")
+		})
+
+		t.Run("a callback may register another without deadlocking", func(t *testing.T) {
+			c := newDisabledConnection()
+
+			var added atomic.Int64
+			c.onReconnect(func() {
+				c.onReconnect(func() { added.Add(1) })
+			})
+
+			// Callbacks are snapshotted under the lock and invoked outside it, so
+			// registering during fireReconnect must not deadlock.
+			require.NotPanics(t, c.fireReconnect)
+			// The newly registered callback only fires on the next reconnect.
+			c.fireReconnect()
+			require.EqualValues(t, 1, added.Load())
 		})
 	})
 }

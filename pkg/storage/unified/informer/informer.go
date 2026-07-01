@@ -73,6 +73,11 @@ type Informer struct {
 
 	store *Store
 
+	// reconnect signals the run loop to re-list after a NATS reconnect, since a
+	// round-robin subscription can miss events published while it was down.
+	// Buffered depth 1 and a non-blocking send coalesce bursts into one re-list.
+	reconnect chan struct{}
+
 	mu       sync.Mutex
 	handlers []cache.ResourceEventHandler
 	synced   atomic.Bool
@@ -112,6 +117,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		log:        log.New("provisioning.informer.nats"),
 		store:      store,
 		syncedCh:   make(chan struct{}),
+		reconnect:  make(chan struct{}, 1),
 	}
 }
 
@@ -171,7 +177,9 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 
 	if n.newObject != nil {
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
-		opts := []nats.SubscribeOption{}
+		// Re-list on reconnect: a round-robin subscription can miss events
+		// published while the connection was down, so reconcile from a fresh list.
+		opts := []nats.SubscribeOption{nats.WithOnReconnect(n.signalReconnect)}
 		if n.queueGroup != "" {
 			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
 		}
@@ -203,7 +211,20 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			return
 		case <-ticker.C:
 			n.relist(ctx, false)
+		case <-n.reconnect:
+			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
+			n.relist(ctx, false)
 		}
+	}
+}
+
+// signalReconnect nudges the run loop to re-list after a NATS reconnect. It is
+// the WithOnReconnect callback, so it must not block: the send is non-blocking
+// and a pending signal coalesces additional reconnects into the next re-list.
+func (n *Informer) signalReconnect() {
+	select {
+	case n.reconnect <- struct{}{}:
+	default:
 	}
 }
 
