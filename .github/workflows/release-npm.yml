@@ -38,8 +38,14 @@ on:
 permissions: {}
 
 jobs:
-  # If called with version_type 'nightly' or 'stable', build + publish to NPM
-  # If called with version_type 'canary', do nothing (temporarily stopping canary releases)
+  # Publishing behaviour by version_type:
+  # - 'stable':                    build + publish ALL @grafana/* packages to NPM.
+  # - 'nightly' / 'canary' (pre-releases): we no longer publish pre-releases of the
+  #   @grafana/* packages to the public NPM registry. The single exception is
+  #   @grafana/e2e-selectors, which plugin e2e tooling follows via the 'nightly'
+  #   dist-tag. It is published (and only that package, tagged 'nightly') when it has
+  #   actually changed since the last 'nightly' publish, so we stop churning out
+  #   unnecessary versions.
 
   publish:
     name: Publish NPM packages
@@ -48,7 +54,7 @@ jobs:
     # https://docs.npmjs.com/trusted-publishers#supported-cicd-providers
     runs-on: github-hosted-ubuntu-x64-small
 
-    if: inputs.version_type == 'nightly' || inputs.version_type == 'stable'
+    if: inputs.version_type == 'stable' || inputs.version_type == 'nightly' || inputs.version_type == 'canary'
     # Required for this workflow to have permission to publish NPM packages
     environment: npm-publish
     permissions:
@@ -78,40 +84,66 @@ jobs:
         run: ./.github/workflows/scripts/validate-commit-in-head.sh
         shell: bash
 
-      - name: Map version type to NPM tag
-        id: npm-tag
-        env:
-          VERSION: ${{ inputs.version }}
-          VERSION_TYPE: ${{ inputs.version_type }}
-          REFERENCE_PKG: "@grafana/runtime"
-        run: |
-          TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
-          echo "NPM_TAG=$TAG" >> "$GITHUB_OUTPUT"
-        shell: bash
-
       - name: Checkout build commit
         uses: actions/checkout@v5
         with:
           persist-credentials: false
           ref: ${{ inputs.grafana_commit }}
-          fetch-depth: 2  # Need HEAD~1 for e2e-selectors change detection
+          # Shallow checkout. For pre-release runs the plan step deepens history on
+          # demand (bounded by the last publish date) to detect e2e-selectors changes.
+          fetch-depth: 1
+
+      # Decide what this run publishes:
+      # - stable:          all packages, dist-tag resolved from the version.
+      # - nightly/canary:  @grafana/e2e-selectors only, tagged 'nightly', and only if
+      #                    it changed since the last 'nightly' publish.
+      - name: Plan publish
+        id: plan
+        env:
+          VERSION: ${{ inputs.version }}
+          VERSION_TYPE: ${{ inputs.version_type }}
+          GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
+          REFERENCE_PKG: "@grafana/runtime"
+        run: |
+          if [ "$VERSION_TYPE" = "stable" ]; then
+            TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
+            {
+              echo "should_publish=true"
+              echo "e2e_only=false"
+              echo "npm_tag=$TAG"
+            } >> "$GITHUB_OUTPUT"
+          else
+            SHOULD=$(PACKAGE_DIR="packages/grafana-e2e-selectors" NPM_TAG="nightly" \
+              ./.github/workflows/scripts/detect-e2e-selectors-change.sh)
+            {
+              echo "should_publish=$SHOULD"
+              echo "e2e_only=true"
+              echo "npm_tag=nightly"
+            } >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
 
       - name: Setup Node
+        if: steps.plan.outputs.should_publish == 'true'
         uses: ./.github/actions/setup-node
 
       # Trusted Publishing is only available in npm v11.5.1 and later
       - name: Update npm
+        if: steps.plan.outputs.should_publish == 'true'
         run: npm install -g npm@^11.5.1
 
       - name: Install yarn dependencies
+        if: steps.plan.outputs.should_publish == 'true'
         uses: ./.github/actions/yarn-install
         with:
           hardened-mode: 'true'
 
       - name: Typecheck packages
+        if: steps.plan.outputs.should_publish == 'true'
         run: yarn run packages:typecheck
 
       - name: Version, build, and pack packages
+        if: steps.plan.outputs.should_publish == 'true'
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -124,14 +156,23 @@ jobs:
             --yes
           yarn run packages:pack
 
+      # For pre-releases we only ship @grafana/e2e-selectors, so drop every other
+      # packed tarball before validating and publishing.
+      - name: Keep only e2e-selectors for pre-release publish
+        if: steps.plan.outputs.should_publish == 'true' && steps.plan.outputs.e2e_only == 'true'
+        run: find ./npm-artifacts -type f -name '*.tgz' ! -name '*e2e-selectors*' -print -delete
+
       - name: Debug packed files
+        if: steps.plan.outputs.should_publish == 'true'
         run: tree -a ./npm-artifacts
 
       - name: Validate packages
+        if: steps.plan.outputs.should_publish == 'true'
         run: ./scripts/validate-npm-packages.sh
 
       - name: Publish packages
+        if: steps.plan.outputs.should_publish == 'true'
         env:
-          NPM_TAG: ${{ steps.npm-tag.outputs.NPM_TAG }}
+          NPM_TAG: ${{ steps.plan.outputs.npm_tag }}
         run: ./scripts/publish-npm-packages.sh --dist-tag "$NPM_TAG" --registry 'https://registry.npmjs.org/'
 
