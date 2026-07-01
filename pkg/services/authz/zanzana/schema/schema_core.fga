@@ -34,7 +34,6 @@ type team
     define member: [user, service-account] or admin
 
     define get: [user, service-account, team#member, role#assignee] or member
-    define create: [user, service-account, team#member, role#assignee] or admin
     define update: [user, service-account, team#member, role#assignee] or admin
     define delete: [user, service-account, team#member, role#assignee] or admin
 
