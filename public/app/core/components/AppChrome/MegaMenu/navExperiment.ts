@@ -1,7 +1,5 @@
 import { reportExperimentView } from '@grafana/runtime';
 
-import { contextSrv } from '../../../services/context_srv';
-
 /**
  * Instrumentation for the Configurable Nav A/B experiment (behind `grafana.customizableMegaMenu`).
  *
@@ -24,7 +22,9 @@ export function setNavExperimentVariant(variant: NavExperimentVariant) {
 
 /**
  * Extra properties stamped onto the existing KPI interactions so they can be attributed to the
- * experiment variant (and filtered to the eligible cohort by `org_id` at analysis time).
+ * experiment variant. The org/tenant identifiers needed to filter to the eligible cohort at
+ * analysis time are already attached to every event by the analytics backends, so they aren't
+ * duplicated here.
  */
 export function getNavExperimentPayload(): Record<string, unknown> {
   if (!currentVariant) {
@@ -32,7 +32,6 @@ export function getNavExperimentPayload(): Record<string, unknown> {
   }
   return {
     experiment_nav_customization: currentVariant,
-    org_id: contextSrv.user.orgId,
   };
 }
 

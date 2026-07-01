@@ -70,6 +70,22 @@ export const useNavCustomization = () => {
   const { pinnedItems, isLoading: pinnedLoading } = usePinnedItems();
   const notifyApp = useAppNotification();
 
+  const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
+
+  // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
+  // off. Cache the variant so the KPI interactions can be stamped with it, and fire the exposure
+  // (denominator) event once per page load for the experiment population (signed-in users). Kept up
+  // here with the other hooks so a future early return can't make the effect conditional.
+  const variant = customizableMegaMenu ? 'treatment' : 'control';
+  useEffect(() => {
+    if (!contextSrv.isSignedIn) {
+      return;
+    }
+    setNavExperimentVariant(variant);
+    reportNavExperimentViewOnce(variant);
+  }, [variant]);
+
   // Persist the bookmark urls via the app-platform preferences API when the new-preferences flag is
   // on, otherwise the legacy endpoint.
   // TODO drop the legacy branch once newPrefsEnabled is fully rolled out.
@@ -93,21 +109,6 @@ export const useNavCustomization = () => {
     },
     [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
   );
-
-  const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
-  const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
-
-  // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
-  // off. Cache the variant so the KPI interactions can be stamped with it, and fire the exposure
-  // (denominator) event once per page load for the experiment population (signed-in users).
-  const variant = customizableMegaMenu ? 'treatment' : 'control';
-  useEffect(() => {
-    if (!contextSrv.isSignedIn) {
-      return;
-    }
-    setNavExperimentVariant(variant);
-    reportNavExperimentViewOnce(variant);
-  }, [variant]);
 
   // Pins come from preferences, so render a skeleton until they've loaded on first visit — otherwise
   // the menu renders un-pinned and then reflows (pins jump to the top). Cached after the first load.
