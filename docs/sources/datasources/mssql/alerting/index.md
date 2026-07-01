@@ -172,7 +172,7 @@ If your data source uses Azure Entra ID **Current User** authentication, alertin
 
 Follow these best practices when creating Microsoft SQL Server alerts:
 
-- **Use time series format:** Always set the query format to Time series for alert queries.
+- **Use time series format:** Always set the query format to time series for alert queries.
 - **Include time filters:** Use the `$__timeFilter()` macro to limit data to the evaluation window.
 - **Use MSSQL macros:** Prefer `$__timeGroupAlias()` and `$__timeGroup()` over manual time-bucketing expressions.
 - **Optimize queries:** Add indexes on columns used in `WHERE` clauses and `GROUP BY`.
