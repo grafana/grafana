@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 )
 
-// fakeStore is a minimal RepositoryCache for asserting the getter's
+// fakeStore is a minimal informer.Cache for asserting the getter's
 // write-through behaviour.
 type fakeStore struct {
 	objs    map[string]runtime.Object

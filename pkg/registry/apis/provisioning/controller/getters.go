@@ -6,11 +6,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // RepositoryGetter is the read seam the repository controller reconciles
@@ -69,30 +69,20 @@ func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (
 // round-robin across replicas and there is no cache to serve a fresh reconcile
 // read.
 
-// RepositoryCache is the NATS informer's snapshot the getter reads the quota
-// list from and writes fresh reconcile reads back into. It is a
-// staleness-tolerant store — refreshed wholesale on each re-list — not a source
-// of truth for the reconcile read.
-type RepositoryCache interface {
-	List(ctx context.Context) []runtime.Object
-	Update(ctx context.Context, obj runtime.Object)
-	Delete(ctx context.Context, namespace, name string)
-}
-
 // NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
-// for the reconcile — and List with the NATS informer's snapshot. The quota
-// count is the only List caller and tolerates the snapshot's staleness (as stale
-// as the resync interval), so reading it avoids an API LIST on every quota
-// check. Each reconcile Get is written back into the store (or removed on
-// NotFound), keeping the count warm between re-lists rather than only as fresh as
-// the last resync.
-func NewClientGetCachedListRepositoryGetter(c client.ProvisioningV0alpha1Interface, store RepositoryCache) RepositoryGetter {
+// for the reconcile — and List with the NATS informer's snapshot (a
+// unified-storage informer Cache). The quota count is the only List caller and
+// tolerates the snapshot's staleness (as stale as the resync interval), so
+// reading it avoids an API LIST on every quota check. Each reconcile Get is
+// written back into the store (or removed on NotFound), keeping the count warm
+// between re-lists rather than only as fresh as the last resync.
+func NewClientGetCachedListRepositoryGetter(c client.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
 	return clientGetCachedListRepositoryGetter{client: c, store: store}
 }
 
 type clientGetCachedListRepositoryGetter struct {
 	client client.ProvisioningV0alpha1Interface
-	store  RepositoryCache
+	store  usinformer.Cache
 }
 
 func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioning.Repository, error) {

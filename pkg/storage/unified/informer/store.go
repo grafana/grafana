@@ -18,6 +18,18 @@ type Store struct {
 	items map[string]runtime.Object
 }
 
+// Cache is the read + write-through surface of a Store: read the current
+// snapshot and write individual objects through between re-lists. A reader that
+// keeps a count warm (e.g. a controller getter) takes this rather than the
+// concrete *Store.
+type Cache interface {
+	List(ctx context.Context) []runtime.Object
+	Update(ctx context.Context, obj runtime.Object)
+	Delete(ctx context.Context, namespace, name string)
+}
+
+var _ Cache = (*Store)(nil)
+
 // NewStore returns an empty Store, ready to be shared between an Informer (which
 // refreshes it on each re-list) and a reader such as a getter (which reads it,
 // and may write through fresh reads to keep it warm).
