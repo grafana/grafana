@@ -34,6 +34,7 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -145,6 +146,25 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
+
+	// natsWatchEnabled routes the provisioning informers' watch through the
+	// informer package's watch swap (currently a not-implemented placeholder)
+	// instead of the apiserver watch, while keeping the LIST-seeded cache.
+	// Internal switch, defaults to false.
+	//
+	// TODO: implement the NATS-based watch (informer.NewNATSInformerFactory) and
+	// enable this; until then it stays false and the apiserver watch is used.
+	natsWatchEnabled bool
+}
+
+// newInformerFactory builds the provisioning informer factory. When
+// natsWatchEnabled is set, the informers keep their LIST-seeded caches but their
+// watch is served by the informer package instead of the apiserver watch.
+func (b *APIBuilder) newInformerFactory(c clientset.Interface, resync time.Duration) informers.SharedInformerFactory {
+	if b.natsWatchEnabled {
+		return informer.NewNATSInformerFactory(c, resync)
+	}
+	return informer.NewInformerFactory(c, resync)
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -932,7 +952,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Informer with resync interval used for health check and reconciliation
 			informerFactoryResyncInterval := 60 * time.Second
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, informerFactoryResyncInterval)
+			sharedInformerFactory := b.newInformerFactory(c, informerFactoryResyncInterval)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
@@ -1145,7 +1165,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 10 * time.Minute
-				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
+				historyJobInformerFactory := b.newInformerFactory(c, historyJobExpiration)
 				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
 				historyJobController := appcontroller.NewHistoryJobController(

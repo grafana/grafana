@@ -868,6 +868,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.secretsReferenceValueUI",
+			Description: "Enable referencing an existing secret in an active keeper when creating a secure value",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "alertingSaveStatePeriodic",
 			Description: "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:       FeatureStagePrivatePreview,
@@ -890,15 +898,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "useScopeSingleNodeEndpoint",
-			Description:  "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true",
-			Generate:     Generate{LegacyFrontend: true},
-			HideFromDocs: true,
 		},
 		{
 			Name:         "useMultipleScopeNodesEndpoint",
@@ -2230,14 +2229,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "heatmapRowsAxisOptions",
-			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
@@ -2273,6 +2264,15 @@ var (
 		{
 			Name:         "onlyStoreServiceAccountActionSets",
 			Description:  "When storing service account resource permissions, only store action sets and not the full list of underlying permissions",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{LegacyGo: true},
+			HideFromDocs: true,
+			Owner:        identityAccessTeam,
+			Expression:   "false",
+		},
+		{
+			Name:         "iam.onlyStoreDatasourceActionSets",
+			Description:  "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
 			Stage:        FeatureStageExperimental,
 			Generate:     Generate{LegacyGo: true},
 			HideFromDocs: true,
@@ -3130,6 +3130,15 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "auth.tokenRotationGracePeriod",
+			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

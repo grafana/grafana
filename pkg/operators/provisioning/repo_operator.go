@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
-
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
 func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
@@ -37,10 +35,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
+	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {

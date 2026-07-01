@@ -34,6 +34,10 @@ var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupRes
 // This follows the convention in pkg/storage/unified/apistore/prepare.go.
 const maxSafeJSInt = (1 << 52) - 1
 
+// maxFutureWindow bounds how far ahead of now an annotation's time (or timeEnd) may be set.
+// TODO: determine appropriate future bound and maybe make configurable.
+const maxFutureWindow = 7 * 24 * time.Hour
+
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
 // status + telemetry classification agree. Already-typed apierrors and unknown
 // errors pass through unchanged (the apiserver will wrap the latter as 500).
@@ -82,6 +86,11 @@ type k8sRESTAdapter struct {
 	// annotation. 0 means no scopes are allowed. Negative values are
 	// rejected by the settings loader.
 	maxScopeCount int
+
+	// retentionTTL bounds how far in the past an annotation's time may be,
+	// matching the cleanup window so we don't accept data that would be
+	// immediately purged.
+	retentionTTL time.Duration
 
 	tracer  trace.Tracer
 	metrics *Metrics
@@ -216,23 +225,21 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
 	}
 
+	err = s.validateAnnotation(annotation)
+	if err != nil {
+		return nil, err
+	}
+
+	if annotation.Name == "" && annotation.GenerateName != "" {
+		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
+	}
+
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
 	if !allowed {
 		return nil, apierrors.NewForbidden(annotationGR, annotation.Name, fmt.Errorf("insufficient permissions"))
-	}
-
-	if annotation.Name == "" && annotation.GenerateName == "" {
-		return nil, apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
-	}
-	if annotation.Name == "" && annotation.GenerateName != "" {
-		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
-	}
-
-	if err := s.validateScopeCount(annotation); err != nil {
-		return nil, err
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -318,9 +325,9 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
-	if _, ok := getLegacyData(resource); !ok {
-		if existingData, ok := getLegacyData(existing); ok {
-			setLegacyData(resource, existingData)
+	if _, ok := GetLegacyData(resource); !ok {
+		if existingData, ok := GetLegacyData(existing); ok {
+			SetLegacyData(resource, existingData)
 		}
 	}
 
@@ -411,10 +418,58 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 	return nil
 }
 
+func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error {
+	if err := s.validateScopeCount(anno); err != nil {
+		return err
+	}
+
+	if err := s.validateTimes(anno); err != nil {
+		return err
+	}
+
+	return validateNames(anno)
+}
+
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	if len(a.Spec.Scopes) > s.maxScopeCount {
 		return apierrors.NewBadRequest(fmt.Sprintf(
 			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
 	}
+	return nil
+}
+
+func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	now := time.Now().UTC()
+	maxFuture := now.Add(maxFutureWindow).UnixMilli()
+	maxPast := now.Add(-s.retentionTTL).UnixMilli()
+
+	if anno.Spec.Time > maxFuture {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
+	}
+	if anno.Spec.Time < maxPast {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+	}
+
+	// If timeEnd is set, validate it's after time and within future bounds
+	if anno.Spec.TimeEnd != nil {
+		if *anno.Spec.TimeEnd < anno.Spec.Time {
+			return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd must be after time", ErrInvalidInput))
+		}
+		if *anno.Spec.TimeEnd > maxFuture {
+			return apierrors.NewBadRequest(
+				fmt.Sprintf("%v: timeEnd cannot be more than 1 week in the future", ErrInvalidInput))
+		}
+	}
+
+	return nil
+}
+
+func validateNames(anno *annotationV0.Annotation) error {
+	if anno.Name == "" && anno.GenerateName == "" {
+		return apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+
 	return nil
 }

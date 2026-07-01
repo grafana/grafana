@@ -23,6 +23,7 @@ func TestReadNATSSettings(t *testing.T) {
 		require.Equal(t, 4222, cfg.NATS.ClientPort)
 		require.Equal(t, 6222, cfg.NATS.ClusterPort)
 		require.Empty(t, cfg.NATS.ClientURLs)
+		require.False(t, cfg.NATS.TLS.Enabled)
 	})
 
 	t.Run("parses overrides", func(t *testing.T) {
@@ -32,6 +33,11 @@ func TestReadNATSSettings(t *testing.T) {
 enabled = true
 mode = external
 client_urls = nats://a:4222, nats://b:4222
+tls_enabled = true
+tls_ca_cert_path = /etc/ca.pem
+token = s3cret
+publisher_credentials_file = /etc/pub.creds
+subscriber_credentials_file = /etc/sub.creds
 `))
 		require.NoError(t, err)
 		cfg.Raw = f
@@ -42,6 +48,11 @@ client_urls = nats://a:4222, nats://b:4222
 		require.Equal(t, NATSModeExternal, cfg.NATS.Mode)
 		require.False(t, cfg.NATS.Embedded())
 		require.Equal(t, []string{"nats://a:4222", "nats://b:4222"}, cfg.NATS.ClientURLs)
+		require.True(t, cfg.NATS.TLS.Enabled)
+		require.Equal(t, "/etc/ca.pem", cfg.NATS.TLS.CACertPath)
+		require.Equal(t, "s3cret", cfg.NATS.Auth.Token)
+		require.Equal(t, "/etc/pub.creds", cfg.NATS.Auth.PublisherCredentialsFile)
+		require.Equal(t, "/etc/sub.creds", cfg.NATS.Auth.SubscriberCredentialsFile)
 	})
 
 	t.Run("rejects invalid mode", func(t *testing.T) {
@@ -51,5 +62,43 @@ client_urls = nats://a:4222, nats://b:4222
 		cfg.Raw = f
 
 		require.Error(t, readNATSSettings(cfg))
+	})
+}
+
+func TestNATSAuthCredentialsPrecedence(t *testing.T) {
+	t.Run("per-role overrides shared", func(t *testing.T) {
+		a := NATSAuthSettings{
+			CredentialsFile:          "/shared.creds",
+			PublisherCredentialsFile: "/pub.creds",
+		}
+		require.Equal(t, "/pub.creds", a.PublisherCredentials())
+	})
+
+	t.Run("falls back to shared", func(t *testing.T) {
+		a := NATSAuthSettings{CredentialsFile: "/shared.creds"}
+		require.Equal(t, "/shared.creds", a.PublisherCredentials())
+	})
+
+	t.Run("empty when nothing set", func(t *testing.T) {
+		a := NATSAuthSettings{}
+		require.Empty(t, a.PublisherCredentials())
+	})
+
+	t.Run("subscriber per-role overrides shared", func(t *testing.T) {
+		a := NATSAuthSettings{
+			CredentialsFile:           "/shared.creds",
+			SubscriberCredentialsFile: "/sub.creds",
+		}
+		require.Equal(t, "/sub.creds", a.SubscriberCredentials())
+	})
+
+	t.Run("subscriber falls back to shared", func(t *testing.T) {
+		a := NATSAuthSettings{CredentialsFile: "/shared.creds"}
+		require.Equal(t, "/shared.creds", a.SubscriberCredentials())
+	})
+
+	t.Run("subscriber empty when nothing set", func(t *testing.T) {
+		a := NATSAuthSettings{}
+		require.Empty(t, a.SubscriberCredentials())
 	})
 }

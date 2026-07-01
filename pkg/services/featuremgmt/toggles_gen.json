@@ -993,6 +993,23 @@
     },
     {
       "metadata": {
+        "name": "auth.tokenRotationGracePeriod",
+        "resourceVersion": "1782472850879",
+        "creationTimestamp": "2026-06-26T10:33:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 11:20:50.87964 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-06-13T09:41:35Z"
@@ -2636,6 +2653,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.secretsReferenceValueUI",
+        "resourceVersion": "1782512869856",
+        "creationTimestamp": "2026-06-26T22:27:49Z"
+      },
+      "spec": {
+        "description": "Enable referencing an existing secret in an active keeper when creating a secure value",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1781683112920",
         "creationTimestamp": "2026-06-17T07:58:32Z"
@@ -2844,6 +2875,7 @@
         "name": "heatmapRowsAxisOptions",
         "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",
+        "deletionTimestamp": "2026-06-22T00:00:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-22 18:16:05.311396 +0000 UTC"
         }
@@ -2854,6 +2886,23 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "iam.onlyStoreDatasourceActionSets",
+        "resourceVersion": "1782461544304",
+        "creationTimestamp": "2026-06-26T07:57:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 08:12:24.304094 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When storing datasource resource permissions, only store action sets and not the full list of underlying permissions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4947,6 +4996,21 @@
     },
     {
       "metadata": {
+        "name": "secretsReferenceValueUI",
+        "resourceVersion": "1782488602777",
+        "creationTimestamp": "2026-06-26T15:43:22Z",
+        "deletionTimestamp": "2026-06-26T22:27:49Z"
+      },
+      "spec": {
+        "description": "Enable referencing an existing secret in an active keeper when creating a secure value",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-15T21:07:39Z",
@@ -5428,7 +5492,8 @@
       "metadata": {
         "name": "useScopeSingleNodeEndpoint",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-31T14:32:41Z"
+        "creationTimestamp": "2025-07-31T14:32:41Z",
+        "deletionTimestamp": "2026-06-24T02:41:49Z"
       },
       "spec": {
         "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
