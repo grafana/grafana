@@ -203,8 +203,10 @@ export function PanelChrome({
   const isPanelTransparent = displayMode === 'transparent';
   const showSubHeader = !collapsed && Boolean(subHeaderContent || descriptionSubHeader);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader, showSubHeader);
-  const subHeaderHeight = showSubHeader ? Math.max(measuredSubHeaderHeight - 0, 0) : 0;
+  // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
+  const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
+  const headerHeight = getHeaderHeight(theme, hasHeader, subHeaderHeight);
+
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
@@ -496,9 +498,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, showSubHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
-    return theme.spacing.gridSize * theme.components.panel.headerHeight - (showSubHeader ? 8 : 0);
+    // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
+    return theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? 8 : 0);
   }
 
   return 0;
