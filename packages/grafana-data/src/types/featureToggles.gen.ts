@@ -1216,6 +1216,11 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
+  */
+  heatmapNegativeLogBuckets?: boolean;
+  /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
   */
