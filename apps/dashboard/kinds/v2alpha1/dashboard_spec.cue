@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint32]
+	ids: [...number]
 }
 
 // Annotation event field source. Defines how to obtain the value for an annotation event field.

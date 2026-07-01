@@ -957,8 +957,8 @@
             "description": "Panel IDs that should be included or excluded",
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64",
+              "type": "number",
+              "format": "double",
               "default": 0
             }
           }
