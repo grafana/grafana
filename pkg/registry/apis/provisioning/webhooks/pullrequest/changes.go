@@ -114,7 +114,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.ShouldGenerateDashboardPreviews()
 	info := changeInfo{
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
