@@ -35,12 +35,19 @@ if [ -z "$PUBLISH_TIME" ]; then
 fi
 echo "Last '${NPM_TAG}' publish: ${PACKAGE}@${LAST_VERSION} at ${PUBLISH_TIME}" >&2
 
-# Deepen only as far back as the last publish (bounded by date, not commit count).
-# If we can't deepen the history we can't compare reliably, so publish to be safe.
-if ! git fetch --quiet --shallow-since="$PUBLISH_TIME" origin "$GIT_COMMIT" 2>/dev/null; then
-  echo "Could not deepen history to ${PUBLISH_TIME}; publishing (safe default)." >&2
-  echo "true"
-  exit 0
+# Ensure we have history back to the last publish. In CI the checkout is shallow
+# (fetch-depth: 1) so we deepen it — bounded by date, not commit count. We ONLY do
+# this when the repo is already shallow: running --shallow-since against a complete
+# clone would truncate it into a shallow one and destroy local history, so a full
+# clone (the usual local dev case) is left untouched and its existing history used.
+if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+  if ! git fetch --quiet --shallow-since="$PUBLISH_TIME" origin "$GIT_COMMIT" 2>/dev/null; then
+    echo "Could not deepen shallow history to ${PUBLISH_TIME}; publishing (safe default)." >&2
+    echo "true"
+    exit 0
+  fi
+else
+  echo "Repository is complete; using existing history (no fetch)." >&2
 fi
 
 # --min-parents=1 excludes the shallow-clone boundary commit: after the date-bounded
