@@ -27,7 +27,7 @@ async function generateCodeownersManifest(
   const hasRawAuditJsonl = await stat(rawAuditPath);
   if (!hasRawAuditJsonl) {
     throw new Error(
-      `No raw CODEOWNERS audit JSONL file found at: ${rawAuditPath} ... run "yarn codeowners-manifest:raw"`
+      `No raw CODEOWNERS audit JSONL file found at: ${rawAuditPath} ... run "pnpm run codeowners-manifest:raw"`
     );
   }
 

@@ -90,7 +90,7 @@ Afterwards, you need to run the `TestIntegrationOpenAPIs` test with `go test ./p
 
 ### 2. Run the API generator script
 
-Run `yarn generate:api-client` and follow the prompts. See [API Client Generator](./src/generator/README.md) for details.
+Run `pnpm run generate:api-client` and follow the prompts. See [API Client Generator](./src/generator/README.md) for details.
 
 ## Updating generated clients
 
@@ -113,7 +113,7 @@ Use this flow when an existing API changes and you need to regenerate the API ty
 4. Regenerate the processed OpenAPI specs and RTK Query endpoints:
 
    ```bash
-   yarn generate-apis
+   pnpm run generate-apis
    ```
 
    This processes snapshots into `packages/grafana-openapi/src/apis/*.json` and regenerates `endpoints.gen.ts` files under `packages/grafana-api-clients/src/clients/rtkq/`.
@@ -124,7 +124,7 @@ Use this flow when an existing API changes and you need to regenerate the API ty
    - `packages/grafana-openapi/src/apis/<group>.grafana.app-<version>.json`.
    - `packages/grafana-api-clients/src/clients/rtkq/<group>/<version>/endpoints.gen.ts`.
 
-You can also run `yarn generate:api-client` and select an existing API group/version.
+You can also run `pnpm run generate:api-client` and select an existing API group/version.
 The generator will offer to update the existing client by running the endpoint generation step without modifying the client config or Redux wiring.
 
 ### Troubleshooting generated client updates

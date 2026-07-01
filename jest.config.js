@@ -35,6 +35,16 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  // ml-regression chain (used by the regression transformer) ships ESM; pnpm's
+  // strict layout no longer hoists it where the default ignore would skip it.
+  'ml-regression-polynomial',
+  'ml-regression-simple-linear',
+  'ml-regression-base',
+  'ml-matrix',
+  'ml-array-rescale',
+  'ml-array-max',
+  'ml-array-min',
+  'is-any-array',
 ].join('|');
 
 module.exports = {
@@ -47,7 +57,9 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
+    // The optional .pnpm/<pkg>@<ver>/node_modules/ segment matches pnpm's nested
+    // store layout so ESM packages there are still transformed, not skipped.
+    `/node_modules/(?!(?:\\.pnpm/.+/node_modules/)?(${esModules}))`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],

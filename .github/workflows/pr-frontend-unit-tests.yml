@@ -89,9 +89,9 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -133,9 +133,9 @@ jobs:
         path: apps/dashboard/pkg/migration
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run test:ci
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run test:ci
       env:
         TEST_MAX_WORKERS: 4
         TEST_SHARD: ${{ matrix.shard }}
@@ -155,9 +155,9 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run plugin:test:ci
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run plugin:test:ci
 
   frontend-packages-unit-tests:
     needs:
@@ -173,9 +173,9 @@ jobs:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run packages:test:ci
+    - name: Install dependencies
+      uses: ./.github/actions/pnpm-install
+    - run: pnpm run packages:test:ci
 
   # This is the job that is actually required by rulesets.
   # We need to require EITHER the OSS or the Enterprise job to pass.

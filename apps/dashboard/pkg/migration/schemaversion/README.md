@@ -321,11 +321,11 @@ describe('V{N} Migration', () => {
 go test ./apps/dashboard/pkg/migration/schemaversion/... -run TestV{N}
 
 # Frontend unit tests
-yarn test DashboardMigrator.test.ts -t "V{N}"
+pnpm run test DashboardMigrator.test.ts -t "V{N}"
 
 # Integration tests
 go test ./apps/dashboard/pkg/migration/... -run TestMigrate
-yarn test DashboardMigratorToBackend.test.ts
+pnpm run test DashboardMigratorToBackend.test.ts
 ```
 
 
@@ -483,7 +483,7 @@ The frontend migration comparison tests validate that backend and frontend migra
 **Test execution:**
 ```bash
 # Frontend migration comparison tests
-yarn test DashboardMigratorToBackend.test.ts
+pnpm run test DashboardMigratorToBackend.test.ts
 ```
 
 **Test approach:**

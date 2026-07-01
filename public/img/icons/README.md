@@ -10,4 +10,4 @@
     - This allows the consumer to control the color of the `Icon`, which is useful for hover/focus states
 - Modify the [`availableIconsIndex` map in `@grafana/data`](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/icon.ts#L1) and add the new icon
   - **Note:** the key must exactly match the icon filename, e.g. if your new icon is `my-icon.svg`, the key must be `my-icon`
-- Run `yarn storybook` and verify the new icon appears correctly in the `Icon` story
+- Run `pnpm run storybook` and verify the new icon appears correctly in the `Icon` story

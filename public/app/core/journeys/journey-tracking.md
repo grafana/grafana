@@ -302,7 +302,7 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 
 ## Adding a New Journey
 
-> **Fast path:** `yarn cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. Use `--dry-run` to preview without writing. Run `yarn cuj:new --help` for the full flag list. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
+> **Fast path:** `pnpm cuj:new <type> [--with-smoke]` scaffolds the wiring file, test file, optional smoke driver, registry entry, and bootstrap import in one go. Use `--dry-run` to preview without writing. Run `pnpm cuj:new --help` for the full flag list. The agent recipe in [`AGENTS.md`](./AGENTS.md) is the compact agent-facing variant of this section.
 
 This section walks through instrumenting a new CUJ end-to-end. Worked example at the bottom.
 
@@ -1052,7 +1052,7 @@ public/app/core/journeys/
 
 **Output:** outcome histogram, journey × scenario × outcome breakdown, average duration, list of failures.
 
-**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `yarn typecheck` and dev-server fork-ts-checker stay untouched. Run `yarn typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
+**Typecheck:** smoke files use explicit `.ts` import extensions (Node ESM with `--experimental-strip-types` requires them). They live under their own `tsconfig.smoke.json` so the main `pnpm typecheck` and dev-server fork-ts-checker stay untouched. Run `pnpm typecheck:smoke` to validate them locally. CI runs it as part of the frontend-lint workflow; lefthook runs it pre-commit when any smoke file is staged.
 
 ## Implementation Details
 

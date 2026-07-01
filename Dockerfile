@@ -21,8 +21,8 @@ FROM gcr.io/distroless/static-debian13 AS distroless-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
-ARG JS_YARN_INSTALL_FLAG=--immutable
-ARG JS_YARN_BUILD_FLAG=build
+ARG JS_INSTALL_FLAG=--frozen-lockfile
+ARG JS_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -30,8 +30,11 @@ WORKDIR /tmp/grafana
 
 RUN apk add --no-cache make build-base python3
 
-COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
+# Provision pnpm from the packageManager field in package.json.
+RUN corepack enable
+
+COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
@@ -43,10 +46,10 @@ COPY conf/defaults.ini ./conf/defaults.ini
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    yarn install; \
+RUN if [ "$JS_INSTALL_FLAG" = "" ]; then \
+    pnpm install; \
   else \
-    yarn install --immutable; \
+    pnpm install $JS_INSTALL_FLAG; \
   fi
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
@@ -54,7 +57,7 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN yarn ${JS_YARN_BUILD_FLAG}
+RUN pnpm run ${JS_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder

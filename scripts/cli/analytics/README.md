@@ -153,7 +153,7 @@ Each call internally invokes `reportInteraction` from `@grafana/runtime`, forwar
 Run the following command from the repo root:
 
 ```bash
-yarn analytics-report
+pnpm run analytics-report
 ```
 
 Example:
