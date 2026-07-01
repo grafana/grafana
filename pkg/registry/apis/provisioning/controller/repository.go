@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -46,9 +45,9 @@ type finalizerProcessor interface {
 
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
-	client     client.ProvisioningV0alpha1Interface
-	repoLister listers.RepositoryLister
-	logger     logging.Logger
+	client client.ProvisioningV0alpha1Interface
+	repos  RepositoryGetter
+	logger logging.Logger
 
 	jobs interface {
 		jobs.Queue
@@ -82,7 +81,7 @@ type RepositoryController struct {
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	repoLister listers.RepositoryLister,
+	repos RepositoryGetter,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
@@ -100,6 +99,7 @@ func NewRepositoryController(
 	minSyncInterval time.Duration,
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
+	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
@@ -108,8 +108,8 @@ func NewRepositoryController(
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client:     provisioningClient,
-		repoLister: repoLister,
+		client: provisioningClient,
+		repos:  repos,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -119,7 +119,7 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
-		quotaChecker:      NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:      quotaChecker,
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:           resourceLister,
@@ -576,10 +576,12 @@ func (rc *RepositoryController) process(key string) error {
 		return err
 	}
 
-	obj, err := rc.repoLister.Repositories(namespace).Get(name)
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the RepositoryGetter's concern, not the controller's.
+	obj, err := rc.repos.Get(namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found in cache")
+		return errors.New("repository not found")
 	case err != nil:
 		return err
 	}

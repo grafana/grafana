@@ -19,6 +19,7 @@ import { formatDate, formatDuration } from 'app/core/internationalization/dates'
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
 import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
@@ -119,6 +120,7 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
+      const description = access.description?.values[p.row.index];
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -126,10 +128,11 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
+      const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={styles.cell} {...cellProps}>
-          {!response.isItemLoaded(p.row.index) ? (
+        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
+          {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
@@ -138,6 +141,7 @@ export const generateColumns = (
               {name}
             </a>
           )}
+          {isLoaded ? <DescriptionTooltip description={description} /> : null}
         </div>
       );
     },
