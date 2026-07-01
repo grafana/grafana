@@ -1,4 +1,4 @@
-package github
+package webhooks
 
 import (
 	"sync"
@@ -8,7 +8,7 @@ import (
 )
 
 // defaultReplayCacheTTL is the lifetime of a recorded webhook replay key. It
-// must comfortably exceed GitHub's webhook retry window so that a replayed
+// must comfortably exceed a provider's webhook retry window so that a replayed
 // request is still considered a duplicate.
 const defaultReplayCacheTTL = time.Hour
 
@@ -18,11 +18,11 @@ const defaultReplayCacheTTL = time.Hour
 // evicted-then-replayed delivery is a single idempotent sync job.
 const maxReplayCacheEntries = 10000
 
-// replayCache tracks recently-seen webhook replay keys so the webhook handler
-// can reject replayed requests. The key is the validated HMAC signature
-// (X-Hub-Signature-256), which binds the entry to the signed request body and
-// the repository's unique secret — see Webhook for why the unauthenticated
-// X-GitHub-Delivery header is not used as the key.
+// replayCache tracks recently-seen webhook replay keys so the dispatcher can
+// reject replayed requests. The key is the provider's validated request
+// signature, which binds the entry to the signed request body and the
+// repository's unique secret, so it cannot be forged or collided across
+// repositories.
 type replayCache struct {
 	// expirable.LRU is internally locked, but seenOrAdd's Get-then-Add is two
 	// calls; this mutex makes the check-and-set atomic so concurrent identical
