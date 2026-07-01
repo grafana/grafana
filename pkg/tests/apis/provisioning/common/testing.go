@@ -89,6 +89,7 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
 	ProvisioningPath string
+	Namespace        string
 
 	Repositories       *apis.K8sResourceClient
 	Connections        *apis.K8sResourceClient
@@ -112,6 +113,7 @@ func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, u
 	return &ProvisioningTestHelper{
 		ProvisioningPath: h.ProvisioningPath,
 		K8sTestHelper:    h.K8sTestHelper,
+		Namespace:        namespace,
 
 		Repositories: h.GetResourceClient(apis.ResourceClientArgs{
 			User:      user,
@@ -202,7 +204,7 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 	})
 
 	result := h.AdminREST.Post().
-		Namespace("default").
+		Namespace(h.Namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
