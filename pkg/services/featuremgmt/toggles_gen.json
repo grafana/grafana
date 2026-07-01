@@ -2872,6 +2872,20 @@
     },
     {
       "metadata": {
+        "name": "heatmapNegativeLogBuckets",
+        "resourceVersion": "1780479590437",
+        "creationTimestamp": "2026-06-03T09:39:50Z"
+      },
+      "spec": {
+        "description": "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "heatmapRowsAxisOptions",
         "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",

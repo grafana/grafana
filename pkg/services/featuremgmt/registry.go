@@ -2229,6 +2229,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "heatmapNegativeLogBuckets",
+			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
