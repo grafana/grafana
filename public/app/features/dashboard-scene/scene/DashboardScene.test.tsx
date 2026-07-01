@@ -46,7 +46,7 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../u
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardScene, type DashboardSceneState } from './DashboardScene';
+import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -55,6 +55,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 

@@ -136,7 +136,7 @@ export const DataSourcePicker = memo(function DataSourcePicker({
     return dataSourceSrv
       .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
       .map((ds) => ({
-        value: ds.name,
+        value: ds.uid,
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,

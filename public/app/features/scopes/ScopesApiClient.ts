@@ -1,5 +1,4 @@
 import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import type { FindDefaultScope } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
@@ -95,7 +94,7 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
-    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
+    if (names.length === 0) {
       return Promise.resolve([]);
     }
 
