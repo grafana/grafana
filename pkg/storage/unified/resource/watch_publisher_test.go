@@ -6,9 +6,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.
@@ -27,12 +28,12 @@ func (f *fakeEventPublisher) Publish(_ context.Context, subject string, data []b
 	return f.err
 }
 
-func TestActionToWatchEventType(t *testing.T) {
-	assert.Equal(t, resourcewatch.Added, actionToWatchEventType(DataActionCreated))
-	assert.Equal(t, resourcewatch.Modified, actionToWatchEventType(DataActionUpdated))
-	assert.Equal(t, resourcewatch.Deleted, actionToWatchEventType(DataActionDeleted))
+func TestActionToWatchNotificationType(t *testing.T) {
+	assert.Equal(t, resourcepb.WatchNotification_ADDED, actionToWatchNotificationType(DataActionCreated))
+	assert.Equal(t, resourcepb.WatchNotification_MODIFIED, actionToWatchNotificationType(DataActionUpdated))
+	assert.Equal(t, resourcepb.WatchNotification_DELETED, actionToWatchNotificationType(DataActionDeleted))
 	// An unknown action must not masquerade as a real change.
-	assert.Equal(t, resourcewatch.EventType(""), actionToWatchEventType("bogus"))
+	assert.Equal(t, resourcepb.WatchNotification_UNKNOWN, actionToWatchNotificationType("bogus"))
 }
 
 func TestPublishWatchNotification(t *testing.T) {
@@ -55,17 +56,15 @@ func TestPublishWatchNotification(t *testing.T) {
 		require.Len(t, pub.subjects, 1)
 		assert.Equal(t, "provisioning.grafana.app.default.repositories", pub.subjects[0])
 
-		got, err := resourcewatch.UnmarshalEvent(pub.payloads[0])
-		require.NoError(t, err)
-		assert.Equal(t, resourcewatch.Event{
-			Type:            resourcewatch.Modified,
-			Group:           event.Group,
-			Resource:        event.Resource,
-			Namespace:       event.Namespace,
-			Name:            event.Name,
-			ResourceVersion: event.ResourceVersion,
-			Folder:          event.Folder,
-		}, got)
+		var got resourcepb.WatchNotification
+		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
+		assert.Equal(t, resourcepb.WatchNotification_MODIFIED, got.GetType())
+		assert.Equal(t, event.Group, got.GetGroup())
+		assert.Equal(t, event.Resource, got.GetResource())
+		assert.Equal(t, event.Namespace, got.GetNamespace())
+		assert.Equal(t, event.Name, got.GetName())
+		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
+		assert.Equal(t, event.Folder, got.GetFolder())
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

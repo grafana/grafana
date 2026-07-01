@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -155,13 +156,17 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
-	vectorBackend    vector.VectorBackend
-	embedder         *embedder.Embedder
-	searchClient     resourcepb.ResourceIndexClient
-	storageMetrics   *resource.StorageMetrics
-	indexMetrics     *resource.BleveIndexMetrics
-	vectorMetrics    *resource.VectorMetrics
-	license          licensing.Licensing
+	// natsPublisher publishes resource watch notifications. Built by the NATS
+	// module and read by the UnifiedBackend module. Nil until the NATS module
+	// initializes; disabled (Enabled()==false) unless [nats] enabled=true.
+	natsPublisher  nats.Publisher
+	vectorBackend  vector.VectorBackend
+	embedder       *embedder.Embedder
+	searchClient   resourcepb.ResourceIndexClient
+	storageMetrics *resource.StorageMetrics
+	indexMetrics   *resource.BleveIndexMetrics
+	vectorMetrics  *resource.VectorMetrics
+	license        licensing.Licensing
 
 	pidFile     string
 	version     string
@@ -248,6 +253,24 @@ func (s *ModuleServer) Run() error {
 		return s.grpcService, nil
 	})
 
+	m.RegisterInvisibleModule(modules.NATS, func() (services.Service, error) {
+		// The embedded server relies on DB-backed peer discovery that is not wired
+		// in module mode, so only external NATS is supported here for now.
+		if s.cfg.NATS.Enabled && s.cfg.NATS.Embedded() {
+			s.log.Warn("embedded NATS is not supported in module mode; configure [nats] mode=external")
+		}
+		natsServer, err := nats.ProvideServer(s.cfg, nil, s.registerer)
+		if err != nil {
+			return nil, err
+		}
+		// The publisher connects lazily on first publish, so no server is started
+		// here; in external mode the embedded server is inert. Returning it as the
+		// module service drains the connection on shutdown.
+		publisher := nats.ProvidePublisher(s.cfg, nats.ProvideNATSConfig(s.cfg, natsServer), s.registerer)
+		s.natsPublisher = publisher
+		return publisher, nil
+	})
+
 	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
@@ -260,9 +283,7 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			// The NATS publisher is not wired into module mode yet, so watch
-			// notifications are published only from the monolith for now.
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, nil)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, s.natsPublisher)
 			if err != nil {
 				return nil, err
 			}

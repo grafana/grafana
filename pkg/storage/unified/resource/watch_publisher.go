@@ -3,9 +3,11 @@ package resource
 import (
 	"context"
 
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
@@ -23,19 +25,19 @@ type EventPublisher interface {
 	Publish(ctx context.Context, subject string, data []byte) error
 }
 
-// actionToWatchEventType maps the stored data action onto the wire event type,
-// mirroring how server.go derives WatchEvent.Type. An unknown action is left as
-// the zero EventType so it is not mistaken for a real change.
-func actionToWatchEventType(action kv.DataAction) resourcewatch.EventType {
+// actionToWatchNotificationType maps the stored data action onto the wire event
+// type, mirroring how server.go derives WatchEvent.Type. An unknown action maps
+// to UNKNOWN so it is not mistaken for a real change.
+func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotification_Type {
 	switch action {
 	case DataActionCreated:
-		return resourcewatch.Added
+		return resourcepb.WatchNotification_ADDED
 	case DataActionUpdated:
-		return resourcewatch.Modified
+		return resourcepb.WatchNotification_MODIFIED
 	case DataActionDeleted:
-		return resourcewatch.Deleted
+		return resourcepb.WatchNotification_DELETED
 	default:
-		return ""
+		return resourcepb.WatchNotification_UNKNOWN
 	}
 }
 
@@ -53,15 +55,15 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		Resource: event.Resource,
 	}, event.Namespace)
 
-	payload, err := resourcewatch.Event{
-		Type:            actionToWatchEventType(event.Action),
+	payload, err := proto.Marshal(&resourcepb.WatchNotification{
+		Type:            actionToWatchNotificationType(event.Action),
 		Group:           event.Group,
 		Resource:        event.Resource,
 		Namespace:       event.Namespace,
 		Name:            event.Name,
 		ResourceVersion: event.ResourceVersion,
 		Folder:          event.Folder,
-	}.Marshal()
+	})
 	if err != nil {
 		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)
 		return
