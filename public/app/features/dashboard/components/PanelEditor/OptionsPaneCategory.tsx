@@ -68,33 +68,35 @@ export const OptionsPaneCategory = React.memo(
     }, [isExpanded, isOpenFromUrl, forceOpen]);
 
     // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
-    useEffect(
-      function highlightPaneCategory() {
-        if (!isHighlightedFromUrl) {
-          return;
-        }
+    useEffect(() => {
+      if (!isHighlightedFromUrl) {
+        return;
+      }
 
-        setIsHighlighted(true);
-        setIsExpanded(true);
+      setIsHighlighted(true);
+      setIsExpanded(true);
+      updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
+    }, [isHighlightedFromUrl, updateQueryParams]);
 
-        const scrollTimeout = window.setTimeout(() => {
-          ref.current?.scrollIntoView();
-        }, 200);
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
+    useEffect(() => {
+      if (!isHighlighted) {
+        return;
+      }
 
-        // Clear the URL param only after the highlight completes. Clearing it synchronously
-        // flips isHighlightedFromUrl, which re-runs this effect and cancels both timers early.
-        const highlightTimeout = window.setTimeout(() => {
-          setIsHighlighted(false);
-          updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
-        }, 2000);
+      const scrollTimeout = window.setTimeout(() => {
+        ref.current?.scrollIntoView();
+      }, 200);
 
-        return () => {
-          window.clearTimeout(scrollTimeout);
-          window.clearTimeout(highlightTimeout);
-        };
-      },
-      [isHighlightedFromUrl, updateQueryParams]
-    );
+      const highlightTimeout = window.setTimeout(() => {
+        setIsHighlighted(false);
+      }, 2000);
+
+      return () => {
+        window.clearTimeout(scrollTimeout);
+        window.clearTimeout(highlightTimeout);
+      };
+    }, [isHighlighted]);
 
     const onToggle = useCallback(() => {
       updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
