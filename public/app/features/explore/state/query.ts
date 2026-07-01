@@ -20,7 +20,8 @@ import {
   type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
@@ -334,8 +335,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
           // Skip automatic import if explicitly requested (e.g., query library replacement)
           if (!options?.skipAutoImport) {
-            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            const queryDatasource = await getDataSourceInstance(oldQuery.datasource);
+            const targetDS = await getDataSourceInstance({ uid: newQuery.datasource?.uid });
             await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
             queriesImported = true;
           }
@@ -398,7 +399,7 @@ export const importQueries = (
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceSrv().get({ uid: key });
+          const queryDatasource = await getDataSourceInstance({ uid: key });
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
@@ -808,7 +809,7 @@ const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars
 
   return await Promise.all(
     Object.values(sets).map(async (targets) => {
-      const datasource = await getDataSourceSrv().get(targets[0].datasource, scopedVars);
+      const datasource = await getDataSourceInstance(targets[0].datasource, scopedVars);
       return {
         datasource,
         targets,
