@@ -50,7 +50,7 @@ In OSS, you can authenticate your requests to the HTTP APIs using basic auth or 
 
 The following table lists all available HTTP API reference pages. New APIs are listed first, followed by legacy APIs.
 
-| API                                                                                                                                                                         | Type   | Legacy API replaced |
+| API                                                                                                                                                                         | Type   | Replaces legacy API |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------- |
 | [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/)                                              | New    | `/api/dashboards/*` |
 | [Folder HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder/)                                                    | New    | `/api/folders/*`    |
