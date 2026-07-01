@@ -1488,11 +1488,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/shared.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -2309,11 +2304,6 @@
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
     "react/no-unescaped-entities": {
       "count": 26
-    }
-  },
-  "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {

@@ -714,6 +714,10 @@ const (
 	// When storing service account resource permissions, only store action sets and not the full list of underlying permissions
 	FlagOnlyStoreServiceAccountActionSets = "onlyStoreServiceAccountActionSets"
 
+	// FlagIamOnlyStoreDatasourceActionSets
+	// When storing datasource resource permissions, only store action sets and not the full list of underlying permissions
+	FlagIamOnlyStoreDatasourceActionSets = "iam.onlyStoreDatasourceActionSets"
+
 	// FlagExcludeRedundantManagedPermissions
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
@@ -861,10 +865,6 @@ const (
 	// FlagAdvisorDatasourceIntegration
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
-
-	// FlagFrontendServiceSSOAutoLogin
-	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
 
 	// FlagStreamingForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
