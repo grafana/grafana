@@ -178,7 +178,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     const singleItemFirstPage = {
       items: [
         {
@@ -210,7 +210,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders the empty state only after the first fetch resolves', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     mockK8sList({ items: [], metadata: { resourceVersion: '1' } });
 
     render(<SnapshotListTable />);
