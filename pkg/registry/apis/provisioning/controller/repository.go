@@ -581,7 +581,7 @@ func (rc *RepositoryController) process(key string) error {
 	obj, err := rc.repos.Get(namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("repository not found in cache")
+		return errors.New("repository not found")
 	case err != nil:
 		return err
 	}

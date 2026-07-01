@@ -207,7 +207,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	conn, err := cc.conns.Get(namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found in cache")
+		return errors.New("connection not found")
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err
