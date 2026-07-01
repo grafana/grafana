@@ -35,9 +35,7 @@ type VariableConditionValueOperator = '=' | '!=' | '=~' | '!~';
  */
 function buildValueRegExp(value: string): RegExp {
   const { cleaned, flags } = parseFlags(value);
-  // parseFlags always adds the global flag; drop it so `test()` is not stateful
-  // across the repeated calls used to evaluate multi-value variables.
-  return new RegExp(cleaned, flags.replace('g', ''));
+  return new RegExp(cleaned, flags);
 }
 
 interface ConditionalRenderingVariableState extends SceneObjectState {
