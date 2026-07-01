@@ -2776,15 +2776,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "frontendServiceSSOAutoLogin",
-			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "splashScreen",
 			Description: "Enables the splash screen modal for introducing new Grafana features on first session",
 			Stage:       FeatureStagePublicPreview,
