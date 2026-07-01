@@ -284,8 +284,9 @@ export function partitionNavForPinning(
   return { pinned: buildPinnedTree(items, pinned), rest: removeMovedItems(items, pinned) };
 }
 
-// Items the mega menu never lists directly (surfaced elsewhere in the chrome).
-export const NON_MENU_NAV_IDS = new Set(['profile', 'help']);
+// Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
+// the logo, so it isn't repeated as a menu item.
+export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {

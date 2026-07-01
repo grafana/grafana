@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -193,6 +188,16 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+  * @default false
+  */
+  externalSnapshotsK8SAPIPush?: boolean;
+  /**
+  * On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+  * @default false
+  */
+  externalSnapshotsSupportLegacyAPI?: boolean;
   /**
   * Routes library panel requests from /api to the /apis endpoint
   * @default false
@@ -448,11 +453,6 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
-  /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
   /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
   * @default true
@@ -1215,11 +1215,6 @@ export interface FeatureToggles {
   * @default true
   */
   vizLegendFacetedFilter?: boolean;
-  /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
-  */
-  heatmapRowsAxisOptions?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false

@@ -154,7 +154,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        <FolderRepo folder={folder} />
+        <FolderRepo folder={folder} enableRepositoryLink />
       </Stack>
     );
   };
