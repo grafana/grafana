@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -155,6 +156,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	natsPublisher    nats.Publisher
 	vectorBackend    vector.VectorBackend
 	embedder         *embedder.Embedder
 	searchClient     resourcepb.ResourceIndexClient
@@ -248,6 +250,26 @@ func (s *ModuleServer) Run() error {
 		return s.grpcService, nil
 	})
 
+	m.RegisterInvisibleModule(modules.NATS, func() (services.Service, error) {
+		// The embedded server relies on DB-backed peer discovery that is not wired
+		// in module mode (no sqlStore is injected here), so only external NATS is
+		// supported. Fail fast rather than fall through to ProvideServer, which would
+		// reject the nil sqlStore anyway, so operators get a mode-specific message.
+		if s.cfg.NATS.Enabled && s.cfg.NATS.Embedded() {
+			return nil, fmt.Errorf("embedded NATS is not supported in module mode; configure [nats] mode=external")
+		}
+		natsServer, err := nats.ProvideServer(s.cfg, nil, s.registerer)
+		if err != nil {
+			return nil, err
+		}
+		// The publisher connects lazily on first publish, so no server is started
+		// here; in external mode the embedded server is inert. Returning it as the
+		// module service drains the connection on shutdown.
+		publisher := nats.ProvidePublisher(s.cfg, nats.ProvideNATSConfig(s.cfg, natsServer), s.registerer)
+		s.natsPublisher = publisher
+		return publisher, nil
+	})
+
 	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
@@ -260,7 +282,7 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, sql.WithEventPublisher(s.natsPublisher))
 			if err != nil {
 				return nil, err
 			}

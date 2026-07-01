@@ -100,6 +100,7 @@ jobs:
     - name: Install dependencies
       uses: ./.github/actions/pnpm-install
     - run: pnpm run typecheck
+    - run: pnpm run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -129,6 +130,7 @@ jobs:
     - name: Install dependencies
       uses: ./.github/actions/pnpm-install
     - run: pnpm run typecheck
+    - run: pnpm run typecheck:smoke
   lint-frontend-typecheck-tsgo-enterprise:
     needs: detect-changes
     permissions:
