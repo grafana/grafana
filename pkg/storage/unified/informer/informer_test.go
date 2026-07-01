@@ -1,0 +1,248 @@
+package informer
+
+import (
+	"context"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
+)
+
+const testNamespace = "default"
+
+var testGVR = schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
+
+// fakeSubscriber is a nats.Subscriber that records subscriptions and lets a test
+// deliver notifications synchronously, so the informer can be exercised without
+// a real NATS server.
+type fakeSubscriber struct {
+	mu       sync.Mutex
+	handlers map[string]nats.MessageHandler
+}
+
+func newFakeSubscriber() *fakeSubscriber {
+	return &fakeSubscriber{handlers: map[string]nats.MessageHandler{}}
+}
+
+func (f *fakeSubscriber) Enabled() bool { return true }
+
+func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.handlers[subject] = handler
+	return fakeSubscription{}, nil
+}
+
+func (f *fakeSubscriber) waitForSubscription(t *testing.T, subject string) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		_, ok := f.handlers[subject]
+		return ok
+	}, 5*time.Second, 5*time.Millisecond, "informer never subscribed to %q", subject)
+}
+
+func (f *fakeSubscriber) publish(t *testing.T, subject string, evt *resourcepb.WatchNotification) {
+	t.Helper()
+	data, err := proto.Marshal(evt)
+	require.NoError(t, err)
+	f.deliver(t, subject, data)
+}
+
+func (f *fakeSubscriber) deliver(t *testing.T, subject string, data []byte) {
+	t.Helper()
+	f.mu.Lock()
+	handler, ok := f.handlers[subject]
+	f.mu.Unlock()
+	require.Truef(t, ok, "no subscription for subject %q", subject)
+	handler(subject, data)
+}
+
+type fakeSubscription struct{}
+
+func (fakeSubscription) Unsubscribe() error { return nil }
+
+var _ nats.Subscriber = (*fakeSubscriber)(nil)
+
+// recordingHandler captures the OnAdd/OnUpdate calls an informer makes.
+type recordingHandler struct {
+	mu      sync.Mutex
+	adds    []*metav1.PartialObjectMetadata
+	updates []*metav1.PartialObjectMetadata
+	deletes []*metav1.PartialObjectMetadata
+}
+
+func (h *recordingHandler) OnAdd(obj interface{}, _ bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.adds = append(h.adds, obj.(*metav1.PartialObjectMetadata))
+}
+
+func (h *recordingHandler) OnUpdate(_, newObj interface{}) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.updates = append(h.updates, newObj.(*metav1.PartialObjectMetadata))
+}
+
+func (h *recordingHandler) OnDelete(obj interface{}) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.deletes = append(h.deletes, obj.(*metav1.PartialObjectMetadata))
+}
+
+func (h *recordingHandler) addedNames() []string   { return names(&h.mu, h.adds) }
+func (h *recordingHandler) updatedNames() []string { return names(&h.mu, h.updates) }
+func (h *recordingHandler) deletedNames() []string { return names(&h.mu, h.deletes) }
+
+func names(mu *sync.Mutex, objs []*metav1.PartialObjectMetadata) []string {
+	mu.Lock()
+	defer mu.Unlock()
+	out := make([]string, len(objs))
+	for i, o := range objs {
+		out[i] = o.Name
+	}
+	return out
+}
+
+var _ cache.ResourceEventHandler = (*recordingHandler)(nil)
+
+func obj(name string) *metav1.PartialObjectMetadata {
+	return &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: testNamespace}}
+}
+
+func newObjectFunc(namespace, name string) runtime.Object {
+	return obj(name)
+}
+
+func event(action resourcepb.WatchNotification_Type, name string) *resourcepb.WatchNotification {
+	return &resourcepb.WatchNotification{
+		Type:      action,
+		Group:     testGVR.Group,
+		Resource:  testGVR.Resource,
+		Namespace: testNamespace,
+		Name:      name,
+	}
+}
+
+func subject() string {
+	return resourcewatch.Subject(testGVR, testNamespace)
+}
+
+// start wires an informer to the given seed list and handler, runs it, and waits
+// until the initial list has synced.
+func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) *Informer {
+	t.Helper()
+	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, newObject, list)
+	require.NoError(t, n.AddEventHandler(handler))
+
+	stop := make(chan struct{})
+	go n.Run(stop)
+	t.Cleanup(func() { close(stop) })
+
+	if newObject != nil {
+		sub.waitForSubscription(t, subject())
+	}
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
+	return n
+}
+
+// The initial list drives an OnAdd per existing object and marks HasSynced, so a
+// controller can start reconciling the full set — just like an informer's
+// LIST-seeded cache.
+func TestInformer_InitialListDeliversAdds(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	start(t, sub, []runtime.Object{obj("a"), obj("b")}, newObjectFunc, handler)
+
+	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+}
+
+// A live ADDED goes through OnAdd; a MODIFIED/DELETED through OnUpdate. The
+// delivered object is the minimal one built from the notification's identity —
+// the controllers re-fetch, so the informer does not read the object.
+func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+	start(t, sub, nil, newObjectFunc, handler)
+
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
+
+	assert.Equal(t, []string{"fresh"}, handler.addedNames())
+	assert.Equal(t, []string{"changed", "gone"}, handler.updatedNames())
+}
+
+// Malformed envelopes and unknown verbs are skipped; a valid notification after
+// them still arrives.
+func TestInformer_SkipsMalformedAndUnknown(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+	start(t, sub, nil, newObjectFunc, handler)
+
+	sub.deliver(t, subject(), []byte("not proto"))
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_UNKNOWN, "x"))
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "survivor"))
+
+	assert.Equal(t, []string{"survivor"}, handler.updatedNames())
+}
+
+// A nil object builder disables live notifications: the informer never
+// subscribes and is driven only by the (initial) list.
+func TestInformer_NilObjectFuncSkipsSubscription(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	start(t, sub, []runtime.Object{obj("only-listed")}, nil, handler)
+
+	sub.mu.Lock()
+	_, subscribed := sub.handlers[subject()]
+	sub.mu.Unlock()
+	assert.False(t, subscribed, "must not subscribe when live notifications are disabled")
+	assert.Equal(t, []string{"only-listed"}, handler.addedNames())
+}
+
+// A re-list diffs against the previous snapshot: an object that has vanished is
+// delivered as a delete carrying its last-known state, which is how a hard delete
+// is caught even though no live notification reliably reaches this replica.
+func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	// list returns [a, b] first, then just [a] on the next call.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		if calls == 1 {
+			return []runtime.Object{obj("a"), obj("b")}, nil
+		}
+		return []runtime.Object{obj("a")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, newObjectFunc, list)
+	require.NoError(t, n.AddEventHandler(handler))
+
+	n.relist(context.Background(), true)  // initial: adds a, b; no deletes
+	n.relist(context.Background(), false) // resync: b is gone -> delete
+
+	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+	assert.Equal(t, []string{"b"}, handler.deletedNames(), "vanished object must be delivered as a delete")
+}
+
+func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, newObjectFunc, nil)
+	require.Error(t, n.AddEventHandler(nil))
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,8 +44,25 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	jobInformerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController := controller.NewJobController()
-	if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
-		return fmt.Errorf("failed to add job event handler: %w", err)
+
+	// Under the NATS watch a NATS-backed informer drives the handler from direct API reads;
+	// otherwise the apiserver-backed informer does. startJobInformers launches the
+	// chosen source and jobHasSynced reports its initial sync.
+	var jobHasSynced cache.InformerSynced
+	var startJobInformers func()
+	if controllerCfg.natsWatch() {
+		jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+		if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add job event handler: %w", err)
+		}
+		jobHasSynced = jobNatsInformer.HasSynced
+		startJobInformers = func() { go jobNatsInformer.Run(ctx.Done()) }
+	} else {
+		if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add job event handler: %w", err)
+		}
+		jobHasSynced = jobInformer.Informer().HasSynced
+		startJobInformers = func() { go jobInformerFactory.Start(ctx.Done()) }
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
@@ -86,11 +104,11 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 	}()
 
-	// Start informers
-	go jobInformerFactory.Start(ctx.Done())
+	// Start the delta source (informer or NATS informer)
+	startJobInformers()
 
-	if !cache.WaitForCacheSync(ctx.Done(), jobInformer.Informer().HasSynced) {
-		return fmt.Errorf("failed to sync job informer cache")
+	if !cache.WaitForCacheSync(ctx.Done(), jobHasSynced) {
+		return fmt.Errorf("failed to sync job event source")
 	}
 
 	logger.Info("job queue operator is ready")

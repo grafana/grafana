@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
 )
 
@@ -48,8 +49,12 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
+	connGetter := controller.NewCachedConnectionGetter(connInformer.Lister())
+	if controllerCfg.natsWatch() {
+		connGetter = controller.NewClientConnectionGetter(provisioningClient.ProvisioningV0alpha1())
+	}
 	connController := controller.NewConnectionController(
-		controller.NewCachedConnectionGetter(connInformer.Lister()),
+		connGetter,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),
@@ -61,14 +66,25 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		controllerCfg.Registry(),
 	)
 
-	reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add connection event handler: %w", err)
+	var hasSynced cache.InformerSynced
+	if controllerCfg.natsWatch() {
+		natsInformer := informer.NewConnectionInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+		if err := natsInformer.AddEventHandler(connController.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add connection event handler: %w", err)
+		}
+		go natsInformer.Run(ctx.Done())
+		hasSynced = natsInformer.HasSynced
+	} else {
+		reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
+		if err != nil {
+			return fmt.Errorf("failed to add connection event handler: %w", err)
+		}
+		informerFactory.Start(ctx.Done())
+		hasSynced = reg.HasSynced
 	}
 
-	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("connection controller cache sync failed")
+	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
+		return fmt.Errorf("connection controller event source sync failed")
 	}
 
 	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

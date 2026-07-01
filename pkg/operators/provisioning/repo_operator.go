@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
@@ -88,7 +89,16 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
+	// Under the NATS watch there is no informer cache, so reconcile reads the
+	// single repository fresh from the API; the quota count reads the NATS
+	// informer's last re-list snapshot, which tolerates staleness. Without NATS
+	// the informer's cache-backed getter is authoritative.
 	repoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+	var repoNatsInformer *informer.Informer
+	if controllerCfg.natsWatch() {
+		repoNatsInformer = informer.NewRepositoryInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+		repoGetter = controller.NewSnapshotListRepositoryGetter(provisioningClient.ProvisioningV0alpha1(), repoNatsInformer)
+	}
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,
@@ -114,14 +124,24 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
-	reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add repository event handler: %w", err)
+	var hasSynced cache.InformerSynced
+	if controllerCfg.natsWatch() {
+		if err := repoNatsInformer.AddEventHandler(controller.EventHandler()); err != nil {
+			return fmt.Errorf("failed to add repository event handler: %w", err)
+		}
+		go repoNatsInformer.Run(ctx.Done())
+		hasSynced = repoNatsInformer.HasSynced
+	} else {
+		reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())
+		if err != nil {
+			return fmt.Errorf("failed to add repository event handler: %w", err)
+		}
+		informerFactory.Start(ctx.Done())
+		hasSynced = reg.HasSynced
 	}
 
-	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
+	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
+		return fmt.Errorf("failed to sync repository event source")
 	}
 
 	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

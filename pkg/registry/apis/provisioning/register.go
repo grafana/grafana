@@ -34,7 +34,6 @@ import (
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -45,9 +44,11 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
@@ -149,24 +150,26 @@ type APIBuilder struct {
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
 
-	// natsWatchEnabled routes the provisioning informers' watch through the
-	// informer package's watch swap (currently a not-implemented placeholder)
-	// instead of the apiserver watch, while keeping the LIST-seeded cache.
-	// Internal switch, defaults to false.
-	//
-	// TODO: implement the NATS-based watch (informer.NewNATSInformerFactory) and
-	// enable this; until then it stays false and the apiserver watch is used.
-	natsWatchEnabled bool
+	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
+	// Instead of an apiserver-backed informer, each controller's handler is driven
+	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
+	// handler on each notification; the controllers re-fetch from the API in their
+	// reconcile. Otherwise the controllers use the apiserver informer.
+	natsSubscriber nats.Subscriber
 }
 
-// newInformerFactory builds the provisioning informer factory. When
-// natsWatchEnabled is set, the informers keep their LIST-seeded caches but their
-// watch is served by the informer package instead of the apiserver watch.
+// newInformerFactory builds the apiserver-backed provisioning informer factory.
+// It is used when NATS is not the delta source; under the NATS watch the
+// controllers are driven by a NATS-backed informer instead (see natsWatch).
 func (b *APIBuilder) newInformerFactory(c clientset.Interface, resync time.Duration) informers.SharedInformerFactory {
-	if b.natsWatchEnabled {
-		return informer.NewNATSInformerFactory(c, resync)
-	}
-	return informer.NewInformerFactory(c, resync)
+	return informers.NewSharedInformerFactory(c, resync)
+}
+
+// natsWatch reports whether the controllers take their deltas from NATS. When
+// they do, there is no informer cache (the NATS-backed informer keeps none), so
+// the controllers reconcile through a client-backed getter reading from the API.
+func (b *APIBuilder) natsWatch() bool {
+	return b.natsSubscriber != nil && b.natsSubscriber.Enabled()
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -332,6 +335,7 @@ func RegisterAPIService(
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -393,6 +397,7 @@ func RegisterAPIService(
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -434,6 +439,7 @@ func RegisterAPIService(
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -957,13 +963,22 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Informer with resync interval used for health check and reconciliation
 			informerFactoryResyncInterval := 60 * time.Second
+			natsWatch := b.natsWatch()
+			if natsWatch {
+				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
+			}
 			sharedInformerFactory := b.newInformerFactory(c, informerFactoryResyncInterval)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
-			go repoInformer.Informer().Run(postStartHookCtx.Done())
-			go jobInformer.Informer().Run(postStartHookCtx.Done())
-			go connInformer.Informer().Run(postStartHookCtx.Done())
+			// Under the NATS watch the delta source is a NATS-backed-backed informer per resource
+			// (started below, after its handler is registered), so the
+			// apiserver-backed informers are only run when NATS is not in use.
+			if !natsWatch {
+				go repoInformer.Informer().Run(postStartHookCtx.Done())
+				go jobInformer.Informer().Run(postStartHookCtx.Done())
+				go connInformer.Informer().Run(postStartHookCtx.Done())
+			}
 
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
@@ -1043,8 +1058,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
-			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
-				return fmt.Errorf("add job controller event handler: %w", err)
+			if natsWatch {
+				jobNatsInformer := informer.NewJobInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
+				if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
+					return fmt.Errorf("add job controller event handler: %w", err)
+				}
+				go jobNatsInformer.Run(postStartHookCtx.Done())
+			} else {
+				if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+					return fmt.Errorf("add job controller event handler: %w", err)
+				}
 			}
 
 			// Add any extra workers
@@ -1101,10 +1124,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			cachedRepoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			// Under the NATS watch there is no informer cache, so reconcile reads
+			// the single repository fresh from the API; the quota count reads the
+			// NATS informer's last re-list snapshot, which tolerates staleness.
+			// Without NATS the informer's cache-backed getter is authoritative.
+			var reconcileRepoGetter controller.RepositoryGetter = controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			var repoNatsInformer *informer.Informer
+			if natsWatch {
+				repoNatsInformer = informer.NewRepositoryInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
+				reconcileRepoGetter = controller.NewSnapshotListRepositoryGetter(b.GetClient(), repoNatsInformer)
+			}
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				cachedRepoGetter,
+				reconcileRepoGetter,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1119,21 +1151,31 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(cachedRepoGetter),
+				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
 			)
-			repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add repository controller event handler: %w", err)
+			var repoHasSynced cache.InformerSynced
+			if natsWatch {
+				if err := repoNatsInformer.AddEventHandler(repoController.EventHandler()); err != nil {
+					return fmt.Errorf("add repository controller event handler: %w", err)
+				}
+				go repoNatsInformer.Run(postStartHookCtx.Done())
+				repoHasSynced = repoNatsInformer.HasSynced
+			} else {
+				repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
+				if err != nil {
+					return fmt.Errorf("add repository controller event handler: %w", err)
+				}
+				repoHasSynced = repoReg.HasSynced
 			}
 
 			// Wait for the cache to sync off the hot path so we don't block
 			// apiserver startup; the controller only starts its workers once
 			// its handler has processed the initial list.
 			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoReg.HasSynced) {
+				if !cache.WaitForCacheSync(postStartHookCtx.Done(), repoHasSynced) {
 					return
 				}
 				repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
@@ -1143,8 +1185,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
+			var connGetter controller.ConnectionGetter = controller.NewCachedConnectionGetter(connInformer.Lister())
+			if natsWatch {
+				connGetter = controller.NewClientConnectionGetter(b.GetClient())
+			}
 			connController := controller.NewConnectionController(
-				controller.NewCachedConnectionGetter(connInformer.Lister()),
+				connGetter,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
@@ -1152,15 +1198,26 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.registry,
 			)
-			connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
-			if err != nil {
-				return fmt.Errorf("add connection controller event handler: %w", err)
+			var connHasSynced cache.InformerSynced
+			if natsWatch {
+				connNatsInformer := informer.NewConnectionInformer(b.natsSubscriber, c, "", informerFactoryResyncInterval)
+				if err := connNatsInformer.AddEventHandler(connController.EventHandler()); err != nil {
+					return fmt.Errorf("add connection controller event handler: %w", err)
+				}
+				go connNatsInformer.Run(postStartHookCtx.Done())
+				connHasSynced = connNatsInformer.HasSynced
+			} else {
+				connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
+				if err != nil {
+					return fmt.Errorf("add connection controller event handler: %w", err)
+				}
+				connHasSynced = connReg.HasSynced
 			}
 
 			// Same as the repository controller above: wait for cache sync off
 			// the hot path so apiserver startup isn't blocked.
 			go func() {
-				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connReg.HasSynced) {
+				if !cache.WaitForCacheSync(postStartHookCtx.Done(), connHasSynced) {
 					return
 				}
 				connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
@@ -1171,15 +1228,23 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				// Create HistoryJobController for cleanup of old job history entries
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 10 * time.Minute
-				historyJobInformerFactory := b.newInformerFactory(c, historyJobExpiration)
-				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
-				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
 				historyJobController := appcontroller.NewHistoryJobController(
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
-					return fmt.Errorf("add history job controller event handler: %w", err)
+				if natsWatch {
+					historyNatsInformer := informer.NewHistoricJobInformer(b.natsSubscriber, c, "", historyJobExpiration)
+					if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
+						return fmt.Errorf("add history job controller event handler: %w", err)
+					}
+					go historyNatsInformer.Run(postStartHookCtx.Done())
+				} else {
+					historyJobInformerFactory := b.newInformerFactory(c, historyJobExpiration)
+					historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
+					go historyJobInformer.Informer().Run(postStartHookCtx.Done())
+					if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
+						return fmt.Errorf("add history job controller event handler: %w", err)
+					}
 				}
 			}
 
