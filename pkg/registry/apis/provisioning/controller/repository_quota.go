@@ -5,9 +5,7 @@ import (
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 const (
@@ -18,15 +16,15 @@ const (
 
 // RepositoryQuotaChecker checks if a namespace exceeds its repository quota limits.
 type RepositoryQuotaChecker struct {
-	repoLister listers.RepositoryLister
+	repos RepositoryGetter
 }
 
 // NewRepositoryQuotaChecker creates a new RepositoryQuotaChecker.
 func NewRepositoryQuotaChecker(
-	repoLister listers.RepositoryLister,
+	repos RepositoryGetter,
 ) *RepositoryQuotaChecker {
 	return &RepositoryQuotaChecker{
-		repoLister: repoLister,
+		repos: repos,
 	}
 }
 
@@ -50,8 +48,8 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 		}, nil
 	}
 
-	// List all repositories from informer cache
-	repos, err := c.repoLister.Repositories(namespace).List(labels.Everything())
+	// List all repositories from the read seam. The count tolerates staleness.
+	repos, err := c.repos.List(namespace)
 	if err != nil {
 		return metav1.Condition{}, err
 	}
