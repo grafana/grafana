@@ -3,6 +3,7 @@ package localcache
 import (
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -40,7 +41,8 @@ func TestExclusiveSet(t *testing.T) {
 		wg.Go(func() {
 			<-start
 			if _, ok := cache.Get(key); !ok {
-				require.NoError(t, cache.ExclusiveSet(key, read, time.Minute))
+				_, err := cache.ExclusiveGetOrSet(key, read, time.Minute)
+				require.NoError(t, err)
 			}
 		})
 
@@ -58,7 +60,8 @@ func TestExclusiveSet(t *testing.T) {
 	// which would delete the cache entry.
 	_, ok := cache.Get(key)
 	if !ok {
-		require.NoError(t, cache.ExclusiveSet(key, read, time.Minute))
+		_, err := cache.ExclusiveGetOrSet(key, read, time.Minute)
+		require.NoError(t, err)
 	}
 
 	cached, ok := cache.Get(key)
@@ -68,4 +71,53 @@ func TestExclusiveSet(t *testing.T) {
 	// At the end of this process, no one is holding the lock to the `key`,
 	// so this mapping should be empty.
 	require.Empty(t, cache.locks)
+}
+
+func TestExclusiveGetOrSetCoalescing(t *testing.T) {
+	var calls int32
+	barrier := make(chan struct{})
+	getValue := func() (any, error) {
+		atomic.AddInt32(&calls, 1)
+		<-barrier // block until all requests are queued up
+		return "hello", nil
+	}
+
+	cache := New(time.Minute, time.Minute)
+	const numReqs = 5
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+
+	results := make([]any, numReqs)
+	errs := make([]error, numReqs)
+
+	for i := 0; i < numReqs; i++ {
+		idx := i
+		wg.Go(func() {
+			<-start
+			val, err := cache.ExclusiveGetOrSet("coalesce-key", getValue, time.Minute)
+			results[idx] = val
+			errs[idx] = err
+		})
+	}
+
+	close(start)
+
+	// Sleep briefly to ensure all goroutines enter ExclusiveGetOrSet and block.
+	// The first goroutine will call getValue and block on barrier.
+	// The other 4 goroutines will block on cache.Lock("coalesce-key").
+	time.Sleep(50 * time.Millisecond)
+
+	// Release the barrier so the first goroutine sets the value and unlocks
+	close(barrier)
+
+	wg.Wait()
+
+	// Assert getValue was called exactly once
+	require.Equal(t, int32(1), atomic.LoadInt32(&calls))
+
+	// Assert all callers got the correct result without error
+	for i := 0; i < numReqs; i++ {
+		require.NoError(t, errs[i])
+		require.Equal(t, "hello", results[i])
+	}
 }

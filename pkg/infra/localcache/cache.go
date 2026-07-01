@@ -36,17 +36,39 @@ func New(defaultExpiration, cleanupInterval time.Duration) *CacheService {
 	}
 }
 
-func (s *CacheService) ExclusiveSet(key string, getValue func() (any, error), dur time.Duration) error {
+// ExclusiveSet locks the entry associated with the given key, calls getValue
+// to fetch it, stores it in the cache (overwriting any existing value), and returns it.
+func (s *CacheService) ExclusiveSet(key string, getValue func() (any, error), dur time.Duration) (any, error) {
 	unlock := s.Lock(key)
 	defer unlock()
 
 	v, err := getValue()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s.Set(key, v, dur)
-	return nil
+	return v, nil
+}
+
+// ExclusiveGetOrSet locks the entry associated with the given key. If the value is
+// already in the cache, it returns it immediately. Otherwise, it calls getValue
+// to fetch it, stores it in the cache, and returns it.
+func (s *CacheService) ExclusiveGetOrSet(key string, getValue func() (any, error), dur time.Duration) (any, error) {
+	unlock := s.Lock(key)
+	defer unlock()
+
+	if v, ok := s.Get(key); ok {
+		return v, nil
+	}
+
+	v, err := getValue()
+	if err != nil {
+		return nil, err
+	}
+
+	s.Set(key, v, dur)
+	return v, nil
 }
 
 func (s *CacheService) ExclusiveDelete(key string) {
