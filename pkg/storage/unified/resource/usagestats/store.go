@@ -89,6 +89,31 @@ func (s *Store) ReadDailyForObject(ctx context.Context, o objectRef) (map[string
 	return out, nil
 }
 
+// ReadDailyRange returns day -> metric -> value for an object, restricted to
+// the inclusive [fromDay, toDay] calendar-day window. Empty bounds mean
+// unbounded on that side. The overflow bucket is always excluded since it does
+// not correspond to a single calendar day.
+func (s *Store) ReadDailyRange(ctx context.Context, o objectRef, fromDay, toDay string) (map[string]map[string]int64, error) {
+	all, err := s.ReadDailyForObject(ctx, o)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]map[string]int64, len(all))
+	for day, metrics := range all {
+		if day == overflowBucket {
+			continue
+		}
+		if fromDay != "" && day < fromDay {
+			continue
+		}
+		if toDay != "" && day > toDay {
+			continue
+		}
+		out[day] = metrics
+	}
+	return out, nil
+}
+
 func (s *Store) FoldIntoOverflow(ctx context.Context, o objectRef, expired map[string]map[string]int64) error {
 	if len(expired) == 0 {
 		return nil
@@ -115,6 +140,31 @@ func (s *Store) FoldIntoOverflow(ctx context.Context, o objectRef, expired map[s
 	for start := 0; start < len(ops); start += kv.MaxBatchOps {
 		end := min(start+kv.MaxBatchOps, len(ops))
 		if err := s.kv.Batch(ctx, dailySection, ops[start:end]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// IncrementAggregates adds deltas to an object's aggregate fields
+// (read-add-write per field). The caller is expected to serialize the
+// read-add-write (e.g. under a flush lease).
+func (s *Store) IncrementAggregates(ctx context.Context, o objectRef, deltas map[string]int64) error {
+	ops := make([]kv.BatchOp, 0, len(deltas))
+	for field, delta := range deltas {
+		if delta == 0 {
+			continue
+		}
+		key := aggregateKey(o, field)
+		cur, err := getInt64(ctx, s.kv, aggregatesSection, key)
+		if err != nil {
+			return fmt.Errorf("read aggregate %s: %w", key, err)
+		}
+		ops = append(ops, kv.BatchOp{Mode: kv.BatchOpPut, Key: key, Value: encodeInt64(cur + delta)})
+	}
+	for start := 0; start < len(ops); start += kv.MaxBatchOps {
+		end := min(start+kv.MaxBatchOps, len(ops))
+		if err := s.kv.Batch(ctx, aggregatesSection, ops[start:end]); err != nil {
 			return err
 		}
 	}
