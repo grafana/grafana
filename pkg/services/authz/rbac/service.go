@@ -152,6 +152,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 
 	getTree := s.newFolderTreeGetter(ctx, checkReq.Namespace, false)
 
+	// Used by checkPermissionsWithFolderAuthZ (mapper miss). In order to fetch folder permissions once.
 	getFolderScope := s.newFolderScopeGetter(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Verb, false)
 
 	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
