@@ -11,10 +11,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagUnifiedStorageSearchPostRankAuthz
-	// Authorize bleve search hits after ranking, stopping early once the page is filled, instead of filtering inside the bleve searcher
-	FlagUnifiedStorageSearchPostRankAuthz = "unifiedStorageSearchPostRankAuthz"
-
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"

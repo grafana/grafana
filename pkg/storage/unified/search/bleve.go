@@ -124,9 +124,9 @@ type BleveOptions struct {
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
 
-	// PostRankAuthzFn returns whether the unifiedStorageSearchPostRankAuthz
-	// feature toggle is enabled. Evaluated per-search. When nil, the toggle is
-	// treated as disabled and the in-searcher permissionScopedQuery path is used.
+	// PostRankAuthzFn returns whether the search_post_rank_authz config option
+	// is enabled. Evaluated per-search. When nil, the option is treated as
+	// disabled and the in-searcher permissionScopedQuery path is used.
 	PostRankAuthzFn func() bool
 
 	// PostRankAuthz tunes the post-filter authorization path used when
