@@ -72,36 +72,40 @@ export default function Recommendations() {
 
   return (
     <div>
-      <Stack direction="row" alignItems="center" gap={2}>
+      <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
         <Text element="h2" variant="h5">
           <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
         </Text>
 
         {collapsed && (
-          <Stack direction="row" alignItems="center" gap={1}>
-            {recommendations.map((recommendation) => (
-              <RecommendationPill key={recommendation.title} recommendation={recommendation} />
-            ))}
-          </Stack>
+          <div className={styles.pills}>
+            <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
+              {recommendations.map((recommendation) => (
+                <RecommendationPill key={recommendation.title} recommendation={recommendation} />
+              ))}
+            </Stack>
+          </div>
         )}
 
-        <div className={cx(styles.spacer, collapsed && styles.line)} />
+        <Stack direction="row" alignItems="center" gap={1} flex="1 1 auto">
+          <div className={cx(styles.spacer, collapsed && styles.line)} />
 
-        <Button
-          variant="secondary"
-          size="sm"
-          fill="text"
-          icon={collapsed ? 'angle-down' : 'angle-up'}
-          iconPlacement="right"
-          onClick={() => setCollapsed(!collapsed)}
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? (
-            <Trans i18nKey="home.recommendations.show">Show</Trans>
-          ) : (
-            <Trans i18nKey="home.recommendations.hide">Hide</Trans>
-          )}
-        </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            fill="text"
+            icon={collapsed ? 'angle-down' : 'angle-up'}
+            iconPlacement="right"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? (
+              <Trans i18nKey="home.recommendations.show">Show</Trans>
+            ) : (
+              <Trans i18nKey="home.recommendations.hide">Hide</Trans>
+            )}
+          </Button>
+        </Stack>
       </Stack>
 
       {!collapsed && (
@@ -174,12 +178,19 @@ export default function Recommendations() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  pills: css({
+    [theme.breakpoints.down('md')]: {
+      order: 1,
+    },
+  }),
   spacer: css({
-    flex: 1,
+    flex: '1 1 0%',
   }),
   line: css({
-    background: theme.colors.border.medium,
-    height: '1px',
+    [theme.breakpoints.up('md')]: {
+      background: theme.colors.border.medium,
+      height: '1px',
+    },
   }),
   card: css({
     background: theme.colors.background.canvas,
