@@ -45,10 +45,10 @@ func TestRewriteAppInstance(t *testing.T) {
 
 	t.Run("rewrites subresource paths", func(t *testing.T) {
 		oas := newOAS(map[string]*spec3.Path{
-			path + "/{name}/health":            {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
-			path + "/{name}/resources":         {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
-			path + "/{name}/resources/{path}":  {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
-			path + "/{name}/proxy":             {PathProps: spec3.PathProps{Post: &spec3.Operation{}}},
+			path + "/{name}/health":           {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
+			path + "/{name}/resources":        {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
+			path + "/{name}/resources/{path}": {PathProps: spec3.PathProps{Get: &spec3.Operation{}}},
+			path + "/{name}/proxy":            {PathProps: spec3.PathProps{Post: &spec3.Operation{}}},
 		})
 
 		RewriteAppInstance(oas, path)
