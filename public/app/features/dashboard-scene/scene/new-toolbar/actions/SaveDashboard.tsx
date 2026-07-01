@@ -95,18 +95,21 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={onSaveAsCopy}
             />
-            {isDashboardTemplatesFlagEnabled && meta.canSave && getSaveAsTemplateForm() !== null && (
-              <Menu.Item
-                label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
-                icon="grid"
-                onClick={() => {
-                  CustomDashboardTemplateInteractions.saveAsOpened({
-                    dashboardUid: uid ?? '',
-                  });
-                  dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
-                }}
-              />
-            )}
+            {isDashboardTemplatesFlagEnabled &&
+              contextSrv.isEditor &&
+              meta.canSave &&
+              getSaveAsTemplateForm() !== null && (
+                <Menu.Item
+                  label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
+                  icon="grid"
+                  onClick={() => {
+                    CustomDashboardTemplateInteractions.saveAsOpened({
+                      dashboardUid: uid ?? '',
+                    });
+                    dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
+                  }}
+                />
+              )}
           </Menu>
         }
       >

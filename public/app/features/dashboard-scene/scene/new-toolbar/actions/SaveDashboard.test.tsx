@@ -77,16 +77,20 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
 
 describe('SaveDashboard (toolbar)', () => {
   let originalHasEditPermissionInFolders: boolean;
+  let originalIsEditor: boolean;
 
   beforeEach(() => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
     originalHasEditPermissionInFolders = contextSrv.hasEditPermissionInFolders;
     contextSrv.hasEditPermissionInFolders = true;
+    originalIsEditor = contextSrv.isEditor;
+    contextSrv.isEditor = true;
   });
 
   afterEach(async () => {
     registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
     contextSrv.hasEditPermissionInFolders = originalHasEditPermissionInFolders;
+    contextSrv.isEditor = originalIsEditor;
     jest.clearAllMocks();
   });
 
@@ -159,6 +163,20 @@ describe('SaveDashboard (toolbar)', () => {
       await act(async () => {
         setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
+      const scene = buildTestScene({ canSave: true });
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
+      expect(screen.queryByRole('menuitem', { name: /Save as template/i })).not.toBeInTheDocument();
+    });
+
+    it('is hidden when the user is not an editor', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+      registerSaveAsTemplateForm(() => null);
+      contextSrv.isEditor = false;
+
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
 

@@ -5,8 +5,10 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { configureStore } from 'app/store/configureStore';
+import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 
 import { type CommandPaletteAction } from '../types';
 
@@ -45,17 +47,32 @@ const hasTemplateAction = (actions: CommandPaletteAction[]) =>
   actions.some((action) => action.id === 'browse-template-dashboard');
 
 describe('useStaticActions - dashboard from template action', () => {
+  let originalPermissions: UserPermission | undefined;
+
   beforeEach(() => {
     config.featureToggles.dashboardTemplates = true;
     // Reset to defaults: a test datasource is available, custom templates are off.
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
     setTestFlags({ 'grafana.customDashboardTemplates': false });
+    // The entry point requires dashboard-create permission, mirroring QuickAdd.
+    originalPermissions = contextSrv.user.permissions;
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = originalPermissions;
   });
 
   it('includes the action when the Grafana templates feature toggle is enabled', () => {
     const { result } = renderStaticActions();
     expect(hasTemplateAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action when the user lacks dashboards:create permission', () => {
+    contextSrv.user.permissions = {};
+    const { result } = renderStaticActions();
+    expect(hasTemplateAction(result.current)).toBe(false);
   });
 
   it('does not include the action when neither templates feature is enabled', () => {
