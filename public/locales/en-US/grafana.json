@@ -10711,6 +10711,7 @@
       "loading": "Loading recently viewed dashboards..."
     },
     "recommendations": {
+      "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
       "hide": "Hide",
       "next": "Next",
@@ -10719,6 +10720,7 @@
       "recommended": "Recommended",
       "resume": "Resume",
       "show": "Show",
+      "switch": "Switch to another app you run",
       "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {

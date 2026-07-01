@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
 
 import RecommendationCard from './RecommendationCard';
+import RecommendationExisting from './RecommendationExisting';
 import RecommendationPill from './RecommendationPill';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
@@ -109,68 +110,80 @@ export default function Recommendations() {
       </Stack>
 
       {!collapsed && (
-        <div className={styles.card}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-            <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
+        <div className={styles.cards}>
+          <Grid gap={0} columns={{ xs: 1, md: 2 }}>
+            <div className={styles.card}>
+              <RecommendationExisting />
 
-            <Stack direction="row" alignItems="center" gap={1}>
-              <Button
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="angle-left"
-                onClick={() => setIndex((index - 1 + recommendations.length) % recommendations.length)}
-                aria-label={t('home.recommendations.previous', 'Previous')}
-              />
-
-              {recommendations.map((_, i) =>
-                i === index ? (
-                  <Button
-                    key={i}
-                    variant="secondary"
-                    size="sm"
-                    fill="solid"
-                    icon={paused ? 'play' : 'pause'}
-                    onClick={() => setPaused(!paused)}
-                    aria-label={
-                      paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
-                    }
-                    data-paused={paused ? true : undefined}
-                    className={cx(styles.dot, styles.active)}
-                  />
-                ) : (
-                  <Button
-                    key={i}
-                    variant="secondary"
-                    size="sm"
-                    fill="solid"
-                    onClick={() => setIndex(i)}
-                    aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
-                    className={styles.dot}
-                  />
-                )
-              )}
-
-              <Button
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="angle-right"
-                onClick={() => setIndex((index + 1) % recommendations.length)}
-                aria-label={t('home.recommendations.next', 'Next')}
-              />
-            </Stack>
-          </Stack>
-
-          <div className={styles.outer}>
-            <div className={styles.inner} style={{ transform: `translateX(-${index * 100}%)` }}>
-              {recommendations.map((recommendation, i) => (
-                <div key={recommendation.title} className={styles.item} aria-hidden={i !== index}>
-                  <RecommendationCard recommendation={recommendation} />
-                </div>
-              ))}
+              <div className={styles.arrow}>
+                <Icon name="arrow-right" size="xl" />
+              </div>
             </div>
-          </div>
+
+            <div className={cx(styles.card, styles.recommended)}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
+                <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
+
+                <Stack direction="row" alignItems="center" gap={1}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    icon="angle-left"
+                    onClick={() => setIndex((index - 1 + recommendations.length) % recommendations.length)}
+                    aria-label={t('home.recommendations.previous', 'Previous')}
+                  />
+
+                  {recommendations.map((_, i) =>
+                    i === index ? (
+                      <Button
+                        key={i}
+                        variant="secondary"
+                        size="sm"
+                        fill="solid"
+                        icon={paused ? 'play' : 'pause'}
+                        onClick={() => setPaused(!paused)}
+                        aria-label={
+                          paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
+                        }
+                        data-paused={paused ? true : undefined}
+                        className={cx(styles.dot, styles.active)}
+                      />
+                    ) : (
+                      <Button
+                        key={i}
+                        variant="secondary"
+                        size="sm"
+                        fill="solid"
+                        onClick={() => setIndex(i)}
+                        aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
+                        className={styles.dot}
+                      />
+                    )
+                  )}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    icon="angle-right"
+                    onClick={() => setIndex((index + 1) % recommendations.length)}
+                    aria-label={t('home.recommendations.next', 'Next')}
+                  />
+                </Stack>
+              </Stack>
+
+              <div className={styles.outer}>
+                <div className={styles.inner} style={{ transform: `translateX(-${index * 100}%)` }}>
+                  {recommendations.map((recommendation, i) => (
+                    <div key={recommendation.title} className={styles.item} aria-hidden={i !== index}>
+                      <RecommendationCard recommendation={recommendation} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Grid>
         </div>
       )}
     </div>
@@ -192,14 +205,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: '1px',
     },
   }),
-  card: css({
+  cards: css({
     background: theme.colors.background.canvas,
     borderRadius: theme.shape.radius.default,
     margin: theme.spacing(2, 0, 0),
-    padding: theme.spacing(2),
-    position: 'relative',
     overflow: 'hidden',
-
+  }),
+  card: css({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: theme.spacing(3, 4),
+    position: 'relative',
+    minWidth: 0,
+  }),
+  recommended: css({
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -207,6 +226,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.gradients.brandHorizontal,
       opacity: 0.05,
       pointerEvents: 'none',
+    },
+  }),
+  arrow: css({
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.circle,
+    border: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(0.25),
+    lineHeight: 0,
+    position: 'absolute',
+    zIndex: 1,
+    left: '50%',
+    top: '100%',
+    transform: 'translate(-50%, -50%) rotate(90deg)',
+
+    [theme.breakpoints.up('md')]: {
+      top: theme.spacing(2),
+      left: '100%',
+      transform: 'translate(-50%, 0)',
     },
   }),
   dot: css({
@@ -277,6 +314,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   item: css({
+    display: 'flex',
     minWidth: '100%',
   }),
 });

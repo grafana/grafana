@@ -17,14 +17,16 @@ describe('Recommendations', () => {
 
     expect(screen.getByRole('button', { name: 'Show' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Show' })).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getAllByRole('link')).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Show' }));
 
     expect(screen.getByText('Recommendations for your stack')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Hide' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
   });
 
   it('loads the collapsed state from local storage', () => {
@@ -39,27 +41,29 @@ describe('Recommendations', () => {
   it('navigates recommendations with previous/next buttons', async () => {
     const { user } = render(<Recommendations />);
 
-    const getVisibleTitle = () => screen.getByRole('heading', { level: 3 }).textContent?.trim() ?? '';
-    const getVisibleSlide = () => screen.getByRole('heading', { level: 3 }).closest('div[aria-hidden="false"]');
+    const getVisibleHeading = () =>
+      screen.getAllByRole('heading', { level: 3 }).find((heading) => heading.closest('div[aria-hidden="false"]'));
+    const getVisibleTitle = () => getVisibleHeading()?.textContent?.trim() ?? '';
+    const getVisibleSlide = () => getVisibleHeading()?.closest('div[aria-hidden="false"]');
 
     const initialVisibleSlide = getVisibleSlide();
     const initialVisibleTitle = getVisibleTitle();
 
     expect(initialVisibleSlide).toBeInTheDocument();
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
+    expect(getVisibleHeading()).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
     expect(getVisibleSlide()).toBeInTheDocument();
     expect(getVisibleSlide()).not.toBe(initialVisibleSlide);
     expect(getVisibleTitle()).not.toBe(initialVisibleTitle);
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
+    expect(getVisibleHeading()).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Previous' }));
 
     expect(getVisibleSlide()).toBe(initialVisibleSlide);
     expect(getVisibleTitle()).toBe(initialVisibleTitle);
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(1);
+    expect(getVisibleHeading()).toBeInTheDocument();
   });
 
   it('navigates recommendations with dots', async () => {
