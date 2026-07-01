@@ -12,6 +12,7 @@ import {
   FieldType,
   getDisplayProcessor,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder, type UPlotConfigPrepFn } from '@grafana/ui';
 import {
@@ -210,9 +211,48 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
 
+  // Native histograms that include negative or zero-straddling buckets (e.g.
+  // exponential histograms with a zero bucket and a negative range) can't be
+  // displayed on a pure log y-axis. Detect this and switch to symlog, which has
+  // a linear region around zero (where the zero bucket sits) flanked by
+  // logarithmic regions for the positive and negative buckets. Pure-positive
+  // sparse heatmaps keep their existing log behavior.
+  const sparseNonPositiveBounds: ReturnType<typeof findSymlogBounds> = (() => {
+    if (!config.featureToggles.heatmapNegativeLogBuckets || !isSparseHeatmap) {
+      return { hasNonPositive: false, smallestMagnitude: null };
+    }
+    const fields = dataRef.current?.heatmap?.fields ?? [];
+    const yMin = fields.find((f) => f.name === 'yMin')?.values ?? [];
+    const yMax = fields.find((f) => f.name === 'yMax')?.values ?? [];
+    return findSymlogBounds(yMin, yMax);
+  })();
+
+  // linearThreshold is the half-width of the linear region in the symlog
+  // axis. Pick it at the bucket boundary closest to zero (on either side):
+  // uPlot's asinh split generator always emits a tick at the linear threshold,
+  // so this places a labeled tick exactly on that innermost bucket boundary
+  // while keeping the linear strip around zero narrow.
+  // A histogram whose only populated bucket is the (skipped) zero bucket has no
+  // real-magnitude boundary to anchor the linear threshold to. Rather than fall
+  // back to a pure log scale — which can't place a zero/straddling bucket and
+  // renders blank — engage symlog with a default threshold so the lone zero band
+  // is still drawn on a sane axis.
+  const ZERO_ONLY_SYMLOG_THRESHOLD = 1;
+  const sparseZeroBucketOnly =
+    config.featureToggles.heatmapNegativeLogBuckets &&
+    sparseNonPositiveBounds.hasNonPositive &&
+    sparseNonPositiveBounds.smallestMagnitude == null;
+  const sparseSymlogLinearThreshold =
+    config.featureToggles.heatmapNegativeLogBuckets && sparseNonPositiveBounds.hasNonPositive
+      ? (sparseNonPositiveBounds.smallestMagnitude ?? ZERO_ONLY_SYMLOG_THRESHOLD)
+      : null;
+
   const scaleDistribution = (() => {
     if (yBucketScale) {
       return yBucketScale.type;
+    }
+    if (sparseSymlogLinearThreshold != null) {
+      return ScaleDistribution.Symlog;
     }
     if (yScale.type !== ScaleDistribution.Linear || isSparseHeatmap) {
       return ScaleDistribution.Log;
@@ -221,7 +261,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   })();
 
   const scaleLog = toLogBase(yBucketScale?.log ?? yScale.log);
-  const scaleLinearThreshold = yBucketScale?.linearThreshold;
+  const scaleLinearThreshold = yBucketScale?.linearThreshold ?? sparseSymlogLinearThreshold ?? undefined;
 
   const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
@@ -261,7 +301,31 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             const isLogScale =
               scaleDistribution === ScaleDistribution.Log || scaleDistribution === ScaleDistribution.Symlog;
-            if (isLogScale) {
+            if (sparseSymlogLinearThreshold != null) {
+              if (sparseZeroBucketOnly) {
+                // Data is entirely the zero bucket (no real-magnitude buckets).
+                // Show a small symmetric window centered on zero so the single
+                // zero band is visible instead of collapsing to a degenerate or
+                // blank axis.
+                const t = sparseSymlogLinearThreshold;
+                [scaleMin, scaleMax] = [-t, t];
+              } else {
+                // Auto-detected symlog (negative/zero buckets present). The y-scale
+                // auto-ranges over the yMin facet only, so the passed dataMin is the
+                // lowest bucket's lower bound while the passed dataMax misses the top
+                // bucket's upper bound (which lives in the yMax facet). Recover the
+                // true top extent, then snap both ends out to clean powers of the base
+                // (see snapSymlogRange) so the outermost buckets get headroom off the
+                // axis edges and the span lines up with the pure-log axis.
+                let hi = dataMax;
+                for (const v of yMaxValues) {
+                  if (typeof v === 'number' && Number.isFinite(v) && v > hi) {
+                    hi = v;
+                  }
+                }
+                [scaleMin, scaleMax] = snapSymlogRange(dataMin, hi, sparseSymlogLinearThreshold, scaleLog || 2);
+              }
+            } else if (isLogScale) {
               // Guard against non-positive values — log(0) = -Infinity causes uPlot to crash in logAxisSplits.
               const safeMin = dataMin > 0 ? dataMin : dataMax / Math.pow(scaleLog, 2);
               [scaleMin, scaleMax] = uPlot.rangeLog(safeMin, dataMax, scaleLog, true);
@@ -271,7 +335,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
             let { min: explicitMin, max: explicitMax } = yAxisConfig;
 
-            if (isLogScale && !isOrdinalY) {
+            if (sparseSymlogLinearThreshold == null && isLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
 
@@ -287,7 +351,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 scaleMax = yExp ** incrRoundUp(maxLog, 1);
               }
             } else if (!isOrdinalY) {
-              // Apply explicit min/max for linear scale
+              // Apply explicit min/max for linear and (auto-detected) symlog scales
               [scaleMin, scaleMax] = applyExplicitMinMax(scaleMin, scaleMax, explicitMin, explicitMax);
             }
 
@@ -406,47 +470,82 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
-    splits: isOrdinalY
-      ? (self: uPlot) => {
-          const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
-          if (!meta.yOrdinalDisplay) {
-            return [0, 1]; //?
-          }
-          let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
+    splits:
+      // Gate on the auto-detected symlog case, not `scaleDistribution === Symlog`:
+      // a manually-selected Symlog y-bucket scale must keep uPlot's default ticks
+      // (this override is part of the flag-gated native-histogram feature).
+      sparseSymlogLinearThreshold != null
+        ? (self: uPlot, _axisIdx: number, sMin: number, sMax: number) =>
+            // Tick/gridline at the y=0 seam plus every power of the base in range, so
+            // gridlines land on each power (matching the pure-log axis). uPlot's own
+            // asinh generator instead anchors at the non-power linthresh and cascades
+            // into awkward values (0.989, 1.49, 2.98, …). Label thinning is handled in
+            // `values`, which keeps all the gridlines.
+            symlogPowerSplits(sMin, sMax, scaleLinearThreshold ?? 1, scaleLog || 2)
+        : isOrdinalY
+          ? (self: uPlot) => {
+              const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
+              if (!meta.yOrdinalDisplay) {
+                return [0, 1]; //?
+              }
+              let splits = meta.yOrdinalDisplay.map((v, idx) => idx);
 
-          switch (dataRef.current?.yLayout) {
-            case HeatmapCellLayout.le:
-              splits.unshift(-1);
-              break;
-            case HeatmapCellLayout.ge:
-              splits.push(splits.length);
-              break;
-          }
+              switch (dataRef.current?.yLayout) {
+                case HeatmapCellLayout.le:
+                  splits.unshift(-1);
+                  break;
+                case HeatmapCellLayout.ge:
+                  splits.push(splits.length);
+                  break;
+              }
 
-          // Skip labels when the height is too small
-          if (self.height < 60) {
-            splits = [splits[0], splits[splits.length - 1]];
-          } else {
-            while (splits.length > 3 && (self.height - 15) / splits.length < 10) {
-              splits = splits.filter((v, idx) => idx % 2 === 0); // remove half the items
+              // Skip labels when the height is too small
+              if (self.height < 60) {
+                splits = [splits[0], splits[splits.length - 1]];
+              } else {
+                while (splits.length > 3 && (self.height - 15) / splits.length < 10) {
+                  splits = splits.filter((v, idx) => idx % 2 === 0); // remove half the items
+                }
+              }
+              return splits;
             }
+          : undefined,
+    values:
+      sparseSymlogLinearThreshold != null
+        ? (self: uPlot, splits: number[], _axisIdx: number, foundSpace: number) => {
+            // Gridlines/ticks stay on every power (the splits above); thin only the
+            // labels, anchored at the largest power and skipping every Nth downward.
+            // This mirrors uPlot's log2 axis (log2AxisValsFilt): keep at most one label
+            // per axis._space (passed here as foundSpace). The y=0 seam is always kept.
+            const base = scaleLog || 2;
+            // Pixels between two adjacent powers at the start of the log region.
+            // Measure at the linear threshold rather than base..base^2: when the
+            // threshold is large (e.g. 128) those small powers fall inside the linear
+            // region and collapse to ~0px, which would over-thin the labels.
+            const t = scaleLinearThreshold ?? 1;
+            const magSpace = Math.abs(self.valToPos(t, yScaleKey) - self.valToPos(t * base, yScaleKey));
+            // keepMod = ceil(space / magSpace), exactly as the log2 axis. When the
+            // panel is so short that adjacent powers collapse to one pixel
+            // (magSpace -> 0 / NaN), thin maximally to the anchor power + the seam
+            // rather than snapping back to "label everything".
+            const keepMod =
+              Number.isFinite(magSpace) && magSpace > 0 ? Math.max(1, Math.ceil(foundSpace / magSpace)) : splits.length;
+            const keep = symlogLabelMask(splits, keepMod, base);
+            return splits.map((v, i) => (keep[i] ? formattedValueToString(dispY(v)) : null));
           }
-          return splits;
-        }
-      : undefined,
-    values: isOrdinalY
-      ? (self: uPlot, splits) => {
-          const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
-          if (meta.yOrdinalDisplay) {
-            return splits.map((v) =>
-              v < 0
-                ? (meta.yMinDisplay ?? '') // Check prometheus style labels
-                : (meta.yOrdinalDisplay?.[v] ?? '')
-            );
-          }
-          return splits;
-        }
-      : undefined,
+        : isOrdinalY
+          ? (self: uPlot, splits) => {
+              const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
+              if (meta.yOrdinalDisplay) {
+                return splits.map((v) =>
+                  v < 0
+                    ? (meta.yMinDisplay ?? '') // Check prometheus style labels
+                    : (meta.yOrdinalDisplay?.[v] ?? '')
+                );
+              }
+              return splits;
+            }
+          : undefined,
   });
 
   const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
@@ -786,6 +885,9 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
   const cellGap = Math.round(gap! * pxRatio);
 
+  // Special zero-bucket rendering is part of the negative/zero-bucket feature.
+  const negativeBucketsEnabled = config.featureToggles.heatmapNegativeLogBuckets ?? false;
+
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
       u,
@@ -848,6 +950,65 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         // uniform x size (interval, step)
         let xSizeUniform = xOffs.get(xMaxs.find((v) => v !== xMaxs[0])) - xOffs.get(xMaxs[0]);
 
+        // The exponential histogram zero bucket straddles zero with bounds so
+        // small (e.g. ±1e-128 for OTel SDK defaults) that valToPosY collapses it
+        // to a sub-pixel line on the y=0 symlog seam. The cells carry no metadata
+        // flagging it, so detect it geometrically: a zero-straddling bucket whose
+        // natural rendered height is sub-pixel. This is independent of which
+        // neighboring buckets happen to be present (sparse encoding omits empty
+        // ones), unlike comparing the bucket width against the linear threshold.
+        // A genuinely wide zero-straddling bucket (e.g. an NHCB bucket spanning
+        // negative to positive) has a real pixel height and renders normally.
+        const MIN_VISIBLE_PX = 2;
+        const isZeroBucket = (i: number): boolean => {
+          if (!negativeBucketsEnabled) {
+            return false;
+          }
+          const lo = yMins[i];
+          const hi = yMaxs[i];
+          if (!(Number.isFinite(lo) && Number.isFinite(hi) && lo < 0 && hi > 0)) {
+            return false;
+          }
+          return yOffs.get(lo) - yOffs.get(hi) < MIN_VISIBLE_PX;
+        };
+
+        // Pixel of the y=0 line (finite on symlog) and the median height of the
+        // other buckets, used to size and place the zero-bucket row so it carries
+        // the same visual weight instead of rendering as a hairline.
+        let zeroPx = 0;
+        let zeroBucketHeight = 0;
+        // Track whether real buckets exist on each side of zero, so a one-sided
+        // histogram's zero band fills the populated side rather than wasting half
+        // its height in the empty side.
+        let hasNeg = false;
+        let hasPos = false;
+        if (negativeBucketsEnabled) {
+          zeroPx = round(valToPosY(0, scaleY, yDim, yOff));
+          const neighborHeights: number[] = [];
+          for (let i = 0; i < dlen; i++) {
+            if (isZeroBucket(i)) {
+              continue;
+            }
+            if (Number.isFinite(yMaxs[i]) && yMaxs[i] <= 0) {
+              hasNeg = true;
+            }
+            if (Number.isFinite(yMins[i]) && yMins[i] >= 0) {
+              hasPos = true;
+            }
+            const h = yOffs.get(yMins[i]) - yOffs.get(yMaxs[i]);
+            if (Number.isFinite(h) && h > 0) {
+              neighborHeights.push(h);
+            }
+          }
+          if (neighborHeights.length > 0) {
+            neighborHeights.sort((a, b) => a - b);
+            zeroBucketHeight = neighborHeights[Math.floor(neighborHeights.length / 2)];
+          } else {
+            // Only the zero bucket is populated; fall back to a small visible row.
+            zeroBucketHeight = Math.max(1, Math.round(yDim / 20));
+          }
+        }
+
         for (let i = 0; i < dlen; i++) {
           if (counts[i] <= hideLE || counts[i] >= hideGE) {
             continue;
@@ -870,6 +1031,23 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
           let x = xMaxPx - cellGap / 2 - xSize;
           let y = yMaxPx + cellGap / 2;
+
+          // A sub-pixel zero-straddling bucket would otherwise render as a hairline;
+          // give it a fixed-height row with the same visual weight as its neighbors.
+          // Straddle the y=0 line when buckets exist on both sides (or none — the
+          // all-zero case), reflecting the exponential zero bucket's [-eps, +eps] span;
+          // when buckets are only on one side, fill that side so a one-sided histogram's
+          // band isn't left half as tall as its neighbors. Flag-gated via isZeroBucket.
+          if (isZeroBucket(i)) {
+            ySize = Math.max(1, zeroBucketHeight - cellGap);
+            if (hasPos && !hasNeg) {
+              y = zeroPx - ySize; // positive-only: extend upward from the seam
+            } else if (hasNeg && !hasPos) {
+              y = zeroPx; // negative-only: extend downward from the seam
+            } else {
+              y = zeroPx - ySize / 2; // both sides or all-zero: straddle, centered
+            }
+          }
 
           let fillPath = fillPaths[fills[i]];
 
@@ -894,6 +1072,122 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
     return null;
   };
+}
+
+/**
+ * Inspects sparse heatmap bucket bounds to decide whether the y-axis needs a
+ * symlog (rather than pure log) scale, and where its linear threshold should
+ * sit.
+ *
+ * A native histogram with negative or zero-straddling buckets can't be drawn
+ * on a pure log axis. `hasNonPositive` flags that case.
+ *
+ * `smallestMagnitude` is the bucket boundary closest to zero across *both* the
+ * positive and negative sides — the symlog linear threshold is placed here so
+ * the innermost real bucket on each side stays in the log region. Straddling
+ * buckets (the exponential zero bucket with bounds at ±epsilon) have
+ * boundaries that are effectively zero, which would otherwise collapse the
+ * linear region to almost nothing, so they are skipped.
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ */
+export function findSymlogBounds(
+  yMinValues: unknown[],
+  yMaxValues: unknown[]
+): { hasNonPositive: boolean; smallestMagnitude: number | null } {
+  let hasNonPositive = false;
+  let smallestMagnitude = Infinity;
+  const isFiniteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+  for (let i = 0; i < Math.max(yMinValues.length, yMaxValues.length); i++) {
+    const lo = yMinValues[i];
+    const hi = yMaxValues[i];
+    if (isFiniteNum(lo) && lo <= 0) {
+      hasNonPositive = true;
+    }
+    if (isFiniteNum(hi) && hi <= 0) {
+      hasNonPositive = true;
+    }
+    const isStraddler = isFiniteNum(lo) && lo < 0 && isFiniteNum(hi) && hi > 0;
+    if (isStraddler) {
+      continue;
+    }
+    if (isFiniteNum(lo) && lo !== 0 && Math.abs(lo) < smallestMagnitude) {
+      smallestMagnitude = Math.abs(lo);
+    }
+    if (isFiniteNum(hi) && hi !== 0 && Math.abs(hi) < smallestMagnitude) {
+      smallestMagnitude = Math.abs(hi);
+    }
+  }
+
+  return {
+    hasNonPositive,
+    smallestMagnitude: smallestMagnitude === Infinity ? null : smallestMagnitude,
+  };
+}
+
+/**
+ * Computes the y-scale [min, max] for an auto-detected sparse symlog heatmap.
+ *
+ * The y-scale auto-ranges over the yMin facet only, so `lo` is the lowest bucket's
+ * lower bound and `hi` must be supplied as the largest yMax (the top bucket's upper
+ * bound, which the yMin facet misses). Each log-region end is snapped out to the
+ * next power of `base` away from zero — mirroring uPlot.rangeLog(fullMags) on the
+ * pure-log axis. This gives the outermost buckets headroom off the axis edges (so a
+ * lone negative bucket isn't crushed onto the baseline) and makes the span land on
+ * clean powers, lining the ticks/gridlines up with the pure-log axis. Values inside
+ * the linear region (|v| <= threshold, e.g. a zero-straddling bucket) are kept as-is.
+ */
+export function snapSymlogRange(lo: number, hi: number, linthresh: number, base: number): [number, number] {
+  const logB = (x: number) => Math.log(x) / Math.log(base);
+  const nextPow = (x: number) => Math.pow(base, Math.floor(logB(x)) + 1);
+  const scaleMax = hi > linthresh ? nextPow(hi) : linthresh;
+  const scaleMin = lo < -linthresh ? -nextPow(-lo) : lo < 0 ? lo : -linthresh;
+  return [scaleMin, scaleMax];
+}
+
+/**
+ * Splits (tick/gridline positions) for a symlog y-axis: the y=0 seam plus every
+ * power of `base` whose magnitude falls within [scaleMin, scaleMax] on each side.
+ * Gridlines land on each power, matching the pure-log axis (uPlot's built-in asinh
+ * generator instead anchors at the non-power linthresh, producing awkward values).
+ */
+export function symlogPowerSplits(scaleMin: number, scaleMax: number, linthresh: number, base: number): number[] {
+  const logB = (x: number) => Math.log(x) / Math.log(base);
+  const maxMag = Math.max(Math.abs(scaleMin), Math.abs(scaleMax), linthresh);
+  const splits = [0];
+  for (let k = Math.ceil(logB(linthresh) - 1e-9); Math.pow(base, k) <= maxMag * (1 + 1e-9); k++) {
+    const p = Math.pow(base, k);
+    if (p <= scaleMax * (1 + 1e-9)) {
+      splits.push(p);
+    }
+    if (-p >= scaleMin * (1 + 1e-9)) {
+      splits.push(-p);
+    }
+  }
+  splits.sort((a, b) => a - b);
+  return splits;
+}
+
+/**
+ * Decides which symlog splits get a label (gridlines stay on all of them). The y=0
+ * seam is always labeled; powers are kept every `keepMod`-th, anchored at the largest
+ * magnitude and counting down — the spacing-aware every-Nth-power scheme uPlot's log2
+ * axis uses (keepMod is derived from pixel spacing by the caller). Returns a boolean
+ * mask aligned to `splits`.
+ */
+export function symlogLabelMask(splits: number[], keepMod: number, base: number): boolean[] {
+  const logB = (x: number) => Math.log(x) / Math.log(base);
+  const maxMag = splits.reduce((m, v) => Math.max(m, Math.abs(v)), base);
+  const kMax = Math.round(logB(maxMag));
+  return splits.map((v) => {
+    if (v === 0) {
+      return true;
+    }
+    const k = Math.round(logB(Math.abs(v)));
+    return (kMax - k) % keepMod === 0;
+  });
 }
 
 /**
