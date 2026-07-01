@@ -6,6 +6,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const (
@@ -16,12 +18,12 @@ const (
 
 // RepositoryQuotaChecker checks if a namespace exceeds its repository quota limits.
 type RepositoryQuotaChecker struct {
-	repos RepositoryGetter
+	repos informer.RepositoryGetter
 }
 
 // NewRepositoryQuotaChecker creates a new RepositoryQuotaChecker.
 func NewRepositoryQuotaChecker(
-	repos RepositoryGetter,
+	repos informer.RepositoryGetter,
 ) *RepositoryQuotaChecker {
 	return &RepositoryQuotaChecker{
 		repos: repos,

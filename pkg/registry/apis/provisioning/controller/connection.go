@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -40,7 +41,7 @@ type ConnectionStatusPatcher interface {
 
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
-	conns  ConnectionGetter
+	conns  informer.ConnectionGetter
 	logger logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
@@ -58,7 +59,7 @@ type ConnectionController struct {
 
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
-	conns ConnectionGetter,
+	conns informer.ConnectionGetter,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
@@ -203,7 +204,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the ConnectionGetter's concern, not the controller's.
+	// fresh is the informer.ConnectionGetter's concern, not the controller's.
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):

@@ -157,13 +157,6 @@ type APIBuilder struct {
 	natsSubscriber nats.Subscriber
 }
 
-// natsWatch reports whether the controllers take their deltas from NATS. When
-// they do, there is no informer cache (the NATS-backed informer keeps none), so
-// the controllers reconcile through a client-backed getter reading from the API.
-func (b *APIBuilder) natsWatch() bool {
-	return nats.Enabled(b.natsSubscriber)
-}
-
 // NewAPIBuilder creates an API builder for the provisioning API.
 //
 // This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
@@ -959,13 +952,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Informer with resync interval used for health check and reconciliation
 			informerFactoryResyncInterval := 60 * time.Second
-			natsWatch := b.natsWatch()
-			if natsWatch {
+			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
-			// Each controller's delta source (and, for repository/connection, the
-			// getter it backs) is selected per resource below: a NATS-backed informer
-			// when NATS is enabled, otherwise an apiserver-backed one.
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 

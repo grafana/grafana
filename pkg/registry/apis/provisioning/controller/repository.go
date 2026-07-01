@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,7 +47,7 @@ type finalizerProcessor interface {
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client client.ProvisioningV0alpha1Interface
-	repos  RepositoryGetter
+	repos  informer.RepositoryGetter
 	logger logging.Logger
 
 	jobs interface {
@@ -81,7 +82,7 @@ type RepositoryController struct {
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	repos RepositoryGetter,
+	repos informer.RepositoryGetter,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
@@ -577,7 +578,7 @@ func (rc *RepositoryController) process(key string) error {
 	}
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the RepositoryGetter's concern, not the controller's.
+	// fresh is the informer.RepositoryGetter's concern, not the controller's.
 	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
