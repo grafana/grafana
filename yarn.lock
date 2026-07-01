@@ -2052,12 +2052,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@faker-js/faker": "npm:^9.8.0"
     "@grafana/api-clients": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
-    "@reduxjs/toolkit": "npm:2.10.1"
+    "@reduxjs/toolkit": "npm:^2.10.1"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"
     "@testing-library/user-event": "npm:^14.6.1"
@@ -2100,7 +2100,7 @@ __metadata:
   peerDependencies:
     "@grafana/runtime": ">=11.6 <= 12.x"
     "@reduxjs/toolkit": ^2.10.0
-    rxjs: 7.8.2
+    rxjs: ^7.8.2
   languageName: unknown
   linkType: soft
 
@@ -2218,7 +2218,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     semver: "npm:^7.7.0"
-    typescript: "npm:6.0.2"
+    typescript: "npm:^6.0.2"
   languageName: unknown
   linkType: soft
 
@@ -2312,11 +2312,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/flamegraph@workspace:packages/grafana-flamegraph"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.2.0-pre"
-    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.2"
     "@storybook/preset-scss": "npm:1.0.3"
@@ -2340,14 +2340,14 @@ __metadata:
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
-    react: "npm:18.3.1"
-    react-use: "npm:17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    react: "npm:^18.3.1"
+    react-use: "npm:^17.6.1"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:10.3.6"
-    tinycolor2: "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
@@ -2441,7 +2441,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/plugin-ui": "npm:^0.13.1"
@@ -2460,9 +2460,9 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
-    react-use: "npm:17.6.1"
+    react-use: "npm:^17.6.1"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:7.8.2"
+    rxjs: "npm:^7.8.2"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
@@ -2527,7 +2527,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.13.1, @grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
+"@grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
   version: 0.13.1
   resolution: "@grafana/plugin-ui@npm:0.13.1"
   dependencies:
@@ -2771,14 +2771,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/assistant": "npm:^0.1.24"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:0.13.1"
+    "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/ui": "npm:13.2.0-pre"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    "@react-awesome-query-builder/ui": "npm:^6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -2794,12 +2794,12 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     i18next-cli: "npm:^1.48.0"
     jest: "npm:^29.6.4"
-    lodash: "npm:4.18.1"
-    react-use: "npm:17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    lodash: "npm:^4.18.1"
+    react-use: "npm:^17.6.1"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:7.8.2"
-    sql-formatter-plus: "npm:1.3.6"
+    rxjs: "npm:^7.8.2"
+    sql-formatter-plus: "npm:^1.3.6"
     typescript: "npm:6.0.2"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
@@ -2911,7 +2911,6 @@ __metadata:
     "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:^1.1.1"
     chance: "npm:^1.1.13"
-    classnames: "npm:^2.5.1"
     clsx: "npm:^2.1.1"
     common-tags: "npm:1.8.2"
     css-loader: "npm:7.1.2"
@@ -6841,7 +6840,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
+"@react-awesome-query-builder/ui@npm:6.6.15, @react-awesome-query-builder/ui@npm:^6.6.15, @react-awesome-query-builder/ui@npm:^6.6.4":
   version: 6.6.15
   resolution: "@react-awesome-query-builder/ui@npm:6.6.15"
   dependencies:
@@ -6962,7 +6961,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.10.1":
+"@reduxjs/toolkit@npm:2.10.1, @reduxjs/toolkit@npm:^2.10.1":
   version: 2.10.1
   resolution: "@reduxjs/toolkit@npm:2.10.1"
   dependencies:
@@ -13183,7 +13182,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:2.5.1, classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
+"classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10/58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
@@ -18394,7 +18393,7 @@ __metadata:
     browserslist: "npm:^4.21.4"
     centrifuge: "npm:5.5.3"
     chance: "npm:^1.1.13"
-    classnames: "npm:2.5.1"
+    clsx: "npm:^2.1.1"
     combokeys: "npm:^3.0.0"
     comlink: "npm:4.4.2"
     common-tags: "npm:1.8.2"
@@ -27972,7 +27971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.6":
+"react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.24, react-virtualized-auto-sizer@npm:^1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
@@ -28015,7 +28014,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:18.3.1":
+"react@npm:18.3.1, react@npm:^18.3.1":
   version: 18.3.1
   resolution: "react@npm:18.3.1"
   dependencies:
@@ -29992,7 +29991,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sql-formatter-plus@npm:1.3.6, sql-formatter-plus@npm:^1.3.6":
+"sql-formatter-plus@npm:^1.3.6":
   version: 1.3.6
   resolution: "sql-formatter-plus@npm:1.3.6"
   dependencies:
@@ -31773,7 +31772,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:6.0.2":
+"typescript@npm:6.0.2, typescript@npm:^6.0.2":
   version: 6.0.2
   resolution: "typescript@npm:6.0.2"
   bin:
@@ -31803,7 +31802,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^6.0.2#optional!builtin<compat/typescript>":
   version: 6.0.2
   resolution: "typescript@patch:typescript@npm%3A6.0.2#optional!builtin<compat/typescript>::version=6.0.2&hash=5786d5"
   bin:

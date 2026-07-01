@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,116 +23,122 @@ import (
 
 const (
 	defaultServerNamePrefix = "grafana-nats-"
-	serviceName             = "nats"
+	serverName              = "nats-server"
 )
 
-var ErrDisabled = errors.New("nats is disabled")
+var (
+	ErrDisabled = errors.New("nats is disabled")
+	ErrClosed   = errors.New("nats connection is closed")
+)
 
-// Service owns the NATS platform lifecycle: the optional embedded server. It is
-// a dskit service (so it composes with the module server) that also bridges to
-// the monolith background-service contract via Run. It is a no-op when NATS is
-// disabled.
-type Service struct {
+// Server owns the embedded NATS server lifecycle (On-Prem only; no-op in external/Cloud mode).
+type Server struct {
 	services.NamedService
 
 	cfg     setting.NATSSettings
 	log     log.Logger
-	metrics *metrics
+	metrics *serverMetrics
 
-	mu         sync.RWMutex
-	server     *natsserver.Server
-	opts       *natsserver.Options
-	clientURLs []string
+	mu     sync.RWMutex
+	server *natsserver.Server
+	opts   *natsserver.Options
 }
 
-func ProvideService(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Service, error) {
-	logger := log.New("infra.nats")
-	m := newMetrics(reg)
+func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Server, error) {
+	s := &Server{
+		cfg: cfg.NATS,
+		log: log.New("infra.nats.server"),
+	}
 
-	s := &Service{
-		cfg:        cfg.NATS,
-		log:        logger,
-		metrics:    m,
-		clientURLs: append([]string(nil), cfg.NATS.ClientURLs...),
+	// Only register the embedded-server metrics when this instance actually runs
+	// the embedded server; external/Cloud mode owns nothing here.
+	if !s.IsDisabled() {
+		s.metrics = newServerMetrics(reg)
 	}
 
 	s.opts = s.serverOptions()
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serviceName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(serverName)
 
 	return s, nil
 }
 
-func (s *Service) IsDisabled() bool {
-	return !s.cfg.Enabled
+// IsDisabled reports whether the embedded server should run. It is disabled when
+// NATS is off entirely or running against an external broker.
+func (s *Server) IsDisabled() bool {
+	return !s.cfg.Enabled || !s.cfg.Embedded()
 }
 
 // Run bridges the dskit service into the monolith background-service contract.
-func (s *Service) Run(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
 	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
 }
 
-// starting runs once; ctx is the service context, live until the service stops.
-func (s *Service) starting(ctx context.Context) error {
-	if !s.cfg.Enabled {
+func (s *Server) starting(ctx context.Context) error {
+	if s.IsDisabled() {
 		return nil
 	}
 
-	if s.cfg.Embedded() {
-		if err := s.startEmbeddedServer(ctx); err != nil {
-			return err
-		}
-	}
-
-	if len(s.ClientURLs()) == 0 {
-		return fmt.Errorf("nats is enabled but no client urls are available")
-	}
-
-	s.log.Info("nats platform started", "mode", s.cfg.Mode, "client_urls", s.ClientURLs())
-	return nil
+	return s.startEmbeddedServer(ctx)
 }
 
-func (s *Service) running(ctx context.Context) error {
+func (s *Server) clientURL() string {
+	if s == nil {
+		return ""
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.server == nil {
+		return ""
+	}
+	return s.server.ClientURL()
+}
+
+func (s *Server) dialOptions() []natsclient.Option {
+	if s == nil {
+		return nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.server == nil {
+		return nil
+	}
+	return []natsclient.Option{natsclient.InProcessServer(s.server)}
+}
+
+func (s *Server) running(ctx context.Context) error {
 	<-ctx.Done()
 	return nil
 }
 
-func (s *Service) stopping(_ error) error {
-	if !s.cfg.Enabled {
+func (s *Server) stopping(_ error) error {
+	if s.IsDisabled() {
 		return nil
 	}
-	s.shutdown(context.Background())
+	s.shutdown()
 	return nil
 }
 
-// Health reports whether the platform is operational.
-func (s *Service) Health(_ context.Context) error {
+func (s *Server) Health(_ context.Context) error {
 	if !s.cfg.Enabled {
 		return ErrDisabled
 	}
-	if len(s.ClientURLs()) == 0 {
-		return fmt.Errorf("nats has no client urls available")
+	if !s.cfg.Embedded() {
+		// Nothing to own in external mode; the client connections report health.
+		return nil
 	}
-	if s.cfg.Embedded() {
-		s.mu.RLock()
-		server := s.server
-		s.mu.RUnlock()
-		if server == nil || !server.Running() {
-			return fmt.Errorf("embedded nats server is not running")
-		}
+	s.mu.RLock()
+	server := s.server
+	s.mu.RUnlock()
+	if server == nil || !server.Running() {
+		return fmt.Errorf("embedded nats server is not running")
 	}
 	return nil
 }
 
-func (s *Service) ClientURLs() []string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return append([]string(nil), s.clientURLs...)
-}
-
-func (s *Service) startEmbeddedServer(_ context.Context) error {
+func (s *Server) startEmbeddedServer(_ context.Context) error {
 	opts := *s.opts
 
 	server, err := natsserver.NewServer(&opts)
@@ -150,7 +157,6 @@ func (s *Service) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
-	s.clientURLs = append([]string{clientURL}, s.cfg.ClientURLs...)
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)
@@ -159,7 +165,7 @@ func (s *Service) startEmbeddedServer(_ context.Context) error {
 	return nil
 }
 
-func (s *Service) serverOptions() *natsserver.Options {
+func (s *Server) serverOptions() *natsserver.Options {
 	return &natsserver.Options{
 		ServerName:            defaultServerNamePrefix + randomSuffix(),
 		Host:                  s.cfg.ListenAddress,
@@ -174,7 +180,7 @@ func (s *Service) serverOptions() *natsserver.Options {
 	}
 }
 
-func (s *Service) shutdown(_ context.Context) {
+func (s *Server) shutdown() {
 	s.mu.RLock()
 	server := s.server
 	s.mu.RUnlock()
