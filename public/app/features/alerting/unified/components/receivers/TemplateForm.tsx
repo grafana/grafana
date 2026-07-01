@@ -399,6 +399,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       className={cx(styles.templatePreview, styles.minEditorSize)}
                       aiGeneratedTemplate={aiGeneratedTemplate}
                       setAiGeneratedTemplate={setAiGeneratedTemplate}
+                      kind={originalTemplate?.kind ?? 'grafana'}
                     />
                   </div>
                 )}

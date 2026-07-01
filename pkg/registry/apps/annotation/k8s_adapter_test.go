@@ -14,7 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
@@ -72,7 +72,7 @@ func testGetLegacyID(t *testing.T, anno *annotationV0.Annotation) int64 {
 // testGetLegacyData is a test helper that extracts the legacy data blob from an annotation.
 func testGetLegacyData(t *testing.T, anno *annotationV0.Annotation) string {
 	t.Helper()
-	v, _ := getLegacyData(anno)
+	v, _ := GetLegacyData(anno)
 	return v
 }
 
@@ -423,21 +423,21 @@ func TestK8sAdapter_List(t *testing.T) {
 		return adapter, ctx
 	}
 
-	t.Run("field selector filters by legacy ID", func(t *testing.T) {
+	t.Run("label selector filters by legacy ID", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=100"),
+			LabelSelector: labels.SelectorFromSet(labels.Set{LabelKeyLegacyID: "200"}),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)
 		require.Len(t, list.Items, 1)
-		assert.Equal(t, "anno-a", list.Items[0].Name)
+		assert.Equal(t, "anno-b", list.Items[0].Name)
 	})
 
-	t.Run("non-matching legacy ID returns empty", func(t *testing.T) {
+	t.Run("non-matching legacy ID label returns empty", func(t *testing.T) {
 		adapter, ctx := setup(t)
 		result, err := adapter.List(ctx, &internalversion.ListOptions{
-			FieldSelector: fields.ParseSelectorOrDie("metadata.legacyID=999"),
+			LabelSelector: labels.SelectorFromSet(labels.Set{LabelKeyLegacyID: "999"}),
 		})
 		require.NoError(t, err)
 		list := result.(*annotationV0.AnnotationList)

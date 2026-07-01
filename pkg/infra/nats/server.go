@@ -62,12 +62,6 @@ func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Regist
 	return s, nil
 }
 
-// ProvideClientMetrics registers the role-labeled client metrics shared by the
-// publisher and (eventually) subscriber connections.
-func ProvideClientMetrics(reg prometheus.Registerer) *clientMetrics {
-	return newClientMetrics(reg)
-}
-
 // IsDisabled reports whether the embedded server should run. It is disabled when
 // NATS is off entirely or running against an external broker.
 func (s *Server) IsDisabled() bool {
