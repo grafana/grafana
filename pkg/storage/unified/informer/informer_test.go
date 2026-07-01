@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -33,6 +34,7 @@ var testGVR = schema.GroupVersionResource{Group: "example.grafana.app", Version:
 type fakeSubscriber struct {
 	mu       sync.Mutex
 	handlers map[string]nats.MessageHandler
+	failN    int // fail the next failN Subscribe calls, mimicking a not-yet-ready server
 }
 
 func newFakeSubscriber() *fakeSubscriber {
@@ -41,9 +43,21 @@ func newFakeSubscriber() *fakeSubscriber {
 
 func (f *fakeSubscriber) Enabled() bool { return true }
 
+// failSubscribes makes the next n Subscribe calls fail, as they do while the
+// embedded NATS server is still starting and has no client URL.
+func (f *fakeSubscriber) failSubscribes(n int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.failN = n
+}
+
 func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.failN > 0 {
+		f.failN--
+		return nil, fmt.Errorf("no nats client urls configured")
+	}
 	f.handlers[subject] = handler
 	return fakeSubscription{}, nil
 }
@@ -283,6 +297,36 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 
 	require.Eventually(t, func() bool { return calls.Load() >= 2 }, 5*time.Second, 5*time.Millisecond,
 		"reconnect must trigger a re-list")
+}
+
+// A subscribe failure (e.g. the embedded NATS server not yet started, so no
+// client URL) is not fatal: the informer still syncs from the initial re-list,
+// retries the subscription, and delivers live events once it opens.
+func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
+	sub := newFakeSubscriber()
+	sub.failSubscribes(2) // first two attempts fail, then it succeeds
+	handler := &recordingHandler{}
+
+	list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.retryInterval = 10 * time.Millisecond // shorten the retry cadence for the test
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+	stopCh := make(chan struct{})
+	go n.Run(stopCh)
+	t.Cleanup(func() { close(stopCh) })
+
+	// HasSynced fires from the initial re-list even though subscribing failed.
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer must sync despite subscribe failure")
+	assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
+
+	// The retry eventually opens the subscription, and live events then flow.
+	sub.waitForSubscription(t, subject())
+	sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+	require.Eventually(t, func() bool {
+		return len(handler.addedNames()) == 2
+	}, 5*time.Second, 5*time.Millisecond, "live events must flow once the retry subscribes")
+	assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
 }
 
 // signalReconnect never blocks: a pending signal coalesces additional reconnects

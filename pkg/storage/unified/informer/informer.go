@@ -42,6 +42,11 @@ type ListFunc func(ctx context.Context) ([]runtime.Object, error)
 // non-positive interval.
 const defaultResync = 5 * time.Minute
 
+// defaultSubscribeRetry is how often Run retries opening the live subscription
+// while it is unavailable — most commonly at startup, when the embedded NATS
+// server is still starting and has no client URL yet.
+const defaultSubscribeRetry = 5 * time.Second
+
 // Informer drives a controller's informer event handlers from NATS instead of an
 // apiserver-backed SharedInformer. It keeps no live per-object cache: on each
 // NATS notification it hands the handler a minimal object built from the
@@ -72,6 +77,10 @@ type Informer struct {
 	log        log.Logger
 
 	store Store
+
+	// retryInterval is how often Run retries opening the live subscription while it
+	// fails; defaults to defaultSubscribeRetry.
+	retryInterval time.Duration
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -107,17 +116,18 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		resync = defaultResync
 	}
 	return &Informer{
-		subscriber: subscriber,
-		gvr:        gvr,
-		namespace:  namespace,
-		resync:     resync,
-		queueGroup: queueGroup,
-		newObject:  newObject,
-		list:       list,
-		log:        log.New("provisioning.informer.nats"),
-		store:      store,
-		syncedCh:   make(chan struct{}),
-		reconnect:  make(chan struct{}, 1),
+		subscriber:    subscriber,
+		gvr:           gvr,
+		namespace:     namespace,
+		resync:        resync,
+		queueGroup:    queueGroup,
+		newObject:     newObject,
+		list:          list,
+		log:           log.New("provisioning.informer.nats"),
+		store:         store,
+		retryInterval: defaultSubscribeRetry,
+		syncedCh:      make(chan struct{}),
+		reconnect:     make(chan struct{}, 1),
 	}
 }
 
@@ -175,7 +185,33 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		}
 	}()
 
-	if n.newObject != nil {
+	// Seed the initial reconcile and report HasSynced before opening the live
+	// subscription: the informer is correct on the periodic re-list alone, so a
+	// slow or not-yet-started NATS server must never block the controller waiting
+	// on HasSynced. Live notifications are only a latency optimisation layered on
+	// top, and any event missed in the window before the subscription opens is
+	// healed by the next re-list.
+	n.relist(ctx, true)
+	n.synced.Store(true)
+	close(n.syncedCh)
+
+	var sub nats.Subscription
+	defer func() {
+		if sub != nil {
+			if err := sub.Unsubscribe(); err != nil {
+				n.log.Debug("nats informer: unsubscribe", "error", err)
+			}
+		}
+	}()
+
+	// subscribe opens the live subscription. The embedded NATS server may still be
+	// starting when the informer first runs (no client URL yet), so a failure is
+	// not fatal: it returns false and Run retries on subscribeRetryInterval until
+	// it succeeds. A nil newObject disables live notifications entirely.
+	subscribe := func() bool {
+		if n.newObject == nil || sub != nil {
+			return true
+		}
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
 		// Re-list on reconnect: a round-robin subscription can miss events
 		// published while the connection was down, so reconcile from a fresh list.
@@ -183,37 +219,35 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		if n.queueGroup != "" {
 			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
 		}
-		sub, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 		if err != nil {
-			n.log.Error("nats informer: subscribe failed", "subject", subject, "error", err)
-			return
+			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+			return false
 		}
-		defer func() {
-			if err := sub.Unsubscribe(); err != nil {
-				n.log.Debug("nats informer: unsubscribe", "error", err)
-			}
-		}()
+		sub = s
 		n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+		return true
 	}
 
-	// Seed the initial reconcile from the API before serving live events, then
-	// report HasSynced so the controller can start once its handler has processed
-	// the full set — the same contract as an informer's LIST-seeded cache.
-	n.relist(ctx, true)
-	n.synced.Store(true)
-	close(n.syncedCh)
+	subscribed := subscribe()
 
-	ticker := time.NewTicker(n.resync)
-	defer ticker.Stop()
+	resync := time.NewTicker(n.resync)
+	defer resync.Stop()
+	retry := time.NewTicker(n.retryInterval)
+	defer retry.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		case <-resync.C:
 			n.relist(ctx, false)
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
 			n.relist(ctx, false)
+		case <-retry.C:
+			if !subscribed {
+				subscribed = subscribe()
+			}
 		}
 	}
 }
