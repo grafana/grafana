@@ -45,7 +45,7 @@ const (
 
 	BlobThresholdDefault int = 0
 
-	DefaultGrpcClientKeepaliveTime = 10 * time.Second
+	DefaultGrpcClientKeepaliveTime time.Duration = 0
 )
 
 type RestConfigProvider interface {
