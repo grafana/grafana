@@ -282,6 +282,8 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			return
 		}
 
+		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
+
 		obj := n.newObject(evt.Namespace, evt.Name)
 		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
 		// may still exist mid-finalization) becomes OnUpdate. The handlers key off

@@ -76,5 +76,6 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
 	p.metrics.messagesPublished.Inc()
+	p.log.Debug("published message", "subject", subject, "bytes", len(data))
 	return nil
 }
