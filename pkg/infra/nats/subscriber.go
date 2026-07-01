@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const subscriberName = "nats-subscriber"
@@ -70,11 +69,15 @@ func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config, cred
 	return s
 }
 
-// ProvideSubscriber builds the subscriber from the shared connection config
-// (which carries the bus config and resolves the mode) plus its per-role
-// credentials, registering its own metrics.
-func ProvideSubscriber(cfg *setting.Cfg, config *Config, reg prometheus.Registerer) *SubscriberService {
-	return newSubscriber(log.New("infra.nats.subscriber"), newSubscriberMetrics(reg), config, cfg.NATS.Auth.SubscriberCredentials)
+// ProvideSubscriber builds the subscriber from the shared connection config,
+// which carries the bus config, resolves the mode, and exposes the per-role
+// credentials. It registers its own metrics.
+func ProvideSubscriber(config *Config, reg prometheus.Registerer) *SubscriberService {
+	m := newSubscriberMetrics()
+	if config.Enabled() {
+		reg.MustRegister(m.collectors()...)
+	}
+	return newSubscriber(log.New("infra.nats.subscriber"), m, config, config.SubscriberCredentials)
 }
 
 func (s *SubscriberService) IsDisabled() bool {

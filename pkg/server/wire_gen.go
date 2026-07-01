@@ -924,8 +924,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(cfg, config, registerer)
-	subscriberService := nats.ProvideSubscriber(cfg, config, registerer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	subscriberService := nats.ProvideSubscriber(config, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1664,8 +1664,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(cfg, config, registerer)
-	subscriberService := nats.ProvideSubscriber(cfg, config, registerer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	subscriberService := nats.ProvideSubscriber(config, registerer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {

@@ -68,7 +68,7 @@ func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	p := newPublisher(log.NewNopLogger(), newPublisherMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
+	p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(p.close)
 	return p
 }
@@ -76,7 +76,7 @@ func newTestPublisher(t *testing.T, srv *natsserver.Server) *PublisherService {
 func newTestSubscriber(t *testing.T, srv *natsserver.Server) *SubscriberService {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(prometheus.NewRegistry()), newTestConfig(srv, cfg), func() string { return "" })
+	s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newTestConfig(srv, cfg), func() string { return "" })
 	t.Cleanup(s.close)
 	return s
 }

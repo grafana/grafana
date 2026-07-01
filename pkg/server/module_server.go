@@ -263,7 +263,7 @@ func (s *ModuleServer) Run() error {
 		// The publisher connects lazily on first publish, so no server is started
 		// here; in external mode the embedded server is inert. Returning it as the
 		// module service drains the connection on shutdown.
-		publisher := nats.ProvidePublisher(s.cfg, nats.ProvideNATSConfig(s.cfg, natsServer), s.registerer)
+		publisher := nats.ProvidePublisher(nats.ProvideNATSConfig(s.cfg, natsServer), s.registerer)
 		s.natsPublisher = publisher
 		return publisher, nil
 	})

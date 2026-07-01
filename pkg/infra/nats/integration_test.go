@@ -279,8 +279,8 @@ func startEmbeddedStack(t *testing.T) (context.Context, *Server, *PublisherServi
 	startService(t, ctx, server)
 
 	natsCfg := ProvideNATSConfig(cfg, server)
-	pub := ProvidePublisher(cfg, natsCfg, prometheus.NewRegistry())
-	sub := ProvideSubscriber(cfg, natsCfg, prometheus.NewRegistry())
+	pub := ProvidePublisher(natsCfg, prometheus.NewRegistry())
+	sub := ProvideSubscriber(natsCfg, prometheus.NewRegistry())
 	startService(t, ctx, pub)
 	startService(t, ctx, sub)
 
@@ -292,7 +292,7 @@ func startExtraSubscriber(t *testing.T, ctx context.Context, server *Server) *Su
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded}
-	sub := ProvideSubscriber(cfg, ProvideNATSConfig(cfg, server), prometheus.NewRegistry())
+	sub := ProvideSubscriber(ProvideNATSConfig(cfg, server), prometheus.NewRegistry())
 	startService(t, ctx, sub)
 	return sub
 }

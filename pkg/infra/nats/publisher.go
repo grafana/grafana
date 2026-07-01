@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const publisherName = "nats-publisher"
@@ -33,11 +32,15 @@ func newPublisher(logger log.Logger, m *publisherMetrics, config *Config, creden
 	return p
 }
 
-// ProvidePublisher builds the publisher from the shared connection config (which
-// carries the bus config and resolves the mode) plus its per-role credentials,
-// registering its own metrics.
-func ProvidePublisher(cfg *setting.Cfg, config *Config, reg prometheus.Registerer) *PublisherService {
-	return newPublisher(log.New("infra.nats.publisher"), newPublisherMetrics(reg), config, cfg.NATS.Auth.PublisherCredentials)
+// ProvidePublisher builds the publisher from the shared connection config, which
+// carries the bus config, resolves the mode, and exposes the per-role
+// credentials. It registers its own metrics.
+func ProvidePublisher(config *Config, reg prometheus.Registerer) *PublisherService {
+	m := newPublisherMetrics()
+	if config.Enabled() {
+		reg.MustRegister(m.collectors()...)
+	}
+	return newPublisher(log.New("infra.nats.publisher"), m, config, config.PublisherCredentials)
 }
 
 func (p *PublisherService) IsDisabled() bool {

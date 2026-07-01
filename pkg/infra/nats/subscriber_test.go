@@ -7,7 +7,6 @@ import (
 	"time"
 
 	natsclient "github.com/nats-io/nats.go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +17,7 @@ import (
 func TestSubscriber(t *testing.T) {
 	t.Run("is disabled when NATS is off", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: false}
-		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		s := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil), func() string { return "" })
 
 		require.False(t, s.Enabled())
 		require.True(t, s.IsDisabled())
@@ -102,7 +101,7 @@ func TestSubscriber(t *testing.T) {
 
 	t.Run("records handler duration on delivery", func(t *testing.T) {
 		srv := startTestServer(t)
-		m := newSubscriberMetrics(prometheus.NewRegistry())
+		m := newSubscriberMetrics()
 		cfg := setting.NATSSettings{Enabled: true}
 		sub := newSubscriber(log.NewNopLogger(), m, newTestConfig(srv, cfg), func() string { return "" })
 		t.Cleanup(sub.close)
@@ -132,7 +131,7 @@ func TestSubscriber(t *testing.T) {
 	})
 
 	t.Run("counts slow-consumer async errors", func(t *testing.T) {
-		m := newSubscriberMetrics(prometheus.NewRegistry())
+		m := newSubscriberMetrics()
 		cfg := setting.NATSSettings{Enabled: true}
 		sub := newSubscriber(log.NewNopLogger(), m, newConfig(cfg, nil), func() string { return "" })
 
