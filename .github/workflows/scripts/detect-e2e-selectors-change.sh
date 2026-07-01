@@ -43,8 +43,13 @@ if ! git fetch --quiet --shallow-since="$PUBLISH_TIME" origin "$GIT_COMMIT" 2>/d
   exit 0
 fi
 
-if [ -n "$(git log --since="$PUBLISH_TIME" --format='%H' -- "$PACKAGE_DIR" 2>/dev/null)" ]; then
-  echo "${PACKAGE_DIR} changed since ${PUBLISH_TIME}; publishing." >&2
+# --min-parents=1 excludes the shallow-clone boundary commit: after the date-bounded
+# deepen above it is grafted parentless, so git treats it as a root that "adds" the
+# whole tree and would otherwise report every path (including this one) as changed.
+CHANGES="$(git log --min-parents=1 --since="$PUBLISH_TIME" --format='  %h %ad %s' --date=short -- "$PACKAGE_DIR" 2>/dev/null)"
+if [ -n "$CHANGES" ]; then
+  echo "${PACKAGE_DIR} changed since ${PUBLISH_TIME}; publishing. Commits:" >&2
+  echo "$CHANGES" >&2
   echo "true"
 else
   echo "${PACKAGE_DIR} unchanged since ${PUBLISH_TIME}; skipping publish." >&2
