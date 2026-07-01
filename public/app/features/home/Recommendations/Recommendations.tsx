@@ -57,8 +57,9 @@ export default function Recommendations() {
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
 
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(() => {
-    if (collapsed || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (collapsed || paused) {
       return;
     }
 
@@ -67,7 +68,7 @@ export default function Recommendations() {
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [collapsed, index]);
+  }, [collapsed, paused, index]);
 
   return (
     <div>
@@ -118,6 +119,34 @@ export default function Recommendations() {
                 aria-label={t('home.recommendations.previous', 'Previous')}
               />
 
+              {recommendations.map((_, i) =>
+                i === index ? (
+                  <Button
+                    key={i}
+                    variant="secondary"
+                    size="sm"
+                    fill="solid"
+                    icon={paused ? 'play' : 'pause'}
+                    onClick={() => setPaused(!paused)}
+                    aria-label={
+                      paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
+                    }
+                    data-paused={paused ? true : undefined}
+                    className={cx(styles.dot, styles.active)}
+                  />
+                ) : (
+                  <Button
+                    key={i}
+                    variant="secondary"
+                    size="sm"
+                    fill="solid"
+                    onClick={() => setIndex(i)}
+                    aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
+                    className={styles.dot}
+                  />
+                )
+              )}
+
               <Button
                 variant="secondary"
                 size="sm"
@@ -167,6 +196,61 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.gradients.brandHorizontal,
       opacity: 0.05,
       pointerEvents: 'none',
+    },
+  }),
+  dot: css({
+    background: theme.colors.background.secondary,
+    lineHeight: 0,
+    padding: 0,
+    width: theme.spacing(1),
+    height: theme.spacing(1),
+    borderRadius: theme.shape.radius.pill,
+    position: 'relative',
+
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+    },
+
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background-color', 'width', 'height'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+  active: css({
+    '&, &::after': {
+      width: theme.spacing(3),
+    },
+
+    '&, &:hover, &:focus': {
+      background: theme.colors.text.maxContrast,
+      color: theme.colors.background.secondary,
+    },
+
+    '&:hover, &[data-paused]': {
+      height: theme.spacing(2),
+    },
+
+    '& > svg': {
+      margin: '0 auto',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['opacity'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+    },
+
+    '&:not(:hover):not([data-paused])': {
+      '& > svg': {
+        opacity: 0,
+      },
     },
   }),
   outer: css({

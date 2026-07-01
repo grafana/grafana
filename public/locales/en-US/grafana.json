@@ -10711,10 +10711,13 @@
       "loading": "Loading recently viewed dashboards..."
     },
     "recommendations": {
+      "go-to": "Go to recommendation {{index}}",
       "hide": "Hide",
       "next": "Next",
+      "pause": "Pause",
       "previous": "Previous",
       "recommended": "Recommended",
+      "resume": "Resume",
       "show": "Show",
       "title": "Recommendations for your stack"
     },
