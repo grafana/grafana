@@ -3,7 +3,10 @@ import { useEffectOnce } from 'react-use';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { ConfigSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 
 import { getCredentials, updateCredentials } from '../../credentials';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
@@ -63,22 +66,24 @@ export const MonitorConfig = (props: Props) => {
         onCredentialsChange={onCredentialsChange}
         disabled={props.options.readOnly}
       >
-        <>
-          <DefaultSubscription
-            subscriptions={subscriptions}
-            credentials={credentials}
-            getSubscriptions={getSubscriptions}
-            disabled={props.options.readOnly}
-            onSubscriptionsChange={onSubscriptionsChange}
-            onSubscriptionChange={onSubscriptionChange}
-            options={options.jsonData}
-          />
+        <DefaultSubscription
+          subscriptions={subscriptions}
+          credentials={credentials}
+          getSubscriptions={getSubscriptions}
+          disabled={props.options.readOnly}
+          onSubscriptionsChange={onSubscriptionsChange}
+          onSubscriptionChange={onSubscriptionChange}
+          options={options.jsonData}
+        />
+      </AzureCredentialsForm>
+      <ConfigSection title={t('components.monitor-config.title-features', 'Features')}>
+        <Stack direction="column" gap={4}>
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
           {config.featureToggles.azureMonitorBatchAPI && (
             <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
           )}
-        </>
-      </AzureCredentialsForm>
+        </Stack>
+      </ConfigSection>
     </>
   );
 };

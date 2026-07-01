@@ -13,17 +13,10 @@ export interface Props {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  text: css({
-    ...theme.typography.body,
+  description: css({
+    ...theme.typography.bodySmall,
     color: theme.colors.text.secondary,
-    fontSize: '11px',
-    a: css({
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
-      '&:hover': {
-        textDecoration: 'none',
-      },
-    }),
+    marginBottom: theme.spacing(1),
   }),
 });
 
@@ -35,17 +28,22 @@ export const BatchAPIToggle = (props: Props) => {
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBatchAPIEnabledChange(e.target.checked);
 
   const description = (
-    <p className={styles.text}>
+    <p className={styles.description}>
       <Trans i18nKey="components.batch-api-toggle.description-batch-api">
         Queries multiple resources in a single request, improving performance for large dashboards. Requires{' '}
         <TextLink
           href="https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/rest-api-walkthrough#retrieve-metric-values-multi-dimensional-api"
           external
+          variant="bodySmall"
         >
           Monitoring Reader
         </TextLink>{' '}
         at the subscription scope on{' '}
-        <TextLink href="https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/migrate-to-batch-api" external>
+        <TextLink
+          href="https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/migrate-to-batch-api"
+          external
+          variant="bodySmall"
+        >
           metrics.monitor.azure.com
         </TextLink>
         . After 1,000,000 free API calls per month, additional calls cost $0.01 per 1,000.
@@ -59,11 +57,13 @@ export const BatchAPIToggle = (props: Props) => {
       description={description}
       label={t('components.batch-api-toggle.label-enable-batch-api', 'Enable Batch API')}
     >
-      <Switch
-        aria-label={t('components.batch-api-toggle.aria-label-enable-batch-api', 'Batch API')}
-        onChange={onChange}
-        value={options.batchAPIEnabled ?? false}
-      />
+      <div>
+        <Switch
+          aria-label={t('components.batch-api-toggle.aria-label-enable-batch-api', 'Batch API')}
+          onChange={onChange}
+          value={options.batchAPIEnabled ?? false}
+        />
+      </div>
     </Field>
   );
 };
