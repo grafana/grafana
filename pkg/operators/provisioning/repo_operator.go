@@ -35,7 +35,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
+	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval(), controllerCfg.natsSubscriber)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -88,7 +88,13 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
+	// With the NATS-backed watch the informer cache is only eventually
+	// consistent, so reconcile through a client-backed getter; otherwise the
+	// informer's cache getter is authoritative.
 	repoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+	if controllerCfg.natsWatch() {
+		repoGetter = controller.NewClientRepositoryGetter(provisioningClient.ProvisioningV0alpha1())
+	}
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,

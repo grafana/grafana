@@ -4,6 +4,7 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -21,5 +22,8 @@ type historicJobs struct {
 }
 
 func (h *historicJobs) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
-	return h.fn(ctx, provisioningapis.HistoricJobResourceInfo.GroupVersionResource(), h.namespace, opts)
+	get := func(ctx context.Context, name string, o metav1.GetOptions) (runtime.Object, error) {
+		return h.Get(ctx, name, o)
+	}
+	return h.fn(ctx, provisioningapis.HistoricJobResourceInfo.GroupVersionResource(), h.namespace, get, opts)
 }
