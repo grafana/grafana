@@ -237,12 +237,24 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 
 	// Then, sync them by creating or deleting Alertmanagers as necessary.
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
-	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
+	timings, err := moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
 	// LOGZ.IO GRAFANA CHANGE :: AI-40 - Add observability to alertmanagers load time
 	loadingTime := time.Since(startTime).Seconds()
 	moa.metrics.SyncAlertmanagersTimeSeconds.Set(loadingTime)
-	moa.logger.Info("Done synchronizing Alertmanagers for orgs", "org_count", len(orgIDs), "duration_seconds", loadingTime)
+	if err != nil {
+		// Failure already logged in SyncAlertmanagersForOrgs; skip the misleading "Done" line.
+		// Return nil to preserve the existing non-fatal behavior on the init/poll paths.
+		return nil
+	}
+	moa.logger.Info("Done synchronizing Alertmanagers for orgs",
+		"org_count", len(orgIDs),
+		"duration_seconds", loadingTime,
+		"load_configs_seconds", timings.loadConfigsSeconds,
+		"sync_loop_seconds", timings.syncLoopSeconds,
+		"cleanup_seconds", timings.cleanupSeconds,
+		"concurrency", timings.concurrency,
+	)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return nil
@@ -263,14 +275,26 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 	return result, nil
 }
 
+// syncPhaseTimings breaks down where a sync spends time so the dominant phase (config load,
+// the per-org sync loop, or orphan cleanup) is visible in the completion log.
+type syncPhaseTimings struct {
+	loadConfigsSeconds float64
+	syncLoopSeconds    float64
+	cleanupSeconds     float64
+	concurrency        int
+}
+
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
-func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) {
+func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, orgIDs []int64) (syncPhaseTimings, error) {
+	var timings syncPhaseTimings
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
+	loadConfigsStart := time.Now()
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
 		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
-		return
+		return timings, err
 	}
+	timings.loadConfigsSeconds = time.Since(loadConfigsStart).Seconds()
 	// Snapshot the running Alertmanagers under a read lock so the per-org work below can run concurrently
 	// without holding the lock. This method is the only writer of moa.alertmanagers and runs serially.
 	moa.alertmanagersMtx.RLock()
@@ -300,7 +324,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	if concurrency < 1 {
 		concurrency = 1
 	}
+	timings.concurrency = concurrency
 	g.SetLimit(concurrency)
+	loopStart := time.Now()
 	for i, orgID := range syncOrgs {
 		i, orgID := i, orgID
 		g.Go(func() error {
@@ -338,6 +364,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		})
 	}
 	_ = g.Wait() // goroutines never return an error; failures are logged above and the org is skipped.
+	timings.syncLoopSeconds = time.Since(loopStart).Seconds()
 
 	// Merge results and prune removed orgs under the write lock. This phase is fast and does no I/O.
 	moa.alertmanagersMtx.Lock()
@@ -358,6 +385,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	moa.metrics.ActiveConfigurations.Set(float64(len(moa.alertmanagers)))
 	moa.alertmanagersMtx.Unlock()
 
+	cleanupStart := time.Now()
 	// Now, we can stop the Alertmanagers without having to hold a lock.
 	for orgID, am := range amsToStop {
 		moa.logger.Info("Stopping Alertmanager", "org", orgID)
@@ -371,6 +399,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	// occur when an organization is deleted and the node running Grafana is
 	// shutdown before the next sync is executed.
 	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
+	timings.cleanupSeconds = time.Since(cleanupStart).Seconds()
+
+	return timings, nil
 }
 
 // cleanupOrphanLocalOrgState will check if there is any organization on

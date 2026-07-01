@@ -223,6 +223,46 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersConcurrency(t *testing.T) {
 	require.Less(t, parallel, serial/2, "expected concurrent sync to be at least 2x faster than serial")
 }
 
+// TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs_PhaseTimings verifies that SyncAlertmanagersForOrgs
+// reports the effective concurrency (so the configured value is observable) and populates phase timings.
+func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs_PhaseTimings(t *testing.T) {
+	newMam := func(concurrency int) *MultiOrgAlertmanager {
+		configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
+		orgStore := &FakeOrgStore{orgs: []int64{1, 2, 3}}
+		kvStore := ngfakes.NewFakeKVStore(t)
+		provStore := ngfakes.NewFakeProvisioningStore()
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		reg := prometheus.NewPedanticRegistry()
+		m := metrics.NewNGAlert(reg)
+		cfg := &setting.Cfg{
+			DataPath: t.TempDir(),
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				AlertmanagerConfigPollInterval: 3 * time.Minute,
+				DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+				SyncConcurrency:                concurrency,
+			},
+		}
+		mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, secretsService.GetDecryptedValue, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
+		require.NoError(t, err)
+		return mam
+	}
+
+	t.Run("reports the configured concurrency and populates timings", func(t *testing.T) {
+		timings, err := newMam(7).SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2, 3})
+		require.NoError(t, err)
+		require.Equal(t, 7, timings.concurrency)
+		require.GreaterOrEqual(t, timings.loadConfigsSeconds, 0.0)
+		require.GreaterOrEqual(t, timings.syncLoopSeconds, 0.0)
+		require.GreaterOrEqual(t, timings.cleanupSeconds, 0.0)
+	})
+
+	t.Run("floors non-positive concurrency to 1", func(t *testing.T) {
+		timings, err := newMam(0).SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+		require.NoError(t, err)
+		require.Equal(t, 1, timings.concurrency)
+	})
+}
+
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
 	var orgWithBadConfig int64 = 2
