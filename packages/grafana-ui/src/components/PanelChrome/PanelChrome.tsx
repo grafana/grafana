@@ -33,6 +33,8 @@ interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
   description?: string | (() => string);
+  /** If true, the description will be displayed in the sub-header area instead of the main header. */
+  descriptionInSubHeader?: boolean;
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -163,6 +165,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
+  descriptionInSubHeader = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -187,12 +190,21 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
+  const descriptionTitleItem = description && !descriptionInSubHeader && (
+    <PanelDescription description={description} className={dragClassCancel} />
+  );
+
+  const descriptionSubHeader = description && descriptionInSubHeader && (
+    <PanelDescription description={description} inSubHeader />
+  );
+
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || descriptionSubHeader);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  const headerHeight = getHeaderHeight(theme, hasHeader, showSubHeader);
+  const subHeaderHeight = showSubHeader ? Math.max(measuredSubHeaderHeight - 0, 0) : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
@@ -319,9 +331,9 @@ export function PanelChrome({
         </div>
       )}
 
-      {(titleItems || description) && (
+      {(titleItems || descriptionTitleItem) && (
         <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          <PanelDescription description={description} className={dragClassCancel} />
+          {descriptionTitleItem}
           {titleItems}
         </div>
       )}
@@ -452,8 +464,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && subHeaderContent && (
+            {!collapsed && (subHeaderContent || descriptionSubHeader) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
+                {descriptionSubHeader}
                 {subHeaderContent}
               </div>
             )}
@@ -483,9 +496,9 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, showSubHeader: boolean) => {
   if (hasHeader) {
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+    return theme.spacing.gridSize * theme.components.panel.headerHeight - (showSubHeader ? 8 : 0);
   }
 
   return 0;
