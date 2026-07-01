@@ -510,7 +510,6 @@ receivers:
 		require.NoError(t, err)
 		require.Len(t, gettableConfig.ExtraConfigs, 1)
 	})
-
 }
 
 func TestMultiOrgAlertmanager_PromoteExtraConfiguration(t *testing.T) {
@@ -544,7 +543,7 @@ receivers:
 		require.Empty(t, gettableConfig.ExtraConfigs, "extra config must be removed after promotion")
 
 		// Imported receiver must now be in the main config.
-		receiverNames := make([]string, 0)
+		receiverNames := make([]string, 0, len(gettableConfig.AlertmanagerConfig.Receivers))
 		for _, r := range gettableConfig.AlertmanagerConfig.Receivers {
 			receiverNames = append(receiverNames, r.Name)
 		}
