@@ -184,6 +184,8 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
+	// s.kv is always set when the embedded server runs (the monolith injects a
+	// sqlStore; module mode never starts this server), but guard defensively.
 	if s.kv != nil {
 		s.discovery = newDiscovery(
 			s.log,
@@ -196,8 +198,6 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 				ttl:      s.cfg.DiscoveryTTL,
 			},
 		)
-	} else {
-		s.log.Warn("nats clustering disabled: no KV backend (enable_sqlkv_backend); running single-node")
 	}
 	s.mu.Unlock()
 
