@@ -195,12 +195,15 @@ async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<De
   );
 }
 
-export async function getDeepSearchResults(query: string): Promise<DeepSearchDashboardResult[]> {
+export async function getDeepSearchResults(
+  query: string,
+  abortSignal?: AbortSignal
+): Promise<DeepSearchDashboardResult[]> {
   if (query.trim().length === 0) {
     return [];
   }
 
-  const results = await searchDashboardVector(query, { limit: DEEP_SEARCH_FETCH_LIMIT });
+  const results = await searchDashboardVector(query, { limit: DEEP_SEARCH_FETCH_LIMIT, abortSignal });
   const withFolderTitles = await resolveFolderTitles(results);
   return groupDeepSearchResults(withFolderTitles);
 }
@@ -235,15 +238,18 @@ export function useDeepSearchResults({ searchQuery, show, enabled }: UseDeepSear
       return;
     }
 
-    let cancelled = false;
+    const abortController = new AbortController();
 
     const search = async () => {
       setIsFetchingDeepSearchResults(true);
 
       let results: DeepSearchDashboardResult[] = [];
       try {
-        results = await debouncedDeepSearch(searchQuery);
+        results = await debouncedDeepSearch(searchQuery, abortController.signal);
       } catch (error) {
+        if (abortController.signal.aborted) {
+          return;
+        }
         // The vector backend may be unconfigured (501) or the feature toggle
         // off (404) — callers gate on the toggle via the enabled flag, so
         // degrade to an empty column but log for anyone calling without the gate
@@ -253,7 +259,7 @@ export function useDeepSearchResults({ searchQuery, show, enabled }: UseDeepSear
       // Skip state updates when the effect has been cleaned up, and only keep
       // results issued after the most recently resolved search, so a slow
       // early response can't overwrite a newer one
-      if (!cancelled && timestamp > lastSearchTimestamp.current) {
+      if (!abortController.signal.aborted && timestamp > lastSearchTimestamp.current) {
         setDeepSearchResults(results);
         setIsFetchingDeepSearchResults(false);
         lastSearchTimestamp.current = timestamp;
@@ -262,7 +268,7 @@ export function useDeepSearchResults({ searchQuery, show, enabled }: UseDeepSear
     search();
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, [enabled, show, searchQuery, debouncedDeepSearch]);
 
