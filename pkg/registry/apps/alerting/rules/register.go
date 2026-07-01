@@ -23,6 +23,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
@@ -228,6 +229,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return rulesequence.Authorize(ctx, authz, a)
 			case search.RouteResource:
 				return search.Authorize(ctx, authz, a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
@@ -248,6 +251,10 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	case alertrule.ResourceInfo.GroupVersionResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case rulesequence.ResourceInfo.GroupVersionResource():
+		return nil
+	case config.ResourceInfo.GroupVersionResource():
+		// Config has no legacy backend — returning nil makes the apiserver serve
+		// it directly from unified storage (no dual writer).
 		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
