@@ -50,6 +50,7 @@ export interface DashboardQueryResult {
   url: string; // link to value (unique)
   panel_type: string;
   tags: string[];
+  description?: string;
   location: string; // url that can be split
   ds_uid: string[];
   isDeleted?: boolean;

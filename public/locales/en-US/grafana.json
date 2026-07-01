@@ -14491,6 +14491,9 @@
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
     },
+    "description-tooltip": {
+      "label": "Description"
+    },
     "generate-columns": {
       "score": "Score"
     },
