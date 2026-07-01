@@ -27,6 +27,14 @@ func newInformerFactory(client versioned.Interface, resync time.Duration, subscr
 	return informers.NewSharedInformerFactory(client, resync)
 }
 
+// natsWatch reports whether the informers' watch is served by NATS. When it is,
+// the informer cache is only eventually consistent (round-robin delivery plus a
+// periodic relist), so the controllers reconcile through a client-backed getter
+// instead of the cache-backed one.
+func (c *ControllerConfig) natsWatch() bool {
+	return c.natsSubscriber != nil && c.natsSubscriber.Enabled()
+}
+
 // newNATSSubscriber builds the NATS subscriber from configuration. It connects
 // lazily on first Subscribe and is a no-op transport when NATS is disabled
 // (Enabled() reports false, so newInformerFactory falls back to the apiserver

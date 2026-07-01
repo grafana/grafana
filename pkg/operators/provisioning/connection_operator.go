@@ -48,8 +48,12 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
+	connGetter := controller.NewCachedConnectionGetter(connInformer.Lister())
+	if controllerCfg.natsWatch() {
+		connGetter = controller.NewClientConnectionGetter(provisioningClient.ProvisioningV0alpha1())
+	}
 	connController := controller.NewConnectionController(
-		controller.NewCachedConnectionGetter(connInformer.Lister()),
+		connGetter,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),

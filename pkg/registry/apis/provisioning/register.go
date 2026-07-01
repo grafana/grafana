@@ -162,12 +162,20 @@ type APIBuilder struct {
 // subscriber is present and enabled, the informers keep their LIST-seeded caches
 // but their watch is served by a NATS consumer instead of the apiserver watch.
 func (b *APIBuilder) newInformerFactory(c clientset.Interface, resync time.Duration) informers.SharedInformerFactory {
-	if b.natsSubscriber != nil && b.natsSubscriber.Enabled() {
+	if b.natsWatch() {
 		logging.DefaultLogger.Info("provisioning informers using NATS-backed watch")
 		watchFn := informer.NewConsumer(b.natsSubscriber, resync).Watch
 		return informers.NewSharedInformerFactory(provinformer.WrapClient(c, watchFn), resync)
 	}
 	return informers.NewSharedInformerFactory(c, resync)
+}
+
+// natsWatch reports whether the informers' watch is served by NATS. When it is,
+// the informer cache is only eventually consistent (round-robin delivery plus a
+// periodic relist), so the controllers reconcile through a client-backed getter
+// instead of the cache-backed one.
+func (b *APIBuilder) natsWatch() bool {
+	return b.natsSubscriber != nil && b.natsSubscriber.Enabled()
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -1105,10 +1113,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			cachedRepoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			// With the NATS-backed watch the informer cache is only eventually
+			// consistent, so reconcile through a client-backed getter; otherwise
+			// the informer's cache getter is authoritative.
+			var reconcileRepoGetter controller.RepositoryGetter = controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			if b.natsWatch() {
+				reconcileRepoGetter = controller.NewClientRepositoryGetter(b.GetClient())
+			}
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				cachedRepoGetter,
+				reconcileRepoGetter,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1123,7 +1137,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(cachedRepoGetter),
+				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
@@ -1147,8 +1161,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
+			var connGetter controller.ConnectionGetter = controller.NewCachedConnectionGetter(connInformer.Lister())
+			if b.natsWatch() {
+				connGetter = controller.NewClientConnectionGetter(b.GetClient())
+			}
 			connController := controller.NewConnectionController(
-				controller.NewCachedConnectionGetter(connInformer.Lister()),
+				connGetter,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
