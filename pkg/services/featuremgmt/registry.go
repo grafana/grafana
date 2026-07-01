@@ -3036,6 +3036,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.useDefaultScopesEndpoint",
+			Description:  "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.logLevelInference",
 			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
 			Stage:        FeatureStageDeprecated,
