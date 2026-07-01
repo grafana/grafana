@@ -230,7 +230,7 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", repo.Slug(), "ref", repo.Config().Branch()))
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("provider", repo.Config().Spec.Type, "slug", repo.Slug(), "ref", repo.Config().Branch()))
 
 	// Authenticate the request before parsing anything.
 	verified, err := repo.VerifyRequest(req)

@@ -59,17 +59,6 @@ func TestPullRequestWorker_Process_NotPullRequestRepository(t *testing.T) {
 	repo := repository.NewMockRepository(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	// Configure the mock repository to return a GitHub config
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
-		Spec: provisioning.RepositorySpec{
-			Title:  "test-repo",
-			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-		},
-	})
-
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -94,19 +83,8 @@ func TestPullRequestWorker_Process_NotReaderRepository(t *testing.T) {
 	commenter := NewMockCommenter(t)
 	progress := jobs.NewMockJobProgressRecorder(t)
 
-	// Create a mock that implements PullRequestRepo but not Reader
+	// Create a mock that is not a Reader
 	repo := repository.NewMockConfigRepository(t)
-
-	// Configure the mock to return a GitHub config
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
-		Spec: provisioning.RepositorySpec{
-			Title:  "test-repo",
-			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-		},
-	})
 
 	worker := NewPullRequestWorker(evaluator, commenter, prometheus.NewPedanticRegistry())
 	job := provisioning.Job{
@@ -137,14 +115,6 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			name: "missing pull request options",
 			opts: nil,
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "test-repo",
-					},
-				})
 			},
 			expectedError: "missing spec.pr",
 		},
@@ -154,34 +124,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				PR: 123,
 			},
 			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "test-repo",
-					},
-				})
 			},
 			expectedError: "missing spec.ref",
-		},
-		{
-			name: "missing github configuration",
-			opts: &provisioning.PullRequestJobOptions{
-				PR:  123,
-				Ref: "test-ref",
-			},
-			setupMocks: func(evaluator *MockEvaluator, commenter *MockCommenter, repo *mockPullRequestRepo, progress *jobs.MockJobProgressRecorder) {
-				repo.MockRepository.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
-					Spec: provisioning.RepositorySpec{
-						Title: "test-repo",
-					},
-				})
-			},
-			expectedError: "expecting github configuration",
 		},
 		{
 			name: "failed to list pull request files",
@@ -196,6 +140,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -217,6 +162,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -239,6 +185,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -277,6 +224,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -317,6 +265,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -342,6 +291,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
@@ -368,6 +318,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 					Spec: provisioning.RepositorySpec{
 						Title:  "test-repo",
+						Type:   provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
 					},
 				})
