@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -54,10 +55,18 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	usageStats usagestats.Service, registerer prometheus.Registerer,
 	settingsProvider setting.Provider, licensing licensing.Licensing,
+	cfgProvider configprovider.ConfigProvider,
 ) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewLDAPStrategy(cfg),
+	}
+
+	// PoC: resolve OAuth settings live from MT-Settings ahead of the static-cfg strategy.
+	if cfgProvider != nil {
+		fbStrategies = append([]ssosettings.FallbackStrategy{
+			strategies.NewConfigProviderOAuthStrategy(cfgProvider),
+		}, fbStrategies...)
 	}
 
 	configurableProviders := make(map[string]bool)

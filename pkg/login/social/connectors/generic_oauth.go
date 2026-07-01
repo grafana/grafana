@@ -41,6 +41,7 @@ var _ ssosettings.Reloadable = (*SocialGenericOAuth)(nil)
 
 type SocialGenericOAuth struct {
 	*SocialBase
+	ssoSettings          ssosettings.Service // PoC: live read-through source (MT-Settings via our strategy)
 	allowedOrganizations []string
 	teamsUrl             string
 	emailAttributeName   string
@@ -68,6 +69,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 
 	provider := &SocialGenericOAuth{
 		SocialBase:           newSocialBaseWithCache(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg, cache),
+		ssoSettings:          ssoSettings,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -163,6 +165,60 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 
 	return nil
 }
+
+// --- PoC read-through (REMOVE / flag-gate before commit) ---
+// liveInfo resolves the provider config live from the settings service on each
+// call, instead of the cached snapshot. GetForProvider routes through our
+// ConfigProviderOAuthStrategy -> cfgProvider.Get (namespace baked in, 1s/5s
+// cached), so this is a cheap read, not a network round-trip per call.
+func (s *SocialGenericOAuth) liveInfo(ctx context.Context) (*social.OAuthInfo, error) {
+	ss, err := s.ssoSettings.GetForProvider(ctx, social.GenericOAuthProviderName)
+	if err != nil {
+		return nil, err
+	}
+	info, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GenericOAuthProviderName, ss.Settings)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+// liveConfig builds a fresh oauth2.Config from live settings (no stored snapshot,
+// no lock). Falls back to the bootstrapped snapshot if the live read fails.
+func (s *SocialGenericOAuth) liveConfig(ctx context.Context) (*oauth2.Config, *social.OAuthInfo) {
+	info, err := s.liveInfo(ctx)
+	if err != nil || info == nil {
+		return s.Config, s.GetOAuthInfo()
+	}
+	return createOAuthConfig(info, s.cfg, social.GenericOAuthProviderName), info
+}
+
+func (s *SocialGenericOAuth) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	// AuthCodeURL has no ctx; safe to use Background because cfgProvider bakes in
+	// the namespace and detaches the caller ctx internally.
+	cfg, info := s.liveConfig(context.Background())
+	if info != nil && info.LoginPrompt != "" {
+		opts = append(opts, oauth2.SetAuthURLParam("prompt", info.LoginPrompt))
+	}
+	return cfg.AuthCodeURL(state, opts...)
+}
+
+func (s *SocialGenericOAuth) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	cfg, _ := s.liveConfig(ctx)
+	return cfg.Exchange(ctx, code, opts...)
+}
+
+func (s *SocialGenericOAuth) Client(ctx context.Context, t *oauth2.Token) *http.Client {
+	cfg, _ := s.liveConfig(ctx)
+	return cfg.Client(ctx, t)
+}
+
+func (s *SocialGenericOAuth) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource {
+	cfg, _ := s.liveConfig(ctx)
+	return cfg.TokenSource(ctx, t)
+}
+
+// --- end PoC read-through ---
 
 func (s *SocialGenericOAuth) isTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
