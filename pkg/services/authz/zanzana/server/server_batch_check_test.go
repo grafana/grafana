@@ -357,14 +357,14 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["user-create"].GetAllowed())
 	})
 
-	t.Run("user:21 (team admin) create on their team is allowed via per-object team create", func(t *testing.T) {
+	t.Run("user:21 (team admin) create on their team is denied: team create is group_resource only", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("team-create", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"),
 		}
 		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:21", items))
 		require.NoError(t, err)
 		require.Len(t, res.GetResults(), 1)
-		assert.True(t, res.GetResults()["team-create"].GetAllowed())
+		assert.False(t, res.GetResults()["team-create"].GetAllowed())
 	})
 
 	t.Run("subresource create on a user is allowed via resource_create", func(t *testing.T) {
