@@ -182,7 +182,6 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-
 <!-- prettier-ignore-start -->
 
 | Option | Description |
