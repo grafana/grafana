@@ -406,6 +406,16 @@ type EditorSettings struct {
 
 type PrometheusStyleRule struct {
 	OriginalRuleDefinition string `json:"original_rule_definition,omitempty"`
+	// SourceIdentifier records which external source produced this converted
+	// rule. It is set by the external ruler sync worker to the UID of the
+	// Mimir/Cortex datasource the rule was synced from, and is empty for rules
+	// imported manually via the convert API. It gives the sync worker a precise,
+	// server-side ownership marker (analogous to the Alertmanager sync
+	// Identifier) so it can prune only the rules it owns without touching
+	// manually-imported converted_prometheus rules. It lives in metadata (not a
+	// label/annotation) so it never reaches the alert data plane or the
+	// round-tripped Prometheus definition.
+	SourceIdentifier string `json:"source_identifier,omitempty"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -563,6 +573,17 @@ func (alertRule *AlertRule) ImportedPrometheusRule() bool {
 func (alertRule *AlertRule) HasPrometheusRuleDefinition() bool {
 	_, err := alertRule.PrometheusRuleDefinition()
 	return err == nil
+}
+
+// PrometheusRuleSourceIdentifier returns the external source identifier stamped
+// on this rule by the ruler sync worker (the source datasource UID), or "" if
+// the rule was not produced by external ruler sync (e.g. a manual convert-API
+// import).
+func (alertRule *AlertRule) PrometheusRuleSourceIdentifier() string {
+	if alertRule.Metadata.PrometheusStyleRule != nil {
+		return alertRule.Metadata.PrometheusStyleRule.SourceIdentifier
+	}
+	return ""
 }
 
 func (alertRule *AlertRule) PrometheusRuleDefinition() (string, error) {
