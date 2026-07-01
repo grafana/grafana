@@ -2870,6 +2870,14 @@ Two consumers honor this setting:
 
 Set this when `[server] root_url` points at a cluster-internal address (for example, when Grafana runs behind a private ingress) but provisioning needs an externally-reachable host. This is analogous to `[rendering] callback_url`, which serves the same purpose for the image renderer plugin.
 
+#### `webhook_trusted_proxy_depth`
+
+Number of trusted reverse-proxy hops in front of the webhook endpoint, used to pick the real client IP for per-IP rate limiting. Default is `0`, which ignores client-controlled forwarding headers and rate-limits on the real TCP peer, preventing a forged header from evading the limit. When you set this above `0`, the endpoint is treated as being behind that many trusted proxies: `X-Real-IP` is used when present (proxies such as the Grafana Cloud gateway set it authoritatively and strip client-injected values), otherwise the entry to the left of the rightmost N `X-Forwarded-For` hops is used. Set this to the number of trusted proxies in front of Grafana.
+
+#### `webhook_rate_limit_rps`
+
+Sustained requests per second the webhook endpoint allows per client before returning `429 Too Many Requests`. The instantaneous burst allowance is twice this value. Default is `0`, which disables rate limiting entirely. Set a positive value to enable it; when the endpoint sits behind a proxy, also set `webhook_trusted_proxy_depth` so the limiter keys on the real client instead of collapsing all traffic into a single bucket.
+
 <hr>
 
 ### `[plugin.plugin_id]`
