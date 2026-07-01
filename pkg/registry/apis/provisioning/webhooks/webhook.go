@@ -178,6 +178,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		rsp, err := s.webhook(ctx, r, hooks)
 		if err != nil {
 			span.RecordError(err)
+			logger.Error("failed to process webhook request", "error", err)
 			responder.Error(err)
 			return
 		}
