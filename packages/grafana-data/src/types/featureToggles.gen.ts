@@ -1481,11 +1481,6 @@ export interface FeatureToggles {
   */
   logsTablePanelNG?: boolean;
   /**
-  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-  * @default false
-  */
-  frontendServiceSSOAutoLogin?: boolean;
-  /**
   * Enables the splash screen modal for introducing new Grafana features on first session
   * @default false
   */
