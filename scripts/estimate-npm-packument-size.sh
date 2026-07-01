@@ -7,16 +7,26 @@
 # package.json (more deps) grow faster and hit the cap at fewer versions.
 #
 # Usage: scripts/estimate-npm-packument-size.sh [package ...]
-#   With no arguments, checks the known published @grafana/* packages.
+#   With no arguments, discovers the non-private packages under ./packages.
 set -euo pipefail
 
 pkgs=("$@")
 if [ ${#pkgs[@]} -eq 0 ]; then
-  pkgs=(
-    @grafana/alerting @grafana/api-clients @grafana/data @grafana/e2e-selectors
-    @grafana/flamegraph @grafana/i18n @grafana/o11y-ds-frontend @grafana/openapi
-    @grafana/runtime @grafana/schema @grafana/sql @grafana/ui
+  # Resolve ./packages relative to this script so it works from any cwd.
+  root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  while IFS= read -r name; do
+    pkgs+=("$name")
+  done < <(
+    for manifest in "$root"/packages/*/package.json; do
+      [ -f "$manifest" ] || continue
+      # Emit the name only for packages that are not marked private.
+      jq -r 'select((.private // false) != true) | .name // empty' "$manifest"
+    done | sort
   )
+  if [ ${#pkgs[@]} -eq 0 ]; then
+    echo "No non-private packages found under $root/packages" >&2
+    exit 1
+  fi
 fi
 
 human() {
