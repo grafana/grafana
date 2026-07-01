@@ -204,11 +204,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    matchCount: css({
-      flexShrink: 0,
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-    }),
     folder: css({
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
@@ -222,12 +217,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    }),
-    score: css({
-      display: 'inline-block',
-      marginRight: theme.spacing(1),
-      fontFamily: theme.typography.fontFamilyMonospace,
-      color: theme.colors.text.disabled,
     }),
     moreMatches: css({
       fontSize: theme.typography.bodySmall.fontSize,
