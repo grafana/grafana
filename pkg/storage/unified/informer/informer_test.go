@@ -151,9 +151,9 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObject, list)
 	require.NoError(t, n.AddEventHandler(handler))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go n.Run(ctx)
-	t.Cleanup(cancel)
+	stopCh := make(chan struct{})
+	n.Start(stopCh)
+	t.Cleanup(func() { close(stopCh) })
 
 	if newObject != nil {
 		sub.waitForSubscription(t, subject())

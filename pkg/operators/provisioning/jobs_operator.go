@@ -59,7 +59,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add history job event handler: %w", err)
 			}
-			startHistoryInformers = func() { go historyNatsInformer.Run(ctx) }
+			startHistoryInformers = func() { historyNatsInformer.Start(ctx.Done()) }
 		} else {
 			// History jobs informer and controller (separate factory with resync == expiration)
 			historyInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.historyExpiration)
@@ -114,7 +114,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 				return fmt.Errorf("failed to add job event handler: %w", err)
 			}
 			jobHasSynced = jobNatsInformer.HasSynced
-			startJobInformers = func() { go jobNatsInformer.Run(ctx) }
+			startJobInformers = func() { jobNatsInformer.Start(ctx.Done()) }
 		} else {
 			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add job event handler: %w", err)

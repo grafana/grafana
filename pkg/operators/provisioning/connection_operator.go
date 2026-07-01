@@ -80,7 +80,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		if err := natsInformer.AddEventHandler(connController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add connection event handler: %w", err)
 		}
-		go natsInformer.Run(ctx)
+		natsInformer.Start(ctx.Done())
 		hasSynced = natsInformer.HasSynced
 	} else {
 		reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())

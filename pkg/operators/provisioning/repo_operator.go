@@ -135,7 +135,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		if err := repoNatsInformer.AddEventHandler(controller.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add repository event handler: %w", err)
 		}
-		go repoNatsInformer.Run(ctx)
+		repoNatsInformer.Start(ctx.Done())
 		hasSynced = repoNatsInformer.HasSynced
 	} else {
 		reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())

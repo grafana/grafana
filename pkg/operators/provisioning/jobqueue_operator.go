@@ -56,7 +56,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			return fmt.Errorf("failed to add job event handler: %w", err)
 		}
 		jobHasSynced = jobNatsInformer.HasSynced
-		startJobInformers = func() { go jobNatsInformer.Run(ctx) }
+		startJobInformers = func() { jobNatsInformer.Start(ctx.Done()) }
 	} else {
 		jobInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 		jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()

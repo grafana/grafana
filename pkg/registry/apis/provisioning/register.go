@@ -1062,7 +1062,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
 					return fmt.Errorf("add job controller event handler: %w", err)
 				}
-				go jobNatsInformer.Run(postStartHookCtx.Context)
+				jobNatsInformer.Start(postStartHookCtx.Done())
 			} else {
 				if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
 					return fmt.Errorf("add job controller event handler: %w", err)
@@ -1162,7 +1162,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if err := repoNatsInformer.AddEventHandler(repoController.EventHandler()); err != nil {
 					return fmt.Errorf("add repository controller event handler: %w", err)
 				}
-				go repoNatsInformer.Run(postStartHookCtx.Context)
+				repoNatsInformer.Start(postStartHookCtx.Done())
 				repoHasSynced = repoNatsInformer.HasSynced
 			} else {
 				repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
@@ -1207,7 +1207,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if err := connNatsInformer.AddEventHandler(connController.EventHandler()); err != nil {
 					return fmt.Errorf("add connection controller event handler: %w", err)
 				}
-				go connNatsInformer.Run(postStartHookCtx.Context)
+				connNatsInformer.Start(postStartHookCtx.Done())
 				connHasSynced = connNatsInformer.HasSynced
 			} else {
 				connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
@@ -1240,7 +1240,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					if err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 						return fmt.Errorf("add history job controller event handler: %w", err)
 					}
-					go historyNatsInformer.Run(postStartHookCtx.Context)
+					historyNatsInformer.Start(postStartHookCtx.Done())
 				} else {
 					historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 					historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()

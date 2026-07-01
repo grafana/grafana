@@ -99,9 +99,9 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 
 	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute)
 	require.NoError(t, inf.AddEventHandler(rec))
-	ctx, cancel := context.WithCancel(context.Background())
-	go inf.Run(ctx)
-	t.Cleanup(cancel)
+	stopCh := make(chan struct{})
+	inf.Start(stopCh)
+	t.Cleanup(func() { close(stopCh) })
 
 	subject := resourcewatch.Subject(gvr, testNamespace)
 	require.Eventually(t, func() bool { return sub.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
@@ -126,9 +126,9 @@ func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
 
 	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute)
 	require.NoError(t, inf.AddEventHandler(&typeRecorder{}))
-	ctx, cancel := context.WithCancel(context.Background())
-	go inf.Run(ctx)
-	t.Cleanup(cancel)
+	stopCh := make(chan struct{})
+	inf.Start(stopCh)
+	t.Cleanup(func() { close(stopCh) })
 
 	require.Eventually(t, inf.HasSynced, 5*time.Second, 5*time.Millisecond)
 	assert.False(t, sub.subscribed(resourcewatch.Subject(gvr, testNamespace)),

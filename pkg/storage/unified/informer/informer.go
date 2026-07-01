@@ -172,12 +172,27 @@ func (n *Informer) Delete(_ context.Context, namespace, name string) {
 	delete(n.store, key)
 }
 
-// Run subscribes to the resource's NATS subject (unless live notifications are
-// disabled) and delivers events to the registered handlers until ctx is
-// cancelled. It performs the initial list (marking HasSynced), then serves live
-// notifications and a periodic re-list. It blocks until ctx is cancelled, so
-// call it in its own goroutine after registering handlers.
-func (n *Informer) Run(ctx context.Context) {
+// Start begins delivering events to the registered handlers and returns
+// immediately, mirroring SharedInformerFactory.Start so the two are wired the
+// same way. It subscribes to the resource's NATS subject (unless live
+// notifications are disabled), performs the initial list (marking HasSynced),
+// then serves live notifications and a periodic re-list until stopCh is closed.
+// Register handlers before calling Start.
+func (n *Informer) Start(stopCh <-chan struct{}) {
+	go n.run(stopCh)
+}
+
+func (n *Informer) run(stopCh <-chan struct{}) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		select {
+		case <-stopCh:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	if n.newObject != nil {
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
 		opts := []nats.SubscribeOption{}
