@@ -24,6 +24,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import {
@@ -46,7 +47,7 @@ import {
   isDashboardLayoutGroup,
   type NestedGroupsTarget,
 } from '../types/DashboardLayoutGroup';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -200,6 +201,20 @@ export class TabsLayoutManager
     }
 
     return panels;
+  }
+
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const edit = buildGroupEdit(items, target);
+
+    if (!edit) {
+      return;
+    }
+
+    dashboardEditActions.edit({ ...edit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
