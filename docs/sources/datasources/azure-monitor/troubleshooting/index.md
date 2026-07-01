@@ -103,7 +103,7 @@ These errors occur when credentials configured in the data source or in Azure ar
 
 1. Verify the Directory (tenant) ID in Azure Portal under **Microsoft Entra ID** > **Overview**.
 1. Ensure you're using the correct Azure cloud setting (Azure, Azure Government, or Azure China).
-1. Check that the tenant ID is a valid GUID format.
+1. Check that the tenant ID is written using a valid GUID format.
 
 ### Client certificate authentication not working
 
