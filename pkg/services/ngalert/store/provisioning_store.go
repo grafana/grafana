@@ -107,9 +107,31 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org
 	})
 }
 
+// managerForProvenanceWrite decides which ManagerProperties to persist for a
+// legacy (Provenance-only) write.
+//
+// The legacy provisioning API cannot express a specific manager: {terraform, id}
+// collapses to ProvenanceAPI on read. If we blindly derived the manager columns
+// from the incoming coarse provenance we would clobber a stored specific manager
+// (dropping its Identity) on every legacy write. The stored manager_kind is the
+// authoritative, higher-fidelity value, so when the incoming provenance is just
+// the coarse view of what is already stored we preserve the stored manager. Only
+// a genuine change of provenance re-derives a fresh classic manager.
+func managerForProvenanceWrite(stored utils.ManagerProperties, p models.Provenance) utils.ManagerProperties {
+	if models.ProvenanceMatchesManager(p, stored) {
+		return stored
+	}
+	return models.ProvenanceToManagerProperties(p)
+}
+
 func (st DBstore) setProvenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance) error {
-	// Always derive manager_kind from provenance so the two columns stay in sync.
-	mp := models.ProvenanceToManagerProperties(p)
+	// Read any existing manager so a legacy write does not clobber a stored
+	// specific manager (e.g. terraform with an identity) with a coarse classic one.
+	stored, err := st.readStoredManager(sess, recordKey, recordType, org)
+	if err != nil {
+		return err
+	}
+	mp := managerForProvenanceWrite(stored, p)
 
 	upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 		provenanceRecord{}.TableName(),
@@ -125,8 +147,7 @@ func (st DBstore) setProvenanceUpsert(sess *db.Session, recordKey, recordType st
 		mp.Identity,
 	}
 
-	_, err := sess.SQL(upsertSQL, params...).Query()
-	if err != nil {
+	if _, err := sess.SQL(upsertSQL, params...).Query(); err != nil {
 		return fmt.Errorf("failed to store provisioning status: %w", err)
 	}
 	return nil
@@ -137,17 +158,19 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 	// If it does, we just update, otherwise we upsert the record.
 	// This is done to avoid deadlocks that can occur in MySQL when multiple transactions try to
 	// insert records (even different) because of the gap and insert intention locks.
+	var record provenanceRecord
 	exists, err := sess.Table(provenanceRecord{}).
 		Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
 		ForUpdate().
-		Exist()
+		Get(&record)
 	if err != nil {
 		return fmt.Errorf("failed to check if provenance record exists: %w", err)
 	}
 
 	if exists {
-		// Always derive manager_kind from provenance so the two columns stay in sync.
-		mp := models.ProvenanceToManagerProperties(p)
+		// Preserve a stored specific manager rather than downgrading it to the
+		// coarse classic manager derived from the incoming legacy provenance.
+		mp := managerForProvenanceWrite(managerFromRecord(record), p)
 		_, err = sess.Table(provenanceRecord{}).
 			Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
 			Update(map[string]interface{}{
@@ -163,6 +186,36 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 
 	// Still upsert in case it was created while we were checking
 	return st.setProvenanceUpsert(sess, recordKey, recordType, org, p)
+}
+
+// readStoredManager returns the ManagerProperties currently persisted for a
+// record, or the zero (unknown) value if no row exists.
+func (st DBstore) readStoredManager(sess *db.Session, recordKey, recordType string, org int64) (utils.ManagerProperties, error) {
+	var record provenanceRecord
+	found, err := sess.Table(provenanceRecord{}).
+		Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
+		Desc("id").
+		Get(&record)
+	if err != nil {
+		return utils.ManagerProperties{}, fmt.Errorf("failed to read stored manager properties: %w", err)
+	}
+	if !found {
+		return utils.ManagerProperties{}, nil
+	}
+	return managerFromRecord(record), nil
+}
+
+// managerFromRecord reconstructs ManagerProperties from a stored row, falling
+// back to deriving them from the provenance column for legacy rows that predate
+// the manager_kind/manager_identity columns.
+func managerFromRecord(record provenanceRecord) utils.ManagerProperties {
+	if record.ManagerKind != "" {
+		return utils.ManagerProperties{
+			Kind:     utils.ParseManagerKindString(record.ManagerKind),
+			Identity: record.ManagerIdentity,
+		}
+	}
+	return models.ProvenanceToManagerProperties(record.Provenance)
 }
 
 // DeleteProvenance deletes the provenance record from the table
@@ -199,11 +252,12 @@ func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionab
 		return utils.ManagerProperties{}, nil
 	}
 	if record.ManagerKind != "" {
-		mp := utils.ManagerProperties{
-			Kind:     utils.ParseManagerKindString(record.ManagerKind),
-			Identity: record.ManagerIdentity,
-		}
+		mp := managerFromRecord(record)
 		// Consistency check: manager_kind and provenance columns should agree.
+		// A specific manager (e.g. terraform) legitimately maps to a coarse
+		// provenance (api), so we compare against that coarse form. A mismatch
+		// here means the two columns have drifted, which points to a write path
+		// that updated one column without the other; manager_kind wins.
 		expectedProv := models.ManagerPropertiesToProvenance(mp)
 		if record.Provenance != "" && record.Provenance != expectedProv {
 			st.Logger.Warn("manager_kind and provenance columns disagree; using manager_kind as authoritative",
@@ -217,7 +271,7 @@ func (st DBstore) GetManagerProperties(ctx context.Context, o models.Provisionab
 		return mp, nil
 	}
 	// Legacy row: derive from provenance column.
-	return models.ProvenanceToManagerProperties(record.Provenance), nil
+	return managerFromRecord(record), nil
 }
 
 // GetManagerPropertiesByUIDs returns ManagerProperties for specific UIDs of a resource type.

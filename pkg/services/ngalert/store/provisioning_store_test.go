@@ -266,14 +266,37 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				require.True(t, mp.Kind.IsClassic())
 			})
 
-			t.Run("SetManagerProperties then SetProvenance overwrites both columns consistently", func(t *testing.T) {
+			t.Run("SetProvenance preserves a stored specific manager when provenance is unchanged", func(t *testing.T) {
+				// Terraform collapses to ProvenanceAPI on the legacy API. A legacy
+				// write carrying that same coarse provenance is not a request to
+				// downgrade the manager to classic-api-provisioning; it is the only
+				// value the legacy API can express. The stored terraform manager
+				// (and its identity) must survive the write.
+				const orgID = 1
+				rule := models.AlertRule{UID: "mp-preserve", OrgID: orgID}
+
+				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
+				require.NoError(t, err)
+
+				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				mp, err := store.GetManagerProperties(context.Background(), &rule, orgID)
+				require.NoError(t, err)
+				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, mp,
+					"stored terraform manager and identity must not be clobbered by a legacy api provenance write")
+			})
+
+			t.Run("SetProvenance re-derives the manager on a genuine provenance change", func(t *testing.T) {
+				// Moving a terraform-managed rule (coarse: api) to file provenance
+				// is a real change of provenance, not just the coarse view of the
+				// stored manager, so the manager is re-derived and the identity dropped.
 				const orgID = 1
 				rule := models.AlertRule{UID: "mp-overwrite", OrgID: orgID}
 
 				err := store.SetManagerProperties(context.Background(), &rule, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"})
 				require.NoError(t, err)
 
-				// A subsequent legacy SetProvenance should re-derive manager_kind and clear the identity.
 				err = store.SetProvenance(context.Background(), &rule, orgID, models.ProvenanceFile)
 				require.NoError(t, err)
 
