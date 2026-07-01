@@ -7,9 +7,9 @@ import (
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
-// externalSyncOrigin aliases the codegen-emitted enum for the origin field on
-// Config.status.externalRulerSync. The generated name is unwieldy in
-// expressions; the alias keeps call sites readable.
+// configStatus and externalSyncOrigin alias the unwieldy codegen-emitted type
+// names for the rules Config status, keeping call sites readable.
+type configStatus = alertingrulesv0alpha1.ConfigStatus
 type externalSyncOrigin = alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOrigin
 
 const (
