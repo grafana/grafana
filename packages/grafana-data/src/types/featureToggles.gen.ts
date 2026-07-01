@@ -454,11 +454,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
-  /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
   * @default true
   */
@@ -1220,11 +1215,6 @@ export interface FeatureToggles {
   * @default true
   */
   vizLegendFacetedFilter?: boolean;
-  /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
-  */
-  heatmapRowsAxisOptions?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false

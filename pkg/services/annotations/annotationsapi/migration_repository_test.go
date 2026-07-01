@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -80,6 +82,29 @@ func (f *fakeProxy) Update(context.Context, int64, int64, *annotations.Item) err
 func (f *fakeProxy) Delete(context.Context, int64, int64) error {
 	f.deleteCalls++
 	return f.deleteErr
+}
+
+type fakeReader struct {
+	items []*annotations.ItemDTO
+}
+
+var _ annotationsimpl.ReadStore = (*fakeReader)(nil)
+
+func (f *fakeReader) Type() string { return "fake" }
+func (f *fakeReader) Get(context.Context, annotations.ItemQuery, *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	return f.items, nil
+}
+func (f *fakeReader) GetTags(context.Context, annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	return annotations.FindTagsResult{}, nil
+}
+
+type fakeAuthorizer struct{}
+
+var _ accesscontrol.Authorizer = (*fakeAuthorizer)(nil)
+
+func (fakeAuthorizer) Authorize(context.Context, annotations.ItemQuery) (*accesscontrol.AccessResources, error) {
+	// Empty dashboards stops RepositoryImpl.Find after one pass.
+	return &accesscontrol.AccessResources{Dashboards: map[string]int64{}}, nil
 }
 
 func newTestRepo(t *testing.T, phase string, legacy *fakeLegacy, proxy *fakeProxy, userSvc user.Service) *migrationRepository {
@@ -197,6 +222,33 @@ func TestMigrationRepository_Find(t *testing.T) {
 		assert.Equal(t, []*annotations.ItemDTO{item(2, 20), item(1, 10)}, got)
 		assert.Len(t, proxy.listCalls, 1)
 		assert.Len(t, legacy.findCalls, 1)
+	})
+
+	t.Run("proxy-writes merges new and legacy, respecting the caller's limit", func(t *testing.T) {
+		legacyItems := []*annotations.ItemDTO{item(2, 20), item(3, 30)}
+		legacy := annotationsimpl.NewRepositoryImpl(
+			&fakeAuthorizer{},
+			nil,
+			&fakeReader{items: legacyItems},
+			nil,
+		)
+
+		proxy := &fakeProxy{listResult: []*annotations.ItemDTO{item(1, 10)}}
+		repo := &migrationRepository{
+			legacy:  legacy,
+			proxy:   proxy,
+			cfg:     &setting.Cfg{AnnotationAppPlatform: setting.AnnotationAppPlatformSettings{APIMigrationPhase: "proxy-writes"}},
+			userSvc: usertest.NewUserServiceFake(),
+			logger:  log.New("test"),
+		}
+
+		query := &annotations.ItemQuery{Limit: 3}
+		got, err := repo.Find(context.Background(), query)
+		require.NoError(t, err)
+
+		// New + legacy yields 3 candidates; the caller's limit of 3 must win the truncation.
+		require.Len(t, got, 3, "merge must respect the caller's limit, not a value mutated by legacy")
+		assert.Equal(t, int64(3), query.Limit, "the caller's query limit must be untouched")
 	})
 
 	t.Run("proxy-writes falls back to legacy when the new store errors", func(t *testing.T) {
