@@ -2056,13 +2056,16 @@
     {
       "metadata": {
         "name": "enableScopesInMetricsExplore",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-11-06T13:11:33Z"
+        "resourceVersion": "1782915825637",
+        "creationTimestamp": "2024-11-06T13:11:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 14:23:45.637495 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the scopes usage in Metrics Explore",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4956,13 +4959,16 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T15:41:19Z"
+        "resourceVersion": "1782915825637",
+        "creationTimestamp": "2024-03-05T15:41:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 14:23:45.637495 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the use of scope filters in Grafana",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
         "expression": "false"
       }
