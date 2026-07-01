@@ -382,7 +382,7 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 		logger.Info("handle repository create")
 		patchOperations, err := webhookOnCreate(ctx, webhookRepo)
 		if err != nil {
-			return nil, fmt.Errorf("error running OnCreate: %w", err)
+			return nil, fmt.Errorf("error running webhookOnCreate: %w", err)
 		}
 		return patchOperations, nil
 	}
@@ -390,7 +390,7 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
 	patchOperations, err := webhookOnUpdate(ctx, webhookRepo)
 	if err != nil {
-		return nil, fmt.Errorf("error running OnUpdate: %w", err)
+		return nil, fmt.Errorf("error running webhookOnUpdate: %w", err)
 	}
 
 	return patchOperations, nil
