@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -56,6 +57,11 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
+	// Publisher announces committed writes on the NATS bus. It is wired into the
+	// in-process storage backend so a monolith run (storage_type=unified) emits
+	// the same resource-change notifications as the storage-server module. Nil-safe
+	// and gated on Enabled(): a disabled bus simply publishes nothing.
+	Publisher nats.Publisher
 }
 
 type clientMetrics struct {
@@ -79,7 +85,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -112,6 +118,7 @@ func newClient(opts options.StorageOptions,
 	kvStore kv.KV,
 	eDB sqldb.DBProvider,
 	gcGate *resource.GCGate,
+	eventPublisher nats.Publisher,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -169,7 +176,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate)
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, sql.WithEventPublisher(eventPublisher))
 		if err != nil {
 			return nil, err
 		}
