@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type FC } from 'react';
 
 import {
   applyFieldOverrides,
@@ -16,8 +17,19 @@ import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { type PanelContext, PanelContextProvider } from '../../../PanelChrome';
 import { TableCellDisplayMode } from '../../types';
+import { LegacyTableNG } from '../legacy/LegacyTableNG';
+import { type TableNGProps } from '../types';
 
-import { RefactoredTableNG as TableNG } from './RefactoredTableNG';
+import { RefactoredTableNG } from './RefactoredTableNG';
+
+// Both the legacy monolith and the refactored flat/nested split expose the same
+// TableNGProps contract, so we run the full behavioral suite against each. This keeps
+// the legacy path (still the default until the OpenFeature flag flips) covered and
+// asserts parity between the two implementations.
+const IMPLEMENTATIONS: Array<[string, FC<TableNGProps>]> = [
+  ['LegacyTableNG', LegacyTableNG],
+  ['RefactoredTableNG', RefactoredTableNG],
+];
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -250,7 +262,7 @@ const createTimeDataFrame = (): DataFrame =>
     })
   );
 
-describe('TableNG', () => {
+describe.each(IMPLEMENTATIONS)('TableNG (%s)', (_impl, TableNG) => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
