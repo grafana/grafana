@@ -55,6 +55,7 @@ declare module "@openfeature/core" {
     | "assistant.frontend.tools.dashboardTemplates"
     | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
+    | "alerting.syncExternalRuler"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
     | "grafana.logLevelInference"
