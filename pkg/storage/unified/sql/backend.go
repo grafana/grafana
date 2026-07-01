@@ -97,6 +97,15 @@ func tmpDir(dataPath string) string {
 	return filepath.Join(dataPath, "tmp")
 }
 
+// StorageBackendOption configures optional behavior of the KV storage backend.
+type StorageBackendOption func(*resource.KVBackendOptions)
+
+// WithEventPublisher makes the backend announce committed writes on an external
+// message bus (NATS) via the given publisher. Applies only to the KV backend.
+func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -109,7 +118,7 @@ func NewStorageBackend(
 	disableStorageServices bool,
 	kvStore kv.KV,
 	gcGate *resource.GCGate,
-	eventPublisher resource.EventPublisher,
+	opts ...StorageBackendOption,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
@@ -199,7 +208,10 @@ func NewStorageBackend(
 		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-		EventPublisher:          eventPublisher,
+	}
+
+	for _, opt := range opts {
+		opt(&kvBackendOpts)
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
