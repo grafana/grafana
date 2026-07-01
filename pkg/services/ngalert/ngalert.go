@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -178,6 +179,7 @@ type AlertNG struct {
 	// Alerting notification services
 	MultiOrgAlertmanager     *notifier.MultiOrgAlertmanager
 	AlertsRouter             *sender.AlertsRouter
+	externalRulerSyncer      *rulesync.ExternalRulerSyncer
 	accesscontrol            accesscontrol.AccessControl
 	AccesscontrolService     accesscontrol.Service
 	ResourcePermissions      accesscontrol.ReceiverPermissionsService
@@ -589,6 +591,23 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol))
 
+	// External Mimir/Cortex ruler sync worker. Reuses the same datasource request
+	// validator as the user-driven proxy (see dsRequestValidator above) and is
+	// gated at runtime by the alerting.syncExternalRuler feature flag.
+	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
+		&ng.Cfg.UnifiedAlerting,
+		log.New("ngalert.rulesync"),
+		rulesync.NewMetrics(ng.Metrics.Registerer),
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
+		alertRuleService,
+		ng.store,
+		ng.store,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
+	)
+
 	ng.Api = &api.API{
 		Cfg:                   ng.Cfg,
 		DatasourceCache:       ng.DataSourceCache,
@@ -772,6 +791,11 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	children.Go(func() error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
+	if ng.externalRulerSyncer != nil {
+		children.Go(func() error {
+			return ng.externalRulerSyncer.Run(subCtx)
+		})
+	}
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		children.Go(func() error {
