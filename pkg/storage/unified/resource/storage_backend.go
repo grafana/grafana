@@ -82,6 +82,7 @@ type kvStorageBackend struct {
 	eventStore              *eventStore
 	notifier                notifier
 	eventPublisher          EventPublisher
+	natsShadow              *natsShadow
 	log                     log.Logger
 	disablePruner           bool
 	dashboardVersionsToKeep int
@@ -177,6 +178,16 @@ type KVBackendOptions struct {
 	// EventPublisher, when set, is used to announce committed writes on an
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
+
+	// EventSubscriber, when set together with EnableNatsNotifierShadow, feeds a
+	// shadow NATS notifier that runs alongside the primary notifier for testing.
+	// Optional; nil disables the shadow.
+	EventSubscriber EventSubscriber
+	// EnableNatsNotifierShadow starts the shadow NATS notifier. It observes the
+	// external change stream and records comparison metrics only; it never feeds
+	// the watch pipeline, so it does not change watch behavior. Requires
+	// EventSubscriber to be set and enabled.
+	EnableNatsNotifierShadow bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -323,6 +334,15 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Start the cleanup background job.
 	go backend.runCleanups(ctx)
+
+	// Optionally start the shadow NATS notifier. It only records comparison
+	// metrics and never feeds the watch pipeline, so it is safe to run beside
+	// the primary notifier for testing.
+	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.New("notifier", "natsShadow"))
+		backend.natsShadow.start(ctx)
+		logger.Info("nats notifier shadow enabled")
+	}
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 

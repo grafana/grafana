@@ -39,6 +39,11 @@ type NATSSettings struct {
 	DiscoveryInterval time.Duration
 	DiscoveryTTL      time.Duration
 
+	// NotifierShadow runs a NATS-backed notifier alongside the storage backend's
+	// primary notifier for testing. It records comparison metrics only and never
+	// feeds the watch pipeline, so it does not change watch behavior.
+	NotifierShadow bool
+
 	TLS  NATSTLSSettings
 	Auth NATSAuthSettings
 }
@@ -84,6 +89,7 @@ func readNATSSettings(cfg *Cfg) error {
 
 		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
 		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
+		NotifierShadow:    section.Key("notifier_shadow").MustBool(false),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),

@@ -157,6 +157,7 @@ type ModuleServer struct {
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
 	natsPublisher    nats.Publisher
+	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
 	embedder         *embedder.Embedder
 	searchClient     resourcepb.ResourceIndexClient
@@ -265,9 +266,27 @@ func (s *ModuleServer) Run() error {
 		// The publisher connects lazily on first publish, so no server is started
 		// here; in external mode the embedded server is inert. Returning it as the
 		// module service drains the connection on shutdown.
-		publisher := nats.ProvidePublisher(nats.ProvideNATSConfig(s.cfg, natsServer), s.registerer)
+		natsCfg := nats.ProvideNATSConfig(s.cfg, natsServer)
+		publisher := nats.ProvidePublisher(natsCfg, s.registerer)
 		s.natsPublisher = publisher
-		return publisher, nil
+
+		// The notifier shadow (testing) also needs a subscriber. Run both under a
+		// manager so both connections drain on shutdown. When the shadow is off,
+		// behavior is unchanged: only the publisher runs, as before.
+		if !s.cfg.NATS.NotifierShadow {
+			return publisher, nil
+		}
+		subscriber := nats.ProvideSubscriber(natsCfg, s.registerer)
+		s.natsSubscriber = subscriber
+		group, err := services.NewManager(publisher, subscriber)
+		if err != nil {
+			return nil, err
+		}
+		return services.NewBasicService(
+			func(ctx context.Context) error { return services.StartManagerAndAwaitHealthy(ctx, group) },
+			func(ctx context.Context) error { <-ctx.Done(); return nil },
+			func(_ error) error { return services.StopManagerAndAwaitStopped(context.Background(), group) },
+		).WithName(modules.NATS), nil
 	})
 
 	m.RegisterInvisibleModule(modules.UnifiedBackend, func() (services.Service, error) {
@@ -282,7 +301,11 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, sql.WithEventPublisher(s.natsPublisher))
+			opts := []sql.StorageBackendOption{sql.WithEventPublisher(s.natsPublisher)}
+			if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
+				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
+			}
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
 				return nil, err
 			}

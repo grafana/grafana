@@ -106,6 +106,18 @@ func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
 }
 
+// WithNatsNotifierShadow runs a NATS-backed notifier in shadow mode alongside
+// the primary (polling/channel) notifier for testing: it consumes the external
+// NATS change stream and records comparison metrics without feeding the watch
+// pipeline, so it never changes what watch clients observe. Applies only to the
+// KV backend.
+func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		o.EventSubscriber = s
+		o.EnableNatsNotifierShadow = true
+	}
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
