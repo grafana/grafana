@@ -900,15 +900,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useMultipleScopeNodesEndpoint",
-			Description:  "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true",
-			Generate:     Generate{LegacyFrontend: true},
-			HideFromDocs: true,
-		},
-		{
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,
