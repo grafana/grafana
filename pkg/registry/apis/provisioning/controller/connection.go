@@ -204,7 +204,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the ConnectionGetter's concern, not the controller's.
-	conn, err := cc.conns.Get(namespace, name)
+	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
 		return errors.New("connection not found")

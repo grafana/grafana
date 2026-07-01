@@ -152,17 +152,13 @@ type syncedChecker struct{ informer *Informer }
 func (c syncedChecker) Name() string          { return "nats-informer:" + c.informer.gvr.String() }
 func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 
-// Start begins delivering events to the registered handlers and returns
-// immediately, mirroring SharedInformerFactory.Start so the two are wired the
-// same way. It subscribes to the resource's NATS subject (unless live
-// notifications are disabled), performs the initial list (marking HasSynced),
-// then serves live notifications and a periodic re-list until stopCh is closed.
-// Register handlers before calling Start.
-func (n *Informer) Start(stopCh <-chan struct{}) {
-	go n.run(stopCh)
-}
-
-func (n *Informer) run(stopCh <-chan struct{}) {
+// Run delivers events to the registered handlers until stopCh is closed,
+// mirroring cache.SharedIndexInformer.Run: it blocks, so start it with
+// `go informer.Run(stopCh)`. It subscribes to the resource's NATS subject
+// (unless live notifications are disabled), performs the initial list (marking
+// HasSynced), then serves live notifications and a periodic re-list. Register
+// handlers before calling Run.
+func (n *Informer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {

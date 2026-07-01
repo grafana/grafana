@@ -81,7 +81,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		if err != nil {
 			return fmt.Errorf("failed to add connection event handler: %w", err)
 		}
-		natsInformer.Start(ctx.Done())
+		go natsInformer.Run(ctx.Done())
 		hasSynced = reg.HasSynced
 	} else {
 		reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
@@ -93,7 +93,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
-		return fmt.Errorf("connection controller event source sync failed")
+		return fmt.Errorf("connection controller informer cache sync failed")
 	}
 
 	connController.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

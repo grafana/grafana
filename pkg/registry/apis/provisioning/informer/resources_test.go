@@ -101,7 +101,7 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
-	inf.Start(stopCh)
+	go inf.Run(stopCh)
 	t.Cleanup(func() { close(stopCh) })
 
 	subject := resourcewatch.Subject(gvr, testNamespace)
@@ -129,7 +129,7 @@ func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
 	_, err := inf.AddEventHandler(&typeRecorder{})
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
-	inf.Start(stopCh)
+	go inf.Run(stopCh)
 	t.Cleanup(func() { close(stopCh) })
 
 	require.Eventually(t, inf.HasSynced, 5*time.Second, 5*time.Millisecond)

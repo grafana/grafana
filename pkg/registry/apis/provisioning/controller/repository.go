@@ -578,7 +578,7 @@ func (rc *RepositoryController) process(key string) error {
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the RepositoryGetter's concern, not the controller's.
-	obj, err := rc.repos.Get(namespace, name)
+	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
 		return errors.New("repository not found")

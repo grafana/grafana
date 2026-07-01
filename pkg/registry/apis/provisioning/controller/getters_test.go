@@ -60,11 +60,11 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	store := newFakeStore()
 	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
-	got, err := g.Get("ns", "fresh")
+	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
 	assert.Equal(t, "fresh", got.Name)
 
-	list, err := g.List("ns")
+	list, err := g.List(context.Background(), "ns")
 	require.NoError(t, err)
 	require.Len(t, list, 1)
 	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
@@ -77,11 +77,11 @@ func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	store := newFakeStore(repo("ns", "stale"))
 	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
-	_, err := g.Get("ns", "stale")
+	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
 	assert.Equal(t, []string{"ns/stale"}, store.deleted)
 
-	list, err := g.List("ns")
+	list, err := g.List(context.Background(), "ns")
 	require.NoError(t, err)
 	assert.Empty(t, list, "the vanished object must be removed from the store")
 }
@@ -91,7 +91,7 @@ func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) 
 	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
 	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
 
-	list, err := g.List("ns-a")
+	list, err := g.List(context.Background(), "ns-a")
 	require.NoError(t, err)
 	assert.Len(t, list, 2)
 }

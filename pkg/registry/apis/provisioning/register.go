@@ -1062,7 +1062,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if _, err := jobNatsInformer.AddEventHandler(jobController.EventHandler()); err != nil {
 					return fmt.Errorf("add job controller event handler: %w", err)
 				}
-				jobNatsInformer.Start(postStartHookCtx.Done())
+				go jobNatsInformer.Run(postStartHookCtx.Done())
 			} else {
 				if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
 					return fmt.Errorf("add job controller event handler: %w", err)
@@ -1166,7 +1166,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if err != nil {
 					return fmt.Errorf("add repository controller event handler: %w", err)
 				}
-				repoNatsInformer.Start(postStartHookCtx.Done())
+				go repoNatsInformer.Run(postStartHookCtx.Done())
 				repoHasSynced = repoReg.HasSynced
 			} else {
 				repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
@@ -1212,7 +1212,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				if err != nil {
 					return fmt.Errorf("add connection controller event handler: %w", err)
 				}
-				connNatsInformer.Start(postStartHookCtx.Done())
+				go connNatsInformer.Run(postStartHookCtx.Done())
 				connHasSynced = connReg.HasSynced
 			} else {
 				connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
@@ -1245,7 +1245,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					if _, err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 						return fmt.Errorf("add history job controller event handler: %w", err)
 					}
-					historyNatsInformer.Start(postStartHookCtx.Done())
+					go historyNatsInformer.Run(postStartHookCtx.Done())
 				} else {
 					historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
 					historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()

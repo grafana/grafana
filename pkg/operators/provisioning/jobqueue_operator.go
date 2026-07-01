@@ -41,31 +41,20 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications
+	// Jobs informer and controller for insert notifications. Under the NATS watch
+	// the source is a NATS-backed informer; otherwise an apiserver-backed one. Both
+	// satisfy DeltaSource, so the rest of the wiring is identical.
 	jobController := controller.NewJobController()
 
-	// Under the NATS watch a NATS-backed informer drives the handler from direct
-	// API reads and no apiserver informer is created; otherwise the apiserver-backed
-	// informer does. startJobInformers launches the chosen source and jobHasSynced
-	// reports its initial sync.
-	var jobHasSynced cache.InformerSynced
-	var startJobInformers func()
+	var jobInformer informer.DeltaSource
 	if controllerCfg.natsWatch() {
-		jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
-		reg, err := jobNatsInformer.AddEventHandler(jobController.EventHandler())
-		if err != nil {
-			return fmt.Errorf("failed to add job event handler: %w", err)
-		}
-		jobHasSynced = reg.HasSynced
-		startJobInformers = func() { jobNatsInformer.Start(ctx.Done()) }
+		jobInformer = informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
 	} else {
-		jobInformerFactory := informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
-		jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-		if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
-			return fmt.Errorf("failed to add job event handler: %w", err)
-		}
-		jobHasSynced = jobInformer.Informer().HasSynced
-		startJobInformers = func() { go jobInformerFactory.Start(ctx.Done()) }
+		jobInformer = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval()).Provisioning().V0alpha1().Jobs().Informer()
+	}
+	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
+	if err != nil {
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
@@ -107,11 +96,11 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 	}()
 
-	// Start the delta source (informer or NATS informer)
-	startJobInformers()
+	// Start the informer and wait for its cache to sync.
+	go jobInformer.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), jobHasSynced) {
-		return fmt.Errorf("failed to sync job event source")
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+		return fmt.Errorf("failed to sync job informer cache")
 	}
 
 	logger.Info("job queue operator is ready")

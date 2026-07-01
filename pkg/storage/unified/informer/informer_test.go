@@ -153,7 +153,7 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 	require.NoError(t, err)
 
 	stopCh := make(chan struct{})
-	n.Start(stopCh)
+	go n.Run(stopCh)
 	t.Cleanup(func() { close(stopCh) })
 
 	if newObject != nil {

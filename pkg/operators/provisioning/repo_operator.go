@@ -139,7 +139,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		if err != nil {
 			return fmt.Errorf("failed to add repository event handler: %w", err)
 		}
-		repoNatsInformer.Start(ctx.Done())
+		go repoNatsInformer.Run(ctx.Done())
 		hasSynced = reg.HasSynced
 	} else {
 		reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())
@@ -151,7 +151,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	}
 
 	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
-		return fmt.Errorf("failed to sync repository event source")
+		return fmt.Errorf("failed to sync repository informer cache")
 	}
 
 	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

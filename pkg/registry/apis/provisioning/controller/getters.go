@@ -21,15 +21,15 @@ import (
 // Get must return a current object (the reconcile acts on its spec); List backs
 // the quota count, which tolerates staleness.
 type RepositoryGetter interface {
-	Get(namespace, name string) (*provisioning.Repository, error)
-	List(namespace string) ([]*provisioning.Repository, error)
+	Get(ctx context.Context, namespace, name string) (*provisioning.Repository, error)
+	List(ctx context.Context, namespace string) ([]*provisioning.Repository, error)
 }
 
 // ConnectionGetter is the read seam the connection controller reconciles
 // against. It exposes only the single connection under reconciliation, so the
 // source can be swapped without touching the controller.
 type ConnectionGetter interface {
-	Get(namespace, name string) (*provisioning.Connection, error)
+	Get(ctx context.Context, namespace, name string) (*provisioning.Connection, error)
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
@@ -42,11 +42,11 @@ type cachedRepositoryGetter struct {
 	lister listers.RepositoryLister
 }
 
-func (g cachedRepositoryGetter) Get(namespace, name string) (*provisioning.Repository, error) {
+func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (*provisioning.Repository, error) {
 	return g.lister.Repositories(namespace).Get(name)
 }
 
-func (g cachedRepositoryGetter) List(namespace string) ([]*provisioning.Repository, error) {
+func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*provisioning.Repository, error) {
 	return g.lister.Repositories(namespace).List(labels.Everything())
 }
 
@@ -60,18 +60,17 @@ type cachedConnectionGetter struct {
 	lister listers.ConnectionLister
 }
 
-func (g cachedConnectionGetter) Get(namespace, name string) (*provisioning.Connection, error) {
+func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (*provisioning.Connection, error) {
 	return g.lister.Connections(namespace).Get(name)
 }
 
 // The client-backed getters read straight through to the apiserver instead of an
 // informer cache. They are used with the NATS-backed watch, where notifications
 // round-robin across replicas and there is no cache to serve a fresh reconcile
-// read. Each call uses context.Background() because the getter seam carries no
-// context.
+// read.
 
-// RepositoryCache is the NATS informer's snapshot the getter reads the
-// quota list from and writes fresh reconcile reads back into. It is a
+// RepositoryCache is the NATS informer's snapshot the getter reads the quota
+// list from and writes fresh reconcile reads back into. It is a
 // staleness-tolerant store — refreshed wholesale on each re-list — not a source
 // of truth for the reconcile read.
 type RepositoryCache interface {
@@ -80,12 +79,13 @@ type RepositoryCache interface {
 	Delete(ctx context.Context, namespace, name string)
 }
 
-// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh, for the
-// reconcile — and List with the NATS informer's snapshot. The quota count is the
-// only List caller and tolerates the snapshot's staleness (as stale as the
-// resync interval), so reading it avoids an API LIST on every quota check. Each
-// reconcile Get is written back into the store (or removed on NotFound), keeping
-// the count warm between re-lists rather than only as fresh as the last resync.
+// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
+// for the reconcile — and List with the NATS informer's snapshot. The quota
+// count is the only List caller and tolerates the snapshot's staleness (as stale
+// as the resync interval), so reading it avoids an API LIST on every quota
+// check. Each reconcile Get is written back into the store (or removed on
+// NotFound), keeping the count warm between re-lists rather than only as fresh as
+// the last resync.
 func NewClientGetCachedListRepositoryGetter(c client.ProvisioningV0alpha1Interface, store RepositoryCache) RepositoryGetter {
 	return clientGetCachedListRepositoryGetter{client: c, store: store}
 }
@@ -95,8 +95,7 @@ type clientGetCachedListRepositoryGetter struct {
 	store  RepositoryCache
 }
 
-func (g clientGetCachedListRepositoryGetter) Get(namespace, name string) (*provisioning.Repository, error) {
-	ctx := context.Background()
+func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioning.Repository, error) {
 	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		g.store.Delete(ctx, namespace, name)
@@ -109,9 +108,9 @@ func (g clientGetCachedListRepositoryGetter) Get(namespace, name string) (*provi
 	return repo, nil
 }
 
-func (g clientGetCachedListRepositoryGetter) List(namespace string) ([]*provisioning.Repository, error) {
+func (g clientGetCachedListRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioning.Repository, error) {
 	var out []*provisioning.Repository
-	for _, obj := range g.store.List(context.Background()) {
+	for _, obj := range g.store.List(ctx) {
 		repo, ok := obj.(*provisioning.Repository)
 		if !ok || repo.Namespace != namespace {
 			continue
@@ -130,6 +129,6 @@ type clientConnectionGetter struct {
 	client client.ProvisioningV0alpha1Interface
 }
 
-func (g clientConnectionGetter) Get(namespace, name string) (*provisioning.Connection, error) {
-	return g.client.Connections(namespace).Get(context.Background(), name, metav1.GetOptions{})
+func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioning.Connection, error) {
+	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
 }

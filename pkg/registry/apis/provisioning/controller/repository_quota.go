@@ -31,7 +31,7 @@ func NewRepositoryQuotaChecker(
 // RepositoryQuotaConditions checks if a namespace has more repositories than allowed by its quota.
 // It returns the conditions based on the check result.
 func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
-	_ context.Context,
+	ctx context.Context,
 	namespace string,
 	quotaStatus provisioning.QuotaStatus,
 ) (metav1.Condition, error) {
@@ -49,7 +49,7 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 	}
 
 	// List all repositories from the read seam. The count tolerates staleness.
-	repos, err := c.repos.List(namespace)
+	repos, err := c.repos.List(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err
 	}
