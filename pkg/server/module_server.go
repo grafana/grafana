@@ -260,7 +260,9 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil)
+			// The NATS publisher is not wired into module mode yet, so watch
+			// notifications are published only from the monolith for now.
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, nil)
 			if err != nil {
 				return nil, err
 			}

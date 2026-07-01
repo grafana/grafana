@@ -109,6 +109,7 @@ func NewStorageBackend(
 	disableStorageServices bool,
 	kvStore kv.KV,
 	gcGate *resource.GCGate,
+	eventPublisher resource.EventPublisher,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
@@ -198,6 +199,7 @@ func NewStorageBackend(
 		SearchLookback:          cfg.SearchLookback,
 		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		EventPublisher:          eventPublisher,
 	}
 
 	if cfg.EnableSQLKVCompatibilityMode {
