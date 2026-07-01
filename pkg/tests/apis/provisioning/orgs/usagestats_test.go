@@ -38,13 +38,13 @@ func TestIntegrationProvisioning_MultiOrgUsageStats(t *testing.T) {
 	// LocalPath dirs keep the two repositories fully isolated on disk.
 	orgAHelper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   "org-a-usage-repo",
-		LocalPath:              helper.ProvisioningPath,
+		LocalPath:              helper.ProvisioningPath + "/org-a-usage-repo",
 		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 		SkipResourceAssertions: true,
 	})
 	orgBHelper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   "org-b-usage-repo",
-		LocalPath:              helper.ProvisioningPath,
+		LocalPath:              helper.ProvisioningPath + "/org-b-usage-repo",
 		Copies:                 map[string]string{"../testdata/all-panels.json": "dashboard.json"},
 		SkipResourceAssertions: true,
 	})

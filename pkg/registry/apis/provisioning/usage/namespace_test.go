@@ -23,7 +23,7 @@ func TestUsageNamespaceLister(t *testing.T) {
 
 		nss, err := lister(ctx)
 		require.NoError(t, err)
-		require.Equal(t, []string{"default"}, nss)
+		require.Equal(t, []string{"stacks-123"}, nss)
 	})
 
 	t.Run("on-prem enumerates one namespace per org", func(t *testing.T) {
@@ -76,8 +76,8 @@ func TestOrgNamespaceLister(t *testing.T) {
 	})
 }
 
-func TestDefaultNamespaceLister(t *testing.T) {
-	nss, err := defaultNamespaceLister()(context.Background())
+func TestStackNamespaceLister(t *testing.T) {
+	nss, err := stackNamespaceLister("123")(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, []string{"default"}, nss)
+	require.Equal(t, []string{"stacks-123"}, nss)
 }

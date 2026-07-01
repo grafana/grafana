@@ -54,32 +54,46 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		managedCounts := make(map[string]int)
 		repoCounts := make(map[string]int)
 		for _, ns := range nss {
-			var nsCtx context.Context
-			nsCtx, _, err = identity.WithProvisioningIdentity(ctx, ns)
-			if err != nil {
-				return m, err
-			}
-			nsCtx = request.WithNamespace(nsCtx, ns)
+			nsSpanCtx, nsSpan := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
 
+			var nsCtx context.Context
+			nsCtx, _, err = identity.WithProvisioningIdentity(nsSpanCtx, ns)
+			if err != nil {
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to create provisioning identity: %v", err))
+				return m, fmt.Errorf("create provisioning identity: %w", err)
+			}
+
+			nsCtx = request.WithNamespace(nsCtx, ns)
 			var count *resourcepb.CountManagedObjectsResponse
 			count, err = unified.CountManagedObjects(nsCtx, &resourcepb.CountManagedObjectsRequest{
 				Namespace: ns,
 			})
 			if err != nil {
-				return m, fmt.Errorf("count managed objects: %w", err)
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to count managed objects on namespace %s: %v", ns, err))
+				return m, fmt.Errorf("count managed objects on namespace %s: %w", ns, err)
 			}
 			for _, v := range count.Items {
 				managedCounts[v.Kind] += int(v.Count)
 			}
+			nsSpan.SetAttributes(attribute.Int("totalManagedObjectsCount", len(count.Items)))
 
 			var repos []provisioning.Repository
 			repos, err = repositoryLister(nsCtx)
 			if err != nil {
-				return m, fmt.Errorf("list repositories: %w", err)
+				nsSpan.RecordError(err)
+				nsSpan.SetStatus(codes.Error, fmt.Sprintf("failed to list repositories on namespace %s: %v", ns, err))
+				return m, fmt.Errorf("list repositories on namespace %s: %w", ns, err)
 			}
+
 			for _, repo := range repos {
 				repoCounts[string(repo.Spec.Type)]++
 			}
+
+			nsSpan.SetAttributes(attribute.Int("totalRepositoriesCount", len(repos)))
+			nsSpan.SetStatus(codes.Ok, "")
+			nsSpan.End()
 		}
 
 		span.SetAttributes(attribute.Int("namespaceCount", len(nss)))
