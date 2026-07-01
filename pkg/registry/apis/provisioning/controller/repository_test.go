@@ -1033,9 +1033,9 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			}
 
 			rc := &RepositoryController{
-				repoLister:    repoLister,
+				repos:         NewCachedRepositoryGetter(repoLister),
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
-				quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+				quotaChecker:  NewRepositoryQuotaChecker(NewCachedRepositoryGetter(repoLister)),
 				healthChecker: healthChecker,
 				statusPatcher: patcher,
 				repoFactory:   repoFactory,
@@ -1130,9 +1130,9 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	patcher := &capturePatcher{}
 
 	rc := &RepositoryController{
-		repoLister:    mockLister,
+		repos:         NewCachedRepositoryGetter(mockLister),
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(mockLister),
+		quotaChecker:  NewRepositoryQuotaChecker(NewCachedRepositoryGetter(mockLister)),
 		healthChecker: healthChecker,
 		repoFactory:   mockFactory,
 		statusPatcher: patcher,
@@ -1279,9 +1279,9 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
 	rc := &RepositoryController{
-		repoLister:        repoLister,
+		repos:             NewCachedRepositoryGetter(repoLister),
 		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:      NewRepositoryQuotaChecker(NewCachedRepositoryGetter(repoLister)),
 		statusPatcher:     patcher,
 		connectionFactory: mockConnFactory,
 		client:            provClient,
@@ -1490,9 +1490,9 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	}
 
 	rc := &RepositoryController{
-		repoLister:    repoLister,
+		repos:         NewCachedRepositoryGetter(repoLister),
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:  NewRepositoryQuotaChecker(NewCachedRepositoryGetter(repoLister)),
 		healthChecker: healthChecker,
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
@@ -1548,9 +1548,9 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 	}
 
 	rc := &RepositoryController{
-		repoLister:    repoLister,
+		repos:         NewCachedRepositoryGetter(repoLister),
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
-		quotaChecker:  NewRepositoryQuotaChecker(repoLister),
+		quotaChecker:  NewRepositoryQuotaChecker(NewCachedRepositoryGetter(repoLister)),
 		healthChecker: healthChecker,
 		statusPatcher: patcher,
 		repoFactory:   repoFactory,
