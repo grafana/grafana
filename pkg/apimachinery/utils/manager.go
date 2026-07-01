@@ -80,8 +80,9 @@ func (k ManagerKind) IsClassic() bool {
 	switch k { //nolint:staticcheck
 	case ManagerKindClassicFP, ManagerKindClassicAPI, ManagerKindClassicConvertedPrometheus:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // SourceProperties is used to identify the source of a provisioned resource.
