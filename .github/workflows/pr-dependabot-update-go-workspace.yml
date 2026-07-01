@@ -55,7 +55,7 @@ jobs:
 
     - name: Commit and push workspace changes
       if: steps.changes.outputs.changed == 'true'
-      uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+      uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
       with:
         commit_message: "update workspace"
         repo: ${{ github.repository }}
