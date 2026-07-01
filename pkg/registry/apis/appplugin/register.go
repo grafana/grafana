@@ -84,6 +84,11 @@ type AppPluginAPIBuilder struct {
 
 	// Populated in UpdateAPIGroupInfo
 	getter rest.Getter
+
+	// pluginContextFn resolves the plugin context for outgoing plugin calls.
+	// Defaults to getPluginContext (which reads the live settings resource);
+	// tests inject a stub to avoid standing up real settings storage.
+	pluginContextFn func(ctx context.Context) (context.Context, backend.PluginContext, error)
 }
 
 func NewAppPluginAPIBuilder(
