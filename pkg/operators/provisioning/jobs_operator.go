@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -41,24 +40,16 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller (resync ~60s like in register.go)
-	natsWatch := controllerCfg.natsWatch()
-
 	// Historic-job cleanup is resync-driven: each re-list delivers every job as an
-	// update so the handler can act on its age. Under the NATS watch the source is
-	// a NATS-backed informer (resync == expiration); otherwise an apiserver-backed
-	// one. Both satisfy DeltaSource; historyInformer stays nil when cleanup is off.
+	// update so the handler can act on its age (resync == expiration). The source
+	// stays nil when cleanup is disabled.
 	var historyInformer informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		if natsWatch {
-			historyInformer = informer.NewHistoricJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.historyExpiration, informer.NewStore())
-		} else {
-			historyInformer = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.historyExpiration).Provisioning().V0alpha1().HistoricJobs().Informer()
-		}
+		historyInformer = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration)
 		if _, err := historyInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add history job event handler: %w", err)
 		}
@@ -83,18 +74,13 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	var wg sync.WaitGroup
 
 	// The job source is only created when job processing is enabled — otherwise
-	// there is no handler and nothing to sync. Under the NATS watch it is a
-	// NATS-backed informer; otherwise an apiserver-backed one (both DeltaSource).
+	// there is no handler and nothing to sync.
 	var jobInformer informer.DeltaSource
 	jobHasSynced := func() bool { return true }
 
 	if controllerCfg.jobProcessingEnabled {
 		jobController := controller.NewJobController()
-		if natsWatch {
-			jobInformer = informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
-		} else {
-			jobInformer = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval()).Provisioning().V0alpha1().Jobs().Informer()
-		}
+		jobInformer = informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 		reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
 		if err != nil {
 			return fmt.Errorf("failed to add job event handler: %w", err)

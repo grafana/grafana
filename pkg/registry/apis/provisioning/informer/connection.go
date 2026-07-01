@@ -9,9 +9,23 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
+
+// NewConnectionDeltaSource returns the connection delta source and the getter it
+// backs. Under NATS the getter reads reconcile state fresh from the API;
+// otherwise it reads the informer's cache lister.
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, controller.ConnectionGetter) {
+	if natsEnabled(subscriber) {
+		source := NewConnectionInformer(subscriber, client, "", resync, NewStore())
+		return source, controller.NewClientConnectionGetter(client.ProvisioningV0alpha1())
+	}
+	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
+	return inf.Informer(), controller.NewCachedConnectionGetter(inf.Lister())
+}
 
 // NewConnectionInformer builds an Informer for connections.
 func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {

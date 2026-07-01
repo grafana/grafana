@@ -3,6 +3,7 @@ package informer
 import (
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -31,7 +32,15 @@ func NewStore() *Store { return usinformer.NewStore() }
 // notification is round-robined to a single replica rather than broadcast to all.
 const queueGroup = "provisioning-informer"
 
-// The per-resource constructors bind LIST to that resource's typed client and
-// build the minimal live-event object as the resource's concrete type, so the
-// controller's event handler keys off the right type. namespace scopes the NATS
-// subscription and the LIST; pass "" to watch every namespace.
+// The per-resource constructors (one per type file) bind LIST to that resource's
+// typed client and build the minimal live-event object as the resource's concrete
+// type, so the controller's event handler keys off the right type. namespace
+// scopes the NATS subscription and the LIST; pass "" to watch every namespace.
+// Each type file also has a New<Type>DeltaSource selector that picks a
+// NATS-backed informer when NATS is enabled, else an apiserver-backed one.
+
+// natsEnabled reports whether the subscriber is present and NATS is on, i.e.
+// whether the NATS-backed informer should be used over the apiserver one.
+func natsEnabled(subscriber nats.Subscriber) bool {
+	return subscriber != nil && subscriber.Enabled()
+}

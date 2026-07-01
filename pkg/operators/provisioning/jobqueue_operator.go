@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -46,12 +45,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// satisfy DeltaSource, so the rest of the wiring is identical.
 	jobController := controller.NewJobController()
 
-	var jobInformer informer.DeltaSource
-	if controllerCfg.natsWatch() {
-		jobInformer = informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
-	} else {
-		jobInformer = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval()).Provisioning().V0alpha1().Jobs().Informer()
-	}
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)

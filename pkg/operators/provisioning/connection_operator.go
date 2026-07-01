@@ -11,8 +11,6 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	provisioninginformers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
@@ -48,19 +46,8 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	// Under the NATS watch reconcile reads the connection fresh from the API and
-	// the apiserver-backed informer is not created at all; otherwise the informer's
-	// cache-backed getter is authoritative.
-	var connGetter controller.ConnectionGetter
-	var connInformer provisioninginformers.ConnectionInformer
-	var informerFactory informers.SharedInformerFactory
-	if controllerCfg.natsWatch() {
-		connGetter = controller.NewClientConnectionGetter(provisioningClient.ProvisioningV0alpha1())
-	} else {
-		informerFactory = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
-		connInformer = informerFactory.Provisioning().V0alpha1().Connections()
-		connGetter = controller.NewCachedConnectionGetter(connInformer.Lister())
-	}
+	// The connection delta source and the getter it backs.
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,
@@ -74,25 +61,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		controllerCfg.Registry(),
 	)
 
-	var hasSynced cache.InformerSynced
-	if controllerCfg.natsWatch() {
-		natsInformer := informer.NewConnectionInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
-		reg, err := natsInformer.AddEventHandler(connController.EventHandler())
-		if err != nil {
-			return fmt.Errorf("failed to add connection event handler: %w", err)
-		}
-		go natsInformer.Run(ctx.Done())
-		hasSynced = reg.HasSynced
-	} else {
-		reg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
-		if err != nil {
-			return fmt.Errorf("failed to add connection event handler: %w", err)
-		}
-		informerFactory.Start(ctx.Done())
-		hasSynced = reg.HasSynced
+	reg, err := connSource.AddEventHandler(connController.EventHandler())
+	if err != nil {
+		return fmt.Errorf("failed to add connection event handler: %w", err)
 	}
+	go connSource.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), hasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("connection controller informer cache sync failed")
 	}
 
