@@ -1,12 +1,12 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
-import { type Action, KBarProvider } from 'kbar';
+import { KBarProvider } from 'kbar';
 import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
-import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, navigationLogger } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
@@ -97,13 +97,6 @@ export function AppWrapper({ context }: AppWrapperProps) {
 
   navigationLogger('AppWrapper', false, 'rendering');
 
-  const commandPaletteActionSelected = (action: Action) => {
-    reportInteraction('command_palette_action_selected', {
-      actionId: action.id,
-      actionName: action.name,
-    });
-  };
-
   const routerWrapperProps = {
     routes: ready && renderRoutes(),
     pageBanners,
@@ -125,10 +118,7 @@ export function AppWrapper({ context }: AppWrapperProps) {
           <GrafanaContext.Provider value={context}>
             <ThemeProvider value={config.theme2}>
               <CacheProvider name={iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
+                <KBarProvider actions={[]} options={{ enableHistory: true }}>
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={registries}>

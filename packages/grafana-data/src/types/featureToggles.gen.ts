@@ -1216,6 +1216,11 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
+  */
+  heatmapNegativeLogBuckets?: boolean;
+  /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
   */
@@ -1480,11 +1485,6 @@ export interface FeatureToggles {
   * @default false
   */
   logsTablePanelNG?: boolean;
-  /**
-  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-  * @default false
-  */
-  frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
   * @default false

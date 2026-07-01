@@ -2229,6 +2229,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "heatmapNegativeLogBuckets",
+			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
@@ -2776,15 +2784,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "frontendServiceSSOAutoLogin",
-			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "splashScreen",
 			Description: "Enables the splash screen modal for introducing new Grafana features on first session",
 			Stage:       FeatureStagePublicPreview,
@@ -3085,7 +3084,15 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.vectorSearchCmdk",
+			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "splunk.useLegacyResultsApi",
