@@ -28,14 +28,14 @@ func TestKVPeerStore(t *testing.T) {
 	ctx := context.Background()
 	ttl := 30 * time.Second
 
-	t.Run("upsert then activePeers round-trips the route url", func(t *testing.T) {
+	t.Run("upsert then listActive round-trips the route url", func(t *testing.T) {
 		now := time.Unix(1_000, 0)
 		s := newTestKVStore(t, "grafana", &now)
 
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"}))
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "b", RouteURL: "nats://10.0.0.2:6222"}))
 
-		peers, err := s.activePeers(ctx, ttl)
+		peers, err := s.listActive(ctx, ttl)
 		require.NoError(t, err)
 		require.ElementsMatch(t, []peer{
 			{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"},
@@ -57,11 +57,11 @@ func TestKVPeerStore(t *testing.T) {
 		require.NoError(t, a.upsert(ctx, peer{ServerName: "a1", RouteURL: "nats://10.0.0.1:6222"}))
 		require.NoError(t, b.upsert(ctx, peer{ServerName: "b1", RouteURL: "nats://10.0.0.2:6222"}))
 
-		peersA, err := a.activePeers(ctx, ttl)
+		peersA, err := a.listActive(ctx, ttl)
 		require.NoError(t, err)
 		require.Equal(t, []peer{{ServerName: "a1", RouteURL: "nats://10.0.0.1:6222"}}, peersA)
 
-		peersB, err := b.activePeers(ctx, ttl)
+		peersB, err := b.listActive(ctx, ttl)
 		require.NoError(t, err)
 		require.Equal(t, []peer{{ServerName: "b1", RouteURL: "nats://10.0.0.2:6222"}}, peersB)
 	})
@@ -74,16 +74,17 @@ func TestKVPeerStore(t *testing.T) {
 		now = now.Add(ttl + time.Second)
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "fresh", RouteURL: "nats://10.0.0.2:6222"}))
 
-		// stale's heartbeat is now older than the ttl; only fresh is active.
-		peers, err := s.activePeers(ctx, ttl)
+		// stale's heartbeat is now older than the ttl; only fresh is active, and
+		// listActive prunes the stale row as a side effect.
+		peers, err := s.listActive(ctx, ttl)
 		require.NoError(t, err)
 		require.Equal(t, []peer{{ServerName: "fresh", RouteURL: "nats://10.0.0.2:6222"}}, peers)
 
-		require.NoError(t, s.pruneStale(ctx, ttl))
-		_, err = s.readPeer(ctx, s.peerKey("stale"))
+		_, err = s.kv.Get(ctx, kv.NATSPeersSection, s.peerKey("stale"))
 		require.ErrorIs(t, err, kv.ErrNotFound)
-		_, err = s.readPeer(ctx, s.peerKey("fresh"))
+		r, err := s.kv.Get(ctx, kv.NATSPeersSection, s.peerKey("fresh"))
 		require.NoError(t, err)
+		require.NoError(t, r.Close())
 	})
 
 	t.Run("remove deletes a single peer", func(t *testing.T) {
@@ -93,7 +94,7 @@ func TestKVPeerStore(t *testing.T) {
 		require.NoError(t, s.upsert(ctx, peer{ServerName: "a", RouteURL: "nats://10.0.0.1:6222"}))
 		require.NoError(t, s.remove(ctx, "a"))
 
-		peers, err := s.activePeers(ctx, ttl)
+		peers, err := s.listActive(ctx, ttl)
 		require.NoError(t, err)
 		require.Empty(t, peers)
 	})

@@ -3,7 +3,6 @@ package nats
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -37,10 +36,11 @@ type peer struct {
 type peerRegistry interface {
 	// upsert records or refreshes this node's row (a heartbeat).
 	upsert(ctx context.Context, p peer) error
-	// activePeers returns every peer whose heartbeat is within ttl.
-	activePeers(ctx context.Context, ttl time.Duration) ([]peer, error)
-	// pruneStale deletes rows older than ttl; self-healing via re-registration.
-	pruneStale(ctx context.Context, ttl time.Duration) error
+	// listActive returns every peer whose heartbeat is within ttl, pruning rows
+	// older than ttl as a side effect (self-healing via re-registration). Pruning
+	// is best-effort: the returned set already excludes stale peers, so a failed
+	// delete only leaves rows to be retried next tick.
+	listActive(ctx context.Context, ttl time.Duration) ([]peer, error)
 	// remove deletes this node's row on graceful shutdown.
 	remove(ctx context.Context, serverName string) error
 }
@@ -113,21 +113,23 @@ func (d *discovery) tick(ctx context.Context) {
 	if err := d.registry.upsert(ctx, d.self); err != nil {
 		d.log.Warn("nats peer heartbeat failed", "server_name", d.self.ServerName, "err", err)
 	}
-	if err := d.registry.pruneStale(ctx, d.ttl); err != nil {
-		d.log.Warn("nats peer prune failed", "err", err)
+	// One scan per tick: listActive returns the live peers and prunes stale rows.
+	peers, err := d.registry.listActive(ctx, d.ttl)
+	if err != nil {
+		d.log.Warn("nats peer discovery degraded", "err", err)
+		// A read failure yields no peers; keep the current routes rather than
+		// reconciling to an empty set and tearing down the mesh. A prune failure
+		// still returns the valid peer set, so we fall through and reconcile.
+		if peers == nil {
+			return
+		}
 	}
-	d.reconcile(ctx)
+	d.reconcile(peers)
 }
 
 // reconcile reloads the server's routes when the live-peer set has changed; NATS
 // solicits new routes and closes removed ones.
-func (d *discovery) reconcile(ctx context.Context) {
-	peers, err := d.registry.activePeers(ctx, d.ttl)
-	if err != nil {
-		d.log.Warn("failed to list nats peers", "err", err)
-		return
-	}
-
+func (d *discovery) reconcile(peers []peer) {
 	desired := make(map[string]struct{}, len(peers))
 	for _, p := range peers {
 		// Skip our own row and peers that haven't advertised a route yet.
@@ -235,49 +237,42 @@ func (s *kvPeerStore) upsert(ctx context.Context, p peer) error {
 	return w.Close()
 }
 
-func (s *kvPeerStore) activePeers(ctx context.Context, ttl time.Duration) ([]peer, error) {
+func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer, error) {
 	cutoff := s.now().Add(-ttl).Unix()
 	var peers []peer
+	var stale []string
 	for rec, err := range s.records(ctx) {
 		if err != nil {
 			return nil, err
 		}
 		if rec.UpdatedAt < cutoff {
+			stale = append(stale, s.peerKey(rec.ServerName))
 			continue
 		}
 		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
 	}
+	// Best-effort prune in one round-trip; the active set above already excludes
+	// these, so a failed delete just leaves them for the next tick.
+	if len(stale) > 0 {
+		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, stale); err != nil {
+			return peers, err
+		}
+	}
 	return peers, nil
-}
-
-func (s *kvPeerStore) pruneStale(ctx context.Context, ttl time.Duration) error {
-	cutoff := s.now().Add(-ttl).Unix()
-	var stale []string
-	for rec, err := range s.records(ctx) {
-		if err != nil {
-			return err
-		}
-		if rec.UpdatedAt < cutoff {
-			stale = append(stale, s.peerKey(rec.ServerName))
-		}
-	}
-	for _, key := range stale {
-		if err := s.kv.Delete(ctx, kv.NATSPeersSection, key); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *kvPeerStore) remove(ctx context.Context, serverName string) error {
 	return s.kv.Delete(ctx, kv.NATSPeersSection, s.peerKey(serverName))
 }
 
-// records iterates this cluster's peer records. A row that vanishes mid-scan
-// (a concurrent prune/remove) is skipped rather than failing the whole read.
+// records iterates this cluster's peer records in two round-trips: one Keys scan
+// over the cluster's prefix range, then one BatchGet for their values. A row that
+// vanishes between the two (a concurrent prune/remove) simply won't appear in the
+// BatchGet result, so it's skipped rather than failing the whole read.
 func (s *kvPeerStore) records(ctx context.Context) func(func(peerRecord, error) bool) {
 	prefix := s.clusterName + "/"
 	return func(yield func(peerRecord, error) bool) {
+		var keys []string
 		for key, err := range s.kv.Keys(ctx, kv.NATSPeersSection, kv.ListOptions{
 			StartKey: prefix,
 			EndKey:   kv.PrefixRangeEnd(prefix),
@@ -286,11 +281,19 @@ func (s *kvPeerStore) records(ctx context.Context) func(func(peerRecord, error) 
 				yield(peerRecord{}, err)
 				return
 			}
-			rec, err := s.readPeer(ctx, key)
+			keys = append(keys, key)
+		}
+		if len(keys) == 0 {
+			return
+		}
+
+		for kvp, err := range s.kv.BatchGet(ctx, kv.NATSPeersSection, keys) {
 			if err != nil {
-				if errors.Is(err, kv.ErrNotFound) {
-					continue
-				}
+				yield(peerRecord{}, err)
+				return
+			}
+			rec, err := decodePeer(kvp)
+			if err != nil {
 				yield(peerRecord{}, err)
 				return
 			}
@@ -301,21 +304,17 @@ func (s *kvPeerStore) records(ctx context.Context) func(func(peerRecord, error) 
 	}
 }
 
-func (s *kvPeerStore) readPeer(ctx context.Context, key string) (peerRecord, error) {
-	r, err := s.kv.Get(ctx, kv.NATSPeersSection, key)
-	if err != nil {
-		return peerRecord{}, err
-	}
-	defer func() { _ = r.Close() }()
+func decodePeer(kvp kv.KeyValue) (peerRecord, error) {
+	defer func() { _ = kvp.Value.Close() }()
 
-	data, err := io.ReadAll(r)
+	data, err := io.ReadAll(kvp.Value)
 	if err != nil {
 		return peerRecord{}, err
 	}
 
 	var rec peerRecord
 	if err := json.Unmarshal(data, &rec); err != nil {
-		return peerRecord{}, fmt.Errorf("decode nats peer %q: %w", key, err)
+		return peerRecord{}, fmt.Errorf("decode nats peer %q: %w", kvp.Key, err)
 	}
 	return rec, nil
 }

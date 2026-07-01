@@ -43,27 +43,19 @@ func (f *fakeRegistry) upsert(_ context.Context, p peer) error {
 	return nil
 }
 
-func (f *fakeRegistry) activePeers(_ context.Context, ttl time.Duration) ([]peer, error) {
+func (f *fakeRegistry) listActive(_ context.Context, ttl time.Duration) ([]peer, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	cutoff := f.now.Add(-ttl)
 	var peers []peer
-	for _, r := range f.rows {
-		if !r.seen.Before(f.now.Add(-ttl)) {
-			peers = append(peers, r.peer)
+	for name, r := range f.rows {
+		if r.seen.Before(cutoff) {
+			delete(f.rows, name)
+			continue
 		}
+		peers = append(peers, r.peer)
 	}
 	return peers, nil
-}
-
-func (f *fakeRegistry) pruneStale(_ context.Context, ttl time.Duration) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	for name, r := range f.rows {
-		if r.seen.Before(f.now.Add(-ttl)) {
-			delete(f.rows, name)
-		}
-	}
-	return nil
 }
 
 func (f *fakeRegistry) remove(_ context.Context, serverName string) error {
@@ -114,7 +106,7 @@ func TestDiscoveryReconcile(t *testing.T) {
 		require.NoError(t, reg.upsert(ctx, peer{ServerName: "peer-empty", RouteURL: ""}))
 
 		d := newTestDiscovery(t, reg, self)
-		d.reconcile(ctx)
+		d.tick(ctx)
 
 		require.Equal(t, map[string]struct{}{
 			"nats://10.0.0.2:6222": {},
@@ -129,7 +121,7 @@ func TestDiscoveryReconcile(t *testing.T) {
 		require.NoError(t, reg.upsert(ctx, peer{ServerName: "peer-a", RouteURL: "nats://10.0.0.2:6222"}))
 
 		d := newTestDiscovery(t, reg, self)
-		d.reconcile(ctx)
+		d.tick(ctx)
 		require.Contains(t, d.routes, "nats://10.0.0.2:6222")
 
 		// peer-a stops heartbeating; self keeps ticking.
@@ -137,7 +129,7 @@ func TestDiscoveryReconcile(t *testing.T) {
 		d.tick(ctx) // heartbeats self, prunes peer-a, reconciles
 
 		require.Empty(t, d.routes)
-		peers, err := reg.activePeers(ctx, d.ttl)
+		peers, err := reg.listActive(ctx, d.ttl)
 		require.NoError(t, err)
 		require.Len(t, peers, 1, "only self should remain after prune")
 	})
@@ -150,7 +142,7 @@ func TestDiscoveryReconcile(t *testing.T) {
 
 		d.deregister(ctx)
 
-		peers, err := reg.activePeers(ctx, d.ttl)
+		peers, err := reg.listActive(ctx, d.ttl)
 		require.NoError(t, err)
 		require.Empty(t, peers)
 	})
