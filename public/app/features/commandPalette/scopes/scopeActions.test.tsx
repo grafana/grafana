@@ -428,6 +428,7 @@ describe('useRegisterScopesActions', () => {
         perform: expect.any(Function),
         priority: 8,
         section: 'Scopes',
+        sectionId: 'scopes',
         subtitle: 'Parent 1',
       },
     ];
