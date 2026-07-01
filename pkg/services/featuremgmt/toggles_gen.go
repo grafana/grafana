@@ -946,6 +946,10 @@ const (
 	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 
+	// FlagAlertingSyncExternalRuler
+	// Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana
+	FlagAlertingSyncExternalRuler = "alerting.syncExternalRuler"
+
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"

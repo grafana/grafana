@@ -69,6 +69,7 @@ declare module "@openfeature/core" {
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
     | "alerting.syncExternalAlertmanager"
+    | "alerting.syncExternalRuler"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
     | "grafana.logLevelInference"
