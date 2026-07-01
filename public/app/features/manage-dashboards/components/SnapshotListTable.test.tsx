@@ -87,6 +87,7 @@ describe('getSnapshots', () => {
     configureStore();
     config.appUrl = 'http://snapshots.grafana.com/';
     config.featureToggles.kubernetesSnapshots = false;
+    config.kubernetesSnapshotsEnabled = false;
   });
 
   test('returns paginated shape with decorated urls (legacy)', async () => {
@@ -117,6 +118,7 @@ describe('getSnapshots', () => {
   });
 
   test('propagates the k8s continue token', async () => {
+    config.kubernetesSnapshotsEnabled = true;
     config.featureToggles.kubernetesSnapshots = true;
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
@@ -128,6 +130,7 @@ describe('getSnapshots', () => {
   });
 
   test('forwards the continue option to the k8s api', async () => {
+    config.kubernetesSnapshotsEnabled = true;
     config.featureToggles.kubernetesSnapshots = true;
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
@@ -141,6 +144,7 @@ describe('SnapshotListTable', () => {
   beforeEach(() => {
     config.appUrl = 'http://snapshots.grafana.com/';
     config.featureToggles.kubernetesSnapshots = false;
+    config.kubernetesSnapshotsEnabled = false;
     mockContextSrv.hasPermission.mockReturnValue(true);
     mockContextSrv.hasPermissionInMetadata.mockReturnValue(true);
   });
@@ -155,6 +159,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders Load More when k8s returns a continue token and appends the next page on click', async () => {
+    config.kubernetesSnapshotsEnabled = true;
     config.featureToggles.kubernetesSnapshots = true;
     const continueTokens = mockK8sList(k8sFirstPage, k8sSecondPage);
 
@@ -178,7 +183,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     const singleItemFirstPage = {
       items: [
         {
@@ -210,7 +215,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders the empty state only after the first fetch resolves', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     mockK8sList({ items: [], metadata: { resourceVersion: '1' } });
 
     render(<SnapshotListTable />);
@@ -222,7 +227,8 @@ describe('SnapshotListTable', () => {
   });
 
   test('shows a Retry button when the initial fetch fails and recovers on click', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
+
     let attempts = 0;
     server.use(
       http.get(K8S_LIST_URL, () => {
