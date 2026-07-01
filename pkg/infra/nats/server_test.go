@@ -50,3 +50,18 @@ func TestServer(t *testing.T) {
 		require.Error(t, s.Health(context.Background()))
 	})
 }
+
+func TestIsLoopbackRouteURL(t *testing.T) {
+	cases := map[string]bool{
+		"nats://127.0.0.1:6222": true,
+		"nats://[::1]:6222":     true,
+		"nats://10.0.0.5:6222":  false,
+		"nats://example:6222":   false, // unresolved hostname is not treated as loopback
+		"not a url":             false,
+	}
+	for routeURL, want := range cases {
+		t.Run(routeURL, func(t *testing.T) {
+			require.Equal(t, want, isLoopbackRouteURL(routeURL))
+		})
+	}
+}
