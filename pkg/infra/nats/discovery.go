@@ -161,6 +161,10 @@ func (d *discovery) applyRoutes(routes map[string]struct{}) error {
 			d.log.Warn("skipping invalid peer route url", "url", r, "err", err)
 			continue
 		}
+		if u.Scheme != "nats" && u.Scheme != "tls" {
+			d.log.Warn("skipping invalid peer route url scheme", "url", r, "scheme", u.Scheme)
+			continue
+		}
 		urls = append(urls, u)
 	}
 
@@ -239,7 +243,7 @@ func (s *kvPeerStore) upsert(ctx context.Context, p peer) error {
 
 func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer, error) {
 	cutoff := s.now().Add(-ttl).Unix()
-	var peers []peer
+	peers := make([]peer, 0)
 	var stale []string
 	for rec, err := range s.records(ctx) {
 		if err != nil {

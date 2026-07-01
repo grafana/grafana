@@ -53,6 +53,11 @@ func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) 
 		log: log.New("infra.nats.server"),
 	}
 
+	// A sqlStore is required to wire DB-backed peer discovery. When present (the
+	// monolith always injects it) the embedded server clusters through discovery;
+	// when absent it runs as a single standalone node. Module mode passes nil but
+	// is prevented from enabling embedded NATS upstream (see module_server.go), so
+	// in practice a running embedded server in production always has discovery.
 	if !s.IsDisabled() && sqlStore != nil {
 		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
 		if err != nil {
@@ -184,8 +189,10 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
-	// s.kv is always set when the embedded server runs (the monolith injects a
-	// sqlStore; module mode never starts this server), but guard defensively.
+	// Wire peer discovery only when a KV is available. The monolith always injects a
+	// sqlStore, so production embedded servers cluster through discovery; module mode
+	// cannot enable embedded NATS (see module_server.go). A nil KV therefore only
+	// happens for a single standalone node (e.g. tests), which runs without clustering.
 	if s.kv != nil {
 		s.discovery = newDiscovery(
 			s.log,
@@ -204,7 +211,28 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)
 
+	// Discovery advertises route_url to peers via the shared DB. A loopback route
+	// resolves to the advertising node itself, so peers on other hosts can never
+	// dial it and clustering silently no-ops. Warn rather than fail: a single
+	// standalone node on default config is a legitimate case.
+	if s.kv != nil && isLoopbackRouteURL(routeURL) {
+		s.log.Warn("embedded nats advertising a loopback route url; multi-host clustering will not form. "+
+			"Set listen_address to a routable address, or bind 0.0.0.0 and set advertise_address to a routable address",
+			"route_url", routeURL)
+	}
+
 	return nil
+}
+
+// isLoopbackRouteURL reports whether the route URL's host is a loopback address,
+// which only clusters within a single host.
+func isLoopbackRouteURL(routeURL string) bool {
+	u, err := url.Parse(routeURL)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(u.Hostname())
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Server) serverOptions() *natsserver.Options {

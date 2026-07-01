@@ -252,9 +252,11 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterInvisibleModule(modules.NATS, func() (services.Service, error) {
 		// The embedded server relies on DB-backed peer discovery that is not wired
-		// in module mode, so only external NATS is supported here for now.
+		// in module mode (no sqlStore is injected here), so only external NATS is
+		// supported. Fail fast rather than fall through to ProvideServer, which would
+		// reject the nil sqlStore anyway, so operators get a mode-specific message.
 		if s.cfg.NATS.Enabled && s.cfg.NATS.Embedded() {
-			s.log.Warn("embedded NATS is not supported in module mode; configure [nats] mode=external")
+			return nil, fmt.Errorf("embedded NATS is not supported in module mode; configure [nats] mode=external")
 		}
 		natsServer, err := nats.ProvideServer(s.cfg, nil, s.registerer)
 		if err != nil {
