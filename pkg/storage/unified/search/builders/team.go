@@ -26,17 +26,11 @@ var TeamSortableExtraFields = []string{
 // IAM legacy SQL backend in team/legacy_search.go.
 var TeamSearchTableColumnDefinitions = tableColumnsByName(TeamSearchFields)
 
-// TeamSearchFields declares paths and types for each team search field. The
-// standard document builder uses these to extract spec values from the raw
-// JSON, avoiding a custom builder. Members is a projection over
-// spec.members[*].name so the indexed array contains member UIDs only.
-var TeamSearchFields = []resource.SearchFieldDefinition{
-	{Name: TEAM_SEARCH_EMAIL, Path: "spec.email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Email of the team"},
-	{Name: TEAM_SEARCH_PROVISIONED, Path: "spec.provisioned", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "Whether the team is provisioned"},
-	{Name: TEAM_SEARCH_EXTERNAL_UID, Path: "spec.externalUID", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, Description: "External UID of the team"},
-	{Name: TEAM_SEARCH_MEMBERS, Path: "spec.members[*].name", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "UIDs of users that are members of the team"},
-	{Name: TEAM_SEARCH_EXTERNAL_GROUPS, Path: "spec.externalGroups", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}, Description: "External group identifiers mapped to the team"},
-}
+// TeamSearchFields are read from the generated IAM manifest, where they are
+// declared in apps/iam/kinds/team.cue.
+var TeamSearchFields = resource.NewManifestBackedProvider(iamManifests).Fields(
+	v0alpha1.TeamResourceInfo.GroupVersionResource(),
+)
 
 func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(TeamSearchTableColumnDefinitions))
