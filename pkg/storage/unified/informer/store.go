@@ -1,0 +1,89 @@
+package informer
+
+import (
+	"context"
+	"sync"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/cache"
+)
+
+// Store is the informer's snapshot of a resource kind, keyed by namespace/name.
+// It is refreshed wholesale on each re-list (Replace) and can be written through
+// between re-lists (Update/Delete) by a caller that has just observed a fresh
+// object. It is a staleness-tolerant view — never a source of truth for a read a
+// reconcile depends on — meant for counts and other cheap, resync-cadence reads.
+type Store struct {
+	mu    sync.Mutex
+	items map[string]runtime.Object
+}
+
+// NewStore returns an empty Store, ready to be shared between an Informer (which
+// refreshes it on each re-list) and a reader such as a getter (which reads it,
+// and may write through fresh reads to keep it warm).
+func NewStore() *Store {
+	return &Store{items: map[string]runtime.Object{}}
+}
+
+// List returns a snapshot of the objects in the store. It returns nil until the
+// first Replace. The context is accepted for signature parity with API-backed
+// readers; the read itself is in-memory.
+func (s *Store) List(_ context.Context) []runtime.Object {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]runtime.Object, 0, len(s.items))
+	for _, obj := range s.items {
+		out = append(out, obj)
+	}
+	return out
+}
+
+// Update writes obj into the store, keyed by namespace/name — the write-through
+// used to keep the store warm between re-lists.
+func (s *Store) Update(_ context.Context, obj runtime.Object) {
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.items[key] = obj
+}
+
+// Delete removes an object from the store, the write-through counterpart to
+// Update for a caller that has just observed the object is gone.
+func (s *Store) Delete(_ context.Context, namespace, name string) {
+	key := name
+	if namespace != "" {
+		key = namespace + "/" + name
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.items, key)
+}
+
+// Replace swaps the store's contents for objs and returns the objects that were
+// present before but are absent now, carrying their last-known state. The
+// informer uses that set to emit deletes for objects that have vanished since the
+// previous re-list.
+func (s *Store) Replace(objs []runtime.Object) []runtime.Object {
+	next := make(map[string]runtime.Object, len(objs))
+	for _, obj := range objs {
+		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
+			next[key] = obj
+		}
+	}
+
+	s.mu.Lock()
+	prev := s.items
+	s.items = next
+	s.mu.Unlock()
+
+	var removed []runtime.Object
+	for key, obj := range prev {
+		if _, ok := next[key]; !ok {
+			removed = append(removed, obj)
+		}
+	}
+	return removed
+}

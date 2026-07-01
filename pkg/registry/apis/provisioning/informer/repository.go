@@ -14,7 +14,7 @@ import (
 )
 
 // NewRepositoryInformer builds an Informer for repositories.
-func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration) *Informer {
+func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -30,5 +30,5 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

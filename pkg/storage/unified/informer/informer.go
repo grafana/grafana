@@ -50,7 +50,7 @@ const defaultResync = 5 * time.Minute
 // wired to an Informer must therefore read the object they reconcile straight
 // from the API (there is no cache to serve a fresh read).
 //
-// It retains a snapshot of the last re-list, exposed by List, for
+// It retains a snapshot of the last re-list, exposed via Store, for
 // staleness-tolerant reads such as a count — reads that accept being as stale as
 // the resync interval and would otherwise cost an API LIST each time. Diffing
 // each re-list against that snapshot is also how it catches hard deletes (which
@@ -71,9 +71,10 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
+	store *Store
+
 	mu       sync.Mutex
 	handlers []cache.ResourceEventHandler
-	store    map[string]runtime.Object
 	synced   atomic.Bool
 	syncedCh chan struct{} // closed once the initial list completes
 }
@@ -92,7 +93,11 @@ type Informer struct {
 //
 // newObject builds the minimal object delivered on a live notification; a nil
 // newObject disables live notifications, leaving only the periodic re-list.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, newObject ObjectFunc, list ListFunc) *Informer {
+//
+// store is the snapshot the informer refreshes on each re-list. Pass the same
+// Store to a reader (e.g. a getter serving a quota count) to share it; the
+// informer never reads it, so an unshared informer can be given its own.
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store *Store, newObject ObjectFunc, list ListFunc) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
@@ -105,6 +110,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		newObject:  newObject,
 		list:       list,
 		log:        log.New("provisioning.informer.nats"),
+		store:      store,
 		syncedCh:   make(chan struct{}),
 	}
 }
@@ -145,53 +151,6 @@ type syncedChecker struct{ informer *Informer }
 
 func (c syncedChecker) Name() string          { return "nats-informer:" + c.informer.gvr.String() }
 func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
-
-// List returns a snapshot of the objects in the store. It is a
-// staleness-tolerant read — the set is only as fresh as the last re-list plus
-// any write-throughs since (see Update/Delete) — meant for counts and other
-// reconcile-non-critical reads, not for fetching the object a reconcile acts on.
-// It returns nil until the initial list has completed.
-func (n *Informer) List(_ context.Context) []runtime.Object {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	out := make([]runtime.Object, 0, len(n.store))
-	for _, obj := range n.store {
-		out = append(out, obj)
-	}
-	return out
-}
-
-// Update writes obj into the store, keyed by namespace/name. It lets a caller
-// that has just read a fresh object (e.g. a controller fetching the object it is
-// about to reconcile from the API) keep the store warm between re-lists, so a
-// staleness-tolerant List reflects the change without waiting for the next
-// resync. A re-list overwrites the store wholesale, so writes are authoritative
-// only until then.
-func (n *Informer) Update(_ context.Context, obj runtime.Object) {
-	key, err := cache.MetaNamespaceKeyFunc(obj)
-	if err != nil {
-		return
-	}
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if n.store == nil {
-		n.store = map[string]runtime.Object{}
-	}
-	n.store[key] = obj
-}
-
-// Delete removes an object from the store, the write-through counterpart to
-// Update for a caller that has just observed the object is gone (e.g. a
-// reconcile GET returning NotFound).
-func (n *Informer) Delete(_ context.Context, namespace, name string) {
-	key := name
-	if namespace != "" {
-		key = namespace + "/" + name
-	}
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	delete(n.store, key)
-}
 
 // Start begins delivering events to the registered handlers and returns
 // immediately, mirroring SharedInformerFactory.Start so the two are wired the
@@ -299,17 +258,9 @@ func (n *Informer) relist(ctx context.Context, initial bool) {
 		return
 	}
 
-	next := make(map[string]runtime.Object, len(objs))
-	for _, obj := range objs {
-		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
-			next[key] = obj
-		}
-	}
-
-	n.mu.Lock()
-	prev := n.store
-	n.store = next
-	n.mu.Unlock()
+	// Swap the snapshot for the fresh set; removed is the objects that vanished
+	// since the previous re-list, with their last-known state.
+	removed := n.store.Replace(objs)
 
 	for _, obj := range objs {
 		o := obj
@@ -320,16 +271,12 @@ func (n *Informer) relist(ctx context.Context, initial bool) {
 		}
 	}
 
-	// Emit a delete for every object that has vanished since the previous
-	// re-list, carrying its last-known state. Skipped on the initial list, which
-	// has nothing to diff against.
+	// Emit a delete for every vanished object. Skipped on the initial list, which
+	// has nothing to diff against (the store started empty).
 	if initial {
 		return
 	}
-	for key, obj := range prev {
-		if _, ok := next[key]; ok {
-			continue
-		}
+	for _, obj := range removed {
 		o := obj
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}

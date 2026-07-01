@@ -148,7 +148,7 @@ func subject() string {
 func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) *Informer {
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObject, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -236,7 +236,7 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 		}
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -248,7 +248,7 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 }
 
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
 	_, err := n.AddEventHandler(nil)
 	require.Error(t, err)
 }

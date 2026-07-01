@@ -55,7 +55,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			// Historic-job cleanup is resync-driven: the informer's periodic
 			// re-list delivers each job as an update so the handler can act on its
 			// age. There is no apiserver informer to start.
-			historyNatsInformer := informer.NewHistoricJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.historyExpiration)
+			historyNatsInformer := informer.NewHistoricJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.historyExpiration, informer.NewStore())
 			if _, err := historyNatsInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 				return fmt.Errorf("failed to add history job event handler: %w", err)
 			}
@@ -109,7 +109,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	if controllerCfg.jobProcessingEnabled {
 		jobController := controller.NewJobController()
 		if natsWatch {
-			jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+			jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
 			reg, err := jobNatsInformer.AddEventHandler(jobController.EventHandler())
 			if err != nil {
 				return fmt.Errorf("failed to add job event handler: %w", err)

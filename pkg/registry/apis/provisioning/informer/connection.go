@@ -14,7 +14,7 @@ import (
 )
 
 // NewConnectionInformer builds an Informer for connections.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration) *Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -30,5 +30,5 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

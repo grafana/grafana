@@ -76,7 +76,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 
 	var hasSynced cache.InformerSynced
 	if controllerCfg.natsWatch() {
-		natsInformer := informer.NewConnectionInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+		natsInformer := informer.NewConnectionInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
 		reg, err := natsInformer.AddEventHandler(connController.EventHandler())
 		if err != nil {
 			return fmt.Errorf("failed to add connection event handler: %w", err)

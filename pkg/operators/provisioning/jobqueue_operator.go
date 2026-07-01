@@ -51,7 +51,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	var jobHasSynced cache.InformerSynced
 	var startJobInformers func()
 	if controllerCfg.natsWatch() {
-		jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
+		jobNatsInformer := informer.NewJobInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), informer.NewStore())
 		reg, err := jobNatsInformer.AddEventHandler(jobController.EventHandler())
 		if err != nil {
 			return fmt.Errorf("failed to add job event handler: %w", err)

@@ -98,8 +98,11 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	var repoInformer provisioninginformers.RepositoryInformer
 	var informerFactory informers.SharedInformerFactory
 	if controllerCfg.natsWatch() {
-		repoNatsInformer = informer.NewRepositoryInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval())
-		repoGetter = controller.NewClientGetCachedListRepositoryGetter(provisioningClient.ProvisioningV0alpha1(), repoNatsInformer)
+		// One store, shared between the informer (which refreshes it) and the getter
+		// (which reads the quota count and writes fresh reconcile reads back).
+		repoStore := informer.NewStore()
+		repoNatsInformer = informer.NewRepositoryInformer(controllerCfg.natsSubscriber, provisioningClient, "", controllerCfg.ResyncInterval(), repoStore)
+		repoGetter = controller.NewClientGetCachedListRepositoryGetter(provisioningClient.ProvisioningV0alpha1(), repoStore)
 	} else {
 		informerFactory = informers.NewSharedInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
 		repoInformer = informerFactory.Provisioning().V0alpha1().Repositories()

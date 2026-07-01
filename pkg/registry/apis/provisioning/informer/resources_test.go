@@ -97,7 +97,7 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute)
+	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, NewStore())
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -125,7 +125,7 @@ func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
 	sub := newFakeSubscriber()
 	gvr := provisioningapis.HistoricJobResourceInfo.GroupVersionResource()
 
-	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute)
+	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, NewStore())
 	_, err := inf.AddEventHandler(&typeRecorder{})
 	require.NoError(t, err)
 	stopCh := make(chan struct{})

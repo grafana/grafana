@@ -14,7 +14,7 @@ import (
 )
 
 // NewJobInformer builds an Informer for jobs.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration) *Informer {
+func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -30,5 +30,5 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

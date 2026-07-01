@@ -4,10 +4,16 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// Informer aliases the generic NATS-backed informer so provisioning wiring has a
-// single import for both the per-resource constructors (one per file in this
-// package) and the informer type.
+// Informer and Store alias the generic NATS-backed types so provisioning wiring
+// has a single import for the per-resource constructors (one per file in this
+// package), the informer type, and the shared snapshot store.
 type Informer = usinformer.Informer
+
+type Store = usinformer.Store
+
+// NewStore returns an empty snapshot Store to share between an informer and a
+// reader (e.g. the repository quota getter).
+func NewStore() *Store { return usinformer.NewStore() }
 
 // queueGroup is the NATS queue group every provisioning informer joins, so each
 // notification is round-robined to a single replica rather than broadcast to all.
