@@ -68,7 +68,7 @@ jest.mock('../../../api/utils', () => ({
 describe('getSnapshots', () => {
   beforeEach(() => {
     config.appUrl = 'http://snapshots.grafana.com/';
-    config.featureToggles.kubernetesSnapshots = false;
+    config.kubernetesSnapshotsEnabled = false;
     get.mockReset();
   });
 
@@ -100,7 +100,7 @@ describe('getSnapshots', () => {
   });
 
   test('propagates the k8s continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     get.mockResolvedValueOnce(k8sFirstPage);
 
     const result = await getSnapshots();
@@ -111,7 +111,7 @@ describe('getSnapshots', () => {
   });
 
   test('forwards the continue option to the k8s api', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     get.mockResolvedValueOnce(k8sSecondPage);
 
     await getSnapshots({ continue: 'tok-page-2' });
@@ -123,7 +123,7 @@ describe('getSnapshots', () => {
 describe('SnapshotListTable', () => {
   beforeEach(() => {
     config.appUrl = 'http://snapshots.grafana.com/';
-    config.featureToggles.kubernetesSnapshots = false;
+    config.kubernetesSnapshotsEnabled = false;
     get.mockReset();
     del.mockReset().mockResolvedValue(undefined);
     mockContextSrv.hasPermission.mockReturnValue(true);
@@ -140,7 +140,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders Load More when k8s returns a continue token and appends the next page on click', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     get.mockResolvedValueOnce(k8sFirstPage).mockResolvedValueOnce(k8sSecondPage);
 
     const { user } = render(<SnapshotListTable />);
@@ -162,7 +162,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     const singleItemFirstPage = {
       items: [
         {
@@ -193,7 +193,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('renders the empty state only after the first fetch resolves', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     get.mockResolvedValueOnce({ items: [], metadata: { resourceVersion: '1' } });
 
     render(<SnapshotListTable />);
@@ -205,7 +205,7 @@ describe('SnapshotListTable', () => {
   });
 
   test('shows a Retry button when the initial fetch fails and recovers on click', async () => {
-    config.featureToggles.kubernetesSnapshots = true;
+    config.kubernetesSnapshotsEnabled = true;
     get.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(k8sFirstPage);
 
     const { user } = render(<SnapshotListTable />);
