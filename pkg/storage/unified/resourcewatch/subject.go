@@ -1,9 +1,3 @@
-// Package resourcewatch defines the NATS wire contract for watching Kubernetes
-// resources, shared by publishers and consumers: the subject (see subject.go)
-// and the envelope, the resourcepb.WatchNotification proto published on it as
-// marshaled bytes. The envelope carries only version-agnostic metadata, never
-// the object itself — each consumer re-fetches it via GET at its own API
-// version, so a single subject serves every version with no per-version fan-out.
 package resourcewatch
 
 import (
