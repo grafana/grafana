@@ -501,7 +501,9 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
     // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
-    return theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? 8 : 0);
+    return (
+      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
+    );
   }
 
   return 0;
