@@ -390,10 +390,18 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	// UpdateAPIGroupInfo behind FlagDashboardNotebookLayout. Without the flag the
 	// apiserver has no route and admission never dispatches here. If Notebook is
 	// ever added to another version or moved to a subresource, update both the
-	// storage registration and this switch in lockstep. Notebook-layout
-	// validation is added in a later step.
+	// storage registration and this switch in lockstep.
 	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
-		return nil
+		switch op {
+		case admission.Create, admission.Update:
+			notebook, ok := a.GetObject().(*dashv2beta1.Notebook)
+			if !ok {
+				return fmt.Errorf("expected notebook")
+			}
+			return validateNotebook(notebook)
+		default:
+			return nil // delete/connect need no validation
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
