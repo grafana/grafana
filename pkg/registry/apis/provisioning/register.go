@@ -161,7 +161,7 @@ type APIBuilder struct {
 // they do, there is no informer cache (the NATS-backed informer keeps none), so
 // the controllers reconcile through a client-backed getter reading from the API.
 func (b *APIBuilder) natsWatch() bool {
-	return b.natsSubscriber != nil && b.natsSubscriber.Enabled()
+	return nats.Enabled(b.natsSubscriber)
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.

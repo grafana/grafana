@@ -14,6 +14,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -97,7 +98,7 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, NewStore())
+	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -125,7 +126,7 @@ func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
 	sub := newFakeSubscriber()
 	gvr := provisioningapis.HistoricJobResourceInfo.GroupVersionResource()
 
-	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, NewStore())
+	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
 	_, err := inf.AddEventHandler(&typeRecorder{})
 	require.NoError(t, err)
 	stopCh := make(chan struct{})

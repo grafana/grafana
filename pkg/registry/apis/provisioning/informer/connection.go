@@ -19,8 +19,8 @@ import (
 // backs. Under NATS the getter reads reconcile state fresh from the API;
 // otherwise it reads the informer's cache lister.
 func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, controller.ConnectionGetter) {
-	if natsEnabled(subscriber) {
-		source := NewConnectionInformer(subscriber, client, "", resync, NewStore())
+	if nats.Enabled(subscriber) {
+		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
 		return source, controller.NewClientConnectionGetter(client.ProvisioningV0alpha1())
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
@@ -28,7 +28,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 }
 
 // NewConnectionInformer builds an Informer for connections.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}

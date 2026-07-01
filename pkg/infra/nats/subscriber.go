@@ -35,6 +35,13 @@ type Subscriber interface {
 	Subscribe(ctx context.Context, subject string, handler MessageHandler, opts ...SubscribeOption) (Subscription, error)
 }
 
+// Enabled reports whether the subscriber is present and NATS is enabled. It is
+// nil-safe (a nil Subscriber is not enabled), so callers can use it to choose
+// between the NATS path and a fallback without repeating the check.
+func Enabled(subscriber Subscriber) bool {
+	return subscriber != nil && subscriber.Enabled()
+}
+
 // subscribeConfig holds the resolved options for a Subscribe call.
 type subscribeConfig struct {
 	queue string

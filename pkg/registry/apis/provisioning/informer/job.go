@@ -18,14 +18,14 @@ import (
 // subscriber is enabled, otherwise an apiserver-backed SharedIndexInformer. The
 // job controller reads no lister, so callers need only the DeltaSource.
 func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
-	if natsEnabled(subscriber) {
-		return NewJobInformer(subscriber, client, "", resync, NewStore())
+	if nats.Enabled(subscriber) {
+		return NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
 	}
 	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
 }
 
 // NewJobInformer builds an Informer for jobs.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *Store) *Informer {
+func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store *usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
