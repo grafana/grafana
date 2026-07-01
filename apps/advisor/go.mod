@@ -8,13 +8,14 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.56.2
+	github.com/grafana/grafana-app-sdk v0.56.3
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/grafana/grafana-plugin-sdk-go v0.292.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/plugins v0.0.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/sync v0.21.0
 	k8s.io/apimachinery v0.36.1
 	k8s.io/apiserver v0.36.0
 	k8s.io/client-go v0.36.1
@@ -167,7 +168,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.28.0 // indirect
+	github.com/google/cel-go v0.28.1 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
@@ -288,7 +289,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.9 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.43.0 // indirect
@@ -313,7 +314,6 @@ require (
 	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260610154732-fb80ec83bdd9 // indirect
 	golang.org/x/term v0.44.0 // indirect

@@ -97,7 +97,10 @@ func NewSearchOptions(
 				return resource.SearchOptions{}, err
 			}
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
-			searchFieldsProviders = resource.SearchFieldProvidersForBuilders(builders)
+			// Prefer search fields declared in manifests, falling back to the
+			// builder-supplied provider for kinds that don't declare any in CUE.
+			builderProviders := resource.SearchFieldProvidersForBuilders(builders)
+			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests(), builderProviders)
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
