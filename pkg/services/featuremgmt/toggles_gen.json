@@ -177,6 +177,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.syncExternalRuler",
+        "resourceVersion": "1782807464063",
+        "creationTimestamp": "2026-06-30T08:17:44Z"
+      },
+      "spec": {
+        "description": "Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-16T16:42:42Z"
