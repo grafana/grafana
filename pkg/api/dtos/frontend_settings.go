@@ -270,6 +270,7 @@ type FrontendSettingsDTO struct {
 	AwsPerDatasourceHTTPProxyEnabled    bool                           `json:"awsPerDatasourceHTTPProxyEnabled"`
 	SupportBundlesEnabled               bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                     bool                           `json:"snapshotEnabled"`
+	KubernetesSnapshotsEnabled          bool                           `json:"kubernetesSnapshotsEnabled"`
 	SecureSocksDSProxyEnabled           bool                           `json:"secureSocksDSProxyEnabled"`
 	ReportingStaticContext              map[string]string              `json:"reportingStaticContext"`
 

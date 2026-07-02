@@ -61,6 +61,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
@@ -76,6 +77,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 
 		service := &CleanUpService{
 			log:                      log.New("cleanup"),
+			Cfg:                      &setting.Cfg{},
 			Features:                 featuremgmt.WithFeatures(),
 			dashboardSnapshotService: mockSnapService,
 		}
@@ -141,9 +143,10 @@ func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
 
 	t.Run("handles REST config error", func(t *testing.T) {
 		service := &CleanUpService{
-			log:                  log.New("cleanup"),
-			Cfg:                  &setting.Cfg{},
-			Features:             featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots),
+			log: log.New("cleanup"),
+			Cfg: &setting.Cfg{
+				KubernetesSnapshotsEnabled: true,
+			},
 			clientConfigProvider: apiserver.WithoutRestConfig,
 		}
 
@@ -220,9 +223,10 @@ func createK8sCleanupService(t *testing.T, mockDynClient *mockDynamicClient) *Cl
 	}, nil)
 
 	return &CleanUpService{
-		log:      log.New("cleanup"),
-		Cfg:      &setting.Cfg{},
-		Features: featuremgmt.WithFeatures(featuremgmt.FlagKubernetesSnapshots),
+		log: log.New("cleanup"),
+		Cfg: &setting.Cfg{
+			KubernetesSnapshotsEnabled: true,
+		},
 		clientConfigProvider: apiserver.RestConfigProviderFunc(func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{}, nil
 		}),
