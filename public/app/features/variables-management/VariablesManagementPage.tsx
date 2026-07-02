@@ -148,11 +148,7 @@ export default function VariablesManagementPage() {
       <Page navId="dashboards/variables" pageNav={pageNav}>
         <Page.Contents isLoading={!isNew && isLoading}>
           {isNew || editVariable ? (
-            <VariableEditorView
-              source={editVariable}
-              folderTitle={editVariable ? folderTitles[getVariableFolderUid(editVariable) ?? ''] : undefined}
-              onBack={backToList}
-            />
+            <VariableEditorView source={editVariable} onBack={backToList} />
           ) : (
             <EmptyState
               variant="not-found"

@@ -31,8 +31,6 @@ import {
 export interface VariableEditorViewProps {
   /** The variable resource being edited; undefined when creating a new variable. */
   source?: Variable;
-  /** Display title of the folder the variable is scoped to (edit mode only). */
-  folderTitle?: string;
   onBack: () => void;
 }
 
@@ -43,7 +41,7 @@ export interface VariableEditorViewProps {
  * (variable set + time range so query editors can resolve context), and serialized
  * back to a VariableKind on save.
  */
-export function VariableEditorView({ source, folderTitle, onBack }: VariableEditorViewProps) {
+export function VariableEditorView({ source, onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
   // '' represents the root Dashboards folder (global scope), matching the
@@ -103,15 +101,16 @@ export function VariableEditorView({ source, folderTitle, onBack }: VariableEdit
         return;
       }
 
-      if (kind.spec.name === getVariableSpecName(source)) {
+      const sourceFolderUid = getVariableFolderUid(source) ?? '';
+      if (kind.spec.name === getVariableSpecName(source) && folderUid === sourceFolderUid) {
         await updateVariable({ name: sourceName, patch: { spec: toWireVariableSpec(kind) } }).unwrap();
         onBack();
         return;
       }
 
-      // Renaming changes the derived metadata.name, which the backend rejects on
-      // update — create the copy first, then delete the original so a failure can
-      // never lose the variable.
+      // Renaming or moving changes the derived metadata.name, which the backend
+      // rejects on update — create the copy first, then delete the original so a
+      // failure can never lose the variable.
       await createVariable({ variable: buildVariableResource(kind, folderUid) }).unwrap();
       await deleteVariable({ name: sourceName }).unwrap();
       onBack();
@@ -133,34 +132,17 @@ export function VariableEditorView({ source, folderTitle, onBack }: VariableEdit
 
   return (
     <div className={styles.container}>
-      {isNew ? (
-        <Field
-          noMargin
-          className={styles.folderField}
-          label={t('variables-management.editor.folder-label', 'Folder')}
-          description={t(
-            'variables-management.editor.folder-description-new',
-            'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
-          )}
-        >
-          <FolderPicker showRootFolder value={folderUid} onChange={(uid) => setFolderUid(uid ?? '')} />
-        </Field>
-      ) : (
-        <Field
-          noMargin
-          label={t('variables-management.editor.folder-label', 'Folder')}
-          description={t(
-            'variables-management.editor.folder-description-edit',
-            'The folder scope cannot be changed here — use Move on the variables list instead'
-          )}
-        >
-          <div className={styles.scopeValue}>
-            {folderUid
-              ? (folderTitle ?? folderUid)
-              : t('variables-management.editor.scope-global', 'Global (entire organization)')}
-          </div>
-        </Field>
-      )}
+      <Field
+        noMargin
+        className={styles.folderField}
+        label={t('variables-management.editor.folder-label', 'Folder')}
+        description={t(
+          'variables-management.editor.folder-description',
+          'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+        )}
+      >
+        <FolderPicker showRootFolder value={folderUid} onChange={(uid) => setFolderUid(uid ?? '')} />
+      </Field>
 
       <VariableEditorForm variable={sceneVariable} onTypeChange={onTypeChange} onGoBack={onBack} onDelete={onDelete} />
 
@@ -187,9 +169,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   folderField: css({
     maxWidth: theme.spacing(60),
-  }),
-  scopeValue: css({
-    color: theme.colors.text.secondary,
-    padding: theme.spacing(0.5, 0),
   }),
 });

@@ -16728,12 +16728,10 @@
     },
     "editor": {
       "cancel": "Cancel",
-      "folder-description-edit": "The folder scope cannot be changed here — use Move on the variables list instead",
-      "folder-description-new": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
       "folder-label": "Folder",
       "save": "Save",
-      "saving": "Saving...",
-      "scope-global": "Global (entire organization)"
+      "saving": "Saving..."
     },
     "editor-nav": {
       "back-to-list": "Back to variables",

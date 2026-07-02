@@ -190,12 +190,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'th, td': {
       padding: theme.spacing(1),
       textAlign: 'left',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
 
     th: {
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightMedium,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
 
     'tbody tr:hover': {
