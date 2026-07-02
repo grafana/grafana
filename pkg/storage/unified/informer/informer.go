@@ -224,8 +224,8 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 
 	// subscribe opens the live subscription. The embedded NATS server may still be
 	// starting when the informer first runs (no client URL yet), so a failure is
-	// not fatal: it returns false and Run retries on subscribeRetryInterval until
-	// it succeeds. A nil newObject disables live notifications entirely.
+	// not fatal: it returns false and Run retries on retryInterval until it
+	// succeeds. A nil newObject disables live notifications entirely.
 	subscribe := func() bool {
 		// No live subscription when notifications are disabled (nil newObject) or
 		// there is no enabled subscriber (nil/typed-nil/disabled): the periodic
