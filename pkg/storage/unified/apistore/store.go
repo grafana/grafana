@@ -748,6 +748,8 @@ func (s *Storage) GuaranteedUpdate(
 			err = resource.GetError(resource.AsErrorResult(err))
 		} else if updateResponse.Error != nil {
 			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+				// finish deletes the secure values created this attempt before we retry
+				_ = v.finish(ctx, resource.GetError(updateResponse.Error), s.opts.SecureValues)
 				continue // try the read again
 			}
 			err = resource.GetError(updateResponse.Error)
