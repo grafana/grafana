@@ -118,11 +118,6 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 	})
 
 	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {
-		// prefapi's K8sClient.GetMerged (used by the index page when the
-		// reroute flag is on) fetches the custom "preferences/merged" route
-		// through the dynamic client as if it were a resource named "merged".
-		// This asserts that URL shape reaches the merged handler and not the
-		// regular {name} storage handler (which would return 404).
 		admin := helper.Org1.Admin
 		adminName := "user-" + admin.Identity.GetIdentifier()
 		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))

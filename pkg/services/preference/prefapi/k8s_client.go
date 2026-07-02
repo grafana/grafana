@@ -69,9 +69,7 @@ func (k *k8sClient) Get(ctx context.Context, owner prefutils.OwnerReference) (*p
 
 // GetMerged fetches the merged preferences for the requester: user, team and
 // namespace preferences combined with the configured defaults, in that
-// priority order. The custom "preferences/merged" route shares the URL shape
-// of a resource named "merged", so the dynamic client fetches it like a
-// regular object.
+// priority order.
 func (k *k8sClient) GetMerged(ctx context.Context) (*preferences.PreferencesSpec, error) {
 	client, err := k.getClient(ctx)
 	if err != nil {

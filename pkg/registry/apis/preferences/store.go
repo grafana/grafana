@@ -39,9 +39,9 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 	return s.ListPreferences(ctx, options)
 }
 
-// Update implements rest.Updater with upsert semantics: a PUT or PATCH for an
+// Update with upsert: a PUT or PATCH for an
 // owner whose preferences don't exist yet creates them instead of returning
-// 404. The legacy storage upserts on its own (see legacy.preferenceStorage.Update).
+// 404. The legacy storage upserts on its own (see legacy.preferenceStorage.Update)
 func (s *preferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	_, err := s.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
