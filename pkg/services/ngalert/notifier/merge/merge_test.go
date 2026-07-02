@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,7 @@ func TestReceivers(t *testing.T) {
 		incoming        []*v1.PostableApiReceiver
 		expected        []*v1.PostableApiReceiver
 		expectedRenames map[string]string
+		expectedAdded   []string
 	}{
 		{
 			name: "should append copies of incoming to existing",
@@ -57,6 +59,7 @@ func TestReceivers(t *testing.T) {
 				r3,
 			},
 			expectedRenames: map[string]string{},
+			expectedAdded:   []string{"r1", "r3"},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -73,6 +76,7 @@ func TestReceivers(t *testing.T) {
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix,
 			},
+			expectedAdded: []string{"r2" + suffix},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -91,6 +95,7 @@ func TestReceivers(t *testing.T) {
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_01",
 			},
+			expectedAdded: []string{"r2" + suffix + "_01"},
 		},
 		{
 			name: "should keep names unique across both sets",
@@ -111,6 +116,7 @@ func TestReceivers(t *testing.T) {
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_02",
 			},
+			expectedAdded: []string{"r2" + suffix + "_02", "r2" + suffix + "_01"},
 		},
 	}
 	for _, tc := range testCases {
@@ -123,9 +129,10 @@ func TestReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames := Receivers(tc.existing, tc.incoming, suffix)
+			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, suffix)
 			require.Len(t, actual, len(tc.expected))
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
+			assert.Equal(t, tc.expectedAdded, actualAdded)
 			for i := range tc.expected {
 				assert.EqualValues(t, tc.expected[i], actual[i])
 				if i < len(tc.existing) {
@@ -174,6 +181,7 @@ func TestTimeIntervals(t *testing.T) {
 		incomingTimeIntervals []v1.TimeInterval
 		expected              []v1.TimeInterval
 		expectedRenames       map[string]string
+		expectedAdded         []string
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
@@ -196,6 +204,7 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti4"),
 			},
 			expectedRenames: map[string]string{},
+			expectedAdded:   []string{"mti3", "ti4"},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -221,6 +230,7 @@ func TestTimeIntervals(t *testing.T) {
 				"ti2":  "ti2" + suffix,
 				"mti1": "mti1" + suffix,
 			},
+			expectedAdded: []string{"ti2" + suffix, "mti1" + suffix},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -246,6 +256,7 @@ func TestTimeIntervals(t *testing.T) {
 				"ti1" + suffix: "ti1" + suffix + suffix,
 				"ti1":          "ti1" + suffix + "_01",
 			},
+			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + suffix},
 		},
 		{
 			name: "should rename dupe among incoming",
@@ -266,6 +277,7 @@ func TestTimeIntervals(t *testing.T) {
 			expectedRenames: map[string]string{
 				"ti2": "ti2" + suffix + "_01",
 			},
+			expectedAdded: []string{"ti2" + suffix, "ti2" + suffix + "_01"},
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
@@ -292,6 +304,7 @@ func TestTimeIntervals(t *testing.T) {
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
 			},
+			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + "_02", "ti2"},
 		},
 	}
 	for _, tc := range testCases {
@@ -310,9 +323,10 @@ func TestTimeIntervals(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, suffix)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
+			assert.Equal(t, tc.expectedAdded, actualAdded)
 
 			// check that existing and incoming lists are not changed
 			var names []string
@@ -387,19 +401,19 @@ func TestMergeExtraConfig(t *testing.T) {
 		}
 	}
 
-	buildExpectedManaged := func(t *testing.T, mimirYAML string, renames RenameResources) (v1.ManagedRoutes, v1.ManagedInhibitionRules) {
+	buildExpectedManaged := func(t *testing.T, mimirYAML string, renames RenameResources) (v1.ManagedRoutes, map[v1.ResourceUID]v1.InhibitionRule) {
 		t.Helper()
 		extra := v1.ExtraConfiguration{Identifier: identifier, AlertmanagerConfig: mimirYAML}
 		mcfg, err := extra.GetAlertmanagerConfig()
 		require.NoError(t, err)
 		route := mcfg.Route
 		RenameResourceUsagesInRoutes([]*v1.Route{route}, renames)
-		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules, v1.Provenance(models.ProvenanceConvertedPrometheus))
+		inhibitRules, _, err := MergeInhibitionRules(nil, mcfg.InhibitRules, identifier)
 		require.NoError(t, err)
 		return v1.ManagedRoutes{identifier: route}, inhibitRules
 	}
 
-	assertResult := func(t *testing.T, expected, actual MergeResult) {
+	assertConfig := func(t *testing.T, expected, actual v1.AMConfigV1) {
 		t.Helper()
 		diff := cmp.Diff(expected, actual,
 			cmpopts.IgnoreUnexported(commoncfg.ProxyConfig{}, labels.Matcher{}),
@@ -420,7 +434,7 @@ func TestMergeExtraConfig(t *testing.T) {
 			}),
 		)
 		if !assert.Empty(t, diff) {
-			data, err := yaml.Marshal(actual.Config)
+			data, err := yaml.Marshal(actual)
 			require.NoError(t, err)
 			t.Fatalf("YAML:\n%v", string(data))
 		}
@@ -428,57 +442,47 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should merge all resources, no renames", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirConfig, RenameResources{})
-		assertResult(t, MergeResult{
-			Config: v1.AMConfigV1{
-				AlertmanagerConfig:     *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-				ManagedRoutes:          expectedRoutes,
-				ManagedInhibitionRules: expectedInhibitRules,
-			},
-			Identifier: identifier,
-		}, result)
+		assertConfig(t, v1.AMConfigV1{
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
+			ManagedRoutes:      expectedRoutes,
+			InhibitionRules:    expectedInhibitRules,
+		}, config)
 	})
 
 	t.Run("should populate intervals by defaults", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirNoIntervals)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
 		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirNoIntervals, RenameResources{})
-		assertResult(t, MergeResult{
-			Config: v1.AMConfigV1{
-				AlertmanagerConfig:     *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
-				ManagedRoutes:          expectedRoutes,
-				ManagedInhibitionRules: expectedInhibitRules,
-			},
-			Identifier: identifier,
-		}, result)
+		assertConfig(t, v1.AMConfigV1{
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) { p.Global = nil }),
+			ManagedRoutes:      expectedRoutes,
+			InhibitionRules:    expectedInhibitRules,
+		}, config)
 	})
 
 	t.Run("should rename receivers and refactor usages", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		renames := RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier}}
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithExtraReceiver, renames)
-		assertResult(t, MergeResult{
-			Config: v1.AMConfigV1{
-				AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-					p.Global = nil
-					p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-						Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
-					})
-				}),
-				ManagedRoutes:          expectedRoutes,
-				ManagedInhibitionRules: expectedInhibitRules,
-			},
-			RenameResources: renames,
-			Identifier:      identifier,
-		}, result)
+		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithExtraReceiver,
+			RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier}})
+		assertConfig(t, v1.AMConfigV1{
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
+				p.Global = nil
+				p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
+					Receiver: definition.Receiver{Name: "grafana-default-email" + identifier},
+				})
+			}),
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
+		}, config)
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
@@ -488,86 +492,78 @@ func TestMergeExtraConfig(t *testing.T) {
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		renames := RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier + "_01"}}
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithOnlyExtraReceiver, renames)
-		assertResult(t, MergeResult{
-			Config: v1.AMConfigV1{
-				AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-					p.Global = nil
-					p.Receivers = append(p.Receivers,
-						&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
-						&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
-					)
-				}),
-				ManagedRoutes:          expectedRoutes,
-				ManagedInhibitionRules: expectedInhibitRules,
-			},
-			RenameResources: renames,
-			Identifier:      identifier,
-		}, result)
+		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirWithOnlyExtraReceiver,
+			RenameResources{Receivers: map[string]string{"grafana-default-email": "grafana-default-email" + identifier + "_01"}})
+		assertConfig(t, v1.AMConfigV1{
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
+				p.Global = nil
+				p.Receivers = append(p.Receivers,
+					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier}},
+					&v1.PostableApiReceiver{Receiver: definition.Receiver{Name: "grafana-default-email" + identifier + "_01"}},
+				)
+			}),
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
+		}, config)
 	})
 
 	t.Run("should rename time intervals and refactor usages", func(t *testing.T) {
 		// fullMimirSwappedIntervals has mute_time_intervals=[ti-1] and time_intervals=[ti-2, mti-1],
 		// intentionally swapping names to verify uniqueness is enforced across both fields.
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirSwappedIntervals)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		renames := RenameResources{TimeIntervals: map[string]string{"ti-1": "ti-1" + identifier, "mti-1": "mti-1" + identifier}}
-		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirSwappedIntervals, renames)
-		assertResult(t, MergeResult{
-			Config: v1.AMConfigV1{
-				AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
-					p.Global = nil
-					// Keep mti-1 and ti-1 from base; mti-2 is absent in fullMimirSwappedIntervals.
-					// Incoming: mute ti-1 (renamed) → ti-1+id, time ti-2 (no conflict), time mti-1 (renamed) → mti-1+id.
-					p.TimeIntervals = []v1.TimeInterval{
-						p.TimeIntervals[0], // mti-1 (existing mute, folded)
-						p.TimeIntervals[1], // ti-1
-						{Name: "ti-1" + identifier},
-						p.TimeIntervals[3], // ti-2 (incoming time, no conflict)
-						{Name: "mti-1" + identifier},
-					}
-				}),
-				ManagedRoutes:          expectedRoutes,
-				ManagedInhibitionRules: expectedInhibitRules,
-			},
-			RenameResources: renames,
-			Identifier:      identifier,
-		}, result)
+		expectedRoutes, expectedInhibitRules := buildExpectedManaged(t, fullMimirSwappedIntervals,
+			RenameResources{TimeIntervals: map[string]string{"ti-1": "ti-1" + identifier, "mti-1": "mti-1" + identifier}})
+		assertConfig(t, v1.AMConfigV1{
+			AlertmanagerConfig: *load(t, fullMergedConfig, func(p *v1.PostableApiAlertingConfig) {
+				p.Global = nil
+				// Keep mti-1 and ti-1 from base; mti-2 is absent in fullMimirSwappedIntervals.
+				// Incoming: mute ti-1 (renamed) → ti-1+id, time ti-2 (no conflict), time mti-1 (renamed) → mti-1+id.
+				p.TimeIntervals = []v1.TimeInterval{
+					p.TimeIntervals[0], // mti-1 (existing mute, folded)
+					p.TimeIntervals[1], // ti-1
+					{Name: "ti-1" + identifier},
+					p.TimeIntervals[3], // ti-2 (incoming time, no conflict)
+					{Name: "mti-1" + identifier},
+				}
+			}),
+			ManagedRoutes:   expectedRoutes,
+			InhibitionRules: expectedInhibitRules,
+		}, config)
 	})
 
 	t.Run("should not modify the base Grafana config", func(t *testing.T) {
 		g := load(t, fullGrafanaConfig)
 		input := withExtra(t, g, fullMimirConfig)
-		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 		assert.Equal(t, load(t, fullGrafanaConfig), g)
 	})
 
 	t.Run("should return base config unchanged if no extra configs", func(t *testing.T) {
 		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
-		assert.Equal(t, input, result.Config)
+		assert.Equal(t, input, config)
 	})
 
 	t.Run("should fail if identifier is empty", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = ""
 		})
-		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, "identifier is required")
 	})
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = v1.ManagedRoutes{identifier: nil}
-		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
 
@@ -575,39 +571,87 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.Identifier = models.DefaultRoutingTreeName
 		})
-		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, models.DefaultRoutingTreeName)
+	})
+
+	t.Run("should populate stats with added resource names", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
+		_, result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assert.Equal(t, identifier, result.AddedRoute)
+		assert.ElementsMatch(t, []string{"recv", "recv2"}, result.AddedReceivers)
+		assert.ElementsMatch(t, []string{"mti-2", "ti-2"}, result.AddedTimeIntervals)
+		assert.Empty(t, result.AddedTemplates)
+		assert.Len(t, result.AddedInhibitionRules, 1)
+	})
+
+	t.Run("should report renamed receiver in stats", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirWithExtraReceiver)
+		_, result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assert.ElementsMatch(t, []string{"recv", "recv2", "grafana-default-email" + identifier}, result.AddedReceivers)
+	})
+
+	t.Run("should report added template names in stats", func(t *testing.T) {
+		templateName := "my-template"
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
+			e.TemplateFiles = map[string]string{templateName: `{{ define "my-template" }}test{{ end }}`}
+		})
+		config, result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, templateName, result.AddedTemplates[0])
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == templateName {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "template %q should be present in merged config", templateName)
+	})
+
+	t.Run("should return empty stats when no extra configs", func(t *testing.T) {
+		input := v1.AMConfigV1{AlertmanagerConfig: *load(t, fullGrafanaConfig)}
+		_, result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		assert.Equal(t, MergeResult{}, result)
 	})
 
 	t.Run("should add extra route to ManagedRoutes", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		require.Contains(t, result.Config.ManagedRoutes, identifier)
-		assert.Equal(t, "recv", result.Config.ManagedRoutes[identifier].Receiver)
+		require.Contains(t, config.ManagedRoutes, identifier)
+		assert.Equal(t, "recv", config.ManagedRoutes[identifier].Receiver)
 	})
 
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = v1.ManagedRoutes{"existing-managed": {Receiver: "existing"}}
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		assert.Contains(t, result.Config.ManagedRoutes, "existing-managed")
-		assert.Contains(t, result.Config.ManagedRoutes, identifier)
+		assert.Contains(t, config.ManagedRoutes, "existing-managed")
+		assert.Contains(t, config.ManagedRoutes, identifier)
 	})
 
 	t.Run("should add inhibition rules to ManagedInhibitionRules with identifier scope", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		require.Len(t, result.Config.ManagedInhibitionRules, 1)
-		for _, rule := range result.Config.ManagedInhibitionRules {
+		require.Len(t, config.InhibitionRules, 1)
+		for _, rule := range config.InhibitionRules {
 			hasSourceScope := false
 			for _, m := range rule.SourceMatchers {
-				if m.Name == models.NamedRouteLabel && m.Value == identifier {
+				if m.Label == models.NamedRouteLabel && m.Value == identifier {
 					hasSourceScope = true
 					break
 				}
@@ -616,7 +660,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 			hasTargetScope := false
 			for _, m := range rule.TargetMatchers {
-				if m.Name == models.NamedRouteLabel && m.Value == identifier {
+				if m.Label == models.NamedRouteLabel && m.Value == identifier {
 					hasTargetScope = true
 					break
 				}
@@ -631,15 +675,22 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: templateContent}
 		})
-		result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, result, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
-		expectedUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
-		require.Contains(t, result.Config.Templates, expectedUID)
-		assert.Equal(t, templateName, result.Config.Templates[expectedUID].Title)
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, templateName, result.AddedTemplates[0])
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == templateName && tmpl.Content == templateContent {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "template %q should be present in merged config", templateName)
 	})
 
-	t.Run("should fail on duplicate template", func(t *testing.T) {
+	t.Run("should rename incoming template when same Mimir name already exists", func(t *testing.T) {
 		templateName := "my-template"
 		templateContent := `{{ define "my-template" }}test{{ end }}`
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
@@ -647,9 +698,225 @@ func TestMergeExtraConfig(t *testing.T) {
 		})
 		existingUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
 		input.Templates = map[v1.ResourceUID]v1.TemplateGroup{
-			existingUID: v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
+			existingUID: v1.NewTemplateGroup(existingUID, templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
 		}
-		_, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
-		require.ErrorContains(t, err, templateName)
+		config, result, err := MergeExtraConfig(context.Background(), &input)
+		require.NoError(t, err)
+
+		renamedName := templateName + identifier
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, renamedName, result.AddedTemplates[0])
+		assert.Equal(t, map[string]string{templateName: renamedName}, result.Templates)
+		require.Contains(t, config.Templates, existingUID, "original template should be preserved")
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == renamedName {
+				found = true
+			}
+		}
+		assert.True(t, found, "renamed template %q should be present", renamedName)
+	})
+}
+
+func TestMergeInhibitionRules(t *testing.T) {
+	mkMatcher := func(name, value string) *labels.Matcher {
+		return &labels.Matcher{Type: labels.MatchEqual, Name: name, Value: value}
+	}
+	rule := func(srcLabel, tgtLabel string) config.InhibitRule {
+		return config.InhibitRule{
+			SourceMatchers: config.Matchers{mkMatcher("alertname", srcLabel)},
+			TargetMatchers: config.Matchers{mkMatcher("alertname", tgtLabel)},
+		}
+	}
+
+	t.Run("empty incoming returns existing unchanged with empty added", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.InhibitionRule{
+			"uid1": v1.NewInhibitionRule("uid1", nil, nil, nil, models.ProvenanceNone),
+		}
+		result, added, err := MergeInhibitionRules(existing, nil, "id")
+		require.NoError(t, err)
+		assert.Equal(t, existing, result)
+		assert.Empty(t, added)
+	})
+
+	t.Run("existing rules are preserved alongside incoming", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.InhibitionRule{
+			"existing-uid": v1.NewInhibitionRule("existing-uid", nil, nil, nil, models.ProvenanceNone),
+		}
+		result, added, err := MergeInhibitionRules(existing, []config.InhibitRule{rule("src", "tgt")}, "id")
+		require.NoError(t, err)
+		assert.Contains(t, result, v1.ResourceUID("existing-uid"))
+		assert.Len(t, result, 2)
+		assert.Len(t, added, 1)
+	})
+
+	t.Run("identifier scope matcher is appended last on both source and target", func(t *testing.T) {
+		identifier := "my-scope"
+		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("critical", "warning")}, identifier)
+		require.NoError(t, err)
+		require.Len(t, added, 1)
+		ir := result[v1.ResourceUID(added[0])]
+
+		require.NotEmpty(t, ir.SourceMatchers)
+		last := ir.SourceMatchers[len(ir.SourceMatchers)-1]
+		assert.Equal(t, models.NamedRouteLabel, last.Label)
+		assert.Equal(t, identifier, last.Value)
+
+		require.NotEmpty(t, ir.TargetMatchers)
+		last = ir.TargetMatchers[len(ir.TargetMatchers)-1]
+		assert.Equal(t, models.NamedRouteLabel, last.Label)
+		assert.Equal(t, identifier, last.Value)
+	})
+
+	t.Run("UID is deterministic for the same inputs", func(t *testing.T) {
+		incoming := []config.InhibitRule{rule("src", "tgt")}
+		result1, added1, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		result2, added2, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("different rules produce different UIDs", func(t *testing.T) {
+		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("a", "b"), rule("c", "d")}, "id")
+		require.NoError(t, err)
+		require.Len(t, added, 2)
+		assert.NotEqual(t, added[0], added[1])
+		assert.Len(t, result, 2)
+	})
+
+	t.Run("deprecated source_match and target_match fields are folded in", func(t *testing.T) {
+		incoming := []config.InhibitRule{
+			{
+				SourceMatch: map[string]string{"alertname": "test"},
+				TargetMatch: map[string]string{"severity": "warning"},
+			},
+		}
+		result, added, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		require.Len(t, added, 1)
+		ir := result[v1.ResourceUID(added[0])]
+
+		var hasSourceLabel, hasTargetLabel bool
+		for _, m := range ir.SourceMatchers {
+			if m.Label == "alertname" && m.Value == "test" {
+				hasSourceLabel = true
+			}
+		}
+		for _, m := range ir.TargetMatchers {
+			if m.Label == "severity" && m.Value == "warning" {
+				hasTargetLabel = true
+			}
+		}
+		assert.True(t, hasSourceLabel)
+		assert.True(t, hasTargetLabel)
+	})
+
+	t.Run("deprecated match fields produce stable UID regardless of map iteration order", func(t *testing.T) {
+		// Build a rule with multiple deprecated match entries. Map iteration is non-deterministic,
+		// so the test validates that the UID is identical across repeated calls.
+		incoming := []config.InhibitRule{
+			{
+				SourceMatch: map[string]string{"alertname": "fire", "severity": "critical", "team": "ops"},
+				TargetMatch: map[string]string{"alertname": "warn", "region": "eu"},
+			},
+		}
+		_, added1, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		_, added2, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+	})
+}
+
+func TestMergeTemplates(t *testing.T) {
+	t.Run("nil existing and nil incoming returns empty maps", func(t *testing.T) {
+		result, renames, added, err := MergeTemplates(nil, nil, "id")
+		require.NoError(t, err)
+		assert.Empty(t, result)
+		assert.Empty(t, renames)
+		assert.Empty(t, added)
+	})
+
+	t.Run("existing templates are preserved unchanged", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "tmpl1", "{{ define \"tmpl1\" }}hello{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI),
+		}
+		result, renames, added, err := MergeTemplates(existing, nil, "id")
+		require.NoError(t, err)
+		assert.Equal(t, existing, result)
+		assert.Empty(t, renames)
+		assert.Empty(t, added)
+	})
+
+	t.Run("incoming templates added with Mimir kind and ProvenanceNone", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "tmpl1", "{{ define \"tmpl1\" }}hello{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"tmpl2": "{{ define \"tmpl2\" }}world{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "id")
+		require.NoError(t, err)
+		assert.Contains(t, result, v1.ResourceUID("uid1"))
+		assert.Len(t, result, 2)
+		assert.Empty(t, renames)
+		require.Len(t, added, 1)
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "tmpl2", tmpl.Title)
+		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
+		assert.Equal(t, models.ProvenanceNone, tmpl.Provenance)
+	})
+
+	t.Run("UID is deterministic for same name, content, identifier", func(t *testing.T) {
+		incoming := map[string]string{"tmpl": "{{ define \"tmpl\" }}body{{ end }}"}
+		_, _, added1, err := MergeTemplates(nil, incoming, "id")
+		require.NoError(t, err)
+		_, _, added2, err := MergeTemplates(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+	})
+
+	t.Run("different identifier produces different UID for the same template", func(t *testing.T) {
+		incoming := map[string]string{"tmpl": "{{ define \"tmpl\" }}body{{ end }}"}
+		_, _, added1, err := MergeTemplates(nil, incoming, "id-a")
+		require.NoError(t, err)
+		_, _, added2, err := MergeTemplates(nil, incoming, "id-b")
+		require.NoError(t, err)
+		assert.NotEqual(t, added1[0], added2[0])
+	})
+
+	t.Run("incoming Mimir name conflicting with existing Mimir is renamed", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "foo", "{{ define \"foo\" }}v1{{ end }}", v1.TemplateKindMimir, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"foo": "{{ define \"foo\" }}v2{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "suffix")
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"foo": "foosuffix"}, renames)
+		require.Len(t, added, 1)
+		assert.Contains(t, result, v1.ResourceUID("uid1"), "original template should be preserved")
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "foosuffix", tmpl.Title)
+		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
+	})
+
+	t.Run("incoming Mimir name conflicting with existing Grafana is NOT renamed", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "foo", "{{ define \"foo\" }}grafana{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"foo": "{{ define \"foo\" }}mimir{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "suffix")
+		require.NoError(t, err)
+		assert.Empty(t, renames)
+		require.Len(t, added, 1)
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "foo", tmpl.Title)
+		assert.Len(t, result, 2)
 	})
 }

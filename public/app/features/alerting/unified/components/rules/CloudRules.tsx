@@ -159,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function CreateRecordingRuleButton() {
+function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const location = useLocation();
 

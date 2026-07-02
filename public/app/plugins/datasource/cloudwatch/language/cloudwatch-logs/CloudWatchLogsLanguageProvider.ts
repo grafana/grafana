@@ -27,7 +27,7 @@ import syntax, {
   STRING_FUNCTIONS,
 } from './syntax';
 
-export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
+type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
 type TypeaheadContext = {
   history?: CloudWatchHistoryItem[];

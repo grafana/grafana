@@ -1,21 +1,8 @@
-import type {
-  AppPluginConfig,
-  PluginExtensionAddedLinkConfig,
-  PluginExtensionExposedComponentConfig,
-  PluginExtensionAddedComponentConfig,
-} from '@grafana/data';
+import type { AppPluginConfig } from '@grafana/data';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { pluginImporter } from './importer/pluginImporter';
-
-export type PluginPreloadResult = {
-  pluginId: string;
-  error?: unknown;
-  exposedComponentConfigs: PluginExtensionExposedComponentConfig[];
-  addedComponentConfigs?: PluginExtensionAddedComponentConfig[];
-  addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
-};
 
 const preloadPromises = new Map<string, Promise<void>>();
 

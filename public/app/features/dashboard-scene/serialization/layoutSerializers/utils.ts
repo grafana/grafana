@@ -41,7 +41,7 @@ import { type DashboardGridItem } from '../../scene/layout-default/DashboardGrid
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
@@ -58,7 +58,11 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown = (queryOptions.timeFrom || queryOptions.timeShift) && !queryOptions.hideTimeOverride;
@@ -96,6 +100,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     }),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   // Set up Angular migration handler if migration data is present
@@ -119,8 +124,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
-  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
-
   return new VizPanel(vizPanelState);
 }
 
@@ -134,7 +137,11 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
@@ -163,6 +170,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
       defaults: {},
       overrides: [],
     },
+    _UNSAFE_clearPreviousFieldValues: true,
   };
 
   if (!config.publicDashboardAccessToken) {
@@ -171,12 +179,10 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     });
   }
 
-  vizPanelState._UNSAFE_clearPreviousFieldValues = Boolean(config.featureToggles.clearPreviousFieldValues);
-
   return new VizPanel(vizPanelState);
 }
 
-export function createPanelDataProvider(
+function createPanelDataProvider(
   panelKind: PanelKind,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
@@ -423,10 +429,6 @@ export function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuer
     ...(datasource ? { datasource } : {}),
     ...query.spec.query.spec,
   };
-}
-
-export function getLayout(sceneState: DashboardLayoutManager): DashboardV2Spec['layout'] {
-  return sceneState.serialize();
 }
 
 export function getConditionalRendering(

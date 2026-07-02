@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -38,8 +38,6 @@ const setup = async () => {
 
 const mockReload = jest.fn();
 const originalLocation = window.location;
-
-testWithFeatureToggles({ enable: ['grafanaconThemes'] });
 
 beforeEach(() => {
   mockReload.mockClear();

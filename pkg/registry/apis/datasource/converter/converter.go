@@ -58,6 +58,9 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		Spec:   datasourceV0.UnstructuredSpec{},
 		Secure: ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
+	if ds.Version > 0 {
+		obj.ResourceVersion = strconv.FormatInt(int64(ds.Version), 10)
+	}
 	obj.UID = gapiutil.CalculateClusterWideUID(obj)
 	obj.Spec.SetTitle(ds.Name).
 		SetAccess(string(ds.Access)).
@@ -75,25 +78,18 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		obj.Spec.SetJSONData(ds.JsonData.Interface())
 	}
 
-	rv := int64(0)
 	if !ds.Created.IsZero() {
 		obj.CreationTimestamp = metav1.NewTime(ds.Created)
-		rv = ds.Created.UnixMilli()
 	}
 
 	// Only mark updated if the times have actually changed
 	if !ds.Updated.IsZero() {
-		rv = ds.Updated.UnixMilli()
-		delta := rv - obj.CreationTimestamp.UnixMilli()
+		delta := ds.Updated.UnixMilli() - obj.CreationTimestamp.UnixMilli()
 		if delta > 1500 {
 			obj.Annotations = map[string]string{
 				utils.AnnoKeyUpdatedTimestamp: ds.Updated.UTC().Format(time.RFC3339),
 			}
 		}
-	}
-
-	if rv > 0 {
-		obj.ResourceVersion = strconv.FormatInt(rv, 10)
 	}
 
 	if ds.APIVersion != "" {
@@ -175,6 +171,7 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		return nil, err
 	}
 
+	version, _ := strconv.Atoi(ds.ResourceVersion)
 	cmd := &datasources.UpdateDataSourceCommand{
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
@@ -192,7 +189,7 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		ReadOnly:        ds.Spec.ReadOnly(),
 
 		// The only field different than add
-		Version: int(ds.Generation),
+		Version: version,
 	}
 
 	jsonData := ds.Spec.JSONData()

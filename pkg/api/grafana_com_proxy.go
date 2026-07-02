@@ -19,6 +19,7 @@ import (
 var ssoTokenAllowedPaths = []*regexp.Regexp{
 	regexp.MustCompile(`^/?plugins$`),
 	regexp.MustCompile(`^/?plugins/[^/]+$`),
+	regexp.MustCompile(`^/?plugins/[^/]+/entitlement$`),
 	regexp.MustCompile(`^/?plugins/[^/]+/versions$`),
 	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+$`),
 	regexp.MustCompile(`^/?plugins/[^/]+/versions/[^/]+/logos/[^/]+$`),

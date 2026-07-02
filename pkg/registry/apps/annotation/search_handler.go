@@ -131,5 +131,11 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		opts.CreatedBy = v
 	}
 
+	if v := queryParams.Get("legacyID"); v != "" {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil && id > 0 {
+			opts.LegacyID = id
+		}
+	}
+
 	return opts
 }

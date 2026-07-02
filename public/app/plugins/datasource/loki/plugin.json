@@ -69,6 +69,19 @@
     { "method": "POST", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
     { "method": "DELETE", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
 
+    {
+      "method": "GET",
+      "path": "/prometheus/api/v1/rules",
+      "reqRole": "Viewer",
+      "reqAction": "alert.rules.external:read"
+    },
+    {
+      "method": "GET",
+      "path": "/prometheus/api/v1/alerts",
+      "reqRole": "Viewer",
+      "reqAction": "alert.rules.external:read"
+    },
+
     { "method": "GET", "path": "/loki/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
     { "method": "POST", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
     {

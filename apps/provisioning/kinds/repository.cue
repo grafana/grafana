@@ -108,6 +108,11 @@ repository: {
 					// The API path is appended automatically. Trailing slashes are stripped.
 					// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
 					baseUrl?: string
+					// Disabled turns off webhook integration for this repository. When true,
+					// Grafana will not register or receive webhook events from the Git provider
+					// and will poll the repository on an interval instead. Use this when Grafana
+					// is not reachable from the public internet.
+					disabled?: bool
 				}
 				#CommitOptions: {
 					// Template for commit messages produced by single-resource UI operations
@@ -116,6 +121,20 @@ repository: {
 					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
 					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 					singleResourceMessageTemplate?: string
+					// Name used as the commit signer. Required for the signing key's
+					// identity to match the commit, which providers need to mark commits
+					// as Verified. When empty, defaults to "Grafana".
+					signerName?: string
+					// Email used as the commit signer. Must match the signing key's
+					// identity and a verified email on the account where the matching
+					// public key is registered. When empty, defaults to
+					// "noreply@grafana.com".
+					signerEmail?: string
+					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
+					signingMethod?: "gpg" | "ssh" | "smime"
+					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+					// signingMethod is "smime". This is public, not a secret.
+					smimeCertificate?: string
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed

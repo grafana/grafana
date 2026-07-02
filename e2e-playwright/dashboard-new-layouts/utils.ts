@@ -5,22 +5,7 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Panel, Sidebar } from './page-objects';
-
 export const flows = {
-  async changePanelTitle(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    oldPanelTitle: string,
-    newPanelTitle: string
-  ) {
-    const page = dashboardPage.ctx.page;
-    const panel = new Panel(page, dashboardPage, selectors);
-    const sidebar = new Sidebar(page, dashboardPage, selectors);
-    await panel.deselectAll();
-    await panel.selectByTitle(oldPanelTitle);
-    await sidebar.panelOptions.getTitleInput().fill(newPanelTitle);
-  },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
     await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();

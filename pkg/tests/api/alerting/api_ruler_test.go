@@ -716,28 +716,15 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 func TestIntegrationAlertRulePostExport(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
-	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, env := getStandardSharedEnv(t)
 	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
-
-	// Create a user to make authenticated requests
-	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	userID := standardGrafanaUserID
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder1", "folder1")
+	folderUID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	var group1 apimodels.PostableRuleGroupConfig
 
@@ -751,7 +738,7 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, json.Unmarshal(getGroup1Raw, &expected))
 
-		status, actualRaw := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, actualRaw := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})
@@ -776,14 +763,14 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 
 		require.Empty(t, diff)
 
-		require.Equal(t, actual.Groups[0].Folder, "folder1")
+		require.Equal(t, actual.Groups[0].Folder, folderUID)
 	})
 
 	t.Run("should return 403 when no access to folder", func(t *testing.T) {
-		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID)
 		apiClient.ReloadCachedPermissions(t)
 
-		status, _ := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, _ := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})

@@ -1,6 +1,6 @@
 import { type Page } from 'playwright-core';
 
-import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type Components, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
@@ -13,7 +13,12 @@ test.describe(
   () => {
     const DATASOURCE_NAME = 'aprometheusAnnotationDS';
 
-    test('should navigate to variable query editor', async ({ page, selectors, createDataSourceConfigPage }) => {
+    test('should navigate to variable query editor', async ({
+      page,
+      selectors,
+      createDataSourceConfigPage,
+      components,
+    }) => {
       const annotationName = 'promAnnotation';
 
       await createDataSourceConfigPage({ type: 'prometheus', name: DATASOURCE_NAME });
@@ -25,7 +30,7 @@ test.describe(
       await navigateToAnnotations(page, selectors);
 
       // Add Prometheus annotation
-      await addPrometheusAnnotation(page, selectors, annotationName);
+      await addPrometheusAnnotation(page, selectors, annotationName, components);
 
       // Open metrics browser
       const metricsBrowserButton = page.getByTestId(
@@ -112,7 +117,12 @@ test.describe(
       await annotationsTab.click();
     }
 
-    async function addPrometheusAnnotation(page: Page, selectors: E2ESelectorGroups, annotationName: string) {
+    async function addPrometheusAnnotation(
+      page: Page,
+      selectors: E2ESelectorGroups,
+      annotationName: string,
+      components: Components
+    ) {
       const addAnnotationButton = page.getByTestId(
         selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2
       );
@@ -124,14 +134,7 @@ test.describe(
       await nameInput.clear();
       await nameInput.fill(annotationName);
 
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByText(DATASOURCE_NAME);
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(DATASOURCE_NAME);
     }
   }
 );

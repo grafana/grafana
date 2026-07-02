@@ -67,7 +67,9 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.secureSocksProxyEnvVars()...)
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(p.getAzureSettings())...)
+	azureSettings := p.getAzureSettings()
+	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(azureSettings)...)
+	hostEnv = append(hostEnv, p.azureHostEnvVars(azureSettings, plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.tracingEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 
@@ -151,6 +153,56 @@ var awsHostEnvVarNames = []string{
 	// Region
 	"AWS_REGION",
 	"AWS_DEFAULT_REGION",
+}
+
+// azureManagedIdentityHostEnvVarNames are host vars injected by Azure
+// platforms (App Service, Container Apps, Service Fabric, Arc, Cloud Shell)
+// that the azidentity SDK reads to locate the local managed identity
+// token endpoint. Without them the SDK falls back to IMDS, which is not
+// reachable on platforms like Azure Container Apps.
+var azureManagedIdentityHostEnvVarNames = []string{
+	"IDENTITY_ENDPOINT",
+	"IDENTITY_HEADER",
+	"IDENTITY_SERVER_THUMBPRINT",
+	"IMDS_ENDPOINT",
+	"MSI_ENDPOINT",
+	"MSI_SECRET",
+}
+
+// azureWorkloadIdentityHostEnvVarNames are host vars injected by the AKS
+// azure-workload-identity mutating webhook into pods that use Azure AD
+// Workload Identity federation.
+var azureWorkloadIdentityHostEnvVarNames = []string{
+	"AZURE_TENANT_ID",
+	"AZURE_CLIENT_ID",
+	"AZURE_FEDERATED_TOKEN_FILE",
+	"AZURE_AUTHORITY_HOST",
+}
+
+func (p *EnvVarsProvider) azureHostEnvVars(azureSettings *azsettings.AzureSettings, pluginID string) []string {
+	if azureSettings == nil {
+		return nil
+	}
+	if !slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
+		return nil
+	}
+
+	var variables []string
+	if azureSettings.ManagedIdentityEnabled {
+		for _, envVarName := range azureManagedIdentityHostEnvVarNames {
+			if v, ok := os.LookupEnv(envVarName); ok {
+				variables = append(variables, p.envVar(envVarName, v))
+			}
+		}
+	}
+	if azureSettings.WorkloadIdentityEnabled {
+		for _, envVarName := range azureWorkloadIdentityHostEnvVarNames {
+			if v, ok := os.LookupEnv(envVarName); ok {
+				variables = append(variables, p.envVar(envVarName, v))
+			}
+		}
+	}
+	return variables
 }
 
 func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {

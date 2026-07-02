@@ -7,7 +7,7 @@
  * Maps old resource names to new resource names.
  * Matches the backend type: definitions.RenameResources
  */
-export interface RenameResources {
+interface RenameResources {
   /** Receivers maps old receiver names to new receiver names */
   receivers?: Record<string, string>;
   /** TimeIntervals maps old time interval names to new time interval names */

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
-import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect, useRef } from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
@@ -113,43 +112,6 @@ export const LogRecordViewerByTimestamp = memo(
   }
 );
 LogRecordViewerByTimestamp.displayName = 'LogRecordViewerByTimestamp';
-
-export function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerProps) {
-  const styles = useStyles2(getStyles);
-
-  const groupedLines = groupBy(records, (record: LogRecord) => {
-    return JSON.stringify(record.line.labels);
-  });
-
-  return (
-    <>
-      {Object.entries(groupedLines).map(([key, records]) => {
-        return (
-          <Stack direction="column" key={key}>
-            <h4>
-              <TagList
-                tags={omitLabels(Object.entries(records[0].line.labels ?? {}), commonLabels).map(
-                  ([key, value]) => `${key}=${value}`
-                )}
-              />
-            </h4>
-            <div className={styles.logsContainer}>
-              {records.map(({ line, timestamp }) => (
-                <div key={uniqueId()}>
-                  <AlertStateTag state={line.previous} size="sm" muted />
-                  <Icon name="arrow-right" size="sm" />
-                  <AlertStateTag state={line.current} />
-                  <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
-                  <div>{dateTimeFormat(timestamp)}</div>
-                </div>
-              ))}
-            </div>
-          </Stack>
-        );
-      })}
-    </>
-  );
-}
 
 interface TimestampProps {
   time: number; // epoch timestamp

@@ -5,7 +5,7 @@ import { type Annotations } from 'app/types/unified-alerting-dto';
 import { Annotation } from './constants';
 import { makeDashboardLink, makePanelLink } from './misc';
 
-export function usePanelAndDashboardIds(annotations: Array<[string, string]>): {
+function usePanelAndDashboardIds(annotations: Array<[string, string]>): {
   dashboardUID?: string;
   panelId?: string;
 } {

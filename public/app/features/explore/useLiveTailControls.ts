@@ -10,7 +10,7 @@ import { changeRefreshInterval } from './state/time';
 /**
  * Hook that gives you all the functions needed to control the live tailing.
  */
-export function useLiveTailControls(exploreId: string) {
+function useLiveTailControls(exploreId: string) {
   const dispatch = useDispatch();
 
   const pause = useCallback(() => {

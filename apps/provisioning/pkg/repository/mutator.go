@@ -82,6 +82,9 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	if new.Secure.WebhookSecret.IsZero() {
 		new.Secure.WebhookSecret = old.Secure.WebhookSecret
 	}
+	if new.Secure.CommitSigningKey.IsZero() {
+		new.Secure.CommitSigningKey = old.Secure.CommitSigningKey
+	}
 }
 
 func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {

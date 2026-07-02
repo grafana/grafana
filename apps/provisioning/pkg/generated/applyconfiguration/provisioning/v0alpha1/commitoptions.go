@@ -4,6 +4,10 @@
 
 package v0alpha1
 
+import (
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+)
+
 // CommitOptionsApplyConfiguration represents a declarative configuration of the CommitOptions type for use
 // with apply.
 type CommitOptionsApplyConfiguration struct {
@@ -15,9 +19,23 @@ type CommitOptionsApplyConfiguration struct {
 	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 	SingleResourceMessageTemplate *string `json:"singleResourceMessageTemplate,omitempty"`
 	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only. The
-	// Grafana-saved-by trailer is always appended regardless of this setting.
+	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName *string `json:"signerName,omitempty"`
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail *string `json:"signerEmail,omitempty"`
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate *string `json:"smimeCertificate,omitempty"`
 }
 
 // CommitOptionsApplyConfiguration constructs a declarative configuration of the CommitOptions type for use with
@@ -39,5 +57,37 @@ func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(valu
 // If called multiple times, the EnforceTemplate field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *CommitOptionsApplyConfiguration {
 	b.EnforceTemplate = &value
+	return b
+}
+
+// WithSignerName sets the SignerName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SignerName field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSignerName(value string) *CommitOptionsApplyConfiguration {
+	b.SignerName = &value
+	return b
+}
+
+// WithSignerEmail sets the SignerEmail field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SignerEmail field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitOptionsApplyConfiguration {
+	b.SignerEmail = &value
+	return b
+}
+
+// WithSigningMethod sets the SigningMethod field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SigningMethod field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0alpha1.SigningMethod) *CommitOptionsApplyConfiguration {
+	b.SigningMethod = &value
+	return b
+}
+
+// WithSMIMECertificate sets the SMIMECertificate field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SMIMECertificate field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSMIMECertificate(value string) *CommitOptionsApplyConfiguration {
+	b.SMIMECertificate = &value
 	return b
 }

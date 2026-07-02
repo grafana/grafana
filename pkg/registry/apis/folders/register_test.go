@@ -218,14 +218,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should return folder not empty when folder contains folders",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Count: 2, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 2, Resource: "folders", Group: "folder.grafana.app"},
 			},
 			wantErr: true,
 		},
 		{
 			name: "should return folder not empty when folder has mixed resources with validated types",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Count: 10, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 10, Resource: "folders", Group: "folder.grafana.app"},
 				{Count: 2, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 5, Resource: "playlists", Group: "playlist.grafana.app"},
 			},
@@ -237,7 +237,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				{Count: 1, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 2, Resource: "alertrules", Group: "alerting.grafana.app"},
 				{Count: 1, Resource: "library_elements", Group: "library.grafana.app"},
-				{Count: 1, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 1, Resource: "folders", Group: "folder.grafana.app"},
 			},
 			wantErr: true,
 		},
@@ -247,7 +247,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				{Count: 0, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 0, Resource: "alertrules", Group: "alerting.grafana.app"},
 				{Count: 0, Resource: "library_elements", Group: "library.grafana.app"},
-				{Count: 0, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 0, Resource: "folders", Group: "folder.grafana.app"},
 				{Count: 10, Resource: "playlists", Group: "playlist.grafana.app"},
 			},
 			wantErr: false,
@@ -268,7 +268,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should reject force delete when cascade gate disabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
 			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 			cascadeDeleteEnabled: false,
@@ -277,7 +277,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should allow force delete when cascade gate enabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
 			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 			cascadeDeleteEnabled: true,

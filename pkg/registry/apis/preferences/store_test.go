@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -221,14 +221,21 @@ func TestListPreferences_Errors(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("non-user identity is rejected", func(t *testing.T) {
-		store := &preferencesStorage{Storage: &fakeStorage{}}
+	t.Run("non-user identity only receives namespace preferences", func(t *testing.T) {
+		fake := &fakeStorage{items: map[string]*preferences.Preferences{
+			"user-sa-1": newPref("user-sa-1"),
+			"team-a":    newPref("team-a"),
+			"namespace": newPref("namespace"),
+		}}
+		store := &preferencesStorage{Storage: fake}
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type:    claims.TypeServiceAccount,
 			UserUID: "sa-1",
+			Groups:  []string{"a"},
 		})
-		_, err := store.ListPreferences(ctx, nil)
-		require.ErrorContains(t, err, "only users may list preferences")
+		list, err := store.ListPreferences(ctx, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"namespace"}, names(list))
 	})
 
 	t.Run("user without identifier is rejected", func(t *testing.T) {

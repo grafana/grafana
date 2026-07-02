@@ -42,6 +42,7 @@ export enum ContactPointAction {
   Delete = 'delete-contact-point',
   Export = 'export-contact-point',
   BulkExport = 'bulk-export-contact-points',
+  Test = 'test-contact-point',
 }
 
 export enum NotificationTemplateAction {
@@ -86,7 +87,7 @@ export enum AlertmanagerAdminAction {
 }
 
 /** Union of all alertmanager entity action enums. */
-export type AlertmanagerAction =
+type AlertmanagerAction =
   | ContactPointAction
   | NotificationTemplateAction
   | NotificationPolicyAction
@@ -113,7 +114,7 @@ export enum EnrichmentAction {
   Write = 'write-enrichment',
 }
 
-export type Action =
+type Action =
   | AlertmanagerAction
   | ExternalAlertmanagerAction
   | RuleAction

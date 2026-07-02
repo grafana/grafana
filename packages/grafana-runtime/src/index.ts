@@ -14,6 +14,7 @@ export {
   reportInteraction,
   reportPageview,
   reportExperimentView,
+  onInteraction,
 } from './analytics/utils';
 export { featureEnabled } from './utils/licensing';
 export {
@@ -25,6 +26,7 @@ export {
   logMeasurement,
   type MonitoringLogger,
 } from './utils/logging';
+export { TracedError } from './utils/TracedError';
 export {
   DataSourceWithBackend,
   HealthCheckError,

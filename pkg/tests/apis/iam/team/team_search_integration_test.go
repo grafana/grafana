@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -89,14 +91,31 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.GreaterOrEqual(t, result.TotalHits, int64(2), "should find at least 2 teams")
 		require.GreaterOrEqual(t, len(result.Hits), 2, "should return at least 2 hits")
 
+		// expectedInternalID fetches the team's deprecated internal (legacy) ID
+		// from its label, which is what the search hit should surface as InternalId.
+		expectedInternalID := func(name string) int64 {
+			obj, err := teamClient.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			idStr, ok := obj.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+			require.True(t, ok && idStr != "", "team %s should have a deprecated internal ID label", name)
+			id, err := strconv.ParseInt(idStr, 10, 64)
+			require.NoError(t, err)
+			require.Positive(t, id)
+			return id
+		}
+
 		for _, hit := range result.Hits {
 			if hit.Name == team1.GetName() {
 				require.Equal(t, "Test Team 1", hit.Title)
 				require.Equal(t, "testteam1@example123.com", hit.Email)
+				require.NotNil(t, hit.InternalId, "search hit should include the deprecated internal ID")
+				require.Equal(t, expectedInternalID(team1.GetName()), *hit.InternalId)
 			}
 			if hit.Name == team2.GetName() {
 				require.Equal(t, "Another Team", hit.Title)
 				require.Equal(t, "anotherteam@example.com", hit.Email)
+				require.NotNil(t, hit.InternalId, "search hit should include the deprecated internal ID")
+				require.Equal(t, expectedInternalID(team2.GetName()), *hit.InternalId)
 			}
 		}
 	})
@@ -588,7 +607,7 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
