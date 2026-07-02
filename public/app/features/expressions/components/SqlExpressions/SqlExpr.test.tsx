@@ -134,6 +134,51 @@ describe('SqlExpr', () => {
     });
   });
 
+  it('quotes initial query table name if it contains spaces', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: 'gdp per capita' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('`gdp per capita`');
+  });
+
+  it('handles empty refIds without crashing and uses default table name', async () => {
+    const onChange = jest.fn();
+    const refIds: any[] = [];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('FROM\n  table');
+  });
+
+  it('does not double-quote already quoted table names in initial query', async () => {
+    const onChange = jest.fn();
+    const refIds = [{ value: '`already quoted`' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
+
+    const updatedQuery = onChange.mock.calls[0][0];
+    expect(updatedQuery.expression).toContain('`already quoted`');
+    expect(updatedQuery.expression).not.toContain('``already quoted``');
+      
   it('uses the legacy SQL editor when sqlExpressionsCodeMirror is disabled', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];

@@ -9,6 +9,7 @@ import {
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
 
+import { quoteIdentifierIfNecessary, unquoteIdentifier } from 'app/plugins/datasource/mysql/sqlUtil';
 import { dataSource } from '../ExpressionDatasource';
 
 import { interpolateSourceQueries } from './interpolateSourceQueries';
@@ -29,15 +30,15 @@ export async function fetchSQLFields(
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
-  const sourceQueries = queries.filter((q) => q.refId === query.table);
-  const interpolatedSourceQueries = await interpolateSourceQueries(
+const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(unquoteIdentifier(query.table))} LIMIT 1`;
+const sourceQueries = queries.filter((q) => q.refId === query.table);
+const interpolatedSourceQueries = await interpolateSourceQueries(
     sourceQueries,
     options.scopedVars ?? {},
     options.filters
-  );
+);
 
-  const queryResponse = await datasource.runMetaSQLExprQuery(
+const queryResponse = await datasource.runMetaSQLExprQuery(
     { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
     options.range ?? getDefaultTimeRange(),
     interpolatedSourceQueries
@@ -49,7 +50,7 @@ export async function fetchSQLFields(
       name,
       text: name,
       label: name,
-      value: quoteIdentifierIfNecessary(name),
+      value: quoteIdentifierIfNecessary(unquoteIdentifier(name)),
       type,
     };
   });
@@ -132,10 +133,6 @@ function mapColumnTypeToIcon(type: string) {
     default:
       return undefined;
   }
-}
-
-function quoteIdentifierIfNecessary(value: string) {
-  return /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(value) ? value : `\`${value}\``;
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go
