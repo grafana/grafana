@@ -26,7 +26,7 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -39,6 +39,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;

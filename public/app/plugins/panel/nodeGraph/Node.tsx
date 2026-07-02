@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { type MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 

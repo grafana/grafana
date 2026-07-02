@@ -2,6 +2,8 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
+import { isGitHubBased } from './repositoryTypes';
+
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
 
@@ -127,13 +129,12 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
-      // Add connection reference at spec level if using GitHub App
-      // connection name is only available for the app flow
-      // Prefer data.connectionName over the parameter for consistency
-      const finalConnectionName = data.connectionName || connectionName;
-      if (finalConnectionName) {
-        spec.connection = { name: finalConnectionName };
-      }
+      break;
+    case 'githubEnterprise':
+      spec.githubEnterprise = {
+        ...baseConfig,
+        generateDashboardPreviews: data.generateDashboardPreviews,
+      };
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
@@ -153,6 +154,16 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
+  }
+
+  // Add connection reference at spec level when using GitHub App (github and
+  // githubEnterprise). The connection name is only available for the app flow;
+  // prefer data.connectionName over the parameter for consistency.
+  if (isGitHubBased(data.type)) {
+    const finalConnectionName = data.connectionName || connectionName;
+    if (finalConnectionName) {
+      spec.connection = { name: finalConnectionName };
+    }
   }
 
   // We need to deep clone the data, so it doesn't become immutable
@@ -178,7 +189,7 @@ export const deriveSigningKeySecret = (
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  const remoteConfig = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
   const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
 
@@ -190,7 +201,8 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
-    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
+    generateDashboardPreviews:
+      spec.github?.generateDashboardPreviews || spec.githubEnterprise?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
@@ -205,6 +217,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
+    case 'githubEnterprise':
     case 'gitlab':
     case 'bitbucket':
     case 'git': {

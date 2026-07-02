@@ -9,73 +9,137 @@ const (
 	metricsSubsystem = "nats"
 )
 
-const roleLabel = "role"
-
-// clientMetrics covers the NATS client side (connections and publishing). Every
-// series is keyed by the `role` label, so a single registration serves every
-// role an environment actually runs: roles that never connect or publish emit
-// no series at all.
-type clientMetrics struct {
-	connectionStatus *prometheus.GaugeVec
-	reconnects       *prometheus.CounterVec
-	disconnects      *prometheus.CounterVec
-	connectionErrors *prometheus.CounterVec
-	messagesPub      *prometheus.CounterVec
-	publishErrors    *prometheus.CounterVec
+// connectionMetrics covers the lifecycle of a single NATS connection. Publisher
+// and subscriber each own their own connection, so the role is baked into the
+// metric name (grafana_nats_<role>_*) rather than carried as a label.
+type connectionMetrics struct {
+	connectionStatus    prometheus.Gauge
+	reconnects          prometheus.Counter
+	disconnects         prometheus.Counter
+	connectionErrors    prometheus.Counter
+	disconnectedSeconds prometheus.Histogram
 }
 
-// TODO: we can further break down into per-role metrics, e.g. publisher vs subscriber, if we want to track
-// metrics separately. For now, we just have a single set of metrics for all roles.
-func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
-	m := &clientMetrics{
-		connectionStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+func newConnectionMetrics(role connRole) connectionMetrics {
+	prefix := string(role) + "_"
+	return connectionMetrics{
+		connectionStatus: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "connection_status",
-			Help:      "Current NATS connection status per role (1 = connected, 0 = disconnected).",
-		}, []string{roleLabel}),
-		reconnects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "connection_status",
+			Help:      "Current NATS connection status (1 = connected, 0 = disconnected).",
+		}),
+		reconnects: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "reconnects_total",
-			Help:      "Total number of NATS reconnections per role.",
-		}, []string{roleLabel}),
-		disconnects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "reconnects_total",
+			Help:      "Total number of NATS reconnections.",
+		}),
+		disconnects: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "disconnects_total",
-			Help:      "Total number of NATS disconnections per role.",
-		}, []string{roleLabel}),
-		connectionErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "disconnects_total",
+			Help:      "Total number of NATS disconnections.",
+		}),
+		connectionErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "connection_errors_total",
-			Help:      "Total number of NATS asynchronous connection errors per role.",
-		}, []string{roleLabel}),
-		messagesPub: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:      prefix + "connection_errors_total",
+			Help:      "Total number of NATS asynchronous connection errors.",
+		}),
+		// Observed when the connection is re-established: the length of each outage
+		// is exactly the window during which this node relies on the polling
+		// fallback rather than NATS push, so the histogram tracks degraded time.
+		disconnectedSeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "messages_published_total",
-			Help:      "Total number of messages published to NATS per role.",
-		}, []string{roleLabel}),
-		publishErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "publish_errors_total",
-			Help:      "Total number of NATS publish errors per role.",
-		}, []string{roleLabel}),
+			Name:      prefix + "disconnected_seconds",
+			Help:      "Duration of NATS disconnections, observed when the connection reconnects.",
+			Buckets:   []float64{0.5, 1, 2, 5, 10, 30, 60, 120, 300},
+		}),
 	}
+}
 
-	reg.MustRegister(
-		m.connectionStatus,
-		m.reconnects,
-		m.disconnects,
-		m.connectionErrors,
-		m.messagesPub,
-		m.publishErrors,
-	)
+func (m connectionMetrics) collectors() []prometheus.Collector {
+	return []prometheus.Collector{m.connectionStatus, m.reconnects, m.disconnects, m.connectionErrors, m.disconnectedSeconds}
+}
 
-	return m
+// publisherMetrics covers the publisher connection plus its publish counters.
+type publisherMetrics struct {
+	connectionMetrics
+	messagesPublished prometheus.Counter
+	publishErrors     prometheus.Counter
+}
+
+func newPublisherMetrics() *publisherMetrics {
+	return &publisherMetrics{
+		connectionMetrics: newConnectionMetrics(rolePublisher),
+		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_messages_published_total",
+			Help:      "Total number of messages published to NATS.",
+		}),
+		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_publish_errors_total",
+			Help:      "Total number of NATS publish errors.",
+		}),
+	}
+}
+
+func (m *publisherMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
+}
+
+// subscriberMetrics covers the subscriber connection plus its delivery counters.
+type subscriberMetrics struct {
+	connectionMetrics
+	messagesReceived prometheus.Counter
+	subscribeErrors  prometheus.Counter
+	handlerDuration  prometheus.Histogram
+	slowConsumers    prometheus.Counter
+}
+
+func newSubscriberMetrics() *subscriberMetrics {
+	return &subscriberMetrics{
+		connectionMetrics: newConnectionMetrics(roleSubscriber),
+		messagesReceived: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_messages_received_total",
+			Help:      "Total number of messages received from NATS.",
+		}),
+		subscribeErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_subscribe_errors_total",
+			Help:      "Total number of NATS subscribe errors.",
+		}),
+		// Time spent in the message handler, the leading indicator of a slow
+		// consumer: a handler that lags lets the client-side buffer fill until the
+		// broker drops messages (slowConsumers below).
+		handlerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_handler_duration_seconds",
+			Help:      "Time spent processing a received message in the subscriber handler.",
+			Buckets:   prometheus.DefBuckets,
+		}),
+		// Slow-consumer async errors are connection-wide (NATS cannot attribute the
+		// dropped messages to a single logical subscriber), so this is unlabeled.
+		slowConsumers: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "subscriber_slow_consumers_total",
+			Help:      "Total number of NATS slow-consumer errors (messages dropped because the client could not keep up).",
+		}),
+	}
+}
+
+func (m *subscriberMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)
 }
 
 // serverMetrics covers the embedded NATS server. It is registered only in

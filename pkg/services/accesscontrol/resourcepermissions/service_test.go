@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -862,4 +863,60 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	require.NoError(t, err)
 
 	return service, userSvc, teamSvc, cfg
+}
+
+func TestMapPermission_Datasource(t *testing.T) {
+	dsOpts := Options{
+		Resource: datasources.ScopeRoot,
+		PermissionsToActions: map[string][]string{
+			"Query": {datasources.ActionRead, datasources.ActionQuery},
+			"Edit":  {datasources.ActionRead, datasources.ActionQuery, datasources.ActionWrite, datasources.ActionDelete},
+			"Admin": {datasources.ActionRead, datasources.ActionQuery, datasources.ActionWrite, datasources.ActionDelete, datasources.ActionPermissionsRead, datasources.ActionPermissionsWrite},
+		},
+	}
+
+	t.Run("flag off: Edit emits action set token AND granular actions", func(t *testing.T) {
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		assert.Contains(t, actions, dsOpts.GetActionSetName("Edit")) // datasources:edit
+		assert.Contains(t, actions, datasources.ActionWrite)
+		assert.Contains(t, actions, datasources.ActionDelete)
+	})
+
+	t.Run("flag off: Query token collides with the granular query action", func(t *testing.T) {
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Query")
+		require.NoError(t, err)
+		// GetActionSetName("Query") == datasources:query == datasources.ActionQuery
+		assert.Equal(t, dsOpts.GetActionSetName("Query"), datasources.ActionQuery)
+		assert.Contains(t, actions, datasources.ActionRead)
+		assert.Contains(t, actions, datasources.ActionQuery)
+	})
+
+	t.Run("flag on: emits only action set token", func(t *testing.T) {
+		openfeatureTestMutex.Lock()
+		defer func() {
+			_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+			openfeatureTestMutex.Unlock()
+		}()
+
+		provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagIamOnlyStoreDatasourceActionSets: setting.NewInMemoryFlag(featuremgmt.FlagIamOnlyStoreDatasourceActionSets, true),
+		})
+		require.NoError(t, err)
+		require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+		svc := &Service{options: dsOpts}
+		actions, err := svc.mapPermission("Edit")
+		require.NoError(t, err)
+		require.Len(t, actions, 1)
+		assert.Equal(t, dsOpts.GetActionSetName("Edit"), actions[0])
+	})
+}
+
+func TestIsActionSetEnabledResource_Datasource(t *testing.T) {
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":query"))
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":edit"))
+	assert.True(t, isActionSetEnabledResource(datasources.ScopeRoot+":admin"))
 }

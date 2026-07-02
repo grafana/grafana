@@ -69,7 +69,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
 | `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
-| `heatmapRowsAxisOptions`                     | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                                                                        | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
@@ -101,7 +100,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
-| `teamFolders`                     | Enables team folders functionality                                                             |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
