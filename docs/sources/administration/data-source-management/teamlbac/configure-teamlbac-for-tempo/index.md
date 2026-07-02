@@ -21,6 +21,8 @@ noindex: true
 
 Team label-based access control (LBAC) for Cloud Traces or Tempo lets you restrict which spans teams can access by defining rules using trace attributes. LBAC provides fine-grained, team-based access control within a single tenant and mirrors the experience used for logs and metrics LBAC in Grafana Cloud.
 
+Unlike logs and metrics, which also support data source-level LBAC through cloud access policies, traces LBAC is currently available only at the team level.
+
 Grafana uses the term LBAC as an umbrella term for label-based access control for all data sources.
 Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
 
@@ -47,6 +49,7 @@ Multiple conditions in the same rule use **AND** (`,`), while multiple rules acr
 
 ### Known limitations
 
+- LBAC for traces is available only at the team level. Data source-level LBAC rules (configured through cloud access policies) aren't currently supported for traces. This differs from logs and metrics LBAC, which supports both team-level and data source-level rules.
 - Autocomplete in search is still under development.
 - LBAC is restricted to only contain resource scope attributes.
 - There is a slight performance degradation for users with multiple rules.
@@ -62,7 +65,7 @@ Follow this workflow when adding a new data source. The data source must be host
 4. In Grafana Cloud, navigate to **Administration > Users and access > Cloud Access Policies**.
    - Create an access policy for the Tempo or Cloud Traces data source.
    - Ensure the access policy includes `traces:read` permissions.
-   - Ensure the access policy doesn't include `labels` rules.
+   - Ensure the access policy doesn't include `labels` rules. Data source-level LBAC isn't supported for traces, so any `labels` rules in the access policy are ignored.
 5. In Grafana, select Tempo or Cloud Traces or create new data source.
 6. Navigate back to the Tempo or Cloud Traces data source.
    - Set up the Tempo or Cloud Traces data source using basic authentication. Use the [userID/tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.

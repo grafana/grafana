@@ -86,6 +86,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
           // TODO: Remove this header once the backend no longer requires it
           'X-Grafana-Alerting-Merge-Matchers': `__grafana_managed_route__=${configIdentifier}`,
+          'X-Grafana-Alerting-Promote': 'true',
           ...(forceReplace ? { 'X-Grafana-Alerting-Config-Force-Replace': 'true' } : {}),
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },

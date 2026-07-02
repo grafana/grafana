@@ -49,7 +49,7 @@ To access the Import dashboard tool from the Git Sync UI:
 1. Select **Import dashboard** and you'll be redirected to the wizard.
 1. Upload or paste the dashboard JSON.
 1. Fill in the relevant fields, including the branch and repository folder, and press **Import**.
-1. Open the pull request, follow your regular workflow, and merge. Note that it could take a few minutes until the imported dashboard appear.
+1. Open the pull request, follow your regular workflow, and merge. Note that it could take a few minutes until the imported dashboard appears.
 
 Keep in mind the following:
 
@@ -57,6 +57,12 @@ Keep in mind the following:
 - Two dashboards can share a title as long as they live at different paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
 
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
+
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
 
 ## Copy an existing dashboard from the Grafana UI
 

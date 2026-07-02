@@ -29,6 +29,15 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	}
 	helper.CreateLocalRepo(t, testRepo)
 
+	// Build a resource list that exceeds the selective-export cap (100).
+	overLimitResources := make([]map[string]interface{}, 101)
+	for i := range overLimitResources {
+		overLimitResources[i] = map[string]interface{}{
+			"name": fmt.Sprintf("dash-%d", i),
+			"kind": "Dashboard",
+		}
+	}
+
 	tests := []struct {
 		name        string
 		jobSpec     map[string]interface{}
@@ -259,6 +268,28 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 				},
 			},
 			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": kind is not supported for export",
+		},
+		{
+			name: "push job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.push.resources: Too many: 101: must have at most 100 items",
+		},
+		{
+			name: "migrate job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionMigrate),
+				"repository": repo,
+				"migrate": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.migrate.resources: Too many: 101: must have at most 100 items",
 		},
 	}
 

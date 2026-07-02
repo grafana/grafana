@@ -1253,6 +1253,16 @@ func (in *RepositoryView) DeepCopyInto(out *RepositoryView) {
 		*out = new(CommitOptions)
 		**out = **in
 	}
+	if in.BranchOptions != nil {
+		in, out := &in.BranchOptions, &out.BranchOptions
+		*out = new(BranchOptions)
+		**out = **in
+	}
+	if in.PullRequest != nil {
+		in, out := &in.PullRequest, &out.PullRequest
+		*out = new(PullRequestOptions)
+		**out = **in
+	}
 	return
 }
 

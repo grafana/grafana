@@ -307,3 +307,134 @@ func TestComputeCommittedStatus(t *testing.T) {
 		assert.Equal(t, nowRFC, c.LastTransitionTime, "flip False->True advances the timestamp")
 	})
 }
+
+func TestComputeNotConfiguredStatus(t *testing.T) {
+	now := time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC)
+	earlier := time.Date(2026, 5, 19, 9, 0, 0, 0, time.UTC)
+	nowRFC := now.UTC().Format(time.RFC3339)
+	earlRFC := earlier.UTC().Format(time.RFC3339)
+
+	findSynced := func(t *testing.T, st alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigCondition {
+		t.Helper()
+		for _, c := range st.Conditions {
+			if c.Type == conditionTypeExternalAlertmanagerSynced {
+				return c
+			}
+		}
+		t.Fatalf("expected Synced condition, got: %+v", st.Conditions)
+		return alertingnotifv0alpha1.ConfigCondition{}
+	}
+
+	t.Run("from clean state emits Synced=Unknown/NotConfigured with current timestamp", func(t *testing.T) {
+		got := computeNotConfiguredStatus(nil, now)
+
+		synced := findSynced(t, got)
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+		assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
+		assert.Equal(t, nowRFC, synced.LastTransitionTime)
+		assert.Nil(t, synced.Message)
+		assert.Nil(t, got.ExternalAlertmanagerSync, "no datasource context when unconfigured")
+	})
+
+	t.Run("after a prior success flips to Unknown and advances lastTransitionTime", func(t *testing.T) {
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusTrue,
+				LastTransitionTime: earlRFC,
+				Reason:             conditionReasonSyncSucceeded,
+			}},
+		}
+
+		synced := findSynced(t, computeNotConfiguredStatus(prev, now))
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+		assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
+		assert.Equal(t, nowRFC, synced.LastTransitionTime, "flip True->Unknown advances the timestamp")
+	})
+
+	t.Run("consecutive not-configured ticks preserve lastTransitionTime", func(t *testing.T) {
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusUnknown,
+				LastTransitionTime: earlRFC,
+				Reason:             conditionReasonNotConfigured,
+			}},
+		}
+
+		synced := findSynced(t, computeNotConfiguredStatus(prev, now))
+		assert.Equal(t, earlRFC, synced.LastTransitionTime, "status stayed Unknown, so the timestamp is preserved")
+	})
+
+	t.Run("a prior MergeCommitted flips to Unknown when the UID is removed", func(t *testing.T) {
+		// No special-case: when sync is no longer configured the Synced condition is
+		// a current-state snapshot, so even a terminal MergeCommitted flips. The merge
+		// artifact still lives in the AM config; this condition only tracks sync.
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusTrue,
+				LastTransitionTime: earlRFC,
+				Reason:             conditionReasonMergeCommitted,
+			}},
+		}
+
+		synced := findSynced(t, computeNotConfiguredStatus(prev, now))
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+		assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
+		assert.Equal(t, nowRFC, synced.LastTransitionTime, "flip True->Unknown advances the timestamp")
+	})
+
+	t.Run("root fields ride through unchanged", func(t *testing.T) {
+		gen := int64(7)
+		uidLast := "uid-last"
+		originLast := originAPI
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			ObservedGeneration: &gen,
+			ExternalAlertmanagerSync: &alertingnotifv0alpha1.ConfigV0alpha1StatusExternalAlertmanagerSync{
+				DatasourceUid: &uidLast,
+				Origin:        &originLast,
+			},
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               conditionTypeExternalAlertmanagerSynced,
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusTrue,
+				LastTransitionTime: earlRFC,
+				Reason:             conditionReasonSyncSucceeded,
+			}},
+		}
+
+		got := computeNotConfiguredStatus(prev, now)
+		// observedGeneration and the last-attempt externalAlertmanagerSync context are
+		// preserved; only the Synced condition flips.
+		require.NotNil(t, got.ObservedGeneration)
+		assert.Equal(t, gen, *got.ObservedGeneration)
+		require.NotNil(t, got.ExternalAlertmanagerSync)
+		require.NotNil(t, got.ExternalAlertmanagerSync.DatasourceUid)
+		assert.Equal(t, "uid-last", *got.ExternalAlertmanagerSync.DatasourceUid)
+		synced := findSynced(t, got)
+		assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+		assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
+	})
+
+	t.Run("other condition types are preserved", func(t *testing.T) {
+		prev := &alertingnotifv0alpha1.ConfigStatus{
+			Conditions: []alertingnotifv0alpha1.ConfigCondition{{
+				Type:               "RoutingApplied",
+				Status:             alertingnotifv0alpha1.ConfigConditionStatusTrue,
+				LastTransitionTime: earlRFC,
+				Reason:             "RoutingApplied",
+			}},
+		}
+
+		got := computeNotConfiguredStatus(prev, now)
+		require.Len(t, got.Conditions, 2)
+		var sawRouting bool
+		for _, c := range got.Conditions {
+			if c.Type == "RoutingApplied" {
+				sawRouting = true
+				assert.Equal(t, earlRFC, c.LastTransitionTime, "unrelated condition untouched")
+			}
+		}
+		assert.True(t, sawRouting)
+	})
+}

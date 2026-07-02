@@ -30,37 +30,37 @@ func TestPluginStorage_CreateCreatesChildren(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a", "child-b"},
+		"parent-app:1.0.0": {"child-a", "child-b"},
 	})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	requireChild(t, parentStorage, "child-a", "1.0.0", "parent")
-	requireChild(t, parentStorage, "child-b", "1.0.0", "parent")
+	requireChild(t, parentStorage, "child-a", "1.0.0", "parent-app")
+	requireChild(t, parentStorage, "child-b", "1.0.0", "parent-app")
 }
 
 func TestPluginStorage_UpdateReconcilesChildren(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
-	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent"))
-	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a", "child-b"))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
+	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent-app"))
+	parentStorage.set(parentPluginWithApplied("default", "parent-app", "1.0.0", "child-a", "child-b"))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:2.0.0": {"child-a", "child-c"},
+		"parent-app:2.0.0": {"child-a", "child-c"},
 	})
 
-	updatedParent := plugin("default", "parent", "2.0.0", "")
-	_, _, err := storage.(rest.Updater).Update(ctx, "parent", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	updatedParent := plugin("default", "parent-app", "2.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	requireChild(t, parentStorage, "child-a", "2.0.0", "parent")
-	requireChild(t, parentStorage, "child-c", "2.0.0", "parent")
+	requireChild(t, parentStorage, "child-a", "2.0.0", "parent-app")
+	requireChild(t, parentStorage, "child-c", "2.0.0", "parent-app")
 	_, ok := parentStorage.items[storageKey("default", "child-b")]
 	require.False(t, ok)
 
-	parent := parentStorage.items[storageKey("default", "parent")]
+	parent := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, parent)
 	require.Equal(t, "child-a,child-c", parent.Annotations[appliedChildrenAnnotation])
 }
@@ -68,32 +68,32 @@ func TestPluginStorage_UpdateReconcilesChildren(t *testing.T) {
 func TestPluginStorage_DeleteCascadesToChildren(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
-	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent"))
-	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a", "child-b"))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
+	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent-app"))
+	parentStorage.set(parentPluginWithApplied("default", "parent-app", "1.0.0", "child-a", "child-b"))
 	// Meta unavailable on Delete is fine — applied annotation is the source of truth.
 	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{err: fmt.Errorf("metadata unavailable")})
 
-	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent", nil, &metav1.DeleteOptions{})
+	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent-app", nil, &metav1.DeleteOptions{})
 	require.NoError(t, err)
 
 	require.NotContains(t, parentStorage.items, storageKey("default", "child-a"))
 	require.NotContains(t, parentStorage.items, storageKey("default", "child-b"))
-	require.NotContains(t, parentStorage.items, storageKey("default", "parent"))
+	require.NotContains(t, parentStorage.items, storageKey("default", "parent-app"))
 }
 
 func TestPluginStorage_CreateStampsAppliedChildren(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a", "child-b"},
+		"parent-app:1.0.0": {"child-a", "child-b"},
 	})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	persistedParent := parentStorage.items[storageKey("default", "parent")]
+	persistedParent := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, persistedParent)
 	require.Equal(t, "child-a,child-b", persistedParent.Annotations[appliedChildrenAnnotation])
 }
@@ -105,11 +105,11 @@ func TestPluginStorage_CreateMetaUnavailable_OmitsAnnotation(t *testing.T) {
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{err: fmt.Errorf("metadata unavailable")})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, persisted)
 	require.NotContains(t, persisted.Annotations, appliedChildrenAnnotation,
 		"meta unavailable on Create with no previous parent must not stamp an annotation")
@@ -121,11 +121,11 @@ func TestPluginStorage_CreateMetaNotFound_OmitsAnnotation(t *testing.T) {
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{err: meta.ErrMetaNotFound})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, persisted)
 	require.NotContains(t, persisted.Annotations, appliedChildrenAnnotation)
 	require.Len(t, parentStorage.items, 1)
@@ -135,14 +135,14 @@ func TestPluginStorage_CreateEmptyChildren_StampsEmpty(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {},
+		"parent-app:1.0.0": {},
 	})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, persisted)
 	require.Equal(t, "", persisted.Annotations[appliedChildrenAnnotation],
 		"empty desired children should stamp an empty annotation value")
@@ -152,12 +152,12 @@ func TestPluginStorage_CreateEmptyChildren_StampsEmpty(t *testing.T) {
 func TestPluginStorage_CreateAlreadyExists_PropagatesError(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(plugin("default", "parent", "1.0.0", ""))
+	parentStorage.set(plugin("default", "parent-app", "1.0.0", ""))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a"},
+		"parent-app:1.0.0": {"child-a"},
 	})
 
-	_, err := storage.(rest.Creater).Create(ctx, plugin("default", "parent", "1.0.0", ""), nil, &metav1.CreateOptions{})
+	_, err := storage.(rest.Creater).Create(ctx, plugin("default", "parent-app", "1.0.0", ""), nil, &metav1.CreateOptions{})
 	require.Error(t, err)
 	require.True(t, errorsK8s.IsAlreadyExists(err))
 	require.NotContains(t, parentStorage.items, storageKey("default", "child-a"),
@@ -169,12 +169,12 @@ func TestPluginStorage_CreateAlreadyExists_PropagatesError(t *testing.T) {
 func TestPluginStorage_UpdateChildPlugin_SkipsCascade(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child", "1.0.0", "parent"))
+	parentStorage.set(childPlugin("default", "child", "1.0.0", "parent-app"))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
 		"child:2.0.0": {"grandchild"},
 	})
 
-	updated := childPlugin("default", "child", "2.0.0", "parent")
+	updated := childPlugin("default", "child", "2.0.0", "parent-app")
 	_, _, err := storage.(rest.Updater).Update(ctx, "child", rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
@@ -188,16 +188,16 @@ func TestPluginStorage_UpdateChildPlugin_SkipsCascade(t *testing.T) {
 func TestPluginStorage_UpdateMetaUnavailable_PreservesAnnotation(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
-	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent"))
-	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a", "child-b"))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
+	parentStorage.set(childPlugin("default", "child-b", "1.0.0", "parent-app"))
+	parentStorage.set(parentPluginWithApplied("default", "parent-app", "1.0.0", "child-a", "child-b"))
 	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{err: fmt.Errorf("metadata unavailable")})
 
-	updatedParent := plugin("default", "parent", "2.0.0", "")
-	_, _, err := storage.(rest.Updater).Update(ctx, "parent", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	updatedParent := plugin("default", "parent-app", "2.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotNil(t, persisted)
 	require.Equal(t, "child-a,child-b", persisted.Annotations[appliedChildrenAnnotation],
 		"meta failure on Update must preserve the previous applied-children annotation")
@@ -210,37 +210,37 @@ func TestPluginStorage_UpdateMetaUnavailable_PreservesAnnotation(t *testing.T) {
 func TestPluginStorage_UpdateSameVersion_UpsertsChildAndDoesNotDelete(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
-	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a"))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
+	parentStorage.set(parentPluginWithApplied("default", "parent-app", "1.0.0", "child-a"))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a"},
+		"parent-app:1.0.0": {"child-a"},
 	})
 
-	updatedParent := plugin("default", "parent", "1.0.0", "")
-	_, _, err := storage.(rest.Updater).Update(ctx, "parent", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	updatedParent := plugin("default", "parent-app", "1.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	require.Contains(t, parentStorage.items, storageKey("default", "child-a"))
 	require.Equal(t, 1, parentStorage.updateCalls[storageKey("default", "child-a")],
 		"existing desired children must still be updated so downstream hooks can reconcile")
-	require.Equal(t, "child-a", parentStorage.items[storageKey("default", "parent")].Annotations[appliedChildrenAnnotation])
+	require.Equal(t, "child-a", parentStorage.items[storageKey("default", "parent-app")].Annotations[appliedChildrenAnnotation])
 }
 
 func TestPluginStorage_UpdateNoPreviousApplied_StampsNew(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(plugin("default", "parent", "1.0.0", ""))
+	parentStorage.set(plugin("default", "parent-app", "1.0.0", ""))
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a"},
+		"parent-app:1.0.0": {"child-a"},
 	})
 
-	updatedParent := plugin("default", "parent", "1.0.0", "")
-	_, _, err := storage.(rest.Updater).Update(ctx, "parent", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	updatedParent := plugin("default", "parent-app", "1.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.Equal(t, "child-a", persisted.Annotations[appliedChildrenAnnotation])
-	requireChild(t, parentStorage, "child-a", "1.0.0", "parent")
+	requireChild(t, parentStorage, "child-a", "1.0.0", "parent-app")
 }
 
 // TestPluginStorage_UpdateMetaUnavailableNoPriorAnnotation_PreservesChildren
@@ -251,17 +251,17 @@ func TestPluginStorage_UpdateNoPreviousApplied_StampsNew(t *testing.T) {
 func TestPluginStorage_UpdateMetaUnavailableNoPriorAnnotation_PreservesChildren(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
-	parentStorage.set(plugin("default", "parent", "1.0.0", ""))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
+	parentStorage.set(plugin("default", "parent-app", "1.0.0", ""))
 	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{err: fmt.Errorf("metadata unavailable")})
 
-	updatedParent := plugin("default", "parent", "2.0.0", "")
-	_, _, err := storage.(rest.Updater).Update(ctx, "parent", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	updatedParent := plugin("default", "parent-app", "2.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	require.Contains(t, parentStorage.items, storageKey("default", "child-a"),
 		"children must survive an Update whose desired set is unknown")
-	persisted := parentStorage.items[storageKey("default", "parent")]
+	persisted := parentStorage.items[storageKey("default", "parent-app")]
 	require.NotContains(t, persisted.Annotations, appliedChildrenAnnotation)
 }
 
@@ -272,7 +272,7 @@ func TestPluginStorage_DeleteChildPlugin_SkipsCascade(t *testing.T) {
 	parentStorage := newFakePluginRESTStorage()
 	// child carries a misleading applied-children annotation; cascade must
 	// still be skipped because the target itself is a child.
-	misleadingChild := childPlugin("default", "child", "1.0.0", "parent")
+	misleadingChild := childPlugin("default", "child", "1.0.0", "parent-app")
 	misleadingChild.Annotations = map[string]string{appliedChildrenAnnotation: "grandchild"}
 	parentStorage.set(misleadingChild)
 	parentStorage.set(plugin("default", "grandchild", "1.0.0", ""))
@@ -289,14 +289,14 @@ func TestPluginStorage_DeleteChildPlugin_SkipsCascade(t *testing.T) {
 func TestPluginStorage_DeleteParentNoAnnotation_NoCascade(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(plugin("default", "parent", "1.0.0", ""))
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
+	parentStorage.set(plugin("default", "parent-app", "1.0.0", ""))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
 	storage := newTestPluginStorage(t, parentStorage, nil)
 
-	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent", nil, &metav1.DeleteOptions{})
+	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent-app", nil, &metav1.DeleteOptions{})
 	require.NoError(t, err)
 
-	require.NotContains(t, parentStorage.items, storageKey("default", "parent"))
+	require.NotContains(t, parentStorage.items, storageKey("default", "parent-app"))
 	require.Contains(t, parentStorage.items, storageKey("default", "child-a"),
 		"with no applied-children annotation we have no record to clean up — the child should remain")
 }
@@ -304,14 +304,14 @@ func TestPluginStorage_DeleteParentNoAnnotation_NoCascade(t *testing.T) {
 func TestPluginStorage_DeleteToleratesMissingChild(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
-	parentStorage.set(parentPluginWithApplied("default", "parent", "1.0.0", "child-a", "child-b"))
-	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent"))
+	parentStorage.set(parentPluginWithApplied("default", "parent-app", "1.0.0", "child-a", "child-b"))
+	parentStorage.set(childPlugin("default", "child-a", "1.0.0", "parent-app"))
 	// child-b is in the applied annotation but already removed out of band.
 	storage := newTestPluginStorage(t, parentStorage, nil)
 
-	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent", nil, &metav1.DeleteOptions{})
+	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent-app", nil, &metav1.DeleteOptions{})
 	require.NoError(t, err, "missing child should be tolerated by the cascade")
-	require.NotContains(t, parentStorage.items, storageKey("default", "parent"))
+	require.NotContains(t, parentStorage.items, storageKey("default", "parent-app"))
 	require.NotContains(t, parentStorage.items, storageKey("default", "child-a"))
 }
 
@@ -320,7 +320,7 @@ func TestPluginStorage_DeleteNonExistentParent_ReturnsNotFound(t *testing.T) {
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorage(t, parentStorage, nil)
 
-	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent", nil, &metav1.DeleteOptions{})
+	_, _, err := storage.(rest.GracefulDeleter).Delete(ctx, "parent-app", nil, &metav1.DeleteOptions{})
 	require.Error(t, err)
 	require.True(t, errorsK8s.IsNotFound(err))
 }
@@ -332,7 +332,7 @@ func TestPluginStorage_SkipsChildPluginWrites(t *testing.T) {
 		"child:1.0.0": {"grandchild"},
 	})
 
-	child := plugin("default", "child", "1.0.0", "parent")
+	child := plugin("default", "child", "1.0.0", "parent-app")
 	_, err := storage.(rest.Creater).Create(ctx, child, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -343,18 +343,66 @@ func TestPluginStorage_CreatedChildrenHaveParentLabel(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
 	storage := newTestPluginStorage(t, parentStorage, map[string][]string{
-		"parent:1.0.0": {"child-a"},
+		"parent-app:1.0.0": {"child-a"},
 	})
 
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	parent.UID = "parent-uid"
 	_, err := storage.(rest.Creater).Create(ctx, parent, nil, &metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	child := parentStorage.items[storageKey("default", "child-a")]
 	require.NotNil(t, child)
-	require.Equal(t, "parent", child.Labels[parentIDLabel])
+	require.Equal(t, "parent-app", child.Labels[parentIDLabel])
 	require.Empty(t, child.OwnerReferences)
+}
+
+// --- Non-app fast path ---
+
+// TestPluginStorage_CreateNonAppPlugin_SkipsMetaAndChildren verifies the
+// app-suffix fast path: a plugin whose ID does not end in "-app" cannot own
+// children, so Create must not look up meta or create any children, even when
+// metadata lists some.
+func TestPluginStorage_CreateNonAppPlugin_SkipsMetaAndChildren(t *testing.T) {
+	ctx := request.WithNamespace(context.Background(), "default")
+	parentStorage := newFakePluginRESTStorage()
+	provider := &fakeMetaProvider{children: map[string][]string{
+		"grafana-foo-datasource:1.0.0": {"child-a", "child-b"},
+	}}
+	storage := newTestPluginStorageWithProvider(t, parentStorage, provider)
+
+	ds := plugin("default", "grafana-foo-datasource", "1.0.0", "")
+	_, err := storage.(rest.Creater).Create(ctx, ds, nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	persisted := parentStorage.items[storageKey("default", "grafana-foo-datasource")]
+	require.NotNil(t, persisted)
+	require.NotContains(t, persisted.Annotations, appliedChildrenAnnotation,
+		"a non-app plugin must not be stamped with applied-children")
+	require.Len(t, parentStorage.items, 1, "no children should be created for a non-app plugin")
+	require.Zero(t, provider.calls, "a non-app plugin must not trigger a meta lookup")
+}
+
+// TestPluginStorage_UpdateNonAppPlugin_SkipsMetaAndChildren is the Update
+// counterpart, covering the BeginUpdate meta lookup that the suffix also skips.
+func TestPluginStorage_UpdateNonAppPlugin_SkipsMetaAndChildren(t *testing.T) {
+	ctx := request.WithNamespace(context.Background(), "default")
+	parentStorage := newFakePluginRESTStorage()
+	parentStorage.set(plugin("default", "grafana-foo-datasource", "1.0.0", ""))
+	provider := &fakeMetaProvider{children: map[string][]string{
+		"grafana-foo-datasource:2.0.0": {"child-a"},
+	}}
+	storage := newTestPluginStorageWithProvider(t, parentStorage, provider)
+
+	updated := plugin("default", "grafana-foo-datasource", "2.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "grafana-foo-datasource", rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	persisted := parentStorage.items[storageKey("default", "grafana-foo-datasource")]
+	require.NotNil(t, persisted)
+	require.NotContains(t, persisted.Annotations, appliedChildrenAnnotation)
+	require.NotContains(t, parentStorage.items, storageKey("default", "child-a"))
+	require.Zero(t, provider.calls, "a non-app plugin must not trigger a meta lookup")
 }
 
 func TestPluginStorage_WrapperRejectsIncompleteStorage(t *testing.T) {
@@ -372,7 +420,7 @@ func TestPluginStorage_DecoratorWrapsDefaultProvider(t *testing.T) {
 	}
 	storage, err := newPluginStorage(&genericregistry.Store{}, &logging.NoOpLogger{}, meta.NewProviderManager(&fakeMetaProvider{
 		children: map[string][]string{
-			"parent:1.0.0": {"child"},
+			"parent-app:1.0.0": {"child"},
 		},
 	}), decorate)
 	require.NoError(t, err)
@@ -381,15 +429,15 @@ func TestPluginStorage_DecoratorWrapsDefaultProvider(t *testing.T) {
 	require.IsType(t, &pluginStorageHookProvider{}, gotBase)
 
 	store := storage.(*genericregistry.Store)
-	parent := plugin("default", "parent", "1.0.0", "")
+	parent := plugin("default", "parent-app", "1.0.0", "")
 	finish, err := store.BeginCreate(context.Background(), parent, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	finish(context.Background(), true)
 	require.Equal(t, "child", parent.Annotations[appliedChildrenAnnotation])
 	store.AfterCreate(parent, &metav1.CreateOptions{})
 
-	updated := plugin("default", "parent", "1.0.0", "")
-	finish, err = store.BeginUpdate(context.Background(), updated, plugin("default", "parent", "0.9.0", ""), &metav1.UpdateOptions{})
+	updated := plugin("default", "parent-app", "1.0.0", "")
+	finish, err = store.BeginUpdate(context.Background(), updated, plugin("default", "parent-app", "0.9.0", ""), &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	finish(context.Background(), true)
 	require.Equal(t, "child", updated.Annotations[appliedChildrenAnnotation])
@@ -401,6 +449,47 @@ func TestPluginStorage_DecoratorWrapsDefaultProvider(t *testing.T) {
 		"afterUpdate",
 		"afterDelete",
 	}, provider.calls)
+}
+
+// TestPluginStorage_DecoratorRunsForNonAppPlugin guards that the -app fast path
+// only gates the default provider's child reconciliation, not the decorating
+// (e.g. enterprise) after-hooks. The store wrapper must still invoke them for a
+// non-app plugin even though no children are reconciled and nothing is stamped.
+func TestPluginStorage_DecoratorRunsForNonAppPlugin(t *testing.T) {
+	provider := &recordingPluginStorageAfterHookProvider{}
+	decorate := func(_ PluginStorageAfterHookProvider) PluginStorageAfterHookProvider {
+		return provider
+	}
+	storage, err := newPluginStorage(&genericregistry.Store{}, &logging.NoOpLogger{}, meta.NewProviderManager(&fakeMetaProvider{
+		children: map[string][]string{
+			"grafana-foo-datasource:1.0.0": {"child"},
+		},
+	}), decorate)
+	require.NoError(t, err)
+
+	store := storage.(*genericregistry.Store)
+	ds := plugin("default", "grafana-foo-datasource", "1.0.0", "")
+	finish, err := store.BeginCreate(context.Background(), ds, &metav1.CreateOptions{})
+	require.NoError(t, err)
+	finish(context.Background(), true)
+	require.NotContains(t, ds.Annotations, appliedChildrenAnnotation,
+		"a non-app plugin must not be stamped with applied-children")
+	store.AfterCreate(ds, &metav1.CreateOptions{})
+
+	updated := plugin("default", "grafana-foo-datasource", "2.0.0", "")
+	finish, err = store.BeginUpdate(context.Background(), updated, plugin("default", "grafana-foo-datasource", "1.0.0", ""), &metav1.UpdateOptions{})
+	require.NoError(t, err)
+	finish(context.Background(), true)
+	require.NotContains(t, updated.Annotations, appliedChildrenAnnotation)
+	store.AfterUpdate(updated, &metav1.UpdateOptions{})
+	store.AfterDelete(updated, &metav1.DeleteOptions{})
+
+	require.Equal(t, []string{
+		"afterCreate",
+		"afterUpdate",
+		"afterDelete",
+	}, provider.calls,
+		"decorating after-hooks must run for non-app plugins even though child reconciliation is skipped")
 }
 
 func newTestPluginStorage(t *testing.T, parentStorage *fakePluginRESTStorage, children map[string][]string) rest.Storage {
@@ -463,6 +552,7 @@ func parentPluginWithApplied(namespace, id, version string, applied ...string) *
 type fakeMetaProvider struct {
 	children map[string][]string
 	err      error
+	calls    int
 }
 
 func (p *fakeMetaProvider) Name() string {
@@ -470,6 +560,7 @@ func (p *fakeMetaProvider) Name() string {
 }
 
 func (p *fakeMetaProvider) GetMeta(_ context.Context, ref meta.PluginRef) (*meta.Result, error) {
+	p.calls++
 	if p.err != nil {
 		return nil, p.err
 	}
@@ -496,7 +587,9 @@ func newHookTestStorage(storage *fakePluginRESTStorage, logger logging.Logger, m
 func (s *hookTestStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if plugin, ok := obj.(*pluginsv0alpha1.Plugin); ok && !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
-		s.hooks.stampDesiredChildren(ctx, plugin, nil)
+		if isAppPlugin(plugin) {
+			s.hooks.stampDesiredChildren(ctx, plugin, nil)
+		}
 	}
 
 	created, err := s.fakePluginRESTStorage.Create(ctx, obj, createValidation, options)
@@ -509,6 +602,9 @@ func (s *hookTestStorage) Create(ctx context.Context, obj runtime.Object, create
 		return created, nil
 	}
 	normalizePluginID(plugin)
+	if !isAppPlugin(plugin) {
+		return created, nil
+	}
 
 	if err := s.hooks.reconcileChildren(ctx, plugin); err != nil {
 		return created, err
@@ -528,8 +624,10 @@ func (s *hookTestStorage) Update(
 	wrappedObjInfo := &testStampingObjInfo{inner: objInfo, transform: func(ctx context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
 		if plugin, ok := newObj.(*pluginsv0alpha1.Plugin); ok && !IsChildPlugin(plugin) {
 			normalizePluginID(plugin)
-			oldPlugin, _ := oldObj.(*pluginsv0alpha1.Plugin)
-			s.hooks.stampDesiredChildren(ctx, plugin, oldPlugin)
+			if isAppPlugin(plugin) {
+				oldPlugin, _ := oldObj.(*pluginsv0alpha1.Plugin)
+				s.hooks.stampDesiredChildren(ctx, plugin, oldPlugin)
+			}
 		}
 		return newObj, nil
 	}}
@@ -544,6 +642,9 @@ func (s *hookTestStorage) Update(
 		return updated, created, nil
 	}
 	normalizePluginID(plugin)
+	if !isAppPlugin(plugin) {
+		return updated, created, nil
+	}
 
 	if err := s.hooks.reconcileChildren(ctx, plugin); err != nil {
 		return updated, created, err
@@ -558,7 +659,7 @@ func (s *hookTestStorage) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	var children []string
-	if plugin != nil && !IsChildPlugin(plugin) {
+	if plugin != nil && !IsChildPlugin(plugin) && isAppPlugin(plugin) {
 		children = parseAppliedChildren(plugin.Annotations)
 	}
 
