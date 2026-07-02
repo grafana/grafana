@@ -28,10 +28,12 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
+import { getSummaryDurationStats } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
@@ -327,6 +329,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       width: '1em',
       verticalAlign: 'middle',
     }),
+    summaryCountBadge: css({
+      label: 'summaryCountBadge',
+      borderRadius: theme.shape.radius.pill,
+      display: 'inline-block',
+      fontSize: '0.85em',
+      fontWeight: 500,
+      lineHeight: 1.4,
+      marginInline: '0.25rem',
+      padding: '0 6px',
+      verticalAlign: 'middle',
+    }),
     labelRight: css({
       label: 'labelRight',
       left: '100%',
@@ -418,7 +431,12 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
 
   const { duration, hasChildren: isParent, operationName, process } = span;
   const serviceDisplayName = getServiceDisplayName(process);
-  const label = formatDuration(duration);
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  // Summary spans show aggregated (min | median | max) stats in place of the single
+  // duration, falling back to the wall-clock duration when min/max are unavailable.
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const summaryStats = summaryDurationStats?.map((stat) => stat.value).join(' | ') ?? null;
+  const label = summaryStats ?? formatDuration(duration);
   const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
@@ -552,7 +570,30 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               </span>
             )}
             <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            {isSummarySpan && span.aggregation?.spanCount !== undefined && (
+              <span
+                className={styles.summaryCountBadge}
+                style={{ background: color, color: theme.colors.getContrastText(color) }}
+                aria-label={t('explore.span-bar-row.summary-count-aria', '', {
+                  count: span.aggregation.spanCount,
+                  defaultValue_one: '{{count}} aggregated span',
+                  defaultValue_other: '{{count}} aggregated spans',
+                })}
+              >
+                {span.aggregation.spanCount}
+              </span>
+            )}
+            {isSummarySpan ? (
+              summaryDurationStats ? (
+                <SummaryDurationStatsTooltip stats={summaryDurationStats}>
+                  <span className={styles.endpointName}> ({label})</span>
+                </SummaryDurationStatsTooltip>
+              ) : (
+                <span className={styles.endpointName}> ({label})</span>
+              )
+            ) : (
+              <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            )}
           </button>
           {showAdaptiveTracesRestoredHint && (
             <Tooltip
@@ -629,6 +670,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
           color={color}
           shortLabel={label}
           longLabel={longLabel}
+          labelDetail={labelDetail}
           traceStartTime={traceStartTime}
           span={span}
           labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
