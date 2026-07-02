@@ -349,6 +349,8 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
 	// and vanished since the previous re-list.
 	added, removed := n.store.Replace(objs)
+	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+		"count", len(objs), "added", len(added), "removed", len(removed))
 	addedKeys := make(map[string]struct{}, len(added))
 	for _, obj := range added {
 		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
