@@ -67,6 +67,9 @@ export interface AlertRuleListItemProps {
   // group-header level instead. Distinct from `evaluationInterval` above which is a Prometheus
   // duration string consumed by `EvaluationMetadata`.
   evalIntervalSeconds?: number;
+  // Evaluation chain chip; surfaced when the rule is part of an evaluation chain
+  // (gated on the alerting.rulesAPIV2 feature toggle and backend-provided membership).
+  ruleSequenceLink?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -95,6 +98,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     showLocation = true,
     querySourceUIDs = [],
     evalIntervalSeconds,
+    ruleSequenceLink,
   } = props;
 
   const listItemAriaId = useId();
@@ -160,6 +164,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     );
   }
 
+  if (ruleSequenceLink) {
+    metadata.push(ruleSequenceLink);
+  }
+
   const ruleHealth = normalizeHealth(health);
   const ruleState = normalizeState(state);
 
@@ -215,6 +223,7 @@ export function RecordingRuleListItem({
   showLocation = true,
   querySourceUIDs = [],
   evalIntervalSeconds,
+  ruleSequenceLink,
 }: RecordingRuleListItemProps) {
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -233,6 +242,10 @@ export function RecordingRuleListItem({
 
   if (querySourceUIDs.length > 0) {
     metadata.push(<QuerySourceIcons queriedDatasourceUIDs={querySourceUIDs} />);
+  }
+
+  if (ruleSequenceLink) {
+    metadata.push(ruleSequenceLink);
   }
 
   const ruleHealth = normalizeHealth(health);

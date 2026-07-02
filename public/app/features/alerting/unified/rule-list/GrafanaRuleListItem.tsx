@@ -14,6 +14,9 @@ import {
   UnknownRuleListItem,
 } from './components/AlertRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { useRuleSequenceDrawer } from './rule-sequences/RuleSequenceDrawerContext';
+import { RuleSequenceLink } from './rule-sequences/RuleSequenceLink';
+import { useGrafanaRuleSequenceMembership } from './rule-sequences/useGrafanaRuleSequenceMembership';
 
 interface GrafanaRuleListItemProps {
   rule: GrafanaPromRuleDTO;
@@ -33,12 +36,18 @@ export function GrafanaRuleListItem({
   evalIntervalSeconds,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
+  const membership = useGrafanaRuleSequenceMembership({ rule, namespaceUid: groupIdentifier.namespace.uid });
+  const { openRuleSequenceDrawer } = useRuleSequenceDrawer();
 
   const groupUrl = groups.detailsPageLink(
     GRAFANA_RULES_SOURCE_NAME,
     groupIdentifier.namespace.uid,
     groupIdentifier.groupName
   );
+
+  const ruleSequenceLink = membership ? (
+    <RuleSequenceLink sequenceName={membership.id} ruleUid={uid} onClick={openRuleSequenceDrawer} />
+  ) : undefined;
 
   const commonProps: RuleListItemCommonProps = {
     name,
@@ -71,12 +80,13 @@ export function GrafanaRuleListItem({
         instancesCount={instancesCount}
         operation={operation}
         showLocation={showLocation}
+        ruleSequenceLink={ruleSequenceLink}
       />
     );
   }
 
   if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} />;
+    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} ruleSequenceLink={ruleSequenceLink} />;
   }
 
   return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;
