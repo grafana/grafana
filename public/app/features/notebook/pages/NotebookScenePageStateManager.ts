@@ -5,6 +5,7 @@ import {
   type LoadDashboardOptions,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
 
 import { K8sNotebookAPI } from '../api/NotebookAPI';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
@@ -35,6 +36,15 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     // edit/share/export toolbar actions and the outline/edit pane (canEditDashboard() and
     // the share button both require !isEmbedded) while the page + title still render.
     scene?.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
+
+    // Surface the notebook's tags on the layout manager's own state so its header can show them.
+    // The manager deliberately doesn't read them off the DashboardScene (that import would form a
+    // dependency cycle), so the loader pushes them down here.
+    const body = scene?.state.body;
+    if (body instanceof NotebookLayoutManager) {
+      body.setState({ tags: rsp?.spec.tags });
+    }
+
     return scene;
   }
 }

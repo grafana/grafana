@@ -3,11 +3,7 @@ import {
   type PanelKind as DashboardPanelKind,
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  type NotebookElement,
-  type NotebookLayoutItemKind,
-  type NotebookLayoutKind,
-} from '@grafana/schema/apis/notebook/v2beta1';
+import { type NotebookElement, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 
 import { NotebookCellItem } from '../../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
@@ -64,20 +60,4 @@ export function deserializeNotebookLayout(
   }
 
   return new NotebookLayoutManager({ cells });
-}
-
-export function serializeNotebookLayout(manager: NotebookLayoutManager): DashboardV2Spec['layout'] {
-  const cells: NotebookLayoutItemKind[] = manager.state.cells.map((cell) => ({
-    kind: 'NotebookLayoutItem',
-    spec: {
-      element: { kind: 'ElementReference', name: cell.state.elementName },
-      source: cell.state.source,
-      // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
-      ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
-    },
-  }));
-
-  const layout: NotebookLayoutKind = { kind: 'NotebookLayout', spec: { cells } };
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- notebook layout is a sibling kind not in DashboardV2Spec['layout']
-  return layout as unknown as DashboardV2Spec['layout'];
 }

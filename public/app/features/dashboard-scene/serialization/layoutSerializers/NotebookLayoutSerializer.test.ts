@@ -7,7 +7,7 @@ import {
   type NotebookLayoutKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
 
-import { deserializeNotebookLayout, serializeNotebookLayout } from './NotebookLayoutSerializer';
+import { deserializeNotebookLayout } from './NotebookLayoutSerializer';
 
 function markdownCell(text: string): CellKind {
   return { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text } } } };
@@ -66,7 +66,7 @@ describe('NotebookLayoutSerializer', () => {
     const { layout, elements } = fixture();
 
     const manager = deserializeNotebookLayout(layout, elements, false);
-    const roundTripped = serializeNotebookLayout(manager);
+    const roundTripped = manager.serialize();
 
     expect(roundTripped).toEqual(layout);
   });

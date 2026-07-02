@@ -11,11 +11,10 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { serializeNotebookLayout } from '../../serialization/layoutSerializers/NotebookLayoutSerializer';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
@@ -24,6 +23,10 @@ import { NotebookCellRenderer } from './NotebookCellRenderer';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
+  // The notebook's tags, shown in the header. Held on the manager's own state (set by the
+  // notebook loader) instead of read from the parent DashboardScene — reaching up to the scene
+  // would import the dashboard-scene module graph and reintroduce a dependency cycle.
+  tags?: string[];
 }
 
 export class NotebookLayoutManager
@@ -48,8 +51,23 @@ export class NotebookLayoutManager
 
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
+  // Serialization lives here (not in a standalone helper) so the manager doesn't import the
+  // serializer module — that mutual import is what forms a dependency cycle. The serializer
+  // still imports this manager to construct it in deserialize, which stays one-directional.
   public serialize(): DashboardV2Spec['layout'] {
-    return serializeNotebookLayout(this);
+    const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
+      kind: 'NotebookLayoutItem',
+      spec: {
+        element: { kind: 'ElementReference', name: cell.state.elementName },
+        source: cell.state.source,
+        // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
+        ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
+      },
+    }));
+
+    const layout: NotebookLayoutKind = { kind: 'NotebookLayout', spec: { cells } };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- notebook layout is a sibling kind not in DashboardV2Spec['layout']
+    return layout as unknown as DashboardV2Spec['layout'];
   }
 
   // Only panel cells are viz panels; markdown/code cells are narrative content and are
@@ -85,14 +103,12 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells } = model.useState();
+  const { cells, tags } = model.useState();
 
-  const dashboard = getDashboardSceneFor(model);
-  const { tags } = dashboard.useState();
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
   // The notebook title is shown by the app chrome (page breadcrumb), so the in-document
-  // header carries only the Notebook pill and scope to avoid duplicating it.
+  // header carries only the Notebook pill, scope and tags to avoid duplicating it.
   return (
     <div className={styles.document}>
       <header className={styles.header}>
