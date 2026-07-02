@@ -19,11 +19,45 @@ describe('navBarTree reducer', () => {
       expect(starred?.children?.[0]).toMatchObject({ id: 'starred/abc', text: 'My Dash', url: '/d/abc' });
     });
 
+    it('carries the passed icon onto the created child', () => {
+      const state = buildState();
+      const next = navTreeReducer(
+        state,
+        setStarred({ id: 'fold1', title: 'My Folder', url: '/dashboards/f/fold1', icon: 'folder', isStarred: true })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children).toHaveLength(1);
+      expect(starred?.children?.[0].icon).toBe('folder');
+    });
+
     it('removes a starred item by prefixed ID', () => {
       const state = buildState([{ id: ID_PREFIX + 'abc', text: 'My Dash', url: '/d/abc' }]);
       const next = navTreeReducer(state, setStarred({ id: 'abc', title: '', url: '', isStarred: false }));
       const starred = next.find((n) => n.id === 'starred');
       expect(starred?.children).toHaveLength(0);
+    });
+
+    it('inserts a starred folder after dashboards even when its title sorts first', () => {
+      const state = buildState([
+        { id: ID_PREFIX + 'b', text: 'BBB dash', url: '/d/b' },
+        { id: ID_PREFIX + 'z', text: 'ZZZ dash', url: '/d/z' },
+      ]);
+      const next = navTreeReducer(
+        state,
+        setStarred({ id: 'f1', title: 'AAA folder', url: '/dashboards/f/f1', sortWeight: 1, isStarred: true })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
+    });
+
+    it('inserts a starred dashboard before folders even when its title sorts last', () => {
+      const state = buildState([
+        { id: ID_PREFIX + 'b', text: 'BBB dash', url: '/d/b' },
+        { id: ID_PREFIX + 'f1', text: 'AAA folder', url: '/dashboards/f/f1', sortWeight: 1 },
+      ]);
+      const next = navTreeReducer(state, setStarred({ id: 'z', title: 'ZZZ dash', url: '/d/z', isStarred: true }));
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
     });
   });
 
@@ -79,6 +113,42 @@ describe('navBarTree reducer', () => {
       expect(starred?.children).toHaveLength(3);
       expect(starred?.children?.map((c) => c.text)).toEqual(['Alpha', 'Beta', 'Charlie']);
       expect(starred?.children?.map((c) => c.id)).toEqual(['starred/a', 'starred/b', 'starred/c']);
+    });
+
+    it('groups dashboards before folders even when a folder title sorts first', () => {
+      const state = buildState();
+      const next = navTreeReducer(
+        state,
+        setStarredItems({
+          uids: ['f1', 'b', 'z'],
+          items: [
+            { id: 'f1', title: 'AAA folder', url: '/dashboards/f/f1', sortWeight: 1 },
+            { id: 'b', title: 'BBB dash', url: '/d/b' },
+            { id: 'z', title: 'ZZZ dash', url: '/d/z' },
+          ],
+        })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
+    });
+
+    it('carries each item icon onto its built child, keyed by uid not position', () => {
+      const state = buildState();
+      // Titles sort opposite to insertion order, so a positional bug would swap the icons.
+      const next = navTreeReducer(
+        state,
+        setStarredItems({
+          uids: ['dash1', 'fold1'],
+          items: [
+            { id: 'dash1', title: 'Zulu Dash', url: '/d/dash1', icon: 'apps' },
+            { id: 'fold1', title: 'Alpha Folder', url: '/dashboards/f/fold1', icon: 'folder' },
+          ],
+        })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      const findChild = (uid: string) => starred?.children?.find((c) => c.id === ID_PREFIX + uid);
+      expect(findChild('dash1')?.icon).toBe('apps');
+      expect(findChild('fold1')?.icon).toBe('folder');
     });
 
     it('clears previous children', () => {

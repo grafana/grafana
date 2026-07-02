@@ -2,7 +2,12 @@ import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import {
+  getFolderFixtures,
+  setMockStarredDashboards,
+  setMockStarredFolders,
+  setTestFlags,
+} from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSelector } from 'app/types/store';
@@ -13,7 +18,7 @@ jest.mock('app/features/search/service/searcher');
 
 const mockedGetGrafanaSearcher = jest.mocked(getGrafanaSearcher);
 
-const [_, { dashbdD, folderA_dashbdD }] = getFolderFixtures();
+const [_, { dashbdD, folderA_dashbdD, folderA }] = getFolderFixtures();
 // The starred fixtures are: dashbdD.item.uid, folderA_dashbdD.item.uid
 const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
 
@@ -32,7 +37,7 @@ const TestHarness = () => {
       <span data-testid="error-state">{String(isError)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
-          <li key={child.id} data-testid={`synced-${child.id}`}>
+          <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon}>
             {child.text}
           </li>
         ))}
@@ -41,7 +46,7 @@ const TestHarness = () => {
   );
 };
 
-function setupSearchMock(items: Array<{ uid: string; name: string; url: string }>) {
+function setupSearchMock(items: Array<{ uid: string; name: string; url: string; kind: string }>) {
   const view = {
     length: items.length,
     get: (i: number) => items[i],
@@ -87,6 +92,7 @@ describe('useSyncStarredItemsInNav', () => {
           uid: d.uid,
           name: d.title,
           url: `/d/${d.uid}`,
+          kind: 'dashboard',
         }))
       );
 
@@ -102,11 +108,14 @@ describe('useSyncStarredItemsInNav', () => {
         });
       });
 
-      // Verify items appeared in the nav tree (sorted alphabetically)
+      // Verify items appeared in the nav tree (sorted alphabetically). Per-kind icons are
+      // gated behind starredFoldersEnabled(): with starred folders disabled, synced rows
+      // must carry no icon at all (nav is unchanged from pre-feature behavior).
       for (const dash of starredDashboards) {
         await waitFor(() => {
           expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
         });
+        expect(screen.getByTestId(`synced-starred/${dash.uid}`)).not.toHaveAttribute('data-icon');
       }
 
       expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
@@ -160,6 +169,82 @@ describe('useSyncStarredItemsInNav', () => {
       // Loading resolved instead of spinning forever, and no items were dispatched
       expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
       expect(screen.getByTestId('starred-list').children).toHaveLength(0);
+    });
+  });
+
+  describe('when starredFolders is enabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+      // Provide a starred section in the nav tree so the reducer has a target
+      config.bootData.navTree = [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'starred', text: 'Starred', children: [] },
+      ];
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('syncs both a starred dashboard and folder, each with its per-kind icon', async () => {
+      const dashUid = dashbdD.item.uid;
+      const folderUid = folderA.item.uid;
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+
+      const mockSearcher = setupSearchMock([
+        { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+      ]);
+
+      render(<TestHarness />);
+
+      // One combined search across both kinds, keyed by the sorted union of starred uids
+      await waitFor(() => {
+        expect(mockSearcher.search).toHaveBeenCalledWith({
+          name: [dashUid, folderUid].sort(),
+          kind: ['dashboard', 'folder'],
+        });
+      });
+
+      // Both kinds land in the nav Starred section
+      await waitFor(() => {
+        expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
+      });
+      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+
+      // ...and carry the icon that distinguishes them
+      expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
+      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
+    });
+
+    it('orders a synced dashboard before a synced folder even when the folder title sorts first', async () => {
+      const dashUid = dashbdD.item.uid;
+      const folderUid = folderA.item.uid;
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+
+      // Folder title alphabetically precedes the dashboard title, so a pure
+      // alphabetical sort would render the folder first — kind grouping must win.
+      setupSearchMock([
+        { uid: dashUid, name: 'ZZZ Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'AAA Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+      ]);
+
+      render(<TestHarness />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+      });
+      expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
+
+      // DOM order mirrors nav children order: the dashboard row renders before the folder row
+      const rowIds = Array.from(screen.getByTestId('starred-list').children).map((el) =>
+        el.getAttribute('data-testid')
+      );
+      expect(rowIds).toEqual([`synced-starred/${dashUid}`, `synced-starred/${folderUid}`]);
     });
   });
 });
