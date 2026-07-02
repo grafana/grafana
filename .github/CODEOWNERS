@@ -1137,6 +1137,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
+/scripts/estimate-npm-packument-size.sh @grafana/grafana-frontend-platform
 
 /scripts/codeowners-manifest/ @grafana/dataviz-squad
 /scripts/test-coverage-by-codeowner.js @grafana/dataviz-squad
@@ -1335,6 +1336,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/pr-notify.mts @grafana/grafana-community-support
 /.github/workflows/scripts/utils.mts @grafana/grafana-community-support
 /.github/workflows/scripts/levitate/ @grafana/grafana-frontend-platform
+/.github/workflows/scripts/detect-e2e-selectors-change.sh @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-backend-services-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-backend-services-squad
