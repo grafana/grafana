@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -82,27 +83,32 @@ func eventRV(action resourcepb.WatchNotification_Type, name string, rv int64) *r
 // A live notification records ObserveLiveEvent with the notification's verb and
 // resource version, so consumer-side latency and throughput can be derived.
 func TestInformer_Metrics_LiveEvents(t *testing.T) {
-	sub := newFakeSubscriber()
-	m := &fakeMetrics{}
-	list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, m)
-	_, err := n.AddEventHandler(&recordingHandler{})
-	require.NoError(t, err)
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		m := &fakeMetrics{}
+		list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, m)
+		_, err := n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
 
-	stopCh := make(chan struct{})
-	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
-	sub.waitForSubscription(t, subject())
+		stopCh := make(chan struct{})
+		go n.Run(stopCh)
+		defer func() { close(stopCh); synctest.Wait() }()
 
-	sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_ADDED, "a", 100))
-	sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_MODIFIED, "b", 200))
-	sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_DELETED, "c", 300))
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
 
-	require.Eventually(t, func() bool { return len(m.byKind("live")) == 3 }, 2*time.Second, 5*time.Millisecond)
-	live := m.byKind("live")
-	assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "add", rv: 100}, live[0])
-	assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "update", rv: 200}, live[1])
-	assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "delete", rv: 300}, live[2])
+		sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_ADDED, "a", 100))
+		sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_MODIFIED, "b", 200))
+		sub.publish(t, subject(), eventRV(resourcepb.WatchNotification_DELETED, "c", 300))
+		synctest.Wait()
+
+		live := m.byKind("live")
+		require.Len(t, live, 3)
+		assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "add", rv: 100}, live[0])
+		assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "update", rv: 200}, live[1])
+		assert.Equal(t, recordedCall{kind: "live", resource: testGVR.Resource, verb: "delete", rv: 300}, live[2])
+	})
 }
 
 // The initial list records every object as a relist add with initial=true (its
