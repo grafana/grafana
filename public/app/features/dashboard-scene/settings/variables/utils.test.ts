@@ -188,6 +188,54 @@ describe('getVariableTypeSelectOptions', () => {
       });
     });
   });
+
+  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('should hide adhoc in the dashboard context', () => {
+      const values = getVariableTypeSelectOptions().map((o) => o.value);
+      expect(values).not.toContain('adhoc');
+      expect(values).toContain('groupby');
+    });
+
+    it('should show adhoc as "Filter and Group by" and hide groupby in the standalone context', () => {
+      const options = getVariableTypeSelectOptions({ standalone: true });
+      const values = options.map((o) => o.value);
+      expect(values).toContain('adhoc');
+      expect(values).not.toContain('groupby');
+
+      const adhoc = options.find((o) => o.value === 'adhoc');
+      expect(adhoc?.label).toBe('Filter and Group by');
+      expect(adhoc?.description).toBe('Add key/value filters and group by keys on the fly');
+    });
+  });
+
+  describe('when dashboardUnifiedDrilldownControls is disabled', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+    });
+
+    it('standalone context should match the dashboard context', () => {
+      const standaloneOptions = getVariableTypeSelectOptions({ standalone: true });
+      expect(standaloneOptions).toEqual(getVariableTypeSelectOptions());
+
+      const adhoc = standaloneOptions.find((o) => o.value === 'adhoc');
+      expect(adhoc?.label).toBe('Filter');
+      expect(standaloneOptions.map((o) => o.value)).toContain('groupby');
+    });
+  });
 });
 
 describe('getVariableEditor', () => {

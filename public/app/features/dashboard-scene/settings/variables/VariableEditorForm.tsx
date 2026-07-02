@@ -37,8 +37,16 @@ interface VariableEditorFormProps {
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  /** True when rendering outside a dashboard (e.g. the variables management page). */
+  standalone?: boolean;
 }
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+  standalone,
+}: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
@@ -93,7 +101,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     <form
       aria-label={t('dashboard-scene.variable-editor-form.aria-label-variable-editor-form', 'Variable editor form')}
     >
-      <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
+      <VariableTypeSelect onChange={onVariableTypeChange} type={type} standalone={standalone} />
 
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>

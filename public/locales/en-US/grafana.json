@@ -6945,6 +6945,7 @@
     },
     "get-editable-variables": {
       "description": {
+        "add-filters-and-group-by-keys-on-the-fly": "Add key/value filters and group by keys on the fly",
         "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
         "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
         "group": "Add keys to group by on the fly",

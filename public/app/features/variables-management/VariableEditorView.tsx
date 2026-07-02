@@ -161,7 +161,13 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
         <FolderPicker showRootFolder value={folderUid} onChange={(uid) => setFolderUid(uid ?? '')} />
       </Field>
 
-      <VariableEditorForm variable={sceneVariable} onTypeChange={onTypeChange} onGoBack={onBack} onDelete={onDelete} />
+      <VariableEditorForm
+        variable={sceneVariable}
+        onTypeChange={onTypeChange}
+        onGoBack={onBack}
+        onDelete={onDelete}
+        standalone
+      />
 
       <Stack gap={2}>
         <Button variant="primary" onClick={onSave} disabled={isSaving}>
