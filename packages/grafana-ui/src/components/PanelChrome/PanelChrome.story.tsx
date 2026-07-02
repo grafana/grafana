@@ -153,7 +153,7 @@ export const Examples = () => {
           {renderPanel('Content', {
             title: 'With description in sub-header',
             description: 'This is a description',
-            descriptionInSubHeader: true,
+            descriptionLocation: true,
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',

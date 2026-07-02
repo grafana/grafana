@@ -4,13 +4,14 @@ import { CoreApp, type FieldConfigSource, type PanelPluginVisualizationSuggestio
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
-import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, TextArea, Combobox, type ComboboxOption } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { UnsetField } from '../edit-pane/UnsetField';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
@@ -202,28 +203,64 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
   const [prevDescription, setPrevDescription] = React.useState(panel.state.description);
 
   return (
-    <TextArea
-      id={id}
-      value={description}
-      onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
-      onFocus={() => setPrevDescription(panel.state.description)}
-      onBlur={() => {
-        dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
-          source: panel,
-          perform: () => panel.setState({ description: description }),
-          undo: () => panel.setState({ description: prevDescription }),
-        });
-      }}
-    />
+    <UnsetField value={description} label={t('dashboard.edit-pane.variable.description', 'Description')}>
+      {(onValueChanged, autoFocus) => (
+        <TextArea
+          id={id}
+          value={description}
+          onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+          onFocus={() => setPrevDescription(panel.state.description)}
+          autoFocus={autoFocus}
+          onBlur={() => {
+            onValueChanged(description);
+
+            dashboardEditActions.edit({
+              description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+              source: panel,
+              perform: () => panel.setState({ description: description }),
+              undo: () => panel.setState({ description: prevDescription }),
+            });
+          }}
+        />
+      )}
+    </UnsetField>
+  );
+}
+
+export function PanelSubTitleTextArea({ panel, id }: { panel: VizPanel; id?: string }) {
+  const { subTitle } = panel.useState();
+  const [prevSubTitle, setPrevSubTitle] = React.useState(panel.state.subTitle);
+
+  return (
+    <UnsetField value={subTitle} label={t('dashboard.edit-pane.variable.sub-title', 'Subtitle')}>
+      {(onValueChanged, autoFocus) => (
+        <TextArea
+          id={id}
+          value={subTitle}
+          onChange={(evt) => panel.setState({ subTitle: evt.currentTarget.value })}
+          onFocus={() => setPrevSubTitle(panel.state.subTitle)}
+          autoFocus={autoFocus}
+          onBlur={() => {
+            onValueChanged(subTitle);
+
+            dashboardEditActions.edit({
+              description: t('dashboard.edit-actions.panel-sub-title', 'Change panel subtitle'),
+              source: panel,
+              perform: () => panel.setState({ subTitle: subTitle }),
+              undo: () => panel.setState({ subTitle: prevSubTitle }),
+            });
+          }}
+        />
+      )}
+    </UnsetField>
   );
 }
 
 export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: string }) {
   const { displayMode = 'default' } = panel.useState();
 
-  const onChange = () => {
-    const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
+  const onChange = (value: ComboboxOption<'default' | 'transparent'>) => {
+    const newDisplayMode = value.value;
 
     dashboardEditActions.edit({
       description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
@@ -233,7 +270,22 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     });
   };
 
-  return <Switch value={displayMode === 'transparent'} id={id} onChange={onChange} />;
+  const options: Array<ComboboxOption<'default' | 'transparent'>> = [
+    { label: t('dashboard.edit-pane.variable.default', 'Default'), value: 'default' },
+    { label: t('dashboard.edit-pane.variable.transparent', 'Transparent'), value: 'transparent' },
+  ];
+
+  return (
+    <UnsetField
+      value={displayMode}
+      label={t('dashboard.edit-pane.variable.background', 'Background')}
+      defaultValue="default"
+    >
+      {(onValueChanged, autoFocus) => (
+        <Combobox id={id} value={displayMode} options={options} onChange={onChange} autoFocus={autoFocus} />
+      )}
+    </UnsetField>
+  );
 }
 
 function updatePanelTitleState(panel: VizPanel, title: string) {

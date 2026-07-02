@@ -34,7 +34,7 @@ interface BaseProps {
   title?: string | React.ReactElement;
   description?: string | (() => string);
   /** If true, the description will be displayed in the sub-header area instead of the main header. */
-  descriptionInSubHeader?: boolean;
+  descriptionLocation?: boolean;
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -165,7 +165,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
-  descriptionInSubHeader = false,
+  descriptionLocation: descriptionInSubHeader = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;

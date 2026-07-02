@@ -14,6 +14,7 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
+  PanelSubTitleTextArea,
   editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -52,16 +53,27 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
+          title: t('dashboard.viz-panel.options.sub-title', 'Subtitle'),
+          id: descriptionId,
+          value: panel.state.description,
+          skipField: true,
+          render: (descriptor) => <PanelSubTitleTextArea id={descriptor.props.id} panel={panel} />,
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
           title: t('dashboard.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
+          skipField: true,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
+          title: t('dashboard.viz-panel.options.background', 'Background'),
           id: backgroundId,
+          skipField: true,
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
