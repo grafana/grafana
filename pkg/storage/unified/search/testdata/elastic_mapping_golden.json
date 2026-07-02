@@ -1,0 +1,72 @@
+{
+  "properties": {
+    "created": {
+      "doc_values": true,
+      "type": "long"
+    },
+    "created_by": {
+      "type": "keyword"
+    },
+    "description": {
+      "type": "text"
+    },
+    "fields": {
+      "properties": {
+        "panel_title": {
+          "fields": {
+            "ngram": {
+              "analyzer": "standard",
+              "type": "text"
+            }
+          },
+          "type": "text"
+        },
+        "tags": {
+          "type": "keyword"
+        }
+      },
+      "type": "object"
+    },
+    "folder": {
+      "doc_values": true,
+      "type": "keyword"
+    },
+    "is_deleted": {
+      "type": "boolean"
+    },
+    "labels": {
+      "dynamic": true,
+      "type": "object"
+    },
+    "name": {
+      "doc_values": true,
+      "type": "keyword"
+    },
+    "ownerReferences": {
+      "type": "keyword"
+    },
+    "resource_version": {
+      "type": "long"
+    },
+    "tags": {
+      "type": "keyword"
+    },
+    "title": {
+      "fields": {
+        "keyword": {
+          "doc_values": true,
+          "type": "keyword"
+        }
+      },
+      "type": "text"
+    },
+    "title_ngram": {
+      "analyzer": "standard",
+      "type": "text"
+    },
+    "title_phrase": {
+      "doc_values": true,
+      "type": "keyword"
+    }
+  }
+}

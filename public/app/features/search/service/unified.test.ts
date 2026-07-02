@@ -172,6 +172,27 @@ describe('toDashboardResults', () => {
     expect(results.meta?.custom?.sortBy).toBe('errors_today');
   });
 
+  it('uses title for display name when field includes resource name', () => {
+    const mockResponse: SearchAPIResponse = {
+      totalHits: 1,
+      hits: [
+        {
+          resource: 'dashboards',
+          name: 'adpqqd9',
+          title: 'MonDash',
+          folder: '',
+          tags: [],
+          field: { name: 'adpqqd9' },
+          url: '/d/adpqqd9/mondash',
+        },
+      ],
+    };
+
+    const results = toDashboardResults(mockResponse, '');
+
+    expect(results.fields.find((f) => f.name === 'name')?.values[0]).toBe('MonDash');
+  });
+
   it('will trim "-" from the sort field name', () => {
     const mockHits: SearchHit[] = [
       {

@@ -1,0 +1,240 @@
+syntax = "proto3";
+package resource;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
+
+import "resource.proto";
+import "google/protobuf/struct.proto";
+
+// SearchEngine is the engine-agnostic contract for indexing and querying.
+// Bleve and Elasticsearch implement it in-process; a gRPC server can expose
+// the same surface for remote engines.
+service SearchEngine {
+  // Reconcile mapping from carried schema descriptors, then upsert/delete docs.
+  rpc Index(IndexRequest) returns (IndexResponse);
+
+  // Engine-agnostic search. Authorization is expressed as AuthzFilter on the
+  // wire; in-process callers may additionally supply an ItemChecker via the Go
+  // interface (not serializable over gRPC).
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // Per-index document counts, optionally scoped to folders.
+  rpc Stats(StatsRequest) returns (StatsResponse);
+
+  // Make writes up to resource_version visible (read-after-write).
+  rpc Refresh(RefreshRequest) returns (RefreshResponse);
+
+  // Drop the index for a (namespace, group, resource).
+  rpc DeleteIndex(DeleteIndexRequest) returns (DeleteIndexResponse);
+
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message ResourceIndexKey {
+  string namespace = 1;
+  string group = 2;
+  string resource = 3;
+}
+
+enum FieldType {
+  FIELD_TYPE_UNSPECIFIED = 0;
+  FIELD_TYPE_STRING = 1;
+  FIELD_TYPE_INT64 = 2;
+  FIELD_TYPE_DOUBLE = 3;
+  FIELD_TYPE_BOOLEAN = 4;
+  FIELD_TYPE_DATE = 5;
+}
+
+enum Capability {
+  CAPABILITY_UNSPECIFIED = 0;
+  CAPABILITY_FILTER = 1;
+  CAPABILITY_TEXT = 2;
+  CAPABILITY_PARTIAL = 3;
+  CAPABILITY_SORT = 4;
+  CAPABILITY_FACET = 5;
+  CAPABILITY_RETRIEVE = 6;
+  CAPABILITY_UNRANKED = 7;
+}
+
+message FieldDescriptor {
+  string name = 1;
+  FieldType type = 2;
+  bool array = 3;
+  repeated Capability capabilities = 4;
+}
+
+message FieldValue {
+  string name = 1;
+  // Scalar fields use values[0]; array fields use all entries.
+  repeated google.protobuf.Value values = 2;
+}
+
+message Document {
+  ResourceKey key = 1;
+  int64 resource_version = 2;
+
+  // Well-known standard fields (implementation-defined, not per-kind).
+  string title = 3;
+  string folder = 4;
+  int64 created = 5;
+  string created_by = 6;
+  repeated string owner_references = 7;
+  map<string, string> labels = 8;
+  bool is_deleted = 9;
+
+  // Manifest-declared kind-specific values.
+  repeated FieldValue fields = 10;
+}
+
+message IndexItem {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    ACTION_UPSERT = 1;
+    ACTION_DELETE = 2;
+  }
+  Action action = 1;
+  Document doc = 2;
+  ResourceKey key = 3; // used for ACTION_DELETE
+}
+
+message IndexRequest {
+  ResourceIndexKey index = 1;
+  repeated FieldDescriptor schema = 2;
+  string schema_hash = 3;
+  repeated IndexItem items = 4;
+  int64 resource_version = 5;
+}
+
+message IndexResponse {
+  ErrorResult error = 1;
+  int64 indexed = 2;
+  int64 resource_version = 3;
+  bool schema_reconciled = 4;
+}
+
+enum FilterOp {
+  FILTER_OP_UNSPECIFIED = 0;
+  FILTER_OP_IN = 1;
+  FILTER_OP_NOT_IN = 2;
+}
+
+message TextPredicate {
+  string value = 1;
+  repeated string fields = 2;
+}
+
+message FilterPredicate {
+  string field = 1;
+  FilterOp op = 2;
+  repeated string values = 3;
+}
+
+message LabelRequirement {
+  string key = 1;
+  FilterOp op = 2;
+  repeated string values = 3;
+}
+
+message Query {
+  repeated TextPredicate text = 1;
+  repeated FilterPredicate filters = 2;
+  repeated LabelRequirement labels = 3;
+}
+
+// AuthzFilter scopes results without embedding AccessClient in the engine.
+// all=true bypasses scoping. Empty folders/names with all=false means the
+// engine returns candidates and the caller post-filters.
+message AuthzFilter {
+  bool all = 1;
+  repeated string folders = 2;
+  repeated string names = 3;
+}
+
+message Sort {
+  string field = 1;
+  bool desc = 2;
+}
+
+message FacetRequest {
+  string field = 1;
+  int64 limit = 2;
+}
+
+message SearchRequest {
+  ResourceIndexKey index = 1;
+  repeated ResourceIndexKey federated = 2;
+  Query query = 3;
+  AuthzFilter authz = 4;
+  repeated Sort sort = 5;
+  repeated string fields = 6;
+  repeated FacetRequest facets = 7;
+  int64 limit = 8;
+  repeated string search_after = 9;
+  int64 offset = 10;
+  bool include_total = 11;
+  bool explain = 12;
+  bool is_deleted = 13;
+}
+
+message Hit {
+  ResourceKey key = 1;
+  double score = 2;
+  repeated FieldValue fields = 3;
+  repeated string sort_values = 4;
+}
+
+message TermCount {
+  string term = 1;
+  int64 count = 2;
+}
+
+message FacetResult {
+  string field = 1;
+  int64 total = 2;
+  int64 missing = 3;
+  repeated TermCount terms = 4;
+}
+
+message SearchResponse {
+  ErrorResult error = 1;
+  repeated Hit hits = 2;
+  int64 total_hits = 3;
+  double max_score = 4;
+  repeated FacetResult facets = 5;
+  int64 resource_version = 6;
+}
+
+message StatsRequest {
+  ResourceIndexKey index = 1;
+  repeated string folders = 2;
+}
+
+message StatsResponse {
+  ErrorResult error = 1;
+  int64 count = 2;
+}
+
+message RefreshRequest {
+  ResourceIndexKey index = 1;
+  int64 resource_version = 2;
+}
+
+message RefreshResponse {
+  ErrorResult error = 1;
+  int64 resource_version = 2;
+}
+
+message DeleteIndexRequest {
+  ResourceIndexKey index = 1;
+}
+
+message DeleteIndexResponse {
+  ErrorResult error = 1;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  ErrorResult error = 1;
+  bool healthy = 2;
+}

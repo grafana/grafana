@@ -438,10 +438,11 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       description: hit.description ?? '',
       folder,
       location,
-      name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID
       kind: hit.resource.substring(0, hit.resource.length - 1), // dashboard "kind" is not plural
       managedBy: hit.managedBy,
       ...field,
+      // hit.name is the k8s resource name (dashboard UID); display title must win over field.name
+      name: hit.title,
     };
   });
   const frame = arrayToDataFrame(dashboardHits);
