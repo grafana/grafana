@@ -135,16 +135,17 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 	row := s.pool.QueryRow(ctx, query, namespace, name)
 
 	var (
-		ns, n, text       string
-		timeMs, createdAt int64
-		timeEnd           *int64
-		dashboardUID      *string
-		panelID           *int64
-		tags, scopes      []string
-		createdBy         *string
-		legacyID          *int64
-		legacyData        *string
-		deletedAt         *int64
+		ns, n, text  string
+		timeMs       int64
+		createdAt    time.Time
+		timeEnd      *int64
+		dashboardUID *string
+		panelID      *int64
+		tags, scopes []string
+		createdBy    *string
+		legacyID     *int64
+		legacyData   *string
+		deletedAt    *time.Time
 	)
 
 	err := row.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
@@ -176,7 +177,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	tags := anno.Spec.Tags
 	scopes := anno.Spec.Scopes
 	createdBy := anno.GetCreatedBy()
-	createdAt := time.Now().UTC().UnixMilli()
+	createdAt := time.Now().UTC()
 
 	var legacyID *int64
 	if id := GetLegacyID(anno); id > 0 {
@@ -250,7 +251,7 @@ func (s *PostgreSQLStore) Delete(ctx context.Context, namespace, name string) er
 		WHERE namespace = $2 AND name = $3 AND deleted_at IS NULL
 	`
 
-	result, err := s.pool.Exec(ctx, query, time.Now().UTC().UnixMilli(), namespace, name)
+	result, err := s.pool.Exec(ctx, query, time.Now().UTC(), namespace, name)
 	if err != nil {
 		return fmt.Errorf("failed to delete annotation: %w", err)
 	}
@@ -294,16 +295,17 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 	var results []annotationV0.Annotation
 	for rows.Next() {
 		var (
-			ns, n, text       string
-			timeMs, createdAt int64
-			timeEnd           *int64
-			dashboardUID      *string
-			panelID           *int64
-			tags, scopes      []string
-			createdBy         *string
-			legacyID          *int64
-			legacyData        *string
-			deletedAt         *int64
+			ns, n, text  string
+			timeMs       int64
+			createdAt    time.Time
+			timeEnd      *int64
+			dashboardUID *string
+			panelID      *int64
+			tags, scopes []string
+			createdBy    *string
+			legacyID     *int64
+			legacyData   *string
+			deletedAt    *time.Time
 		)
 
 		err := rows.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
@@ -434,7 +436,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 // rowToAnnotation converts database row values to an Annotation object
 func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
-	createdBy *string, createdAt int64, legacyID *int64, legacyData *string, deletedAt *int64) *annotationV0.Annotation {
+	createdBy *string, createdAt time.Time, legacyID *int64, legacyData *string, deletedAt *time.Time) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -458,9 +460,9 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	}
 
 	// Set creation timestamp and deletion timestamp if present
-	anno.CreationTimestamp = metav1.NewTime(time.UnixMilli(createdAt))
+	anno.CreationTimestamp = metav1.NewTime(createdAt)
 	if deletedAt != nil {
-		ts := metav1.NewTime(time.UnixMilli(*deletedAt))
+		ts := metav1.NewTime(*deletedAt)
 		anno.DeletionTimestamp = &ts
 	}
 
