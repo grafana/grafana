@@ -4392,10 +4392,6 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
-    "folder-target": {
-      "git": "Sync with Git repository",
-      "grafana": "Save in Grafana only"
-    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -7290,8 +7286,7 @@
       "render-footer": {
         "title-failed-to-save-dashboard": "Failed to save dashboard"
       },
-      "required": "Required",
-      "save-to-git": "Save to Git repository instead"
+      "required": "Required"
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7368,9 +7363,7 @@
       "new-folder": "New folder",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
-      "save-at-root": "No folder (save at repository root)",
       "save-json-to-file": "Save JSON to file",
-      "save-to-database": "Save to Grafana database instead",
       "saving": "Saving...",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",

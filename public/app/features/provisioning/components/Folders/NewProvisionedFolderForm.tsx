@@ -300,7 +300,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   );
 }
 
-function validateProvisionedFolderName(folderName: string): string | true {
+export function validateProvisionedFolderName(folderName: string): string | true {
   if (!folderName || typeof folderName !== 'string') {
     return t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required');
   }

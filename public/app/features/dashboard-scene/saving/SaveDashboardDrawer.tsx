@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
@@ -55,7 +53,6 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 }
 
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
-  const [preferDatabase, setPreferDatabase] = useState(false);
   const {
     showDiff,
     saveAsCopy,
@@ -134,26 +131,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    if (isProvisionedNG && !preferDatabase) {
+    if (isProvisionedNG) {
       return (
         <SaveProvisionedDashboard
           dashboard={dashboard}
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
-          onSaveToDatabase={() => setPreferDatabase(true)}
         />
       );
     }
 
-    if (saveAsCopy || changeInfo.isNew || preferDatabase) {
-      return (
-        <SaveDashboardAsForm
-          dashboard={dashboard}
-          changeInfo={changeInfo}
-          onSaveToGit={preferDatabase ? () => setPreferDatabase(false) : undefined}
-        />
-      );
+    if (saveAsCopy || changeInfo.isNew) {
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {

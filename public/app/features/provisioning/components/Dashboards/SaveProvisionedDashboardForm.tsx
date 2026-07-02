@@ -35,6 +35,7 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
+import { validateProvisionedFolderName } from '../Folders/NewProvisionedFolderForm';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -50,7 +51,6 @@ export interface Props extends SaveProvisionedDashboardProps {
   canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
-  onSaveToDatabase?: () => void;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -63,7 +63,6 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
-  onSaveToDatabase,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -244,25 +243,34 @@ export function SaveProvisionedDashboardForm({
     if (!newFolderName || !repository?.name) {
       return;
     }
-    const slugifiedPath = ensureFolderPathTrailingSlash(slugifyForFilename(newFolderName) || newFolderName);
+    const validationResult = validateProvisionedFolderName(newFolderName);
+    if (validationResult !== true) {
+      setFolderError(validationResult);
+      return;
+    }
+    const folderPath = ensureFolderPathTrailingSlash(newFolderName);
     try {
       const data = await createFolder({
         name: repository.name,
-        path: slugifiedPath,
+        path: folderPath,
         message,
-        ref: workflow === 'write' ? undefined : ref,
         body: { title: newFolderName, type: 'folder' },
       }).unwrap();
       const uid = data.resource?.upsert?.metadata?.name;
       setValue('folder', { uid, title: newFolderName });
+      const { filename } = splitPath(getValues('path'));
+      setValue('path', joinPath(folderPath, filename));
       setShowNewFolderForm(false);
       setNewFolderName('');
     } catch (err) {
       setFolderError(
-        t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
+        getProvisionedRequestError(
+          err,
+          t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
+        )
       );
     }
-  }, [newFolderName, repository?.name, createFolder, setValue, message, ref, workflow]);
+  }, [newFolderName, repository?.name, createFolder, setValue, getValues, message]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -399,21 +407,6 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && (
-                <Button
-                  variant={!watch('folder')?.uid ? 'primary' : 'secondary'}
-                  size="sm"
-                  fill="outline"
-                  onClick={() => {
-                    setValue('folder', { uid: '', title: '' });
-                    updateURLParams('folderUid', '');
-                  }}
-                >
-                  <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.save-at-root">
-                    No folder (save at repository root)
-                  </Trans>
-                </Button>
-              )}
               {isFolderless && workflow !== 'branch' && (
                 <>
                   {!showNewFolderForm && (
@@ -424,14 +417,24 @@ export function SaveProvisionedDashboardForm({
 
                   {showNewFolderForm && (
                     <Stack direction="column" gap={1}>
-                      <Input
-                        placeholder={t(
+                      <Field
+                        noMargin
+                        label={t(
                           'dashboard-scene.save-provisioned-dashboard-form.folder-name-placeholder',
                           'Folder name'
                         )}
-                        value={newFolderName}
-                        onChange={(e) => setNewFolderName(e.currentTarget.value)}
-                      />
+                      >
+                        <Input
+                          value={newFolderName}
+                          onChange={(e) => setNewFolderName(e.currentTarget.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleCreateFolder();
+                            }
+                          }}
+                        />
+                      </Field>
                       {folderError && <ProvisioningAlert error={folderError} />}
                       <Stack gap={1}>
                         <Button
@@ -484,28 +487,19 @@ export function SaveProvisionedDashboardForm({
 
           {error && <ProvisioningAlert error={error} />}
 
-          <Stack direction="column" gap={1}>
-            <Stack gap={2}>
-              <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-                <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-              </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
-              >
-                {request.isLoading || isSubmitting || isValidating
-                  ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                  : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-              </Button>
-            </Stack>
-            {onSaveToDatabase && (
-              <Button variant="secondary" fill="text" size="sm" onClick={onSaveToDatabase}>
-                <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.save-to-database">
-                  Save to Grafana database instead
-                </Trans>
-              </Button>
-            )}
+          <Stack gap={2}>
+            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+            >
+              {request.isLoading || isSubmitting || isValidating
+                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+            </Button>
           </Stack>
         </Stack>
       </form>

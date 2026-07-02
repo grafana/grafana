@@ -40,7 +40,6 @@ export function useProvisionedFolderFormData({
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     folderName: folderUid,
-    includeFolderless: !folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);

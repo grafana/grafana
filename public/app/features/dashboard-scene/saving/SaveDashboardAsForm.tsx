@@ -24,10 +24,9 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
-  onSaveToGit?: () => void;
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo, onSaveToGit }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
@@ -144,16 +143,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onSaveToGit }: Prop
             {error.message && <p>{error.message}</p>}
           </Alert>
         )}
-        <Stack direction="column" gap={1}>
-          <Stack alignItems="center">
-            {cancelButton}
-            {saveButton(false)}
-          </Stack>
-          {onSaveToGit && (
-            <Button variant="secondary" fill="text" size="sm" onClick={onSaveToGit}>
-              <Trans i18nKey="dashboard-scene.save-dashboard-as-form.save-to-git">Save to Git repository instead</Trans>
-            </Button>
-          )}
+        <Stack alignItems="center">
+          {cancelButton}
+          {saveButton(false)}
         </Stack>
       </>
     );

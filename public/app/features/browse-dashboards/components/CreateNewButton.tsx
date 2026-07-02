@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { Button, Drawer, Dropdown, Icon, Menu, Stack, useTheme2 } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppChrome/QuickAdd/utils';
@@ -17,7 +17,6 @@ import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgr
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
@@ -51,13 +50,8 @@ export default function CreateNewButton({
   const location = useLocation();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
-  const [folderSaveTarget, setFolderSaveTarget] = useState<'git' | 'grafana' | null>(null);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
-  const { repository: folderlessRepo } = useGetResourceRepositoryView({
-    includeFolderless: !parentFolder,
-  });
-  const hasFolderlessRepoAtRoot = !parentFolder && folderlessRepo?.target === 'folderless';
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
@@ -188,20 +182,10 @@ export default function CreateNewButton({
         <Drawer
           title={getNewFolderPhrase()}
           subtitle={parentFolder?.title ? `Location: ${parentFolder.title}` : undefined}
-          onClose={() => {
-            setShowNewFolderDrawer(false);
-            setFolderSaveTarget(null);
-          }}
+          onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
           {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
-            <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
-          ) : hasFolderlessRepoAtRoot && folderSaveTarget === null ? (
-            <FolderSaveTargetPicker
-              onGit={() => setFolderSaveTarget('git')}
-              onGrafana={() => setFolderSaveTarget('grafana')}
-            />
-          ) : hasFolderlessRepoAtRoot && folderSaveTarget === 'git' ? (
             <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
             <NewFolderForm
@@ -225,17 +209,4 @@ export default function CreateNewButton({
 function buildUrl(url: string, folderUid: string | undefined) {
   const baseUrl = folderUid ? url + '?folderUid=' + folderUid : url;
   return config.appSubUrl ? config.appSubUrl + baseUrl : baseUrl;
-}
-
-function FolderSaveTargetPicker({ onGit, onGrafana }: { onGit: () => void; onGrafana: () => void }) {
-  return (
-    <Stack direction="column" gap={2}>
-      <Button variant="primary" onClick={onGit}>
-        <Trans i18nKey="browse-dashboards.folder-target.git">Sync with Git repository</Trans>
-      </Button>
-      <Button variant="secondary" fill="outline" onClick={onGrafana}>
-        <Trans i18nKey="browse-dashboards.folder-target.grafana">Save in Grafana only</Trans>
-      </Button>
-    </Stack>
-  );
 }
