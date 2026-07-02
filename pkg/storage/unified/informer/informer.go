@@ -115,6 +115,10 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 	if resync <= 0 {
 		resync = defaultResync
 	}
+	// An unshared informer needs no external store; default one so Run never nil-panics.
+	if store == nil {
+		store = NewStore()
+	}
 	return &Informer{
 		subscriber:    subscriber,
 		gvr:           gvr,
@@ -160,7 +164,7 @@ var _ cache.ResourceEventHandlerRegistration = registration{}
 func (r registration) HasSynced() bool { return r.informer.HasSynced() }
 
 func (r registration) HasSyncedChecker() cache.DoneChecker {
-	return syncedChecker{informer: r.informer}
+	return syncedChecker(r)
 }
 
 type syncedChecker struct{ informer *Informer }
@@ -223,7 +227,10 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// not fatal: it returns false and Run retries on subscribeRetryInterval until
 	// it succeeds. A nil newObject disables live notifications entirely.
 	subscribe := func() bool {
-		if n.newObject == nil || sub != nil {
+		// No live subscription when notifications are disabled (nil newObject) or
+		// there is no enabled subscriber (nil/typed-nil/disabled): the periodic
+		// re-list keeps the informer correct on its own. Already-subscribed is a no-op.
+		if n.newObject == nil || !nats.Enabled(n.subscriber) || sub != nil {
 			return true
 		}
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
@@ -254,10 +261,11 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		case <-ctx.Done():
 			return
 		case <-resync.C:
-			n.relist(ctx, false)
+			// Error already logged in relist; the next tick retries.
+			_ = n.relist(ctx, false)
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
-			n.relist(ctx, false)
+			_ = n.relist(ctx, false)
 		case <-retry.C:
 			if !subscribed {
 				subscribed = subscribe()

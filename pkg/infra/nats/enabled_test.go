@@ -11,6 +11,13 @@ type fakeEnabler struct{ enabled bool }
 
 func (f fakeEnabler) Enabled() bool { return f.enabled }
 
+// ptrEnabler is a pointer-receiver Enabler whose method dereferences the
+// receiver, so calling it on a typed-nil pointer panics — exactly the case
+// Enabled must short-circuit before invoking.
+type ptrEnabler struct{ enabled bool }
+
+func (p *ptrEnabler) Enabled() bool { return p.enabled }
+
 func TestEnabled(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -23,8 +30,10 @@ func TestEnabled(t *testing.T) {
 			want:    false,
 		},
 		{
-			name:    "typed-nil enabler interface is not enabled",
-			enabler: Enabler(nil),
+			// A non-nil interface holding a nil pointer: != nil, and Enabled() would
+			// panic dereferencing the receiver, so Enabled must short-circuit.
+			name:    "typed-nil pointer enabler is not enabled",
+			enabler: (*ptrEnabler)(nil),
 			want:    false,
 		},
 		{
@@ -53,4 +62,12 @@ func TestEnabled_NilTransports(t *testing.T) {
 	var pub Publisher
 	assert.False(t, Enabled(sub), "nil Subscriber must not be enabled")
 	assert.False(t, Enabled(pub), "nil Publisher must not be enabled")
+
+	// Typed-nil concrete transports (a nil *SubscriberService/*PublisherService
+	// stored in the interface) must not be enabled either, and must not panic:
+	// their Enabled() dereferences the embedded *connection.
+	var subSvc *SubscriberService
+	var pubSvc *PublisherService
+	assert.False(t, Enabled(subSvc), "typed-nil *SubscriberService must not be enabled")
+	assert.False(t, Enabled(pubSvc), "typed-nil *PublisherService must not be enabled")
 }

@@ -255,8 +255,8 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
-	n.relist(context.Background(), true)  // initial: adds a, b; no deletes
-	n.relist(context.Background(), false) // resync: b is gone -> delete
+	require.NoError(t, n.relist(context.Background(), true))  // initial: adds a, b; no deletes
+	require.NoError(t, n.relist(context.Background(), false)) // resync: b is gone -> delete
 
 	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
 	assert.Equal(t, []string{"b"}, handler.deletedNames(), "vanished object must be delivered as a delete")
