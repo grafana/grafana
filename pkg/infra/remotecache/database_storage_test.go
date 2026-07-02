@@ -61,6 +61,30 @@ func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
 	assert.Equal(t, err, nil)
 }
 
+func TestIntegrationDatabaseStorageGetClockSkew(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlstore := db.InitTestDB(t)
+
+	db := &databaseCache{
+		SQLStore: sqlstore,
+		log:      log.New("remotecache.database"),
+	}
+
+	obj := []byte("foolbar")
+
+	// simulate clock skew: insert an entry while the clock is 2 days ahead
+	getTime = func() time.Time { return time.Now().AddDate(0, 0, 2) }
+	err := db.Set(context.Background(), "future-key", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
+
+	// clock is corrected back to real time
+	getTime = time.Now
+
+	_, err = db.Get(context.Background(), "future-key")
+	assert.Equal(t, err, ErrCacheItemNotFound)
+}
+
 func TestIntegrationSecondSet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
