@@ -2080,14 +2080,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "teamFolders",
-			Description: "Enables team folders functionality",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-		},
-		{
 			Name:        "grafana.starredFolders",
 			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
 			Stage:       FeatureStageExperimental,
