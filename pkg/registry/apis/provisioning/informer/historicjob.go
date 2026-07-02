@@ -9,7 +9,6 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -19,10 +18,7 @@ import (
 // SharedIndexInformer. Cleanup reads no lister, so callers need only the
 // DeltaSource.
 func NewHistoricJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
-	if nats.Enabled(subscriber) {
-		return NewHistoricJobInformer(subscriber, client, "", resync, usinformer.NewStore())
-	}
-	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
+	return newDeltaSource(subscriber, client, provisioningapis.HistoricJobResourceInfo, resync, NewHistoricJobInformer)
 }
 
 // NewHistoricJobInformer builds an Informer for historic jobs. It disables live

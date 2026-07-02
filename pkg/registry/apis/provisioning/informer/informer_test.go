@@ -76,6 +76,27 @@ func TestInformers(t *testing.T) {
 	}
 }
 
+// The getter-less delta sources resolve their apiserver-backed informer from the
+// kind's GVR via the generated factory (ForResource). This guards that each
+// kind's GVR is registered with the factory, so the shared selector never hits
+// its unreachable panic.
+func TestGetterlessDeltaSources_ApiserverInformerResolves(t *testing.T) {
+	client := fake.NewClientset()
+	tests := []struct {
+		name    string
+		newFunc func(nats.Subscriber, versioned.Interface, time.Duration) DeltaSource
+	}{
+		{"job", NewJobDeltaSource},
+		{"historicjob", NewHistoricJobDeltaSource},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// A nil subscriber selects the apiserver branch (ForResource by GVR).
+			assert.NotNil(t, tt.newFunc(nil, client, time.Minute))
+		})
+	}
+}
+
 // The dynamic list source lists by GVR and converts each item to the kind's
 // concrete type, so a kind can be wired without a typed clientset accessor while
 // still handing the controllers the concrete objects they key off.

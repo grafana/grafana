@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,10 +11,31 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 
+	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
+
+// newDeltaSource is the getter-less delta-source selector shared by kinds whose
+// controllers read no lister (jobs, historic jobs): a NATS-backed informer built
+// by newInformer when the subscriber is enabled, otherwise an apiserver-backed
+// SharedIndexInformer resolved from the kind's GVR via the generated factory
+// (ForResource), so the selector needs no per-kind typed accessor. Kinds with a
+// getter build a Source instead — see NewRepositoryDeltaSource.
+func newDeltaSource(subscriber nats.Subscriber, client versioned.Interface, info utils.ResourceInfo, resync time.Duration, newInformer func(nats.Subscriber, versioned.Interface, string, time.Duration, usinformer.Store) *usinformer.Informer) DeltaSource {
+	if nats.Enabled(subscriber) {
+		return newInformer(subscriber, client, "", resync, usinformer.NewStore())
+	}
+	gi, err := informers.NewSharedInformerFactory(client, resync).ForResource(info.GroupVersionResource())
+	if err != nil {
+		// info is the kind's own ResourceInfo, whose GVR is always registered with
+		// the generated factory, so this is unreachable unless the two drift apart.
+		panic(fmt.Errorf("provisioning informer: no apiserver informer for %s: %w", info.GroupVersionResource(), err))
+	}
+	return gi.Informer()
+}
 
 // newDeltaSourceInformer builds a NATS-backed informer for one resource kind from
 // its ResourceInfo, so a kind supplies only its ResourceInfo and a list source —

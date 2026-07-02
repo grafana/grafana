@@ -9,7 +9,6 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -18,10 +17,7 @@ import (
 // subscriber is enabled, otherwise an apiserver-backed SharedIndexInformer. The
 // job controller reads no lister, so callers need only the DeltaSource.
 func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
-	if nats.Enabled(subscriber) {
-		return NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
-	}
-	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
+	return newDeltaSource(subscriber, client, provisioningapis.JobResourceInfo, resync, NewJobInformer)
 }
 
 // NewJobInformer builds an Informer for jobs.
