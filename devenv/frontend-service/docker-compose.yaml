@@ -76,7 +76,7 @@ services:
       GF_LOG_FRONTEND_ENABLED: true
 
   goff:
-    image: gofeatureflag/go-feature-flag:latest
+    image: gofeatureflag/go-feature-flag:latest@sha256:0c578a3e58cac5bfd59bea6be171c4122847cca2f102d1c0935d3bcf7e07d123
     command: /go-feature-flag --config /config/config.yaml
     # ports are set dynamically in the Tiltfile (derived from PORT)
     configs:

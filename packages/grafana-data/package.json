@@ -106,11 +106,11 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
-    "rollup": "^4.60.1",
+    "rollup": "4.60.1",
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
-    "tsx": "^4.21.0",
+    "rollup-plugin-node-externals": "8.0.1",
+    "tsx": "4.21.0",
     "typescript": "6.0.2"
   },
   "peerDependencies": {
