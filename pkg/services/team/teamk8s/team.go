@@ -459,23 +459,34 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
-	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
-		ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	// Partial update: Name and ExternalUID are written only when set, so a
+	// single-field command doesn't clear the others. Matches the legacy store,
+	// where xorm skips zero-value columns.
+	if cmd.Name != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
+	// email is the deliberate exception: it's written unconditionally (not guarded
+	// like the fields above) so an empty value clears it, matching the legacy
+	// MustCols("email") contract that PUT /api/teams relies on. Do not add an
+	// `if cmd.Email != ""` guard or clearing a team's email breaks.
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
 		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
-		ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	if cmd.ExternalUID != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+			ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
