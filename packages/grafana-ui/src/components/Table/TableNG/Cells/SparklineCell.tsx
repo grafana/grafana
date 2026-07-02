@@ -2,7 +2,13 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import * as React from 'react';
 
-import { type FieldConfig, getMinMaxAndDelta, type Field, isDataFrameWithValue } from '@grafana/data';
+import {
+  FieldColorModeId,
+  type FieldConfig,
+  getMinMaxAndDelta,
+  type Field,
+  isDataFrameWithValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   BarAlignment,
@@ -70,11 +76,17 @@ export const SparklineCell = (props: SparklineCellProps) => {
 
   const cellOptions = getTableSparklineCellOptions(field);
 
+  const useSchemeGradient =
+    field.config.color?.mode === FieldColorModeId.Thresholds &&
+    Boolean(field.config.thresholds?.steps?.length);
+
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
+    ...(useSchemeGradient && field.config.thresholds != null && { thresholds: field.config.thresholds }),
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,
+      ...(useSchemeGradient && { gradientMode: GraphGradientMode.Scheme }),
     },
   };
 
