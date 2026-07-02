@@ -126,11 +126,23 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	}
 	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
 	update := check(utils.VerbUpdate, "requires team update")
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"members":      getPermissions,
 		"groups":       getPermissions,
 		"addmember":    update,
 		"removemember": update,
+	})
+	// Collection list is authorized here as allow and filtered per-team in
+	// unified storage (listAuthorized). Zanzana maps a nameless list check to a
+	// group_resource (wildcard) check, so routing it through the base authorizer
+	// would only let users who can read *every* team list *any* team. Deferring
+	// to storage lets a user list the teams they can read, matching dashboards
+	// and folders. Named get/update/delete and the subresources stay strict.
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.IsResourceRequest() && attr.GetSubresource() == "" && attr.GetName() == "" && attr.GetVerb() == utils.VerbList {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return base.Authorize(ctx, attr)
 	})
 }
 
