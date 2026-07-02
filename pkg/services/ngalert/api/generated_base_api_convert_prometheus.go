@@ -34,6 +34,7 @@ type ConvertPrometheusApi interface {
 	RouteConvertPrometheusGetRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusGetRules(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostAlertmanagerConfig(*contextmodel.ReqContext) response.Response
+	RouteConvertPrometheusPromoteAlertmanagerConfig(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteConvertPrometheusPostRuleGroups(*contextmodel.ReqContext) response.Response
 }
@@ -104,6 +105,11 @@ func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusGetRules(ctx *contex
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteConvertPrometheusPostAlertmanagerConfig(ctx)
+}
+func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPromoteAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	identifierParam := web.Params(ctx.Req)[":Identifier"]
+	return f.handleRouteConvertPrometheusPromoteAlertmanagerConfig(ctx, identifierParam)
 }
 func (f *ConvertPrometheusApiHandler) RouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -209,6 +215,18 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 				http.MethodDelete,
 				"/api/convert/api/v1/alerts",
 				api.Hooks.Wrap(srv.RouteConvertPrometheusDeleteAlertmanagerConfig),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/convert/api/v1/alerts/{Identifier}/promote"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/convert/api/v1/alerts/{Identifier}/promote"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/convert/api/v1/alerts/{Identifier}/promote",
+				api.Hooks.Wrap(srv.RouteConvertPrometheusPromoteAlertmanagerConfig),
 				m,
 			),
 		)

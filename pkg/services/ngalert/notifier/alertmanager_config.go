@@ -52,6 +52,10 @@ var (
 		errutil.WithPublic(
 			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
 		))
+
+	ErrAlertmanagerExtraConfigNotFound = errutil.NotFound("alerting.notifications.alertmanager.extraConfigNotFound",
+		errutil.WithPublicMessage("Extra configuration not found"),
+	)
 )
 
 type UnknownReceiverError struct {
@@ -369,6 +373,10 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 
 	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
 	if err != nil {
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) {
+			return merge.MergeResult{}, err
+		}
 		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
 	}
 
@@ -378,6 +386,10 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 				return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
 			}
 		}
+	}
+
+	if err = moa.Crypto.DecryptExtraConfigs(ctx, cfg); err != nil {
+		return merge.MergeResult{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
 	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
@@ -488,6 +500,21 @@ func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, o
 
 	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, false, false)
 	return err
+}
+
+// PromoteExtraConfiguration promotes an extra configuration to the Grafana configuration.
+func (moa *MultiOrgAlertmanager) PromoteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) (merge.MergeResult, error) {
+	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, func(configurations []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
+		if len(configurations) == 0 || configurations[0].Identifier != identifier { // TODO when we support multiple extra configs, this will need to be changed.
+			return nil, ErrAlertmanagerExtraConfigNotFound.Errorf("extra configuration with identifier %q not found", identifier)
+		}
+		return configurations, nil
+	}, false, true)
+	if err != nil {
+		return merge.MergeResult{}, err
+	}
+	moa.logger.Info("Alertmanager configuration has been merged into Grafana", append(result.LogContext(), "org", org)...)
+	return result, nil
 }
 
 type provisioningStore interface {
