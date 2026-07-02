@@ -178,8 +178,17 @@ func TestIntegrationEmbeddedServer(t *testing.T) {
 		// dropped, not queued for a future subscriber.
 		require.NoError(t, pub.Publish(ctx, subject, []byte("early")))
 
+		// Publish is fire-and-forget, so "early" may still sit in the publisher's
+		// outbound buffer. Flush it (a PING/PONG round-trip) so the server has
+		// definitely processed — and, with no interest yet, dropped — "early" before
+		// we subscribe. Otherwise the SUB can register interest before "early"
+		// reaches the server and the subscriber would receive it.
+		nc, err := pub.get(ctx)
+		require.NoError(t, err)
+		require.NoError(t, nc.Flush())
+
 		got := make(chan []byte, 16)
-		_, err := sub.Subscribe(ctx, subject, func(_ string, data []byte) {
+		_, err = sub.Subscribe(ctx, subject, func(_ string, data []byte) {
 			got <- append([]byte(nil), data...)
 		})
 		require.NoError(t, err)
@@ -270,7 +279,11 @@ func startEmbeddedStack(t *testing.T) (context.Context, *Server, *PublisherServi
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// A zero ClusterPort leaves ClusterAddr() nil, which routeURLForServer dereferences.
+		// Bind free ports rather than the conventional 4222/6222 so parallel or
+		// repeated runs — and a dev Grafana already holding 4222 — don't collide;
+		// clients connect via the server's actual ClientURL. A zero ClusterPort
+		// leaves ClusterAddr() nil, which routeURLForServer dereferences.
+		ClientPort:  freePort(t),
 		ClusterPort: freePort(t),
 	}
 
