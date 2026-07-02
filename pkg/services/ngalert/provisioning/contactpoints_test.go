@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -291,7 +292,8 @@ func TestContactPointService(t *testing.T) {
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
-					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
+					require.Error(t, err)
+					require.Truef(t, validation.ErrProvenanceChangeNotAllowed.Base.Is(err), "expected ErrProvenanceChangeNotAllowed but got %s", err)
 				}
 			})
 		}
