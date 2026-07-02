@@ -11,12 +11,13 @@ import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
 import { alertRuleToQueries } from '../../../utils/query';
 import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
+import { NoQueryToRun } from '../EvalStatus';
 
 interface Props {
   rule: CombinedRule;
 }
 
-const QueryResults = ({ rule }: Props) => {
+const QueryAndCondition = ({ rule }: Props) => {
   // Runner for expression results – evaluates the full original query DAG
   const {
     queryPreviewData: expressionData,
@@ -98,11 +99,11 @@ const QueryResults = ({ rule }: Props) => {
   }, [expressionData, visualizationData]);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isPreviewLoading = isRunning || isExpressionLoading || isVisualizationLoading;
 
-  if (isPreviewLoading) {
-    return <Trans i18nKey="alerting.common.loading">Loading...</Trans>;
-  }
+  // The visualization runner produces the range-converted query that draws the graph;
+  // the expression runner runs the original raw queries + expression DAG that yield the result data.
+  const queryGraphLoading = isRunning || isVisualizationLoading;
+  const queryDataLoading = isRunning || isExpressionLoading;
 
   return (
     <>
@@ -112,29 +113,29 @@ const QueryResults = ({ rule }: Props) => {
           condition={rule.rulerRule.grafana_alert.condition}
           queries={queries}
           evalDataByQuery={mergedPreviewData}
+          queryGraphLoading={queryGraphLoading}
+          queryDataLoading={queryDataLoading}
         />
       )}
 
-      {!rulerRuleType.grafana.rule(rule.rulerRule) &&
-        !isFederatedRule &&
-        mergedPreviewData &&
-        Object.keys(mergedPreviewData).length > 0 && (
-          <Stack direction="column" gap={1}>
-            {queries.map((query) => {
-              return (
-                <QueryPreview
-                  key={query.refId}
-                  rule={rule}
-                  refId={query.refId}
-                  model={query.model}
-                  dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
-                  queryData={mergedPreviewData[query.refId]}
-                  relativeTimeRange={query.relativeTimeRange}
-                />
-              );
-            })}
-          </Stack>
-        )}
+      {!rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
+        <Stack direction="column" gap={1}>
+          {queries.map((query) => {
+            return (
+              <QueryPreview
+                key={query.refId}
+                rule={rule}
+                refId={query.refId}
+                model={query.model}
+                dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                queryData={mergedPreviewData[query.refId]}
+                relativeTimeRange={query.relativeTimeRange}
+                isLoading={queryGraphLoading}
+              />
+            );
+          })}
+        </Stack>
+      )}
       {!isFederatedRule && !allDataSourcesAvailable && (
         <Alert title={t('alerting.rule-view.query.datasources-na.title', 'Query not available')} severity="warning">
           <Trans i18nKey="alerting.rule-view.query.datasources-na.description">
@@ -142,8 +143,10 @@ const QueryResults = ({ rule }: Props) => {
           </Trans>
         </Alert>
       )}
+      {/* No data source query to evaluate (e.g. an expression-only rule), so there is nothing to load. */}
+      {!isFederatedRule && visualizationQueries.length === 0 && <NoQueryToRun />}
     </>
   );
 };
 
-export { QueryResults };
+export { QueryAndCondition };
