@@ -162,11 +162,11 @@ func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int6
 	if s.settings.ExternalRulerUID != "" {
 		return true, nil
 	}
-	uid, err := s.configStore.GetSyncDatasourceUID(ctx, orgID)
+	spec, err := s.configStore.GetSyncSpec(ctx, orgID)
 	if err != nil {
 		return false, err
 	}
-	return uid != "", nil
+	return spec.DatasourceUID != "", nil
 }
 
 // SyncOrg runs one sync tick for a single org. It never returns an error;
@@ -179,7 +179,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 
 	orgIDStr := strconv.FormatInt(orgID, 10)
 
-	uid, origin, err := s.resolveExternalRulerUID(ctx, orgID)
+	uid, targetUID, origin, err := s.resolveExternalRulerConfig(ctx, orgID)
 	if err != nil {
 		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonConfigRead, Cause: err})
 		return
@@ -197,6 +197,17 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	if err != nil {
 		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
 		return
+	}
+
+	// Recording rules write to the target datasource; it defaults to the query
+	// datasource. Only resolve a distinct target when one is configured.
+	targetDS := ds
+	if targetUID != "" && targetUID != uid {
+		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: targetUID, OrgID: orgID})
+		if err != nil {
+			s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", targetUID, err)})
+			return
+		}
 	}
 
 	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
@@ -220,7 +231,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	if applyErr := s.apply(svcCtx, svcUser, orgID, uid, ds, cfg); applyErr != nil {
+	if applyErr := s.apply(svcCtx, svcUser, orgID, uid, ds, targetDS, cfg); applyErr != nil {
 		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, applyErr)
 		return
 	}
@@ -241,7 +252,7 @@ type groupKey struct {
 // apply converts the fetched ruler config into Grafana rule groups, persists
 // them, and prunes previously-synced groups that vanished upstream. Returns a
 // classified *SyncError on failure.
-func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, uid string, ds *datasources.DataSource, cfg RulerConfig) *SyncError {
+func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, uid string, ds *datasources.DataSource, targetDS *datasources.DataSource, cfg RulerConfig) *SyncError {
 	root, _, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle, orgID, user, "")
 	if err != nil {
 		return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create root folder: %w", err)}
@@ -255,7 +266,7 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 			return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create namespace folder %q: %w", namespace, err)}
 		}
 		for _, promGroup := range promGroups {
-			group, err := promconvert.ConvertRuleGroup(s.settings, ds, ds, orgID, nsFolder.UID, promGroup, promconvert.Options{
+			group, err := promconvert.ConvertRuleGroup(s.settings, ds, targetDS, orgID, nsFolder.UID, promGroup, promconvert.Options{
 				KeepOriginalRuleDefinition: true,
 				SourceIdentifier:           uid,
 			})
@@ -308,18 +319,26 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 	return nil
 }
 
-// resolveExternalRulerUID returns the datasource UID to sync for the org and
-// where it came from. The operator-level ini override wins over the per-org
-// Config value.
-func (s *ExternalRulerSyncer) resolveExternalRulerUID(ctx context.Context, orgID int64) (string, externalSyncOrigin, error) {
-	if uid := s.settings.ExternalRulerUID; uid != "" {
-		return uid, originIni, nil
+// resolveExternalRulerConfig returns the query datasource UID to sync, the
+// recording-rules target datasource UID (defaulting to the query UID), and
+// where the query UID came from. The operator-level ini override wins over the
+// per-org Config value for the query datasource; the ini path has no target
+// override, so the target defaults to the query datasource there. The ini path
+// deliberately does not read the Config resource, so ini-only deployments stay
+// unaffected by apiserver availability.
+func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (uid, targetUID string, origin externalSyncOrigin, err error) {
+	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
+		return iniUID, iniUID, originIni, nil
 	}
-	uid, err := s.configStore.GetSyncDatasourceUID(ctx, orgID)
+	spec, err := s.configStore.GetSyncSpec(ctx, orgID)
 	if err != nil {
-		return "", originAPI, err
+		return "", "", originAPI, err
 	}
-	return uid, originAPI, nil
+	targetUID = spec.TargetDatasourceUID
+	if targetUID == "" {
+		targetUID = spec.DatasourceUID
+	}
+	return spec.DatasourceUID, targetUID, originAPI, nil
 }
 
 // recordFailure logs, counts, and records a classified failure onto the org's

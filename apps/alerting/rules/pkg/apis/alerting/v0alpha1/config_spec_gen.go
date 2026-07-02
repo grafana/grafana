@@ -24,6 +24,10 @@ type ConfigV0alpha1SpecExternalRulerSync struct {
 	// org. The operator ini setting `unified_alerting.external_ruler_uid`
 	// overrides this when set; see status.externalRulerSync.origin.
 	DatasourceUid *string `json:"datasourceUid,omitempty"`
+	// targetDatasourceUid is the UID of the datasource that converted recording
+	// rules write their results to. Empty defaults to datasourceUid (the query
+	// datasource). Only used when the upstream ruler contains recording rules.
+	TargetDatasourceUid *string `json:"targetDatasourceUid,omitempty"`
 }
 
 // NewConfigV0alpha1SpecExternalRulerSync creates a new ConfigV0alpha1SpecExternalRulerSync object.

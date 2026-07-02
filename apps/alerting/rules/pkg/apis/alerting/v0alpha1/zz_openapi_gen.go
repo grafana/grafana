@@ -869,6 +869,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref c
 							Format:      "",
 						},
 					},
+					"targetDatasourceUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "targetDatasourceUid is the UID of the datasource that converted recording rules write their results to. Empty defaults to datasourceUid (the query datasource). Only used when the upstream ruler contains recording rules.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
