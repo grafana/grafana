@@ -2794,11 +2794,12 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 
 func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupMock func(*mocks.FakeClient)
-		ref       string
-		wantError bool
-		wantHash  string
+		name       string
+		setupMock  func(*mocks.FakeClient)
+		ref        string
+		wantError  bool
+		wantHash   string
+		wantGetRef string
 	}{
 		{
 			name: "valid short hash",
@@ -2816,8 +2817,21 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 			},
-			ref:       "invalid-hex-zzz",
-			wantError: false,
+			ref:        "invalid-hex-zzz",
+			wantError:  false,
+			wantGetRef: "refs/heads/invalid-hex-zzz",
+		},
+		{
+			name: "branch name is resolved as heads ref",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/feature",
+					Hash: hash.Hash{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+				}, nil)
+			},
+			ref:        "feature",
+			wantError:  false,
+			wantGetRef: "refs/heads/feature",
 		},
 		{
 			name: "refs/heads/ prefix handling",
@@ -2827,8 +2841,9 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 			},
-			ref:       "refs/heads/feature",
-			wantError: false,
+			ref:        "refs/heads/feature",
+			wantError:  false,
+			wantGetRef: "refs/heads/feature",
 		},
 		{
 			name: "refs/tags/ handling",
@@ -2838,8 +2853,21 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 					Hash: hash.Hash{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
 				}, nil)
 			},
-			ref:       "refs/tags/v1.0.0",
-			wantError: false,
+			ref:        "refs/tags/v1.0.0",
+			wantError:  false,
+			wantGetRef: "refs/tags/v1.0.0",
+		},
+		{
+			name: "refs/pull merge handling",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/pull/123/merge",
+					Hash: hash.Hash{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+				}, nil)
+			},
+			ref:        "refs/pull/123/merge",
+			wantError:  false,
+			wantGetRef: "refs/pull/123/merge",
 		},
 	}
 
@@ -2868,6 +2896,11 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, refHash)
+			}
+			if tt.wantGetRef != "" {
+				require.Equal(t, 1, mockClient.GetRefCallCount())
+				_, gotRef := mockClient.GetRefArgsForCall(0)
+				require.Equal(t, tt.wantGetRef, gotRef)
 			}
 		})
 	}

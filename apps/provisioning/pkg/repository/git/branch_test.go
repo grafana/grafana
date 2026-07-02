@@ -23,6 +23,7 @@ func TestIsValidRef(t *testing.T) {
 		{"branch with underscore", "feature_x", true},
 		{"branch with dot", "v1.0", true},
 		{"release branch", "release/v2.10.3", true},
+		{"pull request merge ref", "refs/pull/123/merge", true},
 
 		// Valid commit SHAs.
 		{"short sha 7 chars", "abc1234", true},

@@ -886,7 +886,7 @@ func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions)
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
-// resolveRefToHash resolves a ref (branch name or commit hash) to a commit hash
+// resolveRefToHash resolves a ref (branch name, full ref, or commit hash) to a commit hash
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
 	ctx, _ = r.withGitContext(ctx, ref)
 
@@ -902,8 +902,9 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		return refHash, nil
 	}
 
-	// Prefix ref with refs/heads/
-	ref = fmt.Sprintf("refs/heads/%s", ref)
+	if !strings.HasPrefix(ref, "refs/") {
+		ref = fmt.Sprintf("refs/heads/%s", ref)
+	}
 
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
