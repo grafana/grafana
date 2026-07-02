@@ -209,6 +209,34 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                   placeholder="Europe/Berlin or +02:00"
                 />
               </Field>
+              <Field
+                noMargin
+                label={
+                  <Label>
+                    <EditorStack gap={0.5}>
+                      <span>Connection collation</span>
+                      <Tooltip
+                        content={
+                          <span>
+                            Specify the connection collation, such as <code>utf8mb4_0900_ai_ci</code> or{' '}
+                            <code>utf8mb4_unicode_ci</code>. Leave empty to use the default (
+                            <code>utf8mb4_unicode_ci</code>).
+                          </span>
+                        }
+                      >
+                        <Icon name="info-circle" size="sm" />
+                      </Tooltip>
+                    </EditorStack>
+                  </Label>
+                }
+              >
+                <Input
+                  width={WIDTH_LONG}
+                  value={jsonData.collation || ''}
+                  onChange={onUpdateDatasourceJsonDataOption(props, 'collation')}
+                  placeholder="utf8mb4_unicode_ci"
+                />
+              </Field>
 
               <Field
                 noMargin
