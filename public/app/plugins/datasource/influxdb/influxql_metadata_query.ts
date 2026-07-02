@@ -16,7 +16,7 @@ type MetadataQueryOptions = {
   withTimeFilter?: string;
 };
 
-const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
+const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string; value?: string | number }>> => {
   const { type, datasource, scopedVars, measurement, retentionPolicy, tags, withKey, withMeasurementFilter } = options;
   const query = buildMetadataQuery({
     type,
@@ -91,4 +91,16 @@ export async function getFieldKeys(
 ): Promise<string[]> {
   const data = await runExploreQuery({ type: 'FIELDS', datasource, measurement, retentionPolicy });
   return data.map((item) => item.text);
+}
+
+export async function getFieldKeysWithTypes(
+  datasource: InfluxDatasource,
+  measurement: string,
+  retentionPolicy?: string
+): Promise<Array<{ name: string; type: string }>> {
+  const data = await runExploreQuery({ type: 'FIELDS', datasource, measurement, retentionPolicy });
+  return data.map((item) => ({
+    name: item.text,
+    type: typeof item.value === 'string' ? item.value : 'string',
+  }));
 }

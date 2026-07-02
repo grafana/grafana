@@ -60,6 +60,9 @@ export interface InfluxQueryTag {
   operator?: string;
   condition?: string;
   value: string;
+  // For ::field keys, the InfluxDB field type (string, integer, float, boolean).
+  // Used to decide whether to quote the value in WHERE clauses.
+  dataType?: string;
 }
 
 export type ResultFormat = 'time_series' | 'table' | 'logs';
