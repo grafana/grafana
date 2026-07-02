@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/notifications
 go 1.26.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.56.2
+	github.com/grafana/grafana-app-sdk v0.56.4
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	k8s.io/apimachinery v0.36.1
 	k8s.io/apiserver v0.36.0
@@ -78,7 +78,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.9 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.9 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // indirect
