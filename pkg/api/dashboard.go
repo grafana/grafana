@@ -1195,22 +1195,6 @@ type PostDashboardParams struct {
 	Body dashboards.SaveDashboardCommand
 }
 
-// swagger:parameters calculateDashboardDiff
-type CalcDashboardDiffParams struct {
-	// in:body
-	// required:true
-	Body struct {
-		Base dtos.CalculateDiffTarget `json:"base" binding:"Required"`
-		New  dtos.CalculateDiffTarget `json:"new" binding:"Required"`
-		// The type of diff to return
-		// Description:
-		// * `basic`
-		// * `json`
-		// Enum: basic,json
-		DiffType string `json:"diffType" binding:"Required"`
-	}
-}
-
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// The response message
@@ -1278,12 +1262,6 @@ type PostDashboardResponse struct {
 		// required: false
 		FolderUID string `json:"folderUid"`
 	} `json:"body"`
-}
-
-// swagger:response calculateDashboardDiffResponse
-type CalculateDashboardDiffResponse struct {
-	// in: body
-	Body []byte `json:"body"`
 }
 
 // swagger:response getHomeDashboardResponse
