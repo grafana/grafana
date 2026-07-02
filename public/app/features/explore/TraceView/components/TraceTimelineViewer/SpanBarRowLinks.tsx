@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import { CoreApp, type DataQuery, type DataQueryRequest, type TimeRange } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type TimeZone } from '@grafana/schema';
 
 import { type SpanLinkDef, SpanLinkType, type SpanLinkFunc } from '../types/links';
@@ -110,7 +110,7 @@ async function queryLogs(query: DataQuery, timeRange: TimeRange): Promise<boolea
     return true;
   }
 
-  const datasource = await getDataSourceSrv().get(uid);
+  const datasource = await getDataSourceInstance(uid);
   const request: DataQueryRequest = {
     requestId: 'traces-view-related-logs-' + Math.random(),
     interval: '',
