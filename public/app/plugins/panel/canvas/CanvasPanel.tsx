@@ -259,7 +259,7 @@ export class CanvasPanel extends Component<Props, State> {
       }
 
       this.needsReload = false;
-      this.scene.load(nextProps.options, nextProps.options.inlineEditing);
+      this.scene.load(nextProps.options);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
