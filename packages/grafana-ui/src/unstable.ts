@@ -24,4 +24,6 @@ export type {
   CodeMirrorEditorTheme,
   CodeMirrorExtension,
 } from './components/CodeMirror/types';
+export { getQueryFieldConfig } from './components/CodeMirror/queryField';
+export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/CodeMirror/queryField';
 export { TableNG } from './components/Table/TableNG/TableNG';
