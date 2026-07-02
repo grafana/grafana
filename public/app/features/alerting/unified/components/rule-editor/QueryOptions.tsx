@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -28,14 +28,40 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const separator = <span>, </span>;
+
+  const handleClose = useCallback(() => {
+    // When the toggletip closes (e.g. clicking outside), onBlur may not fire on inputs.
+    // Read current input values and commit them.
+    if (containerRef.current) {
+      const maxDataPointsInput = containerRef.current.querySelector<HTMLInputElement>('input[type="number"]');
+      const minIntervalInput = containerRef.current.querySelector<HTMLInputElement>('input[type="text"]');
+
+      let maxDataPoints: number | undefined = queryOptions.maxDataPoints;
+      let minInterval: string | undefined = queryOptions.minInterval;
+
+      if (maxDataPointsInput) {
+        const parsed = parseInt(maxDataPointsInput.value, 10);
+        maxDataPoints = isNaN(parsed) || parsed === 0 ? undefined : parsed;
+      }
+
+      if (minIntervalInput) {
+        minInterval = minIntervalInput.value || undefined;
+      }
+
+      if (maxDataPoints !== queryOptions.maxDataPoints || minInterval !== queryOptions.minInterval) {
+        onChangeQueryOptions({ maxDataPoints, minInterval }, index);
+      }
+    }
+  }, [queryOptions, onChangeQueryOptions, index]);
 
   return (
     <>
       <Toggletip
         content={
-          <div className={styles.queryOptions}>
+          <div className={styles.queryOptions} ref={containerRef}>
             {onChangeTimeRange && (
               <InlineField label={t('alerting.query-options.label-time-range', 'Time Range')}>
                 <RelativeTimeRangePicker
@@ -48,6 +74,7 @@ export const QueryOptions = ({
             <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
           </div>
         }
+        onClose={handleClose}
         closeButton={true}
         placement="bottom-start"
       >
