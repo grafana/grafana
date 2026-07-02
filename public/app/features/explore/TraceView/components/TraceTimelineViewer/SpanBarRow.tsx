@@ -35,6 +35,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
+import { SpanBarRowLinks } from './SpanBarRowLinks';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
@@ -567,45 +568,14 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               </span>
             </Tooltip>
           )}
-          {createSpanLink &&
-            (() => {
-              const links = createSpanLink(span);
-              const count = links?.length || 0;
-              if (links && count === 1) {
-                if (!links[0]) {
-                  return null;
-                }
-
-                return (
-                  <a
-                    href={links[0].href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{
-                      borderBottom: `2px solid ${color}CF`,
-                      paddingInline: '4px',
-                    }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      links[0].onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
-                              event.preventDefault();
-                              links[0].onClick(event);
-                            }
-                          }
-                        : undefined
-                    }
-                  >
-                    {links[0].content}
-                  </a>
-                );
-              } else if (links && count > 1) {
-                return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
-              } else {
-                return null;
-              }
-            })()}
+          {createSpanLink && (
+            <SpanBarRowLinks
+              color={color}
+              createSpanLink={createSpanLink}
+              datasourceType={datasourceType}
+              span={span}
+            />
+          )}
         </div>
       </TimelineRow.Cell>
       <TimelineRow.Cell
