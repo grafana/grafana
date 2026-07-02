@@ -3568,10 +3568,8 @@ func TestNewDBRuleMutator(t *testing.T) {
 	})
 }
 
-// TestRouteGetRuleStatuses_DBMode_BatchesStateLoad verifies that listing rules with the
-// DB rule mutator (HA single-node eval mode) loads all of the org's alert states in a
-// single GetAll call instead of one GetStatesForRuleUID per rule (the N+1 in #124004),
-// while still producing correct per-rule state.
+// TestRouteGetRuleStatuses_DBMode_BatchesStateLoad verifies that the DB rule mutator loads all
+// of the org's alert states in one GetAll instead of one query per rule (the N+1 in #124004).
 func TestRouteGetRuleStatuses_DBMode_BatchesStateLoad(t *testing.T) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -3636,9 +3634,7 @@ func TestRouteGetRuleStatuses_DBMode_BatchesStateLoad(t *testing.T) {
 	})
 }
 
-// sleepingInstanceReader is a state.InstanceReader that returns pre-generated instances and
-// sleeps a fixed delay per call to simulate DB round-trip latency. It counts calls so a
-// benchmark can report DB round trips per op.
+// sleepingInstanceReader is a state.InstanceReader that simulates DB latency and counts calls.
 type sleepingInstanceReader struct {
 	instances []*ngmodels.AlertInstance
 	delay     time.Duration
@@ -3663,9 +3659,8 @@ func (r *sleepingInstanceReader) ListAlertInstances(_ context.Context, cmd *ngmo
 	return out, nil
 }
 
-// BenchmarkRouteGetRuleStatuses_DBMode probes the N+1 in the HA single-node DB path by
-// injecting a per-query latency and reporting the number of store round trips per op.
-// Before the fix db_calls/op scales with rule count; after it is 1.
+// BenchmarkRouteGetRuleStatuses_DBMode measures the HA single-node DB path, reporting store
+// round trips per op (scales with rule count before the fix).
 func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -3674,8 +3669,7 @@ func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
 
 	for _, ruleCount := range []int{10, 100, 500, 1000, 5000} {
 		b.Run(fmt.Sprintf("rules=%d", ruleCount), func(b *testing.B) {
-			// fakes.NewRuleStore requires *testing.T; build the store directly since the
-			// methods exercised here don't use the embedded testing handle.
+			// fakes.NewRuleStore requires *testing.T; build the store directly.
 			ruleStore := &fakes.RuleStore{
 				Rules:   map[int64][]*ngmodels.AlertRule{},
 				Folders: map[int64][]*folder.Folder{},
@@ -3695,7 +3689,7 @@ func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
 
 			var calls int64
 			reader := &sleepingInstanceReader{instances: instances, delay: perQueryLatency, calls: &calls}
-			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger())
+			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger(), 0, nil)
 
 			api := NewPrometheusSrv(
 				log.NewNopLogger(),
@@ -3723,11 +3717,8 @@ func BenchmarkRouteGetRuleStatuses_DBMode(b *testing.B) {
 	}
 }
 
-// BenchmarkRouteGetRuleStatuses_Cardinality fixes the rule count and varies the number of
-// alert INSTANCES per rule, at a realistic low DB round-trip latency. It isolates the
-// cost driven by instance cardinality (loading + converting all instances to compute
-// per-rule totals) from the per-rule N+1 round-trip cost. Compare loader on/off to see
-// how much the batch fix helps once instance volume dominates.
+// BenchmarkRouteGetRuleStatuses_Cardinality varies instances per rule at a fixed rule count to
+// isolate the cost driven by instance cardinality from the per-rule N+1 round-trip cost.
 func BenchmarkRouteGetRuleStatuses_Cardinality(b *testing.B) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -3759,7 +3750,7 @@ func BenchmarkRouteGetRuleStatuses_Cardinality(b *testing.B) {
 
 			var calls int64
 			reader := &sleepingInstanceReader{instances: instances, delay: perQueryLatency, calls: &calls}
-			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger())
+			storeReader := state.NewStoreStateReader(reader, log.NewNopLogger(), 0, nil)
 
 			api := NewPrometheusSrv(
 				log.NewNopLogger(), storeReader, NewDBRuleMutator(storeReader),
@@ -3789,10 +3780,8 @@ func (nopStatusReader) Status(_ context.Context, _ ngmodels.AlertRuleKey) (ngmod
 	return ngmodels.RuleStatus{Health: "ok"}, true
 }
 
-// BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary compares serving the rules-list endpoint
-// from in-memory state (the evaluating "primary" pod) versus from the DB via StoreStateReader
-// (a non-primary pod, ha_single_node_evaluation), at high instance cardinality. This validates
-// whether routing the read to the primary sidesteps the cost.
+// BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary compares serving the rules list from
+// in-memory state (evaluating pod) versus from the DB via StoreStateReader (non-primary pod).
 func BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary(b *testing.B) {
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
@@ -3838,7 +3827,7 @@ func BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary(b *testing.B) {
 		}
 	}
 	var calls int64
-	storeReader := state.NewStoreStateReader(&sleepingInstanceReader{instances: dbInstances, delay: perQueryLatency, calls: &calls}, log.NewNopLogger())
+	storeReader := state.NewStoreStateReader(&sleepingInstanceReader{instances: dbInstances, delay: perQueryLatency, calls: &calls}, log.NewNopLogger(), 0, nil)
 	secondaryAPI := NewPrometheusSrv(
 		log.NewNopLogger(), storeReader, NewDBRuleMutator(storeReader),
 		ruleStore, &fakeRuleAccessControlService{}, fakes.NewFakeProvisioningStore(),
@@ -3860,8 +3849,7 @@ func BenchmarkRouteGetRuleStatuses_PrimaryVsSecondary(b *testing.B) {
 	})
 }
 
-// countingAlertInstanceManager wraps AlertInstanceManager and counts calls to
-// GetStatesForRuleUID (callCount) and GetAll (getAllCount). Both counters are optional.
+// countingAlertInstanceManager wraps AlertInstanceManager and counts calls; both counters are optional.
 type countingAlertInstanceManager struct {
 	inner       state.AlertInstanceManager
 	callCount   *int

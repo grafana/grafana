@@ -4,43 +4,53 @@ import (
 	"context"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// defaultStateCacheRefresh is how often the background refresh reloads cached org state
-// when no interval is provided.
+// defaultStateCacheRefresh is the fallback background refresh interval.
 const defaultStateCacheRefresh = time.Minute
 
-// orgStates is an immutable snapshot of one org's alert states, indexed by rule UID.
-// It is replaced atomically; callers must never mutate it.
+// stateCacheIdleEviction is how long an org may go unread before its cached state is evicted.
+const stateCacheIdleEviction = 15 * time.Minute
+
+// orgStates is an immutable per-org snapshot of alert states, indexed by rule UID.
 type orgStates struct {
 	all   []*State
 	byUID map[string][]*State
 }
 
-// StoreStateReader reads alert instances from the store and returns them as a slice of State.
-//
-// Deserializing alert-instance state from the database is expensive (protobuf decode +
-// reflection + GC). Under ha_single_node_evaluation the API serves rule statuses from the
-// database on every request, so listing rules would re-deserialize the entire org's state
-// on each call. To avoid that, StoreStateReader keeps an in-memory, per-org snapshot of
-// already-deserialized state and refreshes it in the background on a fixed interval. Reads
-// are served from the snapshot (fast); staleness is bounded by the refresh interval.
+// orgEntry holds an org's snapshot and when it was last read.
+type orgEntry struct {
+	snap       atomic.Pointer[orgStates]
+	lastAccess atomic.Int64 // unix nanos
+}
+
+func (e *orgEntry) touch() {
+	e.lastAccess.Store(time.Now().UnixNano())
+}
+
+// StoreStateReader serves alert state from the store via per-org in-memory snapshots that are
+// refreshed in the background, so reads avoid re-deserializing state on every request.
+// Staleness is bounded by the refresh interval.
 type StoreStateReader struct {
 	reader  InstanceReader
 	log     log.Logger
 	refresh time.Duration
+	metrics *metrics.State
 
-	cache sync.Map           // orgID(int64) -> *orgStates
+	cache sync.Map           // orgID(int64) -> *orgEntry
 	group singleflight.Group // dedupes concurrent cold loads per org
 }
 
-func NewStoreStateReader(reader InstanceReader, log log.Logger, refresh time.Duration) *StoreStateReader {
+// NewStoreStateReader creates a StoreStateReader. metrics may be nil.
+func NewStoreStateReader(reader InstanceReader, log log.Logger, refresh time.Duration, metrics *metrics.State) *StoreStateReader {
 	if refresh <= 0 {
 		refresh = defaultStateCacheRefresh
 	}
@@ -48,60 +58,84 @@ func NewStoreStateReader(reader InstanceReader, log log.Logger, refresh time.Dur
 		reader:  reader,
 		log:     log,
 		refresh: refresh,
+		metrics: metrics,
 	}
 }
 
-// Run periodically refreshes the cached state for every org that has been queried, until
-// ctx is cancelled. It must be started once by the owning service (see AlertNG.Run).
+// Run refreshes the cached state of queried orgs until ctx is cancelled.
 func (m *StoreStateReader) Run(ctx context.Context) error {
 	t := time.NewTicker(m.refresh)
 	defer t.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		case <-t.C:
 			m.refreshAll(ctx)
 		}
 	}
 }
 
-// refreshAll reloads, in the background, the state of every org already in the cache.
+// refreshAll reloads every recently read org and evicts idle ones.
 func (m *StoreStateReader) refreshAll(ctx context.Context) {
-	m.cache.Range(func(k, _ any) bool {
+	ok := true
+	m.cache.Range(func(k, v any) bool {
 		orgID := k.(int64)
+		entry := v.(*orgEntry)
+		if time.Since(time.Unix(0, entry.lastAccess.Load())) > stateCacheIdleEviction {
+			m.cache.Delete(orgID)
+			return true
+		}
 		snap, err := m.loadOrg(ctx, orgID)
 		if err != nil {
+			ok = false
+			m.countRefreshFailure()
 			m.log.Error("Failed to refresh cached alert state", "orgID", orgID, "error", err)
-			return true // keep the previous snapshot; try again next tick
+			return true
 		}
-		m.cache.Store(orgID, snap)
+		entry.snap.Store(snap)
 		return true
 	})
+	if ok && m.metrics != nil {
+		m.metrics.StateCacheLastRefreshSuccess.SetToCurrentTime()
+	}
 }
 
-// snapshot returns the cached snapshot for an org, loading it once on a cold miss.
-// Concurrent cold misses for the same org are coalesced so only one DB load happens.
+func (m *StoreStateReader) countRefreshFailure() {
+	if m.metrics != nil {
+		m.metrics.StateCacheRefreshFailuresTotal.Inc()
+	}
+}
+
+// snapshot returns the org's cached snapshot, cold-loading it once (singleflight-deduped).
 func (m *StoreStateReader) snapshot(ctx context.Context, orgID int64) *orgStates {
 	if v, ok := m.cache.Load(orgID); ok {
-		return v.(*orgStates)
+		entry := v.(*orgEntry)
+		entry.touch()
+		return entry.snap.Load()
 	}
 	v, err, _ := m.group.Do(strconv.FormatInt(orgID, 10), func() (any, error) {
-		if v, ok := m.cache.Load(orgID); ok { // another caller populated it
+		if v, ok := m.cache.Load(orgID); ok {
 			return v, nil
 		}
 		snap, err := m.loadOrg(ctx, orgID)
 		if err != nil {
 			return nil, err
 		}
-		m.cache.Store(orgID, snap)
-		return snap, nil
+		entry := &orgEntry{}
+		entry.snap.Store(snap)
+		entry.touch()
+		m.cache.Store(orgID, entry)
+		return entry, nil
 	})
 	if err != nil {
+		m.countRefreshFailure()
 		m.log.Error("Failed to load alert state from DB", "orgID", orgID, "error", err)
 		return &orgStates{byUID: map[string][]*State{}}
 	}
-	return v.(*orgStates)
+	entry := v.(*orgEntry)
+	entry.touch()
+	return entry.snap.Load()
 }
 
 // loadOrg reads and deserializes all of an org's alert state from the database.
@@ -126,6 +160,11 @@ func (m *StoreStateReader) GetAll(ctx context.Context, orgID int64) []*State {
 
 func (m *StoreStateReader) GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*State {
 	return m.snapshot(ctx, orgID).byUID[alertRuleUID]
+}
+
+// StatesByRuleUID returns the org's states indexed by rule UID. Callers must not modify it.
+func (m *StoreStateReader) StatesByRuleUID(ctx context.Context, orgID int64) map[string][]*State {
+	return m.snapshot(ctx, orgID).byUID
 }
 
 func (m *StoreStateReader) Status(ctx context.Context, key models.AlertRuleKey) (models.RuleStatus, bool) {

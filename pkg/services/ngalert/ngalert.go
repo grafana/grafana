@@ -193,8 +193,8 @@ type AlertNG struct {
 	clientGenerator resource.ClientGenerator
 
 	evaluationCoordinator EvaluationCoordinator
-	// storeStateReader serves API rule statuses from the DB in ha_single_node_evaluation mode.
-	// It maintains a background-refreshed in-memory cache; started in Run when set.
+	// storeStateReader serves API rule statuses from a cached DB snapshot in
+	// ha_single_node_evaluation mode; started in Run when set.
 	storeStateReader *state.StoreStateReader
 	schedCfg         schedule.SchedulerCfg
 }
@@ -470,9 +470,8 @@ func (ng *AlertNG) init() error {
 
 		// Use StoreStateReader to serve rule statuses / alert instances from the database,
 		// because non-primary nodes have no in-memory state
-		// Refresh the cached state roughly every base evaluation interval so API reads are
-		// fast and staleness is bounded to ~one eval cycle.
-		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log, ng.Cfg.UnifiedAlerting.BaseInterval)
+		// Refreshed in the background every base interval to bound staleness.
+		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log, ng.Cfg.UnifiedAlerting.BaseInterval, ng.Metrics.GetStateMetrics())
 		ng.storeStateReader = storeStateReader
 		apiStateManager = storeStateReader
 		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
