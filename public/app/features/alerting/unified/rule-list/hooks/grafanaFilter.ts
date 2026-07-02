@@ -20,7 +20,6 @@ import {
   mapDataSourceNamesToUids,
   namespaceFilter,
   pluginsFilter,
-  policyFilter,
   ruleMatches,
   ruleNameFilter,
   ruleTypeFilter,
@@ -90,6 +89,7 @@ export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
+    policy: normalizedFilterState.policy ?? undefined,
     // If FE filter is defined, don't include the backend filter
     title: ruleFilterConfig.ruleName ? undefined : titleSearch,
     type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
@@ -134,7 +134,7 @@ function buildGrafanaFilterConfigs() {
     dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
     plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
     contactPoint: null,
-    policy: policyFilter,
+    policy: null,
   };
 
   const groupFilterConfig: GroupFilterConfig = {

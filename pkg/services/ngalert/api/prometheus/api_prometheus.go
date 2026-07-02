@@ -507,6 +507,7 @@ type paginationContext struct {
 	panelID            int64
 	ruleGroups         []string
 	receiverName       string
+	routingPolicy      string
 	dataSourceUIDs     []string
 	title              string
 	searchRuleGroup    string
@@ -546,17 +547,18 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:           ctx.opts.OrgID,
-			NamespaceUIDs:   ctx.namespaceUIDs,
-			RuleUIDs:        ctx.ruleUIDs,
-			DashboardUID:    ctx.dashboardUID,
-			PanelID:         ctx.panelID,
-			RuleGroups:      ctx.ruleGroups,
-			ReceiverName:    ctx.receiverName,
-			DataSourceUIDs:  ctx.dataSourceUIDs,
-			SearchTitle:     ctx.title,
-			SearchRuleGroup: ctx.searchRuleGroup,
-			LabelMatchers:   storeMatchers,
+			OrgID:              ctx.opts.OrgID,
+			NamespaceUIDs:      ctx.namespaceUIDs,
+			RuleUIDs:           ctx.ruleUIDs,
+			DashboardUID:       ctx.dashboardUID,
+			PanelID:            ctx.panelID,
+			RuleGroups:         ctx.ruleGroups,
+			ReceiverName:       ctx.receiverName,
+			RoutingPolicyExact: ctx.routingPolicy,
+			DataSourceUIDs:     ctx.dataSourceUIDs,
+			SearchTitle:        ctx.title,
+			SearchRuleGroup:    ctx.searchRuleGroup,
+			LabelMatchers:      storeMatchers,
 		},
 		RuleType:           ctx.ruleType,
 		PluginOriginFilter: ctx.pluginOriginFilter,
@@ -866,6 +868,9 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 	receiverName := opts.Query.Get("receiver_name")
 	span.SetAttributes(attribute.Bool("receiver_name_set", receiverName != ""))
 
+	routingPolicy := opts.Query.Get("routing_policy")
+	span.SetAttributes(attribute.Bool("routing_policy_set", routingPolicy != ""))
+
 	title := opts.Query.Get("search.rule_name")
 	span.SetAttributes(attribute.Bool("search_rule_name_set", title != ""))
 
@@ -943,6 +948,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		panelID:            panelID,
 		ruleGroups:         ruleGroups,
 		receiverName:       receiverName,
+		routingPolicy:      routingPolicy,
 		title:              title,
 		dataSourceUIDs:     dataSourceUIDs,
 		searchRuleGroup:    searchRuleGroup,

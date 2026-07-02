@@ -85,6 +85,16 @@ describe('paginationLimits', () => {
           expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
         }
       );
+
+      it('should return rule limit for grafana + small limit for datasource when only policy filter is used', () => {
+        // policy only filters Grafana-managed rules (datasource rules have no notification settings)
+        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(
+          getFilter({ policy: 'my-policy' })
+        );
+
+        expect(grafanaManagedLimit).toEqual({ ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS });
+        expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_SMALL_API_PAGE_SIZE });
+      });
     });
 
     describe('when alertingUIUseFullyCompatBackendFilters is enabled', () => {

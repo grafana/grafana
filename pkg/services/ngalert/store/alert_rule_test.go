@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -3666,6 +3668,106 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 			gotUIDs = append(gotUIDs, r.UID)
 		}
 		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact with DefaultRoutingTreeName matches rules with no routing override", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		noOverrideGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+		contactPointGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-1")))
+		namedPolicyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "my-team"}))
+
+		// Rules with no routing override — should match
+		n1 := createRule(t, store, noOverrideGen)
+		n2 := createRule(t, store, noOverrideGen)
+		// Rules with an explicit routing override — should not match
+		createRule(t, store, contactPointGen)
+		createRule(t, store, namedPolicyGen)
+		legacyPolicyGen := ruleGen.With(
+			ruleGen.WithNoNotificationSettings(),
+			ruleGen.WithLabels(data.Labels{models.NamedRouteLabel: "my-team"}),
+		)
+		createRule(t, store, legacyPolicyGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: models.DefaultRoutingTreeName,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{n1.UID, n2.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact with named policy excludes rules without matching policy", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchPolicy := "my-team"
+		matchGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: matchPolicy}))
+		otherPolicyGen := ruleGen.With(ruleGen.WithPolicyRouting(models.PolicyRouting{Policy: "other-team"}))
+		noOverrideGen := ruleGen.With(ruleGen.WithNoNotificationSettings())
+		contactPointGen := ruleGen.With(ruleGen.WithContactPointRouting(models.NewDefaultContactPointRouting("recv-1")))
+
+		p1 := createRule(t, store, matchGen)
+		p2 := createRule(t, store, matchGen)
+		createRule(t, store, otherPolicyGen)
+		createRule(t, store, noOverrideGen)
+		createRule(t, store, contactPointGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: matchPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		gotUIDs := make([]string, 0, len(result))
+		for _, r := range result {
+			gotUIDs = append(gotUIDs, r.UID)
+		}
+		require.ElementsMatch(t, []string{p1.UID, p2.UID}, gotUIDs)
+	})
+
+	t.Run("RoutingPolicyExact with legacy named route label matches label-routed rules", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		matchPolicy := "konrad-policy"
+		legacyGen := ruleGen.With(
+			ruleGen.WithNoNotificationSettings(),
+			ruleGen.WithLabels(data.Labels{models.NamedRouteLabel: matchPolicy}),
+		)
+		otherLegacyGen := ruleGen.With(
+			ruleGen.WithNoNotificationSettings(),
+			ruleGen.WithLabels(data.Labels{models.NamedRouteLabel: "other-policy"}),
+		)
+
+		legacyRule := createRule(t, store, legacyGen)
+		createRule(t, store, otherLegacyGen)
+
+		query := &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{
+				OrgID:              orgID,
+				RoutingPolicyExact: matchPolicy,
+			},
+		}
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, legacyRule.UID, result[0].UID)
 	})
 
 	t.Run("ExcludeRoutingPolicy includes rules with no policy", func(t *testing.T) {
