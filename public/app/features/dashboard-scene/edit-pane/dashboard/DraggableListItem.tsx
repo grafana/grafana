@@ -3,8 +3,7 @@ import { Draggable } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useStyles2, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 interface DraggableListItemProps {
   draggableId: string;
@@ -18,12 +17,12 @@ export function DraggableListItem({ draggableId, index, children }: DraggableLis
   return (
     <Draggable draggableId={draggableId} index={index}>
       {(provided) => (
-        <li ref={provided.innerRef} {...provided.draggableProps} className={styles.listItem}>
-          <div {...provided.dragHandleProps} className={styles.dragHandle}>
-            <Tooltip content={t('dashboard-scene.draggable-item.drag-to-reorder', 'Drag to reorder')} placement="top">
-              <Icon name="draggabledots" size="md" />
-            </Tooltip>
-          </div>
+        <li
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={styles.listItem}
+        >
           {children}
         </li>
       )}
@@ -38,17 +37,22 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0.25),
-    }),
-    dragHandle: css({
-      alignSelf: 'stretch',
+      minHeight: theme.spacing(4),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
       cursor: 'grab',
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
       '&:active': {
         cursor: 'grabbing',
+      },
+      '&:hover, &:focus-within': {
+        color: theme.colors.text.maxContrast,
+        backgroundColor: theme.colors.action.hover,
+        boxShadow: `-${theme.spacing(1)} 0 0 0 ${theme.colors.action.hover}`,
+        button: {
+          visibility: 'visible',
+        },
       },
     }),
   };

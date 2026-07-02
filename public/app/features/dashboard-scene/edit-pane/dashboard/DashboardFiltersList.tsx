@@ -7,12 +7,14 @@ import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
 import { createDragEndHandler } from './variablesDragEndHandler';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
@@ -33,6 +35,14 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   const onClickFilter = useCallback((variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(variable).state;
     editPane.selectObject(variable);
+  }, []);
+
+  const onDuplicateFilter = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onDuplicate();
+  }, []);
+
+  const onDeleteFilter = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onConfirmDelete();
   }, []);
 
   const onDragEnd = useMemo(
@@ -58,34 +68,28 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       <DraggableList
         items={visible}
         droppableId={ID_FILTERS_VISIBLE_LIST}
-        title={t('dashboard-scene.filters-list.title-above-dashboard', '', {
-          count: visible.length,
-          defaultValue_one: 'Above dashboard ({{count}})',
-          defaultValue_other: 'Above dashboard ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard-scene.filters-list.title-above-dashboard', 'Above dashboard')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_FILTERS_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.filters-list.title-controls-menu', '', {
-          count: controlsMenu.length,
-          defaultValue_one: 'Controls menu ({{count}})',
-          defaultValue_other: 'Controls menu ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard-scene.filters-list.title-controls-menu', 'Controls menu')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={hidden}
         droppableId={ID_FILTERS_HIDDEN_LIST}
-        title={t('dashboard-scene.filters-list.title-hidden', '', {
-          count: hidden.length,
-          defaultValue_one: 'Hidden ({{count}})',
-          defaultValue_other: 'Hidden ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard-scene.filters-list.title-hidden', 'Hidden')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
@@ -107,4 +111,13 @@ export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
       </Button>
     </Box>
   );
+}
+
+export function AddFilterIconButton({ dashboard }: { dashboard: DashboardScene }) {
+  const onAddFilter = useCallback(() => {
+    openAddFilterForm(dashboard, dashboard);
+    DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
+  }, [dashboard]);
+
+  return <SidebarAddButton onAdd={onAddFilter} tooltip={t('dashboard-scene.filters-list.add-filter', 'Add filter')} />;
 }
