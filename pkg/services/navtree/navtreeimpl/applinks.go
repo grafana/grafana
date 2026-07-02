@@ -19,6 +19,7 @@ import (
 
 // The Knowledge Graph's version of the "Application" page.
 const assertsServicesPath = "/a/grafana-asserts-app/services"
+const appObservabilityAppID = "grafana-app-observability-app"
 
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -68,7 +69,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 
 	// When the App Observability plugin is present it owns the "Application" entry
 	// in the Observability section, so hide the equivalent asserts "Application" page.
-	if treeRoot.FindById("plugin-page-grafana-app-observability-app") != nil {
+	if treeRoot.FindById("plugin-page-"+appObservabilityAppID) != nil {
 		if obsSection := treeRoot.FindById(navtree.NavIDObservability); obsSection != nil {
 			assertsApplicationsURL := s.cfg.AppSubURL + assertsServicesPath
 			children := make([]*navtree.NavLink, 0, len(obsSection.Children))
@@ -312,7 +313,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				// Place the asserts Application page in the same slot as the App Observability
 				// "Application" page, so it lands right after Frontend. Only one of the two is
 				// ever shown.
-				child.SortWeight = s.navigationAppConfig["grafana-app-observability-app"].SortWeight
+				child.SortWeight = s.navigationAppConfig[appObservabilityAppID].SortWeight
 			} else {
 				// keep current sorting of the pages, but above all the other apps
 				child.SortWeight = -100 + child.SortWeight
@@ -426,7 +427,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
+		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database", IsNew: true},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},
