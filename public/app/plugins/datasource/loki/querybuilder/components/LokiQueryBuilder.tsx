@@ -87,21 +87,16 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       return [];
     }
 
-    let values;
+    // Scope the values to the other label filters already in the query so the
+    // dropdown only offers values present in the current result set. The
+    // label/<name>/values endpoint accepts any valid selector (including
+    // negative matchers like != and match-everything regexes), so the only
+    // case we skip scoping is when there are no other filters to scope by.
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-    // If we have no equality/regex operation with .*, we can't fetch series as it will throw an error, so we fetch label values
-    const hasEqualityOperation = labelsToConsider.find(
-      (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
-    );
-    if (labelsToConsider.length === 0 || !hasEqualityOperation) {
-      values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
-    } else {
-      const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
-      values = await datasource.languageProvider.fetchLabelValues(forLabel.label, {
-        streamSelector,
-        timeRange,
-      });
-    }
+    const options = labelsToConsider.length
+      ? { streamSelector: lokiQueryModeller.renderLabels(labelsToConsider), timeRange }
+      : { timeRange };
+    const values = await datasource.languageProvider.fetchLabelValues(forLabel.label, options);
 
     return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return
   };
