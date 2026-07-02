@@ -215,13 +215,13 @@ To apply the configuration, follow these steps:
 1. Initialize the working directory.
    This downloads the Grafana provider.
 
-   ```bash
+   ```shell
    terraform init
    ```
 
 1. Set the environment variables, then preview and apply the changes:
 
-   ```bash
+   ```shell
    export TF_VAR_grafana_auth='<TOKEN>'
    export TF_VAR_external_api_key='<SECRET>'
    terraform plan
@@ -259,7 +259,7 @@ Because `spec.value` is write-only, Terraform never writes the plaintext to stat
 It writes only the `value_hash`.
 To confirm this, search your local state file for the plaintext:
 
-```bash
+```shell
 grep -c '<SECRET_VALUE>' terraform.tfstate
 ```
 
@@ -284,7 +284,7 @@ The stored `spec` shows `value` as `null` and retains only the hash:
 To verify the result, open **Administration** > **Secrets** in Grafana, or call the [Secrets Management HTTP API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/secrets_management/) directly.
 The namespace is `stacks-<STACK_ID>`:
 
-```bash
+```shell
 curl -H "Authorization: Bearer <TOKEN>" \
   "<GRAFANA_URL>/apis/secret.grafana.app/v1beta1/namespaces/stacks-<STACK_ID>/securevalues/external-api-key"
 ```
@@ -388,7 +388,7 @@ Instead, use one of the following approaches:
 The `grafana_apps_secret_securevalue_v1beta1` resource supports import.
 The import ID is the secure value name, which is the value of `metadata.uid`:
 
-```bash
+```shell
 terraform import grafana_apps_secret_securevalue_v1beta1.external_api_key external-api-key
 ```
 
