@@ -35,7 +35,7 @@ if [ "$1" = configure ]; then
   mkdir -p /var/log/grafana /var/lib/grafana
   # Move plugins-bundled into place, see https://github.com/grafana/grafana/issues/123110
   if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
-    if [ "x$IS_UPGRADE" = "xtrue" ] && [ "$RESTART_ON_UPGRADE" = "true" ]; then
+    if [ "$IS_UPGRADE" = "true" ] && [ "$RESTART_ON_UPGRADE" = "true" ]; then
       if command -v systemctl >/dev/null; then
         systemctl stop grafana-server || true
       elif [ -x /etc/init.d/grafana-server ]; then
@@ -52,7 +52,7 @@ if [ "$1" = configure ]; then
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
 
-  if [ "x$IS_UPGRADE" != "xtrue" ]; then
+  if [ "$IS_UPGRADE" != "true" ]; then
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana /var/lib/grafana
     chmod 755 /var/log/grafana /var/lib/grafana
   fi
@@ -90,7 +90,7 @@ if [ "$1" = configure ]; then
 	find /etc/grafana -type f -exec chmod 640 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
-  if [ "x$IS_UPGRADE" != "xtrue" ]; then
+  if [ "$IS_UPGRADE" != "true" ]; then
     if command -v systemctl >/dev/null; then
       echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
       echo " sudo /bin/systemctl daemon-reload"
