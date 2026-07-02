@@ -75,7 +75,7 @@ export const dashboardAPIv2beta1 = generatedAPI.enhanceEndpoints({
       invalidatesTags: (_result, error, arg) => (error ? [] : [{ type: 'Variable', id: arg.name }, variableListTag]),
     },
     deleteVariable: {
-      invalidatesTags: (_result, error, arg) => (error ? [] : [{ type: 'Variable', id: arg.name }, variableListTag]),
+      invalidatesTags: (_result, error) => (error ? [] : [variableListTag]),
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
