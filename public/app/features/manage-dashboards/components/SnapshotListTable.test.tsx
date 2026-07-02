@@ -1,7 +1,12 @@
+import { configureStore } from '@reduxjs/toolkit';
+import { type Store } from 'redux';
+import { from } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setStore } from 'app/store/store';
 
 import { getSnapshots, SnapshotListTable } from './SnapshotListTable';
 
@@ -52,18 +57,43 @@ const k8sSecondPage = {
 
 const get = jest.fn();
 const del = jest.fn();
+const post = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: (...args: unknown[]) => get(...args),
     delete: (...args: unknown[]) => del(...args),
+    post: (...args: unknown[]) => post(...args),
+    // RTK Query's base query goes through fetch — route by method so existing
+    // get/del/post mocks continue to drive the responses.
+    fetch: (req: { url: string; method?: string; params?: unknown; data?: unknown }) => {
+      const method = (req.method ?? 'GET').toUpperCase();
+      const result =
+        method === 'GET'
+          ? Promise.resolve(get(req.url, req.params))
+          : method === 'DELETE'
+            ? Promise.resolve(del(req.url, req.params))
+            : method === 'POST'
+              ? Promise.resolve(post(req.url, req.data))
+              : Promise.resolve(undefined);
+      // RTK Query rejects { data: undefined }, so default to an empty object for
+      // void responses (DELETE in particular).
+      return from(result.then((data) => ({ data: data ?? {} })));
+    },
   }),
 }));
 
-jest.mock('../../../api/utils', () => ({
-  getAPINamespace: () => 'default',
-}));
+beforeAll(() => {
+  // K8sAPI.getSnapshots dispatches RTK Query through the global store, so wire one up
+  // for the direct getSnapshots() tests below. Rendered tests get their own store from
+  // test-utils' Provider.
+  const store = configureStore({
+    reducer: { [dashboardAPIv0alpha1.reducerPath]: dashboardAPIv0alpha1.reducer },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(dashboardAPIv0alpha1.middleware),
+  });
+  setStore(store as unknown as Store);
+});
 
 describe('getSnapshots', () => {
   beforeEach(() => {
@@ -107,7 +137,7 @@ describe('getSnapshots', () => {
 
     expect(result.continueToken).toBe('tok-page-2');
     expect(result.items).toHaveLength(2);
-    expect(get).toHaveBeenCalledWith(k8sUrl, { continue: undefined });
+    expect(get).toHaveBeenCalledWith(k8sUrl, expect.objectContaining({ continue: undefined }));
   });
 
   test('forwards the continue option to the k8s api', async () => {
@@ -116,7 +146,7 @@ describe('getSnapshots', () => {
 
     await getSnapshots({ continue: 'tok-page-2' });
 
-    expect(get).toHaveBeenCalledWith(k8sUrl, { continue: 'tok-page-2' });
+    expect(get).toHaveBeenCalledWith(k8sUrl, expect.objectContaining({ continue: 'tok-page-2' }));
   });
 });
 
@@ -158,7 +188,7 @@ describe('SnapshotListTable', () => {
     expect(screen.getByText('K8s Snap 2')).toBeInTheDocument();
     // continue token is gone so button is no longer rendered
     expect(screen.queryByRole('button', { name: 'Show more snapshots' })).not.toBeInTheDocument();
-    expect(get).toHaveBeenNthCalledWith(2, k8sUrl, { continue: 'tok-page-2' });
+    expect(get).toHaveBeenNthCalledWith(2, k8sUrl, expect.objectContaining({ continue: 'tok-page-2' }));
   });
 
   test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
