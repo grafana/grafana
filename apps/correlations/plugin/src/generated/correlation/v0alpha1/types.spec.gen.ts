@@ -23,6 +23,8 @@ export const defaultDataSourceRef = (): DataSourceRef => ({
 export interface ConfigSpec {
 	field: string;
 	target: TargetSpec;
+	// null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type
+	timeRange?: TimeRangeSpec | null;
 	transformations?: TransformationSpec[];
 }
 
@@ -34,6 +36,17 @@ export const defaultConfigSpec = (): ConfigSpec => ({
 export type TargetSpec = Record<string, any>;
 
 export const defaultTargetSpec = (): TargetSpec => ({});
+
+export interface TimeRangeSpec {
+	field?: string;
+	range?: {
+		from: number;
+		to: number;
+	};
+}
+
+export const defaultTimeRangeSpec = (): TimeRangeSpec => ({
+});
 
 export interface TransformationSpec {
 	type: "regex" | "logfmt";

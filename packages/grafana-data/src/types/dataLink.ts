@@ -3,7 +3,7 @@ import { type ExploreCorrelationHelperData, type ExplorePanelsState } from './ex
 import { type LinkTarget } from './linkTarget';
 import { type InterpolateFunction } from './panel';
 import { type DataQuery } from './query';
-import { type TimeRange } from './time';
+import { type RelativeTimeRange, type TimeRange } from './time';
 
 /**
  * Callback info for DataLink click events
@@ -13,6 +13,14 @@ export interface DataLinkClickEvent<T = any> {
   replaceVariables: InterpolateFunction | undefined;
   e?: any; // mouse|react event
 }
+
+/**
+ * A custom timerange used for correlations
+ */
+export type CorrelationQueryTimeRange = {
+  field?: string;
+  range?: RelativeTimeRange;
+};
 
 /**
  * Data Links can be created by data source plugins or correlations.
@@ -56,6 +64,7 @@ export interface DataLink<T extends DataQuery = any> {
   meta?: {
     correlationData?: ExploreCorrelationHelperData;
     transformations?: DataLinkTransformationConfig[];
+    timeRange?: CorrelationQueryTimeRange;
   };
 
   oneClick?: boolean;

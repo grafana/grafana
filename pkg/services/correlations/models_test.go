@@ -84,7 +84,7 @@ func TestCorrelationModels(t *testing.T) {
 			data, err := json.Marshal(config)
 			require.NoError(t, err)
 
-			require.Equal(t, `{"field":"field","target":{}}`, string(data))
+			require.Equal(t, `{"field":"field","target":{},"timeRange":{}}`, string(data))
 		})
 	})
 }
