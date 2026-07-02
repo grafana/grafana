@@ -54,28 +54,31 @@ The `grafana/grafana` provider downloads automatically when you run `terraform i
 
 ## Create a service account token
 
-Terraform authenticates against Grafana with a [service account token](https://grafana.com/docs/grafana/latest/administration/service-accounts/).
+Terraform authenticates against Grafana with a service account token.
 
-To create a service account token, follow these steps:
+To create a service account and token, follow these steps:
 
-1. In Grafana, create a service account.
-1. Grant it the role-based access control (RBAC) actions needed to manage secure values:
+1. Create a service account and token in Grafana.
+   To create them, refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens).
+   You can also refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/) to set up a service account and token.
+
+1. Make sure the service account has the role-based access control (RBAC) actions needed to manage secure values:
 
    - `secret.securevalues:create`
    - `secret.securevalues:read`
    - `secret.securevalues:write`
    - `secret.securevalues:delete`
 
-   If you also provision a keeper (refer to [Provision a keeper](#provision-a-keeper)), additionally grant the keeper actions, which also cover activating a keeper:
+   If you also provision a keeper (refer to [Provision a keeper](#provision-a-keeper)), the service account also needs the keeper actions, which cover activating a keeper:
 
    - `secret.keepers:create`
    - `secret.keepers:read`
    - `secret.keepers:write`
    - `secret.keepers:delete`
 
-1. Create a token for the service account, and then copy it. You can't view the token again after you leave the page.
+1. Copy the token and store it securely, because you can't view it again after you leave the page.
 
-## Configure the Terraform provider
+## Configure the Grafana provider
 
 In your Terraform working directory, create a `main.tf` file:
 
