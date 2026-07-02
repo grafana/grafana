@@ -31,7 +31,7 @@ To store secure values in an external secret manager instead, [provision a keepe
 To create and manage secure values with Terraform, you complete the following tasks:
 
 1. Create a service account token to authenticate the Terraform provider.
-1. Configure the Terraform provider.
+1. Configure the Grafana provider.
 1. Define one or more secure values.
 1. Run `terraform apply` to provision your secure values.
 
@@ -51,6 +51,10 @@ You also need the following tools at the minimum supported versions:
 
 If you don't have the Terraform CLI, refer to the [Terraform install documentation](https://developer.hashicorp.com/terraform/install).
 The `grafana/grafana` provider downloads automatically when you run `terraform init` in [Provision the secure value with Terraform](#provision-the-secure-value-with-terraform).
+
+{{< admonition type="note" >}}
+All of the following Terraform configuration files should be saved in the same directory.
+{{< /admonition >}}
 
 ## Create a service account token
 
@@ -542,6 +546,13 @@ If you use `ref` while the system keeper is active, the API returns the followin
 ```console
 tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers
 ```
+
+## Summary
+
+In this guide, you created a service account token, configured the Grafana provider, and provisioned a secure value with Terraform.
+You also learned how to rotate and import secure values, and how to provision and activate a keeper to store secrets in an external secret manager.
+
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 ## Next steps
 
