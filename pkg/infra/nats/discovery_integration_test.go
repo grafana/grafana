@@ -36,8 +36,8 @@ func TestIntegrationDiscoveryEmbeddedCluster(t *testing.T) {
 
 		// Publisher connects (in-process) to node A, subscriber to node B, so a
 		// delivery proves interest and the message crossed the cluster route.
-		pub := ProvidePublisher(cfgA.cfg, ProvideNATSConfig(cfgA.cfg, cfgA.srv), prometheus.NewRegistry())
-		sub := ProvideSubscriber(cfgB.cfg, ProvideNATSConfig(cfgB.cfg, cfgB.srv), prometheus.NewRegistry())
+		pub := ProvidePublisher(ProvideNATSConfig(cfgA.cfg, cfgA.srv), prometheus.NewRegistry())
+		sub := ProvideSubscriber(ProvideNATSConfig(cfgB.cfg, cfgB.srv), prometheus.NewRegistry())
 		startService(t, ctx, pub)
 		startService(t, ctx, sub)
 
