@@ -1,5 +1,6 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { updateConfigurationSubtitle } from 'app/core/reducers/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type ThunkResult } from 'app/types/store';
 import { type UserOrg } from 'app/types/user';
 
@@ -37,6 +38,11 @@ export function setUserOrganization(
 ): ThunkResult<void> {
   return async (dispatch) => {
     const organizationResponse = await dependencies.getBackendSrv().post('/api/user/using/' + orgId);
+
+    // backend_srv stamps X-Grafana-Org-Id from contextSrv.user.orgId on every request; refresh both
+    // in-memory copies so no request can carry the previous org while/if the reload is pending
+    config.bootData.user.orgId = orgId;
+    contextSrv.user.orgId = orgId;
 
     dispatch(updateConfigurationSubtitle(organizationResponse.name));
   };
