@@ -163,12 +163,22 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		k8sCmd := *cmd
-		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
-			k8sCmd.OrgID = s.cfg.DefaultOrgID()
+		orgID := cmd.OrgID
+		if orgID == 0 {
+			if requester, err := identity.GetRequester(ctx); err == nil && requester.GetOrgID() != 0 {
+				orgID = requester.GetOrgID()
+			} else {
+				orgID = s.cfg.DefaultOrgID()
+			}
 		}
 
-		result, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		k8sCmd := *cmd
+		k8sCmd.OrgID = orgID
+
+		// GetSignedInUser resolves a user's identity for the system (sign-in sync,
+		// internal validation such as permission assignment), not a user-facing
+		// RBAC-gated read, so run the lookup as the service identity.
+		result, err := s.k8sService.GetSignedInUser(identity.WithServiceIdentityContext(ctx, orgID), &k8sCmd)
 		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return result, nil
@@ -269,13 +279,4 @@ func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
 
 func isNotFoundError(err error) bool {
 	return errors.Is(err, user.ErrUserNotFound) || apierrors.IsNotFound(err)
-}
-
-func hasOrgID(ctx context.Context) bool {
-	if requester, err := identity.GetRequester(ctx); err == nil {
-		return requester.GetOrgID() != 0
-	}
-
-	orgID, ok := identity.OrgIDFrom(ctx)
-	return ok && orgID != 0
 }

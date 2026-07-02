@@ -376,6 +376,17 @@ func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
 		require.ErrorIs(t, err, boom)
 		require.Nil(t, got)
 	})
+
+	t.Run("k8s lookup runs as the service identity, even for an end-user caller", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		caller := &identity.StaticRequester{Type: claims.TypeUser, UserID: 5, OrgID: 2}
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: 2, UserID: 5})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx), "GetSignedInUser must resolve users as the service identity")
+	})
 }
 
 // ctxCapturingUserService records the context passed to GetProfile so tests can
@@ -393,6 +404,11 @@ func (f *ctxCapturingUserService) GetProfile(ctx context.Context, _ *user.GetUse
 func (f *ctxCapturingUserService) GetByID(ctx context.Context, _ *user.GetUserByIDQuery) (*user.User, error) {
 	f.gotCtx = ctx
 	return &user.User{}, nil
+}
+
+func (f *ctxCapturingUserService) GetSignedInUser(ctx context.Context, _ *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	f.gotCtx = ctx
+	return &user.SignedInUser{}, nil
 }
 
 func TestService_GetProfile_SelfReadElevatesToServiceIdentity(t *testing.T) {
