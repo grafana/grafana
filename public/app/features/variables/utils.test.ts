@@ -191,6 +191,17 @@ describe('containsVariable', () => {
   `('when called with value:$value then result should be:$expected', ({ value, expected }) => {
     expect(containsVariable(value, 'var')).toEqual(expected);
   });
+
+  it.each`
+    value                             | variableName
+    ${'[[other:csv]]'}                | ${'csv'}
+    ${'${other:json}'}                | ${'json'}
+    ${'${other.host}'}                | ${'host'}
+    ${'${other.host:raw}'}            | ${'host'}
+    ${{ query: '${other.name:text}' }} | ${'name'}
+  `('does not match $variableName when it is a format or field path in $value', ({ value, variableName }) => {
+    expect(containsVariable(value, variableName)).toBe(false);
+  });
 });
 
 describe('getVariablesFromUrl', () => {
