@@ -22,6 +22,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import { DashboardUI } from 'app/features/dashboard-scene/edit-pane/editActionGuard';
 
 import {
   ObjectsReorderedOnCanvasEvent,
@@ -62,6 +63,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
 }
 
+@DashboardUI
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutGrid
