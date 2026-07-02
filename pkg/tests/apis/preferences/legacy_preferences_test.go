@@ -87,6 +87,49 @@ func TestIntegrationPreferences_LegacyBridge(t *testing.T) {
 				require.Equal(t, "UTC", *got.Timezone)
 			})
 
+			t.Run("index page renders when not logged in", func(t *testing.T) {
+				// The login page renders through setIndexViewData, which also reads
+				// preferences. An unauthenticated request carries no usable identity,
+				// so the flag-gated app-platform read must not be attempted for it.
+				// nolint:gosec
+				resp, err := http.Get(fmt.Sprintf("http://%s/login", helper.GetListenerAddress()))
+				require.NoError(t, err)
+				defer func() { _ = resp.Body.Close() }()
+				require.Equal(t, http.StatusOK, resp.StatusCode)
+			})
+
+			t.Run("home dashboard reads preferences server-side", func(t *testing.T) {
+				// GetHomeDashboard consumes merged preferences on the server; with the
+				// flag on it goes through prefapi.GetPreferencesWithDefaults and the
+				// app-platform "preferences/merged" route instead of pref.Service.
+				dash := struct {
+					UID string `json:"uid"`
+				}{}
+				dashResp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: http.MethodPost,
+					Path:   "/api/dashboards/db",
+					Body:   []byte(`{"dashboard": {"title": "home sweet home"}, "overwrite": true}`),
+				}, &dash)
+				require.Equal(t, http.StatusOK, dashResp.Response.StatusCode, string(dashResp.Body))
+				require.NotEmpty(t, dash.UID)
+
+				putResult := putUserPrefs(t, helper, fmt.Sprintf(`{"homeDashboardUID":%q}`, dash.UID))
+				require.Equal(t, http.StatusOK, putResult)
+
+				redirect := struct {
+					RedirectURI string `json:"redirectUri"`
+				}{}
+				resp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: http.MethodGet,
+					Path:   "/api/dashboards/home",
+				}, &redirect)
+				require.Equal(t, http.StatusOK, resp.Response.StatusCode, string(resp.Body))
+				require.Contains(t, redirect.RedirectURI, dash.UID,
+					"home endpoint must redirect to the dashboard saved in preferences")
+			})
+
 			t.Run("PATCH on missing upserts", func(t *testing.T) {
 				// Use the Editor user — no other subtest writes preferences for them, so
 				// the PATCH below is genuinely against a non-existent record. Both the

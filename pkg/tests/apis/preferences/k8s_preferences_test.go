@@ -116,6 +116,31 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 			require.Equal(t, "", *replaced.Spec.Timezone, "PUT must clear timezone it omitted")
 		}
 	})
+
+	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {
+		// prefapi's K8sClient.GetMerged (used by the index page when the
+		// reroute flag is on) fetches the custom "preferences/merged" route
+		// through the dynamic client as if it were a resource named "merged".
+		// This asserts that URL shape reaches the merged handler and not the
+		// regular {name} storage handler (which would return 404).
+		admin := helper.Org1.Admin
+		adminName := "user-" + admin.Identity.GetIdentifier()
+		putResult := putUserPrefsK8s(t, helper, admin, adminName, fmt.Sprintf(`{"metadata": {"name": "%s"}, "spec": {"theme":"aubergine"}}`, adminName))
+		require.NoError(t, putResult.Error())
+
+		client := admin.RESTClient(t, &preferences.GroupVersion)
+		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
+			"namespaces", "default",
+			"preferences", "merged").Do(context.Background()).Raw()
+		require.NoError(t, err, "GET preferences/merged: %s", string(raw))
+
+		out := &preferences.Preferences{}
+		require.NoError(t, json.Unmarshal(raw, out))
+		require.NotNil(t, out.Spec.Theme)
+		require.Equal(t, "aubergine", *out.Spec.Theme, "user preference must win in the merged view")
+		require.Contains(t, out.Annotations[preferences.APIGroup+"/source"], adminName,
+			"merged response must record the user preferences as a source")
+	})
 }
 
 func putUserPrefsK8s(t *testing.T, helper *apis.K8sTestHelper, user apis.User, name string, body string) rest.Result {
