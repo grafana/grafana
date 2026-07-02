@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
@@ -24,6 +24,9 @@ export function TransformationDebugDisplay() {
     isActive: transformToggles.showDebug,
   });
 
+  const getInputJson = useCallback(() => JSON.stringify(input, null, 2), [input]);
+  const getOutputJson = useCallback(() => JSON.stringify(output, null, 2), [output]);
+
   if (!transformToggles.showDebug || !selectedTransformation) {
     return null;
   }
@@ -38,6 +41,13 @@ export function TransformationDebugDisplay() {
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
             <Trans i18nKey="query-editor-next.transformation-debug.input-data">Input data</Trans>
+            <ClipboardButton
+              icon="copy"
+              size="sm"
+              fill="text"
+              getText={getInputJson}
+              title={t('query-editor-next.transformation-debug.copy-input-data', 'Copy input data to clipboard')}
+            />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={input} />
@@ -49,6 +59,13 @@ export function TransformationDebugDisplay() {
         <div className={styles.debug}>
           <div className={styles.debugTitle}>
             <Trans i18nKey="query-editor-next.transformation-debug.output-data">Output data</Trans>
+            <ClipboardButton
+              icon="copy"
+              size="sm"
+              fill="text"
+              getText={getOutputJson}
+              title={t('query-editor-next.transformation-debug.copy-output-data', 'Copy output data to clipboard')}
+            />
           </div>
           <div className={styles.debugJson}>
             <JSONFormatter json={output} />
@@ -79,6 +96,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       flexGrow: 0,
       flexShrink: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     }),
     debug: css({
       marginTop: theme.spacing(1),
