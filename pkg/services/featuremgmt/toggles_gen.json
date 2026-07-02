@@ -2510,6 +2510,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardSettingsRedesign",
+        "resourceVersion": "1782823244633",
+        "creationTimestamp": "2026-06-30T12:40:44Z"
+      },
+      "spec": {
+        "description": "Redesigns dashboard settings page into Advanced Settings in a modal window",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

@@ -74,6 +74,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
 ## Public preview feature toggles
 
