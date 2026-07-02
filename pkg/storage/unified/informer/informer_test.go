@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -62,14 +63,14 @@ func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler na
 	return fakeSubscription{}, nil
 }
 
-func (f *fakeSubscriber) waitForSubscription(t *testing.T, subject string) {
-	t.Helper()
-	require.Eventually(t, func() bool {
-		f.mu.Lock()
-		defer f.mu.Unlock()
-		_, ok := f.handlers[subject]
-		return ok
-	}, 5*time.Second, 5*time.Millisecond, "informer never subscribed to %q", subject)
+// subscribed reports whether the informer has an open subscription for subject.
+// Under synctest a synctest.Wait quiesces the run loop, so this plain check
+// replaces the wall-clock poll a real bus would need.
+func (f *fakeSubscriber) subscribed(subject string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	_, ok := f.handlers[subject]
+	return ok
 }
 
 func (f *fakeSubscriber) publish(t *testing.T, subject string, evt *resourcepb.WatchNotification) {
@@ -158,9 +159,13 @@ func subject() string {
 	return resourcewatch.Subject(testGVR, testNamespace)
 }
 
-// start wires an informer to the given seed list and handler, runs it, and waits
-// until the initial list has synced.
-func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) *Informer {
+// start wires an informer to the given seed list and handler, runs it inside the
+// current synctest bubble, and lets the run loop quiesce so it has subscribed (when
+// live notifications are enabled) and the initial list has synced. It returns a
+// stop func the caller must defer: the bubble requires every goroutine it spawned
+// to have exited before the test body returns, so the run goroutine cannot be torn
+// down from a t.Cleanup (which fires after the bubble).
+func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) (*Informer, func()) {
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
 	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list)
@@ -169,70 +174,88 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 
 	stopCh := make(chan struct{})
 	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
 
+	// Wait blocks until the run goroutine (and its stop watcher) is durably
+	// blocked, i.e. parked in the main select after subscribing and the initial
+	// list. None of that needs the fake clock to advance, so the informer is
+	// deterministically subscribed and synced once Wait returns.
+	synctest.Wait()
+	require.True(t, n.HasSynced(), "informer never synced")
 	if newObject != nil {
-		sub.waitForSubscription(t, subject())
+		require.Truef(t, sub.subscribed(subject()), "informer never subscribed to %q", subject())
 	}
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
-	return n
+	return n, func() {
+		close(stopCh)
+		synctest.Wait() // let Run observe the cancellation and exit before the bubble ends
+	}
 }
 
 // The initial list drives an OnAdd per existing object and marks HasSynced, so a
 // controller can start reconciling the full set — just like an informer's
 // LIST-seeded cache.
 func TestInformer_InitialListDeliversAdds(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
 
-	start(t, sub, []runtime.Object{obj("a"), obj("b")}, newObjectFunc, handler)
+		_, stop := start(t, sub, []runtime.Object{obj("a"), obj("b")}, newObjectFunc, handler)
+		defer stop()
 
-	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+		assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+	})
 }
 
 // A live ADDED goes through OnAdd; a MODIFIED/DELETED through OnUpdate. The
 // delivered object is the minimal one built from the notification's identity —
 // the controllers re-fetch, so the informer does not read the object.
 func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
-	start(t, sub, nil, newObjectFunc, handler)
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		_, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
 
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
+		synctest.Wait()
 
-	assert.Equal(t, []string{"fresh"}, handler.addedNames())
-	assert.Equal(t, []string{"changed", "gone"}, handler.updatedNames())
+		assert.Equal(t, []string{"fresh"}, handler.addedNames())
+		assert.Equal(t, []string{"changed", "gone"}, handler.updatedNames())
+	})
 }
 
 // Malformed envelopes and unknown verbs are skipped; a valid notification after
 // them still arrives.
 func TestInformer_SkipsMalformedAndUnknown(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
-	start(t, sub, nil, newObjectFunc, handler)
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		_, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
 
-	sub.deliver(t, subject(), []byte("not proto"))
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_UNKNOWN, "x"))
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "survivor"))
+		sub.deliver(t, subject(), []byte("not proto"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_UNKNOWN, "x"))
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "survivor"))
+		synctest.Wait()
 
-	assert.Equal(t, []string{"survivor"}, handler.updatedNames())
+		assert.Equal(t, []string{"survivor"}, handler.updatedNames())
+	})
 }
 
 // A nil object builder disables live notifications: the informer never
 // subscribes and is driven only by the (initial) list.
 func TestInformer_NilObjectFuncSkipsSubscription(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
 
-	start(t, sub, []runtime.Object{obj("only-listed")}, nil, handler)
+		_, stop := start(t, sub, []runtime.Object{obj("only-listed")}, nil, handler)
+		defer stop()
 
-	sub.mu.Lock()
-	_, subscribed := sub.handlers[subject()]
-	sub.mu.Unlock()
-	assert.False(t, subscribed, "must not subscribe when live notifications are disabled")
-	assert.Equal(t, []string{"only-listed"}, handler.addedNames())
+		assert.False(t, sub.subscribed(subject()), "must not subscribe when live notifications are disabled")
+		assert.Equal(t, []string{"only-listed"}, handler.addedNames())
+	})
 }
 
 // A re-list diffs against the previous snapshot: an object that has vanished is
@@ -301,35 +324,37 @@ func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
 // tick. The resync is set far in the future so only the reconnect can trigger the
 // second list.
 func TestInformer_ReconnectTriggersRelist(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
 
-	var calls atomic.Int64
-	list := func(context.Context) ([]runtime.Object, error) {
-		calls.Add(1)
-		return []runtime.Object{obj("a")}, nil
-	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-	_, err := n.AddEventHandler(handler)
-	require.NoError(t, err)
+		var calls atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			calls.Add(1)
+			return []runtime.Object{obj("a")}, nil
+		}
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
 
-	stopCh := make(chan struct{})
-	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
 
-	sub.waitForSubscription(t, subject())
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
-	// Startup lists exactly once (the subscription is opened before the list, so
-	// there is no gap-closing re-list). Only the reconnect can push the count up —
-	// the resync is an hour away.
-	require.Eventually(t, func() bool { return calls.Load() == 1 }, 5*time.Second, 5*time.Millisecond,
-		"startup should have listed once")
-	before := calls.Load()
+		// Startup lists exactly once (the subscription is opened before the list, so
+		// there is no gap-closing re-list). With the resync an hour away, nothing else
+		// can advance the clock, so the count is exactly 1 when the loop quiesces.
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
+		require.True(t, n.HasSynced())
+		before := calls.Load()
+		require.Equal(t, int64(1), before, "startup should have listed once")
 
-	n.signalReconnect()
+		n.signalReconnect()
+		synctest.Wait()
 
-	require.Eventually(t, func() bool { return calls.Load() > before }, 5*time.Second, 5*time.Millisecond,
-		"reconnect must trigger a re-list")
+		assert.Equal(t, before+1, calls.Load(), "reconnect must trigger a re-list")
+	})
 }
 
 // A subscribe failure (e.g. the embedded NATS server not yet started, so no
@@ -337,89 +362,117 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 // subscription and only lists / reports HasSynced once it opens, then delivers
 // live events.
 func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
-	sub := newFakeSubscriber()
-	sub.failSubscribes(2) // first two attempts fail, then it succeeds
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		sub.failSubscribes(2) // first two attempts fail, then it succeeds
+		handler := &recordingHandler{}
 
-	list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-	n.retryInterval = 10 * time.Millisecond // shorten the retry cadence for the test
-	_, err := n.AddEventHandler(handler)
-	require.NoError(t, err)
-	stopCh := make(chan struct{})
-	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
+		list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
+		// Production retryInterval — the fake clock makes the retry cadence free.
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
 
-	// The subscription opens only after the retries succeed; the initial list and
-	// HasSynced follow it.
-	sub.waitForSubscription(t, subject())
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer must sync once subscribed")
-	assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
+		// The subscription gates startup: while it keeps failing, the informer neither
+		// subscribes, lists, nor reports HasSynced.
+		synctest.Wait()
+		require.False(t, sub.subscribed(subject()), "must not subscribe while Subscribe fails")
+		require.False(t, n.HasSynced(), "must not sync before the subscription opens")
 
-	// Live events then flow.
-	sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
-	require.Eventually(t, func() bool {
-		return len(handler.addedNames()) == 2
-	}, 5*time.Second, 5*time.Millisecond, "live events must flow once subscribed")
-	assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
+		// Each retry tick drives another Subscribe; advance the fake clock past the
+		// two failures until the third attempt opens the subscription, after which the
+		// initial list runs and HasSynced follows.
+		for i := 0; i < 5 && !sub.subscribed(subject()); i++ {
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+		}
+		require.True(t, sub.subscribed(subject()), "retry must eventually open the subscription")
+		require.True(t, n.HasSynced(), "must sync once subscribed")
+		assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
+
+		// Live events then flow.
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		synctest.Wait()
+		assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
+	})
 }
 
 // The subscription is opened before the initial list, so at startup the informer
 // lists exactly once (no separate gap-closing re-list); only a resync or reconnect
 // lists again.
 func TestInformer_SubscribesBeforeListingOnce(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
 
-	var calls atomic.Int64
-	list := func(context.Context) ([]runtime.Object, error) {
-		calls.Add(1)
-		return []runtime.Object{obj("a")}, nil
-	}
-	// A one-hour resync guarantees no extra list fires on its own at startup.
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-	_, err := n.AddEventHandler(handler)
-	require.NoError(t, err)
-	stopCh := make(chan struct{})
-	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
+		var calls atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			calls.Add(1)
+			return []runtime.Object{obj("a")}, nil
+		}
+		// A one-hour resync guarantees no extra list fires on its own at startup.
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
 
-	// The subscription opens first, then the single initial list marks synced.
-	sub.waitForSubscription(t, subject())
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
-	require.Never(t, func() bool { return calls.Load() != 1 }, 100*time.Millisecond, 10*time.Millisecond,
-		"startup must list exactly once")
+		// The subscription opens first, then the single initial list marks synced.
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
+		require.True(t, n.HasSynced(), "informer never synced")
+		assert.Equal(t, int64(1), calls.Load(), "startup must list exactly once")
+
+		// With the run loop quiesced and the resync an hour away, no further list can
+		// happen without advancing the clock — so the count is final, deterministically.
+		synctest.Wait()
+		assert.Equal(t, int64(1), calls.Load(), "startup must list exactly once")
+	})
 }
 
 // A failing initial list must not mark the informer synced: HasSynced stays false
 // (so WaitForCacheSync keeps blocking) until the first list succeeds, then the
 // seeded objects are delivered as adds.
 func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
-	sub := newFakeSubscriber()
-	handler := &recordingHandler{}
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
 
-	var calls atomic.Int64
-	list := func(context.Context) ([]runtime.Object, error) {
-		if calls.Add(1) < 3 {
-			return nil, fmt.Errorf("api unavailable")
+		var calls atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			if calls.Add(1) < 3 {
+				return nil, fmt.Errorf("api unavailable")
+			}
+			return []runtime.Object{obj("a")}, nil
 		}
-		return []runtime.Object{obj("a")}, nil
-	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-	n.retryInterval = 10 * time.Millisecond // shorten the initial-list retry for the test
-	_, err := n.AddEventHandler(handler)
-	require.NoError(t, err)
+		// Production retryInterval — the initial-list retry cadence runs on fake time.
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
 
-	stopCh := make(chan struct{})
-	go n.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
 
-	// While the list keeps failing, the informer must not report synced.
-	require.Never(t, n.HasSynced, 20*time.Millisecond, 5*time.Millisecond, "must not sync while the initial list fails")
+		// The subscription opens immediately, but the first list attempt has failed and
+		// the informer is parked on the retry timer; it must not report synced while
+		// the initial list keeps failing.
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
+		require.False(t, n.HasSynced(), "must not sync while the initial list fails")
 
-	// Once a list succeeds, it syncs and delivers the seeded object as an add.
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "must sync after the initial list succeeds")
-	assert.Equal(t, []string{"a"}, handler.addedNames())
+		// Each retry interval drives another attempt; the third succeeds and syncs.
+		for i := 0; i < 5 && !n.HasSynced(); i++ {
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+		}
+		require.True(t, n.HasSynced(), "must sync after the initial list succeeds")
+		assert.Equal(t, []string{"a"}, handler.addedNames())
+	})
 }
 
 // signalReconnect never blocks: a pending signal coalesces additional reconnects
