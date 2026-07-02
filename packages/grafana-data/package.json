@@ -102,7 +102,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "1.4.6",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
