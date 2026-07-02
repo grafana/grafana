@@ -11,6 +11,7 @@ import {
   boundedMinMax,
   calculateBucketExpansionFactor,
   calculateYSizeDivisor,
+  findFiniteBucketBounds,
   heatmapPathsDense,
   heatmapPathsPoints,
   heatmapPathsSparse,
@@ -1868,6 +1869,101 @@ describe('calculateBucketExpansionFactor', () => {
       const yMaxValues = [10, 20, 30, 40];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(2); // Uses second bucket: 20/10 = 2
+    });
+  });
+});
+
+describe('findFiniteBucketBounds', () => {
+  it('returns the smallest finite yMin and largest finite yMax', () => {
+    const yMins = [1, 10, 100, 1000];
+    const yMaxs = [10, 100, 1000, 10000];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 10000,
+      hasUnboundedLower: false,
+      hasUnboundedUpper: false,
+    });
+  });
+
+  it('flags an unbounded lower tail (NHCB (-Inf, first])', () => {
+    const yMins = [-Infinity, 1, 10, 100];
+    const yMaxs = [1, 10, 100, 1000];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 1000,
+      hasUnboundedLower: true,
+      hasUnboundedUpper: false,
+    });
+  });
+
+  it('flags an unbounded upper tail (NHCB (last, +Inf])', () => {
+    const yMins = [1, 10, 100, 1000];
+    const yMaxs = [10, 100, 1000, Infinity];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 1000,
+      hasUnboundedLower: false,
+      hasUnboundedUpper: true,
+    });
+  });
+
+  it('flags both unbounded tails', () => {
+    const yMins = [-Infinity, 1, 10, 100];
+    const yMaxs = [1, 10, 100, Infinity];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 100,
+      hasUnboundedLower: true,
+      hasUnboundedUpper: true,
+    });
+  });
+
+  it('returns nulls when no finite bounds exist', () => {
+    const yMins = [-Infinity];
+    const yMaxs = [Infinity];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: null,
+      finiteMax: null,
+      hasUnboundedLower: true,
+      hasUnboundedUpper: true,
+    });
+  });
+
+  it('returns nulls for empty input', () => {
+    expect(findFiniteBucketBounds([], [])).toEqual({
+      finiteMin: null,
+      finiteMax: null,
+      hasUnboundedLower: false,
+      hasUnboundedUpper: false,
+    });
+  });
+
+  it('recovers boundaries from yMax when middle buckets are empty (sparse NHCB)', () => {
+    // Empty (1,10] and (10,100] buckets are omitted by NHCB's sparse encoding.
+    // The remaining samples are:
+    //   bucket A: yMin=-Inf, yMax=1   ← only place that yields finite boundary 1
+    //   bucket B: yMin=100,  yMax=1000
+    //   bucket C: yMin=1000, yMax=10000
+    // The smallest finite boundary (1) is only present in yMax, so a function
+    // that only considers yMin would incorrectly return finiteMin=100.
+    const yMins = [-Infinity, 100, 1000];
+    const yMaxs = [1, 1000, 10000];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 10000,
+      hasUnboundedLower: true,
+      hasUnboundedUpper: false,
+    });
+  });
+
+  it('skips non-number values', () => {
+    const yMins = [null, undefined, 'x', 1, 10];
+    const yMaxs = [null, undefined, 'x', 10, 100];
+    expect(findFiniteBucketBounds(yMins, yMaxs)).toEqual({
+      finiteMin: 1,
+      finiteMax: 100,
+      hasUnboundedLower: false,
+      hasUnboundedUpper: false,
     });
   });
 });
