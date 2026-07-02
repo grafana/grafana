@@ -48,42 +48,60 @@ func newNatsShadowMetrics(reg prometheus.Registerer) *natsShadowMetrics {
 // watch pipeline, so enabling it cannot change what watch clients observe. It
 // validates NATS delivery (coverage + latency) on a live backend before NATS is
 // wired into the watch path for real.
+// natsShadowRetryInterval is how long start waits before re-subscribing after
+// the notifier channel closes (e.g. NATS was unavailable at startup).
+const natsShadowRetryInterval = 5 * time.Second
+
 type natsShadow struct {
-	notifier  *natsNotifier
-	watchOpts WatchOptions
-	metrics   *natsShadowMetrics
-	log       log.Logger
+	notifier      *natsNotifier
+	watchOpts     WatchOptions
+	metrics       *natsShadowMetrics
+	retryInterval time.Duration
+	log           log.Logger
 }
 
 func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
 	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
-		notifier:  newNatsNotifier(subscriber, metrics.dropped, logger),
-		watchOpts: watchOpts,
-		metrics:   metrics,
-		log:       logger,
+		notifier:      newNatsNotifier(subscriber, metrics.dropped, logger),
+		watchOpts:     watchOpts,
+		metrics:       metrics,
+		retryInterval: natsShadowRetryInterval,
+		log:           logger,
 	}
 }
 
-// start consumes the NATS notifier in a goroutine until ctx is cancelled.
+// start consumes the NATS notifier in a goroutine until ctx is cancelled. The
+// channel closes on ctx cancellation (exit) or subscribe failure; in the latter
+// case it re-subscribes after retryInterval so a NATS outage at startup doesn't
+// leave the shadow inert until the next process restart.
 func (s *natsShadow) start(ctx context.Context) {
 	go func() {
-		events := s.notifier.Watch(ctx, s.watchOpts)
-		for evt := range events {
-			s.metrics.eventsReceived.WithLabelValues(evt.Group, evt.Resource, string(evt.Action)).Inc()
-			latency := time.Since(resourceVersionTime(evt.ResourceVersion)).Seconds()
-			if latency > 0 {
-				s.metrics.latency.WithLabelValues(evt.Resource).Observe(latency)
+		for ctx.Err() == nil {
+			for evt := range s.notifier.Watch(ctx, s.watchOpts) {
+				s.observe(evt)
 			}
-			s.log.Debug("nats shadow received event",
-				"group", evt.Group,
-				"resource", evt.Resource,
-				"namespace", evt.Namespace,
-				"name", evt.Name,
-				"rv", evt.ResourceVersion,
-				"action", evt.Action,
-				"latency_seconds", latency,
-			)
+			select {
+			case <-ctx.Done():
+			case <-time.After(s.retryInterval):
+			}
 		}
 	}()
+}
+
+func (s *natsShadow) observe(evt Event) {
+	s.metrics.eventsReceived.WithLabelValues(evt.Group, evt.Resource, string(evt.Action)).Inc()
+	latency := time.Since(resourceVersionTime(evt.ResourceVersion)).Seconds()
+	if latency > 0 {
+		s.metrics.latency.WithLabelValues(evt.Resource).Observe(latency)
+	}
+	s.log.Debug("nats shadow received event",
+		"group", evt.Group,
+		"resource", evt.Resource,
+		"namespace", evt.Namespace,
+		"name", evt.Name,
+		"rv", evt.ResourceVersion,
+		"action", evt.Action,
+		"latency_seconds", latency,
+	)
 }
