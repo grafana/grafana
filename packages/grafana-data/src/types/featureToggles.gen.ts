@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables annotation clustering and switches to refactored annotation code
-  * @default true
-  */
-  annotationsClustering?: boolean;
-  /**
   * Enables new dashboard layouts
   * @default true
   */
