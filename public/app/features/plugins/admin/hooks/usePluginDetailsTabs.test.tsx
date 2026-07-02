@@ -106,6 +106,20 @@ describe('usePluginDetailsTabs', () => {
     expect(overviewTab).toBeDefined();
   });
 
+  it('should default to overview tab for grafana-assistant-app', () => {
+    mockUsePluginConfig.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: mockPluginConfig,
+    });
+
+    const assistantPlugin = { ...mockPlugin, id: 'grafana-assistant-app' };
+    const { result } = renderHook(() => usePluginDetailsTabs(assistantPlugin, undefined, false));
+
+    // Without a pageId, activePageId should default to overview (not the first config page)
+    expect(result.current.activePageId).toBe('overview');
+  });
+
   it('should include config-specific tabs when plugin config is loaded', () => {
     // simulate config loaded successfully
     mockUsePluginConfig.mockReturnValue({
