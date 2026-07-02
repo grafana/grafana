@@ -1093,11 +1093,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// The repository delta source and the getter it backs.
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			// The repository delta source and the getter it backs, as one value.
+			repoSource := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				reconcileRepoGetter,
+				repoSource,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1112,7 +1112,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
+				controller.NewRepositoryQuotaChecker(repoSource),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
@@ -1137,9 +1137,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			connSource := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			connController := controller.NewConnectionController(
-				connGetter,
+				connSource,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,

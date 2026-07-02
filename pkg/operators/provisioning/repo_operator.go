@@ -86,11 +86,11 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	// The repository delta source and the getter it backs.
-	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	// The repository delta source and the getter it backs, as one value.
+	repoSource := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
-		repoGetter,
+		repoSource,
 		repoFactory,
 		connectionFactory,
 		resourceLister,
@@ -105,7 +105,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
-		controller.NewRepositoryQuotaChecker(repoGetter),
+		controller.NewRepositoryQuotaChecker(repoSource),
 		repository.NewIncrementalSyncPolicy(
 			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),

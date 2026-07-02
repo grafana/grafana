@@ -10,7 +10,6 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -29,18 +28,34 @@ type RepositoryGetter interface {
 	List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error)
 }
 
-// NewRepositoryDeltaSource returns the repository delta source and the getter it
-// backs. Under NATS the getter reads reconcile state fresh from the API and the
-// quota count from the informer's shared snapshot (written back on each reconcile
-// read); otherwise the getter reads the informer's cache lister.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, RepositoryGetter) {
+// NewRepositoryDeltaSource returns the repository delta source and the read seam
+// it backs as one Source: the informer the controller registers its handler on,
+// merged with the RepositoryGetter it reconciles against.
+//
+// Under NATS, Get reads reconcile state fresh from the API and writes it into the
+// informer's shared snapshot; List (the quota count) reads that snapshot, which
+// tolerates staleness (as stale as the resync interval) and so avoids an API LIST
+// per check while the write-through keeps it warm between re-lists. Without NATS,
+// both Get and List read the informer's generated cache lister.
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) *Source[*provisioningapis.Repository] {
+	c := client.ProvisioningV0alpha1()
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
-		source := NewRepositoryInformer(subscriber, client, "", resync, store)
-		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		return &Source[*provisioningapis.Repository]{
+			DeltaSource: NewRepositoryInformer(subscriber, client, "", resync, store),
+			Getter: Getter[*provisioningapis.Repository]{
+				get: func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+					return c.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+				},
+				store: store,
+			},
+		}
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
-	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
+	return &Source[*provisioningapis.Repository]{
+		DeltaSource: inf.Informer(),
+		Getter:      NewCachedRepositoryGetter(inf.Lister()),
+	}
 }
 
 // NewRepositoryInformer builds an Informer for repositories.
@@ -53,30 +68,16 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
-// generated lister, i.e. the informer's local cache.
-func NewCachedRepositoryGetter(lister listers.RepositoryLister) RepositoryGetter {
-	return typedGetter[*provisioningapis.Repository]{
+// generated lister, i.e. the informer's local cache. It is the getter the
+// non-NATS delta source embeds, and is exposed for controllers that reconcile
+// against a lister in tests.
+func NewCachedRepositoryGetter(lister listers.RepositoryLister) Getter[*provisioningapis.Repository] {
+	return Getter[*provisioningapis.Repository]{
 		get: func(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 			return lister.Repositories(namespace).Get(name)
 		},
 		list: func(_ context.Context, namespace string) ([]*provisioningapis.Repository, error) {
 			return lister.Repositories(namespace).List(labels.Everything())
 		},
-	}
-}
-
-// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
-// for the reconcile — and List with the NATS informer's snapshot (a
-// unified-storage informer Cache). The quota count is the only List caller and
-// tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each reconcile Get is
-// written back into the store (or removed on NotFound), keeping the count warm
-// between re-lists rather than only as fresh as the last resync.
-func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
-	return typedGetter[*provisioningapis.Repository]{
-		get: func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-			return c.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-		},
-		store: store,
 	}
 }

@@ -46,10 +46,10 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
-	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	// The connection delta source and the getter it backs, as one value.
+	connSource := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	connController := controller.NewConnectionController(
-		connGetter,
+		connSource,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),

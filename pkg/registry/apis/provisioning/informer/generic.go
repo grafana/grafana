@@ -87,7 +87,7 @@ func NewDynamicListFunc(client dynamic.Interface, info utils.ResourceInfo, names
 	}
 }
 
-// typedGetter is the read seam a controller reconciles against, generic over the
+// Getter is the read seam a controller reconciles against, generic over the
 // resource's concrete pointer type. One type serves every kind and satisfies both
 // the Get-only and the Get+List controller getter interfaces, in three shapes
 // selected by which fields are set:
@@ -97,13 +97,13 @@ func NewDynamicListFunc(client dynamic.Interface, info utils.ResourceInfo, names
 //     staleness-tolerant quota count kept warm between re-lists.
 //   - client-backed, Get-only: get reads the API; List is unused (nil list, nil
 //     store) and returns nothing.
-type typedGetter[T runtime.Object] struct {
+type Getter[T runtime.Object] struct {
 	get   func(ctx context.Context, namespace, name string) (T, error)
 	list  func(ctx context.Context, namespace string) ([]T, error)
 	store usinformer.Cache
 }
 
-func (g typedGetter[T]) Get(ctx context.Context, namespace, name string) (T, error) {
+func (g Getter[T]) Get(ctx context.Context, namespace, name string) (T, error) {
 	obj, err := g.get(ctx, namespace, name)
 	if g.store == nil {
 		return obj, err
@@ -122,7 +122,7 @@ func (g typedGetter[T]) Get(ctx context.Context, namespace, name string) (T, err
 	return obj, nil
 }
 
-func (g typedGetter[T]) List(ctx context.Context, namespace string) ([]T, error) {
+func (g Getter[T]) List(ctx context.Context, namespace string) ([]T, error) {
 	if g.list != nil {
 		return g.list(ctx, namespace)
 	}
@@ -141,4 +141,17 @@ func (g typedGetter[T]) List(ctx context.Context, namespace string) ([]T, error)
 		out = append(out, t)
 	}
 	return out, nil
+}
+
+// Source is one resource kind's delta source and the read seam it backs, merged
+// into a single value: it embeds the DeltaSource a controller registers its
+// handler on (AddEventHandler/Run) and the Getter it reconciles against
+// (Get/List), so one object satisfies both DeltaSource and the kind's
+// <Kind>Getter — a controller is wired from a single value instead of a
+// (source, getter) pair. The two are constructed together because they share
+// backing state: under NATS the getter writes fresh reads through into the same
+// snapshot the informer re-lists into.
+type Source[T runtime.Object] struct {
+	DeltaSource
+	Getter[T]
 }
