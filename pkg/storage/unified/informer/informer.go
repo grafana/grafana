@@ -174,10 +174,12 @@ func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 
 // Run delivers events to the registered handlers until stopCh is closed,
 // mirroring cache.SharedIndexInformer.Run: it blocks, so start it with
-// `go informer.Run(stopCh)`. It subscribes to the resource's NATS subject
-// (unless live notifications are disabled), performs the initial list (marking
-// HasSynced), then serves live notifications and a periodic re-list. Register
-// handlers before calling Run.
+// `go informer.Run(stopCh)`. It first opens the resource's NATS subscription
+// (retrying until it succeeds, unless live notifications are disabled), then
+// performs the initial list (marking HasSynced), then serves live notifications
+// and a periodic re-list. Subscribing before listing means it never lists — nor
+// reports HasSynced — while it still cannot watch the resource. Register handlers
+// before calling Run.
 func (n *Informer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -189,17 +191,54 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		}
 	}()
 
-	// Seed the initial reconcile before reporting HasSynced, retrying until the
-	// first list succeeds. HasSynced releases WaitForCacheSync, so marking it
-	// synced after a failed list would start the controllers against an empty
-	// snapshot — existing objects would go unreconciled and quota counts read as
-	// zero until the next successful resync. A transient API error must therefore
-	// hold HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
-	//
-	// This gates on the API list, not the NATS subscription: the subscription is
-	// opened afterwards and its failure is non-fatal (the periodic re-list keeps
-	// the informer correct), so a slow or not-yet-started bus never blocks the
-	// controller.
+	var sub nats.Subscription
+	defer func() {
+		if sub != nil {
+			if err := sub.Unsubscribe(); err != nil {
+				n.log.Debug("nats informer: unsubscribe", "error", err)
+			}
+		}
+	}()
+
+	// Open the live subscription before the initial list, so a change published
+	// while we are listing is delivered (core NATS has no replay) rather than
+	// dropped in a list-to-subscribe gap. If the subscription cannot be created
+	// yet — most commonly at startup, before the embedded NATS server has a client
+	// URL — keep retrying and do NOT list or report HasSynced: re-listing a
+	// resource we cannot watch would start the controller against a snapshot with
+	// no live updates until the next resync. A nil newObject or a disabled
+	// subscriber means the informer is re-list-only, so there is no subscription
+	// to wait for.
+	if n.newObject != nil && nats.Enabled(n.subscriber) {
+		subject := resourcewatch.Subject(n.gvr, n.namespace)
+		// Re-list on reconnect: a round-robin subscription can miss events
+		// published while the connection was down, so reconcile from a fresh list.
+		opts := []nats.SubscribeOption{nats.WithOnReconnect(n.signalReconnect)}
+		if n.queueGroup != "" {
+			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
+		}
+		for {
+			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+			if err == nil {
+				sub = s
+				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+				break
+			}
+			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(n.retryInterval):
+			}
+		}
+	}
+
+	// Seed the initial reconcile and report HasSynced, retrying until the first
+	// list succeeds. HasSynced releases WaitForCacheSync, so marking it synced
+	// after a failed list would start the controllers against an empty snapshot —
+	// existing objects would go unreconciled and quota counts read as zero until
+	// the next successful resync. A transient API error must therefore hold
+	// HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
 	for {
 		if err := n.relist(ctx, true); err == nil {
 			break
@@ -213,56 +252,8 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	n.synced.Store(true)
 	close(n.syncedCh)
 
-	var sub nats.Subscription
-	defer func() {
-		if sub != nil {
-			if err := sub.Unsubscribe(); err != nil {
-				n.log.Debug("nats informer: unsubscribe", "error", err)
-			}
-		}
-	}()
-
-	// subscribe opens the live subscription. The embedded NATS server may still be
-	// starting when the informer first runs (no client URL yet), so a failure is
-	// not fatal: it returns false and Run retries on retryInterval until it
-	// succeeds. A nil newObject disables live notifications entirely.
-	subscribe := func() bool {
-		// No live subscription when notifications are disabled (nil newObject) or
-		// there is no enabled subscriber (nil/typed-nil/disabled): the periodic
-		// re-list keeps the informer correct on its own. Already-subscribed is a no-op.
-		if n.newObject == nil || !nats.Enabled(n.subscriber) || sub != nil {
-			return true
-		}
-		subject := resourcewatch.Subject(n.gvr, n.namespace)
-		// Re-list on reconnect: a round-robin subscription can miss events
-		// published while the connection was down, so reconcile from a fresh list.
-		opts := []nats.SubscribeOption{nats.WithOnReconnect(n.signalReconnect)}
-		if n.queueGroup != "" {
-			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
-		}
-		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
-		if err != nil {
-			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
-			return false
-		}
-		sub = s
-		n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
-		// Close the gap between the initial list and the subscription becoming
-		// active: a change published in that window (including while Subscribe was
-		// retrying because the bus was not yet ready) had no interest and was
-		// dropped by core NATS. Reconcile from a fresh list now that live events
-		// flow, so a startup write is caught immediately rather than at the next
-		// resync tick.
-		_ = n.relist(ctx, false)
-		return true
-	}
-
-	subscribed := subscribe()
-
 	resync := time.NewTicker(n.resync)
 	defer resync.Stop()
-	retry := time.NewTicker(n.retryInterval)
-	defer retry.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -273,10 +264,6 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
 			_ = n.relist(ctx, false)
-		case <-retry.C:
-			if !subscribed {
-				subscribed = subscribe()
-			}
 		}
 	}
 }

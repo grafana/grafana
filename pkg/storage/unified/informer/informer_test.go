@@ -319,11 +319,11 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 
 	sub.waitForSubscription(t, subject())
 	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
-	// Let startup settle: the initial list plus the gap-closing list that runs once
-	// the subscription is active. Only a reconnect can push the count beyond this
-	// (the resync is an hour away).
-	require.Eventually(t, func() bool { return calls.Load() >= 2 }, 5*time.Second, 5*time.Millisecond,
-		"initial and post-subscribe re-list should have run")
+	// Startup lists exactly once (the subscription is opened before the list, so
+	// there is no gap-closing re-list). Only the reconnect can push the count up —
+	// the resync is an hour away.
+	require.Eventually(t, func() bool { return calls.Load() == 1 }, 5*time.Second, 5*time.Millisecond,
+		"startup should have listed once")
 	before := calls.Load()
 
 	n.signalReconnect()
@@ -333,8 +333,9 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 }
 
 // A subscribe failure (e.g. the embedded NATS server not yet started, so no
-// client URL) is not fatal: the informer still syncs from the initial re-list,
-// retries the subscription, and delivers live events once it opens.
+// client URL) is not fatal but does gate startup: the informer retries the
+// subscription and only lists / reports HasSynced once it opens, then delivers
+// live events.
 func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 	sub := newFakeSubscriber()
 	sub.failSubscribes(2) // first two attempts fail, then it succeeds
@@ -349,24 +350,24 @@ func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 	go n.Run(stopCh)
 	t.Cleanup(func() { close(stopCh) })
 
-	// HasSynced fires from the initial re-list even though subscribing failed.
-	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer must sync despite subscribe failure")
+	// The subscription opens only after the retries succeed; the initial list and
+	// HasSynced follow it.
+	sub.waitForSubscription(t, subject())
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer must sync once subscribed")
 	assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
 
-	// The retry eventually opens the subscription, and live events then flow.
-	sub.waitForSubscription(t, subject())
+	// Live events then flow.
 	sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
 	require.Eventually(t, func() bool {
 		return len(handler.addedNames()) == 2
-	}, 5*time.Second, 5*time.Millisecond, "live events must flow once the retry subscribes")
+	}, 5*time.Second, 5*time.Millisecond, "live events must flow once subscribed")
 	assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
 }
 
-// After the subscription opens, the informer re-lists once more to close the
-// window between the initial list and the subscription becoming active, so a
-// write published in that gap is reconciled immediately rather than at the next
-// resync tick.
-func TestInformer_RelistsAfterSubscribing(t *testing.T) {
+// The subscription is opened before the initial list, so at startup the informer
+// lists exactly once (no separate gap-closing re-list); only a resync or reconnect
+// lists again.
+func TestInformer_SubscribesBeforeListingOnce(t *testing.T) {
 	sub := newFakeSubscriber()
 	handler := &recordingHandler{}
 
@@ -375,7 +376,7 @@ func TestInformer_RelistsAfterSubscribing(t *testing.T) {
 		calls.Add(1)
 		return []runtime.Object{obj("a")}, nil
 	}
-	// A one-hour resync guarantees any extra list came from the subscribe step.
+	// A one-hour resync guarantees no extra list fires on its own at startup.
 	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
@@ -383,12 +384,11 @@ func TestInformer_RelistsAfterSubscribing(t *testing.T) {
 	go n.Run(stopCh)
 	t.Cleanup(func() { close(stopCh) })
 
+	// The subscription opens first, then the single initial list marks synced.
 	sub.waitForSubscription(t, subject())
-	// Initial list + one gap-closing list once the subscription is active.
-	require.Eventually(t, func() bool { return calls.Load() >= 2 }, 5*time.Second, 5*time.Millisecond,
-		"must re-list once after subscribing")
-	// And no further lists without a resync/reconnect.
-	require.Never(t, func() bool { return calls.Load() > 2 }, 50*time.Millisecond, 10*time.Millisecond)
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "informer never synced")
+	require.Never(t, func() bool { return calls.Load() != 1 }, 100*time.Millisecond, 10*time.Millisecond,
+		"startup must list exactly once")
 }
 
 // A failing initial list must not mark the informer synced: HasSynced stays false
