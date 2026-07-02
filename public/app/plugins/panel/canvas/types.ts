@@ -9,9 +9,11 @@ export enum LayerActionID {
   MoveBottom = 'move-bottom',
 }
 
+// rc-tree hands these back in drag/drop callbacks. Only the key (element UID) is kept;
+// resolve the live element from the scene via findElementByUID so rc-tree's internal
+// node cache never retains a deleted ElementState.
 export interface DragNode {
   key: number;
-  dataRef: ElementState;
 }
 
 export interface DropNode extends DragNode {

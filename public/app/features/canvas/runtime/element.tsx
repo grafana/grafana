@@ -744,6 +744,13 @@ export class ElementState implements LayerElement {
     return false;
   }
 
+  destroy() {
+    this.div = undefined;
+    this.parent = undefined;
+    this.getLinks = undefined;
+    this.data = undefined;
+  }
+
   /** Recursively visit all nodes */
   visit(visitor: (v: ElementState) => void) {
     visitor(this);
@@ -787,9 +794,11 @@ export class ElementState implements LayerElement {
     return { ...this.options };
   }
 
-  initElement = (target: HTMLDivElement) => {
-    this.div = target;
-    this.applyLayoutStylesToDiv();
+  initElement = (target: HTMLDivElement | null) => {
+    this.div = target ?? undefined;
+    if (target) {
+      this.applyLayoutStylesToDiv();
+    }
   };
 
   applyDrag = (event: OnDrag) => {

@@ -109,6 +109,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
   const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
 
+  scene.moveable?.destroy();
+  scene.moveable = undefined;
+
   scene.moveable = new Moveable(config.featureToggles.canvasPanelPanZoom ? scene.viewerDiv! : scene.div!, {
     draggable: allowChanges && !scene.editModeEnabled.getValue(),
     resizable: allowChanges,
@@ -474,6 +477,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     /******************/
     /* infiniteViewer */
     /******************/
+    scene.infiniteViewer?.destroy();
+    scene.infiniteViewer = undefined;
+
     scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
       preventWheelClick: false,
       useAutoZoom: true,

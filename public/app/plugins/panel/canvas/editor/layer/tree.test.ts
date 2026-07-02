@@ -1,20 +1,19 @@
-import { type ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { type DragNode, type DropNode } from '../../types';
 
-import { getTreeData, onNodeDrop, type TreeElement } from './tree';
+import { getTreeData, getTreeStructureKey, onNodeDrop, type TreeElement } from './tree';
 
 const createMockFrameState = (elements: unknown[]): FrameState => {
   return { elements } as FrameState;
 };
 
 const createMockDropNode = (key: number, pos: string): DropNode => {
-  return { key, pos, dataRef: {} as ElementState } as DropNode;
+  return { key, pos } as DropNode;
 };
 
 const createMockDragNode = (key: number): DragNode => {
-  return { key, dataRef: {} as ElementState } as DragNode;
+  return { key } as DragNode;
 };
 
 describe('tree', () => {
@@ -47,7 +46,6 @@ describe('tree', () => {
         key: 1,
         title: 'Element 1',
         selectable: true,
-        dataRef: element,
       });
     });
 
@@ -112,12 +110,39 @@ describe('tree', () => {
     });
   });
 
+  describe('getTreeStructureKey', () => {
+    it('should return empty string when root is undefined', () => {
+      expect(getTreeStructureKey(undefined)).toBe('');
+    });
+
+    it('should join element UIDs in order', () => {
+      const root = createMockFrameState([{ UID: 1 }, { UID: 2 }, { UID: 3 }]);
+
+      expect(getTreeStructureKey(root)).toBe('1,2,3');
+    });
+
+    it('should change when an element is removed (so the tree rebuilds and drops stale refs)', () => {
+      const before = createMockFrameState([{ UID: 1 }, { UID: 2 }, { UID: 3 }]);
+      const after = createMockFrameState([{ UID: 1 }, { UID: 3 }]);
+
+      expect(getTreeStructureKey(before)).not.toBe(getTreeStructureKey(after));
+    });
+
+    it('should include nested frame children', () => {
+      const child = { UID: 2, getName: () => 'Child' };
+      const frame = { UID: 1, getName: () => 'Frame', elements: [child] };
+      Object.setPrototypeOf(frame, FrameState.prototype);
+      const root = createMockFrameState([frame]);
+
+      expect(getTreeStructureKey(root)).toBe('1,[,2,]');
+    });
+  });
+
   describe('onNodeDrop', () => {
     const createTreeElement = (key: number, title: string, children?: TreeElement[]): TreeElement => ({
       key,
       title,
       selectable: true,
-      dataRef: {} as ElementState,
       children,
     });
 
