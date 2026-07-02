@@ -24,15 +24,16 @@ import (
 )
 
 const (
-	proxyFieldName   = "Name"
-	proxyFieldEmail  = "Email"
-	proxyFieldLogin  = "Login"
-	proxyFieldRole   = "Role"
-	proxyFieldGroups = "Groups"
-	proxyCachePrefix = "authn-proxy-sync-ttl"
+	proxyFieldName         = "Name"
+	proxyFieldEmail        = "Email"
+	proxyFieldLogin        = "Login"
+	proxyFieldRole         = "Role"
+	proxyFieldGroups       = "Groups"
+	proxyFieldGrafanaAdmin = "GrafanaAdmin"
+	proxyCachePrefix       = "authn-proxy-sync-ttl"
 )
 
-var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
+var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups, proxyFieldGrafanaAdmin}
 
 var (
 	errNotAcceptedIP      = errutil.Unauthorized("auth-proxy.invalid-ip")

@@ -126,6 +126,76 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 	}
 }
 
+func TestGrafana_AuthenticateProxy_GrafanaAdminHeader(t *testing.T) {
+	type testCase struct {
+		desc                   string
+		additional             map[string]string
+		expectedIsGrafanaAdmin *bool
+	}
+
+	trueVal, falseVal := true, false
+
+	tests := []testCase{
+		{
+			desc:                   "header absent leaves IsGrafanaAdmin unset",
+			additional:             map[string]string{},
+			expectedIsGrafanaAdmin: nil,
+		},
+		{
+			desc:                   "true value sets IsGrafanaAdmin to true",
+			additional:             map[string]string{proxyFieldGrafanaAdmin: "true"},
+			expectedIsGrafanaAdmin: &trueVal,
+		},
+		{
+			desc:                   "false value sets IsGrafanaAdmin to false",
+			additional:             map[string]string{proxyFieldGrafanaAdmin: "false"},
+			expectedIsGrafanaAdmin: &falseVal,
+		},
+		{
+			desc:                   "1 value sets IsGrafanaAdmin to true",
+			additional:             map[string]string{proxyFieldGrafanaAdmin: "1"},
+			expectedIsGrafanaAdmin: &trueVal,
+		},
+		{
+			desc:                   "unparseable value leaves IsGrafanaAdmin unset",
+			additional:             map[string]string{proxyFieldGrafanaAdmin: "not-a-bool"},
+			expectedIsGrafanaAdmin: nil,
+		},
+		{
+			desc: "GrafanaAdmin=true wins over Role with no admin pointer",
+			additional: map[string]string{
+				proxyFieldRole:         "Viewer",
+				proxyFieldGrafanaAdmin: "true",
+			},
+			expectedIsGrafanaAdmin: &trueVal,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AuthProxy.AutoSignUp = true
+			cfg.AuthProxy.HeaderProperty = "username"
+			c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+
+			identity, err := c.AuthenticateProxy(
+				context.Background(),
+				&authn.Request{HTTPRequest: &http.Request{}},
+				"test",
+				tt.additional,
+			)
+			assert.NoError(t, err)
+			if tt.expectedIsGrafanaAdmin == nil {
+				assert.Nil(t, identity.IsGrafanaAdmin)
+			} else {
+				if assert.NotNil(t, identity.IsGrafanaAdmin) {
+					assert.Equal(t, *tt.expectedIsGrafanaAdmin, *identity.IsGrafanaAdmin)
+				}
+			}
+		})
+	}
+}
+
 func TestGrafana_AuthenticatePassword(t *testing.T) {
 	type testCase struct {
 		desc             string

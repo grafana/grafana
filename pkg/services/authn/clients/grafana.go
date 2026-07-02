@@ -86,6 +86,12 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		identity.IsGrafanaAdmin = isGrafanaAdmin
 	}
 
+	if v, ok := additional[proxyFieldGrafanaAdmin]; ok {
+		if b, err := strconv.ParseBool(v); err == nil {
+			identity.IsGrafanaAdmin = &b
+		}
+	}
+
 	if v, ok := additional[proxyFieldGroups]; ok {
 		identity.ExternalGroups = util.SplitString(v)
 	}
