@@ -19,7 +19,7 @@ menuTitle: API Structure
 weight: 01
 ---
 
-# The new API structure in Grafana
+# The new HTTP API structure in Grafana
 
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
@@ -40,17 +40,6 @@ Before you begin, ensure you have the following:
 Grafana 13 deprecates legacy API endpoints (`/api`) in favor of a new generation of improved APIs (`/apis`). **Legacy APIs are not being disabled for the moment**. Removal of legacy APIs is planned for a future major release, and any breaking changes will be announced well in advance to avoid disruptions.
 
 For more information, refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
-
-## The Grafana API specification
-
-Grafana HTTP APIs comply both with OpenAPI v2 (Swagger 2.0) and v3 standards.
-
-The specifications are available in Swagger:
-
-- [OpenAPI v2 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json)
-- [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json), which is generated from v2
-
-You can browse and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
 
 ## API structure
 
