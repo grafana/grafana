@@ -107,6 +107,7 @@ fpm \
   --after-install="${SRC}/packaging/deb/control/postinst" \
   --before-remove="${SRC}/packaging/deb/control/prerm" \
   --depends=adduser \
+  --depends=systemd \
   --architecture="${PKG_ARCH}" \
   --description=Grafana \
   --license="${FPM_LICENSE:-AGPLv3}" \
