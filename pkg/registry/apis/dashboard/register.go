@@ -385,6 +385,23 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Connect:
 			return nil
 		}
+	// Reachability invariant: this case only fires when the apiserver routes a
+	// request to the v2beta1 Notebook storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagDashboardNotebookLayout. Without the flag the
+	// apiserver has no route and admission never dispatches here. If Notebook is
+	// ever added to another version or moved to a subresource, update both the
+	// storage registration and this switch in lockstep.
+	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create, admission.Update:
+			notebook, ok := a.GetObject().(*dashv2beta1.Notebook)
+			if !ok {
+				return fmt.Errorf("expected notebook")
+			}
+			return validateNotebook(notebook)
+		default:
+			return nil // delete/connect need no validation
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
@@ -946,6 +963,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDashboardNotebookLayout) {
+		opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
+
+		nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		storage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 	}
 
 	return nil

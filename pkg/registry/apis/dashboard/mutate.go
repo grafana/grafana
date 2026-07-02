@@ -46,6 +46,14 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return nil // nothing needed
 	case dashboardV0.SNAPSHOT_RESOURCE:
 		return nil
+	// Reachability invariant: this case only fires when the apiserver routes a
+	// request to the v2beta1 Notebook storage, registered in UpdateAPIGroupInfo
+	// behind FlagDashboardNotebookLayout (see register.go). Without the flag the
+	// apiserver has no route and admission never dispatches here. If Notebook is
+	// ever added to another version or moved to a subresource, update both the
+	// storage registration and this switch in lockstep.
+	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		return nil
 	}
 
 	return fmt.Errorf("unexpected resource: %+v", a.GetResource())
