@@ -407,14 +407,10 @@ type EditorSettings struct {
 type PrometheusStyleRule struct {
 	OriginalRuleDefinition string `json:"original_rule_definition,omitempty"`
 	// SourceIdentifier records which external source produced this converted
-	// rule. It is set by the external ruler sync worker to the UID of the
-	// Mimir/Cortex datasource the rule was synced from, and is empty for rules
-	// imported manually via the convert API. It gives the sync worker a precise,
-	// server-side ownership marker (analogous to the Alertmanager sync
-	// Identifier) so it can prune only the rules it owns without touching
-	// manually-imported converted_prometheus rules. It lives in metadata (not a
-	// label/annotation) so it never reaches the alert data plane or the
-	// round-tripped Prometheus definition.
+	// rule: the external ruler sync worker sets it to the source Mimir/Cortex
+	// datasource UID (empty for manual convert-API imports), giving the worker a
+	// server-side ownership marker so it prunes only the rules it owns. It lives
+	// in metadata so it never reaches the data plane or the Prometheus definition.
 	SourceIdentifier string `json:"source_identifier,omitempty"`
 }
 

@@ -1,7 +1,7 @@
-// Package rulesync contains the external Mimir/Cortex ruler sync: a background
-// worker that mirrors alert rules from a configured ruler datasource into
-// Grafana as converted-Prometheus rules. It is the rule-side analogue of the
-// external Alertmanager config sync in pkg/services/ngalert/notifier.
+// Package rulesync is the external Mimir/Cortex ruler sync: a background worker
+// that mirrors alert rules from a configured ruler datasource into Grafana as
+// converted-Prometheus rules (the rule-side analogue of the external
+// Alertmanager config sync in pkg/services/ngalert/notifier).
 package rulesync
 
 import (
@@ -21,13 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
-// rulerConfigAPIPath is the Mimir/Cortex ruler configuration API path. It is
-// appended to the datasource URL (which the user configures to include any
-// Prometheus HTTP prefix, e.g. /prometheus), mirroring how LotexRuler builds
-// the ruler proxy path (pkg/services/ngalert/api/lotex_ruler.go: mimirPrefix).
-// It is deliberately the config API (rule group definitions), NOT the query API
-// /api/v1/rules (which vanilla Prometheus also serves but returns rule state, a
-// different shape).
+// rulerConfigAPIPath is the Mimir/Cortex ruler config API path, appended to the
+// datasource URL. It is deliberately the config API (rule group definitions),
+// NOT the query API /api/v1/rules that vanilla Prometheus serves (which returns
+// rule state, a different shape).
 const rulerConfigAPIPath = "/config/v1/rules"
 
 // RulerConfig is the namespace-grouped rule configuration returned by a
@@ -36,25 +33,17 @@ const rulerConfigAPIPath = "/config/v1/rules"
 type RulerConfig = map[string][]apimodels.PrometheusRuleGroup
 
 // ErrNotARuler indicates the datasource did not respond as a Mimir/Cortex ruler
-// config API (an unexpected non-2xx status, or a 200 whose body does not parse
-// as namespace-grouped rule configs). Callers use it to distinguish a
-// misconfigured datasource (e.g. vanilla Prometheus, whose config API path does
-// not exist) from a transient network failure, so the admission validator can
-// reject the datasource and the syncer can surface a clear status.
-//
-// NOTE: an empty ruler (a real Mimir/Cortex tenant with no rule groups) is NOT
-// an error — see Fetch. The exact empty-vs-absent response of Mimir (404 vs 200
-// with an empty body) needs verifying against a live Mimir; the current
-// handling mirrors Grafana's frontend ruler client, which treats 404 as "no
-// rules".
+// config API (unexpected non-2xx, or a 200 that does not parse as
+// namespace-grouped rule configs), letting callers distinguish a misconfigured
+// datasource from a transient network failure. An empty ruler (no rule groups)
+// is NOT an error; see Fetch.
 var ErrNotARuler = errors.New("datasource does not expose a Mimir/Cortex ruler config API")
 
 // RulerFetcher fetches namespace-grouped rule configs from a Mimir/Cortex ruler
-// datasource. It uses the datasource service's HTTP transport so TLS, basic
-// auth, bearer tokens, custom headers and OAuth pass-through configured on the
-// datasource are honoured, and applies the same egress allow/deny-list
-// validation the user-driven datasource proxy runs. Shared by the external
-// ruler sync worker and the AlertingConfig admission validator.
+// datasource, using the datasource service's HTTP transport (so its configured
+// auth/TLS/headers are honoured) and the same egress allow/deny-list validation
+// the datasource proxy runs. Shared by the sync worker and the Config admission
+// validator.
 type RulerFetcher struct {
 	datasourceService  datasources.DataSourceService
 	httpClientProvider httpclient.Provider
@@ -75,14 +64,13 @@ func NewRulerFetcher(
 	}
 }
 
-// Fetch retrieves the ruler configuration from ds. It returns the parsed
-// namespace-grouped rule configs alongside the FNV-1a hash of the raw response
-// body (for cross-tick dedup by the sync worker).
+// Fetch retrieves the ruler configuration from ds, returning the parsed configs
+// and the FNV-1a hash of the raw body (for cross-tick dedup). A 404 is "no rules
+// configured" (empty RulerConfig, nil error). A non-404 non-2xx, or a 200 whose
+// body does not parse, yields ErrNotARuler.
 //
-// A 404 is treated as "no rules configured" and yields an empty RulerConfig
-// with a nil error — a real ruler with no rule groups is valid. A non-2xx that
-// isn't 404, or a 200 whose body does not parse, yields ErrNotARuler so callers
-// can reject/flag a datasource that isn't a ruler.
+// TODO: verify Mimir's empty-vs-absent response (404 vs 200 empty body) against
+// a live ruler; the 404 handling mirrors Grafana's frontend ruler client.
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
 	configURL, err := buildRulerConfigURL(ds)
 	if err != nil {

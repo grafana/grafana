@@ -1,8 +1,5 @@
-// Package promconvert converts Prometheus/Mimir rule groups (the wire shape the
-// convert API accepts) into Grafana alert rule groups. It centralises the
-// apimodels→prom mapping, the prom.Config assembly from server settings, and
-// the import guardrails so the user-driven convert API and the background
-// external ruler sync worker share one conversion path and cannot drift.
+// Package promconvert converts Prometheus/Mimir rule groups into Grafana alert
+// rule groups, shared by the convert API and the external ruler sync worker.
 package promconvert
 
 import (
@@ -17,9 +14,7 @@ import (
 )
 
 // ErrRecordingRulesNotEnabled is returned by ConvertRuleGroup when a group
-// contains recording rules but the recording rules feature is disabled. Callers
-// map it to their own surface (the convert API to an HTTP 400, the sync worker
-// to a sync failure).
+// contains recording rules but the recording rules feature is disabled.
 var ErrRecordingRulesNotEnabled = errors.New("recording rules not enabled")
 
 // Options carries the per-import conversion settings that are not derived from
@@ -33,8 +28,8 @@ type Options struct {
 	NotificationSettings       *models.NotificationSettings
 	ExtraLabels                map[string]string
 	// SourceIdentifier, when set, is stamped onto each converted rule's metadata
-	// (PrometheusStyleRule.SourceIdentifier). The external ruler sync worker sets
-	// it to the source datasource UID; the convert API leaves it empty.
+	// so the sync worker can prune only the rules it owns. The convert API leaves
+	// it empty.
 	SourceIdentifier string
 }
 
@@ -50,10 +45,8 @@ func GroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
 
 // ConvertRuleGroup converts a single Prometheus rule group into a Grafana alert
 // rule group for the given org and namespace (folder), using ds as the query
-// datasource and tds as the recording-rules target datasource.
-//
-// It enforces the recording-rules gate (ErrRecordingRulesNotEnabled) so every
-// import path applies it consistently.
+// datasource and tds as the recording-rules target datasource. It enforces the
+// recording-rules gate (ErrRecordingRulesNotEnabled).
 func ConvertRuleGroup(
 	cfg *setting.UnifiedAlertingSettings,
 	ds *datasources.DataSource,
