@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	openfgaconfig "github.com/openfga/openfga/pkg/server/config"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -63,6 +65,8 @@ func Run(cfg *setting.Cfg, dbType string, grafanaDBConfig *sqlstore.DatabaseConf
 }
 
 func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Logger) error {
+	migrationConfig = withPingDefaults(migrationConfig)
+
 	err := migrate.RunMigrations(migrationConfig)
 	if err == nil {
 		return nil
@@ -81,6 +85,23 @@ func runOpenFGAMigrations(migrationConfig migrate.MigrationConfig, logger log.Lo
 	}
 
 	return nil
+}
+
+// withPingDefaults fills in openfga's datastore ping timeouts when they are
+// unset. openfga v1.18+ pings the datastore in a backoff.Retry loop before
+// running migrations. With the zero values, PingTimeout produces an
+// already-expired context (so every ping fails instantly) and Timeout maps to
+// backoff MaxElapsedTime=0, which retries forever and hangs. openfga normally
+// applies these defaults via its own config helpers, but we build the
+// MigrationConfig directly, so we apply them here for every caller.
+func withPingDefaults(cfg migrate.MigrationConfig) migrate.MigrationConfig {
+	if cfg.PingTimeout == 0 {
+		cfg.PingTimeout = openfgaconfig.DefaultDatastorePingTimeout
+	}
+	if cfg.Timeout == 0 {
+		cfg.Timeout = openfgaconfig.DefaultDatastorePingRetryMaxElapsedTime
+	}
+	return cfg
 }
 
 // resetOpenFGASchema drops the openfga tables to ensure migrations will run from a clean state.
