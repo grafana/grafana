@@ -2670,10 +2670,11 @@
       "empty-description": "To enforce these fields across your organization, enable the requirements in <2>Alert quality settings</2>.",
       "filter": {
         "clear": "Clear filters",
-        "finding-type-count": "{{total}} missing {{label}}",
-        "finding-type-group": "Filter by finding type",
+        "finding-type-label": "Finding type",
         "name-label": "Search by name",
         "name-placeholder": "Filter by name...",
+        "search-label": "Search",
+        "search-placeholder": "Search by name or enter filter query...",
         "severity-all": "All",
         "severity-high": "High",
         "severity-label": "Severity",

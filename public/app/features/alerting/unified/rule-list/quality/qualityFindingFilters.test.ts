@@ -1,7 +1,7 @@
 import { type IncompleteRule } from '../../hooks/useIncompleteRules';
 import { Annotation } from '../../utils/constants';
 
-import { filterFindings, getFindingTypeCounts, getRuleSeverity } from './qualityFindingFilters';
+import { filterFindings, getFindingTypeCounts, getRuleSeverity, getSeverityCounts } from './qualityFindingFilters';
 
 function makeRule(partial: Partial<IncompleteRule> = {}): IncompleteRule {
   return {
@@ -57,32 +57,55 @@ describe('getFindingTypeCounts', () => {
   });
 });
 
+describe('getSeverityCounts', () => {
+  it('counts rules per severity tier', () => {
+    const counts = getSeverityCounts(rules);
+
+    expect(counts.high).toBe(2); // runbookOnly, allMissing
+    expect(counts.medium).toBe(3); // summaryOnly, descriptionOnly, summaryAndDescription
+    expect(counts.low).toBe(0);
+  });
+
+  it('returns zeroes for an empty list', () => {
+    expect(getSeverityCounts([])).toEqual({ high: 0, medium: 0, low: 0 });
+  });
+});
+
 describe('filterFindings', () => {
-  it('returns all rules when both filters are "all"', () => {
-    expect(filterFindings(rules, { severity: 'all', findingType: 'all' })).toEqual(rules);
+  it('returns all rules when no filters are active', () => {
+    expect(filterFindings(rules, { severity: 'all', findingTypes: [] })).toEqual(rules);
   });
 
   it('filters by high severity (missing runbook URL)', () => {
-    const result = filterFindings(rules, { severity: 'high', findingType: 'all' });
+    const result = filterFindings(rules, { severity: 'high', findingTypes: [] });
     expect(result).toEqual([runbookOnly, allMissing]);
   });
 
   it('filters by medium severity (no missing runbook URL)', () => {
-    const result = filterFindings(rules, { severity: 'medium', findingType: 'all' });
+    const result = filterFindings(rules, { severity: 'medium', findingTypes: [] });
     expect(result).toEqual([summaryOnly, descriptionOnly, summaryAndDescription]);
   });
 
   it('returns an empty list for low severity (none exist yet)', () => {
-    expect(filterFindings(rules, { severity: 'low', findingType: 'all' })).toEqual([]);
+    expect(filterFindings(rules, { severity: 'low', findingTypes: [] })).toEqual([]);
   });
 
-  it('filters by finding type', () => {
-    const result = filterFindings(rules, { severity: 'all', findingType: Annotation.description });
+  it('filters by a single finding type', () => {
+    const result = filterFindings(rules, { severity: 'all', findingTypes: [Annotation.description] });
     expect(result).toEqual([descriptionOnly, summaryAndDescription, allMissing]);
   });
 
+  it('ORs multiple finding types together', () => {
+    const result = filterFindings(rules, {
+      severity: 'all',
+      findingTypes: [Annotation.summary, Annotation.runbookURL],
+    });
+    // Every rule except descriptionOnly is missing a summary or a runbook URL.
+    expect(result).toEqual([summaryOnly, runbookOnly, summaryAndDescription, allMissing]);
+  });
+
   it('combines severity and finding type with AND', () => {
-    const result = filterFindings(rules, { severity: 'high', findingType: Annotation.description });
+    const result = filterFindings(rules, { severity: 'high', findingTypes: [Annotation.description] });
     expect(result).toEqual([allMissing]);
   });
 });

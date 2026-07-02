@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 
 import { useAsync } from '../../hooks/useAsync';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 
+import { savedQueryToParams } from './qualitySavedSearch';
+import { useQualityExtraFilters } from './useQualityExtraFilters';
 import { loadDefaultQualitySearch, trackQualitySavedSearchAutoApply } from './useQualitySavedSearches';
 
 /**
@@ -24,13 +26,16 @@ const SESSION_VISITED_KEY = 'grafana.alerting.qualityList.visited';
  * @returns Object with isApplying boolean indicating if the default search is being loaded/applied
  */
 export function useApplyDefaultQualitySearch(): { isApplying: boolean } {
-  const { updateFilters, hasActiveFilters } = useRulesFilter();
+  const { hasActiveFilters } = useRulesFilter();
+  const { hasExtraFilters } = useQualityExtraFilters();
+  const [, updateQueryParams] = useURLSearchParams();
 
   // useAsync doesn't auto-execute; we trigger it manually below.
   const [{ execute }, state] = useAsync(async () => {
     const defaultSearch = await loadDefaultQualitySearch();
     if (defaultSearch) {
-      updateFilters(getSearchFilterFromQuery(defaultSearch.query));
+      // Apply every saved dimension at once (rules query + severity + finding types).
+      updateQueryParams(savedQueryToParams(defaultSearch.query));
       trackQualitySavedSearchAutoApply();
     }
   });
@@ -43,7 +48,7 @@ export function useApplyDefaultQualitySearch(): { isApplying: boolean } {
   }, []);
 
   const isFirstVisit = isFirstVisitInSession();
-  const shouldLoadDefault = !hasActiveFilters && isFirstVisit;
+  const shouldLoadDefault = !hasActiveFilters && !hasExtraFilters && isFirstVisit;
 
   // Mark as visited on first visit, regardless of whether we load defaults.
   if (isFirstVisit && state.status === 'not-executed') {
