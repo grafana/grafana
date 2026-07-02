@@ -2,36 +2,42 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
-import { FilterOperator } from '../types';
+import { FilterList, REGEX_OPERATOR } from './FilterList';
 
-import { FilterList } from './FilterList';
-import { operatorSelectableValues } from './utils';
+const XPR_OPERATOR: SelectableValue<string> = { label: 'Expression', value: 'Expression' };
 
-const ops = operatorSelectableValues();
-
-function containsOp(): SelectableValue<FilterOperator> {
-  return ops[FilterOperator.CONTAINS];
-}
-
-function op(operator: FilterOperator): SelectableValue<FilterOperator> {
-  return ops[operator];
-}
+const referenceElement = document.createElement('div');
 
 function numericOptions(values: number[]): SelectableValue[] {
   return values.map((n) => ({ value: String(n), label: String(n) }));
 }
 
-describe('FilterList', () => {
-  describe('CONTAINS operator', () => {
+function renderFilterList(overrides: Partial<React.ComponentProps<typeof FilterList>> = {}) {
+  const defaults: React.ComponentProps<typeof FilterList> = {
+    options: [],
+    values: [],
+    onChange: jest.fn(),
+    searchFilter: '',
+    setSearchFilter: jest.fn(),
+    operator: REGEX_OPERATOR,
+    setOperator: jest.fn(),
+    referenceElement,
+    showOperators: false,
+    caseSensitive: false,
+  };
+  return render(<FilterList {...defaults} {...overrides} />);
+}
+
+describe('FilterList (TableRT)', () => {
+  describe('CONTAINS / regex operator', () => {
     it('shows all options when search is empty', () => {
       const options: SelectableValue[] = [
         { value: 'apple', label: 'apple' },
         { value: 'banana', label: 'banana' },
         { value: 'cherry', label: 'cherry' },
       ];
-      render(<FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />);
+      renderFilterList({ options, showOperators: true, searchFilter: '' });
       expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: 'banana' })).toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: 'cherry' })).toBeInTheDocument();
@@ -43,9 +49,7 @@ describe('FilterList', () => {
         { value: 'apricot', label: 'apricot' },
         { value: 'banana', label: 'banana' },
       ];
-      render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="ap" operator={containsOp()} />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: 'ap' });
       expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: 'apricot' })).toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: 'banana' })).not.toBeInTheDocument();
@@ -53,55 +57,49 @@ describe('FilterList', () => {
 
     it('matches case-insensitively by default', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
-      render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="APPLE" operator={containsOp()} />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: 'APPLE', caseSensitive: false });
       expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
     });
 
     it('respects case when caseSensitive=true', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="APPLE"
-          operator={containsOp()}
-          caseSensitive
-        />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: 'APPLE', caseSensitive: true });
       expect(screen.queryByRole('checkbox', { name: 'apple' })).not.toBeInTheDocument();
     });
 
     it('shows "No values" when no options match', () => {
       const options: SelectableValue[] = [{ value: 'apple', label: 'apple' }];
-      render(
-        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="zzz" operator={containsOp()} />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: 'zzz' });
       expect(screen.getByText('No values')).toBeInTheDocument();
+    });
+
+    it('still filters by regex when showOperators is false', () => {
+      const options: SelectableValue[] = [
+        { value: 'apple', label: 'apple' },
+        { value: 'banana', label: 'banana' },
+      ];
+      renderFilterList({ options, showOperators: false, searchFilter: 'ap' });
+      expect(screen.getByRole('checkbox', { name: 'apple' })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'banana' })).not.toBeInTheDocument();
     });
   });
 
   describe('comparison operators (smoke tests — logic covered in filterExpression.test.ts)', () => {
     it.each([
-      [FilterOperator.EQUALS, [20]],
-      [FilterOperator.NOT_EQUALS, [10, 30]],
-      [FilterOperator.GREATER, [30]],
-      [FilterOperator.GREATER_OR_EQUAL, [20, 30]],
-      [FilterOperator.LESS, [10]],
-      [FilterOperator.LESS_OR_EQUAL, [10, 20]],
-    ] as Array<[FilterOperator, number[]]>)('%s shows only matching options', (operator, visible) => {
+      ['=', [20]],
+      ['!=', [10, 30]],
+      ['>', [30]],
+      ['>=', [20, 30]],
+      ['<', [10]],
+      ['<=', [10, 20]],
+    ] as Array<[string, number[]]>)('%s shows only matching options', (op, visible) => {
       const all = [10, 20, 30];
-      render(
-        <FilterList
-          options={numericOptions(all)}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(operator)}
-        />
-      );
+      renderFilterList({
+        options: numericOptions(all),
+        showOperators: true,
+        searchFilter: '20',
+        operator: { value: op },
+      });
       for (const n of all) {
         const el = screen.queryByRole('checkbox', { name: String(n) });
         visible.includes(n) ? expect(el).toBeInTheDocument() : expect(el).not.toBeInTheDocument();
@@ -110,15 +108,7 @@ describe('FilterList', () => {
 
     it('excludes options with undefined value', () => {
       const options: SelectableValue[] = [{ label: 'no-value' }, { value: '20', label: '20' }];
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="20"
-          operator={op(FilterOperator.EQUALS)}
-        />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: '20', operator: { value: '=' } });
       expect(screen.queryByRole('checkbox', { name: 'no-value' })).not.toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: '20' })).toBeInTheDocument();
     });
@@ -126,60 +116,43 @@ describe('FilterList', () => {
 
   describe('EXPRESSION operator (smoke tests — logic covered in filterExpression.test.ts)', () => {
     it('filters options using a compound && expression', () => {
-      render(
-        <FilterList
-          options={numericOptions([5, 15, 25])}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="$ > 10 && $ < 20"
-          operator={op(FilterOperator.EXPRESSION)}
-        />
-      );
+      renderFilterList({
+        options: numericOptions([5, 15, 25]),
+        showOperators: true,
+        searchFilter: '$ > 10 && $ < 20',
+        operator: XPR_OPERATOR,
+      });
       expect(screen.queryByRole('checkbox', { name: '5' })).not.toBeInTheDocument();
       expect(screen.getByRole('checkbox', { name: '15' })).toBeInTheDocument();
       expect(screen.queryByRole('checkbox', { name: '25' })).not.toBeInTheDocument();
     });
 
     it('shows "No values" for an unparseable expression', () => {
-      render(
-        <FilterList
-          options={numericOptions([10, 20])}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="$ ==="
-          operator={op(FilterOperator.EXPRESSION)}
-        />
-      );
-      expect(screen.getByText('No values')).toBeInTheDocument();
-    });
-
-    it('shows "No values" and does not fall back to regex when expression is invalid', () => {
-      render(
-        <FilterList
-          options={[
-            { value: '1', label: 'foo' },
-            { value: '2', label: 'foobar' },
-          ]}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="foo"
-          operator={op(FilterOperator.EXPRESSION)}
-        />
-      );
+      renderFilterList({
+        options: numericOptions([10, 20]),
+        showOperators: true,
+        searchFilter: '$ ===',
+        operator: XPR_OPERATOR,
+      });
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
 
     it('returns false when option.value is undefined', () => {
       const options: SelectableValue[] = [{ label: 'no-value' }];
-      render(
-        <FilterList
-          options={options}
-          values={[]}
-          onChange={jest.fn()}
-          searchFilter="$ > 0"
-          operator={op(FilterOperator.EXPRESSION)}
-        />
-      );
+      renderFilterList({ options, showOperators: true, searchFilter: '$ > 0', operator: XPR_OPERATOR });
+      expect(screen.getByText('No values')).toBeInTheDocument();
+    });
+
+    it('shows "No values" and does not fall back to regex when expression is invalid', () => {
+      renderFilterList({
+        options: [
+          { value: '1', label: 'foo' },
+          { value: '2', label: 'foobar' },
+        ],
+        showOperators: true,
+        searchFilter: 'foo',
+        operator: XPR_OPERATOR,
+      });
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
   });
@@ -192,10 +165,9 @@ describe('FilterList', () => {
         { value: 'b', label: 'Beta' },
       ];
       const onChange = jest.fn();
-      render(<FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />);
+      renderFilterList({ options, values: [], onChange, searchFilter: '' });
 
-      const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
-      await user.click(selectAll.querySelector('input')!);
+      await user.click(screen.getByRole('checkbox', { name: /Select all/ }));
 
       expect(onChange).toHaveBeenCalledTimes(1);
       const newValues: SelectableValue[] = onChange.mock.calls[0][0];
@@ -209,12 +181,9 @@ describe('FilterList', () => {
         { value: 'b', label: 'Beta' },
       ];
       const onChange = jest.fn();
-      render(
-        <FilterList options={options} values={options} onChange={onChange} searchFilter="" operator={containsOp()} />
-      );
+      renderFilterList({ options, values: options, onChange, searchFilter: '' });
 
-      const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
-      await user.click(selectAll.querySelector('input')!);
+      await user.click(screen.getByRole('checkbox', { name: /2 selected/ }));
 
       expect(onChange).toHaveBeenCalledTimes(1);
       expect(onChange.mock.calls[0][0]).toEqual([]);
@@ -228,12 +197,9 @@ describe('FilterList', () => {
         { value: 'banana', label: 'banana' },
       ];
       const onChange = jest.fn();
-      render(
-        <FilterList options={options} values={options} onChange={onChange} searchFilter="ap" operator={containsOp()} />
-      );
+      renderFilterList({ options, values: options, onChange, showOperators: true, searchFilter: 'ap' });
 
-      const selectAll = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.SelectAll);
-      await user.click(selectAll.querySelector('input')!);
+      await user.click(screen.getByRole('checkbox', { name: /2 selected/ }));
 
       const remaining: SelectableValue[] = onChange.mock.calls[0][0];
       expect(remaining.map((v) => v.value)).toEqual(['banana']);
@@ -248,7 +214,7 @@ describe('FilterList', () => {
         { value: 'b', label: 'Beta' },
       ];
       const onChange = jest.fn();
-      render(<FilterList options={options} values={[]} onChange={onChange} searchFilter="" operator={containsOp()} />);
+      renderFilterList({ options, values: [], onChange, searchFilter: '' });
 
       await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
 
@@ -261,15 +227,12 @@ describe('FilterList', () => {
       const alphaOption = { value: 'a', label: 'Alpha' };
       const betaOption = { value: 'b', label: 'Beta' };
       const onChange = jest.fn();
-      render(
-        <FilterList
-          options={[alphaOption, betaOption]}
-          values={[alphaOption, betaOption]}
-          onChange={onChange}
-          searchFilter=""
-          operator={containsOp()}
-        />
-      );
+      renderFilterList({
+        options: [alphaOption, betaOption],
+        values: [alphaOption, betaOption],
+        onChange,
+        searchFilter: '',
+      });
 
       await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
 
@@ -283,7 +246,7 @@ describe('FilterList', () => {
   describe('"Select all" checkbox label', () => {
     it('shows "Select all" when no values are selected', () => {
       const options: SelectableValue[] = [{ value: 'a', label: 'Alpha' }];
-      render(<FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="" operator={containsOp()} />);
+      renderFilterList({ options, values: [], searchFilter: '' });
       expect(screen.getByRole('checkbox', { name: /Select all/ })).toBeInTheDocument();
     });
 
@@ -292,16 +255,20 @@ describe('FilterList', () => {
         { value: 'a', label: 'Alpha' },
         { value: 'b', label: 'Beta' },
       ];
-      render(
-        <FilterList
-          options={options}
-          values={[options[0]]}
-          onChange={jest.fn()}
-          searchFilter=""
-          operator={containsOp()}
-        />
-      );
+      renderFilterList({ options, values: [options[0]], searchFilter: '' });
       expect(screen.getByRole('checkbox', { name: /1 selected/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('operator UI', () => {
+    it('renders the filter input when showOperators is true', () => {
+      renderFilterList({ showOperators: true, options: [], searchFilter: '' });
+      expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+    });
+
+    it('renders the filter input when showOperators is false', () => {
+      renderFilterList({ showOperators: false, options: [], searchFilter: '' });
+      expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
     });
   });
 });
