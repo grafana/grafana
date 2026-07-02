@@ -24,7 +24,7 @@ import (
 // below this so a worker renews several times before its claim goes stale;
 // otherwise a single delayed renewal can let a running job be reaped and
 // re-run by another worker.
-const jobClaimExpiry = 30 * time.Second
+const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
