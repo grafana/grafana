@@ -25,8 +25,20 @@ describe('buildNotebookEnvelope', () => {
     expect(envelope.kind).toBe('DashboardWithAccessInfo');
     expect(envelope.apiVersion).toBe(notebook.apiVersion);
     expect(envelope.metadata).toBe(notebook.metadata);
-    // spec is carried through unchanged (the transformer reads it by shape at runtime).
-    expect(envelope.spec).toBe(notebook.spec);
+    // The notebook's own fields are carried onto the spec.
+    expect(envelope.spec.title).toBe('My notebook');
+    expect(envelope.spec.elements).toBe(notebook.spec.elements);
+    expect(envelope.spec.layout).toBe(notebook.spec.layout);
+  });
+
+  it('fills dashboard-only fields the transformer reads directly', () => {
+    const envelope = buildNotebookEnvelope(notebookResource());
+
+    // NotebookSpec omits these; without defaults the transformer crashes (e.g. spreading links).
+    expect(Array.isArray(envelope.spec.links)).toBe(true);
+    expect(Array.isArray(envelope.spec.annotations)).toBe(true);
+    expect(Array.isArray(envelope.spec.variables)).toBe(true);
+    expect(envelope.spec.cursorSync).toBeDefined();
   });
 
   it('provides an access block so the transformer can read permissions', () => {

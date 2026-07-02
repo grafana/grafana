@@ -1,12 +1,16 @@
+import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box } from '@grafana/ui';
+import { Box, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
+import { type DashboardControls } from 'app/features/dashboard-scene/scene/DashboardControls';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { NotebookScenePageStateManager } from './NotebookScenePageStateManager';
@@ -51,9 +55,52 @@ export function NotebookScenePage() {
 
   return (
     <UrlSyncContextProvider scene={notebookScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <notebookScene.Component model={notebookScene} key={notebookScene.state.key} />
+      <NotebookDocument scene={notebookScene} />
     </UrlSyncContextProvider>
   );
 }
+
+// The POC notebook is a read-only document, so we render the scene body inside a plain
+// Page instead of DashboardScene.Component — that keeps the dashboard toolbar, edit pane
+// and outline sidebar out. The scene is activated so panels still run their queries and
+// resolve the shared time range; the title stays via the page breadcrumb (pageNav).
+function NotebookDocument({ scene }: { scene: DashboardScene }) {
+  const { body, controls, title } = scene.useState();
+
+  useEffect(() => scene.activate(), [scene]);
+
+  // Show a "Notebooks" breadcrumb parent rather than nesting under the raw title.
+  const pageNav = { text: title, parentItem: { text: t('notebook.breadcrumb-title', 'Notebooks') } };
+
+  return (
+    <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {controls && <NotebookControls controls={controls} />}
+      {body && <body.Component model={body} />}
+    </Page>
+  );
+}
+
+// Read-only notebooks still get the shared time range + refresh — but only those two
+// pickers, not the full dashboard controls bar (which carries edit/variable actions).
+function NotebookControls({ controls }: { controls: DashboardControls }) {
+  const styles = useStyles2(getControlsStyles);
+  const { timePicker, refreshPicker } = controls.useState();
+
+  return (
+    <div className={styles.controls}>
+      <timePicker.Component model={timePicker} />
+      <refreshPicker.Component model={refreshPicker} />
+    </div>
+  );
+}
+
+const getControlsStyles = (theme: GrafanaTheme2) => ({
+  controls: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1, 2),
+  }),
+});
 
 export default NotebookScenePage;
