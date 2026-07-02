@@ -1059,12 +1059,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobExpiry,
 			)
 
+			// Renew the lease well before it expires. Using jobExpiry as the
+			// renewal interval would schedule the single renewal at the exact
+			// moment the claim goes stale, so any delay (GC pause, apiserver
+			// blip) lets the cleanup controller reap a job that is still
+			// running and risks duplicate execution. A third of the expiry
+			// gives three renewal attempts before the claim is considered
+			// abandoned.
+			leaseRenewalInterval := jobExpiry / 3
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,              // 3 drivers for now
-				20*time.Minute, // Max time for each job
-				30*time.Second, // Periodically look for new jobs
-				jobExpiry,      // Lease renewal interval
+				3,                    // 3 drivers for now
+				20*time.Minute,       // Max time for each job
+				30*time.Second,       // Periodically look for new jobs
+				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
