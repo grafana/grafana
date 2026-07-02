@@ -51,7 +51,7 @@ jobs:
       # labels list extra branches to copy the patch into.
       - name: Resolve VUL ID and backport targets
         id: labels
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const pr = context.payload.pull_request;
@@ -75,7 +75,7 @@ jobs:
       # (success, not failure — a missing label isn't an error, just nothing to do yet).
       - name: Comment when VUL ID is missing
         if: ${{ steps.labels.outputs.vul_id == '' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             await github.rest.issues.createComment({
@@ -128,7 +128,7 @@ jobs:
       # visible, self-contained notification with its own run link.
       - name: Comment dispatch status
         if: ${{ steps.labels.outputs.vul_id != '' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           VUL_ID: ${{ steps.labels.outputs.vul_id }}
           BACKPORT_REFS: ${{ steps.labels.outputs.backport_refs }}

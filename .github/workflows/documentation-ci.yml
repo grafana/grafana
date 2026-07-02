@@ -16,7 +16,7 @@ jobs:
     container:
       image: grafana/vale:latest # zizmor: ignore[unpinned-images]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - uses: grafana/writers-toolkit/vale-action@vale-action/v2 # zizmor: ignore[unpinned-uses]

@@ -31,7 +31,7 @@ jobs:
           github_app: grafana-releases-oss
           permission_set: ${{ github.ref_name == 'main' && 'main' || 'release' }} # different branches require different permission sets
 
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         if: github.repository == 'grafana/grafana'
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}

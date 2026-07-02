@@ -44,7 +44,7 @@ jobs:
       changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
       main-sha: ${{ steps.get-main-sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true
           fetch-depth: 0
@@ -174,7 +174,7 @@ jobs:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           path: './pr'
           persist-credentials: false
@@ -217,7 +217,7 @@ jobs:
 
       - name: Checkout main branch
         if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ needs.detect-changes.outputs.main-sha }}
           path: './main'
@@ -279,7 +279,7 @@ jobs:
       - name: Upload PR HTML coverage report
         if: steps.check-affected.outputs.affected == 'true'
         id: upload-coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: frontend-coverage-${{ steps.coverage-dir.outputs.slug }}
           path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html

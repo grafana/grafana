@@ -27,7 +27,7 @@ jobs:
       next_version: ${{ steps.versions.outputs.next_version }}
       release_branch: ${{ steps.versions.outputs.release_branch }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       # Derive everything from main's current version. main sits at the next minor's
@@ -67,7 +67,7 @@ jobs:
         with:
           github_app: grafana-writer
           permission_set: release-writer-main
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           token: ${{ steps.get-writer-app-token.outputs.token }}
           persist-credentials: false
@@ -124,7 +124,7 @@ jobs:
         with:
           github_app: grafana-writer
           permission_set: release-writer-main
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           token: ${{ steps.get-writer-app-token.outputs.token }}
           persist-credentials: false
