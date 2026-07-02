@@ -13,7 +13,7 @@ labels:
 menuTitle: Provision with Terraform
 title: Use Terraform to provision secure values
 weight: 130
-review_date: '2026-06-17'
+review_date: '2026-07-03'
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-secrets-management/
 ---
 
