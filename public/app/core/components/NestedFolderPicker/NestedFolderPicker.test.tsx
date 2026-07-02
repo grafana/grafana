@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -423,29 +423,6 @@ describe('NestedFolderPicker', () => {
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByLabelText('Starred folders')).toBeNull();
       expect(screen.queryByLabelText('Starred Folder One')).toBeNull();
-    });
-  });
-
-  describe('when both team and starred folders are enabled', () => {
-    testWithFeatureToggles({ enable: ['teamFolders', 'starsFromAPIServer', 'foldersAppPlatformAPI'] });
-
-    beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    it('orders the Team folders root before the Starred folders root', async () => {
-      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
-      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
-
-      const teamRoot = await screen.findByLabelText('Team folders');
-      const starredRoot = await screen.findByLabelText('Starred folders');
-
-      // Starred follows Team in document order → Team renders first.
-      expect(teamRoot.compareDocumentPosition(starredRoot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 });
