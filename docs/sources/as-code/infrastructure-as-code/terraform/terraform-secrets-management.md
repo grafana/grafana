@@ -13,7 +13,7 @@ labels:
 menuTitle: Provision with Terraform
 title: Use Terraform to provision secure values
 weight: 130
-review_date: "2026-06-17"
+review_date: '2026-06-17'
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-secrets-management/
 ---
 
@@ -67,14 +67,12 @@ To create a service account and token, follow these steps:
    You can also refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/) to set up a service account and token.
 
 1. Make sure the service account has the role-based access control (RBAC) actions needed to manage secure values:
-
    - `secret.securevalues:create`
    - `secret.securevalues:read`
    - `secret.securevalues:write`
    - `secret.securevalues:delete`
 
    If you also provision a keeper (refer to [Provision a keeper](#provision-a-keeper)), the service account also needs the keeper actions, which cover activating a keeper:
-
    - `secret.keepers:create`
    - `secret.keepers:read`
    - `secret.keepers:write`
@@ -176,28 +174,28 @@ The following tables describe the fields you use for secure values.
 
 The `metadata` block contains the following fields:
 
-| Field                                  | Required | Description                                                                  |
-| -------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `uid`                                  | Yes      | The secure value's name. Up to 253 characters, DNS-compatible, and immutable. |
-| `folder_uid`                           | No       | Not used for secure values. Leave it unset.                                  |
-| `uuid`, `version`, `url`, `annotations` | No       | Read-only. Grafana populates these fields.                                   |
+| Field                                   | Required | Description                                                                   |
+| --------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| `uid`                                   | Yes      | The secure value's name. Up to 253 characters, DNS-compatible, and immutable. |
+| `folder_uid`                            | No       | Not used for secure values. Leave it unset.                                   |
+| `uuid`, `version`, `url`, `annotations` | No       | Read-only. Grafana populates these fields.                                    |
 
 The `spec` block contains the following fields:
 
-| Field        | Required                   | Description                                                                                                                                                                                                                                            |
-| ------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `description` | Yes, enforced server-side  | 1 to 25 characters.                                                                                                                                                                                                                                   |
-| `value`      | Conditional                | Plaintext secret value, 1 to 24,576 bytes. Sensitive and [write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) in Terraform 1.11 or later. Sent to Grafana on apply but never written to state or plan files. Set exactly one of `value` or `ref`. |
-| `ref`        | Conditional                | Reference to a secret already stored in a third-party keeper, 1 to 1,024 characters. Valid only when the namespace's active keeper isn't the system keeper. Set exactly one of `value` or `ref`.                                                       |
-| `decrypters` | No                         | List of services permitted to decrypt this secure value. Up to 64 unique entries. Each entry must be a valid Kubernetes label value: alphanumerics plus `.`, `-`, and `_`, with no slashes or spaces. For more information, refer to [Decrypters](#decrypters). |
-| `value_hash` | Computed                   | Read-only SHA-256 hash of the stored value. The provider uses it to detect rotation. Don't set it yourself.                                                                                                                                           |
+| Field         | Required                  | Description                                                                                                                                                                                                                                                                                            |
+| ------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `description` | Yes, enforced server-side | 1 to 25 characters.                                                                                                                                                                                                                                                                                    |
+| `value`       | Conditional               | Plaintext secret value, 1 to 24,576 bytes. Sensitive and [write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) in Terraform 1.11 or later. Sent to Grafana on apply but never written to state or plan files. Set exactly one of `value` or `ref`. |
+| `ref`         | Conditional               | Reference to a secret already stored in a third-party keeper, 1 to 1,024 characters. Valid only when the namespace's active keeper isn't the system keeper. Set exactly one of `value` or `ref`.                                                                                                       |
+| `decrypters`  | No                        | List of services permitted to decrypt this secure value. Up to 64 unique entries. Each entry must be a valid Kubernetes label value: alphanumerics plus `.`, `-`, and `_`, with no slashes or spaces. For more information, refer to [Decrypters](#decrypters).                                        |
+| `value_hash`  | Computed                  | Read-only SHA-256 hash of the stored value. The provider uses it to detect rotation. Don't set it yourself.                                                                                                                                                                                            |
 
 The `options` block is optional and contains the following fields:
 
-| Field              | Required | Description                                                                                                                                                                       |
-| ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field              | Required | Description                                                                                                                                                                                    |
+| ------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `manager_identity` | No       | Overrides the manager identity stamped on this resource. The default is `grafana-terraform-provider`. Useful when multiple Terraform workspaces manage resources in the same Grafana instance. |
-| `overwrite`        | No       | Set to `true` to overwrite an existing resource with the same UID when applicable.                                                                                              |
+| `overwrite`        | No       | Set to `true` to overwrite an existing resource with the same UID when applicable.                                                                                                             |
 
 At the top level, the resource exposes a read-only `id` field, which Grafana derives from the secure value's UUID.
 
@@ -235,7 +233,6 @@ To apply the configuration, follow these steps:
    ```
 
    Replace the placeholders as follows:
-
    - _`<TOKEN>`_ is the service account token you created in [Create a service account token](#create-a-service-account-token).
    - _`<SECRET>`_ is the plaintext secret value that Terraform stores as the secure value.
 
@@ -474,30 +471,30 @@ The full schema is on the [Terraform Registry](https://registry.terraform.io/pro
 
 The `metadata` block contains the following fields:
 
-| Field | Required | Description                                                  |
-| ----- | -------- | ------------------------------------------------------------ |
+| Field | Required | Description                                                             |
+| ----- | -------- | ----------------------------------------------------------------------- |
 | `uid` | Yes      | The keeper's name. Up to 253 characters, DNS-compatible, and immutable. |
 
 The `spec` block contains the following fields:
 
-| Field         | Required | Description                                                                          |
-| ------------- | -------- | ------------------------------------------------------------------------------------ |
-| `description` | Yes      | Short description for the keeper, 1 to 253 characters.                                |
+| Field         | Required | Description                                                                            |
+| ------------- | -------- | -------------------------------------------------------------------------------------- |
+| `description` | Yes      | Short description for the keeper, 1 to 253 characters.                                 |
 | `aws`         | No       | AWS Secrets Manager configuration. For the fields, refer to the following `aws` table. |
 
 The `aws` block contains the following fields:
 
-| Field          | Required | Description                                                                                                                       |
-| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `region`       | Yes      | AWS region that hosts your secrets, for example `us-east-1`.                                                                       |
-| `assume_role`  | No       | Role that Grafana assumes to access AWS Secrets Manager. When set, `assume_role_arn` and `external_id` are both required.          |
+| Field         | Required | Description                                                                                                               |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `region`      | Yes      | AWS region that hosts your secrets, for example `us-east-1`.                                                              |
+| `assume_role` | No       | Role that Grafana assumes to access AWS Secrets Manager. When set, `assume_role_arn` and `external_id` are both required. |
 
 The `assume_role` block contains the following fields:
 
-| Field             | Required | Description                                                            |
-| ----------------- | -------- | --------------------------------------------------------------------- |
-| `assume_role_arn` | Yes      | ARN of the IAM role that Grafana assumes.                             |
-| `external_id`     | Yes      | External ID that the IAM role's trust policy requires.               |
+| Field             | Required | Description                                            |
+| ----------------- | -------- | ------------------------------------------------------ |
+| `assume_role_arn` | Yes      | ARN of the IAM role that Grafana assumes.              |
+| `external_id`     | Yes      | External ID that the IAM role's trust policy requires. |
 
 At the top level, the resource exposes a read-only `active` status that's `true` when the keeper is the active keeper for the namespace.
 
