@@ -126,7 +126,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		// Operators run against an external NATS (no embedded server), so a nil
 		// server yields a config that dials the configured client URLs. The
 		// subscriber connects lazily and is a no-op transport when NATS is disabled.
-		natsSubscriber: nats.ProvideSubscriber(cfg, nats.ProvideNATSConfig(cfg, nil), registry),
+		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),
