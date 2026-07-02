@@ -93,9 +93,21 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     )
     .addItem(
       new OptionsPaneItemDescriptor({
+        title: t('dashboard-scene.get-panel-frame-options.title.subtitle', 'Subtitle'),
+        id: 'panel-frame-options-subtitle',
+        value: panel.state.description,
+        skipField: true,
+        render: function renderDescription(descriptor) {
+          return <PanelSubTitleTextArea id={descriptor.props.id} panel={panel} />;
+        },
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
         id: 'panel-frame-options-description',
         value: panel.state.description,
+        skipField: true,
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
@@ -111,6 +123,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       new OptionsPaneItemDescriptor({
         title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
         id: 'panel-frame-options-transparent-bg',
+        skipField: true,
         render: function renderTransparent(descriptor) {
           return <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />;
         },
