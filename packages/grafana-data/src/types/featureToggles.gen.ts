@@ -685,6 +685,11 @@ export interface FeatureToggles {
   */
   exploreLogsShardSplitting?: boolean;
   /**
+  * Show a node-based query flow graph in Explore that breaks a query into its constituent parts
+  * @default false
+  */
+  exploreQueryFlow?: boolean;
+  /**
   * Used in Logs Drilldown to query by aggregated metrics
   * @default false
   */

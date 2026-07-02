@@ -1302,6 +1302,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "exploreQueryFlow",
+			Description: "Show a node-based query flow graph in Explore that breaks a query into its constituent parts",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "exploreLogsAggregatedMetrics",
 			Description: "Used in Logs Drilldown to query by aggregated metrics",
 			Stage:       FeatureStageExperimental,
