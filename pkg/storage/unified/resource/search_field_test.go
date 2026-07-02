@@ -257,27 +257,23 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 		})
 		require.Error(t, err)
 	})
-	t.Run("int64 with sort is rejected", func(t *testing.T) {
+	t.Run("int64 with sort is valid", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
 			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort}},
 		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "created")
-		assert.Contains(t, err.Error(), "int64")
+		require.NoError(t, err)
 	})
-	t.Run("boolean with sort is rejected", func(t *testing.T) {
+	t.Run("boolean with sort is valid", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
 			{Name: "disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
 		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "boolean")
+		require.NoError(t, err)
 	})
-	t.Run("double with sort is rejected", func(t *testing.T) {
+	t.Run("double with sort is valid", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
 			{Name: "score", Type: SearchFieldTypeDouble, Capabilities: []SearchCapability{SearchCapabilitySort}},
 		})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "double")
+		require.NoError(t, err)
 	})
 	t.Run("numeric without sort is valid", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
@@ -287,8 +283,8 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 	})
 	t.Run("multiple violations reported together", func(t *testing.T) {
 		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
-			{Name: "a", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}},
-			{Name: "b", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
+			{Name: "a", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityText}},
+			{Name: "b", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityFacet}},
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "a")
@@ -298,7 +294,7 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 		gvr := schema.GroupVersionResource{Group: "example.test", Version: "v0", Resource: "widgets"}
 		assert.Panics(t, func() {
 			NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
-				gvr: {{Name: "bad", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}}},
+				gvr: {{Name: "bad", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityText}}},
 			}, nil)
 		})
 	})
