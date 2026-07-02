@@ -218,6 +218,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 	}
 
+	if navConfig, ok := s.navigationAppConfig[plugin.ID]; ok && navConfig.HierarchicalNavigation {
+		nestPluginNavLinksByURL(appLink)
+	}
+
 	// Apps without any nav children are not part of navtree
 	if len(appLink.Children) == 0 {
 		return nil
@@ -254,6 +258,49 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+func nestPluginNavLinksByURL(appLink *navtree.NavLink) {
+	nested := map[*navtree.NavLink]struct{}{}
+	for _, child := range appLink.Children {
+		parent := findClosestNavParentByURL(appLink.Children, child)
+		if parent == nil || parent == child || parent.Url == appLink.Url {
+			continue
+		}
+
+		parent.Children = append(parent.Children, child)
+		nested[child] = struct{}{}
+	}
+
+	if len(nested) == 0 {
+		return
+	}
+
+	children := make([]*navtree.NavLink, 0, len(appLink.Children)-len(nested))
+	for _, child := range appLink.Children {
+		if _, ok := nested[child]; !ok {
+			children = append(children, child)
+		}
+	}
+	appLink.Children = children
+}
+
+func findClosestNavParentByURL(children []*navtree.NavLink, child *navtree.NavLink) *navtree.NavLink {
+	var parent *navtree.NavLink
+	for _, candidate := range children {
+		if candidate == child || candidate.Url == "" || !isNavURLParent(candidate.Url, child.Url) {
+			continue
+		}
+
+		if parent == nil || len(candidate.Url) > len(parent.Url) {
+			parent = candidate
+		}
+	}
+	return parent
+}
+
+func isNavURLParent(parentURL string, childURL string) bool {
+	return childURL != parentURL && strings.HasPrefix(childURL, parentURL+"/")
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
@@ -417,7 +464,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Label management"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
-		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", HierarchicalNavigation: true},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
