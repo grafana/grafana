@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -307,16 +307,8 @@ function ImportWizardContent() {
           targetDatasourceUID: values.targetDatasourceUID,
         };
 
-        const { notificationSettings, extraLabels } = buildRoutingParams(
-          values.selectedRoutingTree,
-          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
-        );
-
-        if (notificationSettings !== undefined) {
-          await importRules({ ...baseParams, notificationSettings });
-        } else {
-          await importRules({ ...baseParams, extraLabels });
-        }
+        const { notificationSettings } = buildRoutingParams(values.selectedRoutingTree);
+        await importRules({ ...baseParams, notificationSettings });
       }
 
       setImportStatus('success');

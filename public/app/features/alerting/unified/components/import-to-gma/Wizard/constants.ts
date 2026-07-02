@@ -3,13 +3,6 @@ import { t } from '@grafana/i18n';
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
 /**
- * Label name used in X-Grafana-Alerting-Merge-Matchers header.
- * We use __grafana_managed_route__ as the label name for merge matchers.
- * Alerts matching this label will be routed through the imported policy tree.
- */
-export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
-
-/**
  * Returns the wizard steps configuration.
  * Uses a function to ensure translations are evaluated at runtime.
  */

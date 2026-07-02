@@ -7,7 +7,6 @@ import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
-import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
 import type { ConvertAlertmanagerResponse, DryRunValidationResult } from './types';
 
 interface ParsedAlertmanagerYaml {
@@ -105,21 +104,11 @@ interface MigrateRulesBaseParams {
 type MigrateRulesParams = MigrateRulesBaseParams &
   ({ extraLabels?: string; notificationSettings?: never } | { extraLabels?: never; notificationSettings?: string });
 
-/**
- * Build the routing-specific params for rule import.
- * When the `alertingPolicyRoutingSettings` feature flag is ON and a routing tree is selected,
- * uses the new `notification_settings.policy` mechanism; otherwise falls back to `extraLabels`.
- */
 export function buildRoutingParams(
-  selectedRoutingTree: string | undefined,
-  usePolicyRouting: boolean
-): Pick<MigrateRulesParams, 'extraLabels' | 'notificationSettings'> {
-  if (usePolicyRouting && selectedRoutingTree) {
-    return { notificationSettings: JSON.stringify({ policy: selectedRoutingTree }) };
-  }
-
+  selectedRoutingTree: string | undefined
+): Pick<MigrateRulesParams, 'notificationSettings'> {
   return {
-    extraLabels: selectedRoutingTree ? `${MERGE_MATCHERS_LABEL_NAME}=${selectedRoutingTree}` : undefined,
+    notificationSettings: selectedRoutingTree ? JSON.stringify({ policy: selectedRoutingTree }) : undefined,
   };
 }
 
