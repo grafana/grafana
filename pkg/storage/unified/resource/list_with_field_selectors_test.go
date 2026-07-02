@@ -412,6 +412,7 @@ func (*stubSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSea
 }
 
 type fakeBackend struct {
+	UnimplementedStorageBackend
 	forbidden map[string]struct{}
 }
 
@@ -448,6 +449,7 @@ func (*fakeBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent,
 func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, nil
 }
+
 func (*fakeBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(func(ResourceLastImportTime, error) bool) {}
 }
