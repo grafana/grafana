@@ -61,6 +61,7 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
     | "table.refactorNested"
+    | "grafana.queryVarEditorRedesign"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu";
   export type NumberFlagKey = never;

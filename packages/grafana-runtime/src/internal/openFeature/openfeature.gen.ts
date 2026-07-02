@@ -57,6 +57,8 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
+  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -361,6 +363,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
+ *
+ * **Details:**
+ * - flag key: `grafana.queryVarEditorRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
 };
 
 /**

@@ -5639,7 +5639,7 @@
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
           "close": "Close",
-          "modal-title": "Query Variable",
+          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "selection-options": {
@@ -7250,6 +7250,30 @@
       "try-it": "Try it out",
       "upgrade-title": "New editor available"
     },
+    "query-variable-editor": {
+      "modal": {
+        "apply": "Apply",
+        "apply-description": "Change variable query",
+        "discard": "Discard",
+        "drag-to-resize": "Drag to resize",
+        "preview": "Preview",
+        "preview-of-values": "Preview of values ({{ optionsCount }})",
+        "refresh-preview": "Refresh preview",
+        "tabs": {
+          "query": "Query",
+          "static-options": "Static options ({{staticOptionsCount}})"
+        },
+        "title": "Query variable: {{name}}"
+      },
+      "spreadsheet": {
+        "add-option": "Add new option",
+        "drag-to-reorder": "Drag and drop to reorder",
+        "paste-from-clipboard": "Paste from clipboard",
+        "paste-from-clipboard-with-format": "Paste from clipboard ({{format}})",
+        "paste-parse-error": "Could not parse clipboard content",
+        "remove-option": "Remove {{optionName}}"
+      }
+    },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
@@ -7269,6 +7293,14 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
+    },
+    "refresh-select": {
+      "options": {
+        "label": {
+          "on-dashboard-load": "On dashboard load",
+          "on-time-range-change": "On time range change"
+        }
+      }
     },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
