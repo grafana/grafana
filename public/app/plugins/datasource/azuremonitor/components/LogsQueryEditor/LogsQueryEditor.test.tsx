@@ -2,11 +2,13 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { type EngineSchema } from '../../types/types';
+import { type EngineSchema, TablePlan } from '../../types/types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import LogsQueryEditor from './LogsQueryEditor';
 import { createMockResourcePickerData } from './mocks';
@@ -499,7 +501,46 @@ describe('LogsQueryEditor', () => {
       await act(async () => {
         await waitFor(() =>
           expect(
-            screen.findByText(/This is a Basic Logs query and incurs cost per GiB scanned./)
+            screen.findByText(/This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned\./)
+          ).resolves.toBeInTheDocument()
+        );
+      });
+    });
+
+    it('should show generic data ingested warning when running auxiliary logs queries', async () => {
+      const mockDatasource = createMockDatasource();
+      const onChange = jest.fn();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: 'Auxiliary',
+        },
+      });
+      const onQueryChange = jest.fn();
+
+      mockDatasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage.mockResolvedValue(0);
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={false}
+            auxiliaryLogsEnabled={true}
+          />
+        );
+      });
+
+      await act(async () => {
+        await waitFor(() =>
+          expect(
+            screen.findByText(/This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned/)
           ).resolves.toBeInTheDocument()
         );
       });
@@ -750,6 +791,115 @@ describe('LogsQueryEditor', () => {
         query.azureLogAnalytics?.resources,
         'AppDependencies'
       );
+    });
+  });
+
+  describe('tier auto-switch notification (Builder mode)', () => {
+    const workspaceUri =
+      '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+
+    const buildSchemaWithPlans = (): EngineSchema => ({
+      clusterType: 'Engine',
+      cluster: {
+        connectionString: workspaceUri,
+        databases: [],
+      },
+      database: {
+        name: workspaceUri,
+        tables: [
+          {
+            id: 'AnalyticsTable',
+            name: 'AnalyticsTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Analytics,
+          },
+          {
+            id: 'BasicTable',
+            name: 'BasicTable',
+            timespanColumn: 'TimeGenerated',
+            columns: [{ name: 'TimeGenerated', type: 'datetime' }],
+            related: { solutions: [], functions: [], categories: [] },
+            plan: TablePlan.Basic,
+          },
+        ],
+        functions: [],
+        majorVersion: 0,
+        minorVersion: 0,
+        entityGroups: [],
+      },
+    });
+
+    let originalToggle: boolean | undefined;
+    beforeEach(() => {
+      originalToggle = config.featureToggles.azureMonitorLogsBuilderEditor;
+      config.featureToggles.azureMonitorLogsBuilderEditor = true;
+    });
+    afterEach(() => {
+      config.featureToggles.azureMonitorLogsBuilderEditor = originalToggle;
+    });
+
+    it('renders an info Alert when picking a Basic-plan table from an Analytics query and reverts on click', async () => {
+      const mockDatasource = createMockDatasource();
+      mockDatasource.azureLogAnalyticsDatasource.getKustoSchema = jest
+        .fn()
+        .mockResolvedValue(buildSchemaWithPlans());
+      // getWorkspaceTablePlan is invoked by the existing fetchAllPlans effect but
+      // the schema we provide already has `plan` set, so the in-place mutation is a no-op.
+      // @ts-ignore: forcibly attach for test
+      mockDatasource.azureMonitorDatasource.getWorkspaceTablePlan = jest.fn((_resources, name: string) =>
+        Promise.resolve(name === 'BasicTable' ? TablePlan.Basic : TablePlan.Analytics)
+      );
+
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [workspaceUri],
+          mode: require('../../dataquery.gen').LogsEditorMode.Builder,
+        },
+      });
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      await act(async () => {
+        render(
+          <LogsQueryEditor
+            query={query}
+            datasource={mockDatasource}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onChange}
+            onQueryChange={onQueryChange}
+            setError={() => {}}
+            basicLogsEnabled={true}
+          />
+        );
+      });
+
+      const tableSelect = await screen.findByLabelText('Table');
+      await selectOptionInTest(tableSelect, 'BasicTable');
+
+      // Alert appears with the new tier in the title and the table name in the body
+      const alertTitle = await screen.findByText(/Query tier set to Basic/);
+      expect(alertTitle).toBeInTheDocument();
+      const alert = alertTitle.closest('[role="alert"]') ?? alertTitle.closest('[data-testid^="data-testid Alert"]');
+      expect(alert).not.toBeNull();
+      expect(alert!.textContent).toContain('BasicTable');
+
+      // Revert button uses the previous tier name
+      const revertButton = screen.getByRole('button', { name: /Revert to Analytics/ });
+      await userEvent.click(revertButton);
+
+      // onChange is invoked with basicLogsQuery cleared back to false (Analytics tier)
+      await waitFor(() => {
+        const revertedCall = onChange.mock.calls.find(
+          (call) => call[0]?.azureLogAnalytics?.basicLogsQuery === false
+        );
+        expect(revertedCall).toBeDefined();
+        expect(revertedCall![0].azureLogAnalytics.logTier).toBeUndefined();
+      });
+
+      // Alert is dismissed after revert
+      expect(screen.queryByText(/Query tier set to Basic/)).not.toBeInTheDocument();
     });
   });
 });

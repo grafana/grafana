@@ -158,6 +158,8 @@ type AzureLogsQuery struct {
 	TimeColumn *string `json:"timeColumn,omitempty"`
 	// If set to true the query will be run as a basic logs query
 	BasicLogsQuery *bool `json:"basicLogsQuery,omitempty"`
+	// Discriminates which Logs tier the query targets: "Basic" or "Auxiliary". Both tiers share the /search endpoint (gated by basicLogsQuery). When basicLogsQuery is true and logTier is unset, the query is treated as Basic for back-compat with dashboards saved before Auxiliary support was added.
+	LogTier *AzureLogsQueryLogTier `json:"logTier,omitempty"`
 	// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 	Workspace *string `json:"workspace,omitempty"`
 	// Denotes if logs query editor is in builder mode
@@ -678,6 +680,13 @@ type BaseGrafanaTemplateVariableQuery struct {
 func NewBaseGrafanaTemplateVariableQuery() *BaseGrafanaTemplateVariableQuery {
 	return &BaseGrafanaTemplateVariableQuery{}
 }
+
+type AzureLogsQueryLogTier string
+
+const (
+	AzureLogsQueryLogTierBasic     AzureLogsQueryLogTier = "Basic"
+	AzureLogsQueryLogTierAuxiliary AzureLogsQueryLogTier = "Auxiliary"
+)
 
 type AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery struct {
 	AppInsightsMetricNameQuery *AppInsightsMetricNameQuery `json:"AppInsightsMetricNameQuery,omitempty"`

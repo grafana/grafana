@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { getCredentials, updateCredentials } from '../../credentials';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
+import { AuxiliaryLogsToggle } from './AuxiliaryLogsToggle';
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
@@ -41,6 +42,12 @@ export const MonitorConfig = (props: Props) => {
   const onBasicLogsEnabledChange = (enableBasicLogs: boolean) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, basicLogsEnabled: enableBasicLogs } }));
 
+  const onAuxiliaryLogsEnabledChange = (enableAuxiliaryLogs: boolean) =>
+    updateOptions((options) => ({
+      ...options,
+      jsonData: { ...options.jsonData, auxiliaryLogsEnabled: enableAuxiliaryLogs },
+    }));
+
   // The auth type needs to be set on the first load of the data source
   useEffectOnce(() => {
     if (!options.jsonData.authType || !credentials.authType) {
@@ -70,6 +77,10 @@ export const MonitorConfig = (props: Props) => {
             options={options.jsonData}
           />
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
+          <AuxiliaryLogsToggle
+            options={options.jsonData}
+            onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange}
+          />
         </>
       </AzureCredentialsForm>
     </>

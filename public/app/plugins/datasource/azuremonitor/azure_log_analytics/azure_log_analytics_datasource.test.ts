@@ -346,5 +346,22 @@ describe('AzureLogAnalyticsDatasource', () => {
         resources: ['resource1', 'resource2'],
       });
     });
+
+    it('should preserve the logTier and basicLogsQuery fields on a logs query through templating', () => {
+      replace = (target?: string) => target || '';
+      ctx = createContext();
+      const query = createMockQuery();
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = {
+        ...query.azureLogAnalytics,
+        basicLogsQuery: true,
+        logTier: 'Auxiliary',
+      };
+      const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
+        basicLogsQuery: true,
+        logTier: 'Auxiliary',
+      });
+    });
   });
 });

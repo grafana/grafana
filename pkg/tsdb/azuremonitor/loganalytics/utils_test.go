@@ -99,3 +99,70 @@ func TestRetrieveResources(t *testing.T) {
 		})
 	}
 }
+
+func TestMeetsBasicLogsCriteria(t *testing.T) {
+	workspaceResource := []string{"/subscriptions/abc/resourceGroups/rg/providers/microsoft.operationalinsights/workspaces/ws"}
+	storageResource := []string{"/subscriptions/abc/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/sa"}
+
+	testCases := []struct {
+		name           string
+		resources      []string
+		fromAlert      bool
+		logsEnabled    bool
+		expectedResult bool
+		expectError    bool
+	}{
+		{
+			name:           "returns true when basic/auxiliary logs enabled and single workspace",
+			resources:      workspaceResource,
+			fromAlert:      false,
+			logsEnabled:    true,
+			expectedResult: true,
+			expectError:    false,
+		},
+		{
+			name:           "returns false when logs not enabled",
+			resources:      workspaceResource,
+			fromAlert:      false,
+			logsEnabled:    false,
+			expectedResult: false,
+			expectError:    true,
+		},
+		{
+			name:           "returns false for alerts",
+			resources:      workspaceResource,
+			fromAlert:      true,
+			logsEnabled:    true,
+			expectedResult: false,
+			expectError:    true,
+		},
+		{
+			name:           "returns false for non-workspace resources",
+			resources:      storageResource,
+			fromAlert:      false,
+			logsEnabled:    true,
+			expectedResult: false,
+			expectError:    true,
+		},
+		{
+			name:           "returns false for multiple resources",
+			resources:      append(workspaceResource, workspaceResource...),
+			fromAlert:      false,
+			logsEnabled:    true,
+			expectedResult: false,
+			expectError:    true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := meetsBasicLogsCriteria(tc.resources, tc.fromAlert, tc.logsEnabled)
+			assert.Equal(t, tc.expectedResult, result)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

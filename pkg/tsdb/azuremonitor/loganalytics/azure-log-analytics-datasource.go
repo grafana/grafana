@@ -329,8 +329,15 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		basicLogsEnabled = value
 	}
 
+	auxiliaryLogsEnabled := false
+	if value, ok := dsInfo.JSONData["auxiliaryLogsEnabled"].(bool); ok {
+		auxiliaryLogsEnabled = value
+	}
+
+	searchLogsEnabled := basicLogsEnabled || auxiliaryLogsEnabled
+
 	if basicLogsQueryFlag {
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, basicLogsEnabled); meetsBasicLogsCriteriaErr != nil {
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, searchLogsEnabled); meetsBasicLogsCriteriaErr != nil {
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
 			basicLogsQuery = meetsBasicLogsCriteria

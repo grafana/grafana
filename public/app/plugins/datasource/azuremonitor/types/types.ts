@@ -31,6 +31,7 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
   // monitor
   subscriptionId?: string;
   basicLogsEnabled?: boolean;
+  auxiliaryLogsEnabled?: boolean;
 
   // logs
   /** @deprecated Azure Logs credentials */
@@ -402,6 +403,7 @@ export type DropdownCategories = {
 export enum TablePlan {
   Analytics = 'Analytics',
   Basic = 'Basic',
+  Auxiliary = 'Auxiliary',
 }
 
 export interface GetLogAnalyticsTableSuccessResponse {
