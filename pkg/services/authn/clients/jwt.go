@@ -33,9 +33,13 @@ var (
 )
 
 func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, cfg *setting.Cfg, tracer trace.Tracer) *JWT {
+	logger := log.New(authn.ClientJWT)
+	if cfg.JWTAuth.HeaderName == "" {
+		logger.Warn("JWT auth is enabled but header_name is not configured; JWT authentication will not work")
+	}
 	return &JWT{
 		cfg:           cfg,
-		log:           log.New(authn.ClientJWT),
+		log:           logger,
 		jwtService:    jwtService,
 		orgRoleMapper: orgRoleMapper,
 		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), cfg.JWTAuth.OrgMapping, cfg.JWTAuth.RoleAttributeStrict),
