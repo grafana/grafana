@@ -20,7 +20,13 @@ func TestListFormatValidation_Methods(t *testing.T) {
 	require.Equal(t, ListFormatValidationStepID, validator.ID())
 	require.Equal(t, "SSO List Setting Format Validation", validator.Title())
 	require.Equal(t, "Checks if list configs in SSO settings are in a valid list format (space-separated, comma-separated or JSON array).", validator.Description())
-	require.Equal(t, "Configure the relevant SSO setting using a valid format, like space-separated (\"opt1 opt2\"), comma-separated values (\"opt1, opt2\") or JSON array format ([\"opt1\", \"opt2\"]).", validator.Resolution())
+	// Resolution() returns a template; the rendered English is what actually
+	// reaches the frontend via the registerer (via checks.RenderResolution).
+	require.Equal(t, "Configure the relevant SSO setting using a valid format, like space-separated ({{spaceExample}}), comma-separated values ({{commaExample}}) or JSON array format ({{jsonExample}}).", validator.Resolution())
+	require.Equal(t,
+		`Configure the relevant SSO setting using a valid format, like space-separated ("opt1 opt2"), comma-separated values ("opt1, opt2") or JSON array format (["opt1", "opt2"]).`,
+		checks.RenderResolution(validator),
+	)
 }
 
 func TestListFormatValidation_Run(t *testing.T) {

@@ -45,7 +45,19 @@ func (s *listFormatValidation) Description() string {
 }
 
 func (s *listFormatValidation) Resolution() string {
-	return "Configure the relevant SSO setting using a valid format, like space-separated (\"opt1 opt2\"), comma-separated values (\"opt1, opt2\") or JSON array format ([\"opt1\", \"opt2\"])."
+	return "Configure the relevant SSO setting using a valid format, like space-separated ({{spaceExample}}), " +
+		"comma-separated values ({{commaExample}}) or JSON array format ({{jsonExample}})."
+}
+
+// ResolutionArgs keeps the code examples out of the translatable text so
+// translators can't accidentally localise the option names or break the
+// bracket/quote syntax.
+func (s *listFormatValidation) ResolutionArgs() map[string]string {
+	return map[string]string{
+		"spaceExample": `"opt1 opt2"`,
+		"commaExample": `"opt1, opt2"`,
+		"jsonExample":  `["opt1", "opt2"]`,
+	}
 }
 
 func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, objToCheck any) ([]advisor.CheckReportFailure, error) {

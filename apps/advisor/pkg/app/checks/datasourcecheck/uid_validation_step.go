@@ -26,8 +26,13 @@ func (s *uidValidationStep) Description() string {
 }
 
 func (s *uidValidationStep) Resolution() string {
-	return "Check the <a href='https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement'" +
-		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
+	return "Check the <docs>documentation</docs> for more information or delete the data source and create a new one."
+}
+
+func (s *uidValidationStep) ResolutionLinks() map[string]string {
+	return map[string]string{
+		"docs": "https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v11.2/#grafana-data-source-uid-format-enforcement",
+	}
 }
 
 func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {

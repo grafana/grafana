@@ -30,8 +30,13 @@ func (s *deprecationStep) Description() string {
 }
 
 func (s *deprecationStep) Resolution() string {
-	return "Check the <a href='https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do'" +
-		"target=_blank>documentation</a> for recommended steps or delete the plugin."
+	return "Check the <docs>documentation</docs> for recommended steps or delete the plugin."
+}
+
+func (s *deprecationStep) ResolutionLinks() map[string]string {
+	return map[string]string{
+		"docs": "https://grafana.com/legal/plugin-deprecation/#a-plugin-i-use-is-deprecated-what-should-i-do",
+	}
 }
 
 func (s *deprecationStep) ID() string {

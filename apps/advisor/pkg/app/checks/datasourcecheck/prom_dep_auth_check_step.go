@@ -23,7 +23,21 @@ func (s *promDepAuthStep) Description() string {
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return fmt.Sprintf("Make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
+	return "Make sure that '{{azureProduct}}' and/or '{{amazonProduct}}' plugins are installed. " +
+		"If the data source is provisioned, edit data source type in the provisioning file to use '{{amazonID}}' or '{{azureID}}'."
+}
+
+// ResolutionArgs keeps product names and plugin IDs out of the translatable
+// text — translators see stable "{{name}}" tokens instead. Product names
+// aren't localised anywhere in Grafana; plugin IDs are code identifiers that
+// must match the actual registered plugins.
+func (s *promDepAuthStep) ResolutionArgs() map[string]string {
+	return map[string]string{
+		"azureProduct":  "Azure Monitor Managed Service for Prometheus",
+		"amazonProduct": "Amazon Managed Service for Prometheus",
+		"amazonID":      datasources.DS_AMAZON_PROMETHEUS,
+		"azureID":       datasources.DS_AZURE_PROMETHEUS,
+	}
 }
 
 func (s *promDepAuthStep) ID() string {
