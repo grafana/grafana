@@ -16,9 +16,10 @@ import (
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
@@ -38,16 +39,31 @@ type Server struct {
 	cfg     setting.NATSSettings
 	log     log.Logger
 	metrics *serverMetrics
+	kv      kv.KV
 
-	mu     sync.RWMutex
-	server *natsserver.Server
-	opts   *natsserver.Options
+	mu        sync.RWMutex
+	server    *natsserver.Server
+	opts      *natsserver.Options
+	discovery *discovery
 }
 
-func ProvideServer(cfg *setting.Cfg, _ *sqlstore.SQLStore, reg prometheus.Registerer) (*Server, error) {
+func ProvideServer(cfg *setting.Cfg, sqlStore db.DB, reg prometheus.Registerer) (*Server, error) {
 	s := &Server{
 		cfg: cfg.NATS,
 		log: log.New("infra.nats.server"),
+	}
+
+	// A sqlStore is required to wire DB-backed peer discovery. When present (the
+	// monolith always injects it) the embedded server clusters through discovery;
+	// when absent it runs as a single standalone node. Module mode passes nil but
+	// is prevented from enabling embedded NATS upstream (see module_server.go), so
+	// in practice a running embedded server in production always has discovery.
+	if !s.IsDisabled() && sqlStore != nil {
+		sqlKV, err := kv.NewSQLKV(sqlStore.GetEngine().DB().DB, sqlStore.GetDialect().DriverName())
+		if err != nil {
+			return nil, fmt.Errorf("create nats discovery kv: %w", err)
+		}
+		s.kv = sqlKV
 	}
 
 	// Only register the embedded-server metrics when this instance actually runs
@@ -109,13 +125,29 @@ func (s *Server) dialOptions() []natsclient.Option {
 }
 
 func (s *Server) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d == nil {
+		<-ctx.Done()
+		return nil
+	}
+	return d.run(ctx)
 }
 
 func (s *Server) stopping(_ error) error {
 	if s.IsDisabled() {
 		return nil
+	}
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d != nil {
+		// running's ctx is already cancelled by now, so deregister on a fresh
+		// bounded context. Best-effort: the TTL prune is the backstop.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		d.deregister(ctx)
 	}
 	s.shutdown()
 	return nil
@@ -157,12 +189,50 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
+	// Wire peer discovery only when a KV is available. The monolith always injects a
+	// sqlStore, so production embedded servers cluster through discovery; module mode
+	// cannot enable embedded NATS (see module_server.go). A nil KV therefore only
+	// happens for a single standalone node (e.g. tests), which runs without clustering.
+	if s.kv != nil {
+		s.discovery = newDiscovery(
+			s.log,
+			server,
+			newKVPeerStore(s.kv, opts.Cluster.Name),
+			peer{ServerName: opts.ServerName, RouteURL: routeURL},
+			discoveryOptions{
+				baseOpts: opts,
+				interval: s.cfg.DiscoveryInterval,
+				ttl:      s.cfg.DiscoveryTTL,
+			},
+		)
+	}
 	s.mu.Unlock()
 
 	s.metrics.embeddedServerUp.Set(1)
 	s.log.Info("started embedded nats server", "client_url", clientURL, "route_url", routeURL)
 
+	// Discovery advertises route_url to peers via the shared DB. A loopback route
+	// resolves to the advertising node itself, so peers on other hosts can never
+	// dial it and clustering silently no-ops. Warn rather than fail: a single
+	// standalone node on default config is a legitimate case.
+	if s.kv != nil && isLoopbackRouteURL(routeURL) {
+		s.log.Warn("embedded nats advertising a loopback route url; multi-host clustering will not form. "+
+			"Set listen_address to a routable address, or bind 0.0.0.0 and set advertise_address to a routable address",
+			"route_url", routeURL)
+	}
+
 	return nil
+}
+
+// isLoopbackRouteURL reports whether the route URL's host is a loopback address,
+// which only clusters within a single host.
+func isLoopbackRouteURL(routeURL string) bool {
+	u, err := url.Parse(routeURL)
+	if err != nil {
+		return false
+	}
+	ip := net.ParseIP(u.Hostname())
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Server) serverOptions() *natsserver.Options {

@@ -86,6 +86,7 @@ type clientMetrics struct {
 	cacheMissTotal           prometheus.Counter
 	cacheEvictionTotal       prometheus.Counter
 	cacheSize                prometheus.Gauge
+	cacheMaxSize             prometheus.Gauge
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -239,6 +240,7 @@ func New(config Config) (Service, error) {
 	if config.CacheTTL >= 0 {
 		cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
 		fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		metrics.cacheMaxSize.Set(float64(cacheMaxEntries))
 	}
 
 	return &remoteSettingService{
@@ -701,6 +703,13 @@ func initMetrics(serviceName string) clientMetrics {
 			Help:        "Current number of entries in the List cache; compare against CacheMaxEntries to tune cache size",
 			ConstLabels: constLabels,
 		}),
+		cacheMaxSize: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_max_size",
+			Help:        "Configured maximum number of entries in the List cache (CacheMaxEntries); compare against cache_size to tune cache size",
+			ConstLabels: constLabels,
+		}),
 	}
 	return metrics
 }
@@ -713,6 +722,7 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.cacheMissTotal.Describe(descs)
 	s.metrics.cacheEvictionTotal.Describe(descs)
 	s.metrics.cacheSize.Describe(descs)
+	s.metrics.cacheMaxSize.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -726,4 +736,5 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 		s.metrics.cacheSize.Set(float64(s.cache.Len()))
 	}
 	s.metrics.cacheSize.Collect(metrics)
+	s.metrics.cacheMaxSize.Collect(metrics)
 }

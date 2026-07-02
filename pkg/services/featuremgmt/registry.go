@@ -2080,14 +2080,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "teamFolders",
-			Description: "Enables team folders functionality",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-		},
-		{
 			Name:        "grafana.starredFolders",
 			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
 			Stage:       FeatureStageExperimental,
@@ -3146,6 +3138,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:            "kubernetesReporting",
+			Description:     "Add support for Kubernetes reporting new APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
