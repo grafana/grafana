@@ -102,6 +102,7 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV) (*Server, *setting.Cfg) {
 		// can run side by side; routeURLForServer reads the bound port back.
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
+		DiscoveryEnabled:  true,
 		DiscoveryInterval: 50 * time.Millisecond,
 		DiscoveryTTL:      time.Minute,
 	}

@@ -32,6 +32,10 @@ type NATSSettings struct {
 	ClusterPort      int
 	AdvertiseAddress string
 
+	// DiscoveryEnabled turns on KV-backed peer discovery so embedded replicas
+	// self-assemble into a mesh; disabling it runs a single standalone node.
+	DiscoveryEnabled bool
+
 	// DiscoveryInterval is how often an embedded node refreshes its registry
 	// heartbeat and reconciles cluster routes. DiscoveryTTL is how long a peer is
 	// trusted after its last heartbeat before its route is dropped and row pruned;
@@ -86,6 +90,7 @@ func readNATSSettings(cfg *Cfg) error {
 		ClusterPort:      section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress: section.Key("advertise_address").MustString(""),
 
+		DiscoveryEnabled:  section.Key("discovery_enabled").MustBool(true),
 		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
 		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
 		NotifierShadow:    section.Key("notifier_shadow").MustBool(false),
