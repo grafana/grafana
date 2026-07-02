@@ -7,11 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// natsEventSubscriber adapts an infra/nats.Subscriber to the storage backend's
-// resource.EventSubscriber. An adapter is needed (unlike the publisher, which
-// matches structurally) because nats.Subscriber.Subscribe takes a
-// nats.MessageHandler and variadic options that the resource-package interface
-// deliberately does not expose.
+// natsEventSubscriber adapts infra/nats.Subscriber to resource.EventSubscriber.
+// An adapter is needed (the publisher matches structurally) because
+// nats.Subscriber.Subscribe takes a nats.MessageHandler and variadic options
+// the resource interface deliberately does not expose.
 type natsEventSubscriber struct {
 	sub nats.Subscriber
 }

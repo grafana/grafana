@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -87,7 +89,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			sub := &fakeEventSubscriber{enabled: true}
-			n := newNatsNotifier(sub, log.NewNopLogger())
+			n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -121,7 +123,8 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 
 func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
-	n := newNatsNotifier(sub, log.NewNopLogger())
+	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -135,11 +138,13 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	}))
 
 	expectNoEvent(t, out)
+	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unknown_type")))
 }
 
 func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
-	n := newNatsNotifier(sub, log.NewNopLogger())
+	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -148,11 +153,12 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub.handler("some.subject", []byte("not a valid protobuf"))
 
 	expectNoEvent(t, out)
+	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
 }
 
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
-	n := newNatsNotifier(sub, log.NewNopLogger())
+	n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	out := n.Watch(ctx, WatchOptions{})
@@ -173,7 +179,7 @@ func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 
 func TestNatsNotifierWatch_SubscribeErrorClosesChannel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
-	n := newNatsNotifier(sub, log.NewNopLogger())
+	n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
 	out := n.Watch(context.Background(), WatchOptions{})
 
@@ -186,7 +192,7 @@ func TestNatsNotifierWatch_SubscribeErrorClosesChannel(t *testing.T) {
 }
 
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {
-	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, log.NewNopLogger())
+	n := newNatsNotifier(&fakeEventSubscriber{enabled: true}, nil, log.NewNopLogger())
 	assert.NotPanics(t, func() {
 		n.Publish(Event{Group: "g", Resource: "r", ResourceVersion: 1})
 	})

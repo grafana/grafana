@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,26 +12,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-// Subscription is a handle to an active external-bus subscription; Unsubscribe
-// stops delivery. Its method set matches infra/nats.Subscription.
+// Subscription handle; Unsubscribe stops delivery. Matches infra/nats.Subscription.
 type Subscription interface {
 	Unsubscribe() error
 }
 
-// EventSubscriber consumes resource change notifications from an external
-// message bus (NATS). It is the read-side counterpart of EventPublisher: the
-// publisher announces committed writes, the subscriber receives them on another
-// process. The handler is invoked once per delivered message with the raw
-// (subject, data) so callers never touch nats.go types.
+// EventSubscriber is the read-side counterpart of EventPublisher: it delivers
+// change notifications from the external bus (NATS) to handler as raw
+// (subject, data), keeping nats.go types out of this package.
 type EventSubscriber interface {
 	Enabled() bool
 	Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error)
 }
 
-// watchNotificationTypeToAction reverses actionToWatchNotificationType: it maps
-// a wire event type back onto the stored data action so a received notification
-// can be turned into an Event. UNKNOWN has no corresponding action and reports
-// ok=false so the caller drops it rather than emit a bogus change.
+// watchNotificationTypeToAction maps a wire event type back to a data action.
+// UNKNOWN reports ok=false so the caller drops it rather than emit a bogus change.
 func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.DataAction, bool) {
 	switch t {
 	case resourcepb.WatchNotification_ADDED:
@@ -44,48 +40,53 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 	}
 }
 
-// natsNotifier is a notifier backed by the external NATS bus. Its Watch
-// subscribes to every resource's change subject and emits an Event per received
-// WatchNotification; unlike the polling notifier it learns about writes the
-// instant they are announced rather than by querying the event store.
+// natsNotifier emits an Event per WatchNotification received from NATS, learning
+// of writes the instant they are announced rather than by polling the store.
+// Watch subscribes to the entire stream (SubjectAll) and ignores the resource
+// selectors in WatchOptions, so it is not a drop-in per-watch notifier.
 //
-// Two properties follow from the wire format and must be understood before
-// relying on it as anything more than a low-latency hint:
-//   - Events carry PreviousRV == 0, because WatchNotification has no previous
-//     resource version. Consumers that depend on PreviousRV (batch-event
-//     skipping, previous-object lookups) therefore behave differently than with
-//     the store-sourced notifiers.
-//   - Delivery is at-most-once (core NATS, no JetStream): a missed message is
-//     never redelivered, so this cannot be the sole source of truth. The
-//     polling notifier remains the correctness backstop.
+// Two wire-format properties make it a low-latency hint, not a source of truth:
+//   - Events carry PreviousRV == 0 (WatchNotification has no previous RV), so
+//     consumers relying on PreviousRV behave differently than with store-sourced
+//     notifiers.
+//   - Delivery is at-most-once (core NATS, no JetStream); a missed message is
+//     never redelivered. The polling notifier remains the correctness backstop.
 type natsNotifier struct {
 	subscriber EventSubscriber
+	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
 	log        log.Logger
 }
 
-func newNatsNotifier(subscriber EventSubscriber, logger log.Logger) *natsNotifier {
-	return &natsNotifier{subscriber: subscriber, log: logger}
+func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+	return &natsNotifier{subscriber: subscriber, dropped: dropped, log: logger}
+}
+
+func (n *natsNotifier) drop(reason string) {
+	if n.dropped != nil {
+		n.dropped.WithLabelValues(reason).Inc()
+	}
 }
 
 func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	opts = opts.normalize()
 	n.log.Info("creating new nats notifier", "buffer_size", opts.BufferSize)
 
-	// raw is written by the NATS delivery goroutine; out is owned and closed by
-	// the pump goroutine. Splitting them means the delivery callback never sends
-	// on a closed channel: raw is never closed, so a late callback after ctx
-	// cancellation is harmless.
+	// The NATS callback writes raw; the pump owns and closes out. raw is never
+	// closed, so a callback firing after ctx cancellation can't send on a closed
+	// channel.
 	raw := make(chan Event, opts.BufferSize)
 	out := make(chan Event, opts.BufferSize)
 
 	handler := func(subject string, data []byte) {
 		var notification resourcepb.WatchNotification
 		if err := proto.Unmarshal(data, &notification); err != nil {
+			n.drop("unmarshal_error")
 			n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
 			return
 		}
 		action, ok := watchNotificationTypeToAction(notification.Type)
 		if !ok {
+			n.drop("unknown_type")
 			n.log.Warn("dropped watch notification with unknown type", "subject", subject)
 			return
 		}
@@ -102,6 +103,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		select {
 		case raw <- evt:
 		default:
+			n.drop("buffer_full")
 			n.log.Warn("dropped watch notification, channel full", "subject", subject)
 		}
 	}
@@ -138,6 +140,5 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	return out
 }
 
-// Publish is a no-op: like the polling notifier, natsNotifier learns about
-// writes from the bus, not from in-process callers.
+// Publish is a no-op: natsNotifier learns of writes from the bus, not callers.
 func (n *natsNotifier) Publish(_ Event) {}

@@ -39,9 +39,8 @@ type NATSSettings struct {
 	DiscoveryInterval time.Duration
 	DiscoveryTTL      time.Duration
 
-	// NotifierShadow runs a NATS-backed notifier alongside the storage backend's
-	// primary notifier for testing. It records comparison metrics only and never
-	// feeds the watch pipeline, so it does not change watch behavior.
+	// NotifierShadow runs a NATS-backed notifier beside the primary notifier for
+	// testing: comparison metrics only, never feeds the watch pipeline.
 	NotifierShadow bool
 
 	TLS  NATSTLSSettings

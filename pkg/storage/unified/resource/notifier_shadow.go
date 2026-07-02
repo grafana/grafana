@@ -11,14 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// natsShadowMetrics records what the NATS notifier delivers so it can be
-// compared, in dashboards, against the primary notifier's watch metrics
-// (e.g. storage_server_broadcaster_events_received_total and
-// storage_server_watch_latency_seconds). Divergence in counts signals dropped
-// notifications; the latency histogram shows the delivery-time advantage NATS
-// would give over polling.
+// natsShadowMetrics record what the NATS notifier delivers, for dashboard
+// comparison against the primary notifier's watch metrics
+// (storage_server_broadcaster_events_received_total,
+// storage_server_watch_latency_seconds). Count divergence signals dropped
+// notifications; latency shows the delivery-time advantage over polling.
 type natsShadowMetrics struct {
 	eventsReceived *prometheus.CounterVec
+	dropped        *prometheus.CounterVec
 	latency        *prometheus.HistogramVec
 }
 
@@ -28,6 +28,10 @@ func newNatsShadowMetrics(reg prometheus.Registerer) *natsShadowMetrics {
 			Name: "storage_server_nats_notifier_shadow_events_received_total",
 			Help: "Change notifications received via the shadow NATS notifier, by group, resource, and action.",
 		}, []string{"group", "resource", "action"}),
+		dropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_nats_notifier_shadow_dropped_events_total",
+			Help: "Notifications dropped by the shadow NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
+		}, []string{"reason"}),
 		latency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "storage_server_nats_notifier_shadow_latency_seconds",
 			Help:                            "Time between a resource version being issued and its notification arriving via the shadow NATS notifier.",
@@ -39,12 +43,11 @@ func newNatsShadowMetrics(reg prometheus.Registerer) *natsShadowMetrics {
 	}
 }
 
-// natsShadow runs a natsNotifier alongside the backend's primary notifier for
-// testing. It consumes the NATS change stream and records metrics only; it
-// never feeds WatchWriteEvents, so enabling it cannot change what watch clients
-// observe. This is the safe way to validate NATS delivery (coverage + latency)
-// against the polling notifier on a live backend before wiring NATS into the
-// watch path for real.
+// natsShadow runs a natsNotifier beside the primary notifier for testing: it
+// consumes the NATS change stream and records metrics only, never feeding the
+// watch pipeline, so enabling it cannot change what watch clients observe. It
+// validates NATS delivery (coverage + latency) on a live backend before NATS is
+// wired into the watch path for real.
 type natsShadow struct {
 	notifier  *natsNotifier
 	watchOpts WatchOptions
@@ -53,16 +56,16 @@ type natsShadow struct {
 }
 
 func newNatsShadow(subscriber EventSubscriber, watchOpts WatchOptions, reg prometheus.Registerer, logger log.Logger) *natsShadow {
+	metrics := newNatsShadowMetrics(reg)
 	return &natsShadow{
-		notifier:  newNatsNotifier(subscriber, logger),
+		notifier:  newNatsNotifier(subscriber, metrics.dropped, logger),
 		watchOpts: watchOpts,
-		metrics:   newNatsShadowMetrics(reg),
+		metrics:   metrics,
 		log:       logger,
 	}
 }
 
-// start consumes the NATS notifier until ctx is cancelled. It runs in its own
-// goroutine and returns immediately.
+// start consumes the NATS notifier in a goroutine until ctx is cancelled.
 func (s *natsShadow) start(ctx context.Context) {
 	go func() {
 		events := s.notifier.Watch(ctx, s.watchOpts)
