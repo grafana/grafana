@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -364,16 +365,23 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	}
 	eligible := make([]eligibleItem, 0)
 
-	// List all keys in the store
+	keys := make([]string, 0)
 	// TODO: unbounded list
 	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{}) {
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("listing keys in the kv store: %w", err)
+		}
+		keys = append(keys, key)
+	}
+
+	for keyValue, err := range s.kv.BatchGet(ctx, kvSection, keys) {
+		if err != nil {
+			return nil, fmt.Errorf("fetching batch from kv store: %w", err)
 		}
 
-		value, err := s.readValue(ctx, key)
+		value, err := parseSecureValue(keyValue.Value)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing secure value: %w", err)
 		}
 
 		// Check if this value is eligible for leasing.
@@ -383,8 +391,8 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 		if !value.Active && ageSeconds > int64(minAge.Seconds()) && leaseAgeSeconds > value.LeaseDuration {
 			eligible = append(eligible, eligibleItem{
-				key:   key,
-				value: value,
+				key:   keyValue.Key,
+				value: &value,
 			})
 		}
 	}
@@ -405,9 +413,8 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		return 0
 	})
 
-	result := make([]v1beta1.SecureValue, 0, min(int(maxBatchSize), len(eligible)))
+	toUpdate := make([]eligibleItem, 0, len(eligible))
 
-	// TODO: no batch write, O(maxBatchSize) writes
 	for i := 0; i < len(eligible) && i < int(maxBatchSize); i++ {
 		item := eligible[i]
 
@@ -417,16 +424,33 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		item.value.LeaseCreated = now
 		item.value.LeaseDuration = int64(leaseTTL.Seconds() * math.Pow(2, float64(item.value.GCAttempts)))
 
-		if err := s.writeValue(ctx, item.key, item.value); err != nil {
-			return nil, fmt.Errorf("failed to update lease: %w", err)
-		}
+		toUpdate = append(toUpdate, item)
+	}
 
-		sv, err := item.value.toKubernetes()
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert to Kubernetes format: %w", err)
-		}
+	result := make([]v1beta1.SecureValue, 0, min(int(maxBatchSize), len(eligible)))
 
-		result = append(result, *sv)
+	if len(toUpdate) > 0 {
+		ops := make([]kv.BatchOp, 0, len(toUpdate))
+		for _, entry := range eligible {
+			buffer, err := json.Marshal(entry.value)
+			if err != nil {
+				return nil, fmt.Errorf("json marshaling secure value")
+			}
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpUpdate,
+				Key:   entry.key,
+				Value: buffer,
+			})
+
+			k8s, err := entry.value.toKubernetes()
+			if err != nil {
+				return nil, fmt.Errorf("converting secure value to k8s model: %w", err)
+			}
+			result = append(result, *k8s)
+		}
+		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+			return nil, fmt.Errorf("sending batch query to kv store: %w", err)
+		}
 	}
 
 	return result, nil
@@ -563,9 +587,10 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
+	toUpdate := make([]secureValueKV, 0, len(keys))
+
 	count := make(map[string]int, len(keys))
 	// TODO: this is racy, lost updates are possible
-	// TODO: add to challenges doc
 	for kvValue, err := range s.kv.BatchGet(ctx, kvSection, keys) {
 		if err != nil {
 			return nil, fmt.Errorf("BatchGet returned error: %w", err)
@@ -577,11 +602,26 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 		}
 
 		parsed.GCAttempts += 1
+		toUpdate = append(toUpdate, parsed)
 		count[parsed.GUID] = parsed.GCAttempts
-		// TODO: no batch save
+	}
+
+	if len(toUpdate) > 0 {
 		// TODO: lost updates
-		if err := s.writeValue(ctx, kvValue.Key, &parsed); err != nil {
-			return nil, fmt.Errorf("saving secure value to storage: %w", err)
+		ops := make([]kv.BatchOp, 0, len(toUpdate))
+		for _, sv := range toUpdate {
+			value, err := json.Marshal(sv)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal value: %w", err)
+			}
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpPut,
+				Key:   makeKey(sv.Namespace, sv.Name, sv.Version),
+				Value: value,
+			})
+		}
+		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+			return nil, fmt.Errorf("batch updating secure values: %w", err)
 		}
 	}
 
@@ -611,6 +651,12 @@ func parseSecureValue(reader io.ReadCloser) (secureValueKV, error) {
 func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error {
 	prefix := makeNamespacePrefix(namespace.String())
 
+	type entry struct {
+		key string
+		sv  *secureValueKV
+	}
+	toUpdate := make([]entry, 0)
+
 	// TODO: unbounded list
 	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
 		StartKey: prefix,
@@ -626,12 +672,27 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 			return fmt.Errorf("reading secure value from kv store: %w", err)
 		}
 
-		// TODO: O(n) writes
 		if value.OwnerReferenceAPIGroup == apiGroup {
 			value.Active = false
-			if err := s.writeValue(ctx, key, value); err != nil {
-				return fmt.Errorf("storing secure value in kv store: %w", err)
+			toUpdate = append(toUpdate, entry{key: key, sv: value})
+		}
+	}
+
+	if len(toUpdate) > 0 {
+		ops := make([]kv.BatchOp, 0, len(toUpdate))
+		for _, entry := range toUpdate {
+			value, err := json.Marshal(entry.sv)
+			if err != nil {
+				return fmt.Errorf("json marshaling secure value: %w", err)
 			}
+			ops = append(ops, kv.BatchOp{
+				Mode:  kv.BatchOpUpdate,
+				Key:   entry.key,
+				Value: value,
+			})
+		}
+		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+			return fmt.Errorf("batch updating secure values: %w", err)
 		}
 	}
 
