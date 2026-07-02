@@ -56,6 +56,7 @@ func ProvidePullRequestWorker(
 
 //go:generate mockery --name=PullRequestRepo --structname=MockPullRequestRepo --inpackage --filename=mock_pullrequest_repo.go --with-expecter
 type PullRequestRepo interface {
+	repository.BranchHandler
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error)
@@ -96,7 +97,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
 ) (processErr error) {
-	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
 	outcome := utils.ErrorOutcome
@@ -129,12 +129,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
 
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	if cfg.GitHub == nil {
-		logger.Debug("expecting github configuration")
-		return apierrors.NewBadRequest("expecting github configuration")
-	}
-
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		logger.Debug("pull request job submitted targeting repository that is not a Reader")
@@ -151,8 +145,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	base := cfg.GitHub.Branch
+	base, err := prRepo.GetDefaultBranch(ctx)
+	if err != nil {
+		logger.Error("could not get default branch", "error", err)
+		return fmt.Errorf("failed to get the base branch to create the pull request: %w", err)
+	}
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
