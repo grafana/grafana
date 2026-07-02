@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
@@ -82,7 +84,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/candlestick': candlestickPanel,
   'core:plugin/xychart': xychartPanel,
   'core:plugin/geomap': geomapPanel,
-  'core:plugin/canvas': canvasPanel,
+  ...(config.featureToggles.canvasExternalPlugin ? {} : { 'core:plugin/canvas': canvasPanel }),
   'core:plugin/dashlist': dashListPanel,
   'core:plugin/alertlist': alertListPanel,
   'core:plugin/annolist': annoListPanel,
