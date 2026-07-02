@@ -50,11 +50,12 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				AuthID:          "test",
 				ExternalGroups:  []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
-					SyncUser:        true,
-					SyncTeams:       true,
-					AllowSignUp:     true,
-					FetchSyncedUser: true,
-					SyncOrgRoles:    true,
+					SyncUser:             true,
+					SyncTeams:            true,
+					AllowSignUp:          true,
+					FetchSyncedUser:      true,
+					SyncOrgRoles:         true,
+					SyncOrgRolesAdditive: true,
 					LookUpParams: login.UserLookupParams{
 						Email: new("email@example.com"),
 						Login: new("test"),
@@ -73,10 +74,11 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				AuthenticatedBy: login.AuthProxyAuthModule,
 				AuthID:          "test@test.com",
 				ClientParams: authn.ClientParams{
-					SyncUser:     true,
-					SyncTeams:    true,
-					AllowSignUp:  true,
-					SyncOrgRoles: true,
+					SyncUser:             true,
+					SyncTeams:            true,
+					AllowSignUp:          true,
+					SyncOrgRoles:         true,
+					SyncOrgRolesAdditive: true,
 					LookUpParams: login.UserLookupParams{
 						Email: new("test@test.com"),
 						Login: new("test@test.com"),
@@ -116,6 +118,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableUser, identity.ClientParams.EnableUser)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncOrgRoles, identity.ClientParams.SyncOrgRoles)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncOrgRolesAdditive, identity.ClientParams.SyncOrgRolesAdditive)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)

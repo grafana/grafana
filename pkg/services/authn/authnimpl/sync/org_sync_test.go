@@ -139,6 +139,50 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 	}
 }
 
+func TestOrgSync_SyncOrgRolesHook_Additive(t *testing.T) {
+	// Additive clients (e.g. auth proxy with a Role header) can only assert a
+	// single org role, so org sync must update that org's role without removing
+	// the user from the other orgs they belong to.
+	orgService := &orgtest.MockService{}
+	orgService.On("GetUserOrgList", mock.Anything, mock.Anything).Return([]*org.UserOrgDTO{
+		{OrgID: 1, Role: org.RoleEditor},
+		{OrgID: 2, Role: org.RoleViewer},
+	}, nil)
+	orgService.On("UpdateOrgUser", mock.Anything, mock.MatchedBy(func(cmd *org.UpdateOrgUserCommand) bool {
+		return cmd.OrgID == 1 && cmd.UserID == 1 && cmd.Role == org.RoleAdmin
+	})).Return(nil)
+
+	userService := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Login: "test"}}
+
+	s := &OrgSync{
+		userService:   userService,
+		orgService:    orgService,
+		accessControl: &actest.FakeService{},
+		cfg:           setting.NewCfg(),
+		log:           log.NewNopLogger(),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	id := &authn.Identity{
+		ID:       "1",
+		Type:     claims.TypeUser,
+		Login:    "test",
+		OrgRoles: map[int64]identity.RoleType{1: org.RoleAdmin},
+		ClientParams: authn.ClientParams{
+			SyncOrgRoles:         true,
+			SyncOrgRolesAdditive: true,
+		},
+	}
+
+	err := s.SyncOrgRolesHook(context.Background(), id, nil)
+	require.NoError(t, err)
+
+	// The role in org 1 is updated, but the user is NOT removed from org 2.
+	orgService.AssertCalled(t, "UpdateOrgUser", mock.Anything, mock.Anything)
+	orgService.AssertNotCalled(t, "RemoveOrgUser", mock.Anything, mock.Anything)
+	assert.Equal(t, int64(1), id.OrgID)
+}
+
 func TestOrgSync_SyncOrgRolesHook_SkipsWhenSingleOrgAndKubernetesUsersRedirect(t *testing.T) {
 	tests := []struct {
 		name                    string
