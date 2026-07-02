@@ -225,7 +225,9 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 					}
 				}
 				// this is checked only if authorizeProtected is not nil to cover only the path from receiver testing API.
-				if receiverName != r.Name {
+				// Allow an empty receiver name in the request (e.g. when the frontend omits it for a new contact point).
+				// Authorization is still enforced via authorizeProtected using the DB-resolved name.
+				if r.Name != "" && receiverName != r.Name {
 					return UnknownReceiverError{UID: gr.UID} // return error because integration does not belong to the receiver under the requested name
 				}
 
