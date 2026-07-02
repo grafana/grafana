@@ -818,3 +818,92 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestReadAnnotationSettings(t *testing.T) {
+	t.Run("alerting cleanup uses unified_alerting.state_history.annotations when only max_annotations_to_keep is set", func(t *testing.T) {
+		// Regression test: previously, `readAnnotationSettings` checked the
+		// `max_annotations_to_keep` key against the parent `[annotations]`
+		// section, so this configuration silently fell back to the deprecated
+		// `[alerting]` branch and produced MaxCount=0.
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting.state_history.annotations")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_annotations_to_keep", "10000")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.Raw = f
+		require.NoError(t, cfg.readAnnotationSettings())
+
+		require.Equal(t, int64(10000), cfg.AlertingAnnotationCleanupSetting.MaxCount)
+		require.Equal(t, time.Duration(0), cfg.AlertingAnnotationCleanupSetting.MaxAge)
+	})
+
+	t.Run("alerting cleanup reads max_age from unified_alerting.state_history.annotations", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting.state_history.annotations")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_age", "30d")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.Raw = f
+		require.NoError(t, cfg.readAnnotationSettings())
+
+		require.Equal(t, 30*24*time.Hour, cfg.AlertingAnnotationCleanupSetting.MaxAge)
+		require.Equal(t, int64(0), cfg.AlertingAnnotationCleanupSetting.MaxCount)
+	})
+
+	t.Run("alerting cleanup reads both max_age and max_annotations_to_keep from unified_alerting.state_history.annotations", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting.state_history.annotations")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_age", "30d")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_annotations_to_keep", "5000")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.Raw = f
+		require.NoError(t, cfg.readAnnotationSettings())
+
+		require.Equal(t, 30*24*time.Hour, cfg.AlertingAnnotationCleanupSetting.MaxAge)
+		require.Equal(t, int64(5000), cfg.AlertingAnnotationCleanupSetting.MaxCount)
+	})
+
+	t.Run("alerting cleanup falls back to deprecated [alerting] section when unified_alerting.state_history.annotations is empty", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("alerting")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_annotation_age", "15d")
+		require.NoError(t, err)
+		_, err = sec.NewKey("max_annotations_to_keep", "1000")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.Raw = f
+		require.NoError(t, cfg.readAnnotationSettings())
+
+		require.Equal(t, 15*24*time.Hour, cfg.AlertingAnnotationCleanupSetting.MaxAge)
+		require.Equal(t, int64(1000), cfg.AlertingAnnotationCleanupSetting.MaxCount)
+	})
+
+	t.Run("dashboard and API cleanup read from their own sections regardless of alerting fallback", func(t *testing.T) {
+		f := ini.Empty()
+		dash, err := f.NewSection("annotations.dashboard")
+		require.NoError(t, err)
+		_, err = dash.NewKey("max_annotations_to_keep", "100")
+		require.NoError(t, err)
+		api, err := f.NewSection("annotations.api")
+		require.NoError(t, err)
+		_, err = api.NewKey("max_age", "7d")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.Raw = f
+		require.NoError(t, cfg.readAnnotationSettings())
+
+		require.Equal(t, int64(100), cfg.DashboardAnnotationCleanupSettings.MaxCount)
+		require.Equal(t, 7*24*time.Hour, cfg.APIAnnotationCleanupSettings.MaxAge)
+	})
+}
