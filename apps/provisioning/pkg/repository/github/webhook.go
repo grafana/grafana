@@ -32,30 +32,20 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
-	*repository.WebhookHandler
-	config      *provisioning.Repository
-	owner       string
-	repo        string
-	gh          Client
-	webhookURL  string
-	secret      common.RawSecureValue
-	replayCache *replayCache
+	config     *provisioning.Repository
+	owner      string
+	repo       string
+	gh         Client
+	webhookURL string
+	secret     common.RawSecureValue
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
-	incrementalPolicy repository.IncrementalSyncPolicy,
-	replay *replayCache,
 ) GithubWebhookRepository {
-	// Defensive: callers should pass the factory-owned cache, but never leave
-	// Webhook with a nil cache to dereference.
-	if replay == nil {
-		replay = newReplayCache(defaultReplayCacheTTL)
-	}
 	cfg := basic.Config()
-	slug := fmt.Sprintf("%s/%s", basic.Owner(), basic.Repo())
 	r := &githubWebhookRepository{
 		GithubRepository: basic,
 		config:           cfg,
@@ -64,47 +54,45 @@ func NewGithubWebhookRepository(
 		gh:               basic.Client(),
 		webhookURL:       webhookURL,
 		secret:           secret,
-		replayCache:      replay,
 	}
-	r.WebhookHandler = repository.NewWebhookHandler(
-		r.processRequest, cfg.Status.Webhook, cfg.GetName(), slug,
-		cfg.Spec.GitHub.Branch, cfg.Spec.Sync.Enabled, incrementalPolicy,
-	)
 	return r
 }
 
-func (r *githubWebhookRepository) processRequest(ctx context.Context, req *http.Request) (repository.WebhookEvent, error) {
+func (r *githubWebhookRepository) Slug() string {
+	return fmt.Sprintf("%s/%s", r.owner, r.repo)
+}
+
+func (r *githubWebhookRepository) VerifyRequest(req *http.Request) (*repository.VerifiedWebhookRequest, error) {
 	if r.secret.IsZero() {
-		return repository.WebhookEvent{}, fmt.Errorf("missing webhook secret")
+		return nil, fmt.Errorf("missing webhook secret")
 	}
 
 	payload, err := github.ValidatePayload(req, []byte(r.secret))
 	if err != nil {
-		return repository.WebhookEvent{}, apierrors.NewUnauthorized("invalid signature")
+		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	// Replay protection: key on the validated signature, not the
-	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
-	// only, so the delivery ID is unauthenticated — an attacker replaying a
-	// captured (body, signature) could simply pick a fresh delivery ID and
-	// slip past a delivery-ID cache. The signature, by contrast, is bound to
-	// both the signed body and the repository's unique secret, so it cannot be
-	// forged or collided across repositories.
-	//
-	// Silently drop a request whose signature we have already processed within
-	// the cache TTL — returning a generic 200 avoids confirming to a replay
-	// attacker that the captured payload was a real previously-processed
-	// delivery.
+	// Replay key: the validated signature, not the X-GitHub-Delivery header.
+	// GitHub computes the HMAC over the request body only, so the delivery ID is
+	// unauthenticated — an attacker replaying a captured (body, signature) could
+	// pick a fresh delivery ID and slip past a delivery-ID cache. The signature,
+	// by contrast, is bound to both the signed body and the repository's unique
+	// secret. The dispatcher drops deliveries whose key it has already seen.
 	signature := req.Header.Get(github.SHA256SignatureHeader)
 	if signature == "" {
 		signature = req.Header.Get(github.SHA1SignatureHeader)
 	}
-	if r.replayCache.seenOrAdd(signature) {
-		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
-		return repository.WebhookEvent{Type: repository.WebhookEventReplay}, nil
-	}
 
-	event, err := github.ParseWebHook(github.WebHookType(req), payload)
+	return &repository.VerifiedWebhookRequest{
+		Payload:   payload,
+		Header:    req.Header,
+		ReplayKey: signature,
+	}, nil
+}
+
+func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	eventType := req.Header.Get(github.EventTypeHeader)
+	event, err := github.ParseWebHook(eventType, req.Payload)
 	if err != nil {
 		return repository.WebhookEvent{}, apierrors.NewBadRequest("invalid payload")
 	}
@@ -150,7 +138,7 @@ func (r *githubWebhookRepository) processRequest(ctx context.Context, req *http.
 	default:
 		return repository.WebhookEvent{
 			Type:    repository.WebhookEventUnsupported,
-			Message: fmt.Sprintf("unsupported messageType: %s", github.WebHookType(req)),
+			Message: fmt.Sprintf("unsupported messageType: %s", eventType),
 		}, nil
 	}
 }

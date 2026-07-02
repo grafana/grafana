@@ -9,7 +9,7 @@ import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scene
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { type DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 

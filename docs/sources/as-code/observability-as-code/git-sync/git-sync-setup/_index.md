@@ -236,15 +236,9 @@ In the **Webhook options** menu, you can type in an URL to override the auto-det
 
 You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
-### Advanced commit options
+### Signed commit option
 
-Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys. For more details on how to create your keys for Git authentication, refer to the official documentation at [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
-
-Follow the UI wizard to set up any of these options, and refer to the example below for more details.
-
-#### Pre-requirements
-
-In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need your account's signing key, name and email to set up verification.
+Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
 {{< admonition type="note" >}}
 
@@ -254,6 +248,18 @@ For the moment, Git Sync doesn't support:
 - Verification of individual accounts.
 
 {{< /admonition >}}
+
+Follow the UI wizard to set up any of these options, and refer to the example below for more details.
+
+#### Pre-requirements
+
+In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need your account's signing key, name and email to set up verification.
+
+For more details on how to create your keys for Git authentication, refer to the official documentation:
+
+- GitHub: [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification)
+- GitLab: [Signed commits](https://docs.gitlab.com/user/project/repository/signed_commits/)
+- Bitbucket: [Controlling access to code](https://confluence.atlassian.com/bitbucketserver/controlling-access-to-code-776639770.html)
 
 #### Example: Sign your commits with an SSH key
 

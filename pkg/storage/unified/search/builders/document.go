@@ -7,6 +7,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	sdkResource "github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -97,6 +98,36 @@ func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resou
 		out[c.Name] = c
 	}
 	return out
+}
+
+// iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
+// is wired the same way: its search fields come from the generated IAM manifest
+// and its documents are extracted by the standard builder, so only the resource
+// and its field set differ per kind.
+func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefinition) (resource.DocumentBuilderInfo, error) {
+	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(searchFields))
+	if err != nil {
+		return resource.DocumentBuilderInfo{}, err
+	}
+
+	gvr := ri.GroupVersionResource()
+	gr := ri.GroupResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: searchFields},
+		// The preferred version for this resource. Documents stored with an
+		// apiVersion the server does not recognise fall back to it when their
+		// fields are extracted. IAM kinds serve a single version, so that is the
+		// value here.
+		map[schema.GroupResource]string{gr: gvr.Version},
+	)
+
+	return resource.DocumentBuilderInfo{
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }
 
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.

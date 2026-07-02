@@ -255,6 +255,11 @@ func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, res
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
 // skipSelf: if true, skips the permissions of the folder itself (used for folders to avoid inheriting their own permissions)
 func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface, skipSelf bool) (getResourcePermissionsResponse, error) {
+	// Read inherited permissions with a service identity: the caller is authorized to read this
+	// resource's permissions but may lack permissions:read on ancestor folders, which would otherwise
+	// drop inherited assignments. Mirrors the subject lookup in convertK8sResourcePermissionToDTO.
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
 		Version:  folderv1.APIVersion,

@@ -80,22 +80,6 @@ func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]st
 	return out
 }
 
-// SearchFieldProvidersForBuilders returns a lower-cased "group/resource" map
-// of SearchFieldsProvider values collected from the given DocumentBuilderInfo
-// entries. Builders with a nil provider are skipped, so the map's keys list
-// the kinds whose bleve mapping is provider-driven.
-func SearchFieldProvidersForBuilders(builders []DocumentBuilderInfo) map[string]SearchFieldsProvider {
-	out := map[string]SearchFieldsProvider{}
-	for _, b := range builders {
-		if b.SearchFieldsProvider == nil {
-			continue
-		}
-		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
-		out[key] = b.SearchFieldsProvider
-	}
-	return out
-}
-
 type DocumentBuilderSupplier interface {
 	GetDocumentBuilders() ([]DocumentBuilderInfo, error)
 }

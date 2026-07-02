@@ -13,8 +13,8 @@ import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSe
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
-import { type DashboardEditPane } from '../DashboardEditPane';
 import { getEditableElementFor } from '../shared';
+import { type DashboardEditPaneLike } from '../types';
 import { useOutlineRename } from '../useOutlineRename';
 
 import { type DashboardOutline } from './DashboardOutline';
@@ -22,7 +22,7 @@ import { DashboardOutlineNodeButtonContent } from './DashboardOutlineNodeButtonC
 
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   outline: DashboardOutline;
   isEditing: boolean | undefined;
   depth: number;
