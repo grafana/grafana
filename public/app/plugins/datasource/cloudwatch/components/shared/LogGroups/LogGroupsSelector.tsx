@@ -70,8 +70,8 @@ export const LogGroupsSelector = ({
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
-    if (isModalOpen) {
-    } else {
+
+    if (!isModalOpen) {
       setSelectedLogGroups(selectedLogGroups);
       searchFn(searchPhrase, searchAccountId);
     }
