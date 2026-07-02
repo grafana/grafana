@@ -39,4 +39,4 @@ frontendService.reducedBootDataAPI:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
