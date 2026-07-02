@@ -1010,10 +1010,10 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:            t.TempDir(),
-		FileThreshold:   threshold, // use in-memory for tests
-		PostRankAuthzFn: func() bool { return true },
-		PostRankAuthz:   cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1471,10 +1471,10 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Resource:  "folders",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:            t.TempDir(),
-		FileThreshold:   threshold, // use in-memory for tests
-		PostRankAuthzFn: func() bool { return true },
-		PostRankAuthz:   cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)

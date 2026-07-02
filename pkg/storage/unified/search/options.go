@@ -116,9 +116,7 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
-			PostRankAuthzFn: func() bool {
-				return cfg.SearchPostRankAuthz
-			},
+			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,

@@ -124,13 +124,13 @@ type BleveOptions struct {
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
 
-	// PostRankAuthzFn returns whether the search_post_rank_authz config option
-	// is enabled. Evaluated per-search. When nil, the option is treated as
-	// disabled and the in-searcher permissionScopedQuery path is used.
-	PostRankAuthzFn func() bool
+	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
+	// path. Set from the search_post_rank_authz config option at backend init.
+	// When false, the in-searcher permissionScopedQuery path is used.
+	PostRankAuthzEnabled bool
 
 	// PostRankAuthz tunes the post-filter authorization path used when
-	// PostRankAuthzFn returns true. Zero values fall back to the defaults in
+	// PostRankAuthzEnabled is true. Zero values fall back to the defaults in
 	// PostRankAuthzConfig.effective().
 	PostRankAuthz PostRankAuthzConfig
 }
@@ -1633,10 +1633,10 @@ type bleveIndex struct {
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
 
-	// postRankAuthzFn returns whether the post-ranking authz path is enabled.
-	// nil / false falls back to the in-searcher permissionScopedQuery path.
-	postRankAuthzFn func() bool
-	postRankAuthz   PostRankAuthzConfig
+	// postRankAuthzEnabled enables the post-ranking authz path. When false,
+	// the in-searcher permissionScopedQuery path is used.
+	postRankAuthzEnabled bool
+	postRankAuthz        PostRankAuthzConfig
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1650,18 +1650,18 @@ func (b *bleveBackend) newBleveIndex(
 	logger log.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
-		key:               key,
-		index:             index,
-		indexStorage:      newIndexType,
-		fields:            fields,
-		allFields:         allFields,
-		standard:          standardSearchFields,
-		logger:            logger,
-		updaterFn:         updaterFn,
-		minUpdateInterval: b.opts.IndexMinUpdateInterval,
-		indexMetrics:      b.indexMetrics,
-		postRankAuthzFn:   b.opts.PostRankAuthzFn,
-		postRankAuthz:     b.opts.PostRankAuthz.effective(),
+		key:                  key,
+		index:                index,
+		indexStorage:         newIndexType,
+		fields:               fields,
+		allFields:            allFields,
+		standard:             standardSearchFields,
+		logger:               logger,
+		updaterFn:            updaterFn,
+		minUpdateInterval:    b.opts.IndexMinUpdateInterval,
+		indexMetrics:         b.indexMetrics,
+		postRankAuthzEnabled: b.opts.PostRankAuthzEnabled,
+		postRankAuthz:        b.opts.PostRankAuthz.effective(),
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -2008,7 +2008,7 @@ func (b *bleveIndex) Search(
 	// runner authorizes app-side in rank order, and stops once the page is full.
 	// Count-only (Limit==0), facet, and SearchBefore requests stay on the
 	// in-searcher path (exact totals / exact facets).
-	postRank := b.postRankAuthzFn != nil && b.postRankAuthzFn() && access != nil &&
+	postRank := b.postRankAuthzEnabled && access != nil &&
 		req.Limit > 0 && len(req.SearchBefore) == 0 && len(req.Facet) == 0
 
 	conversionStarts := time.Now()
