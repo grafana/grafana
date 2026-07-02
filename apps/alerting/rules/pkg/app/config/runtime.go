@@ -47,10 +47,8 @@ type RuntimeConfig struct {
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
 	// ValidateExternalRulerSyncDatasource is the admission check for the Config
-	// kind's spec.externalRulerSync.datasourceUid. Implemented in the parent
+	// kind's spec.externalRulerSync.datasourceUid, implemented in the parent
 	// process (pkg/registry/apps/alerting/rules) where the datasource service and
-	// HTTP transport are in scope: it verifies the feature flag, rejects writes
-	// while the operator ini override is set, and probes the datasource's ruler
-	// config API. Nil disables the check (returns no error).
+	// HTTP transport are in scope. Nil disables the check.
 	ValidateExternalRulerSyncDatasource func(ctx context.Context, uid string) error
 }

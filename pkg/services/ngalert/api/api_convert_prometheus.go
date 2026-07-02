@@ -383,8 +383,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	logger := srv.logger.FromContext(c.Req.Context())
 
 	// Refuse manual rule imports when external ruler sync is configured for this
-	// org: the sync worker owns the org's converted rules and would overwrite or
-	// prune anything imported here. Mirrors the Alertmanager convert-API 409 gate.
+	// org, mirroring the Alertmanager convert-API 409 gate. This keeps a single
+	// writer of converted rules for simplicity and parity with the AM side;
+	// prune safety itself is handled separately by SourceIdentifier scoping.
 	if srv.rulerSync != nil {
 		syncConfigured, err := srv.rulerSync.IsConfiguredForOrg(c.Req.Context(), c.GetOrgID())
 		if err != nil {
