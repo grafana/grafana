@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -27,9 +28,9 @@ import (
 )
 
 var (
-	_ dynamic.ResourceInterface = (*mockDynamicClient)(nil)
-	_ repository.Repository     = (*mockRepo)(nil)
-	_ repository.Hooks          = (*mockRepo)(nil)
+	_ dynamic.ResourceInterface    = (*mockDynamicClient)(nil)
+	_ repository.Repository        = (*mockRepo)(nil)
+	_ repository.WebhookRepository = (*mockRepo)(nil)
 )
 
 type mockDynamicClient struct {
@@ -93,26 +94,14 @@ type mockRepo struct {
 	onDeleteFunc func(ctx context.Context) error
 }
 
-func (m mockRepo) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
-	panic("not needed for testing")
-}
-
-func (m mockRepo) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	panic("not needed for testing")
-}
-
-func (m mockRepo) OnDelete(ctx context.Context) error {
-	if m.onDeleteFunc != nil {
-		return m.onDeleteFunc(ctx)
-	}
-	return nil
-}
-
 func (m mockRepo) Config() *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.name,
 			Namespace: m.namespace,
+		},
+		Status: provisioning.RepositoryStatus{
+			Webhook: &provisioning.WebhookStatus{ID: 1},
 		},
 	}
 }
@@ -123,6 +112,49 @@ func (m mockRepo) Validate() field.ErrorList {
 
 func (m mockRepo) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	panic("not needed for testing")
+}
+
+func (m mockRepo) Slug() string { return "" }
+
+func (m mockRepo) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
+	panic("not needed for testing")
+}
+
+func (m mockRepo) ProcessRequest(context.Context, *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	panic("not needed for testing")
+}
+
+func (m mockRepo) WebhookClient() repository.WebhookClient {
+	return mockWebhookClient{onDeleteFunc: m.onDeleteFunc}
+}
+
+func (m mockRepo) WebhookURL() string { return "" }
+
+func (m mockRepo) SubscribedEvents() []string { return nil }
+
+// mockWebhookClient routes DeleteWebhook to the repo's onDeleteFunc so the
+// cleanup finalizer's deletion path can be exercised.
+type mockWebhookClient struct {
+	onDeleteFunc func(ctx context.Context) error
+}
+
+func (m mockWebhookClient) CreateWebhook(context.Context, string, []string, string) (repository.WebhookConfig, error) {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) EditWebhook(context.Context, repository.WebhookConfig) error {
+	panic("not needed for testing")
+}
+
+func (m mockWebhookClient) DeleteWebhook(ctx context.Context, _ int64) error {
+	if m.onDeleteFunc != nil {
+		return m.onDeleteFunc(ctx)
+	}
+	return nil
 }
 
 func TestFinalizer_process(t *testing.T) {
@@ -487,7 +519,7 @@ func TestFinalizer_process(t *testing.T) {
 				repository.RemoveOrphanResourcesFinalizer,
 				repository.CleanFinalizer,
 			},
-			expectedErr: "execute deletion hooks: " + assert.AnError.Error(),
+			expectedErr: "execute deletion hooks: delete webhook: " + assert.AnError.Error(),
 		},
 	}
 
