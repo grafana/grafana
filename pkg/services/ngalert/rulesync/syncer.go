@@ -194,7 +194,10 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 	if rc.queryUID == "" {
-		return // not configured for this org
+		// Not configured here: seed the singleton (Unknown/NotConfigured) so it
+		// exists without a manual create, mirroring the AM sync.
+		s.recordNotConfigured(ctx, orgID)
+		return
 	}
 
 	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
@@ -428,6 +431,17 @@ func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, or
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
+}
+
+// recordNotConfigured seeds the org's Config singleton (Unknown/NotConfigured)
+// when the feature is on but no datasource is configured. Best-effort.
+func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
+	now := time.Now()
+	if err := s.configStore.WriteStatus(ctx, orgID, func(prev *configStatus) configStatus {
+		return computeNotConfiguredStatus(prev, now)
+	}); err != nil {
+		s.logger.Warn("Failed to seed external ruler sync status", "org_id", orgID, "error", err)
+	}
 }
 
 // recordPromotionCommitted writes the terminal PromotionCommitted status once

@@ -31,6 +31,10 @@ const conditionReasonSyncSucceeded = "SyncSucceeded"
 // (the rule-side analogue of the Alertmanager sync's MergeCommitted).
 const conditionReasonPromotionCommitted = "PromotionCommitted"
 
+// conditionReasonNotConfigured: flag on, but no datasource configured. Writing
+// it seeds the Config singleton (create-on-missing), mirroring the AM sync.
+const conditionReasonNotConfigured = "NotConfigured"
+
 // SyncReason categorises a sync failure. snake_case constant → Prometheus
 // `reason` metric label; PascalCase via ConditionReason() → k8s Condition
 // reason. Single source of truth: wrap errors in *SyncError, extract via
@@ -122,6 +126,34 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 // stops.
 func computePromotedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingrulesv0alpha1.ConfigStatus {
 	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromotionCommitted, "rules promoted to native Grafana rules; sync stopped", now)
+}
+
+// computeNotConfiguredStatus updates only the ExternalRulerSynced condition to
+// Unknown/NotConfigured, preserving prev; transition-only timestamp.
+func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+	st := alertingrulesv0alpha1.ConfigStatus{}
+	if prev != nil {
+		st = *prev
+		st.Conditions = append([]alertingrulesv0alpha1.ConfigCondition(nil), prev.Conditions...)
+	}
+
+	synced := alertingrulesv0alpha1.ConfigCondition{
+		Type:               conditionTypeExternalRulerSynced,
+		Status:             alertingrulesv0alpha1.ConfigConditionStatusUnknown,
+		LastTransitionTime: now.UTC().Format(time.RFC3339),
+		Reason:             conditionReasonNotConfigured,
+	}
+	for i, c := range st.Conditions {
+		if c.Type == conditionTypeExternalRulerSynced {
+			if c.Status == alertingrulesv0alpha1.ConfigConditionStatusUnknown {
+				synced.LastTransitionTime = c.LastTransitionTime // no flip → keep timestamp
+			}
+			st.Conditions[i] = synced
+			return st
+		}
+	}
+	st.Conditions = append(st.Conditions, synced)
+	return st
 }
 
 // buildSyncStatus folds an ExternalRulerSynced condition into prev. k8s

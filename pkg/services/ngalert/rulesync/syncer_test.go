@@ -164,7 +164,11 @@ func TestSyncOrg_NotConfigured(t *testing.T) {
 
 	s.SyncOrg(context.Background(), 1)
 	assert.Nil(t, rs.replaced, "nothing synced when not configured")
-	assert.Nil(t, cs.lastWrite, "no status written when not configured")
+	// Singleton still seeded (Unknown/NotConfigured), mirroring the AM sync.
+	require.NotNil(t, cs.lastWrite, "status seeded even when not configured")
+	cond := findSyncedCondition(t, *cs.lastWrite)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusUnknown, cond.Status)
+	assert.Equal(t, "NotConfigured", cond.Reason)
 }
 
 func TestSyncOrg_Dedup(t *testing.T) {
