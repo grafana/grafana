@@ -33,7 +33,6 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -44,9 +43,11 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
@@ -61,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -104,8 +106,9 @@ type APIBuilder struct {
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
-	features   featuremgmt.FeatureToggles
-	usageStats usagestats.Service
+	features             featuremgmt.FeatureToggles
+	usageStats           usagestats.Service
+	usageNamespaceLister usage.NamespaceLister
 
 	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
@@ -145,6 +148,13 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
+
+	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
+	// Instead of an apiserver-backed informer, each controller's handler is driven
+	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
+	// handler on each notification; the controllers re-fetch from the API in their
+	// reconcile. Otherwise the controllers use the apiserver informer.
+	natsSubscriber nats.Subscriber
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -303,12 +313,14 @@ func RegisterAPIService(
 	access authlib.AccessClient,
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
+	orgSvc org.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -369,6 +381,8 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -409,6 +423,8 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -700,6 +716,10 @@ func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
+func (b *APIBuilder) GetIncrementalPolicy() repository.IncrementalSyncPolicy {
+	return b.incrementalPolicy
+}
+
 func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 	return b.healthChecker
 }
@@ -932,15 +952,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Informer with resync interval used for health check and reconciliation
 			informerFactoryResyncInterval := 60 * time.Second
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, informerFactoryResyncInterval)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
-			go repoInformer.Informer().Run(postStartHookCtx.Done())
-			go jobInformer.Informer().Run(postStartHookCtx.Done())
-			go connInformer.Informer().Run(postStartHookCtx.Done())
-
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.repoLister.List, b.unified)
+			if nats.Enabled(b.natsSubscriber) {
+				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
+			}
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
@@ -1018,9 +1033,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
-			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("add job controller event handler: %w", err)
 			}
+			go jobSource.Run(postStartHookCtx.Done())
 
 			// Add any extra workers
 			workers = append(workers, b.extraWorkers...)
@@ -1076,9 +1093,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
+			// The repository delta source and the getter it backs.
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				repoInformer.Lister(),
+				reconcileRepoGetter,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1093,14 +1112,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
+				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
 			)
-			repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
+			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {
 				return fmt.Errorf("add repository controller event handler: %w", err)
 			}
+			go repoSource.Run(postStartHookCtx.Done())
 
 			// Wait for the cache to sync off the hot path so we don't block
 			// apiserver startup; the controller only starts its workers once
@@ -1116,9 +1137,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			connController := controller.NewConnectionController(
-				b.GetClient(),
-				connInformer.Lister(),
+				connGetter,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
@@ -1126,10 +1147,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.registry,
 			)
-			connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
+			connReg, err := connSource.AddEventHandler(connController.EventHandler())
 			if err != nil {
 				return fmt.Errorf("add connection controller event handler: %w", err)
 			}
+			go connSource.Run(postStartHookCtx.Done())
 
 			// Same as the repository controller above: wait for cache sync off
 			// the hot path so apiserver startup isn't blocked.
@@ -1142,19 +1164,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
-				// Create HistoryJobController for cleanup of old job history entries
-				// Separate informer factory for HistoryJob cleanup with resync interval
+				// Create HistoryJobController for cleanup of old job history entries.
+				// Its resync interval is the history expiration, and cleanup is
+				// resync-driven.
 				historyJobExpiration := 10 * time.Minute
-				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
-				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
-				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
 				historyJobController := appcontroller.NewHistoryJobController(
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
+				historySource := informer.NewHistoricJobDeltaSource(b.natsSubscriber, c, historyJobExpiration)
+				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}
+				go historySource.Run(postStartHookCtx.Done())
 			}
 
 			return nil

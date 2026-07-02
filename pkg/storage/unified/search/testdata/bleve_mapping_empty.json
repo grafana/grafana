@@ -12,11 +12,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       },
@@ -245,11 +242,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       }

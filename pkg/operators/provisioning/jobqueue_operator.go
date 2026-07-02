@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,14 +40,14 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
+	// Jobs informer and controller for insert notifications. Under the NATS watch
+	// the source is a NATS-backed informer; otherwise an apiserver-backed one. Both
+	// satisfy DeltaSource, so the rest of the wiring is identical.
 	jobController := controller.NewJobController()
-	if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
+	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
@@ -90,10 +90,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 	}()
 
-	// Start informers
-	go jobInformerFactory.Start(ctx.Done())
+	// Start the informer and wait for its cache to sync.
+	go jobInformer.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), jobInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
