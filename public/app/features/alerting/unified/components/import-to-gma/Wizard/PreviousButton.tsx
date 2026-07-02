@@ -1,7 +1,7 @@
 import { Button } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
-import { getPreviousStep, isFirstStep } from './constants';
+import { getPreviousStep, isFirstStep } from './steps';
 import { useImportMethod } from './useImportMethod';
 
 interface PreviousButtonProps {

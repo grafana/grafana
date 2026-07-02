@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
-import { getNextStep, isLastStep } from './constants';
+import { getNextStep, isLastStep } from './steps';
 import { useImportMethod } from './useImportMethod';
 
 interface NextButtonProps {

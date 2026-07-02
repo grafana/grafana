@@ -1,4 +1,4 @@
-import { getNextStep, getPreviousStep, getWizardSteps, isAutoSyncMethod, isFirstStep, isLastStep } from './constants';
+import { getNextStep, getPreviousStep, getWizardSteps, isAutoSyncMethod, isFirstStep, isLastStep } from './steps';
 import { StepKey } from './types';
 
 describe('getWizardSteps', () => {

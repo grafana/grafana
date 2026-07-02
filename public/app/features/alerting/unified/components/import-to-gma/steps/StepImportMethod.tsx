@@ -23,14 +23,13 @@ export function isAutoSyncSegmentEnabled(): boolean {
 }
 
 function getMethodOptions(includeAutoSync: boolean): Array<SelectableValue<ImportMethod>> {
-  const options: Array<SelectableValue<ImportMethod>> = [];
+  const options: Array<SelectableValue<ImportMethod>> = [
+    { value: 'stage', label: t('alerting.import-to-gma.method.stage', 'Stage') },
+    { value: 'promote', label: t('alerting.import-to-gma.method.promote', 'Promote') },
+  ];
   if (includeAutoSync) {
     options.push({ value: 'autosync', label: t('alerting.import-to-gma.method.autosync', 'Auto-sync') });
   }
-  options.push(
-    { value: 'stage', label: t('alerting.import-to-gma.method.stage', 'Stage') },
-    { value: 'promote', label: t('alerting.import-to-gma.method.promote', 'Promote') }
-  );
   return options;
 }
 

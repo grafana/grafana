@@ -8,7 +8,10 @@ import {
   setupAdminConfigGet,
   setupAlertmanagersStatus,
 } from 'app/features/alerting/unified/mocks/server/configure/admin_config';
-import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  mimirAlertmanagerDataSourcePayload,
+  setupDatasourcesEndpoint,
+} from 'app/features/alerting/unified/mocks/server/configure/datasources';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { type ImportFormValues } from '../ImportToGMA';
@@ -19,17 +22,7 @@ import { StepImportMethod } from './StepImportMethod';
 
 const server = setupMswServer();
 
-const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
-const MIMIR_DS_PAYLOAD = {
-  id: 1,
-  uid: MIMIR_DS_UID,
-  orgId: 1,
-  name: MIMIR_DS_NAME,
-  type: 'alertmanager',
-  url: 'http://localhost:9009',
-  jsonData: { implementation: 'mimir' },
-};
 
 function renderStep(method: ImportMethod = 'stage') {
   function Wrapper() {
@@ -92,6 +85,31 @@ describe('StepImportMethod — Auto-sync segment gating', () => {
   });
 });
 
+describe('StepImportMethod — option order', () => {
+  it('renders Stage then Promote when Auto-sync is unavailable', () => {
+    grantUserRole('Admin');
+    renderStep('stage');
+    const radios = screen.getAllByRole('radio');
+    expect(radios).toHaveLength(2);
+    expect(radios[0]).toHaveAccessibleName('Stage');
+    expect(radios[1]).toHaveAccessibleName('Promote');
+  });
+
+  describe('with the feature flag on', () => {
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
+    it('renders Stage, then Promote, then Auto-sync for org admins', () => {
+      grantUserRole('Admin');
+      renderStep('stage');
+      const radios = screen.getAllByRole('radio');
+      expect(radios).toHaveLength(3);
+      expect(radios[0]).toHaveAccessibleName('Stage');
+      expect(radios[1]).toHaveAccessibleName('Promote');
+      expect(radios[2]).toHaveAccessibleName('Auto-sync');
+    });
+  });
+});
+
 describe('StepImportMethod — Auto-sync panel', () => {
   testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
@@ -102,7 +120,7 @@ describe('StepImportMethod — Auto-sync panel', () => {
 
   it('lists only Mimir/Cortex data sources and blocks Next until one is selected', async () => {
     setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
-    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ name: MIMIR_DS_NAME })]);
 
     const { user } = renderStep('autosync');
 

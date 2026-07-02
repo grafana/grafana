@@ -10,7 +10,10 @@ import {
   setupAlertmanagersStatus,
   setupStatefulAdminConfig,
 } from 'app/features/alerting/unified/mocks/server/configure/admin_config';
-import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  mimirAlertmanagerDataSourcePayload,
+  setupDatasourcesEndpoint,
+} from 'app/features/alerting/unified/mocks/server/configure/datasources';
 
 import { type ImportFormValues } from '../ImportToGMA';
 import { StepperStateProvider, useStepperState } from '../Wizard/StepperState';
@@ -22,15 +25,6 @@ const server = setupMswServer();
 
 const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
-const MIMIR_DS_PAYLOAD = {
-  id: 1,
-  uid: MIMIR_DS_UID,
-  orgId: 1,
-  name: MIMIR_DS_NAME,
-  type: 'alertmanager',
-  url: 'http://localhost:9009',
-  jsonData: { implementation: 'mimir' },
-};
 
 const postState: AdminConfigPostState = { lastPayload: null };
 
@@ -39,7 +33,7 @@ beforeEach(() => {
   grantUserRole('Admin');
   setupAlertmanagersStatus(server);
   setupStatefulAdminConfig(server, postState);
-  setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+  setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ uid: MIMIR_DS_UID, name: MIMIR_DS_NAME })]);
 });
 
 function ActiveStepProbe() {

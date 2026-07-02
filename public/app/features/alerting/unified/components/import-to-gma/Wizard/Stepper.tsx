@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
-import { getWizardSteps } from './constants';
+import { getWizardSteps } from './steps';
 import { type StepKey, StepState } from './types';
 import { useImportMethod } from './useImportMethod';
 

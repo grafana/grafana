@@ -6,22 +6,13 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { setupMswServer } from '../../mockApi';
 import { grantUserRole } from '../../mocks';
 import { setupAdminConfigGet, setupAlertmanagersStatus } from '../../mocks/server/configure/admin_config';
-import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import { mimirAlertmanagerDataSourcePayload, setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 
 import { ImportWizardGate } from './ImportToGMA';
 
 const server = setupMswServer();
 
 const MIMIR_DS_UID = 'mimir-uid';
-const MIMIR_DS_PAYLOAD = {
-  id: 1,
-  uid: MIMIR_DS_UID,
-  orgId: 1,
-  name: 'Test Mimir Alertmanager',
-  type: 'alertmanager',
-  url: 'http://localhost:9009',
-  jsonData: { implementation: 'mimir' },
-};
 
 const ui = {
   blockTitle: byText(/auto-sync is enabled/i),
@@ -44,7 +35,7 @@ describe('Import wizard auto-sync gate', () => {
     beforeEach(() => {
       grantUserRole('Admin');
       setupAlertmanagersStatus(server);
-      setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+      setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ uid: MIMIR_DS_UID })]);
     });
 
     it('blocks the whole wizard and links to Settings when auto-sync is active', async () => {

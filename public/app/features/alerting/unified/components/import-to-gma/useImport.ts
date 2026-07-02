@@ -7,7 +7,7 @@ import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { stringifyErrorLike } from '../../utils/misc';
 
-import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/constants';
+import { MERGE_MATCHERS_LABEL_NAME } from './Wizard/steps';
 import type { ConvertAlertmanagerResponse, DryRunValidationResult, MergeStats, PromoteStatsSummary } from './types';
 
 interface ParsedAlertmanagerYaml {
