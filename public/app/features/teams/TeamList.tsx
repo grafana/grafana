@@ -305,7 +305,7 @@ const TeamList = () => {
       actions={
         !noTeams ? (
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            <Trans i18nKey="teams.team-list.new-team">New Team</Trans>
+            <Trans i18nKey="teams.team-list.new-team">New team</Trans>
           </LinkButton>
         ) : undefined
       }
