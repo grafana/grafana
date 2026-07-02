@@ -123,7 +123,7 @@ Replace the placeholders as follows:
   The numeric `id` field in the response is the stack ID.
   This Cloud API endpoint authenticates with a [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/cloud-api/), which is separate from the service account token that Terraform uses.
 
-Provide each input variable through a matching environment variable that follows Terraform's `TF_VAR_<variable_name>` convention.
+Provide each input variable through a matching environment variable that follows the Terraform `TF_VAR_<variable_name>` naming convention.
 The part after `TF_VAR_` is the name of the variable in your configuration: Terraform maps `TF_VAR_grafana_auth` to the `grafana_auth` variable, `TF_VAR_external_api_key` to `external_api_key`, and so on.
 You can also use a secrets manager or a `terraform.tfvars` file.
 Don't set variables in a file that you commit.
@@ -417,7 +417,7 @@ After you import a secure value, keep the following points in mind:
 
 ## Provision a keeper
 
-A _keeper_ defines where Grafana stores the encrypted material for your secure values. By default, Grafana uses the built-in system keeper, which encrypts values at rest in Grafana's database and requires no setup.
+A _keeper_ defines where Grafana stores the encrypted material for your secure values. By default, Grafana uses the built-in system keeper, which encrypts values at rest in the Grafana database and requires no setup.
 
 To store secrets in an external secret manager instead, provision a keeper with the [`grafana_apps_secret_keeper_v1beta1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_secret_keeper_v1beta1) resource.
 Grafana currently supports AWS Secrets Manager as a keeper.
