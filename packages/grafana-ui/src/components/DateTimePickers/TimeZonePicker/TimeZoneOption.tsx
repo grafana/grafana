@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type TimeZoneInfo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -24,6 +24,7 @@ const offsetClassName = 'tz-utc-offset';
 
 export interface SelectableZone extends SelectableValue<string> {
   searchIndex: string;
+  info: TimeZoneInfo;
 }
 
 export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
@@ -36,7 +37,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
     return null;
   }
 
-  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
+  const timeZoneInfo = data.info;
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
@@ -75,7 +76,7 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
     return null;
   }
 
-  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
+  const timeZoneInfo = data.info;
 
   return (
     <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
