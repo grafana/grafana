@@ -61,7 +61,8 @@ func TestMerge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Merge(tt.new, tt.legacy, tt.limit)
+			// TODO: add Merge cases covering deletedIDs suppression (option B tombstone handling).
+			got := Merge(tt.new, tt.legacy, nil, tt.limit)
 			require.Equal(t, tt.want, got)
 		})
 	}

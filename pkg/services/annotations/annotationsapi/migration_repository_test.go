@@ -1,5 +1,16 @@
 package annotationsapi
 
+// TODO: add tombstone (soft-delete) coverage for option B — legacy stays read-only and
+// new-store tombstones suppress the legacy copy. Cases to cover:
+//   - findByID: proxy.Get returns ErrGone -> no legacy fallback (empty result)
+//   - Update: proxy.Update returns ErrGone -> no legacy fallback, error propagates
+//   - Delete: proxy.Delete returns ErrGone -> idempotent success, no legacy.Delete call
+//   - Delete: proxy.Delete returns ErrNotFound -> falls back to legacy.Delete
+//   - search: proxy.List's deletedIDs suppress matching legacy items from the merged result
+//   - MigrationProxy.getByLegacyID: GetByLegacyID returns a tombstone -> ErrGone
+//   - MigrationProxy.List: tombstones split out of results into deletedIDs
+//   - mapClientErr: 410 -> ErrGone, 404 -> ErrNotFound, other -> passthrough
+
 import (
 	"context"
 	"errors"
@@ -61,11 +72,13 @@ type fakeProxy struct {
 
 	deleteErr   error
 	deleteCalls int
+
+	deletedIDs map[int64]bool
 }
 
-func (f *fakeProxy) List(_ context.Context, _ int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+func (f *fakeProxy) List(_ context.Context, _ int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, map[int64]bool, error) {
 	f.listCalls = append(f.listCalls, query)
-	return f.listResult, f.listErr
+	return f.listResult, f.deletedIDs, f.listErr
 }
 func (f *fakeProxy) Get(_ context.Context, _ int64, _ int64) (*annotations.ItemDTO, error) {
 	f.getCalls++
