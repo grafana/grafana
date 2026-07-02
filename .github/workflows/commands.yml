@@ -40,7 +40,7 @@ jobs:
           github_app: grafana-pr-automation
 
       - name: Run commands
-        uses: grafana/grafana-github-actions/commands@main
+        uses: grafana/grafana-github-actions/commands@3c62d35c5a66e730186a338e45aeb8fa784e2d56 # main
         with:
           metricsWriteAPIKey: ""
           token: ${{ steps.get-github-app-token.outputs.token }}

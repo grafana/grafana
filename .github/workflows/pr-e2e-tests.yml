@@ -24,7 +24,7 @@ jobs:
     outputs:
       run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -45,7 +45,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
@@ -65,7 +65,7 @@ jobs:
         run: make build-go
 
       - name: Upload backend build artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: grafana-backend
           path: bin/
@@ -81,7 +81,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
@@ -109,7 +109,7 @@ jobs:
         run: make build-js
 
       - name: Upload frontend build artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: grafana-frontend
           path: |
@@ -131,13 +131,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+      - uses: grafana/shared-workflows/actions/dockerhub-login@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         if: github.event.pull_request.head.repo.fork == false
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
@@ -170,7 +170,7 @@ jobs:
         shardTotal: [8]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
 
@@ -185,14 +185,14 @@ jobs:
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: grafana-backend
           path: grafana-server/bin
       - name: Fix binary permissions
         run: chmod +x grafana-server/bin/grafana*
       - name: Download frontend artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: grafana-frontend
           path: grafana-server/public
@@ -266,14 +266,14 @@ jobs:
           echo "View combined logs and HTML report in the 'All Playwright tests complete' job once all tests finish."
           exit 1
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: grafana-server-log-${{ matrix.shard }}
           path: grafana-server/grafana.log
           retention-days: 7
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: success() || failure()
         with:
           name: playwright-blob-${{ matrix.shard }}
@@ -293,7 +293,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -317,7 +317,7 @@ jobs:
       - name: Upload HTML report
         if: needs.run-playwright-tests.result != 'skipped'
         id: upload-html
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-html
           path: playwright-report
@@ -368,7 +368,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -406,12 +406,12 @@ jobs:
     runs-on: ubuntu-x64-small
     steps:
       - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
       - name: Setup Node.js

@@ -52,7 +52,7 @@ jobs:
           path: ./artifact
       - name: Log in to GCS
         id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@main
+        uses: grafana/shared-workflows/actions/login-to-gcs@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
           environment: ${{ inputs.environment }}
           service_account: ${{ inputs.service-account }}
@@ -77,7 +77,7 @@ jobs:
           fi
       - name: Upload artifacts
         if: steps.coalesce.outputs.has-artifacts == 'true'
-        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        uses: grafana/shared-workflows/actions/push-to-gcs@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
           bucket: ${{ inputs.bucket }}
           environment: ${{ inputs.environment }}

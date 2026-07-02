@@ -14,7 +14,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - name: Get GitHub App token
@@ -29,14 +29,14 @@ jobs:
           github_app: grafana-pr-approver
       - name: 'Get vault secrets'
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@a56a2305a3382563f57731863d97d17f9aadcde6 # main
         with:
             # Vault secret paths:
             # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token
             repo_secrets: |
                 CROWDIN_TOKEN=grafana-frontend-crowdin-token:access_token
       - name: Download from Crowdin
-        uses: grafana/grafana-github-actions/crowdin-download@main
+        uses: grafana/grafana-github-actions/crowdin-download@3c62d35c5a66e730186a338e45aeb8fa784e2d56 # main
         with:
           crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
           crowdin_project_id: 5

@@ -20,7 +20,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.frontend }}
       devenv-changed: ${{ steps.detect-changes.outputs.devenv }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-x64-small
     name: Generate golden files
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Go
@@ -51,7 +51,7 @@ jobs:
       run: make generate-golden-files
       working-directory: apps/dashboard
     - name: Upload golden files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: golden-files
         retention-days: 1
@@ -79,11 +79,11 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         total: [16]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Download golden files
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -114,7 +114,7 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         total: [16]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Get GitHub App token
@@ -127,7 +127,7 @@ jobs:
       with:
         token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Download golden files
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -150,7 +150,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -168,7 +168,7 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
         persist-credentials: false
     - name: Setup Node.js
@@ -198,7 +198,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
       - name: Check test suites
@@ -218,7 +218,7 @@ jobs:
   #   permissions:
   #     contents: read
   #   steps:
-  #   - uses: actions/checkout@v5
+  #   - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
   #     with:
   #       persist-credentials: false
   #   - name: Setup Docker
