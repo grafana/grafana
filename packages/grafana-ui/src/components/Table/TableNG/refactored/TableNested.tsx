@@ -165,7 +165,15 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   // Nested frames are always compiled via the V1 parser, matching legacy behavior — the proto
   // parser is only applied to the outer frame, never to nested rows.
-  const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
+  const nestedRows = useNestedRows(
+    rows,
+    nestedData,
+    true,
+    nestedFramesFieldName,
+    filter,
+    sortColumns,
+    protoParserEnabled
+  );
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
