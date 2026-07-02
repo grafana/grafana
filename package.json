@@ -448,7 +448,10 @@
     "@types/slate-react/immutable": "^4.0.0",
     "ws": "^8.20.1",
     "js-cookie": "^3.0.7",
-    "@opentelemetry/core": "2.8.0"
+    "@opentelemetry/core": "2.8.0",
+    "shell-quote": "1.9.0",
+    "tmp": "0.2.7",
+    "yaml@npm:^1.10.0": "1.10.3"
   },
   "workspaces": {
     "packages": [
