@@ -122,7 +122,8 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors *prometheus.CounterVec
+	ConflictErrors              *prometheus.CounterVec
+	WatchNotificationsPublished *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -132,6 +133,15 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name:      "optimistic_lock_conflicts_total",
 			Help:      "Total number of optimistic lock conflict errors in the KV storage backend",
 		}, []string{"resource", "action"}),
+		// Counted on every committed write that yields a notification, before the
+		// NATS-enabled guard, so it is the source-of-truth denominator for
+		// consumer-side completeness comparisons (published vs consumed) regardless
+		// of whether NATS delivery is enabled.
+		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Namespace: "storage_server",
+			Name:      "watch_notifications_published_total",
+			Help:      "Total number of watch notifications produced by committed writes, by group, resource, and action.",
+		}, []string{"group", "resource", "action"}),
 	}
 }
 
@@ -140,6 +150,13 @@ func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
 		return
 	}
 	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+}
+
+func (m *kvBackendMetrics) recordPublishedNotification(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}

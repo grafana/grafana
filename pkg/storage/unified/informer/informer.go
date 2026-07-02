@@ -3,11 +3,13 @@ package informer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -17,6 +19,40 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
+
+// Metrics is an optional hook the informer calls to record event-delivery
+// signals. It is deliberately transport-shaped rather than Prometheus-shaped so
+// the storage layer carries no provisioning-specific metric names: the caller
+// supplies an implementation that bakes in its own source label and turns a
+// resource version into a latency. All methods must be safe to call from the
+// informer's goroutines; a nil Metrics disables recording.
+//
+//   - ObserveLiveEvent   — a live notification arrived off the bus.
+//   - ObserveRelistEvent — the periodic re-list reconciled an add/delete the live
+//     stream did not deliver (initial reports the first list, whose "latency"
+//     is object age, not delivery delay).
+//   - ObserveReconnect   — the bus reconnected, a window in which live events may
+//     have been missed (and are recovered on the following re-list).
+type Metrics interface {
+	ObserveLiveEvent(resource, verb string, rv int64)
+	ObserveRelistEvent(resource, verb string, rv int64, initial bool)
+	ObserveReconnect(resource string)
+}
+
+// objectRV reads the resource version off an object's metadata as the int64 the
+// latency helpers expect, returning 0 (which callers treat as "unknown, skip
+// latency") when it is absent or unparseable.
+func objectRV(obj runtime.Object) int64 {
+	m, err := meta.Accessor(obj)
+	if err != nil {
+		return 0
+	}
+	rv, err := strconv.ParseInt(m.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return rv
+}
 
 // ObjectFunc builds a minimal typed object carrying just the identity from a
 // notification (namespace + name). The controllers treat a change notification
@@ -76,6 +112,9 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
+	// metrics records event-delivery signals; nil disables recording.
+	metrics Metrics
+
 	store Store
 
 	// retryInterval is how often Run retries opening the live subscription while it
@@ -111,7 +150,9 @@ type Informer struct {
 // store is the snapshot the informer refreshes on each re-list. Pass the same
 // Store to a reader (e.g. a getter serving a quota count) to share it; the
 // informer never reads it, so an unshared informer can be given its own.
-func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc) *Informer {
+//
+// metrics records event-delivery signals for dashboards; pass nil to disable.
+func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, namespace string, resync time.Duration, queueGroup string, store Store, newObject ObjectFunc, list ListFunc, metrics Metrics) *Informer {
 	if resync <= 0 {
 		resync = defaultResync
 	}
@@ -128,6 +169,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		newObject:     newObject,
 		list:          list,
 		log:           log.New("provisioning.informer.nats"),
+		metrics:       metrics,
 		store:         store,
 		retryInterval: defaultSubscribeRetry,
 		syncedCh:      make(chan struct{}),
@@ -272,9 +314,26 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 // the WithOnReconnect callback, so it must not block: the send is non-blocking
 // and a pending signal coalesces additional reconnects into the next re-list.
 func (n *Informer) signalReconnect() {
+	if n.metrics != nil {
+		n.metrics.ObserveReconnect(n.gvr.Resource)
+	}
 	select {
 	case n.reconnect <- struct{}{}:
 	default:
+	}
+}
+
+// notificationVerb maps a wire notification type onto the metric verb label.
+func notificationVerb(t resourcepb.WatchNotification_Type) string {
+	switch t {
+	case resourcepb.WatchNotification_ADDED:
+		return "add"
+	case resourcepb.WatchNotification_MODIFIED:
+		return "update"
+	case resourcepb.WatchNotification_DELETED:
+		return "delete"
+	default:
+		return "unknown"
 	}
 }
 
@@ -299,6 +358,10 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		}
 
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
+
+		if n.metrics != nil {
+			n.metrics.ObserveLiveEvent(n.gvr.Resource, notificationVerb(evt.Type), evt.ResourceVersion)
+		}
 
 		obj := n.newObject(evt.Namespace, evt.Name)
 		// ADDED becomes OnAdd; everything else (MODIFIED, or a DELETED whose object
@@ -349,6 +412,13 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		o := obj
 		key, _ := cache.MetaNamespaceKeyFunc(o)
 		if _, isNew := addedKeys[key]; isNew {
+			// An add the re-list surfaced that the live stream did not deliver
+			// (routed elsewhere under round-robin, or a hard-missed event); the
+			// unchanged updates are periodic re-delivery, not events, so only the
+			// reconciled add/delete set is recorded.
+			if n.metrics != nil {
+				n.metrics.ObserveRelistEvent(n.gvr.Resource, "add", objectRV(o), initial)
+			}
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 		} else {
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
@@ -357,6 +427,9 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 
 	for _, obj := range removed {
 		o := obj
+		if n.metrics != nil {
+			n.metrics.ObserveRelistEvent(n.gvr.Resource, "delete", objectRV(o), initial)
+		}
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	return nil
