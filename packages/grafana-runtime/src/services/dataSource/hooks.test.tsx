@@ -6,7 +6,13 @@ import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
-import { useDataSourceInstance, useDataSourceInstanceList, useDataSourceInstanceSettings } from './hooks';
+import {
+  useDataSourceInstance,
+  useDataSourceInstanceList,
+  useDataSourceInstanceSettings,
+  useDefaultDataSourceInstanceListItem,
+  useHasDataSourceInstance,
+} from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
@@ -146,5 +152,41 @@ describe('useDataSourceInstance', () => {
     const { result } = renderHook(() => useDataSourceInstance('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
+  });
+});
+
+describe('useDefaultDataSourceInstanceListItem', () => {
+  it('starts loading then resolves to the default instance of the type', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('test-db'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item?.name).toBe('Bravo');
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to undefined for an unknown type', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item).toBeUndefined();
+  });
+});
+
+describe('useHasDataSourceInstance', () => {
+  it('starts loading then resolves to true for an existing type', async () => {
+    const { result } = renderHook(() => useHasDataSourceInstance('test-db'));
+
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasInstance).toBe(true);
+    expect(result.current.error).toBeUndefined();
+  });
+
+  it('resolves to false for an unknown type', async () => {
+    const { result } = renderHook(() => useHasDataSourceInstance('nonexistent'));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasInstance).toBe(false);
   });
 });
