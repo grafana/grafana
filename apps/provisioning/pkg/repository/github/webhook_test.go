@@ -12,7 +12,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -29,79 +28,63 @@ func TestParseWebhooks(t *testing.T) {
 	tests := []struct {
 		messageType string
 		name        string
-		expected    provisioning.WebhookResponse
+		expected    repo.WebhookEvent
 	}{
-		{"ping", "check", provisioning.WebhookResponse{
-			Code: http.StatusOK,
+		{"ping", "check", repo.WebhookEvent{
+			Type: repo.WebhookEventPing,
 		}},
-		{"pull_request", "opened", provisioning.WebhookResponse{
-			Code: http.StatusAccepted, // 202
-			Job: &provisioning.JobSpec{
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPullRequest,
-				PullRequest: &provisioning.PullRequestJobOptions{
-					Ref:  "dashboard/1733653266690",
-					Hash: "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
-					PR:   12,
-					URL:  "https://github.com/grafana/git-ui-sync-demo/pull/12",
-				},
-			},
+		{"pull_request", "opened", repo.WebhookEvent{
+			Type:      repo.WebhookEventPullRequest,
+			RepoSlug:  "grafana/git-ui-sync-demo",
+			Branch:    "main",
+			Action:    repo.PullRequestActionOpened,
+			PRNumber:  12,
+			PRURL:     "https://github.com/grafana/git-ui-sync-demo/pull/12",
+			SourceRef: "dashboard/1733653266690",
+			Hash:      "ab5446a53df9e5f8bdeed52250f51fad08e822bc",
 		}},
-		{"push", "different_branch", provisioning.WebhookResponse{
-			Code: http.StatusOK, // we don't care about a branch that isn't the one we configured
+		{"push", "different_branch", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "not-main",
+			TotalChanges: 1,
 		}},
-		{"push", "nothing_relevant", provisioning.WebhookResponse{
-			Code: http.StatusAccepted,
-			Job: &provisioning.JobSpec{ // we want to always push a sync job
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPull,
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: true,
-				},
-			},
+		{"push", "nothing_relevant", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "main",
+			TotalChanges: 1,
 		}},
-		{"push", "nested", provisioning.WebhookResponse{
-			Code: http.StatusAccepted,
-			Job: &provisioning.JobSpec{
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPull,
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: true,
-				},
-			},
+		{"push", "nested", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "main",
+			TotalChanges: 5,
 		}},
-		{"push", "keep_file_only", provisioning.WebhookResponse{
-			Code: http.StatusAccepted,
-			Job: &provisioning.JobSpec{
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPull,
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: false,
-				},
-			},
+		{"push", "keep_file_only", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "main",
+			DeletedPaths: []string{"empty-folder/.keep"},
+			TotalChanges: 1,
 		}},
-		{"push", "keep_file_with_others", provisioning.WebhookResponse{
-			Code: http.StatusAccepted,
-			Job: &provisioning.JobSpec{
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPull,
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: true,
-				},
-			},
+		{"push", "keep_file_with_others", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "main",
+			DeletedPaths: []string{"dashboards/.keep", "dashboards/dashboard1.json", "dashboards/dashboard2.json"},
+			TotalChanges: 3,
 		}},
-		{"push", "multiple_keep_files", provisioning.WebhookResponse{
-			Code: http.StatusAccepted,
-			Job: &provisioning.JobSpec{
-				Repository: "unit-test-repo",
-				Action:     provisioning.JobActionPull,
-				Pull: &provisioning.SyncJobOptions{
-					Incremental: false,
-				},
-			},
+		{"push", "multiple_keep_files", repo.WebhookEvent{
+			Type:         repo.WebhookEventPush,
+			RepoSlug:     "grafana/git-ui-sync-demo",
+			Branch:       "main",
+			DeletedPaths: []string{"empty-folder1/.keep", "dashboards-to-delete/.keep", "dashboards-to-delete/dashboard.json"},
+			TotalChanges: 3,
 		}},
-		{"issue_comment", "created", provisioning.WebhookResponse{
-			Code: http.StatusNotImplemented,
+		{"issue_comment", "created", repo.WebhookEvent{
+			Type:    repo.WebhookEventUnsupported,
+			Message: "unsupported messageType: issue_comment",
 		}},
 	}
 
@@ -125,13 +108,10 @@ func TestParseWebhooks(t *testing.T) {
 				Webhook: &provisioning.WebhookStatus{},
 			},
 		},
-		owner:       "grafana",
-		repo:        "git-ui-sync-demo",
-		secret:      common.RawSecureValue("webhook-secret"),
-		replayCache: newReplayCache(time.Hour),
+		owner:  "grafana",
+		repo:   "git-ui-sync-demo",
+		secret: common.RawSecureValue("webhook-secret"),
 	}
-	gh.WebhookHandler = repo.NewWebhookHandler(gh.processRequest, gh.config.Status.Webhook, gh.config.GetName(),
-		"grafana/git-ui-sync-demo", gh.config.Spec.GitHub.Branch, gh.config.Spec.Sync.Enabled, repo.IncrementalSyncPolicy{})
 
 	for _, tt := range tests {
 		name := fmt.Sprintf("webhook-%s-%s.json", tt.messageType, tt.name)
@@ -140,56 +120,15 @@ func TestParseWebhooks(t *testing.T) {
 			payload, err := os.ReadFile(path.Join("testdata", name))
 			require.NoError(t, err)
 
-			rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
+			event, err := verifyAndProcess(t, gh, signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
 			require.NoError(t, err)
 
-			require.Equal(t, tt.expected.Code, rsp.Code)
-			require.Equal(t, tt.expected.Job, rsp.Job)
+			require.Equal(t, tt.expected, event)
 		})
 	}
 }
 
-func TestParsePushEvent_LargeDiffForcesFullSync(t *testing.T) {
-	gh := &githubWebhookRepository{
-		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "unit-test-repo",
-			},
-			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Enabled: true,
-				},
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL:    "https://github.com/grafana/git-ui-sync-demo",
-					Branch: "main",
-				},
-			},
-			Status: provisioning.RepositoryStatus{
-				Webhook: &provisioning.WebhookStatus{},
-			},
-		},
-		owner:       "grafana",
-		repo:        "git-ui-sync-demo",
-		secret:      common.RawSecureValue("webhook-secret"),
-		replayCache: newReplayCache(time.Hour),
-	}
-	gh.WebhookHandler = repo.NewWebhookHandler(gh.processRequest, gh.config.Status.Webhook, gh.config.GetName(),
-		"grafana/git-ui-sync-demo", gh.config.Spec.GitHub.Branch, gh.config.Spec.Sync.Enabled, repo.NewIncrementalSyncPolicy(false, 5))
-
-	// nolint:gosec
-	payload, err := os.ReadFile(path.Join("testdata", "webhook-push-large_diff.json"))
-	require.NoError(t, err)
-
-	rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "", string(payload)))
-	require.NoError(t, err)
-
-	require.Equal(t, http.StatusAccepted, rsp.Code)
-	require.NotNil(t, rsp.Job)
-	require.NotNil(t, rsp.Job.Pull)
-	require.False(t, rsp.Job.Pull.Incremental, "large diff should force full sync when above threshold")
-}
-
-func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
+func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 	pushPayload := `{
 		"ref": "refs/heads/main",
 		"repository": {
@@ -197,7 +136,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		}
 	}`
 	// A byte-different but still valid push payload — produces a different
-	// HMAC signature, so it is a distinct (non-replayed) request.
+	// HMAC signature, so it yields a different replay key.
 	otherPayload := `{
 		"ref": "refs/heads/main",
 		"after": "deadbeef",
@@ -206,10 +145,8 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		}
 	}`
 
-	const defaultSecret = "webhook-secret"
-
-	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
-		r := &githubWebhookRepository{
+	newRepo := func(secret string) *githubWebhookRepository {
+		return &githubWebhookRepository{
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
@@ -220,133 +157,38 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 					Webhook: &provisioning.WebhookStatus{},
 				},
 			},
-			owner:       "grafana",
-			repo:        "grafana",
-			secret:      common.RawSecureValue(secret),
-			replayCache: cache,
+			owner:  "grafana",
+			repo:   "grafana",
+			secret: common.RawSecureValue(secret),
 		}
-		r.WebhookHandler = repo.NewWebhookHandler(r.processRequest, r.config.Status.Webhook, r.config.GetName(),
-			"grafana/grafana", r.config.Spec.GitHub.Branch, r.config.Spec.Sync.Enabled, repo.IncrementalSyncPolicy{})
-		return r
 	}
 
-	t.Run("first delivery is accepted", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+	t.Run("replay key is the validated signature", func(t *testing.T) {
+		gh := newRepo("webhook-secret")
+		req := signedWebhookRequest(t, "push", "webhook-secret", "delivery-1", pushPayload)
 
-		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
+		verified, err := gh.VerifyRequest(req)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, rsp.Code)
+		require.NotEmpty(t, verified.ReplayKey)
+		require.Equal(t, req.Header.Get("X-Hub-Signature-256"), verified.ReplayKey)
 	})
 
-	t.Run("replayed request is silently dropped", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+	t.Run("distinct payloads yield distinct replay keys", func(t *testing.T) {
+		gh := newRepo("webhook-secret")
 
-		// First delivery succeeds with the normal accepted-job response.
-		first, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
+		a, err := gh.VerifyRequest(signedWebhookRequest(t, "push", "webhook-secret", "delivery-A", pushPayload))
 		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, first.Code)
-
-		// Replaying the same signed request returns a generic 200 OK — same
-		// shape as other no-op paths so an attacker can't tell from the
-		// response whether the payload was previously processed.
-		dup, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
+		b, err := gh.VerifyRequest(signedWebhookRequest(t, "push", "webhook-secret", "delivery-B", otherPayload))
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, dup.Code)
-		require.Equal(t, "ok", dup.Message)
-		require.Nil(t, dup.Job, "replay must not enqueue a job")
+		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
 
-	t.Run("replay with a fresh delivery id is still dropped", func(t *testing.T) {
-		// Regression: the X-GitHub-Delivery header is not covered by the HMAC,
-		// so an attacker can replay a captured (body, signature) under a new
-		// delivery ID. Keying on the signature must still catch it.
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
+	t.Run("identical body under distinct secrets yields distinct replay keys", func(t *testing.T) {
+		a, err := newRepo("secret-a").VerifyRequest(signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
 		require.NoError(t, err)
-
-		dup, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", pushPayload))
+		b, err := newRepo("secret-b").VerifyRequest(signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, dup.Code, "same signed body under a different delivery id is still a replay")
-		require.Nil(t, dup.Job)
-	})
-
-	t.Run("distinct payloads are independent", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
-		require.NoError(t, err)
-
-		// A different body yields a different signature, so it is processed.
-		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", otherPayload))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, rsp.Code)
-	})
-
-	t.Run("identical body under different secrets does not collide", func(t *testing.T) {
-		// The shared cache is consulted by every repository. Two repos with
-		// distinct webhook secrets produce distinct signatures for the same
-		// body, so one repo's delivery must not shadow another's.
-		cache := newReplayCache(time.Hour)
-		repoA := newRepo(cache, "secret-a")
-		repoB := newRepo(cache, "secret-b")
-
-		_, err := repoA.Webhook(t.Context(), signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
-		require.NoError(t, err)
-
-		rsp, err := repoB.Webhook(t.Context(), signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, rsp.Code)
-	})
-
-	t.Run("repositories sharing a cache silently drop cross-instance replays", func(t *testing.T) {
-		// Mirrors production: extras.Build rebuilds a repository per request
-		// but threads the factory's single cache through each instance.
-		cache := newReplayCache(time.Hour)
-		first := newRepo(cache, defaultSecret)
-		second := newRepo(cache, defaultSecret)
-
-		_, err := first.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
-		require.NoError(t, err)
-
-		dup, err := second.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-2", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, dup.Code)
-		require.Equal(t, "ok", dup.Message)
-		require.Nil(t, dup.Job)
-	})
-
-	t.Run("expired entry is accepted again", func(t *testing.T) {
-		const ttl = 50 * time.Millisecond
-		gh := newRepo(newReplayCache(ttl), defaultSecret)
-
-		_, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
-		require.NoError(t, err)
-
-		// Once the entry expires, the same signed request is processed again.
-		time.Sleep(ttl + 20*time.Millisecond)
-		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, rsp.Code)
-	})
-
-	t.Run("invalid signature is rejected before the replay check", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(pushPayload))
-		req.Header.Set("X-GitHub-Event", "push")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-GitHub-Delivery", "delivery-bad-sig")
-		req.Header.Set("X-Hub-Signature-256", "sha256=deadbeef")
-
-		_, err := gh.Webhook(t.Context(), req)
-		require.Error(t, err)
-
-		// A subsequent valid request must still succeed — a failed signature
-		// must not poison the replay cache.
-		rsp, err := gh.Webhook(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-good", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, http.StatusAccepted, rsp.Code)
+		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
 }
 
@@ -355,27 +197,9 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		name          string
 		config        *provisioning.Repository
 		setupRequest  func() *http.Request
-		expected      *provisioning.WebhookResponse
+		expected      repo.WebhookEvent
 		expectedError error
 	}{
-		{
-			name: "missing webhook configuration",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					// No webhook configuration
-				},
-			},
-			setupRequest: func() *http.Request {
-				req, _ := http.NewRequest("POST", "/webhook", nil)
-				return req
-			},
-			expectedError: fmt.Errorf("unexpected webhook request"),
-		},
 		{
 			name: "invalid signature",
 			config: &provisioning.Repository{
@@ -422,48 +246,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusOK,
-				Message: "ping received",
-			},
-		},
-		{
-			name: "push event for different branch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-					Sync: provisioning.SyncOptions{
-						Enabled: true,
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"ref": "refs/heads/feature",
-					"repository": {
-						"full_name": "grafana/grafana"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "push")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expected: &provisioning.WebhookResponse{
-				Code: http.StatusOK,
-			},
+			expected: repo.WebhookEvent{Type: repo.WebhookEventPing},
 		},
 		{
 			name: "push event for main branch",
@@ -502,15 +285,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code: http.StatusAccepted,
-				Job: &provisioning.JobSpec{
-					Repository: "test-repo",
-					Action:     provisioning.JobActionPull,
-					Pull: &provisioning.SyncJobOptions{
-						Incremental: true,
-					},
-				},
+			expected: repo.WebhookEvent{
+				Type:     repo.WebhookEventPush,
+				RepoSlug: "grafana/grafana",
+				Branch:   "main",
 			},
 		},
 		{
@@ -542,77 +320,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				return req
 			},
 			expectedError: fmt.Errorf("missing repository in push event"),
-		},
-		{
-			name: "push event with repository mismatch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"ref": "refs/heads/main",
-					"repository": {
-						"full_name": "different-owner/different-repo"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "push")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expectedError: repo.ErrRepositoryMismatch,
-		},
-		{
-			name: "push event when sync is disabled",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-					Sync: provisioning.SyncOptions{
-						Enabled: false,
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"ref": "refs/heads/main",
-					"repository": {
-						"full_name": "grafana/grafana"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "push")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expected: &provisioning.WebhookResponse{
-				Code: http.StatusOK,
-			},
 		},
 		{
 			name: "pull request event - opened",
@@ -659,19 +366,15 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusAccepted,
-				Message: "pull request: opened",
-				Job: &provisioning.JobSpec{
-					Repository: "test-repo",
-					Action:     provisioning.JobActionPullRequest,
-					PullRequest: &provisioning.PullRequestJobOptions{
-						URL:  "https://github.com/grafana/grafana/pull/123",
-						PR:   123,
-						Ref:  "feature-branch",
-						Hash: "abcdef1234567890",
-					},
-				},
+			expected: repo.WebhookEvent{
+				Type:      repo.WebhookEventPullRequest,
+				RepoSlug:  "grafana/grafana",
+				Branch:    "main",
+				Action:    repo.PullRequestActionOpened,
+				PRNumber:  123,
+				PRURL:     "https://github.com/grafana/grafana/pull/123",
+				SourceRef: "feature-branch",
+				Hash:      "abcdef1234567890",
 			},
 		},
 		{
@@ -719,113 +422,15 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusAccepted,
-				Message: "pull request: updated",
-				Job: &provisioning.JobSpec{
-					Repository: "test-repo",
-					Action:     provisioning.JobActionPullRequest,
-					PullRequest: &provisioning.PullRequestJobOptions{
-						URL:  "https://github.com/grafana/grafana/pull/123",
-						PR:   123,
-						Ref:  "feature-branch",
-						Hash: "abcdef1234567890",
-					},
-				},
-			},
-		},
-		{
-			name: "pull request event - wrong base branch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"action": "opened",
-					"pull_request": {
-						"html_url": "https://github.com/grafana/grafana/pull/123",
-						"number": 123,
-						"head": {
-							"ref": "feature-branch",
-							"sha": "abcdef1234567890"
-						},
-						"base": {
-							"ref": "develop"
-						}
-					},
-					"repository": {
-						"full_name": "grafana/grafana"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "pull_request")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusOK,
-				Message: "ignoring pull request event as develop is not  the configured branch",
-			},
-		},
-		{
-			name: "pull request event - ignored action",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"action": "closed",
-					"pull_request": {
-						"html_url": "https://github.com/grafana/grafana/pull/123",
-						"number": 123,
-						"head": {
-							"ref": "feature-branch",
-							"sha": "abcdef1234567890"
-						},
-						"base": {
-							"ref": "main"
-						}
-					},
-					"repository": {
-						"full_name": "grafana/grafana"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "pull_request")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusOK,
-				Message: "ignore pull request event: closed",
+			expected: repo.WebhookEvent{
+				Type:      repo.WebhookEventPullRequest,
+				RepoSlug:  "grafana/grafana",
+				Branch:    "main",
+				Action:    repo.PullRequestActionUpdated,
+				PRNumber:  123,
+				PRURL:     "https://github.com/grafana/grafana/pull/123",
+				SourceRef: "feature-branch",
+				Hash:      "abcdef1234567890",
 			},
 		},
 		{
@@ -868,50 +473,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				return req
 			},
 			expectedError: fmt.Errorf("missing repository in pull request event"),
-		},
-		{
-			name: "pull request event with repository mismatch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-					},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
-			},
-			setupRequest: func() *http.Request {
-				payload := `{
-					"action": "opened",
-					"pull_request": {
-						"html_url": "https://github.com/different-owner/different-repo/pull/123",
-						"number": 123,
-						"head": {
-							"ref": "feature-branch",
-							"sha": "abcdef1234567890"
-						},
-						"base": {
-							"ref": "main"
-						}
-					},
-					"repository": {
-						"full_name": "different-owner/different-repo"
-					}
-				}`
-				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
-				req.Header.Set("X-GitHub-Event", "pull_request")
-				req.Header.Set("Content-Type", "application/json")
-
-				// Create a valid signature
-				mac := hmac.New(sha256.New, []byte("webhook-secret"))
-				mac.Write([]byte(payload))
-				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
-
-				return req
-			},
-			expectedError: repo.ErrRepositoryMismatch,
 		},
 		{
 			name: "pull request event missing pull request info",
@@ -975,10 +536,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusOK,
-				Message: "ping received",
-			},
+			expected: repo.WebhookEvent{Type: repo.WebhookEventPing},
 		},
 		{
 			name: "push event for main branch with new secrets store",
@@ -1018,15 +576,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code: http.StatusAccepted,
-				Job: &provisioning.JobSpec{
-					Repository: "test-repo",
-					Action:     provisioning.JobActionPull,
-					Pull: &provisioning.SyncJobOptions{
-						Incremental: true,
-					},
-				},
+			expected: repo.WebhookEvent{
+				Type:     repo.WebhookEventPush,
+				RepoSlug: "grafana/grafana",
+				Branch:   "main",
 			},
 		},
 		{
@@ -1055,8 +608,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			expected: &provisioning.WebhookResponse{
-				Code:    http.StatusNotImplemented,
+			expected: repo.WebhookEvent{
+				Type:    repo.WebhookEventUnsupported,
 				Message: "unsupported messageType: team",
 			},
 		},
@@ -1067,19 +620,13 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			r := &githubWebhookRepository{
-				config:      tt.config,
-				owner:       "grafana",
-				repo:        "grafana",
-				secret:      common.RawSecureValue("webhook-secret"),
-				replayCache: newReplayCache(time.Hour),
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+				secret: common.RawSecureValue("webhook-secret"),
 			}
-			r.WebhookHandler = repo.NewWebhookHandler(
-				r.processRequest, tt.config.Status.Webhook, tt.config.GetName(),
-				"grafana/grafana", tt.config.Spec.GitHub.Branch, tt.config.Spec.Sync.Enabled,
-				repo.IncrementalSyncPolicy{},
-			)
 
-			response, err := r.Webhook(t.Context(), tt.setupRequest())
+			event, err := verifyAndProcess(t, r, tt.setupRequest())
 
 			// Check the error
 			if tt.expectedError != nil {
@@ -1094,24 +641,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.expected.Code, response.Code)
-				require.Equal(t, tt.expected.Message, response.Message)
-
-				if tt.expected.Job != nil {
-					require.NotNil(t, response.Job)
-					require.Equal(t, tt.expected.Job.Action, response.Job.Action)
-					if tt.expected.Job.Pull != nil {
-						require.Equal(t, tt.expected.Job.Pull.Incremental, response.Job.Pull.Incremental)
-					}
-					if tt.expected.Job.PullRequest != nil {
-						require.Equal(t, tt.expected.Job.PullRequest.URL, response.Job.PullRequest.URL)
-						require.Equal(t, tt.expected.Job.PullRequest.PR, response.Job.PullRequest.PR)
-						require.Equal(t, tt.expected.Job.PullRequest.Ref, response.Job.PullRequest.Ref)
-						require.Equal(t, tt.expected.Job.PullRequest.Hash, response.Job.PullRequest.Hash)
-					}
-				} else {
-					require.Nil(t, response.Job)
-				}
+				require.Equal(t, tt.expected, event)
 			}
 		})
 	}
@@ -2170,4 +1700,13 @@ func signedWebhookRequest(t *testing.T, eventType, secret, deliveryID, payload s
 	mac.Write([]byte(payload))
 	req.Header.Set("X-Hub-Signature-256", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 	return req
+}
+
+func verifyAndProcess(t *testing.T, gh *githubWebhookRepository, req *http.Request) (repo.WebhookEvent, error) {
+	t.Helper()
+	verified, err := gh.VerifyRequest(req)
+	if err != nil {
+		return repo.WebhookEvent{}, err
+	}
+	return gh.ProcessRequest(t.Context(), verified)
 }

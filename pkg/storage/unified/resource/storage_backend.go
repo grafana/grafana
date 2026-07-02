@@ -81,6 +81,8 @@ type kvStorageBackend struct {
 	dataStore               *dataStore
 	eventStore              *eventStore
 	notifier                notifier
+	eventPublisher          EventPublisher
+	natsShadow              *natsShadow
 	log                     log.Logger
 	disablePruner           bool
 	dashboardVersionsToKeep int
@@ -172,6 +174,17 @@ type KVBackendOptions struct {
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
+
+	// EventPublisher, when set, is used to announce committed writes on an
+	// external message bus (NATS). Optional; nil disables external publishing.
+	EventPublisher EventPublisher
+
+	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
+	EventSubscriber EventSubscriber
+	// EnableNatsNotifierShadow starts the shadow NATS notifier (see natsShadow):
+	// metrics only, never feeds the watch pipeline. Requires EventSubscriber set
+	// and enabled.
+	EnableNatsNotifierShadow bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -269,6 +282,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dataStore:               newDataStore(kv, metrics),
 		eventStore:              eventStore,
 		notifier:                newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		eventPublisher:          opts.EventPublisher,
 		watchOpts:               opts.WatchOptions.normalize(),
 		snowflake:               s,
 		log:                     logger,
@@ -317,6 +331,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Start the cleanup background job.
 	go backend.runCleanups(ctx)
+
+	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
+	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.New("notifier", "natsShadow"))
+		backend.natsShadow.start(ctx)
+		logger.Info("nats notifier shadow enabled")
+	}
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -1180,6 +1201,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Name:      event.Key.Name,
 	})
 	k.notifier.Publish(eventData)
+	k.publishWatchNotification(ctx, eventData)
 
 	return rv, nil
 }
@@ -1573,15 +1595,19 @@ func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest)
 	return filteredKeys
 }
 
-// applyPagination filters keys based on pagination parameters (descending order only)
-func applyPagination(keys []DataKey, lastSeenRV int64) []DataKey {
+// applyPagination filters keys based on pagination parameters
+func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []DataKey {
 	if lastSeenRV == 0 {
 		return keys
 	}
 
 	pagedKeys := make([]DataKey, 0, len(keys))
 	for _, key := range keys {
-		if key.ResourceVersion < lastSeenRV {
+		if sortAscending {
+			if key.ResourceVersion > lastSeenRV {
+				pagedKeys = append(pagedKeys, key)
+			}
+		} else if key.ResourceVersion < lastSeenRV {
 			pagedKeys = append(pagedKeys, key)
 		}
 	}
@@ -1843,12 +1869,14 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 
 	// Parse continue token if provided
 	lastSeenRV := int64(0)
+	tokenSortAscending := false
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
 		lastSeenRV = ToSnowflakeRV(token.ResourceVersion)
+		tokenSortAscending = token.SortAscending
 	}
 
 	// Generate a new resource version for the list
@@ -1856,7 +1884,11 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 
 	// Handle trash differently from regular history
 	if req.Source == resourcepb.ListRequest_TRASH {
-		return k.processTrashEntries(ctx, req, fn, listRV, lastSeenRV)
+		sortAscending := req.GetVersionMatchV2() == resourcepb.ResourceVersionMatchV2_NotOlderThan
+		if req.NextPageToken != "" {
+			sortAscending = tokenSortAscending
+		}
+		return k.processTrashEntries(ctx, req, fn, listRV, lastSeenRV, sortAscending)
 	}
 
 	// Get all history entries by iterating through datastore keys
@@ -1889,10 +1921,11 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	// Apply "live" history logic: ignore events before the last delete
 	filteredKeys = applyLiveHistoryFilter(filteredKeys, req)
 
-	// Pagination: filter out items up to and including lastSeenRV
-	pagedKeys := applyPagination(filteredKeys, lastSeenRV)
+	// Pagination: filter out items up to and including lastSeenRV. Regular
+	// history is served descending (keys fetched SortOrderDesc above).
+	pagedKeys := applyPagination(filteredKeys, lastSeenRV, false)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false)
+	iter := newKvHistoryIterator(ctx, k.dataStore, pagedKeys, listRV, false, false)
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1906,16 +1939,18 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 // It streams through keys in ascending order, tracking name groups. For each name,
 // if the latest event is a delete, it's a trash candidate.
 //
-// The results are sorted by RV desc: the sorting in this case matters as it's
+// Candidates are sorted by RV in the requested direction (sortAscending): this is
 // the only convenient place to sort results by RV using the datastore before
-// doing a BatchGet to fetch the resources. Existing user-facing features (such as
-// Restore Dashboards) currently rely on this behaviour.
+// doing a BatchGet to fetch the resources. The Restore Dashboards UI lists trash
+// without a version match (descending), while paginating callers that resume from
+// a watermark request NotOlderThan (ascending) so they make forward progress.
 func (k *kvStorageBackend) processTrashEntries(
 	ctx context.Context,
 	req *resourcepb.ListRequest,
 	fn func(ListIterator) error,
 	listRV int64,
 	lastSeenRV int64,
+	sortAscending bool,
 ) (int64, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.processTrashEntries")
 	defer span.End()
@@ -1963,16 +1998,17 @@ func (k *kvStorageBackend) processTrashEntries(
 	// Process the final name group
 	processNameGroup()
 
-	// Sort candidates by resource version descending so the most recently
-	// deleted items come first.
 	slices.SortFunc(candidates, func(a, b DataKey) int {
+		if sortAscending {
+			return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
+		}
 		return cmp.Compare(b.ResourceVersion, a.ResourceVersion)
 	})
 
 	// Apply RV-based pagination: skip candidates already seen on previous pages.
-	candidates = applyPagination(candidates, lastSeenRV)
+	candidates = applyPagination(candidates, lastSeenRV, sortAscending)
 
-	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true)
+	iter := newKvHistoryIterator(ctx, k.dataStore, candidates, listRV, true, sortAscending)
 	defer iter.stop()
 
 	if err := fn(iter); err != nil {
@@ -1996,11 +2032,12 @@ func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 }
 
 // newKvHistoryIterator builds a kvHistoryIterator over dataStore.BatchGet(keys).
-func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool) *kvHistoryIterator {
+func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, skipProvisioned bool, sortAscending bool) *kvHistoryIterator {
 	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
 	return &kvHistoryIterator{
 		listRV:          listRV,
 		skipProvisioned: skipProvisioned,
+		sortAscending:   sortAscending,
 		next:            next,
 		stopFn:          stopFn,
 	}
@@ -2009,6 +2046,7 @@ func newKvHistoryIterator(ctx context.Context, ds *dataStore, keys []DataKey, li
 type kvHistoryIterator struct {
 	listRV          int64
 	skipProvisioned bool
+	sortAscending   bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -2080,6 +2118,7 @@ func (i *kvHistoryIterator) ContinueToken() string {
 	token := ContinueToken{
 		Name:            i.currentDataObj.Key.Name,
 		ResourceVersion: i.currentDataObj.Key.ResourceVersion,
+		SortAscending:   i.sortAscending,
 	}
 	return token.String()
 }

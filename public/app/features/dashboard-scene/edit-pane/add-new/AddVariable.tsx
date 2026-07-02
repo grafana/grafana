@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneObject } from '@grafana/scenes';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { openAddSectionVariablePane, openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -16,7 +16,7 @@ export function AddVariable({
   dashboardScene,
   selectedElement,
 }: {
-  dashboardScene: DashboardScene;
+  dashboardScene: DashboardSceneLike;
   selectedElement: SceneObject | undefined;
 }) {
   // OpenFeature is not initialized for anonymous users, so fall back to
