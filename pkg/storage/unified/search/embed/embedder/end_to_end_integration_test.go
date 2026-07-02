@@ -220,7 +220,7 @@ func buildEmbedder(ctx context.Context, t *testing.T, name string) *embedder.Emb
 		rt := bedrockruntime.NewFromConfig(cfg)
 		client := bedrock.NewClient(rt)
 		return &embedder.Embedder{
-			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024, 50),
+			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024, 50, 0),
 			Model:        "bedrock/" + model,
 			VectorType:   embedder.VectorTypeDense,
 			Metric:       embedder.CosineDistance,

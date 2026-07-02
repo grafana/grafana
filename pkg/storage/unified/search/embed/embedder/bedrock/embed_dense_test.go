@@ -47,7 +47,7 @@ func (f *fakeClient) EmbedTexts(_ context.Context, _ string, texts []string, inp
 
 func TestDenseEmbedder_EmbedText_ChunksAtDefaultBatchSize(t *testing.T) {
 	fc := &fakeClient{dim: 4, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 
 	// 130 inputs at DefaultBatchSize=50 → 3 chunks (50 + 50 + 30).
 	texts := make([]string, 130)
@@ -69,7 +69,7 @@ func TestDenseEmbedder_EmbedText_ChunksAtDefaultBatchSize(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_HonorsConfiguredBatchSize(t *testing.T) {
 	fc := &fakeClient{dim: 4, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 32)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 32, 0)
 
 	// 80 inputs at batchSize=32 → 3 chunks (32 + 32 + 16).
 	texts := make([]string, 80)
@@ -90,7 +90,7 @@ func TestDenseEmbedder_EmbedText_HonorsConfiguredBatchSize(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_PassesInputType(t *testing.T) {
 	fc := &fakeClient{dim: 4, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts: []string{"a"},
@@ -102,7 +102,7 @@ func TestDenseEmbedder_EmbedText_PassesInputType(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_DefaultsToSearchDocument(t *testing.T) {
 	fc := &fakeClient{dim: 4, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a"}})
 	require.NoError(t, err)
 	assert.Equal(t, "search_document", fc.wantInput)
@@ -110,7 +110,7 @@ func TestDenseEmbedder_EmbedText_DefaultsToSearchDocument(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{
 		Texts:     []string{"abcd"},
 		Normalize: true,
@@ -124,7 +124,7 @@ func TestDenseEmbedder_EmbedText_NormalizesWhenAsked(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{})
 	require.NoError(t, err)
 	assert.Empty(t, out.Embeddings)
@@ -133,7 +133,7 @@ func TestDenseEmbedder_EmbedText_EmptyInput(t *testing.T) {
 
 func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: 1}
-	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50)
+	e := NewDenseEmbedder(fc, "cohere.embed-v4:0", 0, 50, 0)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
 }
