@@ -1678,6 +1678,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	batch := b.index.NewBatch()
+	var undeclaredFields map[string]struct{}
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
@@ -1685,6 +1686,18 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+
+			// The static fields.* mapping drops values written under an undeclared
+			// name; collect them so the loss is logged, not silent.
+			for name := range doc.Fields {
+				if b.isDeclaredField(name) {
+					continue
+				}
+				if undeclaredFields == nil {
+					undeclaredFields = map[string]struct{}{}
+				}
+				undeclaredFields[name] = struct{}{}
+			}
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
@@ -1694,11 +1707,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			batch.Delete(resource.SearchID(item.Key))
 		}
 	}
+	for name := range undeclaredFields {
+		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// isDeclaredField reports whether name is a declared search field for this
+// index (per-kind or standard). The fields.* prefix is stripped, so a bare
+// doc.Fields key matches.
+func (b *bleveIndex) isDeclaredField(name string) bool {
+	if b.fields != nil && b.fields.Field(name) != nil {
+		return true
+	}
+	return b.standard != nil && b.standard.Field(name) != nil
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -2266,7 +2292,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	sorting := getSortFields(req, b.fields)
 	searchrequest.SortBy(sorting)
 
-	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
+	// When no sort fields are provided, sort by score if there is a query,
+	// otherwise sort by title. Always add name as the final tie-breaker so
+	// offset pagination sees a total order.
 	if len(sorting) == 0 {
 		if req.Query != "" && req.Query != "*" {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
@@ -2278,13 +2306,20 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Desc:  false,
 			})
 		}
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+			Field: resource.SEARCH_FIELD_NAME,
+			Desc:  false,
+		})
 	}
 
 	if postRankAuthz {
 		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
 		// {namespace}/{group}/{resource}/{name} is globally unique across a
 		// federated alias (dashboards + folders differ by the resource segment),
-		// so this guarantees no skips/dupes over the merged result set.
+		// so this guarantees no skips/dupes over the merged result set. (For
+		// non-federated queries the name tie-breaker above already gives a total
+		// order; the doc ID is still harmless and keeps the cursor shape uniform
+		// across federated and non-federated post-rank searches.)
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
 		// The folder stored field (needed to authorize) is added to the bleve
 		// load list in Search, separate from the response column list.
@@ -2633,7 +2668,12 @@ func safeInt64ToInt(i64 int64) (int, error) {
 }
 
 func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
-	sorting := make([]string, 0, len(req.SortBy))
+	if len(req.SortBy) == 0 {
+		return nil
+	}
+
+	sorting := make([]string, 0, len(req.SortBy)+1)
+	hasNameSort := false
 	for _, sort := range req.SortBy {
 		input := sort.Field
 		if field, ok := textSortFields[input]; ok {
@@ -2648,10 +2688,14 @@ func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.Search
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
+		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
 		if sort.Desc {
 			input = "-" + input
 		}
 		sorting = append(sorting, input)
+	}
+	if !hasNameSort {
+		sorting = append(sorting, resource.SEARCH_FIELD_NAME)
 	}
 	return sorting
 }

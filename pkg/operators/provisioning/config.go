@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,6 +53,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	natsSubscriber        nats.Subscriber
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -103,6 +105,15 @@ type ControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
+// [nats]
+// # when enabled, the informers take their watch from NATS instead of the
+// # apiserver watch; operators use an external NATS (no embedded server).
+// enabled =
+// mode = external
+// client_urls =
+// token =
+// subscriber_credentials_file =
+// tls_enabled =
 func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
@@ -110,8 +121,12 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
-		registry:       registry,
-		Settings:       cfg,
+		registry: registry,
+		Settings: cfg,
+		// Operators run against an external NATS (no embedded server), so a nil
+		// server yields a config that dials the configured client URLs. The
+		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 		drainTimeout:   operatorSec.Key("drain_timeout").MustDuration(30 * time.Second),

@@ -376,6 +376,192 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	assertsApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-asserts-app",
+			Name: "Knowledge graph",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Knowledge graph",
+					Path:       "/a/grafana-asserts-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Entity graph",
+					Path:     "/a/grafana-asserts-app/entities",
+					Type:     "page",
+					AddToNav: true,
+				},
+				{
+					Name:     "Application",
+					Path:     "/a/grafana-asserts-app/services",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	frontendApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-kowalski-app",
+			Name: "Frontend",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Frontend",
+					Path:       "/a/grafana-kowalski-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Overview",
+					Path:     "/a/grafana-kowalski-app/overview",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	applicationApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Application",
+					Path:       "/a/grafana-app-observability-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Services",
+					Path:     "/a/grafana-app-observability-app/services",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
+	// Enabled and accessible, but none of its includes are added to the nav, so
+	// processAppPlugin returns no node. This still lands in
+	// enabledAccessibleAppPluginMap yet never adds an "Application" entry, so the
+	// asserts page must stay visible (exercises the tree lookup over the map).
+	applicationAppNoNav := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:     "Application",
+					Path:     "/a/grafana-app-observability-app/",
+					Type:     "page",
+					AddToNav: false,
+				},
+			},
+		},
+	}
+
+	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
+		settings := map[string]*pluginsettings.DTO{}
+		for _, p := range pluginList {
+			settings[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+		}
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: settings},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: pluginList},
+		}
+		// Use the production nav defaults instead of a hand-rolled map so the test
+		// exercises the real section/weight config (asserts=2, Frontend=3, Application=4).
+		service.readNavigationSettings()
+		return service
+	}
+
+	t.Run("without the App Observability plugin, the asserts Application page sits between Frontend and App Observability", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 3)
+
+		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
+		// asserts "Application" page (weight 4).
+		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
+		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
+		require.Equal(t, "Application", monitoringNode.Children[2].Text)
+		require.Equal(t, "standalone-plugin-page-application", monitoringNode.Children[2].Id)
+	})
+
+	t.Run("when the App Observability plugin is present, it replaces the asserts Application page", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var hasAppObservability bool
+		for _, child := range monitoringNode.Children {
+			// The appo11y "Application" page is shown instead of the asserts "Application" page.
+			if child.Text == "Application" && child.Url == "/a/grafana-app-observability-app/" {
+				hasAppObservability = true
+			}
+			// The asserts "Application" page must not be shown when appo11y is present.
+			require.NotEqual(t, "/a/grafana-asserts-app/services", child.Url)
+		}
+
+		require.True(t, hasAppObservability, "expected the appo11y Application page to be present")
+	})
+
+	t.Run("when the App Observability plugin is present but contributes no nav node, the asserts Application page stays visible", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationAppNoNav})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var hasAssertsApplication bool
+		for _, child := range monitoringNode.Children {
+			if child.Url == "/a/grafana-asserts-app/services" {
+				hasAssertsApplication = true
+			}
+		}
+		require.True(t, hasAssertsApplication, "expected the asserts Application page to stay visible when appo11y contributes no nav node")
+	})
+}
+
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

@@ -1522,14 +1522,16 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			newDoc("doc-c", "allowed"),
 		})
 		ac := &countingAccessClient{allowAll: true}
-		// Pre-flag cursor shape: a single title sort value, no _id tie-breaker.
-		// The post-rank sort order is [title, _id] (len 2); this cursor is len 1.
+		// Pre-flag cursor shape: [title, name], no _id tie-breaker. The post-rank
+		// sort order is [title, name, _id] (len 3); this cursor is len 2, so it
+		// mismatches post-rank and falls back to the in-searcher path, whose sort
+		// is [title, name] (len 2) — a match.
 		q := listQuery(10)
-		q.SearchAfter = []string{"doc-a"}
+		q.SearchAfter = []string{"doc-a", "doc-a"}
 		names, res := searchNames(t, index, ac, q)
 		require.Nil(t, res.Error)
-		// Falls back to the in-searcher path (title sort, len 1); returns docs
-		// with title > "doc-a".
+		// Falls back to the in-searcher path; returns docs with (title, name)
+		// > ("doc-a", "doc-a").
 		require.Equal(t, []string{"doc-b", "doc-c"}, names)
 	})
 
@@ -1537,10 +1539,11 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc-a", "allowed")})
 		ac := &countingAccessClient{allowAll: true}
-		// len 3 matches neither the post-rank order (2) nor the in-searcher
-		// order (1) -> bad request rather than a mismatched bleve search.
+		// len 4 matches neither the post-rank order (3: [title, name, _id]) nor
+		// the in-searcher order (2: [title, name]) -> bad request rather than a
+		// mismatched bleve search.
 		q := listQuery(10)
-		q.SearchAfter = []string{"a", "b", "c"}
+		q.SearchAfter = []string{"a", "b", "c", "d"}
 		res := searchResponse(t, index, ac, q)
 		require.NotNil(t, res.Error)
 	})

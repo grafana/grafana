@@ -2632,6 +2632,10 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded.",
+      "no-query": "No data source query to run for this rule."
+    },
     "queryAndExpressionsStep": {
       "custom": "Custom",
       "disableAdvancedOptions": {
@@ -10706,6 +10710,19 @@
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
     },
+    "recommendations": {
+      "existing": "Enabled solution",
+      "go-to": "Go to recommendation {{index}}",
+      "hide": "Hide",
+      "next": "Next",
+      "pause": "Pause",
+      "previous": "Previous",
+      "recommended": "Recommended",
+      "resume": "Resume",
+      "show": "Show",
+      "switch": "Switch to another app you run",
+      "title": "Recommendations for your stack"
+    },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
@@ -15363,7 +15380,7 @@
       },
       "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
-      "new-team": "New Team",
+      "new-team": "New team",
       "placeholder-search-teams": "Search teams"
     },
     "team-pages": {
