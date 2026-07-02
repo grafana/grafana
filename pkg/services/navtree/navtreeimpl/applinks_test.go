@@ -458,10 +458,24 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		},
 	}
 
-	navigationAppConfig := map[string]NavigationAppConfig{
-		"grafana-asserts-app":           {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
-		"grafana-kowalski-app":          {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app": {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
+	// Enabled and accessible, but none of its includes are added to the nav, so
+	// processAppPlugin returns no node. This still lands in
+	// enabledAccessibleAppPluginMap yet never adds an "Application" entry, so the
+	// asserts page must stay visible (exercises the tree lookup over the map).
+	applicationAppNoNav := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-app-observability-app",
+			Name: "Application",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:     "Application",
+					Path:     "/a/grafana-app-observability-app/",
+					Type:     "page",
+					AddToNav: false,
+				},
+			},
+		},
 	}
 
 	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
@@ -469,15 +483,18 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		for _, p := range pluginList {
 			settings[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
 		}
-		return ServiceImpl{
-			log:                 log.New("navtree"),
-			cfg:                 setting.NewCfg(),
-			accessControl:       accesscontrolmock.New().WithPermissions(permissions),
-			pluginSettings:      &pluginsettings.FakePluginSettings{Plugins: settings},
-			features:            featuremgmt.WithFeatures(),
-			pluginStore:         &pluginstore.FakePluginStore{PluginList: pluginList},
-			navigationAppConfig: navigationAppConfig,
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: settings},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: pluginList},
 		}
+		// Use the production nav defaults instead of a hand-rolled map so the test
+		// exercises the real section/weight config (asserts=2, Frontend=3, Application=4).
+		service.readNavigationSettings()
+		return service
 	}
 
 	t.Run("without the App Observability plugin, the asserts Application page sits between Frontend and App Observability", func(t *testing.T) {
@@ -522,6 +539,26 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		}
 
 		require.True(t, hasAppObservability, "expected the appo11y Application page to be present")
+	})
+
+	t.Run("when the App Observability plugin is present but contributes no nav node, the asserts Application page stays visible", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{assertsApp, frontendApp, applicationAppNoNav})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+
+		var hasAssertsApplication bool
+		for _, child := range monitoringNode.Children {
+			if child.Url == "/a/grafana-asserts-app/services" {
+				hasAssertsApplication = true
+			}
+		}
+		require.True(t, hasAssertsApplication, "expected the asserts Application page to stay visible when appo11y contributes no nav node")
 	})
 }
 

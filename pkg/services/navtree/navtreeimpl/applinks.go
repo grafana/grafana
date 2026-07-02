@@ -17,6 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// The Knowledge Graph's version of the "Application" page.
+const assertsServicesPath = "/a/grafana-asserts-app/services"
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -65,9 +68,9 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 
 	// When the App Observability plugin is present it owns the "Application" entry
 	// in the Observability section, so hide the equivalent asserts "Application" page.
-	if enabledAccessibleAppPluginMap["grafana-app-observability-app"] != nil {
+	if treeRoot.FindById("plugin-page-grafana-app-observability-app") != nil {
 		if obsSection := treeRoot.FindById(navtree.NavIDObservability); obsSection != nil {
-			assertsApplicationsURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/services"
+			assertsApplicationsURL := s.cfg.AppSubURL + assertsServicesPath
 			children := make([]*navtree.NavLink, 0, len(obsSection.Children))
 			for _, child := range obsSection.Children {
 				if child.Url == assertsApplicationsURL {
@@ -302,21 +305,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	sectionChildren := []*navtree.NavLink{appLink}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {
-		servicesURL := s.cfg.AppSubURL + "/a/grafana-asserts-app/services"
+		servicesURL := s.cfg.AppSubURL + assertsServicesPath
 
-		sectionChildren = make([]*navtree.NavLink, 0, len(appLink.Children))
 		for _, child := range appLink.Children {
 			if child.Url == servicesURL {
-				// Place the asserts Application page in the same slot (4) as the App Observability
-				// "Application" page, right after Frontend (3). Only one of the two is ever shown.
-				child.SortWeight = 4
+				// Place the asserts Application page in the same slot as the App Observability
+				// "Application" page, so it lands right after Frontend. Only one of the two is
+				// ever shown.
+				child.SortWeight = s.navigationAppConfig["grafana-app-observability-app"].SortWeight
 			} else {
 				// keep current sorting of the pages, but above all the other apps
 				child.SortWeight = -100 + child.SortWeight
 			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
-			sectionChildren = append(sectionChildren, child)
 		}
+		sectionChildren = appLink.Children
 	}
 
 	if sectionID == navtree.NavIDRoot {
