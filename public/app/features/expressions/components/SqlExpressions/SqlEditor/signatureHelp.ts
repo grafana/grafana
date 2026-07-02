@@ -43,7 +43,8 @@ function toSignatureHelp(signature: SqlFunctionSignature, activeParameter: numbe
   return {
     signatures: [
       {
-        label: formatSignatureLabel(signature),
+        name: signature.name,
+        returnType: signature.returnType,
         documentation: signature.documentation,
         parameters: signature.parameters.map((parameter) => ({
           label: parameter.label,
@@ -54,18 +55,6 @@ function toSignatureHelp(signature: SqlFunctionSignature, activeParameter: numbe
     activeSignature: 0,
     activeParameter: clampActiveParameter(activeParameter, signature.parameters.length),
   };
-}
-
-/**
- * Formats a signature label as `name(param, param): returnType`, matching the
- * shape the generic tooltip renderer parses for the function name and return
- * type.
- */
-function formatSignatureLabel(signature: SqlFunctionSignature): string {
-  const params = signature.parameters.map((parameter) => parameter.label).join(', ');
-  const base = `${signature.name}(${params})`;
-
-  return signature.returnType ? `${base}: ${signature.returnType}` : base;
 }
 
 /**

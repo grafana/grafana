@@ -82,19 +82,9 @@ function renderSignature(signature: SignatureInformation, activeParameter: numbe
   const container = document.createElement('div');
   container.className = 'cm-signature-help-label';
 
-  const { parameters } = signature;
+  container.appendChild(document.createTextNode(`${signature.name}(`));
 
-  // When we have structured parameters, render each so the active one can be
-  // emphasized. Fall back to the raw label otherwise.
-  if (parameters.length === 0) {
-    container.textContent = signature.label;
-    return container;
-  }
-
-  const name = getSignatureName(signature.label);
-  container.appendChild(document.createTextNode(`${name}(`));
-
-  parameters.forEach((parameter, index) => {
+  signature.parameters.forEach((parameter, index) => {
     if (index > 0) {
       container.appendChild(document.createTextNode(', '));
     }
@@ -111,39 +101,11 @@ function renderSignature(signature: SignatureInformation, activeParameter: numbe
 
   container.appendChild(document.createTextNode(')'));
 
-  const returnType = getSignatureReturnType(signature.label);
-  if (returnType) {
-    container.appendChild(document.createTextNode(`: ${returnType}`));
+  if (signature.returnType) {
+    container.appendChild(document.createTextNode(`: ${signature.returnType}`));
   }
 
   return container;
-}
-
-/**
- * Extracts the function name from a label like `round(value, decimals): number`.
- */
-function getSignatureName(label: string): string {
-  const parenIndex = label.indexOf('(');
-  return parenIndex === -1 ? label : label.slice(0, parenIndex);
-}
-
-/**
- * Extracts the return type from a label like `round(value, decimals): number`.
- */
-function getSignatureReturnType(label: string): string | undefined {
-  const closingParenIndex = label.lastIndexOf(')');
-  if (closingParenIndex === -1) {
-    return undefined;
-  }
-
-  const afterParen = label.slice(closingParenIndex + 1);
-  const colonIndex = afterParen.indexOf(':');
-  if (colonIndex === -1) {
-    return undefined;
-  }
-
-  const returnType = afterParen.slice(colonIndex + 1).trim();
-  return returnType || undefined;
 }
 
 // Structural styles that apply regardless of theme. Colors are layered on top by

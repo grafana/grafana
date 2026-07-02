@@ -28,20 +28,27 @@ export interface SignatureParameter {
 
 /**
  * A callable signature, such as `round(value: number, decimals: number): number`.
+ *
+ * The pieces are kept structured (rather than a single pre-formatted string) so
+ * the tooltip can render and highlight them without having to parse a label.
  */
 export interface SignatureInformation {
   /**
-   * Full signature label shown in the tooltip header.
+   * Function name shown before the parameter list.
    */
-  label: string;
-  /**
-   * Optional description of the function.
-   */
-  documentation?: string;
+  name: string;
   /**
    * Ordered list of parameters used to highlight the active argument.
    */
   parameters: SignatureParameter[];
+  /**
+   * Optional return type shown after the parameter list.
+   */
+  returnType?: string;
+  /**
+   * Optional description of the function.
+   */
+  documentation?: string;
 }
 
 /**
