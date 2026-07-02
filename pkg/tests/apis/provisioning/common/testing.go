@@ -125,7 +125,8 @@ type ProvisioningTestHelper struct {
 
 // WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
 // This is useful for multi-org testing where you need separate helpers for different organizations.
-func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, user apis.User) *ProvisioningTestHelper {
+	t.Helper()
 	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
 
 	return &ProvisioningTestHelper{
@@ -178,9 +179,9 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 			Namespace: namespace,
 			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 		}),
-		AdminREST:  user.RESTClient(nil, gv),
-		EditorREST: user.RESTClient(nil, gv),
-		ViewerREST: user.RESTClient(nil, gv),
+		AdminREST:  user.RESTClient(t, gv),
+		EditorREST: user.RESTClient(t, gv),
+		ViewerREST: user.RESTClient(t, gv),
 	}
 }
 
@@ -1159,7 +1160,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 			return
 		}
 		errType := MustNestedString(repoStatus.Object, "status", "health", "error")
-		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		assert.Empty(collect, errType, "repository %s has health error: %s - %v", name, errType, repoStatus.Object)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
 		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
