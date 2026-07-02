@@ -37,6 +37,43 @@ func TestCreateExemplarFrame_ProfileType(t *testing.T) {
 	require.Equal(t, "profile-1", row[2]) // Should use ProfileId for profile type
 }
 
+func TestAddProfileDataLink(t *testing.T) {
+	exemplars := []*Exemplar{
+		{ProfileId: "profile-1", Value: 1.0, Timestamp: 100, Labels: map[string]string{"pod": "pod-1"}},
+	}
+	frame := CreateExemplarFrame(map[string]string{"service": "api"}, exemplars, ExemplarTypeProfile, "short")
+
+	AddProfileDataLink(frame, "ds-uid", "Pyroscope", `{service="api"}`, "cpu")
+
+	idField, _ := frame.FieldByName("Id")
+	require.NotNil(t, idField)
+	require.NotNil(t, idField.Config)
+	require.Len(t, idField.Config.Links, 1)
+
+	link := idField.Config.Links[0]
+	require.Equal(t, "View profile", link.Title)
+	require.NotNil(t, link.Internal)
+	require.Equal(t, "ds-uid", link.Internal.DatasourceUID)
+	require.Equal(t, "Pyroscope", link.Internal.DatasourceName)
+
+	query, ok := link.Internal.Query.(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "profile", query["queryType"])
+	require.Equal(t, `{service="api"}`, query["labelSelector"])
+	require.Equal(t, "cpu", query["profileTypeId"])
+	require.Equal(t, []string{"${__value.raw}"}, query["profileIdSelector"])
+}
+
+func TestAddProfileDataLink_NoIdField(t *testing.T) {
+	// Should be a no-op (not panic) when there is no Id field.
+	frame := CreateExemplarFrame(map[string]string{}, []*Exemplar{}, ExemplarTypeProfile, "short")
+	idField, _ := frame.FieldByName("Id")
+	idField.Name = "NotId"
+	require.NotPanics(t, func() {
+		AddProfileDataLink(frame, "ds-uid", "Pyroscope", "{}", "cpu")
+	})
+}
+
 func TestCreateExemplarFrame_SpanType(t *testing.T) {
 	exemplars := []*Exemplar{
 		{
