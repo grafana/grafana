@@ -2355,3 +2355,38 @@ func TestFormatStringArrayForSource(t *testing.T) {
 		})
 	}
 }
+
+func TestGroupResponseFrame_WithNilFrame(t *testing.T) {
+	frames, err := groupResponseFrame(nil, []string{})
+	assert.NoError(t, err)
+	assert.Empty(t, frames)
+}
+
+func TestGroupResponseFrame_WithEmptyFrame(t *testing.T) {
+	frame := &data.Frame{}
+	frames, err := groupResponseFrame(frame, []string{})
+	assert.NoError(t, err)
+	assert.NotNil(t, frames)
+	assert.Equal(t, 0, len(frames))
+}
+
+func TestHasTimeField_WithNilFrame(t *testing.T) {
+	result := hasTimeField(nil)
+	assert.False(t, result)
+}
+
+func TestHasTimeField_WithEmptyFrame(t *testing.T) {
+	frame := &data.Frame{}
+	result := hasTimeField(frame)
+	assert.False(t, result)
+}
+
+func TestHasTimeField_WithTimeField(t *testing.T) {
+	frame := &data.Frame{
+		Fields: []*data.Field{
+			data.NewField("time", nil, []time.Time{}),
+		},
+	}
+	result := hasTimeField(frame)
+	assert.True(t, result)
+}
