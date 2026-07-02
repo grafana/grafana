@@ -63,16 +63,17 @@ Refer to [configuration options](#configuration-options) for more information.
 resource "grafana_sso_settings" "github_sso_settings" {
   provider_name = "github"
   oauth2_settings {
-    name                  = "Github"
-    client_id             = "YOUR_GITHUB_APP_CLIENT_ID"
-    client_secret         = "YOUR_GITHUB_APP_CLIENT_SECRET"
-    allow_sign_up         = true
-    auto_login            = false
-    scopes                = "user:email,read:org"
-    team_ids              = "150,300"
-    allowed_organizations = "[\"My Organization\", \"Octocats\"]"
-    allowed_domains       = "mycompany.com mycompany.org"
-    role_attribute_path   = "[login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'"
+    name                        = "Github"
+    client_id                   = "YOUR_GITHUB_APP_CLIENT_ID"
+    client_secret               = "YOUR_GITHUB_APP_CLIENT_SECRET"
+    allow_sign_up               = true
+    auto_login                  = false
+    scopes                      = "user:email,read:org"
+    team_ids                    = "150,300"
+    allowed_organizations       = "[\"My Organization\", \"Octocats\"]"
+    allowed_domains             = "mycompany.com mycompany.org"
+    allow_assign_grafana_admin  = true # This needs to be `true` for 'GrafanaAdmin' (server admin) role . otherwise only org admin role is granted
+    role_attribute_path         = "login=='octocat' && 'GrafanaAdmin' || 'Viewer'"
   }
 }
 ```
@@ -148,7 +149,7 @@ In this example, the user with login `octocat` has been granted the `Admin` role
 All other users are granted the `Viewer` role.
 
 ```bash
-role_attribute_path = [login=='octocat'][0] && 'Admin' || 'Viewer'
+role_attribute_path = login=='octocat' && 'Admin' || 'Viewer'
 ```
 
 ##### Map roles using GitHub teams
@@ -174,10 +175,10 @@ role_attribute_path = contains(groups[*], '@my-github-organization/admins') && '
 ##### Map server administrator role
 
 In this example, the user with login `octocat` has been granted the `Admin` organization role as well as the Grafana server admin role.
-All other users are granted the `Viewer` role.
+All other users are granted the `Viewer` role. (if `allow_assign_grafana_admin` is `false` only organization `Admin` role is granted)
 
 ```bash
-role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
+role_attribute_path = login=='octocat' && 'GrafanaAdmin' || 'Viewer'
 ```
 
 ##### Map one role to all users
@@ -207,7 +208,8 @@ auto_login = false
 team_ids = 150,300
 allowed_organizations = ["My Organization", "Octocats"]
 allowed_domains = mycompany.com mycompany.org
-role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
+allow_assign_grafana_admin = true
+role_attribute_path = login=='octocat' && 'GrafanaAdmin' || 'Viewer'
 ```
 
 ## Configure team synchronization
