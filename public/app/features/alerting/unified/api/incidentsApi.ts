@@ -1,3 +1,5 @@
+import { buildAppPluginResourceUrl } from '@grafana/runtime/internal';
+
 import { alertingApi } from './alertingApi';
 
 export const ACTIVE_INCIDENTS_QUERY_LIMIT = 50;
@@ -21,7 +23,7 @@ interface QueryIncidentPreviewsResponse {
   error?: string;
 }
 
-const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
+const getProxyApiUrl = (path: string, pluginId: string) => buildAppPluginResourceUrl(pluginId, path);
 
 export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

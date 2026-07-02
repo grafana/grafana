@@ -2775,6 +2775,15 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "plugins.useMTPluginBackend",
+			Description:  "Enables app plugin backend calls from new apis (frontend + legacy-route redirect)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaCatalogSquad,
+			Generate:     Generate{Go: true, React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
 			Name:        "splashScreen",
 			Description: "Enables the splash screen modal for introducing new Grafana features on first session",
 			Stage:       FeatureStagePublicPreview,

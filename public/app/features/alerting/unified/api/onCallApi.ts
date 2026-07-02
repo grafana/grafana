@@ -1,4 +1,5 @@
 import { type FetchError, isFetchError } from '@grafana/runtime';
+import { buildAppPluginResourceUrl } from '@grafana/runtime/internal';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 
@@ -38,7 +39,7 @@ export interface OnCallConfigChecks {
 }
 
 export function getProxyApiUrl(path: string, pluginId: string) {
-  return `/api/plugins/${pluginId}/resources${path}`;
+  return buildAppPluginResourceUrl(pluginId, path);
 }
 
 export const onCallApi = alertingApi.injectEndpoints({
