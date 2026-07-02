@@ -47,7 +47,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval(), informer.RegisterMetrics(deps.Registerer))
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,

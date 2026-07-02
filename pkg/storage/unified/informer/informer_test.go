@@ -163,7 +163,7 @@ func subject() string {
 func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject ObjectFunc, handler cache.ResourceEventHandler) *Informer {
 	t.Helper()
 	list := func(context.Context) ([]runtime.Object, error) { return seed, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObject, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -251,7 +251,7 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 		}
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -278,7 +278,7 @@ func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
 		}
 		return []runtime.Object{obj("a"), obj("b")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -291,7 +291,7 @@ func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
 }
 
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil, nil)
 	_, err := n.AddEventHandler(nil)
 	require.Error(t, err)
 }
@@ -309,7 +309,7 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 		calls.Add(1)
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 
@@ -342,7 +342,7 @@ func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 	handler := &recordingHandler{}
 
 	list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	n.retryInterval = 10 * time.Millisecond // shorten the retry cadence for the test
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
@@ -377,7 +377,7 @@ func TestInformer_SubscribesBeforeListingOnce(t *testing.T) {
 		return []runtime.Object{obj("a")}, nil
 	}
 	// A one-hour resync guarantees no extra list fires on its own at startup.
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -405,7 +405,7 @@ func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
 		}
 		return []runtime.Object{obj("a")}, nil
 	}
-	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list, nil)
 	n.retryInterval = 10 * time.Millisecond // shorten the initial-list retry for the test
 	_, err := n.AddEventHandler(handler)
 	require.NoError(t, err)
@@ -426,7 +426,7 @@ func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
 // so a burst of reconnects while the run loop is busy cannot deadlock the client's
 // reconnect goroutine.
 func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil, nil)
 	// The run loop is not started, so nothing drains the channel; every call must
 	// still return immediately.
 	for i := 0; i < 100; i++ {

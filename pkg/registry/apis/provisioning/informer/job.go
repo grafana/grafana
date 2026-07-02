@@ -17,15 +17,16 @@ import (
 // NewJobDeltaSource returns the job delta source: a NATS-backed informer when the
 // subscriber is enabled, otherwise an apiserver-backed SharedIndexInformer. The
 // job controller reads no lister, so callers need only the DeltaSource.
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, metrics *Metrics) DeltaSource {
 	if nats.Enabled(subscriber) {
-		return NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
+		return NewJobInformer(subscriber, client, "", resync, usinformer.NewStore(), metrics)
 	}
-	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
+	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
+	return metrics.MeterAPIServer(provisioningapis.JobResourceInfo.GroupVersionResource().Resource, inf)
 }
 
 // NewJobInformer builds an Informer for jobs.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
+func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, metrics *Metrics) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -41,5 +42,5 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list, metrics.NATSRecorder())
 }

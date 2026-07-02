@@ -19,7 +19,7 @@ func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
 	sub := newFakeSubscriber()
 	gvr := provisioningapis.HistoricJobResourceInfo.GroupVersionResource()
 
-	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
+	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore(), nil)
 	_, err := inf.AddEventHandler(&typeRecorder{})
 	require.NoError(t, err)
 	stopCh := make(chan struct{})

@@ -65,7 +65,7 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
+	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore(), nil)
 	_, err := inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
@@ -154,14 +154,14 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute)
+		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute, nil)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, time.Minute)
+		_, getter := NewRepositoryDeltaSource(nil, client, time.Minute, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
 		_, err := getter.Get(context.Background(), testNamespace, "r")

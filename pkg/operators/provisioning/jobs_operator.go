@@ -42,7 +42,7 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		historyInformer = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration)
+		historyInformer = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration, informer.RegisterMetrics(deps.Registerer))
 		if _, err := historyInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add history job event handler: %w", err)
 		}
