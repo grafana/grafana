@@ -80,12 +80,11 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
 
   // Compute the coordinate-space tolerance from the current map resolution.
   // Resolution is map units (meters in EPSG:3857) per pixel. Multiplying by
-  // the pixel tolerance gives the distance threshold below which two features
+  // the pixel tolerance gives the per-axis threshold below which two features
   // are considered co-located. When resolution is unavailable (0), tolerance
   // falls back to 0 which preserves the legacy exact-match behavior.
   const resolution = panel.map.getView().getResolution() ?? 0;
   const tolerance = resolution * HIT_TOLERANCE_PX;
-  const toleranceSq = tolerance * tolerance;
 
   let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
   panel.map.forEachFeatureAtPixel(
@@ -140,11 +139,11 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
                 const otherGeom = otherFeature.getGeometry();
                 if (otherGeom instanceof Point) {
                   const otherCoords = otherGeom.getCoordinates();
-                  // Check for co-located coordinates within pixel tolerance
-                  // using Euclidean distance for circular proximity
-                  const dx = otherCoords[0] - featureCoords[0];
-                  const dy = otherCoords[1] - featureCoords[1];
-                  if (dx * dx + dy * dy <= toleranceSq) {
+                  // Check for co-located coordinates within the per-axis pixel
+                  // tolerance, matching the approach in isSegmentVisible
+                  const dx = Math.abs(otherCoords[0] - featureCoords[0]);
+                  const dy = Math.abs(otherCoords[1] - featureCoords[1]);
+                  if (dx <= tolerance && dy <= tolerance) {
                     h.features.push(otherFeature);
                     addedFeatures = true;
                   }
