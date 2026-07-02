@@ -34,7 +34,6 @@ var WireSetExts = wire.NewSet(
 	iam.ProvideNoopRoleApiInstaller,
 	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
-	iam.ProvideNoopExternalGroupMappingApiInstaller,
 	iam.ProvideNoopRoleBindingApiInstaller,
 
 	externalgroupmapping.ProvideNoopTeamGroupsHandlerProvider,
