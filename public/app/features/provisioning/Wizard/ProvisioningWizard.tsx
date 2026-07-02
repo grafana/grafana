@@ -14,6 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { Stepper } from './Stepper';
@@ -52,7 +53,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: type === 'github' ? 'github-app' : 'pat',
+      githubAuthType: isGitHubBased(type) ? 'github-app' : 'pat',
       githubAppMode: 'existing',
       githubApp: {},
     },
@@ -115,7 +116,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior =
     activeStep === 'authType' ||
-    (activeStep === 'connection' && repoType !== 'github') ||
+    (activeStep === 'connection' && !isGitHubBased(repoType)) ||
     isSyncCompleted ||
     isFinishWithSyncCompleted;
 

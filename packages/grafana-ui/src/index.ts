@@ -445,7 +445,7 @@ export {
 export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
 export { SCHEMA, makeFragment, makeValue } from './utils/slate';
 export { linkModelToContextMenuItems } from './utils/dataLinks';
-export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
+export { getTagColorsFromName } from './utils/tags';
 export { getScrollbarWidth } from './utils/scrollbar';
 export { getCellLinks } from './utils/table';
 export { getCanvasContext, measureText, calculateFontSize } from './utils/measureText';

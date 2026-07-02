@@ -180,7 +180,15 @@ type RepositoryWithURLs interface {
 type WebhookRepository interface {
 	Repository
 
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+	// Slug is the repository the webhook is configured for; the dispatcher uses
+	// it to reject events for anything else.
+	Slug() string
+
+	// VerifyRequest authenticates the inbound request and returns its verified form.
+	VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error)
+
+	// ProcessRequest normalizes an already-verified request into an event.
+	ProcessRequest(ctx context.Context, req *VerifiedWebhookRequest) (WebhookEvent, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

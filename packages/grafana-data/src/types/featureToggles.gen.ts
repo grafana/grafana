@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -458,16 +453,6 @@ export interface FeatureToggles {
   * @default false
   */
   scopeApi?: boolean;
-  /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
-  /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
   /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
@@ -1226,10 +1211,10 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
   */
-  heatmapRowsAxisOptions?: boolean;
+  heatmapNegativeLogBuckets?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
@@ -1496,11 +1481,6 @@ export interface FeatureToggles {
   */
   logsTablePanelNG?: boolean;
   /**
-  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-  * @default false
-  */
-  frontendServiceSSOAutoLogin?: boolean;
-  /**
   * Enables the splash screen modal for introducing new Grafana features on first session
   * @default false
   */
@@ -1570,4 +1550,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }
