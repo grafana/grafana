@@ -113,7 +113,7 @@ Replace the placeholders as follows:
 
   To find your stack ID, open the [Grafana Cloud Portal](https://grafana.com/profile/org), select your stack, and read the numeric **Instance ID**. That value is your `stack_id`.
 
-  You can also retrieve it with a `GET` request to `https://grafana.com/api/orgs/<ORG_SLUG>/instances`.
+  You can also retrieve it with a `GET` request to `https://grafana.com/api/orgs/<ORG_SLUG>/instances`, where _`<ORG_SLUG>`_ is your Grafana Cloud organization name.
   The numeric `id` field in the response is the stack ID.
   This Cloud API endpoint authenticates with a [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/cloud-api/), which is separate from the service account token that Terraform uses.
 
@@ -228,6 +228,11 @@ To apply the configuration, follow these steps:
    terraform apply
    ```
 
+   Replace the placeholders as follows:
+
+   - _`<TOKEN>`_ is the service account token you created in [Create a service account token](#create-a-service-account-token).
+   - _`<SECRET>`_ is the plaintext secret value that Terraform stores as the secure value.
+
    This keeps secrets out of Terraform files.
    If your shell writes history, prefer a secure secret-injection flow, such as CI/CD secrets, a secret manager, or a subshell with history disabled.
 
@@ -263,6 +268,7 @@ To confirm this, search your local state file for the plaintext:
 grep -c '<SECRET_VALUE>' terraform.tfstate
 ```
 
+Replace _`<SECRET_VALUE>`_ with the plaintext secret you provisioned.
 The search returns no matches:
 
 ```console
