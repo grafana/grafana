@@ -31,17 +31,6 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
 	}))
 
-	// Fix alert_rule_state.id column type on PostgreSQL. The migrator maps DB_BigInt with
-	// IsAutoIncrement to SERIAL (integer, max 2^31-1) instead of BIGSERIAL (bigint). The
-	// periodic full-sync (DELETE + re-INSERT) burns through sequence values rapidly, causing
-	// the sequence to overflow on busy installations. Each statement must be its own
-	// migration because a raw SQL migration runs as a single Exec, and Postgres does not
-	// support multiple semicolon-separated statements in one Exec.
-	mg.AddMigration("alter alert_rule_state id column to bigint for postgres", migrator.NewRawSQLMigration("").
-		Postgres("ALTER TABLE alert_rule_state ALTER COLUMN id TYPE BIGINT;"))
-	mg.AddMigration("alter alert_rule_state id sequence to bigint for postgres", migrator.NewRawSQLMigration("").
-		Postgres("ALTER SEQUENCE alert_rule_state_id_seq AS BIGINT;"))
-
 	// End of migration log, add new migrations above this line.
 }
 
