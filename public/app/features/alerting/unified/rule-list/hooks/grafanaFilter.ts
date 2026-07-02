@@ -3,146 +3,65 @@ import { attempt, isError } from 'lodash';
 import { type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { type GrafanaPromRulesOptions } from '../../api/prometheusApi';
-import { shouldUseBackendFilters, shouldUseFullyCompatibleBackendFilters } from '../../featureToggles';
 import { type RulesFilter } from '../../search/rulesSearchParser';
 import { parseMatcher } from '../../utils/matchers';
 
 import { buildTitleSearch, normalizeFilterState } from './filterNormalization';
-import {
-  type GroupFilterConfig,
-  type RuleFilterConfig,
-  dashboardUidFilter,
-  dataSourceNamesFilter,
-  freeFormFilter,
-  groupMatches,
-  groupNameFilter,
-  labelsFilter,
-  mapDataSourceNamesToUids,
-  namespaceFilter,
-  pluginsFilter,
-  policyFilter,
-  ruleMatches,
-  ruleNameFilter,
-  ruleTypeFilter,
-} from './filterPredicates';
+import { mapDataSourceNamesToUids, policyFilter } from './filterPredicates';
 
 /**
  * Determines if client-side filtering is needed for Grafana-managed rules.
+ * All filters except `policy` are handled by the backend; policy filtering is always client-side
+ * as the backend API does not support it.
  */
 export function hasGrafanaClientSideFilters(filterState: Partial<RulesFilter>): boolean {
-  const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();
-
-  // Check each rule filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
-  const hasActiveRuleFilters =
-    (ruleFilterConfig.freeFormWords !== null && Boolean(filterState?.freeFormWords?.length)) ||
-    (ruleFilterConfig.ruleName !== null && Boolean(filterState?.ruleName)) ||
-    (ruleFilterConfig.ruleState !== null && Boolean(filterState?.ruleState)) ||
-    (ruleFilterConfig.ruleType !== null && Boolean(filterState?.ruleType)) ||
-    (ruleFilterConfig.dataSourceNames !== null && Boolean(filterState?.dataSourceNames?.length)) ||
-    (ruleFilterConfig.labels !== null && Boolean(filterState?.labels?.length)) ||
-    (ruleFilterConfig.ruleHealth !== null && Boolean(filterState?.ruleHealth)) ||
-    (ruleFilterConfig.dashboardUid !== null && Boolean(filterState?.dashboardUid)) ||
-    (ruleFilterConfig.plugins !== null && Boolean(filterState?.plugins)) ||
-    (ruleFilterConfig.contactPoint !== null && Boolean(filterState?.contactPoint)) ||
-    (ruleFilterConfig.policy !== null && Boolean(filterState?.policy));
-
-  // Check each group filter: if the config has a non-null handler AND the filter state has a value, we need client-side filtering
-  const hasActiveGroupFilters =
-    (groupFilterConfig.namespace !== null && Boolean(filterState?.namespace)) ||
-    (groupFilterConfig.groupName !== null && Boolean(filterState?.groupName));
-
-  return hasActiveRuleFilters || hasActiveGroupFilters;
+  return Boolean(filterState.policy);
 }
 
 /**
- * Builds a combined filter configuration for Grafana-managed alert rules.
+ * Builds a combined filter for Grafana-managed alert rules.
  *
- * Constructs both backend and frontend filter objects based on the provided filter state.
- * The backend filter is used for server-side filtering when `shouldUseBackendFilters()` is enabled,
- * while the frontend filter provides client-side matching functions for rules and groups.
+ * All filters are passed to the backend except `policy`, which the backend API does not support
+ * and is applied client-side.
  */
 export function getGrafanaFilter(filterState: Partial<RulesFilter>) {
   const normalizedFilterState = normalizeFilterState(filterState);
 
-  const { ruleFilterConfig, groupFilterConfig } = buildGrafanaFilterConfigs();
-
-  // Build title search for backend filtering
   const titleSearch = buildTitleSearch(normalizedFilterState);
 
-  // Check if data source names were provided but none are valid.
   let hasInvalidDataSourceNames = false;
   let datasourceUids: string[] | undefined = undefined;
 
-  // Only map datasources if data source filter should be applied on backend (when ruleFilterConfig.dataSourceNames is null).
-  if (ruleFilterConfig.dataSourceNames === null && normalizedFilterState.dataSourceNames.length > 0) {
+  if (normalizedFilterState.dataSourceNames.length > 0) {
     datasourceUids = mapDataSourceNamesToUids(normalizedFilterState.dataSourceNames);
-    // If names were provided but no valid UIDs were found, all names are invalid.
     hasInvalidDataSourceNames = datasourceUids.length === 0;
   }
 
-  // Convert labels to JSON-encoded matchers for backend filtering
   const ruleMatchersBackendFilter: string[] | undefined =
-    ruleFilterConfig.labels || normalizedFilterState.labels.length === 0
-      ? undefined
-      : labelMatchersToBackendFormat(normalizedFilterState.labels);
+    normalizedFilterState.labels.length === 0 ? undefined : labelMatchersToBackendFormat(normalizedFilterState.labels);
 
   const backendFilter: GrafanaPromRulesOptions = {
     state: normalizedFilterState.ruleState ? [normalizedFilterState.ruleState] : [],
     health: normalizedFilterState.ruleHealth ? [normalizedFilterState.ruleHealth] : [],
     contactPoint: normalizedFilterState.contactPoint ?? undefined,
-    // If FE filter is defined, don't include the backend filter
-    title: ruleFilterConfig.ruleName ? undefined : titleSearch,
-    type: ruleFilterConfig.ruleType ? undefined : normalizedFilterState.ruleType,
-    dashboardUid: ruleFilterConfig.dashboardUid ? undefined : normalizedFilterState.dashboardUid,
-    searchGroupName: groupFilterConfig.groupName ? undefined : normalizedFilterState.groupName,
-    datasources: ruleFilterConfig.dataSourceNames ? undefined : datasourceUids,
+    title: titleSearch,
+    type: normalizedFilterState.ruleType,
+    dashboardUid: normalizedFilterState.dashboardUid,
+    searchGroupName: normalizedFilterState.groupName,
+    datasources: datasourceUids,
     ruleMatchers: ruleMatchersBackendFilter,
-    plugins: ruleFilterConfig.plugins ? undefined : normalizedFilterState.plugins,
-    searchFolder: groupFilterConfig.namespace ? undefined : normalizedFilterState.namespace,
+    plugins: normalizedFilterState.plugins,
+    searchFolder: normalizedFilterState.namespace,
   };
 
   return {
     backendFilter,
     frontendFilter: {
-      groupMatches: (group: PromRuleGroupDTO) => groupMatches(group, normalizedFilterState, groupFilterConfig),
-      ruleMatches: (rule: PromRuleDTO) => ruleMatches(rule, normalizedFilterState, ruleFilterConfig),
+      groupMatches: (_group: PromRuleGroupDTO) => true,
+      ruleMatches: (rule: PromRuleDTO) => policyFilter(rule, normalizedFilterState),
     },
     hasInvalidDataSourceNames,
   };
-}
-
-/**
- * Builds filter configurations for Grafana rules and groups.
- *
- * Determines which filters are applied on the backend vs. client-side based on
- * the `shouldUseBackendFilters()` flag. When backend filtering is enabled, certain
- * filters are set to null to prevent duplicate filtering.
- */
-function buildGrafanaFilterConfigs() {
-  const useBackendFilters = shouldUseBackendFilters();
-  const useFullyCompatibleBackendFilters = shouldUseFullyCompatibleBackendFilters();
-
-  const ruleFilterConfig: RuleFilterConfig = {
-    // When backend filtering is enabled, these filters are handled by the backend
-    freeFormWords: useBackendFilters ? null : freeFormFilter,
-    ruleName: useBackendFilters ? null : ruleNameFilter,
-    ruleState: null,
-    ruleType: useBackendFilters || useFullyCompatibleBackendFilters ? null : ruleTypeFilter,
-    dataSourceNames: useBackendFilters || useFullyCompatibleBackendFilters ? null : dataSourceNamesFilter,
-    labels: useBackendFilters ? null : labelsFilter,
-    ruleHealth: null,
-    dashboardUid: useBackendFilters || useFullyCompatibleBackendFilters ? null : dashboardUidFilter,
-    plugins: useBackendFilters || useFullyCompatibleBackendFilters ? null : pluginsFilter,
-    contactPoint: null,
-    policy: policyFilter,
-  };
-
-  const groupFilterConfig: GroupFilterConfig = {
-    namespace: useBackendFilters ? null : namespaceFilter,
-    groupName: useBackendFilters ? null : groupNameFilter,
-  };
-
-  return { ruleFilterConfig, groupFilterConfig };
 }
 
 /**
