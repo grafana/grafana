@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { getBackendSrv } from '@grafana/runtime';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { dashboardAPIv2beta1, type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { dispatch } from 'app/store/store';
@@ -96,6 +97,28 @@ export interface BulkOperationResult {
 
 function invalidateVariablesList() {
   dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
+}
+
+/**
+ * Replaces a variable with a new definition under a different name and/or folder
+ * scope. Both change the derived metadata.name, which the backend rejects on
+ * update, so the copy is created first and the original only deleted once it
+ * exists — a failure can never lose the variable. Uses direct backend calls
+ * instead of the RTK mutations so the caller can show a single operation-specific
+ * notification instead of separate "created" + "deleted" toasts.
+ */
+export async function recreateVariable(
+  sourceMetadataName: string,
+  kind: VariableKind,
+  targetFolderUid?: string
+): Promise<void> {
+  await getBackendSrv().post(`${BASE_URL}/variables`, buildVariableResource(kind, targetFolderUid));
+  try {
+    await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(sourceMetadataName)}`);
+  } finally {
+    // The copy exists even if the delete fails, so the list is stale either way.
+    invalidateVariablesList();
+  }
 }
 
 /**

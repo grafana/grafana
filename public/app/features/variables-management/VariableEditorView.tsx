@@ -12,6 +12,8 @@ import {
   type Variable,
 } from 'app/api/clients/dashboard/v2beta1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import {
   createSceneVariableFromVariableModel,
@@ -19,7 +21,9 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
+import { dispatch } from 'app/store/store';
 
+import { recreateVariable } from './api';
 import {
   buildVariableResource,
   getVariableFolderUid,
@@ -57,7 +61,8 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
   const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
   const [deleteVariable, { isLoading: isDeleting }] = useDeleteVariableMutation();
-  const isSaving = isCreating || isUpdating || isDeleting;
+  const [isRecreating, setIsRecreating] = useState(false);
+  const isSaving = isCreating || isUpdating || isDeleting || isRecreating;
 
   const scene = useMemo(
     () =>
@@ -108,11 +113,23 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
         return;
       }
 
-      // Renaming or moving changes the derived metadata.name, which the backend
-      // rejects on update — create the copy first, then delete the original so a
-      // failure can never lose the variable.
-      await createVariable({ variable: buildVariableResource(kind, folderUid) }).unwrap();
-      await deleteVariable({ name: sourceName }).unwrap();
+      // Renaming or moving is a create-then-delete under the hood; surface it as
+      // a single operation instead of separate "created" + "deleted" toasts.
+      setIsRecreating(true);
+      try {
+        await recreateVariable(sourceName, kind, folderUid || undefined);
+      } finally {
+        setIsRecreating(false);
+      }
+      dispatch(
+        notifyApp(
+          createSuccessNotification(
+            folderUid !== sourceFolderUid
+              ? t('variables-management.editor.moved', 'Variable moved')
+              : t('variables-management.editor.updated', 'Variable updated')
+          )
+        )
+      );
       onBack();
     } catch {
       // Error already notified.
