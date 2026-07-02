@@ -55,7 +55,8 @@ func TestResourceInfoIsValidRelation_TypedResources(t *testing.T) {
 			resource: iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
 			cases: []relCase{
 				{RelationGet, true},
-				{RelationCreate, true},
+				// teams have no per-object create; creation is governed by the group_resource.
+				{RelationCreate, false},
 				{RelationUpdate, true},
 				{RelationDelete, true},
 				{RelationGetPermissions, true},

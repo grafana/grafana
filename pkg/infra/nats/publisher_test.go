@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,7 +13,7 @@ import (
 func TestPublisher(t *testing.T) {
 	t.Run("is disabled when NATS is off", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: false}
-		p := newPublisher(log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
 
 		require.False(t, p.Enabled())
 		require.True(t, p.IsDisabled())

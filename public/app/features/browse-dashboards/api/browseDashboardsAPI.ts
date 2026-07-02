@@ -41,9 +41,6 @@ import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
 
 async function refreshTeamFolders() {
-  if (!config.featureToggles.teamFolders) {
-    return;
-  }
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 

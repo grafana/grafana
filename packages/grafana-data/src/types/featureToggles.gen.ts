@@ -454,16 +454,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
-  /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
@@ -1145,11 +1135,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enables team folders functionality
-  * @default true
-  */
-  teamFolders?: boolean;
-  /**
   * Enables the interactive learning app
   * @default false
   */
@@ -1220,6 +1205,11 @@ export interface FeatureToggles {
   * @default true
   */
   vizLegendFacetedFilter?: boolean;
+  /**
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
+  */
+  heatmapNegativeLogBuckets?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
@@ -1486,11 +1476,6 @@ export interface FeatureToggles {
   */
   logsTablePanelNG?: boolean;
   /**
-  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-  * @default false
-  */
-  frontendServiceSSOAutoLogin?: boolean;
-  /**
   * Enables the splash screen modal for introducing new Grafana features on first session
   * @default false
   */
@@ -1560,4 +1545,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }
