@@ -3,7 +3,7 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
 
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
@@ -14,6 +14,11 @@ export interface SqlEditorProps {
   formatter?: (value: string) => string;
   height?: number | string;
   ariaLabel?: string;
+  /**
+   * SQL dialect used for syntax highlighting and keyword completion.
+   * Defaults to `'standardSql'`.
+   */
+  dialect?: CodeMirrorSqlDialect;
   children?: (props: { formatQuery: () => void }) => ReactNode;
 }
 
@@ -24,6 +29,7 @@ export const SqlEditor = ({
   formatter,
   height = '200px',
   ariaLabel,
+  dialect,
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -46,6 +52,7 @@ export const SqlEditor = ({
       <div className={styles.editorBorder}>
         <CodeMirrorEditor
           language="sql"
+          sqlDialect={dialect}
           value={value}
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
