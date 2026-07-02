@@ -2080,14 +2080,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "teamFolders",
-			Description: "Enables team folders functionality",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-		},
-		{
 			Name:        "grafana.starredFolders",
 			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
 			Stage:       FeatureStageExperimental,
@@ -3146,6 +3138,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.growthHomepage",
+			Description: "Enables PLG-focused growth redesign of the unified homepage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Generate:    Generate{React: true},
+			Expression:  "false",
 		},
 		{
 			Name:            "kubernetesReporting",

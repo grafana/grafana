@@ -47,6 +47,8 @@ export const FlagKeys = {
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables PLG-focused growth redesign of the unified homepage */
+  GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -308,6 +310,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Enables PLG-focused growth redesign of the unified homepage
+ *
+ * **Details:**
+ * - flag key: `grafana.growthHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.growthHomepage", false, options).value;
 };
 
 /**
