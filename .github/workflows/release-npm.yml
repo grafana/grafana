@@ -109,7 +109,7 @@ jobs:
               echo "should_publish=true"
               echo "e2e_only=false"
               echo "npm_tag=$TAG"
-            } >> "$GITHUB_OUTPUT"
+            } | tee -a "$GITHUB_OUTPUT"
           else
             SHOULD=$(PACKAGE_DIR="packages/grafana-e2e-selectors" NPM_TAG="nightly" \
               ./.github/workflows/scripts/detect-e2e-selectors-change.sh)
@@ -117,7 +117,7 @@ jobs:
               echo "should_publish=$SHOULD"
               echo "e2e_only=true"
               echo "npm_tag=nightly"
-            } >> "$GITHUB_OUTPUT"
+            } | tee -a "$GITHUB_OUTPUT"
           fi
         shell: bash
 
