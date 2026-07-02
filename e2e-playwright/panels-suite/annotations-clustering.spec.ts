@@ -335,6 +335,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         const descriptionTextarea = page.getByTestId('annotation-editor-description');
         const tagsInput = page.getByText('Add tags');
         const markersLocator = panel.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+        const annotationEditor = page.locator('form', { has: descriptionTextarea });
         await expect(descriptionTextarea, 'add annotation description is visible').toBeVisible();
         await expect(tagsInput, 'should only be one tags input').toHaveCount(1);
 
@@ -347,7 +348,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.press('Enter');
 
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await annotationEditor.getByRole('button', { name: 'Save', exact: true }).click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -366,7 +367,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.type('tag2');
         await page.keyboard.press('Enter');
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await annotationEditor.getByRole('button', { name: 'Save', exact: true }).click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -471,12 +472,13 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
 
         const descriptionTextarea = page.getByTestId('annotation-editor-description');
         const markersLocator = page.getByTestId(selectors.pages.Dashboard.Annotations.marker);
+        const annotationEditor = page.locator('form', { has: descriptionTextarea });
 
         // add description
         await descriptionTextarea.fill('description text goes here');
 
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await annotationEditor.getByRole('button', { name: 'Save', exact: true }).click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
