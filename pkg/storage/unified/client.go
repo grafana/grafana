@@ -62,6 +62,24 @@ type Options struct {
 	// the same resource-change notifications as the storage-server module. Nil-safe
 	// and gated on Enabled(): a disabled bus simply publishes nothing.
 	Publisher nats.Publisher
+	// Subscriber backs the shadow NATS notifier when nats.notifier_shadow is on.
+	// Like Publisher, it is wired in-process so a monolith can run the shadow;
+	// gated on Enabled(), so a disabled bus starts nothing.
+	Subscriber nats.Subscriber
+}
+
+// natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
+// in-process shadow notifier (mirrors the adapter in pkg/server). Needed because
+// nats.Subscriber.Subscribe takes a nats.MessageHandler and variadic options the
+// resource interface does not expose.
+type natsEventSubscriber struct {
+	sub nats.Subscriber
+}
+
+func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
+
+func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (resource.Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
 }
 
 type clientMetrics struct {
@@ -85,7 +103,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -119,6 +137,7 @@ func newClient(opts options.StorageOptions,
 	eDB sqldb.DBProvider,
 	gcGate *resource.GCGate,
 	eventPublisher nats.Publisher,
+	eventSubscriber nats.Subscriber,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -176,7 +195,14 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, sql.WithEventPublisher(eventPublisher))
+		storageOpts := []sql.StorageBackendOption{sql.WithEventPublisher(eventPublisher)}
+		// Run the shadow notifier in-process too when enabled, mirroring the
+		// storage-server module. Gated on the flag; the subscriber's own Enabled()
+		// check downstream stops it when the bus is off.
+		if cfg.NATS.NotifierShadow && eventSubscriber != nil {
+			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
+		}
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err
 		}
