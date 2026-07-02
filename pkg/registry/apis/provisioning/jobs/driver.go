@@ -294,9 +294,13 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 			if err != nil {
 				consecutiveFailures++
-				if apierrors.IsNotFound(err) ||
+				// Lease loss (job reaped or claimed by another worker) is terminal: keeping
+				// this worker running would mean two workers process the same job. Abort now
+				// instead of retrying, which would only stomp the new owner's claim.
+				if errors.Is(err, ErrLeaseLost) ||
+					apierrors.IsNotFound(err) ||
 					strings.Contains(err.Error(), "job no longer exists") {
-					logger.Error("job no longer exists - lease expired", "error", err)
+					logger.Error("lease lost - aborting job", "error", err)
 					close(leaseExpired)
 					return
 				}
