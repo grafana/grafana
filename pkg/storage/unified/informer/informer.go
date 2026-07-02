@@ -247,6 +247,13 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		}
 		sub = s
 		n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+		// Close the gap between the initial list and the subscription becoming
+		// active: a change published in that window (including while Subscribe was
+		// retrying because the bus was not yet ready) had no interest and was
+		// dropped by core NATS. Reconcile from a fresh list now that live events
+		// flow, so a startup write is caught immediately rather than at the next
+		// resync tick.
+		_ = n.relist(ctx, false)
 		return true
 	}
 
