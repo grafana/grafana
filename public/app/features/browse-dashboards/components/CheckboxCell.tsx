@@ -12,7 +12,7 @@ import { useSelector } from 'app/types/store';
 
 import { canEditItemType } from '../permissions';
 import { type DashboardsTreeCellProps, SelectionState } from '../types';
-import { isSharedWithMe, isUnderTeamFolders, isVirtualTeamFolder } from '../utils/dashboards';
+import { isNonSelectableVirtualFolder, isUnderTeamFolders } from '../utils/dashboards';
 
 export default function CheckboxCell({
   row: { original: row },
@@ -41,7 +41,7 @@ export default function CheckboxCell({
     }
   }
 
-  if (isSharedWithMe(item.uid) || isVirtualTeamFolder(item.uid) || isUnderTeamFolders(item.uid)) {
+  if (isNonSelectableVirtualFolder(item.uid) || isUnderTeamFolders(item.uid)) {
     return <CheckboxSpacer />;
   }
 

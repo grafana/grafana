@@ -34,6 +34,21 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => dsMock,
 }));
 
+const datasources: Record<string, { uid: string; name: string }> = {
+  'name-of-ds1': { uid: 'ds1', name: 'name-of-ds1' },
+  'name-of-ds2': { uid: 'ds2', name: 'name-of-ds2' },
+};
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(datasources[nameOrUid]);
+    }
+    return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
+  },
+}));
+
 const preferencesServiceMock = {
   patch: jest.fn(),
   load: jest.fn(),

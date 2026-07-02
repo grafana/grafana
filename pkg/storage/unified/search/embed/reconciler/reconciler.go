@@ -697,6 +697,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// An empty extract means the dashboard has no embeddable content;
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
+		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
 		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
 			statusLabel = "delete_error"
 			return err

@@ -60,6 +60,10 @@ type frontendService struct {
 	index           *IndexProvider
 	settingsService settingservice.Service // nil if not configured
 	pluginsCDN      *pluginscdn.Service
+
+	// baggageEvalContextKeys are the W3C baggage member keys copied into the
+	// per-request OpenFeature evaluation context.
+	baggageEvalContextKeys []string
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
@@ -95,6 +99,8 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		index:           index,
 		settingsService: settingsService,
 		pluginsCDN:      pluginsCDN,
+
+		baggageEvalContextKeys: readBaggageEvalContextKeys(cfg),
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil

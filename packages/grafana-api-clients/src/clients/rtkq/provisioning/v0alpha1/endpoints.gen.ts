@@ -2182,12 +2182,16 @@ export type SupportedResource = {
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
+  /** Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name. */
+  branchOptions?: BranchOptions;
   /** Commit message options. Mirrors the same-named field on the repository spec. */
   commit?: CommitOptions;
   /** The k8s name for this repository */
   name: string;
   /** For git, this is the target path */
   path?: string;
+  /** Pull request options. Mirrors the same-named field on the repository spec. */
+  pullRequest?: PullRequestOptions;
   /** When syncing, where values are saved
     
     Possible enum values:

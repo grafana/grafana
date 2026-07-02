@@ -15,8 +15,10 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
@@ -83,11 +85,20 @@ export function DeleteProvisionedDashboardForm({
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const showError = (error: unknown) => {
     setSubmitError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.delete-provisioned-dashboard-form.delete-error', 'Failed to delete dashboard')
       )
     );
@@ -101,6 +112,7 @@ export function DeleteProvisionedDashboardForm({
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
       action: 'delete',
+      prTitle,
     });
     navigate(url);
   };
@@ -234,6 +246,7 @@ export function DeleteProvisionedDashboardForm({
                 repository={repository}
                 lockComment={locked}
                 commitMessage={message}
+                lockBranch={lockBranch}
               />
 
               {submitError && <ProvisioningAlert error={submitError} />}

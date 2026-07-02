@@ -14,10 +14,26 @@ import (
 
 type mockPositionProvider struct {
 	position atomic.Int32
+	// ready gates WaitReady. When nil, WaitReady returns immediately (the
+	// cluster is treated as already settled). When set, WaitReady blocks until
+	// the channel is closed, simulating a cluster that has not yet settled.
+	ready chan struct{}
 }
 
 func (m *mockPositionProvider) Position() int {
 	return int(m.position.Load())
+}
+
+func (m *mockPositionProvider) WaitReady(ctx context.Context) error {
+	if m.ready == nil {
+		return nil
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-m.ready:
+		return nil
+	}
 }
 
 func TestNewEvaluationCoordinator(t *testing.T) {
@@ -72,6 +88,65 @@ func TestEvaluationCoordinator_Updates(t *testing.T) {
 				require.True(t, val, "position 0 should emit true")
 			default:
 				t.Fatal("expected initial value immediately")
+			}
+		})
+	})
+
+	t.Run("waits for cluster to settle before first decision", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			provider := &mockPositionProvider{ready: make(chan struct{})}
+			// Before the cluster settles, every node sees only itself and
+			// reports position 0.
+			provider.position.Store(0)
+
+			coordinator, err := NewEvaluationCoordinator(provider, log.NewNopLogger())
+			require.NoError(t, err)
+
+			updates := coordinator.Updates(t.Context())
+			synctest.Wait()
+
+			// No decision must be emitted while the cluster is unsettled,
+			// otherwise this node would start evaluating based on a bogus
+			// position 0.
+			select {
+			case val := <-updates:
+				t.Fatalf("must not emit a decision before the cluster settles, got %v", val)
+			default:
+			}
+
+			// Cluster settles and this node's real position turns out to be 1
+			// (a secondary node).
+			provider.position.Store(1)
+			close(provider.ready)
+			synctest.Wait()
+
+			select {
+			case val := <-updates:
+				require.False(t, val, "settled secondary node should not evaluate")
+			default:
+				t.Fatal("expected a decision once the cluster has settled")
+			}
+		})
+	})
+
+	t.Run("closes channel when context is cancelled before the cluster settles", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			provider := &mockPositionProvider{ready: make(chan struct{})}
+			coordinator, err := NewEvaluationCoordinator(provider, log.NewNopLogger())
+			require.NoError(t, err)
+
+			ctx, cancel := context.WithCancel(t.Context())
+			updates := coordinator.Updates(ctx)
+			synctest.Wait()
+
+			cancel()
+			synctest.Wait()
+
+			select {
+			case _, ok := <-updates:
+				require.False(t, ok, "channel should be closed")
+			default:
+				t.Fatal("channel should close when context is cancelled while waiting for the cluster to settle")
 			}
 		})
 	})
