@@ -75,11 +75,26 @@ To adjust this behavior:
 - **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
 - **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
 
+The standalone plugin requires Grafana 12.2.0 or later. The Elasticsearch data source bundled with Grafana 12.1 and earlier continues to work as before — these versions are unaffected by the externalisation.
+
+Users running Grafana 12.2.x through 12.4.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.0. To use the standalone plugin with Grafana 12.2.x through 12.4.x, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.elasticsearch]
+as_external = true
+
+[plugins]
+; Install the latest version on startup:
+preinstall_sync = elasticsearch
+; Or install a specific version:
+; preinstall_sync = elasticsearch@<version>
+```
+
 ## Additional resources
 
-Once you have configured the Elasticsearch data source, you can:
+After you have configured the Elasticsearch data source, you can:
 
-- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your Elasticsearch data.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run user-written queries against your Elasticsearch data.
 - Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/) for dynamic dashboards.
 - Add [Transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to process query results.
 - [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your Elasticsearch data.
