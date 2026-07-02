@@ -249,14 +249,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'inline-flex',
     alignItems: 'center',
-    verticalAlign: 'middle',
     // No border for second element (inputs) as label and input border is shared
     '> :nth-child(2)': css({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
     marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
   verticalContainer: css({
     display: 'flex',

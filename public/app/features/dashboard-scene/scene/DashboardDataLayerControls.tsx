@@ -79,8 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'dashboard-data-layer-controls',
     display: 'inline-flex',
     alignItems: 'center',
-    verticalAlign: 'middle',
     marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
 });
