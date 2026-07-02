@@ -2022,6 +2022,32 @@ func (b *bleveIndex) Search(
 	if err := b.ensureSearchFields(searchrequest, req); err != nil {
 		return nil, err
 	}
+
+	// A SearchAfter cursor carries one sort value per field in the sort order
+	// that produced it. The post-rank path appends a SortDocID tie-breaker, so
+	// its sort order is one longer than the in-searcher path's. A cursor
+	// created before the flag was enabled (or after it was turned off) has the
+	// wrong length for the current path. runPostFilterAuthz calls
+	// SearchInContext directly, so bleve doesn't validate the mismatch before
+	// the collector indexes into the shorter cursor. Guard it here: if the
+	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
+	// path; if it still doesn't match, reject the request.
+	if postRank && len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+		postRank = false
+		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank)
+		if e != nil {
+			response.Error = e
+			return response, nil
+		}
+		if err := b.ensureSearchFields(searchrequest, req); err != nil {
+			return nil, err
+		}
+	}
+	if len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+		response.Error = resource.NewBadRequestError("search_after cursor does not match the current sort order")
+		return response, nil
+	}
+
 	// selectFields is the response column list, derived from the caller's
 	// requested fields (or the all-fields sentinel when none were requested).
 	// It is snapshotted before ensureAuthzFields so the folder field — which

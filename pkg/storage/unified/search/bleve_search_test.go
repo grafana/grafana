@@ -1143,6 +1143,17 @@ func columnNames(res *resourcepb.ResourceSearchResponse) []string {
 	return names
 }
 
+// searchResponse runs a search and returns the raw response (without asserting
+// on res.Error), so tests can assert on error/bad-request behavior.
+func searchResponse(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+	t.Helper()
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+	ctx := authlib.WithAuthInfo(context.Background(), requester)
+	res, err := index.Search(ctx, ac, q, nil, nil)
+	require.NoError(t, err)
+	return res
+}
+
 // pageAll walks SearchAfter cursors until a short/empty page, returning the
 // names in the order they were returned across pages.
 func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
@@ -1498,6 +1509,40 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		colsAll := columnNames(resAll)
 		require.NotEmpty(t, colsAll)
 		require.Greater(t, len(colsAll), 1, "empty Fields returns the full column set, not just the folder authz field")
+	})
+
+	t.Run("stale SearchAfter cursor falls back to in-searcher path", func(t *testing.T) {
+		// A cursor created before the flag was enabled has one fewer sort value
+		// (no SortDocID tie-breaker). The post-rank path must fall back to the
+		// in-searcher path instead of feeding bleve a mismatched cursor.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-a", "allowed"),
+			newDoc("doc-b", "allowed"),
+			newDoc("doc-c", "allowed"),
+		})
+		ac := &countingAccessClient{allowAll: true}
+		// Pre-flag cursor shape: a single title sort value, no _id tie-breaker.
+		// The post-rank sort order is [title, _id] (len 2); this cursor is len 1.
+		q := listQuery(10)
+		q.SearchAfter = []string{"doc-a"}
+		names, res := searchNames(t, index, ac, q)
+		require.Nil(t, res.Error)
+		// Falls back to the in-searcher path (title sort, len 1); returns docs
+		// with title > "doc-a".
+		require.Equal(t, []string{"doc-b", "doc-c"}, names)
+	})
+
+	t.Run("SearchAfter cursor matching neither sort order is rejected", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc-a", "allowed")})
+		ac := &countingAccessClient{allowAll: true}
+		// len 3 matches neither the post-rank order (2) nor the in-searcher
+		// order (1) -> bad request rather than a mismatched bleve search.
+		q := listQuery(10)
+		q.SearchAfter = []string{"a", "b", "c"}
+		res := searchResponse(t, index, ac, q)
+		require.NotNil(t, res.Error)
 	})
 }
 
