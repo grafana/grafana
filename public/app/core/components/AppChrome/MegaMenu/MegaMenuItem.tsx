@@ -53,6 +53,9 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
+  // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
+  const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
   // Pinned sections use a separate expand-state key (and default to expanded) so a section shown
   // both pinned and in the normal nav doesn't share — and fight over — the same collapse state.
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
@@ -140,7 +143,7 @@ export function MegaMenuItem({
                 [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
             >
-              {level === 0 && iconElement}
+              {(level === 0 || isStarredLeaf) && iconElement}
               <Text truncate element="p">
                 {link.text}
               </Text>
@@ -177,7 +180,7 @@ export function MegaMenuItem({
               .filter((childLink) => !childLink.isCreateAction)
               .map((childLink) => (
                 <MegaMenuItem
-                  key={`${link.text}-${childLink.text}`}
+                  key={childLink.id ?? `${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
                   onClick={onClick}
