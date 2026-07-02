@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func newResourcePermission(apiGroup, resource, name string) *iamv0.ResourcePermission {
@@ -70,7 +71,7 @@ func TestResourcePermissions_AfterGet(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
-			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider, tracing.NewNoopTracerService())
 			ctx := types.WithAuthInfo(context.Background(), user)
 
 			err := resPermAuthz.AfterGet(ctx, fold1)
@@ -103,7 +104,7 @@ func TestResourcePermissions_AfterGet_WithUsersPermissionsRead(t *testing.T) {
 	}
 	accessClient := &fakeAccessClient{checkFunc: checkFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
-	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider, tracing.NewNoopTracerService())
 	ctx := types.WithAuthInfo(context.Background(), user)
 
 	err := resPermAuthz.AfterGet(ctx, fold1)
@@ -154,7 +155,7 @@ func TestResourcePermissions_FilterList(t *testing.T) {
 
 	accessClient := &fakeAccessClient{checkFunc: checkFunc, batchCheckFunc: batchCheckFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
-	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider, tracing.NewNoopTracerService())
 	ctx := types.WithAuthInfo(context.Background(), user)
 
 	obj, err := resPermAuthz.FilterList(ctx, list)
@@ -191,7 +192,7 @@ func TestResourcePermissions_FilterList_WithUsersPermissionsRead(t *testing.T) {
 	}
 	accessClient := &fakeAccessClient{checkFunc: checkFunc}
 	fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
-	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+	resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider, tracing.NewNoopTracerService())
 	ctx := types.WithAuthInfo(context.Background(), user)
 
 	obj, err := resPermAuthz.FilterList(ctx, list)
@@ -247,7 +248,7 @@ func TestResourcePermissions_beforeWrite(t *testing.T) {
 
 			accessClient := &fakeAccessClient{checkFunc: checkFunc}
 			fakeParentProvider := &fakeParentProvider{hasParent: true, getParentFunc: getParentFunc}
-			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider)
+			resPermAuthz := NewResourcePermissionsAuthorizer(accessClient, fakeParentProvider, tracing.NewNoopTracerService())
 			ctx := types.WithAuthInfo(context.Background(), user)
 
 			err := resPermAuthz.beforeWrite(ctx, fold1)

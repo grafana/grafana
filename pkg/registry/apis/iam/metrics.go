@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -67,7 +68,7 @@ var (
 		Subsystem: metricsSubSystem,
 		Name:      "storage_wrapper_duration_seconds",
 		Help:      "Latency of IAM storage wrapper operations split by layer (authz vs inner store), operation, resource, and status",
-		Buckets:   prometheus.ExponentialBuckets(0.001, 2, 10), // 1ms to ~1s
+		Buckets:   prometheus.DefBuckets,
 	}, []string{"layer", "op", "resource", "status"})
 )
 
@@ -86,6 +87,8 @@ func registerMetrics(reg prometheus.Registerer) {
 				log.New("iam.apis").Warn("failed to register iam apiserver metrics", "error", err)
 			}
 		}
+
+		iamauthorizer.RegisterMetrics(reg)
 	})
 }
 
