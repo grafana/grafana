@@ -266,6 +266,12 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"dashboard_uid"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("alter dashboard.id column to bigint", NewRawSQLMigration("").
+		Postgres("ALTER TABLE dashboard ALTER COLUMN id TYPE BIGINT;"))
+
+	mg.AddMigration("alter dashboard.id sequence to bigint", NewRawSQLMigration("").
+		Postgres(`DO $$ DECLARE seq_name TEXT; BEGIN seq_name := pg_get_serial_sequence('dashboard', 'id'); IF seq_name IS NOT NULL THEN EXECUTE format('ALTER SEQUENCE %s AS BIGINT', seq_name); END IF; END $$;`))
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {

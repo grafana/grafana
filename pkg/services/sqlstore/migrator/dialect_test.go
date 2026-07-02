@@ -6,6 +6,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPostgresDialectSQLType(t *testing.T) {
+	db := NewPostgresDialect()
+
+	tests := []struct {
+		name     string
+		col      *Column
+		expected string
+	}{
+		{
+			name:     "DB_BigInt with AutoIncrement should produce BIGSERIAL, not SERIAL",
+			col:      &Column{Type: DB_BigInt, IsAutoIncrement: true},
+			expected: DB_BigSerial,
+		},
+		{
+			name:     "DB_BigInt without AutoIncrement should produce BIGINT",
+			col:      &Column{Type: DB_BigInt, IsAutoIncrement: false},
+			expected: DB_BigInt,
+		},
+		{
+			name:     "DB_Int with AutoIncrement should still produce SERIAL",
+			col:      &Column{Type: DB_Int, IsAutoIncrement: true},
+			expected: DB_Serial,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := db.SQLType(tc.col)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func TestInsertQuery(t *testing.T) {
 	tests := []struct {
 		name                  string
