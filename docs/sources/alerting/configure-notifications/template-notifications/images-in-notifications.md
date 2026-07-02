@@ -21,7 +21,7 @@ weight: 105
 # Use images in notifications
 
 {{< admonition type="note" >}}
-Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
+Grafana Cloud users can enable this feature by [opening a support ticket in the Cloud Portal](/profile/org#support). Refer to the [Grafana Cloud configuration](#grafana-cloud) section for details.
 {{< /admonition >}}
 
 Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including a screenshot of the panel associated with the alert.
@@ -34,7 +34,7 @@ When an alert is fired or resolved Grafana takes a screenshot of the panel assoc
 
 Grafana takes at most two screenshots for each alert: once when the alert fires and again when the alert is resolved. Screenshots are not re-taken over the lifetime of the alert, instead you should open the panel in Grafana to follow the data in real time. In addition, depending on how alerts are grouped in your notification policies, Grafana might send a notification with many screenshots of the same panel. This happens because Grafana does not know how your alerts are grouped at the time a screenshot is taken, and so acts conservatively by taking a screenshot for every alert.
 
-After a screenshot has been taken Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; upload the screenshot to it's internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.
+After a screenshot has been taken Grafana can either upload it to a cloud storage service such as Amazon S3, Azure Blob Storage, Google Cloud Storage, or Grafana Cloud; upload the screenshot to its internal web server; or upload it to the service that is receiving the notification, such as Slack. Which option you should choose depends on how your Grafana is managed and which integrations you use. More information on this can be found in Requirements.
 
 Refer to the table at the end of this page for a list of contact points and their support for images in notifications.
 
@@ -46,7 +46,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 3. You should use a cloud storage service unless sending alerts to Discord, email, Pushover, Slack or Telegram. These integrations support either embedding screenshots in the email or attaching screenshots to the notification, while other integrations must link screenshots uploaded to a cloud storage bucket. If a cloud storage service has been configured then integrations that support both link screenshots from the cloud storage bucket instead of embedding or attaching screenshots to the notification.
 
-4. If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; then image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens, we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
+4. If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage, Google Cloud Storage, or Grafana Cloud; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; then image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens, we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
 5. When uploading screenshots to a cloud storage service Grafana uses a random 20 character (30 characters for Azure Blob Storage) filename for each image. This makes URLs hard to guess but not impossible.
 
@@ -60,35 +60,25 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Configuration
 
-{{< admonition type="note" >}}
-Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
-{{< /admonition >}}
+### Grafana Cloud
 
-Having set up Grafana to use the image renderer service, set `capture` in `[unified_alerting.screenshots]` to `true`:
+Grafana Cloud includes built-in support for images in notifications using its own managed image storage. You don't need to configure an external cloud storage provider yourself. To enable this feature, [open a support ticket in the Cloud Portal](/profile/org#support) and request that images in notifications be enabled for your instance. The Grafana Cloud support team configures the necessary backend settings on your behalf.
 
-    # Enable screenshots in notifications. You must have either installed the Grafana image rendering
-    # plugin, or set up Grafana to use a remote rendering service.
-    # For more information on configuration options, refer to [rendering].
-    capture = false
+### Grafana OSS and Enterprise
 
-If screenshots should be uploaded to cloud storage then `upload_external_image_storage` should also be set to `true`:
+After setting up Grafana to use the image renderer service, configure the `[unified_alerting.screenshots]` section:
 
-    # Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please
-    # see [external_image_storage] for further configuration options. If this option is false, screenshots
-    # are persisted to disk for up to temp_data_lifetime.
-    upload_external_image_storage = false
+    [unified_alerting.screenshots]
+    capture = true
+    capture_timeout = 10s
+    max_concurrent_screenshots = 5
+    upload_external_image_storage = true
+
+If `upload_external_image_storage` is set to `true`, you must also configure the `[external_image_storage]` section to specify which cloud storage provider to use. Set the `provider` option to one of `s3`, `gcs`, `azure_blob`, `webdav`, or `local`, and then configure the corresponding provider-specific section.
+
+For the full list of options, refer to [`[unified_alerting.screenshots]`](/docs/grafana/latest/setup-grafana/configure-grafana/#unified_alertingscreenshots) and [`[external_image_storage]`](/docs/grafana/latest/setup-grafana/configure-grafana/#external-image-store) in the Grafana configuration documentation.
 
 Restart Grafana for the changes to take effect.
-
-## Advanced configuration
-
-We recommend that `max_concurrent_screenshots` is less than or equal to `concurrent_render_request_limit`. The default value for both `max_concurrent_screenshots` and `concurrent_render_request_limit` is `5`:
-
-    # The maximum number of screenshots that can be taken at the same time. This option is different from
-    # concurrent_render_request_limit as max_concurrent_screenshots sets the number of concurrent screenshots
-    # that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets
-    # the total number of concurrent screenshots across all Grafana services.
-    max_concurrent_screenshots = 5
 
 ## Supported contact points
 
@@ -121,7 +111,7 @@ Grafana supports a wide range of contact points with varied support for images i
 - This feature is not supported when using custom templates in email notifications.
 - A number of contact points support at most one image per notification. In this case, just the first image is either uploaded to the receiving service or referenced from cloud storage per notification.
 - When multiple alerts are sent in a single notification a screenshot might be included for each alert. The order the images are shown is random.
-- If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN.
+- If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage, Google Cloud Storage, or Grafana Cloud; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN.
 
 ## Troubleshooting
 
