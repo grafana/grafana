@@ -4031,6 +4031,23 @@
     },
     {
       "metadata": {
+        "name": "ofrep.bulkFlagEvalFiltering",
+        "resourceVersion": "1783006061209",
+        "creationTimestamp": "2026-07-02T15:25:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-02 15:27:41.20966 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Filters bulk OFREP flag evaluations to public-metadata flags only",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "onlyStoreActionSets",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-10-20T15:02:56Z"
