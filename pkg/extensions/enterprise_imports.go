@@ -45,6 +45,7 @@ import (
 	_ "github.com/go-jose/go-jose/v4"
 	_ "github.com/go-jose/go-jose/v4/jwt"
 	_ "github.com/go-openapi/strfmt"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/gobwas/glob"
 	_ "github.com/golang/snappy"
 	_ "github.com/google/go-cmp/cmp"

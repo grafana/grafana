@@ -23,6 +23,8 @@ interface SummaryCardProps<T> {
   // When set, replaces the list/empty state with a retryable warning alert.
   error?: { title: string; onRetry: () => void };
   emptyMessage: string;
+  // Rendered in the empty state in place of emptyMessage — a call-to-action button. Caller gates it.
+  emptyAction?: ReactNode;
   items: T[];
   getItemKey: (item: T) => string;
   renderItem: (item: T) => ReactNode;
@@ -38,6 +40,7 @@ export function SummaryCard<T>({
   loading,
   error,
   emptyMessage,
+  emptyAction,
   items,
   getItemKey,
   renderItem,
@@ -83,7 +86,7 @@ export function SummaryCard<T>({
 
           {!loading && !error && items.length === 0 && (
             <Stack direction="column" alignItems="center">
-              <Text color="secondary">{emptyMessage}</Text>
+              {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
             </Stack>
           )}
 

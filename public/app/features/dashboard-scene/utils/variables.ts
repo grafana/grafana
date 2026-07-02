@@ -31,15 +31,46 @@ const DEFAULT_DATASOURCE = 'default';
 export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
 
 /**
+ * Collects the user-defined variables visible from `model` by walking up the
+ * scene graph, so that both section-level (tab/row) and dashboard-level
+ * variables are returned. When the same name is defined at multiple levels the
+ * nearest definition wins, matching how `sceneGraph.lookupVariable` resolves a
+ * variable at evaluation time. Internal system variables (e.g. ScopesVariable)
+ * are excluded.
+ */
+function collectInScopeUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const byName = new Map<string, SceneVariable>();
+
+  let current: SceneObject | undefined = model;
+  while (current) {
+    const variableSet = current.state.$variables;
+
+    if (variableSet) {
+      for (const variable of variableSet.state.variables) {
+        if (keepOnlyUserDefinedVariables(variable) && !byName.has(variable.state.name)) {
+          byName.set(variable.state.name, variable);
+        }
+      }
+    }
+
+    current = current.parent;
+  }
+
+  return Array.from(byName.values());
+}
+
+/**
  * Excludes internal system variables (e.g. ScopesVariable)
  */
 export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
-  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+  return collectInScopeUserDefinedVariables(model);
 }
 
 export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
-  const { variables } = sceneGraph.getVariables(model).useState();
-  return variables.filter(keepOnlyUserDefinedVariables);
+  // Subscribe to the closest variable set so the list reacts to variables being
+  // added or removed; the returned list still spans the whole parent chain.
+  sceneGraph.getVariables(model).useState();
+  return collectInScopeUserDefinedVariables(model);
 }
 
 export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
