@@ -45,8 +45,22 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "properties": {
+          "email": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "docvalues": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
           "externalGroups": {
             "enabled": true,
             "dynamic": true,
@@ -56,6 +70,18 @@
                 "analyzer": "keyword",
                 "store": true,
                 "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "externalUID": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
                 "skip_freq_norm": true
               }
             ]
@@ -70,6 +96,16 @@
                 "store": true,
                 "index": true,
                 "skip_freq_norm": true
+              }
+            ]
+          },
+          "provisioned": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "boolean",
+                "store": true
               }
             ]
           }

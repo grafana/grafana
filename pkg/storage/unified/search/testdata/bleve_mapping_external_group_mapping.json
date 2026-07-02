@@ -45,7 +45,7 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "properties": {
           "external_group": {
             "enabled": true,

@@ -16,10 +16,7 @@ import (
 // fieldDefinitionsForMapping returns the SearchFieldDefinition slice that
 // drives the per-kind fields.* sub-document mapping. The provider is the
 // only source of truth: a kind that wants per-kind bleve mappings must
-// register a SearchFieldsProvider. Anything the helper does not emit a
-// mapping for (retrieve-only fields, non-string fields with only
-// filter/facet under the type-aware mapper) is left to Bleve's dynamic
-// mapping at index time.
+// register a SearchFieldsProvider.
 func fieldDefinitionsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) []resource.SearchFieldDefinition {
 	if provider == nil {
 		return nil
@@ -63,24 +60,17 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
 	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
 
-	// Non-string fields (int64, double, boolean) get a mapping matching their
-	// type, never a keyword: bleve turns a numeric or boolean value into a
-	// keyword mapping's processString no-op and drops it entirely. Under a
-	// dynamic parent bleve's dynamic path already produces the typed mapping,
-	// so emit nothing explicit. Under a static parent (the top-level mapper)
-	// there is no dynamic fallback, so emit an explicit typed mapping when the
-	// field is filtered or retrieved. Text, partial, facet and sort are all
-	// validated as string-only, so filter and retrieve are the only
-	// capabilities that reach here for non-strings.
+	// Non-string fields (int64, double, boolean) must be mapped to their own
+	// type: bleve silently drops a numeric or boolean value fed through a
+	// keyword mapping. Text, partial and facet are validated as string-only, so
+	// only filter, sort and retrieve reach here for non-strings.
 	if def.Type != resource.SearchFieldTypeString {
-		if !parent.Dynamic && (hasFilter || hasRetrieve) {
+		if hasFilter || hasSort || hasRetrieve {
 			m := typedNonStringFieldMapping(def.Type)
-			m.Index = hasFilter
+			// bleve can sort an indexed numeric field even without doc values, so
+			// sort only needs the field indexed.
+			m.Index = hasFilter || hasSort
 			m.Store = hasRetrieve
-			// Doc values are only needed for sort. Sort on non-string types is
-			// gated off in the validator today, so hasSort is always false here;
-			// wiring numeric/boolean sort is a follow-up and this line is ready
-			// for it.
 			m.DocValues = hasSort
 			m.IncludeInAll = false
 			parent.AddFieldMappingsAt(def.Name, m)
@@ -126,15 +116,24 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		parent.AddFieldMappingsAt(def.Name+"_ngram", m)
 	}
 
-	// retrieve without any other capability has no place to live; today's
-	// translation never produces such a shape. Silently ignored.
+	// A retrieve-only string has no mapping above, so store it explicitly;
+	// otherwise the static parent would drop it entirely.
+	if hasRetrieve && !needKeyword && !hasText && !hasPartial {
+		m := bleve.NewKeywordFieldMapping()
+		m.Index = false
+		m.Store = true
+		m.IncludeTermVectors = false
+		m.SkipFreqNorm = true
+		m.DocValues = false
+		m.IncludeInAll = false
+		parent.AddFieldMappingsAt(def.Name, m)
+	}
 }
 
 // typedNonStringFieldMapping returns a bleve field mapping matching a
 // non-string search field's type, so the value is indexed and stored in its
 // native form instead of being coerced through keyword analysis (which drops
-// it). Only int64 standard fields (created, updated) reach this on the static
-// top-level parent today; custom fields go through the dynamic parent.
+// it).
 func typedNonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
 	switch t {
 	case resource.SearchFieldTypeBoolean:
@@ -212,7 +211,9 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
-	fieldMapper := bleve.NewDocumentMapping()
+	// Static so undeclared keys are dropped rather than dynamically indexed
+	// (BulkIndex warns when a document carries one).
+	fieldMapper := bleve.NewDocumentStaticMapping()
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		addCapabilityFieldMappings(fieldMapper, def)
 	}
