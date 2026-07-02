@@ -822,6 +822,14 @@ func (ng *AlertNG) GetHooks() *api.Hooks {
 	return ng.Api.Hooks
 }
 
+// HTTPClientProvider exposes the HTTP client provider so out-of-package
+// consumers (e.g. the rules AppInstaller building the external ruler sync
+// admission validator) can reuse it without threading a separate Wire param
+// through RegisterAppInstaller.
+func (ng *AlertNG) HTTPClientProvider() httpclient.Provider {
+	return ng.httpClientProvider
+}
+
 type Historian interface {
 	api.Historian
 	state.Historian

@@ -33,10 +33,20 @@ func New(cfg app.Config) (app.App, error) {
 				return nil, err
 			}
 			managedKind := simple.AppManagedKind{
-				Kind:      kind,
-				Validator: validator,
-				Mutator:   buildKindMutator(kind, runtimeCfg),
-				Watcher:   buildKindWatcher(kind, runtimeCfg),
+				Kind:    kind,
+				Watcher: buildKindWatcher(kind, runtimeCfg),
+			}
+			// Assign the validator/mutator only when non-nil: these builders return
+			// concrete pointer types, so assigning a nil result straight into the
+			// KindValidator/KindMutator interface fields would yield a non-nil
+			// interface holding a nil pointer. ValidateManifest would then reject a
+			// validation-only kind (e.g. Config, which has no mutator) as "has a
+			// mutator" and fail app init.
+			if validator != nil {
+				managedKind.Validator = validator
+			}
+			if mutator := buildKindMutator(kind, runtimeCfg); mutator != nil {
+				managedKind.Mutator = mutator
 			}
 			// Only kinds with a watcher run an informer (RuleSequence), so this
 			// scopes that watch to WatchNamespace; empty means all namespaces.
@@ -92,6 +102,11 @@ func buildKindValidator(kind resource.Kind, cfg config.RuntimeConfig, md app.Man
 		return validation.NewBuilder[*v0alpha1.RuleSequence]().
 			WithOpenAPIValidation(md, gk).
 			OnWrite(rulesequence.ValidateWrite(cfg)).
+			Build()
+	case "Config":
+		return validation.NewBuilder[*v0alpha1.Config]().
+			WithOpenAPIValidation(md, gk).
+			OnWrite(config.ValidateConfigWrite(cfg)).
 			Build()
 	}
 	return nil, nil
