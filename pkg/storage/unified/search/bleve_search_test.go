@@ -1132,6 +1132,17 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 	return names, res
 }
 
+// columnNames returns the response table's column names, used to assert that
+// fields loaded only for authorization (e.g. folder) don't leak into results.
+func columnNames(res *resourcepb.ResourceSearchResponse) []string {
+	cols := res.Results.GetColumns()
+	names := make([]string, 0, len(cols))
+	for _, c := range cols {
+		names = append(names, c.Name)
+	}
+	return names
+}
+
 // pageAll walks SearchAfter cursors until a short/empty page, returning the
 // names in the order they were returned across pages.
 func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
@@ -1458,6 +1469,35 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		got := pageAll(t, index, ac, 50)
 		require.Equal(t, want, got, "paging must cover every doc once in order")
+	})
+
+	t.Run("folder authz field is not leaked into response columns", func(t *testing.T) {
+		// Regression: the post-rank path loads the folder stored field to
+		// authorize hits, but that field must not become a response column.
+		// Pre-fix, Fields: ["title"] returned title+folder and empty Fields
+		// returned only folder (ensureSearchFields skipped the all-fields
+		// sentinel because folder was already appended).
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+
+		// Explicit field set: only the requested column is returned.
+		q := listQuery(10)
+		q.Fields = []string{"title"}
+		_, res := searchNames(t, index, ac, q)
+		cols := columnNames(res)
+		require.Len(t, cols, 1, "only the requested field should be returned")
+		require.NotContains(t, cols, "folder")
+
+		// Empty field set: the all-fields sentinel drives the response (the
+		// full standard column set, which includes folder), not just folder.
+		_, resAll := searchNames(t, index, ac, listQuery(10))
+		colsAll := columnNames(resAll)
+		require.NotEmpty(t, colsAll)
+		require.Greater(t, len(colsAll), 1, "empty Fields returns the full column set, not just the folder authz field")
 	})
 }
 

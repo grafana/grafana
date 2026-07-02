@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"time"
 
@@ -76,6 +77,18 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 	return nil
 }
 
+// ensureAuthzFields makes bleve load the folder stored field so the post-rank
+// runner can authorize each hit (parseHitDocInfo reads it from doc.Fields). This
+// extends the bleve load list only; it is NOT part of the response column list
+// (selectFields) — Search snapshots selectFields before calling this so the
+// caller's requested columns are returned unchanged.
+func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest) {
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) &&
+		!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
+	}
+}
+
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
@@ -140,6 +153,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	req *resourcepb.ResourceSearchRequest,
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
+	selectFields []string,
 	stats *resource.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
 ) (*resourcepb.ResourceSearchResponse, error) {
@@ -257,7 +271,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
-	return response, b.finalizePostFilter(ctx, response, page, firstReq.Fields, firstReq.Sort, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
 		authorized, exhausted, stats)
 }
 
@@ -268,7 +282,7 @@ func (b *bleveIndex) finalizePostFilter(
 	ctx context.Context,
 	response *resourcepb.ResourceSearchResponse,
 	page search.DocumentMatchCollection,
-	fields []string,
+	selectFields []string,
 	sort search.SortOrder,
 	req *resourcepb.ResourceSearchRequest,
 	firstRes *bleve.SearchResult,
@@ -293,7 +307,7 @@ func (b *bleveIndex) finalizePostFilter(
 	stats.AddReturnedDocuments(len(page))
 
 	resultsConversionStart := time.Now()
-	results, err := b.hitsToTable(ctx, fields, page, sort, req.Explain)
+	results, err := b.hitsToTable(ctx, selectFields, page, sort, req.Explain)
 	if err != nil {
 		return err
 	}

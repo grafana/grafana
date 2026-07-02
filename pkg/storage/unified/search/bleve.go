@@ -2022,10 +2022,20 @@ func (b *bleveIndex) Search(
 	if err := b.ensureSearchFields(searchrequest, req); err != nil {
 		return nil, err
 	}
+	// selectFields is the response column list, derived from the caller's
+	// requested fields (or the all-fields sentinel when none were requested).
+	// It is snapshotted before ensureAuthzFields so the folder field — which
+	// bleve loads only to authorize hits — is never returned to the caller.
+	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
+	// from "fields returned to the caller" (selectFields).
+	selectFields := slices.Clone(searchrequest.Fields)
+	if postRank {
+		b.ensureAuthzFields(searchrequest)
+	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, stats, response)
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response)
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -2041,7 +2051,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, searchrequest.Sort, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, selectFields, res.Hits, searchrequest.Sort, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -2250,13 +2260,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// federated alias (dashboards + folders differ by the resource segment),
 		// so this guarantees no skips/dupes over the merged result set.
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
-
-		// Ensure bleve loads the folder field (needed to authorize) regardless of
-		// the caller's requested field set.
-		if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) &&
-			!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
-			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
-		}
+		// The folder stored field (needed to authorize) is added to the bleve
+		// load list in Search, separate from the response column list.
 	}
 
 	return searchrequest, nil
