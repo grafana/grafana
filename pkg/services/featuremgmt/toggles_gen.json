@@ -3404,6 +3404,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesReporting",
+        "resourceVersion": "1782923989000",
+        "creationTimestamp": "2026-07-01T15:36:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 16:39:49.000516 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Add support for Kubernetes reporting new APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountTokensApi",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
