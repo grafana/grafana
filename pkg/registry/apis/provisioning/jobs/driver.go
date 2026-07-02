@@ -351,10 +351,14 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 	case <-leaseExpired:
 		// Another worker now owns the job. Cancel our worker and wait for it to
 		// return so we don't keep running (and later complete) a job we no longer own.
-		// The wait is bounded by the parent context's timeout, since workerCtx derives
-		// from it.
+		// Also observe ctx.Done() so a worker that ignores cancellation can't pin this
+		// goroutine forever: on job timeout or shutdown we stop waiting and let the
+		// caller run its cleanup.
 		cancelWorker()
-		<-resultChan
+		select {
+		case <-resultChan:
+		case <-ctx.Done():
+		}
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
 		// Return context error directly - caller will determine if this is due to graceful shutdown

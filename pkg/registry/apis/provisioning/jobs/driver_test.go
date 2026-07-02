@@ -465,7 +465,11 @@ func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testin
 	}()
 
 	// Wait until the worker is running, then signal that the lease was lost.
-	<-workerStarted
+	select {
+	case <-workerStarted:
+	case <-time.After(3 * time.Second):
+		t.Fatal("worker.Process was not invoked")
+	}
 	close(leaseExpired)
 
 	select {
