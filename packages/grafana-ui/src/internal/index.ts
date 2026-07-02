@@ -28,7 +28,6 @@ export {
 export { hasVisibleLegendSeries, PlotLegend } from '../components/uPlot/PlotLegend';
 export { getScaleGradientFn } from '../components/uPlot/config/gradientFills';
 export { buildScaleKey } from '../components/uPlot/internal';
-export { CloseButton } from '../components/uPlot/plugins/CloseButton';
 export { type TimeRange2, TooltipHoverMode } from '../components/uPlot/plugins/TooltipPlugin2';
 export type { FacetedData, FacetSeries } from '../components/uPlot/types';
 
@@ -69,7 +68,10 @@ export { defaultSparklineCellConfig } from '../components/Table/Cells/SparklineC
 export { TableCell } from '../components/Table/Cells/TableCell';
 export { useTableStyles } from '../components/Table/TableRT/styles';
 export { migrateTableDisplayModeToCellOptions } from '../components/Table/cellUtils';
-export { type DataLinksContextMenuApi } from '../components/DataLinks/DataLinksContextMenu';
+export {
+  type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
+} from '../components/DataLinks/DataLinksContextMenu';
 export { MenuDivider } from '../components/Menu/MenuDivider';
 export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
@@ -85,17 +87,6 @@ export { ConfirmContent, type ConfirmContentProps } from '../components/ConfirmM
 export { EmotionPerfTest } from '../components/ThemeDemos/EmotionPerfTest';
 export { ThemeDemo } from '../components/ThemeDemos/ThemeDemo';
 
-export { VizTooltipContent } from '../components/VizTooltip/VizTooltipContent';
-export {
-  VizTooltipFooter,
-  type AdHocFilterModel,
-  type FilterByGroupedLabelsModel,
-} from '../components/VizTooltip/VizTooltipFooter';
-export { VizTooltipHeader } from '../components/VizTooltip/VizTooltipHeader';
-export { VizTooltipWrapper } from '../components/VizTooltip/VizTooltipWrapper';
-export { VizTooltipRow } from '../components/VizTooltip/VizTooltipRow';
-export { getContentItems } from '../components/VizTooltip/utils';
-export { ColorIndicator, ColorPlacement, type VizTooltipItem } from '../components/VizTooltip/types';
 export { mapMouseEventToMode } from '../components/VizLegend/utils';
 export { Carousel } from '../components/Carousel/Carousel';
 
@@ -113,3 +104,5 @@ export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
+
+export { getInternalRadius, getExternalRadius } from '../themes/mixins';

@@ -15263,6 +15263,14 @@
             }
           },
           {
+            "description": "Limit response to annotations created by a specific user, identified by UID.",
+            "in": "query",
+            "name": "userUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
             "in": "query",
             "name": "alertId",
@@ -19749,6 +19757,8 @@
     },
     "/org/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "getOrgPreferences",
         "responses": {
           "200": {
@@ -19768,6 +19778,8 @@
         "tags": ["org", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "patchOrgPreferences",
         "requestBody": {
           "content": {
@@ -19801,6 +19813,8 @@
         "tags": ["org", "preferences"]
       },
       "put": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace",
         "operationId": "updateOrgPreferences",
         "requestBody": {
           "content": {
@@ -23639,6 +23653,8 @@
     },
     "/user/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "getUserPreferences",
         "responses": {
           "200": {
@@ -23655,6 +23671,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "patchUserPreferences",
         "requestBody": {
           "content": {
@@ -23685,7 +23703,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "deprecated": true,
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {

@@ -17,7 +17,7 @@ import { SectionEmptyState } from './SectionEmptyState';
 export function QueriesAndTransformationsView() {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
-  const { pendingExpression, pendingSavedQuery, pendingTransformation } = useQueryEditorUIContext();
+  const { pendingExpression, pendingSavedQuery, pendingTransformation, multiSelectMode } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const [queriesOpen, setQueriesOpen] = useState(true);
@@ -49,6 +49,7 @@ export function QueriesAndTransformationsView() {
       >
         {queries.length > 0 && (
           <DraggableList
+            isDragDisabled={multiSelectMode}
             droppableId="query-sidebar-queries"
             items={queries}
             keyExtractor={(query) => query.refId}
@@ -70,6 +71,7 @@ export function QueriesAndTransformationsView() {
       >
         {transformations.length > 0 && (
           <DraggableList
+            isDragDisabled={multiSelectMode}
             droppableId="query-sidebar-transformations"
             items={transformations}
             keyExtractor={(t) => t.transformId}

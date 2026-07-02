@@ -285,21 +285,21 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 			IndexSnapshotBucketURL: "file:///tmp/snapshot",
 			EnableKVLeases:         true,
 		}
-		_, err := buildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
 	t.Run("rejects when enable_kv_leases is off", func(t *testing.T) {
 		cfg := &setting.Cfg{}
-		_, err := buildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "requires enable_kv_leases")
 	})
 
 	t.Run("rejects when backend is not a KVBackend", func(t *testing.T) {
 		cfg := &setting.Cfg{EnableKVLeases: true}
-		_, err := buildKVSnapshotStore(cfg, &nonKVBackend{}, logger)
+		_, err := BuildKVSnapshotStore(cfg, &nonKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "requires a KV-backed storage backend")
 	})
@@ -307,7 +307,7 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 	t.Run("rejects when backend has no lease manager", func(t *testing.T) {
 		cfg := &setting.Cfg{EnableKVLeases: true}
 		backend := &stubKVBackend{kv: newTestKV(t)}
-		_, err := buildKVSnapshotStore(cfg, backend, logger)
+		_, err := BuildKVSnapshotStore(cfg, backend, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no lease manager")
 	})
@@ -319,7 +319,7 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 		t.Cleanup(mgr.Stop)
 		backend := &stubKVBackend{kv: store, mgr: mgr}
 
-		got, err := buildKVSnapshotStore(cfg, backend, logger)
+		got, err := BuildKVSnapshotStore(cfg, backend, logger)
 		require.NoError(t, err)
 		assert.NotNil(t, got)
 	})

@@ -8,7 +8,7 @@ import { type ThunkResult } from 'app/types/store';
 import { type DashboardModel } from '../../../state/DashboardModel';
 import { type PanelModel } from '../../../state/PanelModel';
 
-import { closeEditor, setDiscardChanges, updateEditorInitState } from './reducers';
+import { closeEditor, updateEditorInitState } from './reducers';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
@@ -20,14 +20,6 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
         sourcePanel,
       })
     );
-  };
-}
-
-export function discardPanelChanges(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const { getPanel } = getStore().panelEditor;
-    getPanel().configRev = 0;
-    dispatch(setDiscardChanges(true));
   };
 }
 

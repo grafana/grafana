@@ -7,6 +7,16 @@
         "enabled": false,
         "dynamic": false
       },
+      "created": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true
+          }
+        ]
+      },
       "createdBy": {
         "enabled": true,
         "dynamic": true,
@@ -252,6 +262,16 @@
             "index": true,
             "docvalues": true,
             "skip_freq_norm": true
+          }
+        ]
+      },
+      "updated": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true
           }
         ]
       }

@@ -51,7 +51,7 @@ export function KBarSearch(
       spellCheck="false"
       aria-expanded={showing}
       aria-controls={KBAR_LISTBOX}
-      aria-activedescendant={getListboxItemId(activeIndex)}
+      aria-activedescendant={activeIndex >= 0 ? getListboxItemId(activeIndex) : undefined}
       value={inputValue}
       placeholder={defaultText}
       onChange={(event) => {

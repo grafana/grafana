@@ -42,10 +42,11 @@ The form has these options:
 
 ## Use filters
 
-Loki supports the special **Filters** variable type.
-You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
+Loki supports the **Filter and Group by** feature.
+You can use this filters to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
+The group by function allows you to then group data by keys, letting you split it up.
 
-For more information, refer to [Add filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Use $\_\_auto variable for Loki metric queries
 

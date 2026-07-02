@@ -176,6 +176,7 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.FoldersRead,
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstanceRead,

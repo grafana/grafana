@@ -557,12 +557,13 @@ func TestCombineBuildRequests(t *testing.T) {
 
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
-		buildInfo        IndexBuildInfo
-		minTime          time.Time
-		lastImportTime   time.Time
-		minBuildVersion  *semver.Version
-		maxBuildVersion  *semver.Version
-		selectableFields []string
+		buildInfo                IndexBuildInfo
+		minTime                  time.Time
+		lastImportTime           time.Time
+		minBuildVersion          *semver.Version
+		maxBuildVersion          *semver.Version
+		selectableFields         []string
+		expectedSearchFieldsHash string
 
 		expected bool
 	}
@@ -674,9 +675,33 @@ func TestShouldRebuildIndex(t *testing.T) {
 			selectableFields: []string{"title", "team", "new.field"},
 			expected:         true,
 		},
+		"no expected hash, no stored hash": {
+			buildInfo: IndexBuildInfo{},
+			expected:  false,
+		},
+		"no expected hash, stored hash present": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "",
+			expected:                 false,
+		},
+		"expected hash present, no stored hash": {
+			buildInfo:                IndexBuildInfo{},
+			expectedSearchFieldsHash: "abc",
+			expected:                 true,
+		},
+		"expected hash matches stored hash": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "abc",
+			expected:                 false,
+		},
+		"expected hash differs from stored hash": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "def",
+			expected:                 true,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, nil)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}

@@ -2203,6 +2203,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref common.ReferenceC
 							Format:      "",
 						},
 					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"seriesBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
