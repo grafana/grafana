@@ -638,21 +638,25 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 
 	timeEnd := func(ms int64) *int64 { return &ms }
 
+	deletedAt := metav1.NewTime(time.Now().UTC())
+
 	cases := []struct {
-		name        string
-		time        int64
-		timeEnd     *int64
-		expectErr   bool
-		errContains string
+		name              string
+		time              int64
+		timeEnd           *int64
+		deletionTimestamp *metav1.Time
+		expectErr         bool
+		errContains       string
 	}{
-		{"time is current", now, nil, false, ""},
-		{"recent past within retention", now - retentionMs/2, nil, false, ""},
-		{"inside future bound", now + futureWindowMs - second, nil, false, ""},
-		{"too far in the future", now + futureWindowMs + second, nil, true, "time cannot be more than 1 week in the future"},
-		{"older than retention TTL", now - retentionMs - second, nil, true, "time cannot be older than retention TTL"},
-		{"valid timeEnd after time", now, timeEnd(now + second), false, ""},
-		{"timeEnd before time", now, timeEnd(now - second), true, "timeEnd must be after time"},
-		{"timeEnd too far in the future", now, timeEnd(now + futureWindowMs + second), true, "timeEnd cannot be more than 1 week in the future"},
+		{"time is current", now, nil, nil, false, ""},
+		{"recent past within retention", now - retentionMs/2, nil, nil, false, ""},
+		{"inside future bound", now + futureWindowMs - second, nil, nil, false, ""},
+		{"too far in the future", now + futureWindowMs + second, nil, nil, true, "time cannot be more than 1 week in the future"},
+		{"older than retention TTL", now - retentionMs - second, nil, nil, true, "time cannot be older than retention TTL"},
+		{"valid timeEnd after time", now, timeEnd(now + second), nil, false, ""},
+		{"timeEnd before time", now, timeEnd(now - second), nil, true, "timeEnd must be after time"},
+		{"timeEnd too far in the future", now, timeEnd(now + futureWindowMs + second), nil, true, "timeEnd cannot be more than 1 week in the future"},
+		{"deletionTimestamp set on create", now, nil, &deletedAt, true, "metadata.deletionTimestamp cannot be set on create"},
 	}
 
 	for _, tc := range cases {
@@ -664,7 +668,7 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 
 			name := "anno"
 			obj := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, DeletionTimestamp: tc.deletionTimestamp},
 				Spec:       annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd},
 			}
 			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})

@@ -506,7 +506,7 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 		return err
 	}
 
-	return validateNames(anno)
+	return validateMetadata(anno)
 }
 
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
@@ -545,9 +545,12 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	return nil
 }
 
-func validateNames(anno *annotationV0.Annotation) error {
+func validateMetadata(anno *annotationV0.Annotation) error {
 	if anno.Name == "" && anno.GenerateName == "" {
 		return apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+	if anno.DeletionTimestamp != nil {
+		return apierrors.NewBadRequest("metadata.deletionTimestamp cannot be set on create")
 	}
 
 	return nil
