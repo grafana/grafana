@@ -402,6 +402,18 @@ function graphToTimeseriesOptions(angular: any): {
     if (legendConfig.hideEmpty) {
       overrides.push(getLegendHideFromOverride(ReducerID.allIsNull));
     }
+
+    const sortKey = legendConfig.sortBy ?? legendConfig.sort;
+    if (sortKey != null && sortKey !== '') {
+      const mapped = mapLegendSortKey(String(sortKey));
+      if (mapped) {
+        options.legend.sortBy = mapped;
+      }
+    }
+
+    if (legendConfig.sortDesc != null) {
+      options.legend.sortDesc = legendConfig.sortDesc;
+    }
   }
 
   // timeRegions migration
@@ -705,6 +717,25 @@ function getReducersFromLegend(obj: Record<string, unknown>): string[] {
     }
   }
   return ids;
+}
+
+/** Maps legacy graph legend sort keys to VizLegend table column titles (fieldReducer.name). */
+function mapLegendSortKey(sortKey: string): string {
+  const reducer = fieldReducers.getIfExists(sortKey);
+  if (reducer) {
+    return reducer.name;
+  }
+
+  const legacy: Record<string, string> = {
+    avg: 'Mean',
+    mean: 'Mean',
+    max: 'Max',
+    min: 'Min',
+    total: 'Total',
+    current: 'Last',
+  };
+
+  return legacy[sortKey.toLowerCase()] ?? sortKey;
 }
 
 function migrateHideFrom(panel: {
