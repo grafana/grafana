@@ -144,7 +144,16 @@ export const Examples = () => {
           })}
           {renderPanel('Content', {
             loadingState: LoadingState.Error,
-            title: 'No title, loadingState is Error, no statusMessage',
+            title: 'loadingState is Error, no statusMessage',
+          })}
+          {renderPanel('Content', {
+            title: 'With description',
+            description: 'This is a description',
+          })}
+          {renderPanel('Content', {
+            title: 'With description in sub-header',
+            description: 'This is a description',
+            descriptionInSubHeader: true,
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
