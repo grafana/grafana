@@ -177,7 +177,7 @@ func keywordVariantName(name string, hasText bool) string {
 // mapping.
 func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
-	mapper.DocValuesDynamic = false // only folder and title_phrase need DocValues
+	mapper.DocValuesDynamic = false // only explicitly sortable fields need DocValues
 	mapper.ScoringModel = index.BM25Scoring
 
 	err := RegisterCustomAnalyzers(mapper)
