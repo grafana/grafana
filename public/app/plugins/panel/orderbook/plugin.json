@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "Order book",
+  "id": "orderbook",
+  "state": "alpha",
+  "suggestions": true,
+  "info": {
+    "description": "Depth-of-market order book showing bid and ask price levels with size and cumulative depth.",
+    "keywords": ["financial", "trading", "order book", "depth", "market", "bid", "ask"],
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/orderbook.svg",
+      "large": "img/orderbook.svg"
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
+  }
+}
