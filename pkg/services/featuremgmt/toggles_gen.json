@@ -3144,6 +3144,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginPathNesting",
+        "resourceVersion": "1785918906185",
+        "creationTimestamp": "2026-08-05T08:35:06Z"
+      },
+      "spec": {
+        "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1781718345897",
         "creationTimestamp": "2026-06-17T17:45:45Z"
