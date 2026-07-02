@@ -624,6 +624,7 @@ func (ng *AlertNG) init() error {
 		Tracer:                ng.tracer,
 		UserService:           ng.userService,
 		SilenceLimitsProvider: limitsProvider,
+		ClientGenerator:       ng.clientGenerator,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

@@ -301,6 +301,50 @@
     },
     {
       "metadata": {
+        "name": "alertingConvertPrometheusK8S",
+        "resourceVersion": "1781019607465",
+        "creationTimestamp": "2026-06-09T15:40:07Z",
+        "deletionTimestamp": "2026-06-09T15:41:28Z"
+      },
+      "spec": {
+        "description": "Use internal k8s clients to create AlertRule, RecordingRule, and RuleSequence resources during Prometheus rule conversion instead of the legacy provisioning path",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingConvertPrometheusK8s",
+        "resourceVersion": "1781019463714",
+        "creationTimestamp": "2026-06-09T15:37:43Z",
+        "deletionTimestamp": "2026-06-09T15:40:07Z"
+      },
+      "spec": {
+        "description": "Use internal k8s clients to create AlertRule, RecordingRule, and RuleSequence resources during Prometheus rule conversion instead of the legacy provisioning path",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingConvertPrometheusViaKubernetesAPI",
+        "resourceVersion": "1781019688373",
+        "creationTimestamp": "2026-06-09T15:41:28Z"
+      },
+      "spec": {
+        "description": "Use internal Kubernetes clients to create AlertRule, RecordingRule, and RuleSequence resources during Prometheus rule conversion instead of the legacy provisioning path",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableDMAinUI",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
