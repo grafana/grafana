@@ -83,6 +83,10 @@ export const useShortcuts = () => {
       { keys: ['g', 'e'], description: t('help-modal.shortcuts-description.go-to-explore', 'Go to Explore') },
       { keys: ['g', 'p'], description: t('help-modal.shortcuts-description.go-to-profile', 'Go to Profile') },
       { keys: ['g', 'a'], description: t('help-modal.shortcuts-description.open-alerting', 'Go to Alerting') },
+      {
+        keys: ['g', 'k'],
+        description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
+      },
       { keys: [`${modKey} + k`], description: t('help-modal.shortcuts-description.open-search', 'Open search') },
       {
         keys: ['esc'],
@@ -164,10 +168,6 @@ export const useShortcuts = () => {
           {
             keys: ['d', 'v'],
             description: t('help-modal.shortcuts-description.toggle-active-mode', 'Toggle in-active / view mode'),
-          },
-          {
-            keys: ['d', 'k'],
-            description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
           },
           {
             keys: ['d', '⇧ + e'],
