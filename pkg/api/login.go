@@ -137,9 +137,10 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
 		// LDAP users authenticated by auth proxy are also assigned login token but their auth module is LDAP
+		// JWT validated users are also assigned a login token but come from the plain JWTModule
 		if hs.Cfg.AuthProxy.Enabled &&
 			hs.Cfg.AuthProxy.EnableLoginToken &&
-			c.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule) {
+			c.IsAuthenticatedBy(loginservice.AuthProxyAuthModule, loginservice.LDAPAuthModule, loginservice.JWTModule) {
 			user := &user.User{ID: c.UserID, Email: c.Email, Login: c.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
