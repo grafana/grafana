@@ -21,6 +21,7 @@ export class OutlierDetector implements AugursOutlierDetector {
   preprocess(y: number[][] | Float64Array[]): AugursLoadedOutlierDetector {
     return new LoadedOutlierDetector();
   }
+  [Symbol.dispose](): void {}
 }
 
 export class LoadedOutlierDetector implements AugursLoadedOutlierDetector {
@@ -29,4 +30,5 @@ export class LoadedOutlierDetector implements AugursLoadedOutlierDetector {
   }
   free(): void {}
   updateDetector(options: OutlierDetectorOptions): void {}
+  [Symbol.dispose](): void {}
 }
