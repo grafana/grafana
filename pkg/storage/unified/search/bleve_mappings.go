@@ -63,16 +63,32 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
 	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
 
-	// Non-string fields skip the explicit keyword under a dynamic parent;
-	// bleve's dynamic path produces the right shape (numeric, boolean)
-	// which keyword analysis would break. Static parents (top-level
-	// mapper) still emit an explicit keyword. Sort is validated as
-	// string-only, so hasSort cannot reach here for non-strings.
-	isStringTyped := def.Type == resource.SearchFieldTypeString
-	needKeyword := hasFilter || hasFacet || hasSort
-	if needKeyword && !isStringTyped && parent.Dynamic {
-		needKeyword = false
+	// Non-string fields (int64, double, boolean) get a mapping matching their
+	// type, never a keyword: bleve turns a numeric or boolean value into a
+	// keyword mapping's processString no-op and drops it entirely. Under a
+	// dynamic parent bleve's dynamic path already produces the typed mapping,
+	// so emit nothing explicit. Under a static parent (the top-level mapper)
+	// there is no dynamic fallback, so emit an explicit typed mapping when the
+	// field is filtered or retrieved. Text, partial, facet and sort are all
+	// validated as string-only, so filter and retrieve are the only
+	// capabilities that reach here for non-strings.
+	if def.Type != resource.SearchFieldTypeString {
+		if !parent.Dynamic && (hasFilter || hasRetrieve) {
+			m := typedNonStringFieldMapping(def.Type)
+			m.Index = hasFilter
+			m.Store = hasRetrieve
+			// Doc values are only needed for sort. Sort on non-string types is
+			// gated off in the validator today, so hasSort is always false here;
+			// wiring numeric/boolean sort is a follow-up and this line is ready
+			// for it.
+			m.DocValues = hasSort
+			m.IncludeInAll = false
+			parent.AddFieldMappingsAt(def.Name, m)
+		}
+		return
 	}
+
+	needKeyword := hasFilter || hasFacet || hasSort
 	keywordName := keywordVariantName(def.Name, hasText)
 
 	if needKeyword {
@@ -112,6 +128,26 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 
 	// retrieve without any other capability has no place to live; today's
 	// translation never produces such a shape. Silently ignored.
+}
+
+// typedNonStringFieldMapping returns a bleve field mapping matching a
+// non-string search field's type, so the value is indexed and stored in its
+// native form instead of being coerced through keyword analysis (which drops
+// it). Only int64 standard fields (created, updated) reach this on the static
+// top-level parent today; custom fields go through the dynamic parent.
+func typedNonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
+	switch t {
+	case resource.SearchFieldTypeBoolean:
+		return bleve.NewBooleanFieldMapping()
+	case resource.SearchFieldTypeInt64, resource.SearchFieldTypeDouble:
+		return bleve.NewNumericFieldMapping()
+	default:
+		// SearchFieldTypeDate and SearchFieldTypeUnknown do not appear as
+		// non-string standard fields today. Fall back to numeric so an
+		// int64/float value still round-trips; revisit if a real date field
+		// is ever declared here.
+		return bleve.NewNumericFieldMapping()
+	}
 }
 
 // keywordVariantName returns the name the keyword analyzer variant of a field
