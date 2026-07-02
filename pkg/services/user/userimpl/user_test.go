@@ -10,6 +10,8 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -325,6 +327,54 @@ func TestService_NoLegacyFallback(t *testing.T) {
 			require.ErrorIs(t, err, k8sErr)
 			require.Nil(t, got)
 		})
+	})
+}
+
+func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	legacyUser := &user.SignedInUser{UserID: 1, Login: "from-legacy"}
+
+	t.Run("k8s hit is returned without falling back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 2, Login: "from-k8s"}},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-k8s", got.Login)
+	})
+
+	t.Run("k8s not-found falls back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-legacy", got.Login)
+	})
+
+	t.Run("k8s forbidden is surfaced, no fallback to legacy", func(t *testing.T) {
+		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}, "u", errors.New("nope"))
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: forbidden},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.True(t, apierrors.IsForbidden(err))
+		require.Nil(t, got)
+	})
+
+	t.Run("k8s generic error is surfaced, no fallback to legacy", func(t *testing.T) {
+		boom := errors.New("k8s boom")
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: boom},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.ErrorIs(t, err, boom)
+		require.Nil(t, got)
 	})
 }
 

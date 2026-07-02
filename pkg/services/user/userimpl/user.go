@@ -2,10 +2,12 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -171,7 +173,12 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
 			return result, nil
 		}
-		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
+		if !isNotFoundError(err) {
+			span.RecordError(err)
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return nil, err
+		}
+		ctxLogger.Warn("k8s GetSignedInUser not found, falling back to legacy", "userID", cmd.UserID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
@@ -258,6 +265,10 @@ func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
 // and must keep working via the legacy path.
 func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
 	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
+}
+
+func isNotFoundError(err error) bool {
+	return errors.Is(err, user.ErrUserNotFound) || apierrors.IsNotFound(err)
 }
 
 func hasOrgID(ctx context.Context) bool {
