@@ -12090,6 +12090,7 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "all-items": "All items",
       "close": "Close menu",
       "customise": "Customise menu",
       "customise-cancel": "Cancel",
@@ -12099,13 +12100,11 @@
       "dialog-label": "Navigation",
       "dock": "Dock menu",
       "feedback": "Feedback",
-      "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "only-pinned": "Only show pinned items",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned",
-      "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {

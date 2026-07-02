@@ -134,12 +134,11 @@ export function MegaMenuItem({
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
   // every item shows it (the signed-in / non-bookmarks gating lives in MegaMenuItemText). With it
-  // on: Home and individual starred dashboards (the `starred/` prefix) are never pinnable, and in
-  // the pinned area only the section row (level 0) and leaf rows are actionable — not the
-  // intermediate structural rows.
+  // on, Home and individual starred dashboards (the `starred/` prefix) are never pinnable; every
+  // other row is actionable, including intermediate subsections in the pinned area (so a child
+  // section of a whole-pinned section — e.g. Administration → General — can be unpinned).
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
-  const isPinnableRow = pinned ? level === 0 || !linkHasChildren(link) : true;
-  const showPin = !canCustomise || (isPinnableItem && isPinnableRow);
+  const showPin = !canCustomise || isPinnableItem;
 
   return (
     <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
@@ -187,7 +186,8 @@ export function MegaMenuItem({
               <Text truncate element="p">
                 {link.text}
               </Text>
-              {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
+              {/* Hide the "New!" badge while customising — it competes with the edit controls. */}
+              {link.isNew && !editMode && <FeatureBadge featureState={FeatureState.new} />}
             </div>
           </MegaMenuItemText>
         </div>
@@ -290,14 +290,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
+    // Tighter gap so the customise controls sit close to the chevron and the label uses the width.
+    gap: theme.spacing(1),
     height: theme.spacing(4),
     position: 'relative',
   }),
   collapseButtonWrapper: css({
     display: 'flex',
     justifyContent: 'center',
-    width: theme.spacing(3),
+    width: theme.spacing(2),
     flexShrink: 0,
   }),
   itemConnector: css({

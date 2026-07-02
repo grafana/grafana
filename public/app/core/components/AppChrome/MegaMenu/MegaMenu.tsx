@@ -7,10 +7,11 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Button, Icon, ScrollContainer, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, ScrollContainer, Switch, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
+import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
@@ -138,8 +139,23 @@ export const MegaMenu = memo(
                 </ul>
               )}
             </li>
-            {showUnpinnedItems && <li className={styles.divider} aria-hidden="true" />}
+            {(unpinnedCollapsible || showUnpinnedItems) && <li className={styles.divider} aria-hidden="true" />}
           </>
+        )}
+        {/* Collapse toggle sits at the top of the unpinned list, below the pinned divider. */}
+        {unpinnedCollapsible && (
+          <li>
+            <button
+              type="button"
+              className={styles.unpinnedToggle}
+              onClick={() => setUnpinnedExpanded(!showUnpinnedItems)}
+              aria-expanded={showUnpinnedItems}
+              aria-controls={UNPINNED_ITEMS_ID}
+            >
+              <Icon name={showUnpinnedItems ? 'angle-up' : 'angle-down'} size="lg" />
+              <Text color="secondary">{t('navigation.megamenu.all-items', 'All items')}</Text>
+            </button>
+          </li>
         )}
         {showUnpinnedItems && (
           <li>
@@ -153,18 +169,7 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <MegaMenuHeader
-          handleDockedMenu={handleDockedMenu}
-          onClose={onClose}
-          canCustomise={canCustomise}
-          editMode={editMode}
-          canReset={canReset}
-          onEnterEditMode={onEnterEditMode}
-          onSaveEdit={onSaveEdit}
-          onCancelEdit={onCancelEdit}
-          onResetToDefault={onResetToDefault}
-          saving={isSaving}
-        />
+        <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
@@ -186,38 +191,41 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          {unpinnedCollapsible && (
-            <button
-              type="button"
-              className={styles.unpinnedToggle}
-              onClick={() => setUnpinnedExpanded(!showUnpinnedItems)}
-              aria-expanded={showUnpinnedItems}
-              aria-controls={UNPINNED_ITEMS_ID}
-            >
-              <Icon name={showUnpinnedItems ? 'angle-up' : 'angle-down'} size="lg" />
-              <Text color="secondary">
-                {showUnpinnedItems
-                  ? t('navigation.megamenu.hide-unpinned-items', 'Hide unpinned items')
-                  : t('navigation.megamenu.show-unpinned-items', 'Show unpinned items')}
-              </Text>
+          {canCustomise && !editMode && (
+            <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
+              <Icon name="sliders-v-alt" size="lg" />
+              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise menu')}</Text>
             </button>
           )}
           {editMode && (
             <div className={styles.editFooter}>
-              {/* Only relevant once something is pinned — otherwise it would hide the whole menu. */}
-              {pinnedNavItems.length > 0 && (
-                <div className={styles.onlyPinnedRow}>
-                  <label htmlFor={ONLY_PINNED_ID}>
-                    <Text color="secondary">{t('navigation.megamenu.only-pinned', 'Only show pinned items')}</Text>
-                  </label>
-                  <Switch id={ONLY_PINNED_ID} value={onlyShowPinned} onChange={onToggleOnlyShowPinned} />
-                </div>
-              )}
-              <div className={styles.feedbackRow}>
-                {/* Placeholder — not wired up yet. */}
-                <Button variant="secondary" fill="outline" size="sm" icon="comment-alt-message">
-                  {t('navigation.megamenu.feedback', 'Feedback')}
-                </Button>
+              {/* Always shown while editing, but disabled until something is pinned (with nothing
+                  pinned it would hide the whole menu). */}
+              <div className={styles.onlyPinnedRow}>
+                <label htmlFor={ONLY_PINNED_ID}>
+                  <Text color="secondary">{t('navigation.megamenu.only-pinned', 'Only show pinned items')}</Text>
+                </label>
+                <Switch
+                  id={ONLY_PINNED_ID}
+                  value={onlyShowPinned}
+                  onChange={onToggleOnlyShowPinned}
+                  disabled={pinnedNavItems.length === 0}
+                />
+              </div>
+              <div className={styles.controlsRow}>
+                {/* Feedback placeholder — not wired up yet. */}
+                <IconButton
+                  name="comment-alt-message"
+                  tooltip={t('navigation.megamenu.feedback', 'Feedback')}
+                  variant="secondary"
+                />
+                <MegaMenuCustomiseControls
+                  canReset={canReset}
+                  onResetToDefault={onResetToDefault}
+                  onCancelEdit={onCancelEdit}
+                  onSaveEdit={onSaveEdit}
+                  saving={isSaving}
+                />
               </div>
             </div>
           )}
@@ -264,8 +272,27 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       margin: 0,
     }),
-    // Pinned to the bottom of the menu as a footer, with a divider separating it from the list.
+    // Collapse toggle at the top of the unpinned list (below the pinned divider).
     unpinnedToggle: css({
+      alignItems: 'center',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      flexShrink: 0,
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 2),
+      width: '100%',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.main}`,
+        outlineOffset: '-2px',
+      },
+    }),
+    // Customise entry point, pinned to the bottom of the menu as a footer button.
+    customiseButton: css({
       alignItems: 'center',
       background: 'none',
       border: 'none',
@@ -284,8 +311,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         outlineOffset: '-2px',
       },
     }),
-    // Footer holding the edit-mode controls (only-show-pinned switch + feedback) — distinct from
-    // the full-width nav rows above it.
+    // Footer holding the edit-mode controls (feedback, then the only-show-pinned switch) — distinct
+    // from the full-width nav rows above it.
     editFooter: css({
       borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
@@ -294,15 +321,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1.5),
       padding: theme.spacing(1.5, 2),
     }),
+    // Feedback on the left, the Reset/Cancel/Done controls on the right, on one line.
+    controlsRow: css({
+      alignItems: 'center',
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     onlyPinnedRow: css({
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(1),
       justifyContent: 'space-between',
-    }),
-    feedbackRow: css({
-      display: 'flex',
-      justifyContent: 'center',
     }),
   };
 };
