@@ -248,7 +248,7 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			Spec: dashv2alpha1.DashboardSpec{
 				Title:    "Test Dashboard",
 				Elements: elements,
-				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 					AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
 						Kind: "AutoGridLayout",
 						Spec: dashv2alpha1.DashboardAutoGridLayoutSpec{
@@ -326,7 +326,7 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 			Spec: dashv2alpha1.DashboardSpec{
 				Title:    "Test Dashboard",
 				Elements: elements,
-				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 					TabsLayoutKind: &dashv2alpha1.DashboardTabsLayoutKind{
 						Kind: "TabsLayout",
 						Spec: dashv2alpha1.DashboardTabsLayoutSpec{
@@ -460,7 +460,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 			Spec: dashv2alpha1.DashboardSpec{
 				Title:    "Test Dashboard",
 				Elements: elements,
-				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 					RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 						Kind: "RowsLayout",
 						Spec: dashv2alpha1.DashboardRowsLayoutSpec{
@@ -576,7 +576,7 @@ func TestExpandedRowYPositionNoOverlap(t *testing.T) {
 			Spec: dashv2alpha1.DashboardSpec{
 				Title:    "Test Dashboard",
 				Elements: elements,
-				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 					RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 						Kind: "RowsLayout",
 						Spec: dashv2alpha1.DashboardRowsLayoutSpec{
@@ -701,7 +701,7 @@ func TestV2alpha1ToV1BasicFields(t *testing.T) {
 			Editable:    &editable,
 			LiveNow:     &liveNow,
 			Revision:    &revision,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 					Kind: "GridLayout",
 					Spec: dashv2alpha1.DashboardGridLayoutSpec{
@@ -819,7 +819,7 @@ func TestV2alpha1ToV1MatcherConfig(t *testing.T) {
 					},
 				},
 			},
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 					Kind: "GridLayout",
 					Spec: dashv2alpha1.DashboardGridLayoutSpec{

@@ -205,7 +205,7 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
     panels.push(...getRepeatedPanelsForSnapshot(scene));
   }
 
-  return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
+  const elements = panels.reduce<Record<string, Element>>((elements, vizPanel) => {
     const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
 
     // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
@@ -223,6 +223,10 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
     elements[elementKey] = element;
     return elements;
   }, {});
+
+  // Layouts that own non-panel element bodies (e.g. notebook markdown/code cells) contribute
+  // them here, so their content is persisted alongside the panel elements.
+  return { ...elements, ...scene.state.body.getContributedElements?.() };
 }
 
 function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
@@ -563,6 +567,10 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 
 export function createElements(panels: Element[], scene: DashboardScene): Record<string, Element> {
   return panels.reduce<Record<string, Element>>((elements, panel) => {
+    // Cell elements are keyed by name (contributed by their layout), not by panel id.
+    if (panel.kind === 'Cell') {
+      return elements;
+    }
     let elementKey = scene.serializer.getElementIdForPanel(panel.spec.id);
     elements[elementKey!] = panel;
     return elements;
@@ -681,7 +689,7 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
     // Find the panel in elements
     const panelElementKey = Object.keys(dash.elements || {}).find((key) => {
       const element = dash.elements![key];
-      return element.spec.id === panelId;
+      return element.kind !== 'Cell' && element.spec.id === panelId;
     });
 
     if (panelElementKey) {

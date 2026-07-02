@@ -2303,7 +2303,7 @@ func createV2DashboardWithSimpleTabs() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				TabsLayoutKind: &dashv2alpha1.DashboardTabsLayoutKind{
 					Kind: "TabsLayout",
 					Spec: dashv2alpha1.DashboardTabsLayoutSpec{
@@ -2379,7 +2379,7 @@ func createV2DashboardWithRowsCollapsed() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 					Kind: "RowsLayout",
 					Spec: dashv2alpha1.DashboardRowsLayoutSpec{
@@ -2457,7 +2457,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 					Kind: "RowsLayout",
 					Spec: dashv2alpha1.DashboardRowsLayoutSpec{
@@ -2652,7 +2652,7 @@ func createV2DashboardWithTabsAndNestedRows() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				TabsLayoutKind: &dashv2alpha1.DashboardTabsLayoutKind{
 					Kind: "TabsLayout",
 					Spec: dashv2alpha1.DashboardTabsLayoutSpec{
@@ -2794,7 +2794,7 @@ func createV2DashboardWithRowsAndNestedTabs() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 					Kind: "RowsLayout",
 					Spec: dashv2alpha1.DashboardRowsLayoutSpec{
@@ -2897,7 +2897,7 @@ func createV2ComplexNestedDashboard() *dashv2alpha1.Dashboard {
 	return &dashv2alpha1.Dashboard{
 		Spec: dashv2alpha1.DashboardSpec{
 			Elements: elements,
-			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+			Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 				TabsLayoutKind: &dashv2alpha1.DashboardTabsLayoutKind{
 					Kind: "TabsLayout",
 					Spec: dashv2alpha1.DashboardTabsLayoutSpec{

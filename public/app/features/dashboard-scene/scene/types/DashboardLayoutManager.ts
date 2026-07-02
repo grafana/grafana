@@ -47,6 +47,13 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   getVizPanels(): VizPanel[];
 
   /**
+   * Contributes non-panel entries to the dashboard `elements` map on save (e.g. notebook
+   * markdown/code cells). Viz panels are collected separately via getVizPanels(); a layout
+   * only implements this when it owns element bodies that are not viz panels.
+   */
+  getContributedElements?(): DashboardV2Spec['elements'];
+
+  /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
    */

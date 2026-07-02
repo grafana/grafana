@@ -1,13 +1,18 @@
 import {
   type AutoGridLayoutKind,
   type GridLayoutKind,
+  type NotebookLayoutKind,
   type RowsLayoutKind,
   type TabsLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+// Layouts that nest inside rows/tabs and may hold grid items to truncate.
 type Layout = GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+// The top-level dashboard layout additionally allows NotebookLayout, which has no
+// grid coordinates and so nothing to truncate.
+type DashboardLayout = Layout | NotebookLayoutKind;
 
-export function truncateFloatGridItems(layout: Layout): { layout: Layout; modified: boolean } {
+function truncateGridLayouts(layout: Layout): { layout: Layout; modified: boolean } {
   switch (layout.kind) {
     case 'GridLayout': {
       let modified = false;
@@ -35,7 +40,7 @@ export function truncateFloatGridItems(layout: Layout): { layout: Layout; modifi
         if (row.kind !== 'RowsLayoutRow') {
           return row;
         }
-        const result = truncateFloatGridItems(row.spec.layout);
+        const result = truncateGridLayouts(row.spec.layout);
         if (result.modified) {
           modified = true;
           return { ...row, spec: { ...row.spec, layout: result.layout } };
@@ -51,7 +56,7 @@ export function truncateFloatGridItems(layout: Layout): { layout: Layout; modifi
         if (tab.kind !== 'TabsLayoutTab') {
           return tab;
         }
-        const result = truncateFloatGridItems(tab.spec.layout);
+        const result = truncateGridLayouts(tab.spec.layout);
         if (result.modified) {
           modified = true;
           return { ...tab, spec: { ...tab.spec, layout: result.layout } };
@@ -64,4 +69,11 @@ export function truncateFloatGridItems(layout: Layout): { layout: Layout; modifi
     default:
       return { layout, modified: false };
   }
+}
+
+export function truncateFloatGridItems(layout: DashboardLayout): { layout: DashboardLayout; modified: boolean } {
+  if (layout.kind === 'NotebookLayout') {
+    return { layout, modified: false };
+  }
+  return truncateGridLayouts(layout);
 }

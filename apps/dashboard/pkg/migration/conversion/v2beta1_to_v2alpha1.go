@@ -209,7 +209,41 @@ func convertElement_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardElement, out *d
 		return convertLibraryPanelKind_V2beta1_to_V2alpha1(in.LibraryPanelKind, out.LibraryPanelKind, scope)
 	}
 
+	if in.CellKind != nil {
+		out.CellKind = &dashv2alpha1.DashboardCellKind{
+			Kind: in.CellKind.Kind,
+		}
+		convertCellContent_V2beta1_to_V2alpha1(&in.CellKind.Spec.Content, &out.CellKind.Spec.Content)
+		return nil
+	}
+
 	return nil
+}
+
+// convertCellContent_V2beta1_to_V2alpha1 copies a notebook cell's content union. The
+// shape is identical across the v2 versions, so this rebuilds it in the target types to
+// keep cell content from being dropped on conversion.
+func convertCellContent_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCellContentKind, out *dashv2alpha1.DashboardCellContentKind) {
+	if in.MarkdownCellContentKind != nil {
+		out.MarkdownCellContentKind = &dashv2alpha1.DashboardMarkdownCellContentKind{
+			Kind: in.MarkdownCellContentKind.Kind,
+			Spec: dashv2alpha1.DashboardMarkdownCellContentSpec{
+				Text: in.MarkdownCellContentKind.Spec.Text,
+			},
+		}
+		return
+	}
+	if in.CodeCellContentKind != nil {
+		out.CodeCellContentKind = &dashv2alpha1.DashboardCodeCellContentKind{
+			Kind: in.CodeCellContentKind.Kind,
+			Spec: dashv2alpha1.DashboardCodeCellContentSpec{
+				Language:   in.CodeCellContentKind.Spec.Language,
+				Code:       in.CodeCellContentKind.Spec.Code,
+				Highlight:  in.CodeCellContentKind.Spec.Highlight,
+				Annotation: in.CodeCellContentKind.Spec.Annotation,
+			},
+		}
+	}
 }
 
 func convertPanelKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardPanelKind, out *dashv2alpha1.DashboardPanelKind, scope conversion.Scope) error {
@@ -488,7 +522,7 @@ func convertValueMapping_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardValueMappi
 	}
 }
 
-func convertLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
+func convertLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind, scope conversion.Scope) error {
 	if in.GridLayoutKind != nil {
 		out.GridLayoutKind = &dashv2alpha1.DashboardGridLayoutKind{
 			Kind: in.GridLayoutKind.Kind,
@@ -517,7 +551,35 @@ func convertLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOr
 		return convertTabsLayoutSpec_V2beta1_to_V2alpha1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope)
 	}
 
+	if in.NotebookLayoutKind != nil {
+		out.NotebookLayoutKind = &dashv2alpha1.DashboardNotebookLayoutKind{
+			Kind: in.NotebookLayoutKind.Kind,
+		}
+		convertNotebookLayoutSpec_V2beta1_to_V2alpha1(&in.NotebookLayoutKind.Spec, &out.NotebookLayoutKind.Spec)
+		return nil
+	}
+
 	return nil
+}
+
+// convertNotebookLayoutSpec_V2beta1_to_V2alpha1 copies the notebook layout 1:1. The
+// shape is identical across the v2 versions, so this just rebuilds it in the target
+// types to keep notebook cells from being dropped on conversion.
+func convertNotebookLayoutSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardNotebookLayoutSpec, out *dashv2alpha1.DashboardNotebookLayoutSpec) {
+	out.Cells = make([]dashv2alpha1.DashboardNotebookLayoutItemKind, len(in.Cells))
+	for i, cell := range in.Cells {
+		out.Cells[i] = dashv2alpha1.DashboardNotebookLayoutItemKind{
+			Kind: cell.Kind,
+			Spec: dashv2alpha1.DashboardNotebookLayoutItemSpec{
+				Element: dashv2alpha1.DashboardElementReference{
+					Kind: cell.Spec.Element.Kind,
+					Name: cell.Spec.Element.Name,
+				},
+				Source:    dashv2alpha1.DashboardNotebookLayoutItemSpecSource(cell.Spec.Source),
+				Collapsed: cell.Spec.Collapsed,
+			},
+		}
+	}
 }
 
 func convertGridLayoutSpec_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutSpec, out *dashv2alpha1.DashboardGridLayoutSpec, scope conversion.Scope) error {
@@ -1091,8 +1153,39 @@ func convertRowLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKin
 	return nil
 }
 
+// convertTabLayout_V2beta1_to_V2alpha1 converts a tab's nested layout. NotebookLayout is
+// a top-level-only layout (it cannot nest in a tab), so this handles the four nestable
+// kinds and intentionally does not delegate to convertLayout_V2beta1_to_V2alpha1.
 func convertTabLayout_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, out *dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, scope conversion.Scope) error {
-	return convertLayout_V2beta1_to_V2alpha1(in, out, scope)
+	if in.GridLayoutKind != nil {
+		out.GridLayoutKind = &dashv2alpha1.DashboardGridLayoutKind{
+			Kind: in.GridLayoutKind.Kind,
+		}
+		return convertGridLayoutSpec_V2beta1_to_V2alpha1(&in.GridLayoutKind.Spec, &out.GridLayoutKind.Spec, scope)
+	}
+
+	if in.RowsLayoutKind != nil {
+		out.RowsLayoutKind = &dashv2alpha1.DashboardRowsLayoutKind{
+			Kind: in.RowsLayoutKind.Kind,
+		}
+		return convertRowsLayoutSpec_V2beta1_to_V2alpha1(&in.RowsLayoutKind.Spec, &out.RowsLayoutKind.Spec, scope)
+	}
+
+	if in.AutoGridLayoutKind != nil {
+		out.AutoGridLayoutKind = &dashv2alpha1.DashboardAutoGridLayoutKind{
+			Kind: in.AutoGridLayoutKind.Kind,
+		}
+		return convertAutoGridLayoutSpec_V2beta1_to_V2alpha1(&in.AutoGridLayoutKind.Spec, &out.AutoGridLayoutKind.Spec, scope)
+	}
+
+	if in.TabsLayoutKind != nil {
+		out.TabsLayoutKind = &dashv2alpha1.DashboardTabsLayoutKind{
+			Kind: in.TabsLayoutKind.Kind,
+		}
+		return convertTabsLayoutSpec_V2beta1_to_V2alpha1(&in.TabsLayoutKind.Spec, &out.TabsLayoutKind.Spec, scope)
+	}
+
+	return nil
 }
 
 func convertAnnotationMappings_V2beta1_to_V2alpha1(in map[string]dashv2beta1.DashboardAnnotationEventFieldMapping) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {

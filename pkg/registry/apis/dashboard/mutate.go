@@ -94,7 +94,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	case *dashboardV2alpha1.Dashboard:
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
 		// until the generator is fixed.
-		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil && v.Spec.Layout.NotebookLayoutKind == nil {
 			v.Spec.Layout.GridLayoutKind = &dashboardV2alpha1.DashboardGridLayoutKind{
 				Kind: "GridLayout",
 				Spec: dashboardV2alpha1.DashboardGridLayoutSpec{},
@@ -107,7 +107,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	case *dashboardV2beta1.Dashboard:
 		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
 		// until the generator is fixed.
-		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil && v.Spec.Layout.NotebookLayoutKind == nil {
 			v.Spec.Layout.GridLayoutKind = &dashboardV2beta1.DashboardGridLayoutKind{
 				Kind: "GridLayout",
 				Spec: dashboardV2beta1.DashboardGridLayoutSpec{},
@@ -118,7 +118,7 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		resourceInfo = dashboardV2beta1.DashboardResourceInfo
 
 	case *dashboardV2.Dashboard:
-		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil && v.Spec.Layout.NotebookLayoutKind == nil {
 			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
 				Kind: "GridLayout",
 				Spec: dashboardV2.DashboardGridLayoutSpec{},

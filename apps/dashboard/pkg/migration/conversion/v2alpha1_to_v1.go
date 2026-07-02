@@ -232,7 +232,7 @@ func convertLinksToV1(links []dashv2alpha1.DashboardDashboardLink) []map[string]
 //   - RowsLayout: Rows become row panels; nested structures are flattened
 //   - AutoGridLayout: Calculates gridPos based on column count and row height
 //   - TabsLayout: Tabs become expanded row panels; content is flattened
-func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind) ([]interface{}, error) {
+func convertPanelsFromElementsAndLayout(elements map[string]dashv2alpha1.DashboardElement, layout dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind) ([]interface{}, error) {
 	// Find the maximum panel ID from all elements to use for row panel IDs.
 	nextRowID := getMaxPanelIDFromElements(elements) + 1
 

@@ -536,12 +536,12 @@ func transformLinks(dashboard map[string]interface{}) []dashv2alpha1.DashboardDa
 // Panel transformation constants
 const GRID_ROW_HEIGHT = 1
 
-func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[string]interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind, error) {
 	panels, ok := dashboard["panels"].([]interface{})
 	if !ok {
 		// Return empty elements and default grid layout
 		elements := make(map[string]dashv2alpha1.DashboardElement)
-		layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+		layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 			GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 				Kind: "GridLayout",
 				Spec: dashv2alpha1.DashboardGridLayoutSpec{
@@ -570,7 +570,7 @@ func transformPanelsToElementsAndLayout(ctx context.Context, dashboard map[strin
 	return convertToGridLayout(ctx, panels, dsIndexProvider, leIndexProvider)
 }
 
-func convertToGridLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToGridLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	items := make([]dashv2alpha1.DashboardGridLayoutItemKind, 0, len(panels))
 
@@ -589,7 +589,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 		items = append(items, buildGridItemKind(ctx, panelMap, elementName, nil, leIndexProvider))
 	}
 
-	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 		GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 			Kind: "GridLayout",
 			Spec: dashv2alpha1.DashboardGridLayoutSpec{
@@ -601,7 +601,7 @@ func convertToGridLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 	return elements, layout, nil
 }
 
-func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind, error) {
+func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) (map[string]dashv2alpha1.DashboardElement, dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind, error) {
 	elements := make(map[string]dashv2alpha1.DashboardElement)
 	rows := make([]dashv2alpha1.DashboardRowsLayoutRowKind, 0)
 
@@ -697,7 +697,7 @@ func convertToRowsLayout(ctx context.Context, panels []interface{}, dsIndexProvi
 		rows = append(rows, *currentRow)
 	}
 
-	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+	layout := dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 		RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
 			Kind: "RowsLayout",
 			Spec: dashv2alpha1.DashboardRowsLayoutSpec{

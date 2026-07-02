@@ -21,6 +21,10 @@ export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot
 
 export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowKind {
   const layout = row.state.layout.serialize(isSnapshot);
+  // NotebookLayout is a top-level dashboard layout only; it cannot nest inside a row.
+  if (layout.kind === 'NotebookLayout') {
+    throw new Error('NotebookLayout cannot be nested inside a row');
+  }
 
   // Normalize Y coordinates to be relative within the row
   // Panels in the scene have absolute Y coordinates, but in V2 schema they should be relative to the row
