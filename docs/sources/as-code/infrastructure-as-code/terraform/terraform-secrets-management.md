@@ -522,7 +522,7 @@ Keep the following points in mind for this resource:
 
 You can also set the active keeper outside Terraform, in the Grafana UI under **Administration** > **Secrets**.
 
-Once the keeper is active, Grafana routes new secure values to it automatically.
+After the keeper is active, Grafana routes new secure values to it automatically.
 A `value`-backed secure value like the one in [Define a secure value](#define-a-secure-value) needs no changes to use the active keeper.
 
 To reference a secret that already exists in the third-party keeper instead of sending a new value, use `ref` in place of `value`:
