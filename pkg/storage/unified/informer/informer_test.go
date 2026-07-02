@@ -262,6 +262,34 @@ func TestInformer_RelistDiffEmitsDeletes(t *testing.T) {
 	assert.Equal(t, []string{"b"}, handler.deletedNames(), "vanished object must be delivered as a delete")
 }
 
+// An object first seen on a resync re-list (not on the initial list) is delivered
+// as an add, not an update, so an add-only handler (e.g. the job controller's
+// AddFunc) wakes for it. Existing objects stay updates.
+func TestInformer_RelistEmitsAddForNewKeys(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	// list returns [a] first, then [a, b] on the next call — b is new on resync.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		if calls == 1 {
+			return []runtime.Object{obj("a")}, nil
+		}
+		return []runtime.Object{obj("a"), obj("b")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+
+	require.NoError(t, n.relist(context.Background(), true))  // initial: a added
+	require.NoError(t, n.relist(context.Background(), false)) // resync: b new -> add, a -> update
+
+	assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames(), "b must be an add, not an update")
+	assert.Equal(t, []string{"a"}, handler.updatedNames(), "the already-known object is an update")
+	assert.Empty(t, handler.deletedNames())
+}
+
 func TestInformer_AddEventHandlerRejectsNil(t *testing.T) {
 	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
 	_, err := n.AddEventHandler(nil)

@@ -28,11 +28,13 @@ type Cache interface {
 // a Cache. Construct one with NewStore.
 type Store interface {
 	Cache
-	// Replace swaps the store's contents for objs and returns the objects that
-	// were present before but are absent now, carrying their last-known state. The
-	// informer uses that set to emit deletes for objects that have vanished since
-	// the previous re-list.
-	Replace(objs []runtime.Object) []runtime.Object
+	// Replace swaps the store's contents for objs and reports the diff against the
+	// previous snapshot: added is the objects whose key was not present before,
+	// removed is the objects present before but absent now (carrying their
+	// last-known state). The informer dispatches added as OnAdd — so add-only
+	// handlers still wake for an object first seen by a re-list — and removed as
+	// OnDelete for objects that have vanished since the previous re-list.
+	Replace(objs []runtime.Object) (added, removed []runtime.Object)
 }
 
 // store is the in-memory Store implementation.
@@ -94,7 +96,7 @@ func (s *store) Delete(_ context.Context, namespace, name string) {
 // present before but are absent now, carrying their last-known state. The
 // informer uses that set to emit deletes for objects that have vanished since the
 // previous re-list.
-func (s *store) Replace(objs []runtime.Object) []runtime.Object {
+func (s *store) Replace(objs []runtime.Object) (added, removed []runtime.Object) {
 	next := make(map[string]runtime.Object, len(objs))
 	for _, obj := range objs {
 		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
@@ -107,11 +109,15 @@ func (s *store) Replace(objs []runtime.Object) []runtime.Object {
 	s.items = next
 	s.mu.Unlock()
 
-	var removed []runtime.Object
+	for key, obj := range next {
+		if _, ok := prev[key]; !ok {
+			added = append(added, obj)
+		}
+	}
 	for key, obj := range prev {
 		if _, ok := next[key]; !ok {
 			removed = append(removed, obj)
 		}
 	}
-	return removed
+	return added, removed
 }

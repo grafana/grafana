@@ -328,11 +328,17 @@ func (n *Informer) onNotification() nats.MessageHandler {
 
 // relist reads the full set from the API and reconciles it against the previous
 // snapshot, mirroring how a SharedInformer's reflector re-lists into DeltaFIFO:
-//   - objects present now are delivered as adds (initial list) or updates (resync),
-//     which replays state to handlers and heals events NATS routed to other replicas;
+//   - a key seen for the first time is delivered as an add, a key seen before as an
+//     update. Preserving the add/update distinction matters: an add-only handler
+//     (e.g. the provisioning job controller's AddFunc) must still wake for an object
+//     first observed via a re-list — during the startup subscribe gap, or because the
+//     live ADDED event was round-robined to another replica;
 //   - objects that were in the previous snapshot but are gone now are delivered as
 //     deletes, carrying the last-known object — this is how a hard delete (which no
 //     live notification reliably reaches under round-robin delivery) is caught.
+//
+// On the initial list the store starts empty, so every object is an add (with
+// isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
 	objs, err := n.list(ctx)
 	if err != nil {
@@ -340,24 +346,26 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		return err
 	}
 
-	// Swap the snapshot for the fresh set; removed is the objects that vanished
-	// since the previous re-list, with their last-known state.
-	removed := n.store.Replace(objs)
+	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
+	// and vanished since the previous re-list.
+	added, removed := n.store.Replace(objs)
+	addedKeys := make(map[string]struct{}, len(added))
+	for _, obj := range added {
+		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
+			addedKeys[key] = struct{}{}
+		}
+	}
 
 	for _, obj := range objs {
 		o := obj
-		if initial {
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, true) })
+		key, _ := cache.MetaNamespaceKeyFunc(o)
+		if _, isNew := addedKeys[key]; isNew {
+			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 		} else {
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 		}
 	}
 
-	// Emit a delete for every vanished object. Skipped on the initial list, which
-	// has nothing to diff against (the store started empty).
-	if initial {
-		return nil
-	}
 	for _, obj := range removed {
 		o := obj
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })

@@ -17,18 +17,23 @@ func storeNames(objs []runtime.Object) []string {
 	return out
 }
 
-// Replace swaps the whole set and reports the objects that vanished, so the
-// informer can emit deletes for them.
-func TestStore_ReplaceReportsRemoved(t *testing.T) {
+// Replace swaps the whole set and reports the diff — objects that newly appeared
+// (added) and objects that vanished (removed) — so the informer can emit adds and
+// deletes for them.
+func TestStore_ReplaceReportsDiff(t *testing.T) {
 	s := NewStore()
 	ctx := context.Background()
 
-	assert.Empty(t, s.Replace([]runtime.Object{obj("a"), obj("b")}), "first replace removes nothing")
+	added, removed := s.Replace([]runtime.Object{obj("a"), obj("b")})
+	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(added), "first replace adds everything")
+	assert.Empty(t, removed, "first replace removes nothing")
 	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(s.List(ctx)))
 
-	removed := s.Replace([]runtime.Object{obj("a")})
-	assert.Equal(t, []string{"b"}, storeNames(removed), "b vanished and must be reported")
-	assert.Equal(t, []string{"a"}, storeNames(s.List(ctx)))
+	// c is new, b vanished, a is unchanged (reported in neither set).
+	added, removed = s.Replace([]runtime.Object{obj("a"), obj("c")})
+	assert.Equal(t, []string{"c"}, storeNames(added), "c newly appeared and must be reported as added")
+	assert.Equal(t, []string{"b"}, storeNames(removed), "b vanished and must be reported as removed")
+	assert.ElementsMatch(t, []string{"a", "c"}, storeNames(s.List(ctx)))
 }
 
 // Update and Delete are the write-throughs that keep the store warm between
