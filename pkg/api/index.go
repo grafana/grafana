@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
@@ -113,6 +114,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
+	orgCount := hs.getUserOrgCount(c, userID)
+	if orgCount <= 1 {
+		if cfgNode := navTree.FindById(navtree.NavIDCfg); cfgNode != nil {
+			cfgNode.SubTitle = ""
+		}
+	}
+
 	weekStart := ""
 	if prefs.WeekStart != nil {
 		weekStart = *prefs.WeekStart
@@ -138,7 +146,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgId:                      c.GetOrgID(),
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.GetOrgRole(),
-			OrgCount:                   hs.getUserOrgCount(c, userID),
+			OrgCount:                   orgCount,
 			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
