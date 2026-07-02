@@ -147,7 +147,7 @@ const getDefaultSearchHandler = () =>
       if (ownerReferenceFilter.length > 0) {
         filters.push(({ item }) =>
           Boolean(
-            (item.kind === 'folder' || item.kind === 'dashboard') &&
+            item.kind === 'folder' &&
               item.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference))
           )
         );
