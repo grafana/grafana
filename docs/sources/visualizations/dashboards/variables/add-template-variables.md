@@ -127,7 +127,7 @@ For more information, refer to the [Dashboard controls documentation](https://gr
 - Variable drop-down lists are displayed in the order in which they're listed in the **Variables** tab in dashboard settings, so put the variables that you change often at the top, so they're shown first.
 - By default, variables don't have a default value. This means that the topmost value in the drop-down list is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
   1. Select the **Include All Option** checkbox.
-  2. In the **Custom all value** field, enter a value like `.+`.
+  1. In the **Custom all value** field, enter a value like `.+`.
 
 ## Add a query variable
 
@@ -397,4 +397,13 @@ In order to have custom regular expression, globs, or Lucene syntax in the **Cus
 
 ### Include All option
 
-Grafana adds an `All` option to the variable drop-down list. If a user selects this option, then all variable options are selected.
+Grafana adds an **All** option to the variable drop-down list. If a user selects this option, then all variable options are selected.
+
+If you enable this option but also set a variable's **Display** option to **Hidden**, the variable defaults to selecting only the first value&mdash;not **All**&mdash;unless you explicitly select **All** while the variable is visible and then save the dashboard.
+To set **All** as the default for a hidden variable, complete the following steps:
+
+1. Temporarily set **Display** to **Above dashboard**.
+1. On the dashboard, select the **All** option from the variable drop-down list.
+1. Save the dashboard to persist the selection.
+1. Return to **Dashboard options** > **Variables**, select the variable, and set **Display** back to **Hidden**.
+1. Save the dashboard again.
