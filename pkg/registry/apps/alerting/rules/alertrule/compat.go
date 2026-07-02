@@ -107,47 +107,8 @@ func convertToK8sResource(
 		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
 	}
 
-	if setting := rule.ContactPointRouting(); setting != nil {
-		simplifiedRouting := model.AlertRuleSimplifiedRouting{
-			Type:     model.AlertRuleNotificationSettingsTypeSimplifiedRouting,
-			Receiver: setting.Receiver,
-			GroupBy:  setting.GroupBy,
-		}
-		if setting.GroupWait != nil {
-			simplifiedRouting.GroupWait = new(model.AlertRulePromDuration(setting.GroupWait.String()))
-		}
-		if setting.GroupInterval != nil {
-			simplifiedRouting.GroupInterval = new(model.AlertRulePromDuration(setting.GroupInterval.String()))
-		}
-		if setting.RepeatInterval != nil {
-			simplifiedRouting.RepeatInterval = new(model.AlertRulePromDuration(setting.RepeatInterval.String()))
-		}
-		if setting.MuteTimeIntervals != nil {
-			simplifiedRouting.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
-			for _, m := range setting.MuteTimeIntervals {
-				simplifiedRouting.MuteTimeIntervals = append(simplifiedRouting.MuteTimeIntervals, model.AlertRuleTimeIntervalRef(m))
-			}
-		}
-		if setting.ActiveTimeIntervals != nil {
-			simplifiedRouting.ActiveTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.ActiveTimeIntervals))
-			for _, a := range setting.ActiveTimeIntervals {
-				simplifiedRouting.ActiveTimeIntervals = append(simplifiedRouting.ActiveTimeIntervals, model.AlertRuleTimeIntervalRef(a))
-			}
-		}
-		k8sRule.Spec.NotificationSettings = &model.AlertRuleNotificationSettings{
-			SimplifiedRouting: &simplifiedRouting,
-		}
-	}
-
-	if setting := rule.PolicyRouting(); setting != nil {
-		namedRoutingTree := model.AlertRuleNamedRoutingTree{
-			Type:        model.AlertRuleNotificationSettingsTypeNamedRoutingTree,
-			RoutingTree: setting.Policy,
-		}
-
-		k8sRule.Spec.NotificationSettings = &model.AlertRuleNotificationSettings{
-			NamedRoutingTree: &namedRoutingTree,
-		}
+	if ns := convertToK8sNotificationSettings(rule); ns != nil {
+		k8sRule.Spec.NotificationSettings = ns
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -181,6 +142,53 @@ func convertToK8sResource(
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
 	return k8sRule, nil
+}
+
+// convertToK8sNotificationSettings maps the domain rule's routing configuration into k8s
+// notification settings. It returns nil when the rule has no routing configured.
+func convertToK8sNotificationSettings(rule *ngmodels.AlertRule) *model.AlertRuleNotificationSettings {
+	if setting := rule.ContactPointRouting(); setting != nil {
+		simplifiedRouting := model.AlertRuleSimplifiedRouting{
+			Type:     model.AlertRuleNotificationSettingsTypeSimplifiedRouting,
+			Receiver: setting.Receiver,
+			GroupBy:  setting.GroupBy,
+		}
+		if setting.GroupWait != nil {
+			simplifiedRouting.GroupWait = new(model.AlertRulePromDuration(setting.GroupWait.String()))
+		}
+		if setting.GroupInterval != nil {
+			simplifiedRouting.GroupInterval = new(model.AlertRulePromDuration(setting.GroupInterval.String()))
+		}
+		if setting.RepeatInterval != nil {
+			simplifiedRouting.RepeatInterval = new(model.AlertRulePromDuration(setting.RepeatInterval.String()))
+		}
+		if setting.MuteTimeIntervals != nil {
+			simplifiedRouting.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
+			for _, m := range setting.MuteTimeIntervals {
+				simplifiedRouting.MuteTimeIntervals = append(simplifiedRouting.MuteTimeIntervals, model.AlertRuleTimeIntervalRef(m))
+			}
+		}
+		if setting.ActiveTimeIntervals != nil {
+			simplifiedRouting.ActiveTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.ActiveTimeIntervals))
+			for _, a := range setting.ActiveTimeIntervals {
+				simplifiedRouting.ActiveTimeIntervals = append(simplifiedRouting.ActiveTimeIntervals, model.AlertRuleTimeIntervalRef(a))
+			}
+		}
+		return &model.AlertRuleNotificationSettings{
+			SimplifiedRouting: &simplifiedRouting,
+		}
+	}
+
+	if setting := rule.PolicyRouting(); setting != nil {
+		return &model.AlertRuleNotificationSettings{
+			NamedRoutingTree: &model.AlertRuleNamedRoutingTree{
+				Type:        model.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: setting.Policy,
+			},
+		}
+	}
+
+	return nil
 }
 
 func ConvertToK8sNoDataState(state ngmodels.NoDataState) (model.AlertRuleNoDataState, error) {
