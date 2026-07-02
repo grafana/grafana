@@ -21,9 +21,9 @@ import (
 // syncer so the orchestration (SyncOrg) can be unit-tested against a fake while
 // the real k8s-client wiring is verified via integration/manual testing.
 type rulesConfigStore interface {
-	// GetSyncDatasourceUID returns spec.externalRulerSync.datasourceUid for the
-	// org, or "" when the resource or field is absent.
-	GetSyncDatasourceUID(ctx context.Context, orgID int64) (string, error)
+	// GetSyncSpec returns the org's externalRulerSync spec fields, with empty
+	// strings when the resource or a field is absent.
+	GetSyncSpec(ctx context.Context, orgID int64) (syncSpec, error)
 	// WriteStatus upserts the org's Config status using compute(prev), creating
 	// the singleton if absent. Best-effort; callers log failures.
 	WriteStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error
@@ -80,20 +80,30 @@ func (s *k8sConfigStore) orgServiceContext(ctx context.Context, orgID int64) (co
 	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns), ns
 }
 
-func (s *k8sConfigStore) GetSyncDatasourceUID(ctx context.Context, orgID int64) (string, error) {
+// syncSpec holds the externalRulerSync spec fields the worker reads from the
+// org's Config resource in a single round trip.
+type syncSpec struct {
+	// DatasourceUID is the source Mimir/Cortex ruler datasource to sync from.
+	DatasourceUID string
+	// TargetDatasourceUID is where converted recording rules write their
+	// results; empty means default to the query (source) datasource.
+	TargetDatasourceUID string
+}
+
+func (s *k8sConfigStore) GetSyncSpec(ctx context.Context, orgID int64) (syncSpec, error) {
 	c, err := s.resolveCfgClient()
 	if err != nil {
-		return "", err
+		return syncSpec{}, err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
 	cfg, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return "", nil
+			return syncSpec{}, nil
 		}
-		return "", err
+		return syncSpec{}, err
 	}
-	return externalRulerUIDFromConfig(cfg), nil
+	return syncSpecFromConfig(cfg), nil
 }
 
 func (s *k8sConfigStore) WriteStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
@@ -135,13 +145,18 @@ func (s *k8sConfigStore) WriteStatus(ctx context.Context, orgID int64, compute f
 	})
 }
 
-// externalRulerUIDFromConfig returns the configured UID or "" when any level in
-// the nested optional chain is unset.
-func externalRulerUIDFromConfig(c *alertingrulesv0alpha1.Config) string {
-	if c == nil ||
-		c.Spec.ExternalRulerSync == nil ||
-		c.Spec.ExternalRulerSync.DatasourceUid == nil {
-		return ""
+// syncSpecFromConfig extracts the externalRulerSync spec fields, tolerating any
+// level of the nested optional chain being unset.
+func syncSpecFromConfig(c *alertingrulesv0alpha1.Config) syncSpec {
+	if c == nil || c.Spec.ExternalRulerSync == nil {
+		return syncSpec{}
 	}
-	return *c.Spec.ExternalRulerSync.DatasourceUid
+	var spec syncSpec
+	if uid := c.Spec.ExternalRulerSync.DatasourceUid; uid != nil {
+		spec.DatasourceUID = *uid
+	}
+	if uid := c.Spec.ExternalRulerSync.TargetDatasourceUid; uid != nil {
+		spec.TargetDatasourceUID = *uid
+	}
+	return spec
 }

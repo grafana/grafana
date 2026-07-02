@@ -633,6 +633,12 @@ spec:
                     org. The operator ini setting `unified_alerting.external_ruler_uid`
                     overrides this when set; see status.externalRulerSync.origin.
                   type: string
+                targetDatasourceUid:
+                  description: |-
+                    targetDatasourceUid is the UID of the datasource that converted recording
+                    rules write their results to. Empty defaults to datasourceUid (the query
+                    datasource). Only used when the upstream ruler contains recording rules.
+                  type: string
               type: object
           type: object
         status:

@@ -23,12 +23,13 @@ import (
 
 type fakeConfigStore struct {
 	uid       string
+	targetUID string
 	uidErr    error
 	lastWrite *alertingrulesv0alpha1.ConfigStatus
 }
 
-func (f *fakeConfigStore) GetSyncDatasourceUID(context.Context, int64) (string, error) {
-	return f.uid, f.uidErr
+func (f *fakeConfigStore) GetSyncSpec(context.Context, int64) (syncSpec, error) {
+	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID}, f.uidErr
 }
 func (f *fakeConfigStore) WriteStatus(_ context.Context, _ int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
 	st := compute(f.lastWrite)
@@ -83,10 +84,18 @@ func (fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title s
 	return &folder.FolderReference{UID: "folder-" + title, Title: title}, false, nil
 }
 
-type fakeDatasourceGetter struct{ ds *datasources.DataSource }
+type fakeDatasourceGetter struct {
+	ds        *datasources.DataSource
+	requested *[]string
+}
 
-func (f fakeDatasourceGetter) GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
-	return f.ds, nil
+func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if f.requested != nil {
+		*f.requested = append(*f.requested, q.UID)
+	}
+	// Return a datasource carrying the requested UID so callers that resolve a
+	// distinct target datasource see the right UID.
+	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
 }
 
 func newTestSyncer(t *testing.T, cs *fakeConfigStore, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
@@ -205,6 +214,35 @@ func TestSyncOrg_PruneScopedBySourceIdentifier(t *testing.T) {
 	// Delete is scoped to our source identifier so it can't touch other owners.
 	require.NotNil(t, rs.deleted[0].SourceIdentifier)
 	assert.Equal(t, "ds1", *rs.deleted[0].SourceIdentifier)
+}
+
+func TestSyncOrg_TargetDatasourceResolved(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", targetUID: "tds1"}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 9}, rs)
+	var requested []string
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	// Both the query and the distinct target datasource are resolved.
+	assert.Contains(t, requested, "ds1")
+	assert.Contains(t, requested, "tds1")
+}
+
+func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1"} // no targetUID
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 9}, rs)
+	var requested []string
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	// Target defaults to the query datasource: only ds1 is resolved (no 2nd lookup).
+	assert.Equal(t, []string{"ds1"}, requested)
 }
 
 func TestSyncOrg_IniOverrideWins(t *testing.T) {
