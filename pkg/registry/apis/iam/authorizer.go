@@ -126,11 +126,22 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	}
 	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
 	update := check(utils.VerbUpdate, "requires team update")
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"members":      getPermissions,
 		"groups":       getPermissions,
 		"addmember":    update,
 		"removemember": update,
+	})
+
+	// Authorize the team collection list at the API layer and defer per-team
+	// filtering to unified storage (listAuthorized), so a user can list the teams
+	// they can read — matching dashboards and folders. Named get/update/delete
+	// and the subresources stay strict.
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.IsResourceRequest() && attr.GetSubresource() == "" && attr.GetName() == "" && attr.GetVerb() == utils.VerbList {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return base.Authorize(ctx, attr)
 	})
 }
 
