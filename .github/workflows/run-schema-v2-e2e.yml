@@ -29,8 +29,12 @@ jobs:
         uses: ./.github/actions/yarn-install
       - name: Install Playwright browsers
         run: yarn playwright install --with-deps chromium
-      - name: Build grafana
-        run: make build
+      - name: Build Grafana backend
+        run: make build-go
+      - name: Build Grafana frontend
+        env:
+          NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
+        run: make build-js
       - name: Run dashboard scenes e2e
         run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
 

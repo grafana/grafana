@@ -39,23 +39,7 @@ func TestReadWebassets(t *testing.T) {
 		}
 	],
 	"dark": "public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
-		},
-		{
-		"filePath": "public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
-		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
+	"light": "public/build/grafana.light.2fbd901d840329c18394.css"
 	}`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
@@ -87,30 +71,14 @@ func TestReadWebassets(t *testing.T) {
 		}
 	],
 	"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
-		},
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
-		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
+	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css"
 	}`, string(dto))
 }
 
 func TestReadWebassetsFromCDN(t *testing.T) {
 	t.Skip()
 
-	assets, err := readWebAssetsFromCDN(context.Background(), "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
+	assets, err := readWebAssetsFromCDN(context.Background(), "build", "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
