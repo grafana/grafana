@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataFrame, FieldType, store, toDataFrame } from '@grafana/data';
-import { type FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
+import { type FieldNameMetaStore } from 'app/features/logs/components/fieldSelector/fieldNameMeta';
 
 import { createLogLine } from '../mocks/logRow';
 import { LogListContext } from '../panel/LogListContext';

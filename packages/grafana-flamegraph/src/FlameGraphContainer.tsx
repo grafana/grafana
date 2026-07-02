@@ -97,6 +97,12 @@ export type Props = {
    * Enable the new pane-based UI with call tree support.
    */
   enableNewUI?: boolean;
+
+  /**
+   * Escape hatch to disable virtualization of the top table. Only intended for tests, where jsdom
+   * cannot measure the grid and virtualization would otherwise render no rows.
+   */
+  enableVirtualization?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -115,6 +121,7 @@ const FlameGraphContainer = ({
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant = true,
   enableNewUI,
+  enableVirtualization,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
@@ -135,6 +142,7 @@ const FlameGraphContainer = ({
         keepFocusOnDataChange={keepFocusOnDataChange}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
         showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+        enableVirtualization={enableVirtualization}
       />
     );
   }
@@ -155,6 +163,7 @@ const FlameGraphContainer = ({
       keepFocusOnDataChange={keepFocusOnDataChange}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
       showAnalyzeWithAssistant={showAnalyzeWithAssistant}
+      enableVirtualization={enableVirtualization}
     />
   );
 };
@@ -174,6 +183,7 @@ type InternalProps = {
   keepFocusOnDataChange?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   showAnalyzeWithAssistant: boolean;
+  enableVirtualization?: boolean;
 };
 
 const LegacyContainer = ({
@@ -191,6 +201,7 @@ const LegacyContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  enableVirtualization,
 }: InternalProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -360,6 +371,7 @@ const LegacyContainer = ({
       onSearch={onSearch}
       onTableSort={onTableSortStable}
       colorScheme={colorScheme}
+      enableVirtualization={enableVirtualization}
     />
   );
 
@@ -444,6 +456,7 @@ const NewUIContainer = ({
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
   showAnalyzeWithAssistant,
+  enableVirtualization,
 }: InternalProps) => {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
@@ -524,6 +537,7 @@ const NewUIContainer = ({
     keepFocusOnDataChange,
     focusedItemIndexes,
     setFocusedItemIndexes,
+    enableVirtualization,
   };
 
   let body;

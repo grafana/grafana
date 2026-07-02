@@ -14,10 +14,10 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
-import { TableCellDisplayMode } from '../types';
+import { type PanelContext, PanelContextProvider } from '../../../PanelChrome';
+import { TableCellDisplayMode } from '../../types';
 
-import { TableNG } from './TableNG';
+import { RefactoredTableNG as TableNG } from './RefactoredTableNG';
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -243,11 +243,11 @@ describe('TableNG', () => {
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
-      constructor(callback: any) {
+      constructor(callback: ResizeObserverCallback) {
         // Store the callback
         this.callback = callback;
       }
-      callback: any;
+      callback: ResizeObserverCallback;
       observe() {
         // Do nothing
       }

@@ -90,6 +90,8 @@ global.ResizeObserver = class ResizeObserver {
       left: 100,
       right: 0,
     },
+    // Needed for @grafana/react-data-grid (TableNG), which reads contentBoxSize[0]
+    contentBoxSize: [{ inlineSize: 500, blockSize: 500 }],
     target: {
       // Needed for react-virtual to work in tests
       getAttribute: () => 1,
@@ -126,6 +128,12 @@ global.ResizeObserver = class ResizeObserver {
     this.#isObserving = false;
   }
 };
+
+// jsdom doesn't implement scrollIntoView, which @grafana/react-data-grid (TableNG) calls when a
+// cell is selected. Without this, any test that selects/clicks a grid cell throws.
+if (!window.HTMLElement.prototype.scrollIntoView) {
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+}
 
 // originally using just global.MessageChannel = MessageChannel
 // however this results in open handles in jest tests

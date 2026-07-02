@@ -1,21 +1,7 @@
-import { type Property } from 'csstype';
 import { type FC } from 'react';
-import { type CellProps, type Column, type Row, type TableState, type UseExpandedRowProps } from 'react-table';
 
-import {
-  type DataFrame,
-  type Field,
-  type KeyValue,
-  type SelectableValue,
-  type TimeRange,
-  type FieldConfigSource,
-  type ActionModel,
-  type InterpolateFunction,
-} from '@grafana/data';
+import { type DataFrame, type Field, type ActionModel, type InterpolateFunction } from '@grafana/data';
 import type * as schema from '@grafana/schema';
-
-import { type TableCellInspectorMode } from './TableCellInspector';
-import { type TableStyles } from './TableRT/styles';
 
 export {
   TableCellDisplayMode,
@@ -28,8 +14,6 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export type InspectCell = { value: any; mode: TableCellInspectorMode };
-
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
@@ -40,36 +24,10 @@ export type TableColumnResizeActionCallback = (
   width: number,
   fieldScope?: schema.MatcherScope
 ) => void;
-type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
-export type TableInspectCellCallback = (state: InspectCell) => void;
-
 export interface TableSortByFieldState {
   displayName: string;
   desc?: boolean;
 }
-
-export interface TableCellProps extends CellProps<any> {
-  tableStyles: TableStyles;
-  cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
-  field: Field;
-  onCellFilterAdded?: TableFilterActionCallback;
-  innerWidth: number;
-  frame: DataFrame;
-  actions?: ActionModel[]; // unused in NG
-  setInspectCell?: TableInspectCellCallback;
-}
-
-export type CellComponent = FC<TableCellProps>;
-
-export type FooterItem = Array<KeyValue<string>> | string | undefined;
-
-export type GrafanaTableColumn = Column & {
-  field: Field;
-  sortType: 'number' | 'basic' | 'alphanumeric-insensitive';
-  filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => SelectableValue[];
-  justifyContent: Property.JustifyContent;
-  minWidth: number;
-};
 
 export interface TableFooterCalc {
   show: boolean;
@@ -77,51 +35,6 @@ export interface TableFooterCalc {
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
-}
-
-export interface GrafanaTableState extends TableState {
-  // We manually track this to know where to reset the row heights. This is needed because react-table removed the
-  // collapsed IDs/indexes from the state.expanded map so when collapsing we would have to do a diff of current and
-  // previous state.expanded to know what changed.
-  lastExpandedOrCollapsedIndex?: number;
-}
-
-export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
-
-export interface TableStateReducerProps {
-  onColumnResize?: TableColumnResizeActionCallback;
-  onSortByChange?: TableSortByActionCallback;
-  data: DataFrame;
-}
-
-// export interface Props {
-export interface TableRTProps {
-  ariaLabel?: string;
-  data: DataFrame;
-  width: number;
-  height: number;
-  maxHeight?: number;
-  /** Minimal column width specified in pixels */
-  columnMinWidth?: number;
-  noHeader?: boolean;
-  showTypeIcons?: boolean;
-  resizable?: boolean;
-  initialSortBy?: TableSortByFieldState[];
-  onColumnResize?: TableColumnResizeActionCallback;
-  onSortByChange?: TableSortByActionCallback;
-  onCellFilterAdded?: TableFilterActionCallback;
-  footerOptions?: TableFooterCalc;
-  footerValues?: FooterItem[];
-  enablePagination?: boolean;
-  cellHeight?: schema.TableCellHeight;
-  /** @alpha Used by SparklineCell when provided */
-  timeRange?: TimeRange;
-  enableSharedCrosshair?: boolean;
-  // The index of the field value that the table will initialize scrolled to
-  initialRowIndex?: number;
-  fieldConfig?: FieldConfigSource;
-  getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
 }
 
 /**
