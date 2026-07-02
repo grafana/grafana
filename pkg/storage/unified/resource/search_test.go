@@ -81,6 +81,7 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
+	UnimplementedStorageBackend
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
 	statsCalls      atomic.Int32
