@@ -43,7 +43,7 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 // owner whose preferences don't exist yet creates them instead of returning
 // 404. The legacy storage upserts on its own (see legacy.preferenceStorage.Update)
 func (s *preferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	_, err := s.Storage.Get(ctx, name, &metav1.GetOptions{})
+	_, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !k8serrors.IsNotFound(err) {
 			return nil, false, err
@@ -58,7 +58,7 @@ func (s *preferencesStorage) Update(ctx context.Context, name string, objInfo re
 			return nil, false, err
 		}
 
-		created, err := s.Storage.Create(ctx, obj, createValidation, createOptionsFrom(options))
+		created, err := s.Create(ctx, obj, createValidation, createOptionsFrom(options))
 		if err == nil {
 			return created, true, nil
 		}
