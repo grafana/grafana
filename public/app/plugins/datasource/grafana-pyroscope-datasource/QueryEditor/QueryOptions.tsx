@@ -55,6 +55,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   if (query.spanSelector?.length) {
     collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
   }
+  if (query.profileIdSelector?.length) {
+    collapsedInfo.push(`Profile ID: ${query.profileIdSelector.join(', ')}`);
+  }
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
   }
@@ -126,6 +129,19 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                 onQueryChange({
                   ...query,
                   spanSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
+                });
+              }}
+            />
+          </EditorField>
+          <EditorField label={'Profile ID'} tooltip={<>Sets the profile ID from which to load a single profile.</>}>
+            <Input
+              value={query.profileIdSelector || ['']}
+              type="string"
+              placeholder="a1b2c3d4e5f6"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                onQueryChange({
+                  ...query,
+                  profileIdSelector: event.currentTarget.value !== '' ? [event.currentTarget.value] : [],
                 });
               }}
             />
