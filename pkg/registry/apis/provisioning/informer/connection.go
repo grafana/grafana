@@ -31,7 +31,10 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 	c := client.ProvisioningV0alpha1()
 	if nats.Enabled(subscriber) {
 		return &Source[*provisioningapis.Connection]{
-			DeltaSource: NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore()),
+			DeltaSource: newDeltaSourceInformer(subscriber, provisioningapis.ConnectionResourceInfo, "", resync, usinformer.NewStore(), true,
+				typedListFunc(func(ctx context.Context) (runtime.Object, error) {
+					return c.Connections("").List(ctx, metav1.ListOptions{})
+				})),
 			Getter: Getter[*provisioningapis.Connection]{
 				get: func(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
 					return c.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
@@ -44,15 +47,6 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		DeltaSource: inf.Informer(),
 		Getter:      NewCachedConnectionGetter(inf.Lister()),
 	}
-}
-
-// NewConnectionInformer builds an Informer for connections.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
-	c := client.ProvisioningV0alpha1()
-	return newDeltaSourceInformer(subscriber, provisioningapis.ConnectionResourceInfo, namespace, resync, store, true,
-		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
-			return c.Connections(namespace).List(ctx, metav1.ListOptions{})
-		}))
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's

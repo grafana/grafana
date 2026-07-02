@@ -18,15 +18,23 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// newDeltaSource is the getter-less delta-source selector shared by kinds whose
+// typedList issues a kind's typed LIST for one namespace, returning the typed
+// *XList as a runtime.Object. It closes over the typed client, so it is the one
+// per-kind accessor the generated clientset can't express generically (there is
+// no c.Resource(gvr)) — every getter-less kind supplies one and nothing else.
+type typedList = func(ctx context.Context, namespace string) (runtime.Object, error)
+
+// getterlessDeltaSource is the whole delta-source selector for kinds whose
 // controllers read no lister (jobs, historic jobs): a NATS-backed informer built
-// by newInformer when the subscriber is enabled, otherwise an apiserver-backed
-// SharedIndexInformer resolved from the kind's GVR via the generated factory
-// (ForResource), so the selector needs no per-kind typed accessor. Kinds with a
+// from the kind's typed LIST when the subscriber is enabled, otherwise an
+// apiserver-backed SharedIndexInformer resolved from the kind's GVR via the
+// generated factory (ForResource), so the apiserver branch needs no per-kind
+// accessor. The production wiring always watches every namespace. Kinds with a
 // getter build a Source instead — see NewRepositoryDeltaSource.
-func newDeltaSource(subscriber nats.Subscriber, client versioned.Interface, info utils.ResourceInfo, resync time.Duration, newInformer func(nats.Subscriber, versioned.Interface, string, time.Duration, usinformer.Store) *usinformer.Informer) DeltaSource {
+func getterlessDeltaSource(subscriber nats.Subscriber, client versioned.Interface, info utils.ResourceInfo, resync time.Duration, liveObjects bool, list typedList) DeltaSource {
 	if nats.Enabled(subscriber) {
-		return newInformer(subscriber, client, "", resync, usinformer.NewStore())
+		return newDeltaSourceInformer(subscriber, info, "", resync, usinformer.NewStore(), liveObjects,
+			typedListFunc(func(ctx context.Context) (runtime.Object, error) { return list(ctx, "") }))
 	}
 	gi, err := informers.NewSharedInformerFactory(client, resync).ForResource(info.GroupVersionResource())
 	if err != nil {

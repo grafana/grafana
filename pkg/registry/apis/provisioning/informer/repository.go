@@ -42,7 +42,10 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		return &Source[*provisioningapis.Repository]{
-			DeltaSource: NewRepositoryInformer(subscriber, client, "", resync, store),
+			DeltaSource: newDeltaSourceInformer(subscriber, provisioningapis.RepositoryResourceInfo, "", resync, store, true,
+				typedListFunc(func(ctx context.Context) (runtime.Object, error) {
+					return c.Repositories("").List(ctx, metav1.ListOptions{})
+				})),
 			Getter: Getter[*provisioningapis.Repository]{
 				get: func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 					return c.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
@@ -56,15 +59,6 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		DeltaSource: inf.Informer(),
 		Getter:      NewCachedRepositoryGetter(inf.Lister()),
 	}
-}
-
-// NewRepositoryInformer builds an Informer for repositories.
-func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
-	c := client.ProvisioningV0alpha1()
-	return newDeltaSourceInformer(subscriber, provisioningapis.RepositoryResourceInfo, namespace, resync, store, true,
-		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
-			return c.Repositories(namespace).List(ctx, metav1.ListOptions{})
-		}))
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's

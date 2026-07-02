@@ -17,45 +17,52 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	provisioningscheme "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/scheme"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-// Every kind's informer is built by the same generic core, so one table asserts
-// the two behaviours that core encodes: a kind with live notifications delivers
-// its own concrete type built from the notification's identity, while a kind with
-// them disabled (nil live-object builder) never subscribes and is driven only by
-// the re-list.
+// Every kind's delta source is built by the same generic core, so one table
+// asserts the two behaviours that core encodes: a kind with live notifications
+// delivers its own concrete type built from the notification's identity, while a
+// kind with them disabled (nil live-object builder) never subscribes and is
+// driven only by the re-list. Each row builds through the public constructor, so
+// this also covers that every constructor wires the right kind.
 func TestInformers(t *testing.T) {
 	tests := []struct {
-		name        string
-		newInformer func(nats.Subscriber, versioned.Interface, string, time.Duration, usinformer.Store) *usinformer.Informer
-		gvr         schema.GroupVersionResource
+		name      string
+		newSource func(nats.Subscriber, versioned.Interface, time.Duration) DeltaSource
+		gvr       schema.GroupVersionResource
 		// want is the concrete type each notification must be delivered as; a nil
 		// want marks a kind that must not subscribe at all.
 		want interface{}
 	}{
-		{"repository", NewRepositoryInformer, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), &provisioningapis.Repository{}},
-		{"job", NewJobInformer, provisioningapis.JobResourceInfo.GroupVersionResource(), &provisioningapis.Job{}},
-		{"connection", NewConnectionInformer, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), &provisioningapis.Connection{}},
-		{"historicjob", NewHistoricJobInformer, provisioningapis.HistoricJobResourceInfo.GroupVersionResource(), nil},
+		{"repository", func(s nats.Subscriber, c versioned.Interface, r time.Duration) DeltaSource {
+			return NewRepositoryDeltaSource(s, c, r)
+		}, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), &provisioningapis.Repository{}},
+		{"connection", func(s nats.Subscriber, c versioned.Interface, r time.Duration) DeltaSource {
+			return NewConnectionDeltaSource(s, c, r)
+		}, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), &provisioningapis.Connection{}},
+		{"job", NewJobDeltaSource, provisioningapis.JobResourceInfo.GroupVersionResource(), &provisioningapis.Job{}},
+		{"historicjob", NewHistoricJobDeltaSource, provisioningapis.HistoricJobResourceInfo.GroupVersionResource(), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sub := newFakeSubscriber()
 			rec := &typeRecorder{}
-			inf := tt.newInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
-			_, err := inf.AddEventHandler(rec)
+			src := tt.newSource(sub, fake.NewClientset(), time.Minute)
+			reg, err := src.AddEventHandler(rec)
 			require.NoError(t, err)
 			stopCh := make(chan struct{})
-			go inf.Run(stopCh)
+			go src.Run(stopCh)
 			t.Cleanup(func() { close(stopCh) })
 
-			subject := resourcewatch.Subject(tt.gvr, testNamespace)
+			// The delta sources watch every namespace, so the subscription subject is
+			// the all-namespaces one; the notification still carries a concrete
+			// object's namespace/name.
+			subject := resourcewatch.Subject(tt.gvr, "")
 
 			if tt.want == nil {
-				require.Eventually(t, inf.HasSynced, 5*time.Second, 5*time.Millisecond)
+				require.Eventually(t, reg.HasSynced, 5*time.Second, 5*time.Millisecond)
 				assert.False(t, sub.subscribed(subject), "%s must not subscribe to live notifications", tt.name)
 				return
 			}

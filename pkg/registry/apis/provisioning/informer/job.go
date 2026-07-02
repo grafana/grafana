@@ -10,21 +10,15 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // NewJobDeltaSource returns the job delta source: a NATS-backed informer when the
 // subscriber is enabled, otherwise an apiserver-backed SharedIndexInformer. The
-// job controller reads no lister, so callers need only the DeltaSource.
+// job controller reads no lister, so callers need only the DeltaSource — the kind
+// contributes only its ResourceInfo and its typed LIST.
 func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
-	return newDeltaSource(subscriber, client, provisioningapis.JobResourceInfo, resync, NewJobInformer)
-}
-
-// NewJobInformer builds an Informer for jobs.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
-	c := client.ProvisioningV0alpha1()
-	return newDeltaSourceInformer(subscriber, provisioningapis.JobResourceInfo, namespace, resync, store, true,
-		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
-			return c.Jobs(namespace).List(ctx, metav1.ListOptions{})
-		}))
+	return getterlessDeltaSource(subscriber, client, provisioningapis.JobResourceInfo, resync, true,
+		func(ctx context.Context, namespace string) (runtime.Object, error) {
+			return client.ProvisioningV0alpha1().Jobs(namespace).List(ctx, metav1.ListOptions{})
+		})
 }
