@@ -1,0 +1,195 @@
+import { css } from '@emotion/css';
+import { useEffect, useMemo, useState } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { Button, Field, Stack, useStyles2 } from '@grafana/ui';
+import {
+  useCreateVariableMutation,
+  useDeleteVariableMutation,
+  useUpdateVariableMutation,
+  type Variable,
+} from 'app/api/clients/dashboard/v2beta1';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
+import {
+  createSceneVariableFromVariableModel,
+  type TypedVariableModelV2,
+} from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
+import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
+import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
+
+import {
+  buildVariableResource,
+  getVariableFolderUid,
+  getVariableKind,
+  getVariableSpecName,
+  toWireVariableSpec,
+} from './utils';
+
+export interface VariableEditorViewProps {
+  /** The variable resource being edited; undefined when creating a new variable. */
+  source?: Variable;
+  /** Display title of the folder the variable is scoped to (edit mode only). */
+  folderTitle?: string;
+  onBack: () => void;
+}
+
+/**
+ * Standalone editor for global/folder-scoped variables. Bridges the k8s Variable
+ * resource to the scene-based VariableEditorForm used in dashboard settings: the
+ * wire spec is converted to a SceneVariable hosted in a minimal detached scene
+ * (variable set + time range so query editors can resolve context), and serialized
+ * back to a VariableKind on save.
+ */
+export function VariableEditorView({ source, folderTitle, onBack }: VariableEditorViewProps) {
+  const styles = useStyles2(getStyles);
+  const isNew = !source;
+  // '' represents the root Dashboards folder (global scope), matching the
+  // FolderPicker's uid for its root item so it renders as selected.
+  const [folderUid, setFolderUid] = useState<string>(source ? (getVariableFolderUid(source) ?? '') : '');
+  const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
+    source
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
+      : getVariableScene('query', { name: 'query0' })
+  );
+
+  const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
+  const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
+  const [deleteVariable, { isLoading: isDeleting }] = useDeleteVariableMutation();
+  const isSaving = isCreating || isUpdating || isDeleting;
+
+  const scene = useMemo(
+    () =>
+      new EmbeddedScene({
+        $timeRange: new SceneTimeRange({}),
+        $variables: new SceneVariableSet({ variables: [sceneVariable] }),
+        body: new SceneFlexLayout({ children: [] }),
+      }),
+    [sceneVariable]
+  );
+
+  useEffect(() => scene.activate(), [scene]);
+
+  const onTypeChange = (type: EditableVariableType) => {
+    const { name, label } = sceneVariable.state;
+    setSceneVariable(getVariableScene(type, { name, label }));
+  };
+
+  const onSave = async () => {
+    const variableSet = scene.state.$variables;
+    if (!(variableSet instanceof SceneVariableSet)) {
+      return;
+    }
+
+    const [kind] = sceneVariablesSetToSchemaV2Variables(variableSet, true);
+    if (!kind || !kind.spec.name) {
+      return;
+    }
+
+    // Failed mutations already surface an error notification via the enhanced
+    // RTK endpoints, so rejections are swallowed and the editor stays open.
+    try {
+      if (isNew) {
+        await createVariable({ variable: buildVariableResource(kind, folderUid) }).unwrap();
+        onBack();
+        return;
+      }
+
+      const sourceName = source.metadata.name;
+      if (!sourceName) {
+        return;
+      }
+
+      if (kind.spec.name === getVariableSpecName(source)) {
+        await updateVariable({ name: sourceName, patch: { spec: toWireVariableSpec(kind) } }).unwrap();
+        onBack();
+        return;
+      }
+
+      // Renaming changes the derived metadata.name, which the backend rejects on
+      // update — create the copy first, then delete the original so a failure can
+      // never lose the variable.
+      await createVariable({ variable: buildVariableResource(kind, folderUid) }).unwrap();
+      await deleteVariable({ name: sourceName }).unwrap();
+      onBack();
+    } catch {
+      // Error already notified.
+    }
+  };
+
+  const onDelete = async () => {
+    try {
+      if (source?.metadata.name) {
+        await deleteVariable({ name: source.metadata.name }).unwrap();
+      }
+      onBack();
+    } catch {
+      // Error already notified.
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      {isNew ? (
+        <Field
+          noMargin
+          className={styles.folderField}
+          label={t('variables-management.editor.folder-label', 'Folder')}
+          description={t(
+            'variables-management.editor.folder-description-new',
+            'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+          )}
+        >
+          <FolderPicker showRootFolder value={folderUid} onChange={(uid) => setFolderUid(uid ?? '')} />
+        </Field>
+      ) : (
+        <Field
+          noMargin
+          label={t('variables-management.editor.folder-label', 'Folder')}
+          description={t(
+            'variables-management.editor.folder-description-edit',
+            'The folder scope cannot be changed here — use Move on the variables list instead'
+          )}
+        >
+          <div className={styles.scopeValue}>
+            {folderUid
+              ? (folderTitle ?? folderUid)
+              : t('variables-management.editor.scope-global', 'Global (entire organization)')}
+          </div>
+        </Field>
+      )}
+
+      <VariableEditorForm variable={sceneVariable} onTypeChange={onTypeChange} onGoBack={onBack} onDelete={onDelete} />
+
+      <Stack gap={2}>
+        <Button variant="primary" onClick={onSave} disabled={isSaving}>
+          {isSaving
+            ? t('variables-management.editor.saving', 'Saving...')
+            : t('variables-management.editor.save', 'Save')}
+        </Button>
+        <Button variant="secondary" fill="outline" onClick={onBack}>
+          <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
+        </Button>
+      </Stack>
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    maxWidth: theme.breakpoints.values.xl,
+  }),
+  folderField: css({
+    maxWidth: theme.spacing(60),
+  }),
+  scopeValue: css({
+    color: theme.colors.text.secondary,
+    padding: theme.spacing(0.5, 0),
+  }),
+});

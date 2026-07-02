@@ -155,6 +155,36 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
       ),
     },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboards/variables',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboards/variables/new',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    config.featureToggles.globalDashboardVariables && {
+      path: '/dashboards/variables/:name',
+      roles: () => ['Editor', 'Admin'],
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
     {
       path: '/dashboards/f/:uid/:slug',
       component: SafeDynamicImport(
