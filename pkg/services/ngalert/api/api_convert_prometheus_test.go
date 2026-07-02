@@ -42,6 +42,32 @@ const (
 	existingDSUID = "test-ds"
 )
 
+func TestRouteConvertPrometheusPostRuleGroups_ExternalRulerSyncGate(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+
+	t.Run("rejects with 409 when ruler sync is configured", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{configured: true}))
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), "test", group)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("allows when ruler sync is not configured", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{configured: false}))
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), "test", group)
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+
+	t.Run("nil checker allows (sync disabled)", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t)
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), "test", group)
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+}
+
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	simpleGroup := apimodels.PrometheusRuleGroup{
 		Name:     "Test Group",
@@ -1727,6 +1753,7 @@ type convertPrometheusSrvOptions struct {
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
+	rulerSync                    ExternalRulerSyncChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1759,6 +1786,21 @@ func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.alertmanager = am
 	}
+}
+
+func withRulerSync(checker ExternalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.rulerSync = checker
+	}
+}
+
+type fakeRulerSyncChecker struct {
+	configured bool
+	err        error
+}
+
+func (f fakeRulerSyncChecker) IsConfiguredForOrg(context.Context, int64) (bool, error) {
+	return f.configured, f.err
 }
 
 func withFolderService(f folder.Service) convertPrometheusSrvOptionsFunc {
@@ -1817,7 +1859,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync)
 
 	return srv, dsCache, ruleStore
 }

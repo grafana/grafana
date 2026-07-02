@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
-	"github.com/grafana/grafana/pkg/services/ngalert/prom"
+	"github.com/grafana/grafana/pkg/services/ngalert/promconvert"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/setting"
@@ -140,6 +140,16 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
+	rulerSync        ExternalRulerSyncChecker
+}
+
+// ExternalRulerSyncChecker reports whether external Mimir/Cortex ruler sync is
+// configured for an org. When it is, the convert API rejects manual rule
+// imports for that org, since the sync worker owns the org's converted rules and
+// would overwrite/prune them. Satisfied by *rulesync.ExternalRulerSyncer; may be
+// nil (sync disabled / test paths) — treated as not configured.
+type ExternalRulerSyncChecker interface {
+	IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
 }
 
 type Alertmanager interface {
@@ -158,6 +168,7 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
+	rulerSync ExternalRulerSyncChecker,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -168,6 +179,7 @@ func NewConvertPrometheusSrv(
 		featureToggles:   featureToggles,
 		am:               am,
 		importsAuthz:     importsAuthz,
+		rulerSync:        rulerSync,
 	}
 }
 
@@ -370,6 +382,21 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
 
+	// Refuse manual rule imports when external ruler sync is configured for this
+	// org, mirroring the Alertmanager convert-API 409 gate. This keeps a single
+	// writer of converted rules for simplicity and parity with the AM side;
+	// prune safety itself is handled separately by SourceIdentifier scoping.
+	if srv.rulerSync != nil {
+		syncConfigured, err := srv.rulerSync.IsConfiguredForOrg(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			logger.Error("Failed to check external ruler sync configuration", "error", err)
+			return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
+		}
+		if syncConfigured {
+			return response.Error(http.StatusConflict, "rule import is disabled while external ruler sync is configured for this organization", nil)
+		}
+	}
+
 	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
@@ -444,29 +471,29 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		}
 
 		for _, rg := range rgs {
-			// If we're importing recording rules, we can only import them if the feature is enabled,
-			// and the feature flag that enables configuring target datasources per-rule is also enabled.
-			if promGroupHasRecordingRules(rg) {
-				if !srv.cfg.RecordingRules.Enabled {
+			logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(rg.Rules), "folder_uid", namespace.UID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
+			grafanaGroup, err := promconvert.ConvertRuleGroup(
+				srv.cfg,
+				ds,
+				tds,
+				c.GetOrgID(),
+				namespace.UID,
+				rg,
+				promconvert.Options{
+					PauseRecordingRules:        pauseRecordingRules,
+					PauseAlertRules:            pauseAlertRules,
+					KeepOriginalRuleDefinition: keepOriginalRuleDefinition,
+					NotificationSettings:       notificationSettings,
+					ExtraLabels:                extraLabels,
+				},
+			)
+			if err != nil {
+				// Recording rules imported while the feature is disabled: keep the
+				// existing public HTTP error/message.
+				if errors.Is(err, promconvert.ErrRecordingRulesNotEnabled) {
 					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
 					return errorToResponse(errRecordingRulesNotEnabled)
 				}
-			}
-
-			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
-				c,
-				ds,
-				tds,
-				namespace.UID,
-				rg,
-				pauseRecordingRules,
-				pauseAlertRules,
-				keepOriginalRuleDefinition,
-				notificationSettings,
-				extraLabels,
-				logger,
-			)
-			if err != nil {
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
 			}
@@ -523,75 +550,6 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 	logger.Debug("Using folder for the converted rules", "folder_uid", ns.UID)
 
 	return ns, nil
-}
-
-func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
-	c *contextmodel.ReqContext,
-	ds *datasources.DataSource,
-	tds *datasources.DataSource,
-	namespaceUID string,
-	promGroup apimodels.PrometheusRuleGroup,
-	pauseRecordingRules bool,
-	pauseAlertRules bool,
-	keepOriginalRuleDefinition bool,
-	notificationSettings *models.NotificationSettings,
-	extraLabels map[string]string,
-	logger log.Logger,
-) (*models.AlertRuleGroup, error) {
-	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
-
-	rules := make([]prom.PrometheusRule, len(promGroup.Rules))
-	for i, r := range promGroup.Rules {
-		rules[i] = prom.PrometheusRule{
-			Alert:         r.Alert,
-			Expr:          r.Expr,
-			For:           r.For,
-			KeepFiringFor: r.KeepFiringFor,
-			Labels:        r.Labels,
-			Annotations:   r.Annotations,
-			Record:        r.Record,
-		}
-	}
-	group := prom.PrometheusRuleGroup{
-		Name:        promGroup.Name,
-		Interval:    promGroup.Interval,
-		Rules:       rules,
-		QueryOffset: promGroup.QueryOffset,
-		Limit:       promGroup.Limit,
-		Labels:      promGroup.Labels,
-	}
-
-	converter, err := prom.NewConverter(
-		prom.Config{
-			DatasourceUID:        ds.UID,
-			DatasourceType:       ds.Type,
-			TargetDatasourceUID:  tds.UID,
-			TargetDatasourceType: tds.Type,
-			DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
-			RecordingRules: prom.RulesConfig{
-				IsPaused: pauseRecordingRules,
-			},
-			AlertRules: prom.RulesConfig{
-				IsPaused: pauseAlertRules,
-			},
-			KeepOriginalRuleDefinition: new(keepOriginalRuleDefinition),
-			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
-			NotificationSettings:       notificationSettings,
-			ExtraLabels:                extraLabels,
-		},
-	)
-	if err != nil {
-		logger.Error("Failed to create Prometheus converter", "datasource_uid", ds.UID, "datasource_type", ds.Type, "error", err)
-		return nil, err
-	}
-
-	grafanaGroup, err := converter.PrometheusRulesToGrafana(c.GetOrgID(), namespaceUID, group)
-	if err != nil {
-		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
-		return nil, err
-	}
-
-	return grafanaGroup, nil
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
@@ -851,15 +809,6 @@ func namespaceErrorResponse(err error) response.Response {
 	}
 
 	return toNamespaceErrorResponse(err)
-}
-
-func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
-	for _, rule := range promGroup.Rules {
-		if rule.Record != "" {
-			return true
-		}
-	}
-	return false
 }
 
 // getProvenance determines the provenance value to use for rules created via the Prometheus conversion API.

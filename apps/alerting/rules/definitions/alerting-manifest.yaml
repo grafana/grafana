@@ -546,5 +546,157 @@ spec:
           type: object
       scope: Namespaced
       userReadable: false
+    - admission:
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: Config
+      plural: Configs
+      schemas:
+        Condition:
+          additionalProperties: false
+          description: |-
+            Condition mirrors metav1.Condition. Inlined because the app-sdk codegen
+            here can't reference metav1.Condition from CUE. Field semantics are
+            k8s-standard; reason values are produced by SyncReason in the syncer.
+          properties:
+            lastTransitionTime:
+              description: RFC3339
+              type: string
+            message:
+              type: string
+            observedGeneration:
+              type: integer
+            reason:
+              type: string
+            status:
+              enum:
+              - "True"
+              - "False"
+              - Unknown
+              type: string
+            type:
+              type: string
+          required:
+          - type
+          - status
+          - lastTransitionTime
+          - reason
+          type: object
+        Config:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        spec:
+          additionalProperties: false
+          properties:
+            externalRulerSync:
+              additionalProperties: false
+              properties:
+                datasourceUid:
+                  description: |-
+                    datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to
+                    sync alert rules from. Empty means no sync is configured for the current
+                    org. The operator ini setting `unified_alerting.external_ruler_uid`
+                    overrides this when set; see status.externalRulerSync.origin.
+                  type: string
+                promote:
+                  description: |-
+                    promote, when true, converts the rules already synced from datasourceUid
+                    into native Grafana rules the org owns (provenance is cleared so they
+                    become editable) and stops syncing them. This is a one-way action: once
+                    promoted the worker no longer manages these rules. Ignored while the
+                    operator ini override `unified_alerting.external_ruler_uid` is set.
+                  type: boolean
+                targetDatasourceUid:
+                  description: |-
+                    targetDatasourceUid is the UID of the datasource that converted recording
+                    rules write their results to. Empty defaults to datasourceUid (the query
+                    datasource). Only used when the upstream ruler contains recording rules.
+                  type: string
+              type: object
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            conditions:
+              description: |-
+                Standard k8s-style condition list. Each binary-state feature owns one
+                condition type. Current types:
+                  - ExternalRulerSynced: True after a successful sync, False after a
+                    failed attempt, Unknown until the first attempt.
+              items:
+                $ref: '#/components/schemas/Condition'
+              type: array
+            externalRulerSync:
+              additionalProperties: false
+              properties:
+                datasourceUid:
+                  description: |-
+                    datasourceUid is the UID actually used on the last sync attempt; may lag
+                    spec until the next tick. When origin=ini, this is the ini override value.
+                  type: string
+                origin:
+                  description: |-
+                    origin records which source supplied datasourceUid on the last run. "ini"
+                    (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
+                    (spec.externalRulerSync.datasourceUid).
+                  enum:
+                  - api
+                  - ini
+                  type: string
+              type: object
+            observedGeneration:
+              description: |-
+                observedGeneration is the spec.generation last evaluated by the
+                controllers writing this status.
+              type: integer
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
     name: v0alpha1
     served: true

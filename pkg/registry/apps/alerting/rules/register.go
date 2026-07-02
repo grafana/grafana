@@ -3,7 +3,10 @@ package rules
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,15 +24,21 @@ import (
 	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -65,13 +74,14 @@ func RegisterAppInstaller(
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
-		FolderValidator:               newFolderValidator(ng),
-		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
-		ReservedLabelKeys:             ngmodels.LabelsUserCannotSpecify,
-		ResolveRuleRef:                newRuleRefResolver(ng),
-		MembershipResolver:            membershipIndex,
-		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
-		WatchNamespace:                watchNamespace(cfg),
+		FolderValidator:                     newFolderValidator(ng),
+		BaseEvaluationInterval:              ng.Cfg.UnifiedAlerting.BaseInterval,
+		ReservedLabelKeys:                   ngmodels.LabelsUserCannotSpecify,
+		ResolveRuleRef:                      newRuleRefResolver(ng),
+		MembershipResolver:                  membershipIndex,
+		NotificationSettingsValidator:       newNotificationSettingsValidator(ng),
+		WatchNamespace:                      watchNamespace(cfg),
+		ValidateExternalRulerSyncDatasource: newExternalRulerSyncDatasourceValidator(cfg, ng.DataSourceService, ng.HTTPClientProvider(), resolveDataSourceRequestValidator(ng)),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -94,6 +104,67 @@ func RegisterAppInstaller(
 // In cloud each instance serves one stack namespace and its storage identity is
 // scoped to it, so an all-namespace watch is rejected as a mismatch; on-prem
 // (no stack ID) returns "" to watch all namespaces.
+// resolveDataSourceRequestValidator reuses the validator wired into the
+// user-driven datasource proxy so the ruler probe honours the same allow/deny
+// rules, falling back to the no-op OSS validator when no proxy is configured.
+func resolveDataSourceRequestValidator(ng *ngalert.AlertNG) validations.DataSourceRequestValidator {
+	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
+		return ng.DataProxy.DataSourceRequestValidator
+	}
+	return &validations.OSSDataSourceRequestValidator{}
+}
+
+// newExternalRulerSyncDatasourceValidator builds the admission check for the
+// Config kind's spec.externalRulerSync.datasourceUid: requires the sync feature
+// flag, rejects writes while the operator ini override is set, verifies the
+// datasource is a Prometheus datasource that isn't vanilla Prometheus, and
+// probes the ruler config API so a datasource that can't be synced is rejected
+// at write time. Mirrors the Alertmanager sync datasource validator.
+func newExternalRulerSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService, httpClientProvider httpclient.Provider, requestValidator validations.DataSourceRequestValidator) func(ctx context.Context, uid string) error {
+	fetcher := rulesync.NewRulerFetcher(ds, httpClientProvider, requestValidator)
+	return func(ctx context.Context, uid string) error {
+		ofClient := openfeature.NewDefaultClient()
+		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalRuler, false, openfeature.TransactionContext(ctx)) {
+			return fmt.Errorf("external ruler sync is disabled on this instance")
+		}
+		if cfg == nil {
+			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
+		}
+		if cfg.UnifiedAlerting.ExternalRulerUID != "" {
+			return fmt.Errorf("external ruler UID is managed by the operator (unified_alerting.external_ruler_uid); cannot be changed via API")
+		}
+
+		ns, err := reqns.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return fmt.Errorf("resolve org from request namespace: %w", err)
+		}
+
+		got, err := ds.GetDataSource(ctx, &datasources.GetDataSourceQuery{UID: uid, OrgID: ns.OrgID})
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return fmt.Errorf("datasource not found")
+			}
+			return fmt.Errorf("look up datasource: %w", err)
+		}
+		if got.Type != datasources.DS_PROMETHEUS {
+			return fmt.Errorf("datasource must be of type prometheus")
+		}
+		// Cheap pre-reject for vanilla Prometheus (no ruler config API); clearer
+		// than a failed probe. Empty prometheusType is treated as Mimir/Cortex.
+		if got.JsonData != nil && strings.EqualFold(got.JsonData.Get("prometheusType").MustString(""), "prometheus") {
+			return fmt.Errorf("datasource is a vanilla Prometheus (prometheusType=Prometheus), which does not expose a ruler config API; use a Mimir or Cortex datasource")
+		}
+		// Authoritative probe of the ruler config API.
+		if _, _, err := fetcher.Fetch(ctx, got); err != nil {
+			if errors.Is(err, rulesync.ErrNotARuler) {
+				return fmt.Errorf("datasource does not expose a Mimir/Cortex ruler config API")
+			}
+			return fmt.Errorf("failed to reach ruler config API: %w", err)
+		}
+		return nil
+	}
+}
+
 func watchNamespace(cfg *setting.Cfg) string {
 	if cfg == nil || cfg.StackID == "" {
 		return ""
@@ -211,6 +282,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, a)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
@@ -234,6 +307,10 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 	case alertrule.ResourceInfo.GroupVersionResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case rulesequence.ResourceInfo.GroupVersionResource():
+		return nil
+	case config.ResourceInfo.GroupVersionResource():
+		// Config has no legacy backend — returning nil makes the apiserver serve
+		// it directly from unified storage (no dual writer).
 		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
