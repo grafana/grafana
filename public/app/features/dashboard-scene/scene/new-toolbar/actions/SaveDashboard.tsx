@@ -4,6 +4,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templatePermissions';
 import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
@@ -96,7 +97,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               onClick={onSaveAsCopy}
             />
             {isDashboardTemplatesFlagEnabled &&
-              contextSrv.isEditor &&
+              canManageDashboardTemplates() &&
               meta.canSave &&
               getSaveAsTemplateForm() !== null && (
                 <Menu.Item

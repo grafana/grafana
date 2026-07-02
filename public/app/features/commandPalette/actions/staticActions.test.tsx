@@ -87,8 +87,25 @@ describe('useStaticActions - dashboard from template action', () => {
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(() => null);
     setTestFlags({ 'grafana.customDashboardTemplates': true });
+    // Custom templates require the read permission in addition to dashboard-create.
+    contextSrv.user.permissions = {
+      [AccessControlAction.DashboardsCreate]: true,
+      [AccessControlAction.DashboardTemplatesRead]: true,
+    };
 
     const { result } = renderStaticActions();
     expect(hasTemplateAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action for custom-only templates without dashboardtemplates:read', () => {
+    config.featureToggles.dashboardTemplates = false;
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+    mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+    setTestFlags({ 'grafana.customDashboardTemplates': true });
+    // Has dashboard-create but not the templates read permission.
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+
+    const { result } = renderStaticActions();
+    expect(hasTemplateAction(result.current)).toBe(false);
   });
 });
