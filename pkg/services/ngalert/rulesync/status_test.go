@@ -55,6 +55,23 @@ func TestComputeSyncStatus_Failure(t *testing.T) {
 	assert.Contains(t, *cond.Message, "ruler config API")
 }
 
+func TestComputePromotedStatus_TerminalTrue(t *testing.T) {
+	t0 := time.Date(2026, 6, 29, 12, 0, 0, 0, time.UTC)
+	t1 := t0.Add(time.Hour)
+
+	// A prior successful sync at t0.
+	st0 := computeSyncStatus(nil, "ds", originAPI, nil, t0)
+	// Promotion at t1 stays True (rules still exist, now owned), so the
+	// transition time is preserved and only the reason flips.
+	st1 := computePromotedStatus(&st0, "ds", originAPI, t1)
+
+	cond := findSyncedCondition(t, st1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, cond.Status)
+	assert.Equal(t, conditionReasonPromotionCommitted, cond.Reason)
+	assert.Equal(t, t0.Format(time.RFC3339), cond.LastTransitionTime, "stays True: transition time preserved")
+	require.NotNil(t, cond.Message)
+}
+
 func TestBuildSyncStatus_TransitionTimeOnlyAdvancesOnFlip(t *testing.T) {
 	t0 := time.Date(2026, 6, 29, 12, 0, 0, 0, time.UTC)
 	t1 := t0.Add(time.Hour)

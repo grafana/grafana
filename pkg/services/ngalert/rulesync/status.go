@@ -26,6 +26,11 @@ const conditionTypeExternalRulerSynced = "ExternalRulerSynced"
 // reasons come from SyncReason.ConditionReason().
 const conditionReasonSyncSucceeded = "SyncSucceeded"
 
+// conditionReasonPromotionCommitted is the terminal success reason once the
+// synced rules have been promoted to native Grafana rules and sync has stopped
+// (the rule-side analogue of the Alertmanager sync's MergeCommitted).
+const conditionReasonPromotionCommitted = "PromotionCommitted"
+
 // SyncReason categorises a sync failure. snake_case constant → Prometheus
 // `reason` metric label; PascalCase via ConditionReason() → k8s Condition
 // reason. Single source of truth: wrap errors in *SyncError, extract via
@@ -41,6 +46,8 @@ const (
 	ReasonConvert   SyncReason = "convert"
 	ReasonSave      SyncReason = "save"
 	ReasonPrune     SyncReason = "prune"
+	// ReasonPromote: promoting the synced rules to native Grafana rules failed.
+	ReasonPromote SyncReason = "promote"
 	// ReasonConfigRead: couldn't read the org's Config resource to resolve the
 	// sync datasource; the tick is skipped and surfaced as a failure.
 	ReasonConfigRead SyncReason = "config_read"
@@ -65,6 +72,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonPrune:
 		return "PruneFailed"
+	case ReasonPromote:
+		return "PromotionFailed"
 	case ReasonConfigRead:
 		return "ConfigReadFailed"
 	default:
@@ -105,6 +114,14 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
 	}
 	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+}
+
+// computePromotedStatus is the terminal status once the synced rules have been
+// promoted to native Grafana rules: the condition stays True (the rules exist
+// and are owned by the org), the reason flips to PromotionCommitted, and sync
+// stops.
+func computePromotedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromotionCommitted, "rules promoted to native Grafana rules; sync stopped", now)
 }
 
 // buildSyncStatus folds an ExternalRulerSynced condition into prev. k8s

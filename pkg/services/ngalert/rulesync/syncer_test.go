@@ -24,12 +24,13 @@ import (
 type fakeConfigStore struct {
 	uid       string
 	targetUID string
+	promote   bool
 	uidErr    error
 	lastWrite *alertingrulesv0alpha1.ConfigStatus
 }
 
 func (f *fakeConfigStore) GetSyncSpec(context.Context, int64) (syncSpec, error) {
-	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID}, f.uidErr
+	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID, Promote: f.promote}, f.uidErr
 }
 func (f *fakeConfigStore) WriteStatus(_ context.Context, _ int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
 	st := compute(f.lastWrite)
@@ -38,23 +39,27 @@ func (f *fakeConfigStore) WriteStatus(_ context.Context, _ int64, compute func(p
 }
 
 type fakeFetcher struct {
-	cfg  RulerConfig
-	hash uint64
-	err  error
+	cfg   RulerConfig
+	hash  uint64
+	err   error
+	calls int
 }
 
 func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConfig, uint64, error) {
+	f.calls++
 	return f.cfg, f.hash, f.err
 }
 
 type fakeRuleService struct {
-	replaced []*models.AlertRuleGroup
-	existing []models.AlertRuleGroupWithFolderFullpath
-	deleted  []provisioning.FilterOptions
+	replaced           []*models.AlertRuleGroup
+	replacedProvenance models.Provenance
+	existing           []models.AlertRuleGroupWithFolderFullpath
+	deleted            []provisioning.FilterOptions
 }
 
-func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, _ models.Provenance, _ string) error {
+func (f *fakeRuleService) ReplaceRuleGroups(_ context.Context, _ identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance, _ string) error {
 	f.replaced = groups
+	f.replacedProvenance = provenance
 	return nil
 }
 func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Requester, _ models.Provenance, filterOpts *provisioning.FilterOptions) error {
@@ -257,6 +262,52 @@ func TestSyncOrg_IniOverrideWins(t *testing.T) {
 	require.NotNil(t, cs.lastWrite.ExternalRulerSync)
 	assert.Equal(t, "from-ini", *cs.lastWrite.ExternalRulerSync.DatasourceUid)
 	assert.Equal(t, originIni, *cs.lastWrite.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_Promote(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", promote: true}
+	rs := &fakeRuleService{
+		existing: []models.AlertRuleGroupWithFolderFullpath{
+			ownedGroup("folder-ns1", "g1", "ds1"),
+		},
+	}
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncer(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	// Promotion rewrites the owned group with provenance=none and a cleared
+	// SourceIdentifier, and does NOT fetch upstream or prune.
+	assert.Equal(t, 0, fetch.calls, "promotion skips the upstream fetch")
+	assert.Empty(t, rs.deleted, "promotion does not prune")
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, models.ProvenanceNone, rs.replacedProvenance)
+	require.Len(t, rs.replaced[0].Rules, 1)
+	if psr := rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule; psr != nil {
+		assert.Empty(t, psr.SourceIdentifier, "SourceIdentifier cleared on promotion")
+	}
+
+	// Terminal PromotionCommitted status (condition stays True).
+	require.NotNil(t, cs.lastWrite)
+	cond := findSyncedCondition(t, *cs.lastWrite)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, cond.Status)
+	assert.Equal(t, "PromotionCommitted", cond.Reason)
+}
+
+func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
+	cs := &fakeConfigStore{uid: "ds1", promote: true}
+	rs := &fakeRuleService{} // no owned rules (already promoted)
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 5}
+	s := newTestSyncer(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "nothing to promote")
+	assert.Equal(t, 0, fetch.calls, "still no fetch once promote is set")
+	// Terminal status is still (re-)asserted each tick.
+	require.NotNil(t, cs.lastWrite)
+	cond := findSyncedCondition(t, *cs.lastWrite)
+	assert.Equal(t, "PromotionCommitted", cond.Reason)
 }
 
 func TestSyncOrg_FeatureDisabled(t *testing.T) {

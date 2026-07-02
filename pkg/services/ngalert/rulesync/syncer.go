@@ -38,6 +38,8 @@ const rootFolderTitle = "External Ruler Sync"
 
 const versionMessage = "external ruler sync"
 
+const promoteVersionMessage = "external ruler sync: promote to native rules"
+
 // ruleService is the subset of provisioning.AlertRuleService the syncer needs.
 type ruleService interface {
 	ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance, versionMessage string) error
@@ -67,6 +69,13 @@ type orgStore interface {
 // ruler datasource into Grafana as converted-Prometheus rules. It is the rule
 // analogue of ExternalAMSyncer. The loop driver (Run) is intentionally thin so
 // the same SyncOrg core could later be hosted by an app runner instead.
+//
+// Promotion (the one-way exit): when spec.externalRulerSync.promote is set, the
+// worker converts the rules it synced into native Grafana rules the org owns by
+// clearing their provenance (converted_prometheus -> none, which makes them
+// editable) and their SourceIdentifier (so prune stops owning them), then stops
+// syncing and records the terminal PromotionCommitted status. This is the
+// rule-side analogue of the Alertmanager sync's merge-commit.
 type ExternalRulerSyncer struct {
 	settings *setting.UnifiedAlertingSettings
 	logger   log.Logger
@@ -179,33 +188,46 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 
 	orgIDStr := strconv.FormatInt(orgID, 10)
 
-	uid, targetUID, origin, err := s.resolveExternalRulerConfig(ctx, orgID)
+	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
 	if err != nil {
-		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonConfigRead, Cause: err})
+		s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, &SyncError{Reason: ReasonConfigRead, Cause: err})
 		return
 	}
-	if uid == "" {
+	if rc.queryUID == "" {
 		return // not configured for this org
+	}
+
+	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
+
+	// Promotion is the terminal exit: convert the synced rules to native rules
+	// the org owns and stop syncing. Idempotent — once promoted there are no
+	// owned rules left, so subsequent ticks are cheap no-ops that just re-assert
+	// the terminal status.
+	if rc.promote {
+		if err := s.promote(svcCtx, svcUser, rc.queryUID); err != nil {
+			s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, &SyncError{Reason: ReasonPromote, Cause: err})
+			return
+		}
+		s.recordPromotionCommitted(ctx, orgID, rc.queryUID, rc.origin)
+		return
 	}
 
 	start := time.Now()
 	defer func() { s.metrics.SyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds()) }()
 
-	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
-
-	ds, err := s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: uid, OrgID: orgID})
+	ds, err := s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.queryUID, OrgID: orgID})
 	if err != nil {
-		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
+		s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
 		return
 	}
 
 	// Recording rules write to the target datasource; it defaults to the query
 	// datasource. Only resolve a distinct target when one is configured.
 	targetDS := ds
-	if targetUID != "" && targetUID != uid {
-		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: targetUID, OrgID: orgID})
+	if rc.targetUID != "" && rc.targetUID != rc.queryUID {
+		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.targetUID, OrgID: orgID})
 		if err != nil {
-			s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", targetUID, err)})
+			s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", rc.targetUID, err)})
 			return
 		}
 	}
@@ -216,7 +238,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		if errors.Is(err, ErrNotARuler) {
 			reason = ReasonNotARuler
 		}
-		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: reason, Cause: err})
+		s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, &SyncError{Reason: reason, Cause: err})
 		return
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
@@ -231,8 +253,8 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	if applyErr := s.apply(svcCtx, svcUser, orgID, uid, ds, targetDS, cfg); applyErr != nil {
-		s.recordFailure(ctx, orgID, orgIDStr, uid, origin, applyErr)
+	if applyErr := s.apply(svcCtx, svcUser, orgID, rc.queryUID, ds, targetDS, cfg); applyErr != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.queryUID, rc.origin, applyErr)
 		return
 	}
 
@@ -240,7 +262,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.lastSyncHash[orgID] = hash
 	s.lastSyncHashMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
-	s.recordSyncResult(ctx, orgID, uid, origin, nil)
+	s.recordSyncResult(ctx, orgID, rc.queryUID, rc.origin, nil)
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
 }
 
@@ -319,26 +341,85 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 	return nil
 }
 
-// resolveExternalRulerConfig returns the query datasource UID to sync, the
-// recording-rules target datasource UID (defaulting to the query UID), and
-// where the query UID came from. The operator-level ini override wins over the
-// per-org Config value for the query datasource; the ini path has no target
-// override, so the target defaults to the query datasource there. The ini path
-// deliberately does not read the Config resource, so ini-only deployments stay
-// unaffected by apiserver availability.
-func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (uid, targetUID string, origin externalSyncOrigin, err error) {
+// promote converts the rules this datasource synced into native Grafana rules
+// the org owns. For every converted rule the worker still owns (SourceIdentifier
+// == uid) it clears the SourceIdentifier and rewrites the group with
+// provenance=none, which the provisioning service permits for a
+// converted_prometheus -> none transition. Clearing the SourceIdentifier both
+// makes the rule editable and removes it from the prune scope, so if sync is
+// later re-enabled these now-native rules are never touched. Idempotent: once
+// promoted there are no owned rules left and this is a no-op.
+func (s *ExternalRulerSyncer) promote(ctx context.Context, user identity.Requester, uid string) error {
+	owned, err := s.ruleService.GetAlertGroupsWithFolderFullpath(ctx, user, &provisioning.FilterOptions{
+		SourceIdentifier: &uid,
+	})
+	if err != nil {
+		return fmt.Errorf("list owned rule groups: %w", err)
+	}
+	if len(owned) == 0 {
+		return nil // already promoted / nothing synced
+	}
+
+	groups := make([]*models.AlertRuleGroup, 0, len(owned))
+	for _, g := range owned {
+		if g.AlertRuleGroup == nil {
+			continue
+		}
+		group := *g.AlertRuleGroup
+		rules := make([]models.AlertRule, len(group.Rules))
+		for i, r := range group.Rules {
+			// Copy the PrometheusStyleRule before clearing SourceIdentifier so we
+			// never mutate the store's returned objects in place.
+			if r.Metadata.PrometheusStyleRule != nil {
+				psr := *r.Metadata.PrometheusStyleRule
+				psr.SourceIdentifier = ""
+				r.Metadata.PrometheusStyleRule = &psr
+			}
+			rules[i] = r
+		}
+		group.Rules = rules
+		groups = append(groups, &group)
+	}
+
+	// provenance=none flips the stored converted_prometheus rules to user-owned;
+	// the cleared SourceIdentifier makes it register as an update so the
+	// provenance change is actually applied.
+	if err := s.ruleService.ReplaceRuleGroups(ctx, user, groups, models.ProvenanceNone, promoteVersionMessage); err != nil {
+		return fmt.Errorf("promote rule groups: %w", err)
+	}
+	s.logger.Info("Promoted external ruler rules to native Grafana rules", "datasource_uid", uid, "groups", len(groups))
+	return nil
+}
+
+// resolvedSync is the effective external-ruler-sync configuration for one org,
+// after applying the ini override and target/promote defaults.
+type resolvedSync struct {
+	queryUID  string             // datasource to sync rules from
+	targetUID string             // recording-rules write target (defaults to queryUID)
+	origin    externalSyncOrigin // where queryUID came from (ini vs api)
+	promote   bool               // one-way promote-to-native requested
+}
+
+// resolveExternalRulerConfig computes the effective sync config for the org.
+// The operator-level ini override wins over the per-org Config value for the
+// query datasource; the ini path deliberately does not read the Config resource
+// (so ini-only deployments stay unaffected by apiserver availability), which
+// means target/promote — both spec-only knobs — are not honoured while the ini
+// override is set. Under ini, the target defaults to the query datasource and
+// promotion is off.
+func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedSync, error) {
 	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
-		return iniUID, iniUID, originIni, nil
+		return resolvedSync{queryUID: iniUID, targetUID: iniUID, origin: originIni}, nil
 	}
 	spec, err := s.configStore.GetSyncSpec(ctx, orgID)
 	if err != nil {
-		return "", "", originAPI, err
+		return resolvedSync{origin: originAPI}, err
 	}
-	targetUID = spec.TargetDatasourceUID
+	targetUID := spec.TargetDatasourceUID
 	if targetUID == "" {
 		targetUID = spec.DatasourceUID
 	}
-	return spec.DatasourceUID, targetUID, originAPI, nil
+	return resolvedSync{queryUID: spec.DatasourceUID, targetUID: targetUID, origin: originAPI, promote: spec.Promote}, nil
 }
 
 // recordFailure logs, counts, and records a classified failure onto the org's
@@ -347,6 +428,17 @@ func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, or
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
+}
+
+// recordPromotionCommitted writes the terminal PromotionCommitted status once
+// the org's synced rules have been promoted to native rules (sync stops).
+func (s *ExternalRulerSyncer) recordPromotionCommitted(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin) {
+	now := time.Now()
+	if err := s.configStore.WriteStatus(ctx, orgID, func(prev *configStatus) configStatus {
+		return computePromotedStatus(prev, uid, origin, now)
+	}); err != nil {
+		s.logger.Warn("Failed to write external ruler promotion status", "org_id", orgID, "error", err)
+	}
 }
 
 // recordSyncResult writes the latest outcome (nil = success) onto the org's
