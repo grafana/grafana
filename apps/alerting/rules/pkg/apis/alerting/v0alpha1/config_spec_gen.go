@@ -28,6 +28,12 @@ type ConfigV0alpha1SpecExternalRulerSync struct {
 	// rules write their results to. Empty defaults to datasourceUid (the query
 	// datasource). Only used when the upstream ruler contains recording rules.
 	TargetDatasourceUid *string `json:"targetDatasourceUid,omitempty"`
+	// promote, when true, converts the rules already synced from datasourceUid
+	// into native Grafana rules the org owns (provenance is cleared so they
+	// become editable) and stops syncing them. This is a one-way action: once
+	// promoted the worker no longer manages these rules. Ignored while the
+	// operator ini override `unified_alerting.external_ruler_uid` is set.
+	Promote *bool `json:"promote,omitempty"`
 }
 
 // NewConfigV0alpha1SpecExternalRulerSync creates a new ConfigV0alpha1SpecExternalRulerSync object.

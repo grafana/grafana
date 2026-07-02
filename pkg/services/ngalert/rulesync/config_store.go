@@ -88,6 +88,9 @@ type syncSpec struct {
 	// TargetDatasourceUID is where converted recording rules write their
 	// results; empty means default to the query (source) datasource.
 	TargetDatasourceUID string
+	// Promote requests a one-way conversion of the synced rules into native
+	// Grafana rules the org owns, after which sync stops.
+	Promote bool
 }
 
 func (s *k8sConfigStore) GetSyncSpec(ctx context.Context, orgID int64) (syncSpec, error) {
@@ -157,6 +160,9 @@ func syncSpecFromConfig(c *alertingrulesv0alpha1.Config) syncSpec {
 	}
 	if uid := c.Spec.ExternalRulerSync.TargetDatasourceUid; uid != nil {
 		spec.TargetDatasourceUID = *uid
+	}
+	if p := c.Spec.ExternalRulerSync.Promote; p != nil {
+		spec.Promote = *p
 	}
 	return spec
 }
