@@ -196,26 +196,44 @@ export function expandPinnedUrls(storedUrls: string[], items: NavModelItem[]): S
   return leaves;
 }
 
+/** First index in `orderUrls` at which any of the item's (section or leaf) urls appears, else Infinity. */
+function firstPinnedIndex(item: NavModelItem, orderUrls: string[]): number {
+  const urls = new Set<string>(getPinnableLeafUrls(item));
+  if (item.url) {
+    urls.add(item.url);
+  }
+  const index = orderUrls.findIndex((url) => urls.has(url));
+  return index === -1 ? Infinity : index;
+}
+
+/**
+ * Order top-level items by the user-defined pin order (`orderUrls`, the stored bookmark list):
+ * items appear in the order their urls first show up in `orderUrls`; anything not yet in that list
+ * (e.g. a freshly-pinned item) keeps its nav-tree position and sorts after the known ones. Passing
+ * an empty `orderUrls` therefore leaves the nav-tree order untouched.
+ */
+function orderByPins(items: NavModelItem[], orderUrls: string[]): NavModelItem[] {
+  return items
+    .map((item, navIndex) => ({ item, navIndex }))
+    .sort(
+      (a, b) => firstPinnedIndex(a.item, orderUrls) - firstPinnedIndex(b.item, orderUrls) || a.navIndex - b.navIndex
+    )
+    .map(({ item }) => item);
+}
+
 /**
  * Collapse a flat set of pinned leaf urls back into the canonical stored form: a top-level section
  * whose every pinnable leaf is pinned is stored as the section itself; otherwise its pinned leaves
- * are stored individually. Collapse is top-level only (intermediate groups aren't collapsed).
+ * are stored individually. Collapse is top-level only (intermediate groups aren't collapsed). The
+ * top-level blocks keep the user's order (`orderUrls`); newly-pinned blocks are appended.
  */
-export function normalizePinnedUrls(leafSet: Set<string>, items: NavModelItem[]): string[] {
-  const result: string[] = [];
-  for (const item of items) {
+export function normalizePinnedUrls(leafSet: Set<string>, items: NavModelItem[], orderUrls: string[] = []): string[] {
+  const withPins = hoistAppsSection(items).filter((item) => getPinnableLeafUrls(item).some((url) => leafSet.has(url)));
+  return orderByPins(withPins, orderUrls).flatMap((item) => {
     const leaves = getPinnableLeafUrls(item);
     const pinned = leaves.filter((url) => leafSet.has(url));
-    if (pinned.length === 0) {
-      continue;
-    }
-    if (item.url && pinned.length === leaves.length) {
-      result.push(item.url);
-    } else {
-      result.push(...pinned);
-    }
-  }
-  return result;
+    return item.url && pinned.length === leaves.length ? [item.url] : pinned;
+  });
 }
 
 /** Whether an item is pinned in its own right (its url is in the pinned set). */
@@ -249,7 +267,7 @@ function hasPinnedItem(item: NavModelItem, pinned: Set<string>): boolean {
  * ancestor with just the branches that lead to a pinned item — so pinning "Playlists" surfaces
  * "Dashboards → Playlists".
  */
-function buildPinnedTree(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
+function buildPinnedBranch(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
   return items
     .filter((item) => hasPinnedItem(item, pinned))
     .map((item) => {
@@ -258,9 +276,24 @@ function buildPinnedTree(items: NavModelItem[], pinned: Set<string>): NavModelIt
       }
       const children = pinnableChildren(item);
       return children.length > 0
-        ? { ...item, children: buildPinnedTree(children, pinned) }
+        ? { ...item, children: buildPinnedBranch(children, pinned) }
         : { ...item, children: undefined };
     });
+}
+
+// The "More apps" section is a generic bucket, so its children act as top-level pinnable blocks:
+// a pinned app surfaces at the top of the pinned area (e.g. "App → Page") rather than nested under
+// a "More apps" parent. Only affects the pinned area — the normal nav keeps "More apps" intact.
+const APPS_NAV_ID = 'apps';
+const hoistAppsSection = (items: NavModelItem[]): NavModelItem[] =>
+  items.flatMap((item) => (item.id === APPS_NAV_ID ? (item.children ?? []) : [item]));
+
+/**
+ * The pinned subtree, with the top-level blocks in the user's order (`orderUrls`). Only the
+ * top level is reordered — a block's children keep their nav-tree order and move with the block.
+ */
+function buildPinnedTree(items: NavModelItem[], pinned: Set<string>, orderUrls: string[] = []): NavModelItem[] {
+  return orderByPins(buildPinnedBranch(hoistAppsSection(items), pinned), orderUrls);
 }
 
 /**
@@ -279,14 +312,117 @@ function removeMovedItems(items: NavModelItem[], pinned: Set<string>): NavModelI
  */
 export function partitionNavForPinning(
   items: NavModelItem[],
-  pinned: Set<string>
+  pinned: Set<string>,
+  orderUrls: string[] = []
 ): { pinned: NavModelItem[]; rest: NavModelItem[] } {
-  return { pinned: buildPinnedTree(items, pinned), rest: removeMovedItems(items, pinned) };
+  return { pinned: buildPinnedTree(items, pinned, orderUrls), rest: removeMovedItems(items, pinned) };
 }
+
+/**
+ * Move the top-level pinned block at `fromIndex` to `toIndex` and rebuild the canonical stored url
+ * list so the block order reflects the new arrangement (each block's urls stay grouped together).
+ */
+export function reorderPinnedBlocks(
+  orderUrls: string[],
+  items: NavModelItem[],
+  fromIndex: number,
+  toIndex: number
+): string[] {
+  const blocks = buildPinnedTree(items, new Set(orderUrls), orderUrls);
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= blocks.length || toIndex >= blocks.length) {
+    return orderUrls;
+  }
+  const reordered = [...blocks];
+  const [moved] = reordered.splice(fromIndex, 1);
+  reordered.splice(toIndex, 0, moved);
+  return reordered.flatMap((block) => {
+    const leaves = new Set(getPinnableLeafUrls(block));
+    return orderUrls.filter((url) => url === block.url || leaves.has(url));
+  });
+}
+
+// ----- Hiding -----
+
+// Top-level items that can never be hidden, so users can't customise their way out of the home
+// page or the bookmarks section (itself a customisation surface).
+const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks']);
 
 // Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
 // the logo, so it isn't repeated as a menu item.
 export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
+
+/** Whether an item can be hidden (any depth). Excludes Home/Bookmarks, create actions and starred sub-items. */
+export const isHideable = (item: NavModelItem): boolean =>
+  Boolean(item.id) && !PROTECTED_NAV_IDS.has(item.id ?? '') && !item.isCreateAction && !item.id?.startsWith(ID_PREFIX);
+
+// Children that can be hidden — used when "breaking apart" a hidden parent.
+const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
+
+/** Build the normal nav with hidden items removed. A hidden node takes its subtree with it; a
+ * partially-hidden parent keeps its non-hidden children (so all-children-hidden still shows the parent). */
+export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): NavModelItem[] {
+  return items
+    .filter((item) => !hidden.has(item.id ?? ''))
+    .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/** All descendant ids of an item. */
+function getDescendantIds(item: NavModelItem): string[] {
+  return (item.children ?? []).flatMap((child) => [...(child.id ? [child.id] : []), ...getDescendantIds(child)]);
+}
+
+/** The chain of nodes from a top-level item down to (and including) the item with `id`. */
+function findNodePath(items: NavModelItem[], id: string): NavModelItem[] | null {
+  for (const item of items) {
+    if (item.id === id) {
+      return [item];
+    }
+    const childPath = item.children ? findNodePath(item.children, id) : null;
+    if (childPath) {
+      return [item, ...childPath];
+    }
+  }
+  return null;
+}
+
+/** Hide an item: add its id and drop any of its now-redundant descendant ids. Never adds the parent. */
+export function hideItem(hidden: string[], items: NavModelItem[], id: string): string[] {
+  const node = findNodePath(items, id)?.at(-1);
+  const descendants = new Set(node ? getDescendantIds(node) : []);
+  return [...hidden.filter((h) => h !== id && !descendants.has(h)), id];
+}
+
+/**
+ * Reveal an item. If it's hidden via an ancestor, "break apart" that hide: remove the hidden
+ * ancestor and hide every off-path sibling down the path to the item, so only the item's path is
+ * revealed and the rest of the hidden subtree stays hidden. If it was only explicitly hidden,
+ * this just removes its id.
+ */
+export function revealItem(hidden: string[], items: NavModelItem[], id: string): string[] {
+  const path = findNodePath(items, id);
+  const next = new Set(hidden);
+  next.delete(id);
+  if (!path) {
+    return [...next];
+  }
+  let underHidden = false;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = path[i];
+    const onPathChildId = path[i + 1].id;
+    if (node.id && next.has(node.id)) {
+      next.delete(node.id);
+      underHidden = true;
+    }
+    if (underHidden) {
+      for (const child of hideableChildren(node)) {
+        if (child.id && child.id !== onPathChildId) {
+          next.add(child.id);
+        }
+      }
+    }
+  }
+  return [...next];
+}
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {
