@@ -17,8 +17,6 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import ConditionalWrap from '../../ConditionalWrap';
-import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 const NotificationPreviewForGrafanaManaged = lazy(() => import('./NotificationPreviewGrafanaManaged'));
@@ -34,12 +32,6 @@ interface NotificationPreviewProps {
 }
 
 const { preview } = alertRuleApi.endpoints;
-
-// strips labels that are routing infrastructure and should never be shown to users
-function stripInternalLabels(labels: Labels): Labels {
-  const { [NAMED_ROOT_LABEL_NAME]: _, ...rest } = labels;
-  return rest;
-}
 
 // TODO the scroll position keeps resetting when we preview
 // this is to be expected because the list of routes dissapears as we start the request but is very annoying
@@ -60,9 +52,13 @@ export const NotificationPreview = ({
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
-  const potentialInstances = data.flatMap((instance) =>
-    instance.labels ? [stripInternalLabels(instance.labels)] : []
-  );
+  const potentialInstances = data.reduce<Labels[]>((acc = [], instance) => {
+    if (instance.labels) {
+      acc.push(instance.labels);
+    }
+
+    return acc;
+  }, []);
 
   const onPreview = () => {
     if (previewRoutingDisabled) {
@@ -96,9 +92,12 @@ export const NotificationPreview = ({
         </Trans>
       );
     }
-    return (
-      <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">Select a folder to preview routing</Trans>
-    );
+    if (!folder) {
+      return (
+        <Trans i18nKey="alerting.notification-preview.select-folder-tooltip">Select a folder to preview routing</Trans>
+      );
+    }
+    return '';
   };
 
   return (
@@ -129,14 +128,11 @@ export const NotificationPreview = ({
             </Text>
           )}
         </Stack>
-        <ConditionalWrap
-          shouldWrap={previewRoutingDisabled}
-          wrap={(button) => <Tooltip content={getTooltipContent()}>{button}</Tooltip>}
-        >
+        <Tooltip content={getTooltipContent()}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={previewRoutingDisabled}>
             <Trans i18nKey="alerting.notification-preview.preview-routing">Preview routing</Trans>
           </Button>
-        </ConditionalWrap>
+        </Tooltip>
       </Stack>
       {potentialInstances.length > 0 && (
         <Suspense

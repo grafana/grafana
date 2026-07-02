@@ -1,30 +1,14 @@
-import { contextSrv } from 'app/core/services/context_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { AccessControlAction } from 'app/types/accessControl';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useExternalGlobalRuleAbility, useGlobalRuleAbility } from '../../../hooks/abilities/rules/ruleAbilities';
+import { ExternalRuleAction, RuleAction } from '../../../hooks/abilities/types';
 import { useHasRulerV2 } from '../../../hooks/useHasRuler';
 import { RuleFormType } from '../../../types/rule-form';
 
 export const onlyOneDSInQueries = (queries: AlertQuery[]) => {
   return queries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID).length === 1;
 };
-
-function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
-  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
-  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
-
-  const enabledRuleTypes: RuleFormType[] = [];
-  if (canCreateGrafanaRules) {
-    enabledRuleTypes.push(RuleFormType.grafana);
-  }
-  if (canCreateCloudRules) {
-    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
-  }
-
-  return { enabledRuleTypes, defaultRuleType };
-}
 
 export const useGetCanSwitch = ({
   queries,
@@ -33,8 +17,16 @@ export const useGetCanSwitch = ({
   queries: AlertQuery[];
   ruleFormType: RuleFormType | undefined;
 }) => {
-  // get available rule types
-  const availableRuleTypes = getAvailableRuleTypes();
+  const { granted: canCreateGrafanaRules } = useGlobalRuleAbility(RuleAction.Create);
+  const { granted: canCreateCloudRules } = useExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule);
+
+  const enabledRuleTypes: RuleFormType[] = [];
+  if (canCreateGrafanaRules) {
+    enabledRuleTypes.push(RuleFormType.grafana);
+  }
+  if (canCreateCloudRules) {
+    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
+  }
 
   // check if we have only one query in queries and if it's a cloud datasource
   const onlyOneDS = onlyOneDSInQueries(queries);
@@ -47,8 +39,8 @@ export const useGetCanSwitch = ({
 
   const canSwitchToGrafanaRule = !isRecordingRuleType;
   // check for enabled types
-  const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
-  const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);
+  const grafanaTypeEnabled = enabledRuleTypes.includes(RuleFormType.grafana);
+  const cloudTypeEnabled = enabledRuleTypes.includes(RuleFormType.cloudAlerting);
 
   // can we switch to the other type? (cloud or grafana)
   const canSwitchFromCloudToGrafana =
