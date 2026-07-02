@@ -50,6 +50,10 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, u
 		return nil, err
 	}
 
+	if cm.Workflow == "" {
+		cm.Workflow = cloudmigration.SessionWorkflowIdle
+	}
+
 	if err := ss.decryptToken(ctx, &cm); err != nil {
 		return nil, fmt.Errorf("decrypting token: %w", err)
 	}
@@ -66,6 +70,9 @@ func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudm
 		migration.Created = time.Now()
 		migration.Updated = time.Now()
 		migration.UID = util.GenerateShortUID()
+		if migration.Workflow == "" {
+			migration.Workflow = cloudmigration.SessionWorkflowIdle
+		}
 
 		_, err := sess.Insert(&migration)
 		if err != nil {
@@ -90,6 +97,9 @@ func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context, orgID int6
 
 	for i := 0; i < len(migrations); i++ {
 		m := migrations[i]
+		if m.Workflow == "" {
+			m.Workflow = cloudmigration.SessionWorkflowIdle
+		}
 
 		if err := ss.decryptToken(ctx, m); err != nil {
 			return nil, fmt.Errorf("decrypting token: %w", err)
@@ -247,6 +257,93 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	}
 
 	return nil
+}
+
+func (ss *sqlStore) GetSnapshotStatus(ctx context.Context, sessionUID, snapshotUID string) (cloudmigration.SnapshotStatus, error) {
+	var row struct {
+		Status cloudmigration.SnapshotStatus `xorm:"status"`
+	}
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.Table("cloud_migration_snapshot").
+			Where("session_uid=? AND uid=?", sessionUID, snapshotUID).
+			Cols("status").
+			Get(&row)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+		return nil
+	})
+	return row.Status, err
+}
+
+func (ss *sqlStore) TransitionSessionWorkflow(
+	ctx context.Context,
+	orgID int64,
+	sessionUID string,
+	expected, next cloudmigration.SessionWorkflow,
+	activeSnapshotUID *string,
+) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		activeUID := ""
+		if activeSnapshotUID != nil {
+			activeUID = *activeSnapshotUID
+		}
+
+		var affected int64
+		var err error
+		if expected == "" {
+			res, execErr := sess.Exec(
+				"UPDATE cloud_migration_session SET workflow=?, active_snapshot_uid=?, updated=? WHERE org_id=? AND uid=?",
+				next, activeUID, time.Now(), orgID, sessionUID,
+			)
+			if execErr != nil {
+				return execErr
+			}
+			affected, err = res.RowsAffected()
+		} else {
+			res, execErr := sess.Exec(
+				"UPDATE cloud_migration_session SET workflow=?, active_snapshot_uid=?, updated=? WHERE org_id=? AND uid=? AND workflow=?",
+				next, activeUID, time.Now(), orgID, sessionUID, expected,
+			)
+			if execErr != nil {
+				return execErr
+			}
+			affected, err = res.RowsAffected()
+		}
+		if err != nil {
+			return err
+		}
+		if affected == 1 {
+			return nil
+		}
+
+		var session cloudmigration.CloudMigrationSession
+		exist, err := sess.Where("org_id=? AND uid=?", orgID, sessionUID).Get(&session)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrMigrationNotFound
+		}
+
+		return cloudmigration.SessionWorkflowMismatchError{
+			Workflow:          session.Workflow,
+			ActiveSnapshotUID: session.ActiveSnapshotUID,
+		}
+	})
+}
+
+func (ss *sqlStore) ResetSessionWorkflow(ctx context.Context, orgID int64, sessionUID string) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec(
+			"UPDATE cloud_migration_session SET workflow=?, active_snapshot_uid=?, updated=? WHERE org_id=? AND uid=?",
+			cloudmigration.SessionWorkflowIdle, "", time.Now(), orgID, sessionUID,
+		)
+		return err
+	})
 }
 
 func (ss *sqlStore) StorePartition(ctx context.Context, snapshotUID string, resourceType string, partitionNumber int, data []byte) error {

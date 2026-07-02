@@ -237,4 +237,18 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		PrimaryKeys: []string{"snapshot_uid", "resource_type", "partition_number"},
 	}
 	ConvertUniqueKeyToPrimaryKey(mg, srpUniqueIndex, updatedCloudMigrationSnapshotPartitionTable)
+
+	mg.AddMigration("add cloud_migration_session.workflow column", NewAddColumnMigration(migrationSessionTable, &Column{
+		Name:     "workflow",
+		Type:     DB_NVarchar,
+		Length:   40,
+		Nullable: false,
+		Default:  "'idle'",
+	}))
+	mg.AddMigration("add cloud_migration_session.active_snapshot_uid column", NewAddColumnMigration(migrationSessionTable, &Column{
+		Name:     "active_snapshot_uid",
+		Type:     DB_NVarchar,
+		Length:   40,
+		Nullable: true,
+	}))
 }

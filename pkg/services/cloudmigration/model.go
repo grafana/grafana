@@ -10,6 +10,7 @@ var (
 	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented").Errorf("Internal server error")
 	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled").Errorf("Cloud migrations are disabled on this instance")
 	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
+	ErrSnapshotCanceled            = errutil.Internal("cloudmigrations.snapshotCanceled").Errorf("Snapshot was canceled")
 	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound").Errorf("Migration run not found")
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
@@ -18,6 +19,40 @@ var (
 )
 
 // CloudMigration domain structs
+
+type SessionWorkflow string
+
+const (
+	SessionWorkflowIdle               SessionWorkflow = "idle"
+	SessionWorkflowBuildingSnapshot   SessionWorkflow = "building_snapshot"
+	SessionWorkflowUploadingSnapshot  SessionWorkflow = "uploading_snapshot"
+	SessionWorkflowProcessingSnapshot SessionWorkflow = "processing_snapshot"
+)
+
+func (w SessionWorkflow) IsBusy() bool {
+	return w != SessionWorkflowIdle && w != ""
+}
+
+// SessionConflictError is returned when a migration session already has an in-flight operation.
+type SessionConflictError struct {
+	Workflow          SessionWorkflow
+	ActiveSnapshotUID string
+	CanForce          bool
+}
+
+func (e SessionConflictError) Error() string {
+	return "migration session is busy"
+}
+
+// SessionWorkflowMismatchError is returned when a compare-and-set session workflow transition fails.
+type SessionWorkflowMismatchError struct {
+	Workflow          SessionWorkflow
+	ActiveSnapshotUID string
+}
+
+func (e SessionWorkflowMismatchError) Error() string {
+	return "session workflow transition failed"
+}
 
 // CloudMigrationSession represents a configured migration token
 type CloudMigrationSession struct {
@@ -29,6 +64,8 @@ type CloudMigrationSession struct {
 	StackID     int `xorm:"stack_id"`
 	RegionSlug  string
 	ClusterSlug string
+	Workflow    SessionWorkflow `xorm:"workflow"`
+	ActiveSnapshotUID string    `xorm:"active_snapshot_uid"`
 	Created     time.Time
 	Updated     time.Time
 }
@@ -173,10 +210,12 @@ type CloudMigrationSessionRequest struct {
 }
 
 type CloudMigrationSessionResponse struct {
-	UID     string
-	Slug    string
-	Created time.Time
-	Updated time.Time
+	UID               string
+	Slug              string
+	Workflow          SessionWorkflow
+	ActiveSnapshotUID string
+	Created           time.Time
+	Updated           time.Time
 }
 
 type CloudMigrationSessionListResponse struct {
@@ -223,6 +262,13 @@ func (r ResourceTypes) Has(t MigrateDataType) bool {
 type CreateSnapshotCommand struct {
 	SessionUID    string
 	ResourceTypes ResourceTypes
+	Force         bool
+}
+
+type UploadSnapshotCommand struct {
+	SessionUID  string
+	SnapshotUID string
+	Force       bool
 }
 
 type GetSnapshotsQuery struct {

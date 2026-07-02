@@ -107,5 +107,12 @@ func (c *memoryClientImpl) CreatePresignedUploadUrl(ctx context.Context, sess cl
 	return "http://localhost:3000", nil
 }
 
+func (c *memoryClientImpl) CancelSnapshot(_ context.Context, _ cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) error {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	c.snapshotInfo[snapshot.GMSSnapshotUID] = cloudmigration.SnapshotStateCanceled
+	return nil
+}
+
 func (c *memoryClientImpl) ReportEvent(context.Context, cloudmigration.CloudMigrationSession, EventRequestDTO) {
 }

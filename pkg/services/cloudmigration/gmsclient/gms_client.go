@@ -234,6 +234,41 @@ func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cl
 	return result.UploadUrl, nil
 }
 
+func (c *gmsClientImpl) CancelSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) error {
+	path, err := c.buildURL(session.ClusterSlug, fmt.Sprintf("/api/v1/snapshots/%s/cancel", snapshot.GMSSnapshotUID))
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSGetSnapshotStatusTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, bytes.NewReader(nil))
+	if err != nil {
+		return fmt.Errorf("creating http request to cancel snapshot: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
+	c.populateHeaderMetadata(req)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("sending http request to cancel snapshot: %w", err)
+	}
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			c.log.Error("closing cancel snapshot response body", "err", closeErr.Error())
+		}
+	}()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("cancel snapshot request failed: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
 func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.CloudMigrationSession, event EventRequestDTO) {
 	if event.LocalID == "" || event.Event == "" {
 		return

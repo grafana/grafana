@@ -19,6 +19,7 @@ import { type AlertVariant, Box, Stack, Text } from '@grafana/ui';
 
 import { useGetLocalPluginListQuery } from '../api';
 import { maybeAPIError } from '../api/errors';
+import { getSessionConflict, type SessionConflictDetails } from '../api/sessionConflict';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
 import { ConfigureSnapshot } from './ConfigureSnapshot';
@@ -26,6 +27,7 @@ import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationSummary } from './MigrationSummary';
 import { ResourcesTable } from './ResourcesTable';
 import { CreatingSnapshotCTA } from './SnapshotCTAs';
+import { SessionConflictModal } from './SessionConflictModal';
 import { SupportedTypesDisclosure } from './SupportedTypesDisclosure';
 import { type ResourceTableItem } from './types';
 import { useNotifySuccessful } from './useNotifyOnSuccess';
@@ -132,6 +134,11 @@ export const Page = () => {
     order: undefined,
   });
   const [highlightErrors, setHighlightErrors] = useState(false);
+  const [sessionConflict, setSessionConflict] = useState<SessionConflictDetails | null>(null);
+  const [pendingCreateResourceTypes, setPendingCreateResourceTypes] = useState<Array<ResourceTableItem['type']> | null>(
+    null
+  );
+  const [pendingUpload, setPendingUpload] = useState(false);
 
   const { data: resourceDependencies = { resourceDependencies: [] } } = useGetResourceDependenciesQuery();
   const [reconfiguring, setReconfiguring] = useState(false);
@@ -164,6 +171,7 @@ export const Page = () => {
   const sessionUid = session.data?.uid;
   const snapshotUid = snapshot.data?.uid;
   const snapshotStatus = snapshot.data?.status;
+  const sessionWorkflow = session.data?.workflow;
 
   // isBusy is not a loading state, but indicates that the system is doing *something* and all buttons should be disabled.
   const isBusy =
@@ -206,9 +214,13 @@ export const Page = () => {
 
     // When loading the page for the first time, we might already have a snapshot in a workable state.
     if (uiState === 'loading') {
-      // Snapshot is being created.
-      if (snapshotStatus === 'CREATING') {
+      if (sessionWorkflow === 'building_snapshot' || snapshotStatus === 'CREATING') {
         setUiState('building');
+        return;
+      }
+
+      if (sessionWorkflow === 'uploading_snapshot' || sessionWorkflow === 'processing_snapshot') {
+        setUiState('uploading');
         return;
       }
 
@@ -300,6 +312,7 @@ export const Page = () => {
     uiState,
     reconfiguring,
     snapshot.data?.results?.length,
+    sessionWorkflow,
     createSnapshotResult.error,
     uploadSnapshotResult.error,
   ]);
@@ -316,26 +329,80 @@ export const Page = () => {
 
   // Action Callbacks
   const handleCreateSnapshot = useCallback(
-    (resourceTypes: Array<ResourceTableItem['type']>) => {
-      if (sessionUid) {
-        setUiState('building');
+    async (resourceTypes: Array<ResourceTableItem['type']>, force = false) => {
+      if (!sessionUid) {
+        return;
+      }
 
-        performCreateSnapshot({
+      if (!force) {
+        setUiState('building');
+      }
+
+      try {
+        await performCreateSnapshot({
           uid: sessionUid,
           createSnapshotRequestDto: {
             resourceTypes,
+            force,
           },
-        });
+        }).unwrap();
+        setSessionConflict(null);
+        setPendingCreateResourceTypes(null);
+      } catch (error) {
+        const conflict = getSessionConflict(error);
+        if (conflict) {
+          setSessionConflict(conflict);
+          setPendingCreateResourceTypes(resourceTypes);
+          setUiState('configure');
+          return;
+        }
       }
     },
     [performCreateSnapshot, sessionUid]
   );
 
-  const handleUploadSnapshot = useCallback(() => {
-    if (sessionUid && snapshotUid) {
-      performUploadSnapshot({ uid: sessionUid, snapshotUid: snapshotUid });
+  const handleUploadSnapshot = useCallback(
+    async (force = false) => {
+      if (!sessionUid || !snapshotUid) {
+        return;
+      }
+
+      try {
+        await performUploadSnapshot({
+          uid: sessionUid,
+          snapshotUid: snapshotUid,
+          uploadSnapshotRequestDto: { force },
+        }).unwrap();
+        setSessionConflict(null);
+        setPendingUpload(false);
+        setUiState('uploading');
+      } catch (error) {
+        const conflict = getSessionConflict(error);
+        if (conflict) {
+          setSessionConflict(conflict);
+          setPendingUpload(true);
+          return;
+        }
+      }
+    },
+    [performUploadSnapshot, sessionUid, snapshotUid]
+  );
+
+  const handleRefreshSessionState = useCallback(async () => {
+    await Promise.all([session.refetch(), snapshot.refetch()]);
+    setSessionConflict(null);
+  }, [session, snapshot]);
+
+  const handleProceedAfterConflict = useCallback(async () => {
+    if (pendingCreateResourceTypes) {
+      await handleCreateSnapshot(pendingCreateResourceTypes, true);
+      return;
     }
-  }, [performUploadSnapshot, sessionUid, snapshotUid]);
+
+    if (pendingUpload) {
+      await handleUploadSnapshot(true);
+    }
+  }, [handleCreateSnapshot, handleUploadSnapshot, pendingCreateResourceTypes, pendingUpload]);
 
   const handleRebuildSnapshot = useCallback(() => {
     if (sessionUid && snapshotUid) {
@@ -373,6 +440,20 @@ export const Page = () => {
 
   return (
     <>
+      {sessionConflict && (
+        <SessionConflictModal
+          conflict={sessionConflict}
+          isLoading={createSnapshotResult.isLoading || uploadSnapshotResult.isLoading}
+          onDismiss={() => {
+            setSessionConflict(null);
+            setPendingCreateResourceTypes(null);
+            setPendingUpload(false);
+          }}
+          onRefresh={handleRefreshSessionState}
+          onProceed={handleProceedAfterConflict}
+        />
+      )}
+
       <Stack direction="column" gap={2}>
         <MigrationSummary
           session={session.data}
@@ -382,7 +463,7 @@ export const Page = () => {
           onDisconnect={handleDisconnect}
           showUploadSnapshot={['built', 'uploading'].includes(uiState)}
           uploadSnapshotIsLoading={uploadSnapshotResult.isLoading || uiState === 'uploading'}
-          onUploadSnapshot={handleUploadSnapshot}
+          onUploadSnapshot={() => handleUploadSnapshot()}
           showRebuildSnapshot={['built', 'uploading', 'uploaded'].includes(uiState)}
           onRebuildSnapshot={handleRebuildSnapshot}
           onHighlightErrors={() => setHighlightErrors(!highlightErrors)}
@@ -400,7 +481,7 @@ export const Page = () => {
           <ConfigureSnapshot
             disabled={isBusy}
             isLoading={isBusy}
-            onClick={handleCreateSnapshot}
+            onClick={(resourceTypes) => handleCreateSnapshot(resourceTypes)}
             resourceDependencies={resourceDependencies.resourceDependencies || []}
           />
         )}
