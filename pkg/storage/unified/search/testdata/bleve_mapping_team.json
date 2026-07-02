@@ -145,6 +145,7 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
+            "docvalues": true,
             "skip_freq_norm": true
           }
         ]
