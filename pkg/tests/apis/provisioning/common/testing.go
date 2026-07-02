@@ -203,8 +203,13 @@ func (h *ProvisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 		Pull:   options,
 	})
 
+	namespace := h.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+
 	result := h.AdminREST.Post().
-		Namespace(h.Namespace).
+		Namespace(namespace).
 		Resource("repositories").
 		Name(repo).
 		SubResource("jobs").
