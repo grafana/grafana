@@ -41,6 +41,15 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 	return settings, loader, err
 }
 
+// pluginContext resolves the plugin context via the injected override when
+// present, falling back to the real settings-backed lookup.
+func (b *AppPluginAPIBuilder) pluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
+	if b.pluginContextFn != nil {
+		return b.pluginContextFn(ctx)
+	}
+	return b.getPluginContext(ctx)
+}
+
 // Gets plugin context with decrypted secure values
 func (b *AppPluginAPIBuilder) getPluginContext(ctx context.Context) (context.Context, backend.PluginContext, error) {
 	settings, secure, err := b.getSettings(ctx)
