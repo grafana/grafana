@@ -4393,6 +4393,10 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
+    "folder-target": {
+      "git": "Sync with Git repository",
+      "grafana": "Save in Grafana only"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -7298,7 +7302,8 @@
       "render-footer": {
         "title-failed-to-save-dashboard": "Failed to save dashboard"
       },
-      "required": "Required"
+      "required": "Required",
+      "save-to-git": "Save to Git repository instead"
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7354,10 +7359,14 @@
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "cancel": "Cancel",
+      "cancel-folder": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "create-folder": "Create",
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "folder-create-error": "Failed to create folder",
+      "folder-name-placeholder": "Folder name",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
@@ -7368,9 +7377,12 @@
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "new-folder": "New folder",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
+      "save-at-root": "No folder (save at repository root)",
       "save-json-to-file": "Save JSON to file",
+      "save-to-database": "Save to Grafana database instead",
       "saving": "Saving...",
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-required": "Dashboard title is required",

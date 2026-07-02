@@ -13,9 +13,16 @@ export interface SaveProvisionedDashboardProps {
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
   saveAsCopy?: boolean;
+  onSaveToDatabase?: () => void;
 }
 
-export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
+export function SaveProvisionedDashboard({
+  drawer,
+  changeInfo,
+  dashboard,
+  saveAsCopy,
+  onSaveToDatabase,
+}: SaveProvisionedDashboardProps) {
   const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
 
@@ -36,6 +43,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
+        onSaveToDatabase={onSaveToDatabase}
       />
     </ProvisionedFormGate>
   );
