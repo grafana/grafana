@@ -139,8 +139,8 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 // mirroring cache.SharedIndexInformer.AddEventHandler: it returns a registration
 // whose HasSynced reports the informer's initial-list state, so callers wait on
 // it with cache.WaitForCacheSync exactly as they would an apiserver informer's.
-// Register all handlers before Start; there is no cache to replay, so a handler
-// added after Start only sees events from the next notification or re-list.
+// Register all handlers before Run; there is no cache to replay, so a handler
+// added after Run only sees events from the next notification or re-list.
 func (n *Informer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("nats informer: nil handler for %s", n.gvr.String())
