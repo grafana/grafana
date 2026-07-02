@@ -207,6 +207,15 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 				return
 			}
 
+			// Only roll back if the job in the store is still the one we claimed. Job names are
+			// deterministic, so this same name may now be a re-created job claimed by another
+			// worker. Stripping its claim would hand that worker's job to a third one and
+			// reintroduce duplicate execution, so leave it alone.
+			if refetched.UID != updatedJob.UID || refetched.Labels[LabelJobClaimOwner] != updatedJob.Labels[LabelJobClaimOwner] {
+				logger.Info("claim no longer owned by this worker - skipping rollback")
+				return
+			}
+
 			// Rollback the claim.
 			refetchedJob := refetched.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
@@ -352,11 +361,13 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	}
 	logger.Debug("deleted job from job store")
 
-	// We need to remove the claim label before moving the job to the historic job store.
+	// We need to remove the claim labels before moving the job to the historic job store,
+	// so the per-claim owner token does not leak into the archived object.
 	if job.Labels == nil {
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
+	delete(job.Labels, LabelJobClaimOwner)
 	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")

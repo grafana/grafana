@@ -51,6 +51,42 @@ func TestClaim_StampsOwnerToken(t *testing.T) {
 	assert.NotEmpty(t, claimed.Labels[LabelJobClaimOwner], "claim owner token should be set")
 }
 
+// TestClaim_RollbackSkipsJobOwnedByAnother verifies that the claim rollback does not
+// strip the claim from a job that is now owned by another worker. Job names are
+// deterministic, so by the time we roll back, the same name may be a re-created job
+// another worker is running; clearing its claim would reintroduce duplicate execution.
+func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, rollback, err := store.Claim(ctx)
+	require.NoError(t, err)
+
+	// Simulate another worker taking over the same job name after our claim.
+	taken, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	taken.Labels[LabelJobClaimOwner] = "another-worker"
+	_, err = fakeClient.Jobs("stacks-123").Update(ctx, taken, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Rolling back our (now lost) claim must not disturb the other worker's job.
+	rollback()
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "another-worker", after.Labels[LabelJobClaimOwner], "rollback must not strip another worker's claim")
+	assert.NotEmpty(t, after.Labels[LabelJobClaim], "rollback must not clear the active claim timestamp")
+}
+
 // TestRenewLease_LostToAnotherOwner verifies that a worker cannot renew a claim
 // that now belongs to a different owner (same job name, different owner token).
 // This is the core protection against two workers processing the same job: once
