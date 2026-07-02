@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/cache"
 
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -27,19 +28,57 @@ type typedList = func(ctx context.Context, namespace string) (runtime.Object, er
 // getterlessDeltaSource is the whole delta-source selector for kinds whose
 // controllers read no lister (jobs, historic jobs): a NATS-backed informer built
 // from the kind's typed LIST when the subscriber is enabled, otherwise an
-// apiserver-backed SharedIndexInformer resolved from the kind's GVR via the
-// generated factory (ForResource), so the apiserver branch needs no per-kind
-// accessor. The production wiring always watches every namespace. Kinds with a
-// getter build a Source instead — see NewRepositoryDeltaSource.
+// apiserver-backed SharedIndexInformer resolved from the kind's GVR. The
+// production wiring always watches every namespace. Kinds with a getter build a
+// Source via getterDeltaSource instead.
 func getterlessDeltaSource(subscriber nats.Subscriber, client versioned.Interface, info utils.ResourceInfo, resync time.Duration, liveObjects bool, list typedList) DeltaSource {
 	if nats.Enabled(subscriber) {
-		return newDeltaSourceInformer(subscriber, info, "", resync, usinformer.NewStore(), liveObjects,
-			typedListFunc(func(ctx context.Context) (runtime.Object, error) { return list(ctx, "") }))
+		return natsInformer(subscriber, info, resync, usinformer.NewStore(), liveObjects, list)
 	}
-	gi, err := informers.NewSharedInformerFactory(client, resync).ForResource(info.GroupVersionResource())
+	return apiserverInformer(informers.NewSharedInformerFactory(client, resync), info)
+}
+
+// getterDeltaSource is the delta-source selector for kinds whose controllers
+// reconcile against a getter (repositories, connections). Under NATS it pairs a
+// NATS-backed informer with a client-backed getter (clientGet reads fresh from
+// the API); storeList additionally backs the getter's List from the informer's
+// shared snapshot — the staleness-tolerant quota count kept warm by write-through
+// — rather than leaving it empty. Otherwise it pairs the apiserver-backed
+// informer with cached, the lister-backed getter built from the same factory.
+// Either way it returns one Source that is both the DeltaSource and the getter.
+func getterDeltaSource[T runtime.Object](
+	subscriber nats.Subscriber, client versioned.Interface, info utils.ResourceInfo, resync time.Duration,
+	list typedList,
+	clientGet func(ctx context.Context, namespace, name string) (T, error),
+	storeList bool,
+	cached func(informers.SharedInformerFactory) Getter[T],
+) *Source[T] {
+	if nats.Enabled(subscriber) {
+		store := usinformer.NewStore()
+		getter := Getter[T]{get: clientGet}
+		if storeList {
+			getter.store = store
+		}
+		return &Source[T]{DeltaSource: natsInformer(subscriber, info, resync, store, true, list), Getter: getter}
+	}
+	factory := informers.NewSharedInformerFactory(client, resync)
+	return &Source[T]{DeltaSource: apiserverInformer(factory, info), Getter: cached(factory)}
+}
+
+// natsInformer builds a kind's NATS-backed informer from its typed LIST, scoped
+// to every namespace (the production wiring never scopes to one).
+func natsInformer(subscriber nats.Subscriber, info utils.ResourceInfo, resync time.Duration, store usinformer.Store, liveObjects bool, list typedList) *usinformer.Informer {
+	return newDeltaSourceInformer(subscriber, info, "", resync, store, liveObjects,
+		typedListFunc(func(ctx context.Context) (runtime.Object, error) { return list(ctx, "") }))
+}
+
+// apiserverInformer resolves a kind's apiserver-backed SharedIndexInformer from
+// its GVR via the generated factory. The GVR is the kind's own compile-time
+// constant, always registered with the factory, so a lookup miss is unreachable
+// unless the two drift apart.
+func apiserverInformer(factory informers.SharedInformerFactory, info utils.ResourceInfo) cache.SharedIndexInformer {
+	gi, err := factory.ForResource(info.GroupVersionResource())
 	if err != nil {
-		// info is the kind's own ResourceInfo, whose GVR is always registered with
-		// the generated factory, so this is unreachable unless the two drift apart.
 		panic(fmt.Errorf("provisioning informer: no apiserver informer for %s: %w", info.GroupVersionResource(), err))
 	}
 	return gi.Informer()
