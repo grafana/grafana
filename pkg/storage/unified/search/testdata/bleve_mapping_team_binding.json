@@ -45,8 +45,30 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "properties": {
+          "external": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "boolean",
+                "store": true
+              }
+            ]
+          },
+          "permission": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
           "subject": {
             "enabled": true,
             "dynamic": true,
