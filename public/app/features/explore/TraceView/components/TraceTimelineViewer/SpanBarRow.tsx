@@ -19,6 +19,7 @@ import * as React from 'react';
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
+import { type TimeZone } from '@grafana/schema';
 import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
@@ -30,12 +31,11 @@ import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
 
 import SpanBar from './SpanBar';
-import { SpanLinksMenu } from './SpanLinks';
+import { SpanBarRowLinks } from './SpanBarRowLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
-import { SpanBarRowLinks } from './SpanBarRowLinks';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
@@ -382,6 +382,7 @@ export type SpanBarRowProps = {
   datasourceType: string;
   visibleSpanIds: string[];
   criticalPath: CriticalPathSection[];
+  timeZone: TimeZone;
 };
 
 const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
@@ -415,6 +416,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
     criticalPath,
     onDetailToggled,
     onChildrenToggled,
+    timeZone,
   } = props;
 
   const { duration, hasChildren: isParent, operationName, process } = span;
@@ -574,6 +576,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               createSpanLink={createSpanLink}
               datasourceType={datasourceType}
               span={span}
+              timeZone={timeZone}
             />
           )}
         </div>
