@@ -100,6 +100,11 @@ export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterp
   return type === 'github' || type === 'githubEnterprise';
 };
 
+// Providers whose repositories can register and receive webhooks.
+export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab';
+};
+
 /**
  * Get repository configurations ordered by provider type priority:
  * 1. Git providers first (github, gitlab, bitbucket) - excludes pure git
