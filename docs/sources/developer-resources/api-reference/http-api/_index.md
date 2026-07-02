@@ -38,14 +38,14 @@ To learn more refer to:
 
 ## The Grafana API specification
 
-Grafana HTTP APIs comply both with the [OpenAPI v2 specification (Swagger 2.0)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json) and [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json). While both describe the exact same set of Grafana HTTP API routes (dashboards, folders, data sources, orgs, users, teams, RBAC, alerting provisioning...), v2 is the canonical spec and source of truth, and v3 is converted from the v2 file using a conversion script.
+Grafana HTTP APIs comply both with the [OpenAPI v2 specification (Swagger 2.0)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json) and [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json). While both describe the exact same set of Grafana HTTP API routes (dashboards, folders, data sources, organizations, users, teams, RBAC, alerting provisioning...), v2 is the canonical specification and source of truth, and v3 is converted from the v2 file using a conversion script.
 
-If you're consuming Grafana's API:
+If you're consuming a Grafana HTTP API:
 
-- Use v2 if your tooling (SDK generators, older Swagger UI, grafana-openapi-client-go, terraform-provider-grafana) expects Swagger 2.0.
+- Use v2 if your tooling (SDK generators, older Swagger UI, `terraform-provider-grafana`) expects Swagger 2.0.
 - Use v3 if your tooling requires OpenAPI 3.x (for example, newer codegen tools, some API gateways, Postman's newer import features).
 
-You can browse and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
+You can browse and try out both via the Swagger UI editor, served by the Grafana server, by navigating to `/swagger-ui`.
 
 ## Authentication
 
