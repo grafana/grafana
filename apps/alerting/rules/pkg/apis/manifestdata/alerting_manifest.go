@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	rawSchemaAlertRulev0alpha1         = []byte(`{"AlertRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"ExecErrState":{"enum":["Error","Ok","Alerting","KeepLast"],"type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"description":"TODO: validate that only one can specify source=true\n\u0026 struct.MinFields(1) This doesn't work in Cue \u003cv0.12.0 as per","type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"NamedRoutingTree":{"additionalProperties":false,"properties":{"routingTree":{"type":"string"},"type":{"$ref":"#/components/schemas/NotificationSettingsType"}},"required":["type","routingTree"],"type":"object"},"NoDataState":{"enum":["NoData","Ok","Alerting","KeepLast"],"type":"string"},"NotificationSettings":{"description":"TODO(@moustafab): this should be imported from the notifications package","oneOf":[{"$ref":"#/components/schemas/SimplifiedRouting"},{"$ref":"#/components/schemas/NamedRoutingTree"}]},"NotificationSettingsType":{"enum":["SimplifiedRouting","NamedRoutingTree"],"type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PanelRef":{"additionalProperties":false,"properties":{"dashboardUID":{"minLength":1,"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"panelID":{"exclusiveMinimum":true,"minimum":0,"type":"integer"}},"required":["dashboardUID","panelID"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"SimplifiedRouting":{"additionalProperties":false,"properties":{"activeTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"groupBy":{"items":{"type":"string"},"type":"array"},"groupInterval":{"$ref":"#/components/schemas/PromDuration"},"groupWait":{"$ref":"#/components/schemas/PromDuration"},"muteTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"receiver":{"type":"string"},"repeatInterval":{"$ref":"#/components/schemas/PromDuration"},"type":{"$ref":"#/components/schemas/NotificationSettingsType"}},"required":["type","receiver"],"type":"object"},"TemplateString":{"type":"string"},"TimeIntervalRef":{"description":"TODO(@moustafab): validate regex for time interval ref","type":"string"},"spec":{"additionalProperties":false,"properties":{"annotations":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"execErrState":{"$ref":"#/components/schemas/ExecErrState","default":"Error"},"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"for":{"type":"string"},"keepFiringFor":{"type":"string"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"missingSeriesEvalsToResolve":{"minimum":0,"type":"integer"},"noDataState":{"$ref":"#/components/schemas/NoDataState","default":"NoData"},"notificationSettings":{"$ref":"#/components/schemas/NotificationSettings"},"panelRef":{"$ref":"#/components/schemas/PanelRef"},"paused":{"type":"boolean"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","noDataState","execErrState","expressions"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaAlertRulev0alpha1         = []byte(`{"AlertRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"ExecErrState":{"enum":["Error","Ok","Alerting","KeepLast"],"type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"NamedRoutingTree":{"additionalProperties":false,"properties":{"routingTree":{"type":"string"},"type":{"$ref":"#/components/schemas/NotificationSettingsType"}},"required":["type","routingTree"],"type":"object"},"NoDataState":{"enum":["NoData","Ok","Alerting","KeepLast"],"type":"string"},"NotificationSettings":{"oneOf":[{"$ref":"#/components/schemas/SimplifiedRouting"},{"$ref":"#/components/schemas/NamedRoutingTree"}]},"NotificationSettingsType":{"enum":["SimplifiedRouting","NamedRoutingTree"],"type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PanelRef":{"additionalProperties":false,"properties":{"dashboardUID":{"minLength":1,"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"panelID":{"exclusiveMinimum":true,"minimum":0,"type":"integer"}},"required":["dashboardUID","panelID"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"SimplifiedRouting":{"additionalProperties":false,"properties":{"activeTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"groupBy":{"items":{"type":"string"},"type":"array"},"groupInterval":{"$ref":"#/components/schemas/PromDuration"},"groupWait":{"$ref":"#/components/schemas/PromDuration"},"muteTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"receiver":{"type":"string"},"repeatInterval":{"$ref":"#/components/schemas/PromDuration"},"type":{"$ref":"#/components/schemas/NotificationSettingsType"}},"required":["type","receiver"],"type":"object"},"TemplateString":{"type":"string"},"TimeIntervalRef":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"annotations":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"execErrState":{"$ref":"#/components/schemas/ExecErrState","default":"Error"},"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"for":{"type":"string"},"keepFiringFor":{"type":"string"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"missingSeriesEvalsToResolve":{"minimum":0,"type":"integer"},"noDataState":{"$ref":"#/components/schemas/NoDataState","default":"NoData"},"notificationSettings":{"$ref":"#/components/schemas/NotificationSettings"},"panelRef":{"$ref":"#/components/schemas/PanelRef"},"paused":{"type":"boolean"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","noDataState","execErrState","expressions"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaAlertRulev0alpha1     app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaAlertRulev0alpha1, &versionSchemaAlertRulev0alpha1)
-	rawSchemaRecordingRulev0alpha1     = []byte(`{"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"description":"TODO: validate that only one can specify source=true\n\u0026 struct.MinFields(1) This doesn't work in Cue \u003cv0.12.0 as per","type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"MetricName":{"description":"TODO(@moustafab): validate the metric name regex","pattern":"^[a-zA-Z_:][a-zA-Z0-9_:]*$","type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RecordingRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"TemplateString":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"metric":{"$ref":"#/components/schemas/MetricName"},"paused":{"type":"boolean"},"targetDatasourceUID":{"$ref":"#/components/schemas/DatasourceUID"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","metric","expressions","targetDatasourceUID"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	rawSchemaRecordingRulev0alpha1     = []byte(`{"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"MetricName":{"pattern":"^[a-zA-Z_:][a-zA-Z0-9_:]*$","type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RecordingRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"TemplateString":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"metric":{"$ref":"#/components/schemas/MetricName"},"paused":{"type":"boolean"},"targetDatasourceUID":{"$ref":"#/components/schemas/DatasourceUID"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","metric","expressions","targetDatasourceUID"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaRecordingRulev0alpha1 app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaRecordingRulev0alpha1, &versionSchemaRecordingRulev0alpha1)
 	rawSchemaRuleSequencev0alpha1      = []byte(`{"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"RuleRef":{"additionalProperties":false,"properties":{"name":{"$ref":"#/components/schemas/RuleUID","description":"name is the metadata.name of an AlertRule or RecordingRule resource."}},"required":["name"],"type":"object"},"RuleSequence":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RuleUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"spec":{"additionalProperties":false,"properties":{"alertingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"recordingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["trigger","recordingRules"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
@@ -125,9 +125,1358 @@ var appManifestData = app.ManifestData{
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
+				Namespaced: map[string]spec3.PathProps{
+					"/search": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getSearchRules",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "continueToken",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "dashboardUID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "datasourceUIDs",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "folders",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "groups",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "labels",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "limit",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"integer"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "metric",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "notificationType",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "panelID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"integer"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "paused",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "q",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "receiver",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "routingTree",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "sort",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/RuleSearchSortField"),
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "targetDatasourceUID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "type",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleHit"),
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				Properties: map[string]spec.Schema{
+																					"continue": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"remainingItemCount": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"integer"},
+																						},
+																					},
+																					"resourceVersion": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"selfLink": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																				},
+																			},
+																			VendorExtensible: spec.VendorExtensible{
+																				Extensions: spec.Extensions{
+																					"x-grafana-app-uses-kubernetes-list-metadata": true,
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																		"apiVersion",
+																		"kind",
+																		"metadata",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+					"/search/alertrules": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getSearchAlertRules",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "continueToken",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "dashboardUID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "datasourceUIDs",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "folders",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "groups",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "labels",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "limit",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"integer"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "notificationType",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "panelID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"integer"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "paused",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "q",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "receiver",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "routingTree",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "sort",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/RuleSearchSortField"),
+												},
+											},
+										},
+									},
+								},
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesAlertRuleHit"),
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				Properties: map[string]spec.Schema{
+																					"continue": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"remainingItemCount": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"integer"},
+																						},
+																					},
+																					"resourceVersion": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"selfLink": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																				},
+																			},
+																			VendorExtensible: spec.VendorExtensible{
+																				Extensions: spec.Extensions{
+																					"x-grafana-app-uses-kubernetes-list-metadata": true,
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																		"apiVersion",
+																		"kind",
+																		"metadata",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+					"/search/recordingrules": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "getSearchRecordingRules",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "continueToken",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "datasourceUIDs",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "folders",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "groups",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "labels",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "limit",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"integer"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "metric",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "names",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "paused",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "q",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "sort",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/RuleSearchSortField"),
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "targetDatasourceUID",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRecordingRuleHit"),
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"metadata": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				Properties: map[string]spec.Schema{
+																					"continue": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"remainingItemCount": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"integer"},
+																						},
+																					},
+																					"resourceVersion": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																					"selfLink": {
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						},
+																					},
+																				},
+																			},
+																			VendorExtensible: spec.VendorExtensible{
+																				Extensions: spec.Extensions{
+																					"x-grafana-app-uses-kubernetes-list-metadata": true,
+																				},
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																		"apiVersion",
+																		"kind",
+																		"metadata",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
+				},
+				Cluster: map[string]spec3.PathProps{},
+				Schemas: map[string]spec.Schema{
+					"getSearchAlertRulesAlertRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"datasourceUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"for": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"keepFiringFor": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"notificationType": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"routingTree": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchAlertRulesRuleSearchType": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
+							},
+						},
+					},
+					"getSearchRecordingRulesRecordingRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"datasourceUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"metric": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"targetDatasourceUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchRecordingRulesRuleSearchType": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
+							},
+						},
+					},
+					"getSearchRulesAlertRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"dashboardUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"datasourceUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"for": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"keepFiringFor": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"notificationType": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"panelID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"routingTree": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchRulesRecordingRuleHit": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"datasourceUIDs": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
+								"folder": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"group": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"interval": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"metric": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"name": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"paused": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"targetDatasourceUID": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"title": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"type": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesRuleSearchType"),
+									},
+								},
+							},
+							Required: []string{
+								"type",
+								"name",
+								"title",
+								"folder",
+							},
+						},
+					},
+					"getSearchRulesRuleHit": {
+						SchemaProps: spec.SchemaProps{
+
+							Description: "RuleHit is the cross-kind union returned by /search.",
+						},
+					},
+					"getSearchRulesRuleSearchType": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"string"},
+							Enum: []interface{}{
+								"alertrule",
+								"recordingrule",
+							},
+						},
+					},
+				},
 			},
 		},
 	},
@@ -154,7 +1503,11 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1||<namespace>/search|GET":                v0alpha1.GetSearchRulesResponse{},
+	"v0alpha1||<namespace>/search/alertrules|GET":     v0alpha1.GetSearchAlertRulesResponse{},
+	"v0alpha1||<namespace>/search/recordingrules|GET": v0alpha1.GetSearchRecordingRulesResponse{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
