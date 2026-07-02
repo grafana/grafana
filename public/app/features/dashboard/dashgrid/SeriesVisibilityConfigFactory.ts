@@ -160,7 +160,7 @@ const getDisplayNames = (data: DataFrame[], excludeName?: string): string[] => {
 
   for (const frame of data) {
     for (const field of frame.fields) {
-      if (field.type !== FieldType.number) {
+      if (!isSeriesField(field.type)) {
         continue;
       }
 
@@ -189,7 +189,7 @@ const getNamesOfHiddenFields = (overrides: ConfigOverrideRule[], data: DataFrame
 
       for (const frame of data) {
         for (const field of frame.fields) {
-          if (field.type !== FieldType.number) {
+          if (!isSeriesField(field.type)) {
             continue;
           }
 
@@ -205,3 +205,7 @@ const getNamesOfHiddenFields = (overrides: ConfigOverrideRule[], data: DataFrame
 
   return names;
 };
+
+function isSeriesField(type: FieldType): boolean {
+  return type === FieldType.number || type === FieldType.boolean || type === FieldType.enum;
+}
