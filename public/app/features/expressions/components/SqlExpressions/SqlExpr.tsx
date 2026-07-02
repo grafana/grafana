@@ -22,6 +22,7 @@ import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
+import { FUNCTION_SIGNATURES } from './functionSignatures';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
 const SQLEditor = lazy(() =>
@@ -267,6 +268,7 @@ LIMIT
                   value={query.expression ?? initialQuery}
                   onChange={onEditorChange}
                   completionProvider={completionProvider}
+                  functionSignatures={FUNCTION_SIGNATURES}
                   formatter={formatSQL}
                   height={editorHeight}
                   ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
