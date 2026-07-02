@@ -29,8 +29,8 @@ checktypev0alpha1: {
 			stepID: string
 			// resolution follows the same template + args + links contract as
 			// description above.
-			resolution:       string
-			resolutionArgs?:  [string]: string
+			resolution: string
+			resolutionArgs?: [string]: string
 			resolutionLinks?: [...#Link]
 		}
 		spec: {
