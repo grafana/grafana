@@ -9651,7 +9651,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-hierarchy@npm:*":
+"@types/d3-hierarchy@npm:*, @types/d3-hierarchy@npm:3.0.2":
   version: 3.0.2
   resolution: "@types/d3-hierarchy@npm:3.0.2"
   checksum: 10/6edbce03db42e73b7ae311d52a8c030da6cc8e84dab380121b61b1ea6086764fbd1f0f23afea0520ba97f9516da42efdf8ff06ed5b7e0b05642804e6d461202c
@@ -14743,7 +14743,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-hierarchy@npm:3":
+"d3-hierarchy@npm:3, d3-hierarchy@npm:3.1.2":
   version: 3.1.2
   resolution: "d3-hierarchy@npm:3.1.2"
   checksum: 10/497b79dc6c35e28b21e8a7b94db92876abd1d4ec082d9803a07ea8964e55b0e71c511a21489363a36f1456f069adb8ff7d33c633678730d6ae961ed350b27733
@@ -18451,6 +18451,7 @@ __metadata:
     "@grafana/flamegraph": "workspace:*"
     "@grafana/i18n": "workspace:*"
     "@grafana/levitate": "npm:0.17.2"
+    "@grafana/lezer-logql": "npm:0.2.9"
     "@grafana/llm": "npm:1.0.9"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:3.7.2"
@@ -18480,6 +18481,7 @@ __metadata:
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@playwright/test": "npm:1.56.1"
     "@popperjs/core": "npm:2.11.8"
+    "@prometheus-io/lezer-promql": "npm:0.307.3"
     "@rc-component/tree": "npm:1.1.0"
     "@react-aria/dialog": "npm:3.5.31"
     "@react-aria/focus": "npm:3.21.2"
@@ -18503,6 +18505,7 @@ __metadata:
     "@types/confusing-browser-globals": "npm:^1"
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
+    "@types/d3-hierarchy": "npm:3.0.2"
     "@types/d3-scale": "npm:^4"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
@@ -18574,6 +18577,7 @@ __metadata:
     css-minimizer-webpack-plugin: "npm:^8.0.0"
     d3: "npm:7.9.0"
     d3-force: "npm:3.0.0"
+    d3-hierarchy: "npm:3.1.2"
     d3-scale: "npm:^4.0.2"
     d3-scale-chromatic: "npm:3.1.0"
     dangerously-set-html-content: "npm:1.1.0"
