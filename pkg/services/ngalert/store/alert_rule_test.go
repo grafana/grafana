@@ -2625,6 +2625,57 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		}
 	})
 
+	t.Run("filter by SourceIdentifier", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+		convertedRule := func(source string) *models.AlertRule {
+			return createRule(t, store, ruleGen.With(
+				models.RuleMuts.WithPrometheusOriginalRuleDefinition("data"),
+				models.RuleMuts.WithPrometheusSourceIdentifier(source),
+			))
+		}
+		ds1Rule := convertedRule("ds-1")
+		// "ds-10" shares the "ds-1" prefix; it must not match a "ds-1" filter
+		// (guards the coarse LIKE prefilter against prefix false-positives).
+		ds10Rule := convertedRule("ds-10")
+		regularRule := createRule(t, store, ruleGen)
+
+		tc := []struct {
+			name             string
+			sourceIdentifier *string
+			expectedRules    []*models.AlertRule
+		}{
+			{
+				name:             "returns only rules owned by the given source",
+				sourceIdentifier: new("ds-1"),
+				expectedRules:    []*models.AlertRule{ds1Rule},
+			},
+			{
+				name:             "returns nothing for an unknown source",
+				sourceIdentifier: new("ds-unknown"),
+				expectedRules:    nil,
+			},
+			{
+				name:             "returns all rules when filter is not set",
+				sourceIdentifier: nil,
+				expectedRules:    []*models.AlertRule{ds1Rule, ds10Rule, regularRule},
+			},
+		}
+		for _, tt := range tc {
+			t.Run(tt.name, func(t *testing.T) {
+				query := &models.ListAlertRulesQuery{
+					OrgID:            orgID,
+					SourceIdentifier: tt.sourceIdentifier,
+				}
+				result, err := store.ListAlertRules(context.Background(), query)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.expectedRules, result)
+			})
+		}
+	})
+
 	t.Run("filter by DataSourceUIDs", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
