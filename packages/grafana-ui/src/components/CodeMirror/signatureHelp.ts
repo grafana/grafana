@@ -1,0 +1,204 @@
+import { StateField, type Extension } from '@codemirror/state';
+import { EditorView, showTooltip, type Tooltip } from '@codemirror/view';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+
+import { type SignatureHelp, type SignatureHelpProvider, type SignatureInformation } from './types';
+
+export interface SignatureHelpOptions {
+  /**
+   * Grafana theme used to style the tooltip. When omitted the tooltip falls
+   * back to CodeMirror's default tooltip chrome plus the structural base styles.
+   */
+  theme?: GrafanaTheme2;
+}
+
+interface SignatureHelpState {
+  help: SignatureHelp;
+  pos: number;
+}
+
+/**
+ * Builds a CodeMirror extension that shows a signature-help tooltip while the
+ * cursor sits inside a function call. The provider owns language-specific
+ * detection; this extension owns the state tracking and tooltip rendering.
+ */
+export function signatureHelp(provider: SignatureHelpProvider, options: SignatureHelpOptions = {}): Extension {
+  const field = StateField.define<SignatureHelpState | null>({
+    create(state) {
+      const pos = state.selection.main.head;
+      const help = provider(state, pos);
+      return help ? { help, pos } : null;
+    },
+    update(value, tr) {
+      // Only recompute when the document or selection changes; other transactions
+      // (for example focus or config changes) leave the signature untouched.
+      if (!tr.docChanged && !tr.selection) {
+        return value;
+      }
+
+      const pos = tr.state.selection.main.head;
+      const help = provider(tr.state, pos);
+      return help ? { help, pos } : null;
+    },
+    provide: (stateField) =>
+      showTooltip.from(stateField, (value) => (value ? createSignatureTooltip(value.help, value.pos) : null)),
+  });
+
+  const extensions: Extension[] = [field, baseTheme];
+
+  if (options.theme) {
+    extensions.push(getSignatureHelpTheme(options.theme));
+  }
+
+  return extensions;
+}
+
+function createSignatureTooltip(help: SignatureHelp, pos: number): Tooltip {
+  const signature = help.signatures[help.activeSignature] ?? help.signatures[0];
+
+  return {
+    pos,
+    above: true,
+    strictSide: false,
+    create() {
+      const dom = document.createElement('div');
+      dom.className = 'cm-signature-help';
+      dom.appendChild(renderSignature(signature, help.activeParameter));
+
+      if (signature.documentation) {
+        const doc = document.createElement('div');
+        doc.className = 'cm-signature-help-doc';
+        doc.textContent = signature.documentation;
+        dom.appendChild(doc);
+      }
+
+      return { dom };
+    },
+  };
+}
+
+function renderSignature(signature: SignatureInformation, activeParameter: number): HTMLElement {
+  const container = document.createElement('div');
+  container.className = 'cm-signature-help-label';
+
+  const { parameters } = signature;
+
+  // When we have structured parameters, render each so the active one can be
+  // emphasized. Fall back to the raw label otherwise.
+  if (parameters.length === 0) {
+    container.textContent = signature.label;
+    return container;
+  }
+
+  const name = getSignatureName(signature.label);
+  container.appendChild(document.createTextNode(`${name}(`));
+
+  parameters.forEach((parameter, index) => {
+    if (index > 0) {
+      container.appendChild(document.createTextNode(', '));
+    }
+
+    const paramEl = document.createElement('span');
+    paramEl.textContent = parameter.label;
+
+    if (index === activeParameter) {
+      paramEl.className = 'cm-signature-help-active-param';
+    }
+
+    container.appendChild(paramEl);
+  });
+
+  container.appendChild(document.createTextNode(')'));
+
+  const returnType = getSignatureReturnType(signature.label);
+  if (returnType) {
+    container.appendChild(document.createTextNode(`: ${returnType}`));
+  }
+
+  return container;
+}
+
+/**
+ * Extracts the function name from a label like `round(value, decimals): number`.
+ */
+function getSignatureName(label: string): string {
+  const parenIndex = label.indexOf('(');
+  return parenIndex === -1 ? label : label.slice(0, parenIndex);
+}
+
+/**
+ * Extracts the return type from a label like `round(value, decimals): number`.
+ */
+function getSignatureReturnType(label: string): string | undefined {
+  const closingParenIndex = label.lastIndexOf(')');
+  if (closingParenIndex === -1) {
+    return undefined;
+  }
+
+  const afterParen = label.slice(closingParenIndex + 1);
+  const colonIndex = afterParen.indexOf(':');
+  if (colonIndex === -1) {
+    return undefined;
+  }
+
+  const returnType = afterParen.slice(colonIndex + 1).trim();
+  return returnType || undefined;
+}
+
+// Structural styles that apply regardless of theme. Colors are layered on top by
+// getSignatureHelpTheme when a Grafana theme is provided.
+const baseTheme = EditorView.baseTheme({
+  '.cm-tooltip.cm-signature-help': {
+    padding: '6px 10px',
+    maxWidth: '480px',
+    borderRadius: '2px',
+  },
+  '.cm-signature-help-label': {
+    fontFamily: 'monospace',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  },
+  '.cm-signature-help-active-param': {
+    fontWeight: 'bold',
+  },
+  '.cm-signature-help-doc': {
+    marginTop: '6px',
+    paddingTop: '6px',
+    borderTop: '1px solid rgba(127, 127, 127, 0.3)',
+  },
+});
+
+/**
+ * Applies Grafana theme tokens to the tooltip so it matches the surrounding UI
+ * in both light and dark modes, VSCode signature-help style.
+ */
+function getSignatureHelpTheme(theme: GrafanaTheme2): Extension {
+  return EditorView.theme({
+    '.cm-tooltip.cm-signature-help': {
+      padding: theme.spacing(0.75, 1.25),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.elevated,
+      color: theme.colors.text.primary,
+      boxShadow: theme.shadows.z2,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+    '.cm-signature-help-label': {
+      fontFamily: theme.typography.fontFamilyMonospace,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+    },
+    '.cm-signature-help-active-param': {
+      color: theme.colors.primary.text,
+      fontWeight: theme.typography.fontWeightBold,
+    },
+    '.cm-signature-help-doc': {
+      marginTop: theme.spacing(0.75),
+      paddingTop: theme.spacing(0.75),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+    },
+  });
+}
