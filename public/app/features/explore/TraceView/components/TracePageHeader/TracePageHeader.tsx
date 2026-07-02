@@ -326,6 +326,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
               <span
+                data-meticulous-ignore
                 className={cx(
                   styles.metadataValue,
                   css({
