@@ -8,7 +8,7 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { type LegendProps, SeriesVisibilityChangeBehavior, type VizLegendItem } from './types';
+import { SeriesVisibilityChangeBehavior, type VizLegendProps, type VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
@@ -24,8 +24,6 @@ export function VizLegend<T>({
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,
-  onLabelClick,
-  onToggleSort,
   placement,
   className,
   itemRenderer,
@@ -34,7 +32,7 @@ export function VizLegend<T>({
   limit,
   filterAction,
   overflow,
-}: LegendProps<T>) {
+}: VizLegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
   const onMouseOver = useCallback(
@@ -75,9 +73,6 @@ export function VizLegend<T>({
 
   const onLegendLabelClick = useCallback(
     (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      if (onLabelClick) {
-        onLabelClick(item, event);
-      }
       if (onToggleSeriesVisibility) {
         onToggleSeriesVisibility(
           item.fieldName ?? item.label,
@@ -87,7 +82,7 @@ export function VizLegend<T>({
         );
       }
     },
-    [onToggleSeriesVisibility, onLabelClick, seriesVisibilityChangeBehavior]
+    [onToggleSeriesVisibility, seriesVisibilityChangeBehavior]
   );
 
   const makeVizLegendList = useCallback(
@@ -120,7 +115,7 @@ export function VizLegend<T>({
           sortBy={sortKey}
           sortDesc={sortDesc}
           onLabelClick={onLegendLabelClick}
-          onToggleSort={onToggleSort || onToggleLegendSort}
+          onToggleSort={onToggleLegendSort}
           onLabelMouseOver={onMouseOver}
           onLabelMouseOut={onMouseOut}
           itemRenderer={itemRenderer}

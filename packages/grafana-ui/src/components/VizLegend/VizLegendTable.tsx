@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
 import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -104,7 +105,7 @@ export const VizLegendTable = <T extends unknown>({
   return (
     <>
       <table
-        className={cx(styles.grid, className)}
+        className={clsx(styles.grid, className)}
         style={{
           gridTemplateColumns: `min-content minmax(55px, auto) ${'min-content '.repeat(Object.keys(header).length - 1)}`,
         }}
@@ -121,16 +122,15 @@ export const VizLegendTable = <T extends unknown>({
                 {...(sortKey === columnTitle ? { 'aria-sort': sortDesc ? 'descending' : 'ascending' } : null)}
                 title={header[columnTitle]}
                 key={columnTitle}
-                className={cx({
-                  [styles.headerSortable]: Boolean(onToggleSort),
-                  [styles.nameHeader]: isSortable,
+                className={clsx({
+                  [styles.headerSortable]: isSortable,
                   [styles.calcHeader]: i > 0,
                   [styles.withIcon]: sortKey === columnTitle,
                   'sr-only': !isSortable,
                 })}
                 onClick={() => {
-                  if (onToggleSort && isSortable) {
-                    onToggleSort(columnTitle);
+                  if (isSortable) {
+                    onToggleSort?.(columnTitle);
                   }
                 }}
               >
@@ -167,9 +167,6 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
 
     color: theme.colors.primary.text,
   }),
-  nameHeader: css({
-    textAlign: 'left',
-  }),
   calcHeader: css({
     textAlign: 'right',
   }),
@@ -178,6 +175,8 @@ const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') 
   }),
   headerSortable: css({
     cursor: 'pointer',
+    textAlign: 'left',
+    paddingLeft: '30px',
   }),
   filterAction: css({
     marginLeft: theme.spacing(0.5),

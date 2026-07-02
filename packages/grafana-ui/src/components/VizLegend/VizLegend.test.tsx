@@ -147,23 +147,6 @@ describe('VizLegend', () => {
       await userEvent.click(legendButton());
       expect(onToggleSeriesVisibility).toHaveBeenCalledWith('field', expect.any(String));
     });
-
-    it('calls both onLabelClick and onToggleSeriesVisibility', async () => {
-      const onLabelClick = jest.fn();
-      const onToggleSeriesVisibility = jest.fn();
-      renderWithContext(
-        <VizLegend
-          displayMode={LegendDisplayMode.List}
-          items={[makeItem('A')]}
-          placement="bottom"
-          onLabelClick={onLabelClick}
-        />,
-        { onToggleSeriesVisibility }
-      );
-      await userEvent.click(legendButton());
-      expect(onLabelClick).toHaveBeenCalledTimes(1);
-      expect(onToggleSeriesVisibility).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('hover events', () => {
@@ -189,22 +172,7 @@ describe('VizLegend', () => {
   describe('table mode sorting', () => {
     const tableItem = makeItem('A', { getDisplayValues: () => [{ numeric: 1, text: '1', title: 'min' }] });
 
-    it('calls onToggleSort prop when provided', async () => {
-      const onToggleSort = jest.fn();
-      renderWithContext(
-        <VizLegend
-          displayMode={LegendDisplayMode.Table}
-          items={[tableItem]}
-          placement="bottom"
-          onToggleSort={onToggleSort}
-          isSortable
-        />
-      );
-      await userEvent.click(screen.getByText('min'));
-      expect(onToggleSort).toHaveBeenCalledWith('min');
-    });
-
-    it('calls onToggleLegendSort from context when onToggleSort prop is not provided', async () => {
+    it('calls onToggleLegendSort from context on sort click', async () => {
       const onToggleLegendSort = jest.fn();
       renderWithContext(
         <VizLegend displayMode={LegendDisplayMode.Table} items={[tableItem]} placement="bottom" isSortable />,
