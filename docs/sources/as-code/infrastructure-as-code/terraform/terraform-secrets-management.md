@@ -46,7 +46,6 @@ You also need the following tools at the minimum supported versions:
 
 | Tool                                 | Minimum version                                                                                                               |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Grafana                              | Grafana Cloud                                                                                                                 |
 | Terraform CLI                        | 1.11, for [write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) |
 | `grafana/grafana` Terraform provider | 4.26.0                                                                                                                        |
 
@@ -123,7 +122,7 @@ You can also use a secrets manager or a `terraform.tfvars` file.
 Don't set variables in a file that you commit.
 
 For other authentication options, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
-For end-to-end stack management, refer to [Manage a Grafana Cloud stack with Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/terraform-cloud-stack/).
+For end-to-end stack management, refer to [Create and manage a Grafana Cloud stack using Terraform](../terraform-cloud-stack/).
 
 ## Define a secure value
 
@@ -382,7 +381,10 @@ Keep the following points in mind when you rotate secure values:
 
 ### Handle the secret value safely
 
+{{< admonition type="warning" >}}
 Never check plaintext secret values into Terraform configuration.
+{{< /admonition >}}
+
 Instead, use one of the following approaches:
 
 - A `sensitive` or `ephemeral` Terraform variable populated from a `TF_VAR_*` environment variable.
