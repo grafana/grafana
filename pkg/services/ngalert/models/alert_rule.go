@@ -411,6 +411,11 @@ type PrometheusStyleRule struct {
 	// datasource UID (empty for manual convert-API imports), giving the worker a
 	// server-side ownership marker so it prunes only the rules it owns. It lives
 	// in metadata so it never reaches the data plane or the Prometheus definition.
+	//
+	// TODO: once a legacy backing field exists, this ownership marker could be
+	// expressed via the platform's manager metadata (grafana.app managed-by)
+	// instead of a bespoke field, which is the more idiomatic way to mark
+	// platform-managed resources.
 	SourceIdentifier string `json:"source_identifier,omitempty"`
 }
 
