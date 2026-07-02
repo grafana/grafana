@@ -722,6 +722,8 @@ require (
 	github.com/nats-io/nats.go v1.52.0 // @grafana/grafana-search-and-storage
 )
 
+require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
+
 require (
 	github.com/antithesishq/antithesis-sdk-go v0.7.0-default-no-op // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
