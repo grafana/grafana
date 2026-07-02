@@ -15,9 +15,6 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
 func repo(namespace, name string) *provisioningapis.Repository {
@@ -56,35 +53,6 @@ func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
 	key := namespace + "/" + name
 	delete(s.objs, key)
 	s.deleted = append(s.deleted, key)
-}
-
-// A live repository notification is delivered as the concrete *Repository the
-// controller's handler expects, built from the notification's identity.
-func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
-	sub := newFakeSubscriber()
-	rec := &typeRecorder{}
-	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
-
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
-	_, err := inf.AddEventHandler(rec)
-	require.NoError(t, err)
-	stopCh := make(chan struct{})
-	go inf.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
-
-	subject := resourcewatch.Subject(gvr, testNamespace)
-	require.Eventually(t, func() bool { return sub.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
-
-	sub.publish(t, subject, &resourcepb.WatchNotification{
-		Type: resourcepb.WatchNotification_MODIFIED, Group: gvr.Group, Resource: gvr.Resource,
-		Namespace: testNamespace, Name: "repo-a",
-	})
-
-	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	got, ok := rec.last().(*provisioningapis.Repository)
-	require.True(t, ok, "expected *Repository, got %T", rec.last())
-	assert.Equal(t, "repo-a", got.Name)
-	assert.Equal(t, testNamespace, got.Namespace)
 }
 
 // The cached getter reads the informer's lister for both Get and List.

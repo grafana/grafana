@@ -25,23 +25,16 @@ func NewHistoricJobDeltaSource(subscriber nats.Subscriber, client versioned.Inte
 	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
 }
 
-// NewHistoricJobInformer builds an Informer for historic jobs. It passes a nil
-// object builder, so it is driven only by the periodic re-list of full objects:
-// the cleanup handler reads each job's creation timestamp directly (it does not
-// re-fetch), so a minimal live-event object would make it act on a job that has
-// no age. Cleanup is resync-driven anyway, so live notifications add nothing.
+// NewHistoricJobInformer builds an Informer for historic jobs. It disables live
+// notifications (liveObjects=false), so it is driven only by the periodic re-list
+// of full objects: the cleanup handler reads each job's creation timestamp
+// directly (it does not re-fetch), so a minimal live-event object would make it
+// act on a job that has no age. Cleanup is resync-driven anyway, so live
+// notifications add nothing.
 func NewHistoricJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
-	}
-	return usinformer.NewInformer(subscriber, provisioningapis.HistoricJobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, nil, list)
+	return newDeltaSourceInformer(subscriber, provisioningapis.HistoricJobResourceInfo, namespace, resync, store, false,
+		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
+			return c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})
+		}))
 }

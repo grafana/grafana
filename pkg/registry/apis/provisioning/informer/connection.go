@@ -38,47 +38,28 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 // NewConnectionInformer builds an Informer for connections.
 func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
-	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
-	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.Connections(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
-	}
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	return newDeltaSourceInformer(subscriber, provisioningapis.ConnectionResourceInfo, namespace, resync, store, true,
+		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
+			return c.Connections(namespace).List(ctx, metav1.ListOptions{})
+		}))
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's
 // generated lister, i.e. the informer's local cache.
 func NewCachedConnectionGetter(lister listers.ConnectionLister) ConnectionGetter {
-	return cachedConnectionGetter{lister: lister}
-}
-
-type cachedConnectionGetter struct {
-	lister listers.ConnectionLister
-}
-
-func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.lister.Connections(namespace).Get(name)
+	return typedGetter[*provisioningapis.Connection]{
+		get: func(_ context.Context, namespace, name string) (*provisioningapis.Connection, error) {
+			return lister.Connections(namespace).Get(name)
+		},
+	}
 }
 
 // NewClientConnectionGetter backs a ConnectionGetter with the API client, for
 // the NATS watch where there is no informer cache to serve a fresh reconcile read.
 func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface) ConnectionGetter {
-	return clientConnectionGetter{client: c}
-}
-
-type clientConnectionGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-}
-
-func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+	return typedGetter[*provisioningapis.Connection]{
+		get: func(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
+			return c.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+		},
+	}
 }

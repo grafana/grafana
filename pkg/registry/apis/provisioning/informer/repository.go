@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,39 +46,23 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 // NewRepositoryInformer builds an Informer for repositories.
 func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
-	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
-	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.Repositories(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
-	}
-	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	return newDeltaSourceInformer(subscriber, provisioningapis.RepositoryResourceInfo, namespace, resync, store, true,
+		typedListFunc(func(ctx context.Context) (runtime.Object, error) {
+			return c.Repositories(namespace).List(ctx, metav1.ListOptions{})
+		}))
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
 // generated lister, i.e. the informer's local cache.
 func NewCachedRepositoryGetter(lister listers.RepositoryLister) RepositoryGetter {
-	return cachedRepositoryGetter{lister: lister}
-}
-
-type cachedRepositoryGetter struct {
-	lister listers.RepositoryLister
-}
-
-func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	return g.lister.Repositories(namespace).Get(name)
-}
-
-func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*provisioningapis.Repository, error) {
-	return g.lister.Repositories(namespace).List(labels.Everything())
+	return typedGetter[*provisioningapis.Repository]{
+		get: func(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+			return lister.Repositories(namespace).Get(name)
+		},
+		list: func(_ context.Context, namespace string) ([]*provisioningapis.Repository, error) {
+			return lister.Repositories(namespace).List(labels.Everything())
+		},
+	}
 }
 
 // NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
@@ -90,35 +73,10 @@ func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*pr
 // written back into the store (or removed on NotFound), keeping the count warm
 // between re-lists rather than only as fresh as the last resync.
 func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
-	return clientGetCachedListRepositoryGetter{client: c, store: store}
-}
-
-type clientGetCachedListRepositoryGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-	store  usinformer.Cache
-}
-
-func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		g.store.Delete(ctx, namespace, name)
-		return nil, err
+	return typedGetter[*provisioningapis.Repository]{
+		get: func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+			return c.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+		},
+		store: store,
 	}
-	if err != nil {
-		return nil, err
-	}
-	g.store.Update(ctx, repo)
-	return repo, nil
-}
-
-func (g clientGetCachedListRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error) {
-	var out []*provisioningapis.Repository
-	for _, obj := range g.store.List(ctx) {
-		repo, ok := obj.(*provisioningapis.Repository)
-		if !ok || repo.Namespace != namespace {
-			continue
-		}
-		out = append(out, repo)
-	}
-	return out, nil
 }

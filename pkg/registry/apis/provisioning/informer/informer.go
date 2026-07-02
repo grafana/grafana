@@ -18,9 +18,12 @@ type DeltaSource interface {
 // notification is round-robined to a single replica rather than broadcast to all.
 const queueGroup = "provisioning-informer"
 
-// The per-resource constructors (one per type file) bind LIST to that resource's
-// typed client and build the minimal live-event object as the resource's concrete
-// type, so the controller's event handler keys off the right type. namespace
-// scopes the NATS subscription and the LIST; pass "" to watch every namespace.
-// Each type file also has a New<Type>DeltaSource selector that picks a
-// NATS-backed informer when nats.Enabled(subscriber), else an apiserver-backed one.
+// The per-resource constructors (one per type file) are thin: each binds LIST to
+// its resource's typed client and hands its ResourceInfo to the shared
+// newDeltaSourceInformer (see generic.go), which derives the GVR and builds the
+// minimal live-event object from that ResourceInfo's concrete type — so the
+// controller's event handler keys off the right type without a hand-written
+// object builder or []runtime.Object copy loop per kind. namespace scopes the
+// NATS subscription and the LIST; pass "" to watch every namespace. Each type
+// file also has a New<Type>DeltaSource selector that picks a NATS-backed informer
+// when nats.Enabled(subscriber), else an apiserver-backed one.
