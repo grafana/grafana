@@ -2,12 +2,16 @@
 
 const { AutoComplete } = require('enquirer');
 const cp = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const open = require('open').default;
 const { hideBin } = require('yargs/helpers');
 const yargs = require('yargs/yargs');
 
-const { getCodeowners } = require('./codeowners-manifest/utils.js');
+const { getCodeowners, buildCodeownerDirectoryPath } = require('./codeowners-manifest/utils.js');
 
 const JEST_CONFIG_PATH = 'jest.config.codeowner.js';
+const COVERAGE_SUMMARY_OUTPUT_PATH = './coverage-summary.json';
 
 async function promptCodeownerName() {
   const teams = await getCodeowners();
@@ -44,14 +48,90 @@ async function runTestCoverageByCodeowner(codeownerName, noOpen = process.env.CI
       reject(new Error(`Failed to start Jest: ${error.message}`));
     });
 
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
+    child.on('close', async (code) => {
+      if (code !== 0) {
         reject(new Error(`Jest exited with code ${code}`));
+        return;
       }
+
+      try {
+        writeCoverageSummaryArtifact(codeownerName);
+        await maybeOpenCoverageReport(codeownerName, noOpen);
+      } catch (err) {
+        console.error(`Post-run coverage processing failed: ${err}`);
+      }
+
+      resolve();
     });
   });
+}
+
+/**
+ * Reads the istanbul json-summary Jest wrote to the team's coverage dir and rewrites it into the
+ * per-team summary artifact consumed by compare-coverage-by-codeowner.js and grafana-bench.
+ * @param {string} codeownerName
+ */
+function writeCoverageSummaryArtifact(codeownerName) {
+  const outputDir = path.join('./coverage/by-team', buildCodeownerDirectoryPath(codeownerName));
+  const istanbulSummaryPath = path.join(outputDir, 'coverage-summary.json');
+
+  if (!fs.existsSync(istanbulSummaryPath)) {
+    console.error(`Coverage summary not found at ${istanbulSummaryPath}`);
+    return;
+  }
+
+  const istanbulSummary = JSON.parse(fs.readFileSync(istanbulSummaryPath, 'utf8'));
+  const pctOnly = (metrics) => ({
+    lines: { pct: metrics.lines.pct },
+    statements: { pct: metrics.statements.pct },
+    functions: { pct: metrics.functions.pct },
+    branches: { pct: metrics.branches.pct },
+  });
+
+  const files = {};
+  for (const [filePath, metrics] of Object.entries(istanbulSummary)) {
+    if (filePath === 'total') {
+      continue;
+    }
+    const relativePath = filePath.replace(process.cwd() + '/', '');
+    files[relativePath] = pctOnly(metrics);
+  }
+
+  const summary = {
+    team: codeownerName,
+    commit: process.env.GITHUB_SHA || 'unknown',
+    timestamp: new Date().toISOString(),
+    summary: pctOnly(istanbulSummary.total),
+    files,
+  };
+
+  try {
+    fs.writeFileSync(COVERAGE_SUMMARY_OUTPUT_PATH, JSON.stringify(summary, null, 2));
+    console.log(`📊 Coverage summary written to ${COVERAGE_SUMMARY_OUTPUT_PATH}`);
+  } catch (err) {
+    console.error(`Failed to write coverage summary: ${err}`);
+  }
+}
+
+/**
+ * Logs the HTML report location and opens it in the default browser unless disabled.
+ * @param {string} codeownerName
+ * @param {boolean} noOpen
+ */
+async function maybeOpenCoverageReport(codeownerName, noOpen) {
+  const outputDir = path.join('./coverage/by-team', buildCodeownerDirectoryPath(codeownerName));
+  const reportURL = `file://${path.resolve(outputDir)}/html/index.html`;
+  console.log(`📄 Coverage report saved to ${reportURL}`);
+
+  if (noOpen) {
+    return;
+  }
+
+  try {
+    await open(reportURL);
+  } catch (err) {
+    console.error(`Failed to open coverage report: ${err}`);
+  }
 }
 
 if (require.main === module) {

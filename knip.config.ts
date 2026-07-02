@@ -53,9 +53,6 @@ const config: KnipConfig = {
         // used by yarn test:ci
         'jest-junit',
 
-        // used by coverage script, see jest.config.codeowner.js
-        'jest-monocart-coverage',
-
         // needed by github actions
         '@grafana/levitate',
         'wait-on',
