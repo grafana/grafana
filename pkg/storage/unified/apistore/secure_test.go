@@ -371,30 +371,10 @@ func TestSecureLifecycle(t *testing.T) {
 		err = handleSecureValuesDelete(context.Background(), nil, objWithCreateSecret)
 		require.Error(t, err, "should error when secure value storage is not configured")
 	})
-}
 
-type conflictOnceClient struct {
-	resource.ResourceClient
-	prev    []byte
-	updates int
-}
-
-func (c *conflictOnceClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	return &resourcepb.ReadResponse{Value: c.prev, ResourceVersion: 1}, nil
-}
-
-func (c *conflictOnceClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
-	c.updates++
-	if c.updates == 1 {
-		return &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict}}, nil
-	}
-	return &resourcepb.UpdateResponse{ResourceVersion: 2}, nil
-}
-
-func TestGuaranteedUpdate(t *testing.T) {
 	// A conflicting update attempt already persisted an inline secure value; it must
 	// be deleted before we retry, otherwise every retry leaks an orphaned secret.
-	t.Run("cleans up secure values created on a conflicting attempt", func(t *testing.T) {
+	t.Run("guaranteed update cleans up secure values created on a conflicting attempt", func(t *testing.T) {
 		prev := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "example.grafana.app/v1",
 			"kind":       "Example",
@@ -439,6 +419,24 @@ func TestGuaranteedUpdate(t *testing.T) {
 		require.NoError(t, err)
 		secureStore.AssertExpectations(t)
 	})
+}
+
+type conflictOnceClient struct {
+	resource.ResourceClient
+	prev    []byte
+	updates int
+}
+
+func (c *conflictOnceClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return &resourcepb.ReadResponse{Value: c.prev, ResourceVersion: 1}, nil
+}
+
+func (c *conflictOnceClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	c.updates++
+	if c.updates == 1 {
+		return &resourcepb.UpdateResponse{Error: &resourcepb.ErrorResult{Code: http.StatusConflict}}, nil
+	}
+	return &resourcepb.UpdateResponse{ResourceVersion: 2}, nil
 }
 
 func asJSON(v any, pretty bool) string {
