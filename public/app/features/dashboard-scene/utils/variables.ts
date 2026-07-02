@@ -104,8 +104,15 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
+  const blockDependentsOnError = Boolean(config.featureToggles.dashboardVariablesBlockOnError);
+
   return new SceneVariableSet({
     variables: [...defaultVariableObjects, ...variableObjects],
+    blockDependentsOnError,
+    // Most datasources (e.g. Prometheus label_values) swallow a failed request and resolve the
+    // variable to an empty value rather than an error, so empty must be treated as an error for
+    // the block-on-error behavior to cover the common failure case.
+    treatEmptyAsError: blockDependentsOnError,
   });
 }
 
