@@ -61,12 +61,14 @@ A nested set model ensures each item of a flame graph is encoded by its nesting 
 
 Required fields:
 
-| Field name | Type   | Description                                                                                                                 |
-| ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| level      | number | The nesting level of the item. In other words how many items are between this item and the top item of the flame graph.     |
-| value      | number | The absolute or cumulative value of the item. This translates to the width of the item in the graph.                        |
-| label      | string | Label to be shown for the particular item.                                                                                  |
-| self       | number | Self value, which is usually the cumulative value of the item minus the sum of cumulative values of its immediate children. |
+| Field name | Type           | Description                                                                                                                 |
+| ---------- | -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| level      | number         | The nesting level of the item. In other words how many items are between this item and the top item of the flame graph.     |
+| value      | number         | The absolute or cumulative value of the item. This translates to the width of the item in the graph.                        |
+| label      | string or enum | Label to be shown for the particular item.                                                                                  |
+| self       | number         | Self value, which is usually the cumulative value of the item minus the sum of cumulative values of its immediate children. |
+
+Diff profiles can also include optional `valueRight` and `selfRight` fields. When present, the tooltip and top table show baseline, comparison, and diff values.
 
 ### Example
 
@@ -137,7 +139,7 @@ The status bar shows metadata about the flame graph and currently applied modifi
 
 ## Top table mode
 
-The top table shows the functions from the profile in table format. The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
+The top table shows the functions from the profile in table format. The table has three columns: **Symbol**, **Self**, and **Total**. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-toptable-v12.0.png" max-width="700px" alt="Table view">}}
 
@@ -153,7 +155,7 @@ The following table lists the features of the toolbar:
 | ------ | ----------- |
 | [Search](#search) | Use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions appear in gray. |
 | Reset | Reset the flame graph back to its original state from a focus block or sandwich view. The reset icon is only displayed when the flame graph is in one of those two states. |
-| [Color schema picker](#color-schema-picker) | Switch between coloring functions by their value or by their package name to visually tie functions from the same package together. |
+| [Change color scheme](#change-color-scheme) | Switch between **By value** and **By package name** to visually tie functions from the same package together. |
 | Grouping | Expand or collapse all groups to show all instances of a function or show the function grouped. |
 | Text align | Align text either to the left or to the right to show more important parts of the function name when it does not fit into the block. |
 | Visualization picker | Choose to show only the flame graph, only table, or both at the same time. |
@@ -166,9 +168,9 @@ You can use the search field to find functions with a particular name. All the f
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-search-v12.0.png" max-width="700px" alt="Searching for a function name in a flame graph visualization.">}}
 
-### Color schema picker
+### Change color scheme
 
-You can switch between coloring functions by their value or by their package name to visually tie functions from the same package together.
+You can switch between **By value** and **By package name** to visually tie functions from the same package together.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-color-v11.6.png" max-width="700px" alt="Different color scheme" >}}
 
