@@ -346,19 +346,21 @@ export const removePlugin = (pluginId: SupportedPlugin) => {
   server.use(getPluginMissingHandler(pluginId));
 };
 
-/** Make an additional plugin respond as installed and enabled */
+/** Make an additional plugin respond as installed and enabled. Returns the registered handler. */
 export const addPlugin = (pluginMeta: PluginMeta) => {
-  server.use(getSpecificPluginHandler(pluginMeta));
+  const handler = getSpecificPluginHandler(pluginMeta);
+  server.use(handler);
+  return handler;
 };
 
-/** Make a plugin settings request fail with a given HTTP status code (default 500) */
-export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
+/** Make a plugin settings request fail with a given HTTP status code (default 500). Returns the registered handler. */
+export const failPlugin = (pluginId: string, status = 500) => {
   invalidatePluginSettingsCache(pluginId);
-  server.use(
-    http.get(`/api/plugins/${pluginId}/settings`, () =>
-      HttpResponse.json({ message: 'Internal server error' }, { status })
-    )
+  const handler = http.get(`/api/plugins/${pluginId}/settings`, () =>
+    HttpResponse.json({ message: 'Internal server error' }, { status })
   );
+  server.use(handler);
+  return handler;
 };
 
 /** Get an error response for use in a API response, in the format:
