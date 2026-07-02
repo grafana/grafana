@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -77,6 +77,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                   >
                     <item.Component model={item} />
                     {conditionalRenderingOverlay}
+                    {isEditing && <DisabledResizeHandle styles={styles} />}
                   </LazyLoader>
                 ) : (
                   <div
@@ -90,6 +91,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                   >
                     <item.Component model={item} />
                     {conditionalRenderingOverlay}
+                    {isEditing && <DisabledResizeHandle styles={styles} />}
                   </div>
                 )
               }
@@ -141,6 +143,24 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   );
 }
 
+function DisabledResizeHandle({ styles }: { styles: ReturnType<typeof getStyles> }) {
+  return (
+    <Tooltip content="Panels cannot be resized in auto layout" placement="top">
+      <div className={styles.disabledResizeHandle} aria-label="Panels cannot be resized in auto layout">
+        <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M21 15L15 21M21 8L8 21"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+    </Tooltip>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({ width: '100%', height: '100%', position: 'relative' }),
   draggedWrapper: css({
@@ -170,5 +190,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  disabledResizeHandle: css({
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    zIndex: 999,
+    padding: theme.spacing(1.5, 0, 0, 1.5),
+    color: theme.colors.text.disabled,
+    cursor: 'not-allowed',
+    svg: {
+      display: 'block',
+    },
   }),
 });
