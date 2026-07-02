@@ -28,10 +28,11 @@ import {
   useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
@@ -295,6 +296,20 @@ export class AutoGridLayoutManager
   public editModeChanged(isEditing: boolean) {
     this.state.layout.setState({ isDraggable: isEditing });
     forceRenderChildren(this.state.layout, true);
+  }
+
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const edit = buildGroupEdit(items, target);
+
+    if (!edit) {
+      return;
+    }
+
+    dashboardEditActions.edit({ ...edit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

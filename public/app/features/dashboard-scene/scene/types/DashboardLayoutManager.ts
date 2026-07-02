@@ -95,8 +95,41 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Returns a list of all grid layout types contained within child tree
    */
   getAllGridTypes(): string[];
+
+  /**
+   * Whether the given multi-selection of this layout's direct children can be grouped into a new
+   * row or tab. Only implemented by layout managers that can group the children they hold (rows,
+   * tabs and grids); the shared grouping view dispatches through this instead of importing the
+   * concrete grouping logic, which keeps the edit-pane out of the layout-manager import cycle.
+   */
+  canGroupSelectionInto?(items: SceneObject[], target: GroupTarget): GroupingResult;
+
+  /**
+   * Groups the given multi-selection of this layout's direct children into a new row or tab as a
+   * single undo/redo entry. See {@link canGroupSelectionInto}.
+   */
+  groupSelectionInto?(items: SceneObject[], target: GroupTarget): void;
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
   return 'isDashboardLayoutManager' in obj;
+}
+
+export type GroupTarget = 'row' | 'tab';
+
+export interface GroupingResult {
+  enabled: boolean;
+  reason?: string;
+}
+
+/**
+ * A layout manager that knows how to group a multi-selection of its children. Used by the shared
+ * grouping view to stay decoupled from the concrete grouping implementation (which must construct
+ * concrete layout managers and therefore lives inside the layout-manager import cycle).
+ */
+export function isGroupableLayoutManager(
+  manager: DashboardLayoutManager
+): manager is DashboardLayoutManager &
+  Required<Pick<DashboardLayoutManager, 'canGroupSelectionInto' | 'groupSelectionInto'>> {
+  return typeof manager.canGroupSelectionInto === 'function' && typeof manager.groupSelectionInto === 'function';
 }

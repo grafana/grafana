@@ -5518,6 +5518,8 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -5596,6 +5598,14 @@
         "tabs": "Tabs",
         "variable": "{{type}} variable",
         "variable-set": "Variables"
+      },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "limit-reached": "Grouping is limited to 3 levels",
+        "tab-nesting": "Tabs cannot be nested inside other tabs",
+        "title": "Group"
       },
       "links": {
         "add-link": "Add link",

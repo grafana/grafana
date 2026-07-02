@@ -4,8 +4,8 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewTabTo } from '../../scene/layouts-shared/addNew';
+import { useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 

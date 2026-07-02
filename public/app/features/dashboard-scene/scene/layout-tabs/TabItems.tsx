@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { getGroupSelectedCategory } from '../layouts-shared/GroupSelectedActions';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 
 import { type TabItem } from './TabItem';
@@ -15,7 +16,7 @@ export class TabItems implements EditableDashboardElement {
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return [];
+    return [getGroupSelectedCategory(this.getTabs())];
   }
 
   public getTabs(): TabItem[] {
