@@ -28,13 +28,12 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -124,6 +123,16 @@ type BleveOptions struct {
 	// rebuild. Older siblings under the same resource still use
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
+
+	// PostRankAuthzFn returns whether the search_post_rank_authz config option
+	// is enabled. Evaluated per-search. When nil, the option is treated as
+	// disabled and the in-searcher permissionScopedQuery path is used.
+	PostRankAuthzFn func() bool
+
+	// PostRankAuthz tunes the post-filter authorization path used when
+	// PostRankAuthzFn returns true. Zero values fall back to the defaults in
+	// PostRankAuthzConfig.effective().
+	PostRankAuthz PostRankAuthzConfig
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -1623,6 +1632,11 @@ type bleveIndex struct {
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
+
+	// postRankAuthzFn returns whether the post-ranking authz path is enabled.
+	// nil / false falls back to the in-searcher permissionScopedQuery path.
+	postRankAuthzFn func() bool
+	postRankAuthz   PostRankAuthzConfig
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1646,6 +1660,8 @@ func (b *bleveBackend) newBleveIndex(
 		updaterFn:         updaterFn,
 		minUpdateInterval: b.opts.IndexMinUpdateInterval,
 		indexMetrics:      b.indexMetrics,
+		postRankAuthzFn:   b.opts.PostRankAuthzFn,
+		postRankAuthz:     b.opts.PostRankAuthz.effective(),
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1987,25 +2003,28 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	// postFilter is purely flag-gated: when on, every search with an access
+	// client ranks in bleve and authorizes app-side. TotalHits is the unfiltered
+	// match count (by design — fast over exact totals); pure count-only queries
+	// (Limit==0, no facets) return that unfiltered total too.
+	postRank := b.postRankAuthzFn != nil && b.postRankAuthzFn() && access != nil
+
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank)
 	if e != nil {
 		response.Error = e
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected.
-	// Individual field names tell bleve which stored values to load.
-	// The sentinel triggers hitsToTable to use the curated allFields column list.
-	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
-		f, err := b.index.Fields()
-		if err != nil {
-			return nil, err
-		}
-		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+	if err := b.ensureSearchFields(searchrequest, req); err != nil {
+		return nil, err
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
+
+	if postRank {
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, stats, response)
+	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
@@ -2020,7 +2039,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, searchrequest.Sort, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -2111,7 +2130,7 @@ func (b *bleveIndex) getIndex(
 }
 
 // nolint:gocyclo
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
@@ -2141,10 +2160,22 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, resource.AsErrorResult(err)
 	}
 
+	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
+	// authorization (and offset/facet aggregation) happen afterward in
+	// bleveIndex.Search. The first window is sized via scanWindowSize (adaptive
+	// for page-fill, fixed for facets) and paged with SearchAfter. From/offset
+	// are applied app-side (over authorized hits), so bleve always starts at 0.
+	reqSize := size
+	reqFrom := offset
+	if postRankAuthz {
+		reqSize = b.postRankAuthz.scanWindowSize(size, offset, 0, len(req.Facet) > 0)
+		reqFrom = 0
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    size,
-		From:    offset,
+		Size:    reqSize,
+		From:    reqFrom,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -2311,35 +2342,28 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
 	}
 
-	if access != nil {
-		verb := utils.VerbGet
-		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-			verb = utils.VerbUpdate
-		}
-
-		// Build resource -> verb mapping for batch authorization
-		resources := map[string]string{
-			b.key.Resource: verb,
-		}
-
-		// Handle federation
-		for _, federated := range req.Federated {
-			resources[federated.Resource] = utils.VerbGet
-		}
-
+	// postFilter applies authorization after ranking in runPostFilterAuthz, so
+	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
+	if access != nil && !postRankAuthz {
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
 			access:    access,
 			namespace: b.key.Namespace,
 			group:     b.key.Group,
-			resources: resources,
+			resources: b.authzResources(req),
 		})
 	}
 
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
+	// postFilter aggregates facets app-side over authorized hits; bleve's facets
+	// would run over the unfiltered searcher and count unauthorized docs.
+	if postRankAuthz {
+		searchrequest.Facets = nil
+	} else {
+		for k, v := range req.Facet {
+			if searchrequest.Facets == nil {
+				searchrequest.Facets = make(bleve.FacetsRequest)
+			}
+			searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
 	// Add the sort fields
@@ -2357,6 +2381,27 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Field: resource.SEARCH_FIELD_TITLE_PHRASE,
 				Desc:  false,
 			})
+		}
+	}
+
+	if postRankAuthz {
+		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
+		// {namespace}/{group}/{resource}/{name} is globally unique across a
+		// federated alias (dashboards + folders differ by the resource segment),
+		// so this guarantees no skips/dupes over the merged result set.
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
+
+		// Ensure bleve loads the folder (to authorize) and facet fields (to
+		// aggregate app-side) regardless of the caller's requested field set.
+		needed := []string{resource.SEARCH_FIELD_FOLDER}
+		for _, f := range req.Facet {
+			needed = append(needed, f.Field)
+		}
+		for _, f := range needed {
+			if !slices.Contains(searchrequest.Fields, f) &&
+				!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+				searchrequest.Fields = append(searchrequest.Fields, f)
+			}
 		}
 	}
 
@@ -2824,7 +2869,48 @@ func filterValue(field string, v string) string {
 	return v
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
+// hitSortFields builds bleve SearchAfter / SearchBefore cursor values for a hit.
+// hit.Sort uses sentinel placeholders (_score); bleve pagination expects decoded
+// values (numeric score, doc ID, decoded field values).
+func hitSortFields(hit *search.DocumentMatch, sort search.SortOrder) []string {
+	if hit == nil {
+		return nil
+	}
+	if len(sort) > 0 {
+		fields := make([]string, len(sort))
+		for i, ss := range sort {
+			switch ss.(type) {
+			case *search.SortScore:
+				fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+			case *search.SortDocID:
+				fields[i] = hit.ID
+			default:
+				if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+					fields[i] = hit.DecodedSort[i]
+				} else if i < len(hit.Sort) {
+					fields[i] = hit.Sort[i]
+				}
+			}
+		}
+		return fields
+	}
+	if len(hit.Sort) == 0 {
+		return nil
+	}
+	fields := make([]string, len(hit.Sort))
+	for i, v := range hit.Sort {
+		if v == "_score" {
+			fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+		} else if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+			fields[i] = hit.DecodedSort[i]
+		} else {
+			fields[i] = v
+		}
+	}
+	return fields
+}
+
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, sort search.SortOrder, explain bool) (*resourcepb.ResourceTable, error) {
 	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
 	defer span.End()
 
@@ -2873,7 +2959,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 		row := &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{},
 			Cells:      make([][]byte, len(fields)),
-			SortFields: match.Sort,
+			SortFields: hitSortFields(match, sort),
 		}
 		table.Rows[rowID] = row
 
@@ -3038,6 +3124,12 @@ type batchAuthzSearcher struct {
 	resources   map[string]string // resource -> verb mapping
 	log         log.Logger
 
+	// Traces the authz-filtered scan and records how many candidate documents
+	// were considered vs. how many survived authorization. Ended in Close.
+	span       trace.Span
+	candidates atomic.Int64
+	authorized atomic.Int64
+
 	// Pull iterator state (lazily initialized)
 	searchCtx *search.SearchContext
 	next      func() (docInfo, error, bool)
@@ -3055,8 +3147,14 @@ func newBatchAuthzSearcher(
 	resources map[string]string,
 	logger log.Logger,
 ) *batchAuthzSearcher {
+	ctx, span := tracer.Start(ctx, "search.batchAuthzSearcher", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("group", group),
+	))
+
 	return &batchAuthzSearcher{
 		ctx:         ctx,
+		span:        span,
 		searcher:    searcher,
 		indexReader: indexReader,
 		dvReader:    dvReader,
@@ -3105,6 +3203,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 			if !ok {
 				continue // Skip invalid documents
 			}
+			s.candidates.Add(1)
 
 			if !yield(info) {
 				return
@@ -3123,10 +3222,20 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn)
+	// WithTracer makes FilterAuthorized emit a span around the batched
+	// BatchCheck loop, so the authz phase is visible as a child of this
+	// searcher's span instead of an opaque gap.
+	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn, authz.WithTracer(tracer))
 
 	s.next, s.stop = iter.Pull2(func(yield func(docInfo, error) bool) {
-		authzIter(yield)
+		for item, err := range authzIter {
+			if err == nil {
+				s.authorized.Add(1)
+			}
+			if !yield(item, err) {
+				return
+			}
+		}
 		if iterErr != nil {
 			var zero docInfo
 			yield(zero, iterErr)
@@ -3197,6 +3306,13 @@ func (s *batchAuthzSearcher) Advance(searchCtx *search.SearchContext, ID index.I
 func (s *batchAuthzSearcher) Close() error {
 	if s.stop != nil {
 		s.stop()
+	}
+	if s.span != nil {
+		s.span.SetAttributes(
+			attribute.Int64("search.candidates", s.candidates.Load()),
+			attribute.Int64("search.authorized", s.authorized.Load()),
+		)
+		s.span.End()
 	}
 	return s.searcher.Close()
 }

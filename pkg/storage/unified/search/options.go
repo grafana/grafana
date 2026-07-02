@@ -117,6 +117,9 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
+			PostRankAuthzFn: func() bool {
+				return cfg.SearchPostRankAuthz
+			},
 		}, indexMetrics)
 
 		if err != nil {
