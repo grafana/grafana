@@ -23,4 +23,5 @@ The following guides help you get started using Terraform to manage your Grafana
 - [Managing Frontend Observability in Grafana Cloud using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-frontend-observability/): Learn how to manage resources in Frontend Observability using Terraform.
 - [Manage Cloud Provider Observability in Grafana Cloud using Terraform](terraform-cloud-provider-o11y/): Learn how to manage Amazon CloudWatch and Microsoft Azure resources in Cloud Provider Observability using Terraform.
 - [Manage Knowledge Graph in Grafana Cloud using Terraform](terraform-knowledge-graph/): Learn how to create and manage notification alerts, suppressed assertions, custom model rules, log, trace, and profile configurations, threshold configurations, and Prometheus rules in Grafana Cloud Knowledge Graph using Terraform.
-- [Install plugins in Grafana Cloud using Terraform](terraform-plugins): Learn how to install plugins in Grafana Cloud using Terraform.
+- [Install plugins in Grafana Cloud using Terraform](terraform-plugins/): Learn how to install plugins in Grafana Cloud using Terraform.
+- [Use Terraform to provision secure values](terraform-secrets-management/): Learn how to create, rotate, and manage secure values in Grafana Secrets Management using Terraform.
