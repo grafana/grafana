@@ -5,6 +5,7 @@
       "resource": "dashboards",
       "name": "timeseries-formats",
       "title": "Panel Tests - Timeseries - Supported input formats",
+      "folder": "general",
       "field": {
         "panel_types": [
           "table",

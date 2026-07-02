@@ -10,6 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
+      "folder": "general",
       "score": 0.112,
       "explain": {
         "children": [
@@ -60,7 +61,7 @@
                                 "value": 2.485
                               }
                             ],
-                            "message": "fieldWeight(fields.panel_title:orange in <docID>), as per bm25 model, product of:",
+                            "message": "fieldWeight(fields.panel_title:orange in \u003cdocID\u003e), as per bm25 model, product of:",
                             "value": 1.108
                           }
                         ],

@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -258,7 +259,19 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
-	return obj, err
+	if err != nil {
+		return obj, err
+	}
+
+	// Replace empty folder with "general" on read
+	if s.opts.EnableFolderSupport {
+		m, _ := utils.MetaAccessor(obj)
+		if m != nil && m.GetFolder() == "" {
+			m.SetFolder(folder.GeneralFolderUID)
+		}
+	}
+
+	return obj, nil
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live

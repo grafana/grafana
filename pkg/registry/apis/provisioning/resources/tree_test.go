@@ -199,18 +199,18 @@ func TestFolderTree(t *testing.T) {
 
 	t.Run("remove cascades deep and across branches", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
-		tree.Add(Folder{ID: "root", Title: "Root", Path: "root/"}, "")
-		tree.Add(Folder{ID: "b", Title: "B", Path: "root/b/"}, "root")
-		tree.Add(Folder{ID: "c", Title: "C", Path: "root/b/c/"}, "b")
-		tree.Add(Folder{ID: "d", Title: "D", Path: "root/b/d/"}, "b")
-		tree.Add(Folder{ID: "e", Title: "E", Path: "root/e/"}, "root")
-		tree.Add(Folder{ID: "f", Title: "F", Path: "root/e/f/"}, "e")
-		tree.Add(Folder{ID: "g", Title: "G", Path: "root/e/g/"}, "e")
+		tree.Add(Folder{ID: "p", Title: "P", Path: "p/"}, "")
+		tree.Add(Folder{ID: "b", Title: "B", Path: "p/b/"}, "p")
+		tree.Add(Folder{ID: "c", Title: "C", Path: "p/b/c/"}, "b")
+		tree.Add(Folder{ID: "d", Title: "D", Path: "p/b/d/"}, "b")
+		tree.Add(Folder{ID: "e", Title: "E", Path: "p/e/"}, "p")
+		tree.Add(Folder{ID: "f", Title: "F", Path: "p/e/f/"}, "e")
+		tree.Add(Folder{ID: "g", Title: "G", Path: "p/e/g/"}, "e")
 		tree.Add(Folder{ID: "x", Title: "X", Path: "x/"}, "")
 
 		// Verify all folders are in the tree.
 		assert.Equal(t, 8, tree.Count())
-		assert.True(t, tree.In("root"))
+		assert.True(t, tree.In("p"))
 		assert.True(t, tree.In("b"))
 		assert.True(t, tree.In("c"))
 		assert.True(t, tree.In("d"))
@@ -220,9 +220,9 @@ func TestFolderTree(t *testing.T) {
 		assert.True(t, tree.In("x"))
 
 		// Only x should remain in the tree.
-		tree.Remove("root")
+		tree.Remove("p")
 		assert.Equal(t, 1, tree.Count())
-		assert.False(t, tree.In("root"))
+		assert.False(t, tree.In("p"))
 		assert.False(t, tree.In("b"))
 		assert.False(t, tree.In("c"))
 		assert.False(t, tree.In("d"))

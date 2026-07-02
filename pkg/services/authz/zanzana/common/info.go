@@ -10,6 +10,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type typeInfo struct {
@@ -58,22 +59,8 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		relations,
 	)
 
-	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
-		if resource.IsFolderResource() && resource.name == "" {
-			// Create checks use an empty Name. For a subfolder, Folder is the parent;
-			// permission must be evaluated on the parent folder (can_create), not on "general".
-			if resource.folder != "" {
-				resource.name = resource.folder
-				resource.folder = ""
-			} else {
-				resource.name = accesscontrol.GeneralFolderUID
-			}
-		} else if resource.HasFolderSupport() && resource.folder == "" {
-			resource.folder = accesscontrol.GeneralFolderUID
-		}
-
-		return resource
+		resource.normalizeForCreate()
 	}
 
 	return resource
@@ -105,23 +92,33 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 		relations,
 	)
 
-	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
-		if resource.IsFolderResource() && resource.name == "" {
-			if resource.folder != "" {
-				resource.name = resource.folder
-				resource.folder = ""
-			} else {
-				resource.name = accesscontrol.GeneralFolderUID
-			}
-		} else if resource.HasFolderSupport() && resource.folder == "" {
-			resource.folder = accesscontrol.GeneralFolderUID
-		}
-
-		return resource
+		resource.normalizeForCreate()
 	}
 
 	return resource
+}
+
+// normalizeForCreate adjusts a resource for a create-verb permission check,
+// where Zanzana models the root as the synthetic "general" folder. The root
+// parent may arrive as any sentinel ("", "general", or "root") depending on
+// whether the apistore has stamped it.
+func (r *ResourceInfo) normalizeForCreate() {
+	if r.IsFolderResource() && r.name == "" {
+		// Create checks use an empty Name. For a subfolder, Folder is the
+		// parent and permission is evaluated on it (can_create), not "general".
+		if !foldermodel.IsRootFolderUID(r.folder) {
+			r.name = r.folder
+			r.folder = ""
+		} else {
+			r.name = accesscontrol.GeneralFolderUID
+		}
+	} else if r.HasFolderSupport() && foldermodel.IsRootFolderUID(r.folder) {
+		r.folder = accesscontrol.GeneralFolderUID
+		// Mark this as a real create target so FolderIdent surfaces the general
+		// folder rather than treating it as "no parent" (see rootForCreate).
+		r.rootForCreate = true
+	}
 }
 
 func getTypeAndRelations(group, resource string) (string, []string) {
@@ -153,6 +150,10 @@ type ResourceInfo struct {
 	folder      string
 	subresource string
 	relations   []string
+	// rootForCreate marks a create-at-root check, where the general folder is a
+	// real target. It distinguishes that from a stored resource that merely
+	// carries "general" as its parent, which must not inherit folder permissions.
+	rootForCreate bool
 }
 
 func (r ResourceInfo) GroupResource() string {
@@ -179,6 +180,14 @@ func (r ResourceInfo) ResourceIdent() string {
 
 func (r ResourceInfo) FolderIdent() string {
 	if r.folder == "" {
+		return ""
+	}
+	// A stored resource parented at the root now carries the "general" sentinel
+	// instead of "". That means "no parent folder", so it must yield an empty
+	// ident — otherwise permissions on the synthetic general folder would leak
+	// to every root-parented resource. The exception is a create-at-root check
+	// (rootForCreate), where the general folder is a real target.
+	if foldermodel.IsRootFolderUID(r.folder) && !r.rootForCreate {
 		return ""
 	}
 

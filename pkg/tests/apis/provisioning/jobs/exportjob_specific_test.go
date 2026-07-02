@@ -16,6 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -186,7 +187,9 @@ func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *tes
 		// was fully created and claimed.
 		depth := 0
 		folderUID := d.GetAnnotations()[utils.AnnoKeyFolder]
-		for folderUID != "" {
+		// The root parent is now stamped with the "general" sentinel rather than
+		// an empty string; stop at either since "general" is not a real folder.
+		for !foldermodel.IsRootFolderUID(folderUID) {
 			f, err := helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 			if !assert.NoError(collect, err, "ancestor folder %q should exist", folderUID) {
 				return
