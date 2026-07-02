@@ -197,17 +197,31 @@ func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd Dele
 
 func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
 	correlation := Correlation{
-		UID:         cmd.UID,
-		OrgID:       cmd.OrgId,
-		SourceUID:   cmd.SourceUID,
-		Label:       *cmd.Label,
-		Description: *cmd.Description,
-		Config: CorrelationConfig{
-			Field:           *cmd.Config.Field,
-			Target:          *cmd.Config.Target,
-			Transformations: cmd.Config.Transformations,
-		},
-		Type: *cmd.Type,
+		UID:       cmd.UID,
+		OrgID:     cmd.OrgId,
+		SourceUID: cmd.SourceUID,
+	}
+
+	if cmd.Label != nil {
+		correlation.Label = *cmd.Label
+	}
+
+	if cmd.Description != nil {
+		correlation.Description = *cmd.Description
+	}
+
+	if cmd.Type != nil {
+		correlation.Type = *cmd.Type
+	}
+
+	if cmd.Config != nil {
+		if cmd.Config.Field != nil {
+			correlation.Config.Field = *cmd.Config.Field
+		}
+		if cmd.Config.Target != nil {
+			correlation.Config.Target = *cmd.Config.Target
+		}
+		correlation.Config.Transformations = cmd.Config.Transformations
 	}
 
 	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: cmd.SourceUID}
@@ -272,7 +286,12 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	sourceDsList := map[string]string{}
 	for _, val := range cmd.SourceUIDs {
 		dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: val}
-		sourceDs, _ := s.DataSourceService.GetDataSource(ctx, dsCmd)
+		sourceDs, err := s.DataSourceService.GetDataSource(ctx, dsCmd)
+		if err != nil {
+			return GetCorrelationsResponseBody{
+				Correlations: []Correlation{},
+			}, err
+		}
 		sourceDsList[val] = sourceDs.Type
 	}
 
@@ -299,7 +318,7 @@ func (s *CorrelationsK8sService) GetCorrelations(ctx context.Context, cmd GetCor
 	correlations := make([]Correlation, len(actualResults))
 
 	for i, val := range actualResults {
-		legacyCorr, _ := convertUnstructuredToCorrelation(val)
+		legacyCorr, err := convertUnstructuredToCorrelation(val)
 		if err != nil {
 			return GetCorrelationsResponseBody{
 				Correlations: []Correlation{},
