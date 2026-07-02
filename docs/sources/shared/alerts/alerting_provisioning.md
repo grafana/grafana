@@ -1750,6 +1750,9 @@ Status: Bad Request
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
+Atomically replaces all rules in a rule group and sets the group's evaluation interval. Any rules not included in the request body are deleted. The body must include all rules you want to retain.
+
+This action also sets the provenance for the rule group and all its alert rules. Pass the `X-Disable-Provenance: true` header to allow the resources to be edited in the Grafana UI after provisioning.
 {{< admonition type="warning" >}}
 This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
@@ -1771,10 +1774,13 @@ This action also changes the provenance setting (`X-Disable-Provenance`) for all
 
 #### All responses
 
-| Code                                   | Status      | Description     | Has headers | Schema                                           |
-| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
-| [200](#route-put-alert-rule-group-200) | OK          | AlertRuleGroup  |             | [schema](#route-put-alert-rule-group-200-schema) |
-| [400](#route-put-alert-rule-group-400) | Bad Request | ValidationError |             | [schema](#route-put-alert-rule-group-400-schema) |
+| Code                                   | Status                | Description        | Has headers | Schema                                           |
+| -------------------------------------- | --------------------- | ------------------ | :---------: | ------------------------------------------------ |
+| [200](#route-put-alert-rule-group-200) | OK                    | AlertRuleGroup     |             | [schema](#route-put-alert-rule-group-200-schema) |
+| [400](#route-put-alert-rule-group-400) | Bad Request           | ValidationError    |             | [schema](#route-put-alert-rule-group-400-schema) |
+| [403](#route-put-alert-rule-group-403) | Forbidden             | ForbiddenError     |             | [schema](#route-put-alert-rule-group-403-schema) |
+| [409](#route-put-alert-rule-group-409) | Conflict              | GenericPublicError |             | [schema](#route-put-alert-rule-group-409-schema) |
+| [500](#route-put-alert-rule-group-500) | Internal Server Error | GenericPublicError |             | [schema](#route-put-alert-rule-group-500-schema) |
 
 #### Responses
 
@@ -1793,6 +1799,36 @@ Status: Bad Request
 ###### <span id="route-put-alert-rule-group-400-schema"></span> Schema
 
 [ValidationError](#validation-error)
+
+##### <span id="route-put-alert-rule-group-403"></span> 403 - ForbiddenError
+
+Status: Forbidden
+
+Returned when the alert rule quota has been reached.
+
+###### <span id="route-put-alert-rule-group-403-schema"></span> Schema
+
+[ForbiddenError](#forbidden-error)
+
+##### <span id="route-put-alert-rule-group-409"></span> 409 - Conflict
+
+Status: Conflict
+
+Returned when a concurrent update is detected (optimistic lock conflict). Retry the request.
+
+###### <span id="route-put-alert-rule-group-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
+
+##### <span id="route-put-alert-rule-group-500"></span> 500 - Internal Server Error
+
+Status: Internal Server Error
+
+Returned when an unexpected server-side error occurs, such as a database failure.
+
+###### <span id="route-put-alert-rule-group-500-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-put-contactpoint"></span> Update an existing contact point. (_RoutePutContactpoint_)
 
