@@ -95,13 +95,15 @@ func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *a
 
 func (s *listFormatValidation) generateLinks(provider string) []advisor.CheckErrorLink {
 	return []advisor.CheckErrorLink{
-		{
-			Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
-			Message: "Check the documentation",
-		},
-		{
-			Url:     fmt.Sprintf("/admin/authentication/%s", provider),
-			Message: "Configure provider",
-		},
+		checks.NewCheckErrorLink(
+			"Check the documentation",
+			"advisor.ssosetting.sso-list-format-validation.link.check-the-documentation",
+			fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
+		),
+		checks.NewCheckErrorLink(
+			"Configure provider",
+			"advisor.ssosetting.sso-list-format-validation.link.configure-provider",
+			fmt.Sprintf("/admin/authentication/%s", provider),
+		),
 	}
 }

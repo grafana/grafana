@@ -19,9 +19,21 @@ const (
 	IgnoreStepsAnnotation     = "advisor.grafana.app/ignore-steps"
 	IgnoreStepsAnnotationList = "advisor.grafana.app/ignore-steps-list"
 	NameAnnotation            = "advisor.grafana.app/checktype-name"
+	NameKeyAnnotation         = "advisor.grafana.app/checktype-name-key"
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )
+
+// NewCheckErrorLink builds a CheckErrorLink with an i18n key alongside the
+// English message. messageKey is expected to be a stable key (no whitespace,
+// dot-separated) — frontend resolves it via t(messageKey, message).
+func NewCheckErrorLink(message, messageKey, url string) advisor.CheckErrorLink {
+	return advisor.CheckErrorLink{
+		Message:    message,
+		MessageKey: &messageKey,
+		Url:        url,
+	}
+}
 
 func NewCheckReportFailure(
 	severity advisor.CheckReportFailureSeverity,

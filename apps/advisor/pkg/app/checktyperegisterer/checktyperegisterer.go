@@ -232,11 +232,17 @@ func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger loggi
 		steps := t.Steps()
 		stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
 		for i, s := range steps {
+			titleKey := fmt.Sprintf("advisor.%s.%s.title", t.ID(), s.ID())
+			descriptionKey := fmt.Sprintf("advisor.%s.%s.description", t.ID(), s.ID())
+			resolutionKey := fmt.Sprintf("advisor.%s.%s.resolution", t.ID(), s.ID())
 			stepTypes[i] = advisorv0alpha1.CheckTypeStep{
-				Title:       s.Title(),
-				Description: s.Description(),
-				StepID:      s.ID(),
-				Resolution:  s.Resolution(),
+				Title:          s.Title(),
+				TitleKey:       &titleKey,
+				Description:    s.Description(),
+				DescriptionKey: &descriptionKey,
+				StepID:         s.ID(),
+				Resolution:     s.Resolution(),
+				ResolutionKey:  &resolutionKey,
 			}
 		}
 		obj := &advisorv0alpha1.CheckType{
@@ -244,7 +250,8 @@ func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger loggi
 				Name:      t.ID(),
 				Namespace: namespace,
 				Annotations: map[string]string{
-					checks.NameAnnotation: t.Name(),
+					checks.NameAnnotation:    t.Name(),
+					checks.NameKeyAnnotation: fmt.Sprintf("advisor.%s.name", t.ID()),
 					// Flag to indicate feature availability
 					checks.RetryAnnotation:       "1",
 					checks.IgnoreStepsAnnotation: "1",

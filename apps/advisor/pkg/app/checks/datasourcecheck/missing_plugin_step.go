@@ -44,10 +44,11 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 	_, exists := s.PluginStore.Plugin(ctx, ds.Type)
 	if !exists {
 		links := []advisor.CheckErrorLink{
-			{
-				Message: "Delete data source",
-				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-			},
+			checks.NewCheckErrorLink(
+				"Delete data source",
+				"advisor.datasource.missing-plugin.link.delete-data-source",
+				fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
+			),
 		}
 		plugins, err := s.PluginRepo.GetPluginsInfo(ctx, repo.GetPluginsInfoOptions{
 			IncludeDeprecated: false, // Deprecated plugins are not visible in the catalog
@@ -58,10 +59,11 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 		}
 		if len(plugins) > 0 {
 			// Plugin is available in the repo
-			links = append(links, advisor.CheckErrorLink{
-				Message: "View plugin",
-				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
-			})
+			links = append(links, checks.NewCheckErrorLink(
+				"View plugin",
+				"advisor.datasource.missing-plugin.link.view-plugin",
+				fmt.Sprintf("/plugins/%s", ds.Type),
+			))
 		}
 		// The plugin is not installed
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(

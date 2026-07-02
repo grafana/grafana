@@ -49,3 +49,24 @@ func (c *CustomRouteClient) CreateRegister(ctx context.Context, namespace string
 	}
 	return &cast, nil
 }
+
+type GetTranslationsRequest struct {
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) GetTranslations(ctx context.Context, namespace string, request GetTranslationsRequest) (*GetTranslationsResponse, error) {
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/translations",
+		Verb:    "GET",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetTranslationsResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTranslationsResponse: %w", err)
+	}
+	return &cast, nil
+}
