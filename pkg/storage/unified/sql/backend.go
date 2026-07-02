@@ -50,6 +50,7 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
+const defaultPollingMaxBackoff = 5 * time.Second
 
 // newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
 // [grafana_com] sso_api_token and api_url are configured.
@@ -278,6 +279,7 @@ type BackendOptions struct {
 	DBProvider        db.DBProvider
 	Reg               prometheus.Registerer
 	PollingInterval   time.Duration
+	PollingMaxBackoff time.Duration
 	WatchBufferSize   int
 	IsHA              bool
 	storageMetrics    *resource.StorageMetrics
@@ -332,6 +334,9 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.PollingInterval == 0 {
 		opts.PollingInterval = defaultPollingInterval
 	}
+	if opts.PollingMaxBackoff == 0 {
+		opts.PollingMaxBackoff = defaultPollingMaxBackoff
+	}
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
@@ -350,6 +355,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
 		pollingInterval:         opts.PollingInterval,
+		pollingMaxBackoff:       opts.PollingMaxBackoff,
 		watchBufferSize:         opts.WatchBufferSize,
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
@@ -408,6 +414,7 @@ type backend struct {
 	// watch streaming
 	//stream chan *resource.WatchEvent
 	pollingInterval time.Duration
+	pollingMaxBackoff time.Duration
 	watchBufferSize int
 	notifier        eventNotifier
 
@@ -504,6 +511,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 	notifier, err := newNotifier(&notifierConfig{
 		isHA:            b.isHA,
 		pollingInterval: b.pollingInterval,
+		pollingMaxBackoff: b.pollingMaxBackoff,
 		watchBufferSize: b.watchBufferSize,
 		log:             b.log,
 		bulkLock:        b.bulkLock,
