@@ -1127,7 +1127,15 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The behaviour under test is the List below, which uses its own 1µs
+	// timeout. This deadline only bounds the fixture setup: 500 serial writes
+	// (the count is deliberate — it guarantees the List is large enough that
+	// every backend observes the cancelled context and reports the error).
+	// On slower backends (e.g. sqlkv, where each write is its own transaction)
+	// under CI load those writes can exceed a tighter budget and fail with
+	// DeadlineExceeded, so give the setup generous headroom while still bounding
+	// it. NewTestContext caps this at `go test -timeout` if that is shorter.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
