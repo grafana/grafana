@@ -17,7 +17,7 @@ export function RuleViewerVisualization({
   data,
   thresholds,
   isLoading = false,
-}: RuleViewerVisualizationProps): JSX.Element | null {
+}: RuleViewerVisualizationProps): JSX.Element {
   return (
     <>
       {isLoading && <EvalLoadingBar />}

@@ -11,12 +11,13 @@ import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
 import { alertRuleToQueries } from '../../../utils/query';
 import { isFederatedRuleGroup, rulerRuleType } from '../../../utils/rules';
 import { useAlertQueryRunner } from '../../rule-editor/query-and-alert-condition/useAlertQueryRunner';
+import { NoQueryToRun } from '../EvalStatus';
 
 interface Props {
   rule: CombinedRule;
 }
 
-const QueryAndConditionsView = ({ rule }: Props) => {
+const QueryAndCondition = ({ rule }: Props) => {
   // Runner for expression results – evaluates the full original query DAG
   const {
     queryPreviewData: expressionData,
@@ -142,8 +143,10 @@ const QueryAndConditionsView = ({ rule }: Props) => {
           </Trans>
         </Alert>
       )}
+      {/* No data source query to evaluate (e.g. an expression-only rule), so there is nothing to load. */}
+      {!isFederatedRule && visualizationQueries.length === 0 && <NoQueryToRun />}
     </>
   );
 };
 
-export { QueryAndConditionsView };
+export { QueryAndCondition };

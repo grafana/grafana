@@ -10,7 +10,7 @@ import { mockCombinedRule, mockDataSource, mockRulerGrafanaRule } from '../../..
 import { type AlertingQueryResponse } from '../../../state/AlertingQueryRunner';
 import { setupDataSources } from '../../../testSetup/datasources';
 
-import { QueryAndConditionsView } from './Query';
+import { QueryAndCondition } from './QueryAndCondition';
 
 const DS_UID = 'test-ds-uid';
 
@@ -76,7 +76,7 @@ describe('visualizationQueries transformation', () => {
       },
     ]);
 
-    render(<QueryAndConditionsView rule={rule} />);
+    render(<QueryAndCondition rule={rule} />);
 
     // Wait for both eval calls to arrive (one from expression runner, one from visualization runner)
     await waitFor(() => expect(capturedBodies.length).toBe(2));
@@ -108,7 +108,7 @@ describe('visualizationQueries transformation', () => {
       },
     ]);
 
-    render(<QueryAndConditionsView rule={rule} />);
+    render(<QueryAndCondition rule={rule} />);
 
     await waitFor(() => expect(capturedBodies.length).toBe(2));
 
@@ -139,7 +139,7 @@ describe('visualizationQueries transformation', () => {
       },
     ]);
 
-    render(<QueryAndConditionsView rule={rule} />);
+    render(<QueryAndCondition rule={rule} />);
 
     await waitFor(() => expect(capturedBodies.length).toBe(2));
 
@@ -176,7 +176,7 @@ describe('loading state', () => {
       },
     ]);
 
-    render(<QueryAndConditionsView rule={rule} />);
+    render(<QueryAndCondition rule={rule} />);
 
     // The definition renders immediately, even though eval is still pending (no global loading gate)
     expect(await screen.findByTestId('queries-container')).toBeInTheDocument();
@@ -188,6 +188,45 @@ describe('loading state', () => {
 
     // Loading bars disappear once both runners have settled
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. No-data states
+// ---------------------------------------------------------------------------
+
+describe('no data', () => {
+  it('shows the generic no-data message when eval returns no results', async () => {
+    server.use(http.post('/api/v1/eval', () => HttpResponse.json<AlertingQueryResponse>({ results: {} })));
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    expect(await screen.findByText('No data — query results could not be loaded.')).toBeInTheDocument();
+  });
+
+  it('shows the no-query message for an expression-only rule', async () => {
+    server.use(http.post('/api/v1/eval', () => HttpResponse.json<AlertingQueryResponse>({ results: {} })));
+
+    // A rule whose only query is an expression: there is no data source query to run.
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: '__expr__',
+        model: { refId: 'A', datasource: { type: '__expr__', uid: '__expr__' } },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    expect(await screen.findByText('No data source query to run for this rule.')).toBeInTheDocument();
   });
 });
 
@@ -211,7 +250,7 @@ describe('merge order', () => {
       },
     ]);
 
-    render(<QueryAndConditionsView rule={rule} />);
+    render(<QueryAndCondition rule={rule} />);
 
     // Wait for loading to finish
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());

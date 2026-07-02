@@ -16,7 +16,17 @@ export function EvalLoadingBar() {
 export function NoEvalData() {
   return (
     <Text color="secondary" variant="bodySmall">
-      <Trans i18nKey="alerting.query-viewer.no-eval-data">No data — query results could not be loaded</Trans>
+      <Trans i18nKey="alerting.query-viewer.no-eval-data">No data — query results could not be loaded.</Trans>
+    </Text>
+  );
+}
+
+// Distinct from NoEvalData: the rule has no data source query to run at all (e.g. an
+// expression-only rule), so there is nothing to evaluate — not a failed/empty load.
+export function NoQueryToRun() {
+  return (
+    <Text color="secondary" variant="bodySmall">
+      <Trans i18nKey="alerting.query-viewer.no-query">No data source query to run for this rule.</Trans>
     </Text>
   );
 }
