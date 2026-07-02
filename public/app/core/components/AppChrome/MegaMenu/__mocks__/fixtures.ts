@@ -26,6 +26,35 @@ export const nestedNavTree: NavModelItem[] = [
   { text: 'Home', id: 'home', url: '/' },
 ];
 
+/**
+ * A plugin-sourced section nested three levels deep, mirroring what the backend
+ * emits when path-based nesting is enabled (App → Settings → Usage).
+ */
+export const pluginNavTree: NavModelItem[] = [
+  {
+    text: 'My app',
+    id: 'plugin-page-my-app',
+    url: '/a/my-app',
+    pluginId: 'my-app',
+    children: [
+      {
+        text: 'Settings',
+        id: 'plugin-page-my-app-settings',
+        url: '/a/my-app/settings',
+        pluginId: 'my-app',
+        children: [
+          {
+            text: 'Usage',
+            id: 'plugin-page-my-app-usage',
+            url: '/a/my-app/settings/usage',
+            pluginId: 'my-app',
+          },
+        ],
+      },
+    ],
+  },
+];
+
 /** The full tree the customisation tests render: pinnable sections, Starred, and the Bookmarks section. */
 export const customisableNavTree: NavModelItem[] = [
   { text: 'Home', id: 'home', url: '/' },

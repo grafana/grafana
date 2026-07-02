@@ -2701,6 +2701,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginPathNesting",
+        "resourceVersion": "1782922416495",
+        "creationTimestamp": "2026-07-01T16:13:36Z"
+      },
+      "spec": {
+        "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",

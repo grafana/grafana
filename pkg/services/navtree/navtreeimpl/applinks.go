@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -164,6 +166,20 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
 	}
 
+	// When enabled, nav items are nested according to their URL path hierarchy
+	// (e.g. /a/app/settings/usage nests under /a/app/settings) instead of being
+	// flat-appended under the app. Attachment happens in a second pass so it does
+	// not depend on the order includes appear in plugin.json.
+	ctx := c.Req.Context()
+	nestByPath := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPluginPathNesting, false, openfeature.TransactionContext(ctx))
+
+	type pendingInclude struct {
+		link   *navtree.NavLink
+		isPage bool
+	}
+	var pending []pendingInclude
+	var pageLinks []*navtree.NavLink
+
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
 			continue
@@ -219,9 +235,16 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					}
 				}
 
-				// Register the page under the app
+				// Register the page under the app (attached in the second pass below).
+				// Standalone pages are relocated out of the app, so they don't participate.
 			} else if include.AddToNav {
-				appLink.Children = append(appLink.Children, link)
+				pending = append(pending, pendingInclude{link: link, isPage: true})
+				// A page whose URL is the app root itself (e.g. a DefaultNav page) is not a
+				// distinct nesting parent: nesting under it duplicates nesting under the app
+				// section, and it is pruned from the top level below.
+				if cleanNavURL(link.Url) != cleanNavURL(appLink.Url) {
+					pageLinks = append(pageLinks, link)
+				}
 			}
 		}
 
@@ -233,9 +256,21 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					Text:     include.Name,
 					PluginID: plugin.ID,
 				}
-				appLink.Children = append(appLink.Children, link)
+				pending = append(pending, pendingInclude{link: link, isPage: false})
 			}
 		}
+	}
+
+	// Attach each include to its nearest path-ancestor page (when nesting is enabled
+	// and one exists) or to the app section. Dashboards never nest.
+	for _, p := range pending {
+		parent := appLink
+		if nestByPath && p.isPage {
+			if anc := nearestAncestorByPath(p.link, pageLinks); anc != nil {
+				parent = anc
+			}
+		}
+		parent.Children = append(parent.Children, p.link)
 	}
 
 	// Apps without any nav children are not part of navtree
@@ -274,6 +309,37 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	}
 
 	return nil
+}
+
+// nearestAncestorByPath returns the page link whose URL is the deepest segment
+// prefix of link's URL, or nil if none — in which case the caller attaches link to
+// the app section. Matching is on full path segments (so /settings does not capture
+// /settings-advanced); query strings, fragments and trailing slashes are ignored.
+func nearestAncestorByPath(link *navtree.NavLink, candidates []*navtree.NavLink) *navtree.NavLink {
+	child := cleanNavURL(link.Url)
+	var best *navtree.NavLink
+	for _, c := range candidates {
+		if c == link {
+			continue
+		}
+		parent := cleanNavURL(c.Url)
+		if parent == child || !strings.HasPrefix(child, parent+"/") {
+			continue
+		}
+		if best == nil || len(parent) > len(cleanNavURL(best.Url)) {
+			best = c
+		}
+	}
+	return best
+}
+
+// cleanNavURL strips any query/fragment and trailing slash so URLs can be compared
+// on path-segment boundaries.
+func cleanNavURL(u string) string {
+	if i := strings.IndexAny(u, "?#"); i >= 0 {
+		u = u[:i]
+	}
+	return strings.TrimRight(u, "/")
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {

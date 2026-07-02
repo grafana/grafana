@@ -20,7 +20,7 @@ import { configureStore } from 'app/store/configureStore';
 import { AppChromeService } from '../AppChromeService';
 
 import { MegaMenu } from './MegaMenu';
-import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
+import { customisableNavTree, nestedNavTree, pluginNavTree } from './__mocks__/fixtures';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -103,6 +103,14 @@ describe('MegaMenu', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Child1' }));
     expect(await screen.findByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
+  });
+
+  it('should render a plugin-sourced page nested three levels deep', async () => {
+    renderMegaMenu({ navBarTree: pluginNavTree });
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: My app' }));
+    expect(await screen.findByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Settings' }));
+    expect(await screen.findByRole('link', { name: 'Usage' })).toBeInTheDocument();
   });
 
   it('should filter out profile', async () => {

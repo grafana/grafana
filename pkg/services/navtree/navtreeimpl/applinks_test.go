@@ -2,8 +2,11 @@ package navtreeimpl
 
 import (
 	"net/http"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -891,5 +894,134 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 
 		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
 		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+	})
+}
+
+var openfeatureTestMutex sync.Mutex
+
+// setupOpenFeatureFlag sets a global OpenFeature provider for the duration of the
+// test, guarded by a mutex so flag-dependent tests don't race on the shared client.
+func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		flag: setting.NewInMemoryFlag(flag, value),
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+func TestNestPluginIncludesByPath(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}}
+
+	newService := func(includes ...*plugins.Includes) ServiceImpl {
+		app := pluginstore.Plugin{
+			JSONData: plugins.JSONData{ID: "nesting-app", Name: "Nesting App", Type: plugins.TypeApp, Includes: includes},
+		}
+		return ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{app.ID: {OrgID: 1, PluginID: app.ID, PluginVersion: "1.0.0", Enabled: true}}},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: []pluginstore.Plugin{app}},
+		}
+	}
+
+	buildAppNode := func(t *testing.T, service ServiceImpl) *navtree.NavLink {
+		t.Helper()
+		treeRoot := navtree.NavTreeRoot{}
+		require.NoError(t, service.addAppLinks(&treeRoot, reqCtx))
+		appNode := treeRoot.FindById("plugin-page-nesting-app")
+		require.NotNil(t, appNode)
+		return appNode
+	}
+
+	page := func(name, path string) *plugins.Includes {
+		return &plugins.Includes{Name: name, Path: path, Type: "page", AddToNav: true}
+	}
+
+	t.Run("nests a page under its path-ancestor, regardless of include order", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
+		// Child declared before parent to prove resolution is order-independent.
+		service := newService(
+			page("Usage", "/a/nesting-app/settings/usage"),
+			page("Settings", "/a/nesting-app/settings"),
+		)
+		appNode := buildAppNode(t, service)
+
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Settings", appNode.Children[0].Text)
+		require.Len(t, appNode.Children[0].Children, 1)
+		require.Equal(t, "Usage", appNode.Children[0].Children[0].Text)
+	})
+
+	t.Run("attaches to the nearest ancestor when an intermediate level is missing", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
+		// No "/settings" include, so Usage falls back to the app section.
+		service := newService(page("Usage", "/a/nesting-app/settings/usage"))
+		appNode := buildAppNode(t, service)
+
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Usage", appNode.Children[0].Text)
+	})
+
+	t.Run("does not nest across partial segment matches", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
+		service := newService(
+			page("Settings", "/a/nesting-app/settings"),
+			page("Settings advanced", "/a/nesting-app/settings-advanced"),
+		)
+		appNode := buildAppNode(t, service)
+
+		// settings-advanced is a string prefix of neither — both stay top-level.
+		require.Len(t, appNode.Children, 2)
+	})
+
+	t.Run("matches path ignoring any query string", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
+		service := newService(
+			page("Settings", "/a/nesting-app/settings"),
+			page("Usage", "/a/nesting-app/settings/usage?tab=daily"),
+		)
+		appNode := buildAppNode(t, service)
+
+		require.Len(t, appNode.Children, 1)
+		require.Equal(t, "Settings", appNode.Children[0].Text)
+		require.Len(t, appNode.Children[0].Children, 1)
+		require.Equal(t, "Usage", appNode.Children[0].Children[0].Text)
+	})
+
+	t.Run("dashboards never nest and stay under the app", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaPluginPathNesting, true)
+		service := newService(
+			page("Settings", "/a/nesting-app/settings"),
+			page("Usage", "/a/nesting-app/settings/usage"),
+			&plugins.Includes{Name: "Overview", Type: "dashboard", UID: "abc123", AddToNav: true},
+		)
+		appNode := buildAppNode(t, service)
+
+		// Settings (with nested Usage) + the dashboard, both top-level.
+		require.Len(t, appNode.Children, 2)
+		require.NotNil(t, navtree.FindByURL(appNode.Children, "/d/abc123"))
+	})
+
+	t.Run("stays flat when the flag is disabled", func(t *testing.T) {
+		// No provider set — the flag defaults to false, preserving current behaviour.
+		service := newService(
+			page("Usage", "/a/nesting-app/settings/usage"),
+			page("Settings", "/a/nesting-app/settings"),
+		)
+		appNode := buildAppNode(t, service)
+
+		require.Len(t, appNode.Children, 2)
 	})
 }

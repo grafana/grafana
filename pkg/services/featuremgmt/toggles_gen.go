@@ -961,4 +961,8 @@ const (
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 )

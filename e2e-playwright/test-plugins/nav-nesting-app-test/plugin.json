@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Nav nesting app test plugin",
+  "id": "nav-nesting-app-test",
+  "info": {
+    "keywords": ["app", "nav", "nesting"],
+    "description": "Dev-only app plugin that exercises nested (3-level) navigation derived from include URL paths.",
+    "author": {
+      "name": "Grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "1.0.0",
+    "updated": "2024-01-01"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "icon": "apps",
+      "name": "Home",
+      "path": "/a/nav-nesting-app-test",
+      "addToNav": true,
+      "defaultNav": true
+    },
+    {
+      "type": "page",
+      "icon": "chart-line",
+      "name": "Usage",
+      "path": "/a/nav-nesting-app-test/settings/usage",
+      "addToNav": true
+    },
+    {
+      "type": "page",
+      "icon": "cog",
+      "name": "Settings",
+      "path": "/a/nav-nesting-app-test/settings",
+      "addToNav": true
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.0",
+    "plugins": []
+  }
+}
