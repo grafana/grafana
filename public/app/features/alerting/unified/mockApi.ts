@@ -194,6 +194,15 @@ export function mockAlertRuleApi(server: SetupServer) {
     getAlertRuleVersionHistory: (uid: string, response: RulerGrafanaRuleDTO[]) => {
       server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}/versions`, () => HttpResponse.json(response)));
     },
+    modifyExportReceiver: (response: Record<string, string>) => {
+      server.use(
+        http.post('/api/v1/provisioning/contact-points/modify-export', ({ request }) => {
+          const url = new URL(request.url);
+          const format = url.searchParams.get('format') ?? 'hcl';
+          return HttpResponse.text(response[format]);
+        })
+      );
+    },
   };
 }
 

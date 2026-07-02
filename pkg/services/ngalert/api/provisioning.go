@@ -73,6 +73,10 @@ func NewProvisioningApi(svc *ProvisioningSrv) *ProvisioningApiHandler {
 	}
 }
 
+func (f *ProvisioningApiHandler) handleRoutePostExportModifiedContactPoint(ctx *contextmodel.ReqContext, cp apimodels.ContactPointExport) response.Response {
+	return f.svc.RoutePostExportModifiedContactPoint(ctx, cp)
+}
+
 func (f *ProvisioningApiHandler) handleRouteGetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
 	return deprecatedNotificationProvisioningResponse(f.svc.RouteGetPolicyTree(ctx), replacementRoutingTree)
 }

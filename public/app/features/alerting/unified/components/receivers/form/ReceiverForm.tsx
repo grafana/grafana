@@ -46,6 +46,7 @@ interface Props<R extends ChannelValues> {
   contactPointId?: string;
   canManagePermissions?: boolean;
   canEditProtectedFields: boolean;
+  modifyExport?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -63,6 +64,7 @@ export function ReceiverForm<R extends ChannelValues>({
   contactPointId,
   canManagePermissions,
   canEditProtectedFields,
+  modifyExport,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -140,9 +142,19 @@ export function ReceiverForm<R extends ChannelValues>({
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
         <Stack justifyContent="space-between" alignItems="center">
           <h2 className={styles.heading}>
-            {!isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
-            {isEditable && initialValues && t('alerting.receiver-form.contact-point-update', 'Update contact point')}
-            {isEditable && !initialValues && t('alerting.receiver-form.contact-point-create', 'Create contact point')}
+            {modifyExport &&
+              initialValues &&
+              t('alerting.export-receiver-form.modify-export', 'Export modified contact point')}
+            {modifyExport && !initialValues && t('alerting.contact-points.export-new', 'Export new contact point')}
+            {!modifyExport && !isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
+            {!modifyExport &&
+              isEditable &&
+              initialValues &&
+              t('alerting.receiver-form.contact-point-update', 'Update contact point')}
+            {!modifyExport &&
+              isEditable &&
+              !initialValues &&
+              t('alerting.receiver-form.contact-point-create', 'Create contact point')}
           </h2>
           {canManagePermissions && contactPointId && (
             <ManagePermissions
@@ -225,7 +237,7 @@ export function ReceiverForm<R extends ChannelValues>({
           </Button>
         )}
         <div className={styles.buttons}>
-          {isEditable && (
+          {isEditable && !modifyExport && (
             <>
               {isSubmitting && (
                 <Button disabled={true} icon="spinner" variant="primary">
@@ -238,6 +250,11 @@ export function ReceiverForm<R extends ChannelValues>({
                 </Button>
               )}
             </>
+          )}
+          {modifyExport && (
+            <Button type="submit">
+              <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
+            </Button>
           )}
           <LinkButton
             disabled={isSubmitting}
