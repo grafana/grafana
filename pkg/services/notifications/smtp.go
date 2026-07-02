@@ -67,7 +67,7 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	return sentEmailsCount, nil
 }
 
-func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) error {
+func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) (err error) {
 	ctx, span := tracer.Start(ctx, "notifications.SmtpClient.sendMessage", trace.WithAttributes(
 		attribute.String("smtp.sender", msg.From),
 		attribute.StringSlice("smtp.recipients", msg.To),
@@ -76,7 +76,18 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 
 	m := sc.buildEmail(ctx, msg)
 
-	err := dialer.DialAndSend(m)
+	// Recover from panics inside gopkg.in/mail.v2 (e.g. nil pointer in base64LineWriter
+	// when writing file attachments, see https://github.com/go-gomail/gomail/issues/89).
+	// Convert the panic into a regular error so a single bad message cannot crash the
+	// process or take down sibling alert-notification goroutines.
+	defer func() {
+		if r := recover(); r != nil {
+			emailsSentFailed.Inc()
+			err = tracing.Errorf(span, "panic while sending email: %v", r)
+		}
+	}()
+
+	err = dialer.DialAndSend(m)
 	emailsSentTotal.Inc()
 	if err != nil {
 		// As gomail does not returned typed errors we have to parse the error
@@ -143,15 +154,25 @@ func (sc *SmtpClient) setFiles(
 	}
 
 	for _, file := range msg.EmbeddedContents {
+		file := file
 		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			if writer == nil {
+				return fmt.Errorf("nil writer passed for embedded content %q", file.Name)
+			}
 			_, err := writer.Write(file.Content)
 			return err
 		}))
 	}
 
 	for _, file := range msg.AttachedFiles {
+		if file == nil {
+			continue
+		}
 		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			if writer == nil {
+				return fmt.Errorf("nil writer passed for attached file %q", file.Name)
+			}
 			_, err := writer.Write(file.Content)
 			return err
 		}))
