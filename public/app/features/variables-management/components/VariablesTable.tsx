@@ -104,7 +104,7 @@ function FolderRows({ folder, isExpanded, onToggleFolder, selected, onSetSelecte
 
   return (
     <Fragment>
-      <tr className={styles.folderRow}>
+      <tr>
         <td className={styles.checkboxCell}>
           <Checkbox
             value={allSelected}
@@ -197,12 +197,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: theme.colors.text.secondary,
       fontWeight: theme.typography.fontWeightMedium,
     },
+
+    'tbody tr:hover': {
+      backgroundColor: theme.colors.action.hover,
+    },
   }),
   checkboxCell: css({
     width: theme.spacing(4),
-  }),
-  folderRow: css({
-    backgroundColor: theme.colors.background.secondary,
   }),
   folderButton: css({
     display: 'flex',
