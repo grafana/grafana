@@ -278,13 +278,12 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 }
 
 // prune deletes converted-Prometheus rule groups that this datasource owns
-// (SourceIdentifier == uid) but that are no longer present upstream. Scoping by
-// SourceIdentifier ensures we never delete manually-imported converted rules or
-// rules synced from a different datasource.
+// (SourceIdentifier == uid) but that are no longer present upstream. Scoping the
+// store queries by SourceIdentifier ensures we never enumerate or delete
+// manually-imported converted rules or rules synced from a different datasource.
 func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester, uid string, desired map[groupKey]struct{}) error {
-	hasPrometheusRuleDefinition := true
 	existing, err := s.ruleService.GetAlertGroupsWithFolderFullpath(ctx, user, &provisioning.FilterOptions{
-		HasPrometheusRuleDefinition: &hasPrometheusRuleDefinition,
+		SourceIdentifier: &uid,
 	})
 	if err != nil {
 		return fmt.Errorf("list converted rule groups: %w", err)
@@ -294,18 +293,13 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 		if g.AlertRuleGroup == nil || len(g.Rules) == 0 {
 			continue
 		}
-		// All rules in a synced group share the SourceIdentifier; checking the
-		// first is sufficient. Empty/other identifier → not ours, skip.
-		if g.Rules[0].PrometheusRuleSourceIdentifier() != uid {
-			continue
-		}
 		if _, ok := desired[groupKey{folderUID: g.FolderUID, group: g.Title}]; ok {
 			continue // still present upstream
 		}
 		if err := s.ruleService.DeleteRuleGroups(ctx, user, models.ProvenanceConvertedPrometheus, &provisioning.FilterOptions{
-			NamespaceUIDs:               []string{g.FolderUID},
-			RuleGroups:                  []string{g.Title},
-			HasPrometheusRuleDefinition: &hasPrometheusRuleDefinition,
+			NamespaceUIDs:    []string{g.FolderUID},
+			RuleGroups:       []string{g.Title},
+			SourceIdentifier: &uid,
 		}); err != nil {
 			return fmt.Errorf("delete stale rule group %q in folder %q: %w", g.Title, g.FolderUID, err)
 		}

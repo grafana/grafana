@@ -60,8 +60,19 @@ func (f *fakeRuleService) DeleteRuleGroups(_ context.Context, _ identity.Request
 	f.deleted = append(f.deleted, *filterOpts)
 	return nil
 }
-func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, _ *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
-	return f.existing, nil
+func (f *fakeRuleService) GetAlertGroupsWithFolderFullpath(_ context.Context, _ identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error) {
+	// Emulate the store's SourceIdentifier filter so the fake is faithful to the
+	// real query the syncer now relies on for prune scoping.
+	if filterOpts == nil || filterOpts.SourceIdentifier == nil {
+		return f.existing, nil
+	}
+	var out []models.AlertRuleGroupWithFolderFullpath
+	for _, g := range f.existing {
+		if len(g.Rules) > 0 && g.Rules[0].PrometheusRuleSourceIdentifier() == *filterOpts.SourceIdentifier {
+			out = append(out, g)
+		}
+	}
+	return out, nil
 }
 
 // fakeNamespaceStore returns a folder whose UID is the title prefixed, so root
@@ -191,6 +202,9 @@ func TestSyncOrg_PruneScopedBySourceIdentifier(t *testing.T) {
 	require.Len(t, rs.deleted, 1, "exactly one stale, owned group pruned")
 	assert.Equal(t, []string{"folder-ns1"}, rs.deleted[0].NamespaceUIDs)
 	assert.Equal(t, []string{"stale-group"}, rs.deleted[0].RuleGroups)
+	// Delete is scoped to our source identifier so it can't touch other owners.
+	require.NotNil(t, rs.deleted[0].SourceIdentifier)
+	assert.Equal(t, "ds1", *rs.deleted[0].SourceIdentifier)
 }
 
 func TestSyncOrg_IniOverrideWins(t *testing.T) {

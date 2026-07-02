@@ -1153,6 +1153,12 @@ type ListAlertRulesQuery struct {
 
 	HasPrometheusRuleDefinition *bool
 
+	// SourceIdentifier, when non-nil, filters rules to those whose converted
+	// metadata carries a matching PrometheusStyleRule.SourceIdentifier (exact
+	// match). Used by the external ruler sync worker to enumerate/prune only the
+	// rules it owns.
+	SourceIdentifier *string
+
 	// LabelMatchers filters rules by their labels.
 	// Only equality and inequality matchers are supported, no regex operators.
 	LabelMatchers labels.Matchers
