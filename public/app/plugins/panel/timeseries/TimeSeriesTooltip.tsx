@@ -5,11 +5,12 @@ import {
   type Field,
   FieldType,
   formattedValueToString,
+  getTimeZoneInfo,
   type InterpolateFunction,
   type LinkModel,
   usePluginContext,
 } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, type TimeZone, TooltipDisplayMode } from '@grafana/schema';
 import {
   type AdHocFilterModel,
   type FilterByGroupedLabelsModel,
@@ -23,6 +24,8 @@ import {
 } from '@grafana/ui';
 
 import { getFieldActions } from '../status-history/utils';
+
+import { TimeSeriesTooltipHeaderTime } from './TimeSeriesTooltipHeaderTime';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
@@ -53,6 +56,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  timeZone?: TimeZone;
 }
 
 export const TimeSeriesTooltip = ({
@@ -72,6 +76,7 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  timeZone,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -121,9 +126,22 @@ export const TimeSeriesTooltip = ({
     }
   }
 
+  const getHeaderValue = () => {
+    if (xField.type === FieldType.time && timeZone !== undefined) {
+      const timezoneInfo = getTimeZoneInfo(timeZone, xVal);
+      if (timezoneInfo?.abbreviation !== undefined) {
+        return <TimeSeriesTooltipHeaderTime time={xDisp} timeZone={timezoneInfo.abbreviation} />;
+      } else {
+        return xDisp;
+      }
+    } else {
+      return xDisp;
+    }
+  };
+
   const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-    value: xDisp,
+    value: getHeaderValue(),
   };
 
   return (
