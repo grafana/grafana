@@ -427,3 +427,59 @@ func TestProcessJob_NilCurrentJob_ReturnsNil(t *testing.T) {
 	err := driver.processJob(context.Background(), recorder)
 	require.NoError(t, err)
 }
+
+// TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker verifies that
+// losing the lease actively cancels the in-flight worker and does not report the
+// abort until the worker has actually stopped. Without this, a reaped-and-re-claimed
+// job could keep running on this pod while another pod runs the same job.
+func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	workerStarted := make(chan struct{})
+	workerReturned := make(chan struct{})
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	// A well-behaved worker: block until its context is cancelled, then return.
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).
+		RunAndReturn(func(ctx context.Context, _ repository.Repository, _ provisioning.Job, _ JobProgressRecorder) error {
+			close(workerStarted)
+			<-ctx.Done()
+			close(workerReturned)
+			return ctx.Err()
+		})
+
+	leaseExpired := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- driver.processJobWithLeaseCheck(context.Background(), recorder, leaseExpired)
+	}()
+
+	// Wait until the worker is running, then signal that the lease was lost.
+	<-workerStarted
+	close(leaseExpired)
+
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "aborted due to lease expiry")
+		// The worker must have observed cancellation and returned before
+		// processJobWithLeaseCheck reported the abort.
+		select {
+		case <-workerReturned:
+		default:
+			t.Fatal("processJobWithLeaseCheck returned before the worker stopped — in-flight work was not cancelled and awaited")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("processJobWithLeaseCheck did not abort after lease expiry")
+	}
+}

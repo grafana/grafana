@@ -332,16 +332,29 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 // processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
 func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
+	// Derive a cancellable context for the worker so that losing the lease actively
+	// stops the in-flight work, rather than leaving the goroutine running until the
+	// caller's deferred cancel fires much later. Otherwise two pods could execute the
+	// same job concurrently once another worker takes over the reaped claim.
+	workerCtx, cancelWorker := context.WithCancel(ctx)
+	defer cancelWorker()
+
 	// Run the job processing in a goroutine so we can monitor lease expiry
 	resultChan := make(chan error, 1)
 	go func() {
-		resultChan <- d.processJob(ctx, recorder)
+		resultChan <- d.processJob(workerCtx, recorder)
 	}()
 
 	select {
 	case err := <-resultChan:
 		return err
 	case <-leaseExpired:
+		// Another worker now owns the job. Cancel our worker and wait for it to
+		// return so we don't keep running (and later complete) a job we no longer own.
+		// The wait is bounded by the parent context's timeout, since workerCtx derives
+		// from it.
+		cancelWorker()
+		<-resultChan
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
 		// Return context error directly - caller will determine if this is due to graceful shutdown
