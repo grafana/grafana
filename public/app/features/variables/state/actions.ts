@@ -20,7 +20,7 @@ import {
   VariableRefresh,
   type VariableWithOptions,
 } from '@grafana/data';
-import { config, locationService, logWarning } from '@grafana/runtime';
+import { locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -32,12 +32,11 @@ import { type ThunkResult, type StoreState } from 'app/types/store';
 import { appEvents } from '../../../core/app_events';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { getBackendSrv } from '../../../core/services/backend_srv';
-import { Graph, type Node } from '../../../core/utils/dag';
+import { Graph } from '../../../core/utils/dag';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, type TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
-import { cleanEditorState } from '../editor/reducer';
 import { ensureStringValues } from '../ensureStringValues';
 import { hasCurrent, hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti } from '../guard';
 import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
@@ -62,7 +61,6 @@ import {
   toVariablePayload,
 } from '../utils';
 
-import { findVariableNodeInList, isVariableOnTimeRangeConfigured } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
 import {
@@ -133,7 +131,7 @@ export function fixSelectedInconsistency(model: TypedVariableModel): TypedVariab
   return model;
 }
 
-export const addSystemTemplateVariables = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
+const addSystemTemplateVariables = (key: string, dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch) => {
     const dashboardModel: DashboardVariableModel = {
       ...initialVariableModelState,
@@ -237,7 +235,7 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
   };
 };
 
-export const processVariableDependencies = async (variable: TypedVariableModel, state: StoreState) => {
+const processVariableDependencies = async (variable: TypedVariableModel, state: StoreState) => {
   if (!variable.rootStateKey) {
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
@@ -434,7 +432,7 @@ export const setOptionFromUrl = (
   };
 };
 
-export const selectOptionsForCurrentValue = (variable: VariableWithOptions): VariableOption[] => {
+const selectOptionsForCurrentValue = (variable: VariableWithOptions): VariableOption[] => {
   let i, y, value, option;
   const selected: VariableOption[] = [];
 
@@ -626,118 +624,7 @@ export interface OnTimeRangeUpdatedDependencies {
   events: typeof appEvents;
 }
 
-const dfs = (
-  node: Node,
-  visited: string[],
-  variables: TypedVariableModel[],
-  variablesRefreshTimeRange: TypedVariableModel[]
-) => {
-  if (!visited.includes(node.name)) {
-    visited.push(node.name);
-  }
-  node.outputEdges.forEach((e) => {
-    const child = e.outputNode;
-    if (child && !visited.includes(child.name)) {
-      const childVariable = variables.find((v) => v.name === child.name) as QueryVariableModel;
-      // when a variable is refreshed on time range change, we need to add that variable to be refreshed and mark its children as visited
-      if (
-        childVariable &&
-        childVariable.refresh === VariableRefresh.onTimeRangeChanged &&
-        variablesRefreshTimeRange.indexOf(childVariable) === -1
-      ) {
-        variablesRefreshTimeRange.push(childVariable);
-        visited.push(child.name);
-      } else {
-        dfs(child, visited, variables, variablesRefreshTimeRange);
-      }
-    }
-  });
-  return variablesRefreshTimeRange;
-};
-
-// verify if the output edges of a node are not time range dependent
-const areOuputEdgesNotTimeRange = (node: Node, variables: TypedVariableModel[]) => {
-  return node.outputEdges.every((e) => {
-    const childNode = e.outputNode;
-    if (childNode) {
-      const childVariable = findVariableNodeInList(variables, childNode.name);
-      if (childVariable && childVariable.type === 'query') {
-        return childVariable.refresh !== VariableRefresh.onTimeRangeChanged;
-      }
-    }
-    return true;
-  });
-};
-
-/**
- * This function returns a list of variables that need to be refreshed when the time range changes
- * It follows this logic
- * Create a graph based on all template variables.
- * Loop through all the variables and perform the following checks for each variable:
- *
- * -- a) If a variable A is a query variable, it’s time range, and has no dependent nodes
- * ----- it should be added to the variablesRefreshTimeRange.
- *
- * -- b) If a variable A is a query variable, it’s time range, and has dependent nodes (B, C)
- * ----- 1. add the variable A to variablesRefreshTimeRange
- * ----- 2. skip all the dependent nodes (B, C).
- *       Here, we should traverse the tree using DFS (Depth First Search), as the dependent nodes will be updated in cascade when the parent variable is updated.
- */
-
-export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): TypedVariableModel[] => {
-  const allVariables = getVariablesByKey(key, state);
-
-  //create dependency graph
-  const g = createGraph(allVariables);
-  // create a list of nodes that were visited
-  const visitedDfs: string[] = [];
-  const variablesRefreshTimeRange: TypedVariableModel[] = [];
-  allVariables.forEach((v) => {
-    const node = g.getNode(v.name);
-    if (visitedDfs.includes(v.name)) {
-      return;
-    }
-    if (node) {
-      const parentVariableNode = findVariableNodeInList(allVariables, node.name);
-      if (!parentVariableNode) {
-        return;
-      }
-      const isVariableTimeRange = isVariableOnTimeRangeConfigured(parentVariableNode);
-      // if variable is time range and has no output edges add it to the list of variables that need refresh
-      if (isVariableTimeRange && node.outputEdges.length === 0) {
-        variablesRefreshTimeRange.push(parentVariableNode);
-      }
-
-      // if variable is time range and other variables depend on it (output edges) add it to the list of variables that need refresh and dont visit its dependents
-      if (
-        isVariableTimeRange &&
-        variablesRefreshTimeRange.includes(parentVariableNode) &&
-        node.outputEdges.length > 0
-      ) {
-        variablesRefreshTimeRange.push(parentVariableNode);
-        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
-      }
-
-      // If is variable time range, has outputEdges, but the output edges are not time range configured, it means this
-      // is the top variable that need to be refreshed
-      if (isVariableTimeRange && node.outputEdges.length > 0 && areOuputEdgesNotTimeRange(node, allVariables)) {
-        if (!variablesRefreshTimeRange.includes(parentVariableNode)) {
-          variablesRefreshTimeRange.push(parentVariableNode);
-        }
-      }
-
-      // if variable is not time range but has dependents (output edges) visit its dependants and repeat the process
-      if (!isVariableTimeRange && node.outputEdges.length > 0) {
-        dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
-      }
-    }
-  });
-
-  return variablesRefreshTimeRange;
-};
-
-// old approach of refreshing variables that need refresh
-const getVariablesThatNeedRefreshOld = (key: string, state: StoreState): VariableWithOptions[] => {
+const getVariablesThatNeedRefresh = (key: string, state: StoreState): VariableWithOptions[] => {
   const allVariables = getVariablesByKey(key, state);
 
   const variablesThatNeedRefresh = allVariables.filter((variable) => {
@@ -763,11 +650,7 @@ export const onTimeRangeUpdated =
     // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
     // TODO: remove the VariableWithOptions type once the feature flag is on GA
     let variablesThatNeedRefresh: VariableWithOptions[] | TypedVariableModel[] = [];
-    if (config.featureToggles.refactorVariablesTimeRange) {
-      variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
-    } else {
-      variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
-    }
+    variablesThatNeedRefresh = getVariablesThatNeedRefresh(key, getState());
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>
@@ -783,7 +666,7 @@ export const onTimeRangeUpdated =
     }
   };
 
-export const timeRangeUpdated =
+const timeRangeUpdated =
   (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const variableInState = getVariable(identifier, getState());
@@ -971,7 +854,6 @@ export const cleanUpVariables =
   (key: string): ThunkResult<void> =>
   (dispatch) => {
     dispatch(toKeyedAction(key, cleanVariables()));
-    dispatch(toKeyedAction(key, cleanEditorState()));
     dispatch(toKeyedAction(key, cleanPickerState()));
     dispatch(toKeyedAction(key, variablesClearTransaction()));
   };
@@ -1013,7 +895,7 @@ export const updateOptions =
     }
   };
 
-export const createVariableErrorNotification = (
+const createVariableErrorNotification = (
   message: string,
   error: unknown,
   identifier?: KeyedVariableIdentifier
@@ -1023,7 +905,7 @@ export const createVariableErrorNotification = (
     error instanceof Error ? `${message} ${error.message}` : `${message}`
   );
 
-export const completeVariableLoading =
+const completeVariableLoading =
   (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
   (dispatch, getState) => {
     const { rootStateKey } = identifier;

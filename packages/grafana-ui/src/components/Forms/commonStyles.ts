@@ -74,37 +74,6 @@ export const inputPadding = (theme: GrafanaTheme2) => {
   });
 };
 
-export const inputSizes = () => {
-  return {
-    sm: css({
-      width: inputSizesPixels('sm'),
-    }),
-    md: css({
-      width: inputSizesPixels('md'),
-    }),
-    lg: css({
-      width: inputSizesPixels('lg'),
-    }),
-    auto: css({
-      width: inputSizesPixels('auto'),
-    }),
-  };
-};
-
-const inputSizesPixels = (size: string) => {
-  switch (size) {
-    case 'sm':
-      return '200px';
-    case 'md':
-      return '320px';
-    case 'lg':
-      return '580px';
-    case 'auto':
-    default:
-      return 'auto';
-  }
-};
-
 export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {
   switch (size) {
     case 'sm':

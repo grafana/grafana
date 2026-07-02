@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -936,10 +937,12 @@ func TestCheckQuotas(t *testing.T) {
 			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
 		}
 
+		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
 		server, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
 			SearchClient:     searchClient,
 			OverridesService: overridesService,
+			StorageMetrics:   metrics,
 			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
 		})
 		require.NoError(t, err)
@@ -948,6 +951,8 @@ func TestCheckQuotas(t *testing.T) {
 		})
 
 		require.NoError(t, server.checkQuota(ctx, nsr))
+		require.Equal(t, float64(1), testutil.ToFloat64(
+			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
 	})
 }
 
@@ -2471,4 +2476,26 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
 	require.NoError(t, err)
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+}
+
+func TestClassifyAuthError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"nil", nil, ""},
+		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
+		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
+		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
+		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
+		{"permission denied", status.Error(codes.PermissionDenied, "no"), "auth_rejected"},
+		{"invalid argument", status.Error(codes.InvalidArgument, "bad"), "auth_rejected"},
+		{"unknown", errors.New("boom"), "auth_error"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, classifyAuthError(tt.err))
+		})
+	}
 }

@@ -6,38 +6,13 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
-interface SaveDashboardButtonProps {
+interface Props {
   dashboard: DashboardModel;
   onSaveSuccess?: () => void;
   size?: ComponentSize;
   onClick?: () => void;
+  variant?: ButtonVariant;
 }
-
-export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
-  return (
-    <ModalsController>
-      {({ showModal, hideModal }) => {
-        return (
-          <Button
-            size={size}
-            onClick={() => {
-              showModal(SaveDashboardDrawer, {
-                dashboard,
-                onSaveSuccess,
-                onDismiss: hideModal,
-              });
-            }}
-            data-testid={selectors.pages.Dashboard.Settings.General.saveDashBoard}
-          >
-            <Trans i18nKey="dashboard.save-dashboard-button.save-dashboard">Save dashboard</Trans>
-          </Button>
-        );
-      }}
-    </ModalsController>
-  );
-};
-
-type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
 
 export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, variant, size }: Props) => {
   return (

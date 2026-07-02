@@ -61,6 +61,7 @@
     },
     "background": {
       "canvas": "#1e273d",
+      "page": "#182036",
       "primary": "#12192e",
       "secondary": "#212c47",
       "elevated": "#212c47"

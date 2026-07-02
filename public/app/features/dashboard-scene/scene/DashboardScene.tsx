@@ -113,8 +113,7 @@ import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { type LayoutParent } from './types/LayoutParent';
-import { type DashboardSceneLike, type DashboardSceneState as DashboardSceneStateBase } from './types/dashboard';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -151,10 +150,7 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-// Temp re-export, will follup with a specific circular dependency fix in separate PR
-export type DashboardSceneState = DashboardSceneStateBase;
-
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent, DashboardSceneLike {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements DashboardSceneLike {
   static Component = DashboardSceneRenderer;
   public isDashboardScene = true;
 
@@ -303,7 +299,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ links: nonDefaultLinks });
   }
 
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
+    const wasEditing = this.state.isEditing;
+
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
@@ -315,6 +313,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(true);
 
     this._changeTracker.startTrackingChanges();
+
+    if (!wasEditing) {
+      DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
+    }
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -763,10 +765,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public copyPanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const panelType = vizPanel.state.pluginId;
     const styleConfig = getPanelStyleConfig(panelType);
 
@@ -785,10 +783,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public static hasPanelStylesToPaste(panelType: string): boolean {
-    if (!config.featureToggles.panelStyleActions) {
-      return false;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return false;
@@ -804,10 +798,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public pastePanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return;
@@ -946,7 +936,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
-    locationService.partial({ editview: 'settings' });
+    const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
+    locationService.partial({ editview });
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {

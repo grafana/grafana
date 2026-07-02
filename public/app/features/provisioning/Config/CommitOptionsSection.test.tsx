@@ -81,7 +81,7 @@ describe('CommitOptionsSection', () => {
 
     expect(
       screen.getByText(
-        /\{\{action\}\} \(create\/update\/delete\/move\/rename\), \{\{resourceKind\}\} \(dashboard\/folder\), \{\{resourceID\}\}, \{\{title\}\}/
+        /\{\{action\}\}.*\{\{resourceKind\}\}.*\{\{resourceID\}\}.*\{\{title\}\}.*\{\{userName\}\}.*\{\{userLogin\}\}.*\{\{userEmail\}\}/
       )
     ).toBeInTheDocument();
   });

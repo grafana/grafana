@@ -46,7 +46,7 @@ Refer to [Key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-co
 
 {{< admonition type="note" >}}
 
-If you want to add an existing dashboard to your provisioned resources, refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/).
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
 
 {{< /admonition >}}
 
@@ -54,6 +54,8 @@ You have the following options to add new dashboards in your Git Sync connection
 
 - Create them directly within Git Sync-managed folders in the Grafana UI
 - Add them by committing JSON files to your Git repository
+
+If you want to add an existing dashboard to your provisioned resources, refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/).
 
 ### Add a new dashboard from the Grafana UI
 
@@ -111,6 +113,12 @@ You can document the contents or any other relevant piece of information of your
 - When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
 - If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
 - You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
 
 ## Best practices
 
