@@ -61,10 +61,6 @@ LBAC for data sources enables you to filter access for both logs and metrics. By
 
 This flexibility allows teams to use the same data source for multiple use cases while maintaining secure access boundaries.
 
-## Before you begin
-
-To be able to use LBAC for data sources metrics, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance.
-
 ## Limitations
 
 - There is a set number of rules to be configured within a data source, depending on the size of the rules.
