@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -301,6 +302,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		Features:           featuremgmt.WithFeatures(),
 		QuotaService:       quotatest.New(false, nil),
 		searchUsersService: &searchusers.OSSService{},
+		log:                log.NewNopLogger(),
 		tracer:             tracing.InitializeTracerForTest(),
 	}
 
