@@ -89,6 +89,10 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		keyPrefix:         "gf_live",
 	}
 
+	if cfg.LiveMaxConnections == 0 {
+		logger.Debug("Grafana Live is disabled (max_connections=0)")
+	}
+
 	if cfg.LiveHAPrefix != "" {
 		// Once this is deployed across all waves in grafana cloud, we can remove the configured LiveHAPrefix
 		// This is OK because the channel prefix now starts with the full stack identifier
@@ -391,15 +395,16 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 		pushPipelineWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/ws", g.websocketHandler)
-	}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
+	if cfg.LiveMaxConnections != 0 {
+		routeRegister.Group("/api/live", func(group routing.RouteRegister) {
+			group.Get("/ws", g.websocketHandler)
+		}, middleware.ReqSignedIn, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
-	routeRegister.Group("/api/live", func(group routing.RouteRegister) {
-		group.Get("/push/:streamId", g.pushWebsocketHandler)
-		group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
-	}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
-
+		routeRegister.Group("/api/live", func(group routing.RouteRegister) {
+			group.Get("/push/:streamId", g.pushWebsocketHandler)
+			group.Get("/pipeline/push/*", g.pushPipelineWebsocketHandler)
+		}, middleware.ReqOrgAdmin, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
+	}
 	g.registerUsageMetrics()
 
 	return g, nil
