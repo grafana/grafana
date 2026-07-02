@@ -31,16 +31,10 @@ If you need to manage or access other resources from your [Grafana Cloud Stack](
 
 Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
 
-To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/).
+To learn more refer to:
 
-## The Grafana API specification
-
-HTTP API specs are available in Swagger:
-
-- [OpenAPI v2 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json)
-- [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json), generated from the v2 specs
-
-You can browse and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
+- The new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/) for information on the API specifications and structure.
+- The [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details on the legacy API deprecation process.
 
 ## Authentication
 
@@ -89,3 +83,11 @@ The following table lists all available HTTP API reference pages. New APIs are l
 | [Team HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team/)                                             | Deprecated           | Not Applicable      |
 | [Team Sync HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team_sync/)                                   | Deprecated           | Not Applicable      |
 | [User HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/user/)                                             | Deprecated           | Not Applicable      |
+
+## Related resources
+
+Use the following resources to keep working with Grafana APIs:
+
+- **API structure:** Refer to [The new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+- **Migration guide:** Refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
+- **Swagger UI:** Open the `/swagger` page in your Grafana instance to inspect endpoint schemas and try requests.
