@@ -56,8 +56,8 @@ For kubectl to work, grafana needs to run over https.  To simplify development, 
 ```ini
 app_mode = development
 
-[feature_toggles]
-grafanaAPIServerEnsureKubectlAccess = true
+[grafana-apiserver]
+dev_mode_enabled = true
 
 [unified_storage.playlists.playlist.grafana.app]
 dualWriterMode = 2
