@@ -19,6 +19,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
+  DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -59,10 +61,14 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Enable referencing an existing secret in an active keeper when creating a secure value */
+  GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables semantic (vector) dashboard search in the command palette */
+  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -111,6 +117,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
+  /** Enables the refactored TableNG nested-table implementation */
+  TableRefactorNested: "table.refactorNested",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -146,6 +154,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+ *
+ * **Details:**
+ * - flag key: `dashboard.vectorSearch`
+ * - default value: `false`
+ */
+export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.vectorSearch", false, options).value;
 };
 
 /**
@@ -369,6 +388,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Enable referencing an existing secret in an active keeper when creating a secure value
+ *
+ * **Details:**
+ * - flag key: `grafana.secretsReferenceValueUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.secretsReferenceValueUI", false, options).value;
+};
+
+/**
  * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
  *
  * **Details:**
@@ -388,6 +418,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables semantic (vector) dashboard search in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.vectorSearchCmdk`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**
@@ -652,6 +693,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Enables the refactored TableNG nested-table implementation
+ *
+ * **Details:**
+ * - flag key: `table.refactorNested`
+ * - default value: `false`
+ */
+export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refactorNested", false, options).value;
 };
 
 /**

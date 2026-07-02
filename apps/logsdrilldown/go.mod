@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/logsdrilldown
 go 1.26.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.56.2
+	github.com/grafana/grafana-app-sdk v0.56.3
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	k8s.io/apimachinery v0.36.1
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
@@ -74,7 +74,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect

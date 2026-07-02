@@ -48,12 +48,20 @@ type DocumentBuilderInfo struct {
 
 	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
 	// slices registered for GroupResource across every version. The hash is
-	// stored in IndexBuildInfo when an index is built and re-checked on
-	// startup so the index is rebuilt automatically when index-affecting
-	// search-field metadata changes.
+	// stored in IndexBuildInfo when an index is built and re-checked
+	// whenever a rebuild is considered, so the index is rebuilt
+	// automatically when index-affecting search-field metadata changes.
 	//
 	// Empty when the builder does not use a SearchFieldsProvider.
 	SearchFieldsHash string
+
+	// SearchFieldsProvider is the manifest-driven source of truth for this
+	// builder's search fields. When non-nil, the bleve mapping for
+	// GroupResource is built from the provider's SearchFieldDefinition
+	// declarations rather than from the legacy Fields (column-definition)
+	// translation. Fields may still be populated alongside the provider for
+	// downstream consumers that read column metadata directly.
+	SearchFieldsProvider SearchFieldsProvider
 }
 
 // SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map

@@ -90,12 +90,16 @@ func NewSearchOptions(
 		// hash check is a no-op rather than a nil deref. Real callers always
 		// pass a non-nil supplier.
 		var searchFieldsHashes map[string]string
+		var searchFieldsProviders map[string]resource.SearchFieldsProvider
 		if docs != nil {
 			builders, err := docs.GetDocumentBuilders()
 			if err != nil {
 				return resource.SearchOptions{}, err
 			}
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
+			// Search fields come from the app manifests: every in-tree kind that
+			// has custom search fields declares them in its CUE manifest.
+			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests())
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
@@ -107,6 +111,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
 			SelectableFieldsForKinds:       resource.SelectableFields(),
 			SearchFieldsHashesForKinds:     searchFieldsHashes,
+			SearchFieldsProvidersForKinds:  searchFieldsProviders,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,

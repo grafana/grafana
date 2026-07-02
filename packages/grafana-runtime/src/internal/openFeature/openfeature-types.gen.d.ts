@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
+    | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
@@ -56,7 +57,10 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "dashboard.vectorSearch"
+    | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
+    | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.onDemandDiagnostics";

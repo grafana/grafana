@@ -2632,6 +2632,10 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded.",
+      "no-query": "No data source query to run for this rule."
+    },
     "queryAndExpressionsStep": {
       "custom": "Custom",
       "disableAdvancedOptions": {
@@ -3083,7 +3087,8 @@
         "show": "Show"
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
-      "namespace-autocomplete-unavailable": "Due to large number of folders, autocomplete is not available",
+      "namespace-multiple-datasources": "Multiple data sources",
+      "namespace-search-incomplete": "Due to a large number of groups, search might not be complete in external data sources.",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",
@@ -3114,6 +3119,17 @@
       "text-federated": "Federated",
       "text-provisioned": "Provisioned",
       "ungrouped": "Ungrouped"
+    },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
@@ -4911,6 +4927,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4925,6 +4946,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
@@ -5421,11 +5443,6 @@
         "not-found": "Not found"
       }
     },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
-      }
-    },
     "dashboard-srv": {
       "message": {
         "edit-dashboard-json": "Edit Dashboard JSON"
@@ -5773,11 +5790,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
@@ -5801,6 +5813,7 @@
     },
     "inspect": {
       "data-tab": "Data",
+      "errors-and-notices-tab": "Errors and notices",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -5879,6 +5892,7 @@
           "title": "Change layout"
         }
       },
+      "scroll-content": "Dashboard content",
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
@@ -6882,6 +6896,14 @@
       "show-more": "Show more",
       "sql-name": "Transform with SQL",
       "sql-transformation-description": "Manipulate your data using MySQL-like syntax"
+    },
+    "errors-and-notices-inspector": {
+      "copy": "Copy to clipboard",
+      "learn-more": "Learn more",
+      "no-issues": "No errors or notices for this query.",
+      "severity-error": "Error",
+      "severity-info": "Info",
+      "severity-warning": "Warning"
     },
     "filters-list": {
       "add-filter": "Add filter",
@@ -9347,6 +9369,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Accessible",
+        "experimentalGroup": "Experimental",
         "otherGroup": "Others"
       }
     },
@@ -10201,6 +10224,8 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
+      "errors-and-notices": "Errors and notices",
+      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -10633,6 +10658,7 @@
       "starred-active": "Starred dashboards"
     },
     "firing-alerts-card": {
+      "create": "Create an alert rule",
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
@@ -10926,9 +10952,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Create library panel"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -12048,6 +12071,12 @@
     "item": {
       "bookmark": {
         "tooltip": "Bookmark {{itemName}}"
+      },
+      "pin": {
+        "tooltip": "Pin {{itemName}}"
+      },
+      "unpin": {
+        "tooltip": "Unpin {{itemName}}"
       }
     },
     "kiosk": {
@@ -12057,8 +12086,12 @@
       "close": "Close menu",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "open": "Main menu",
+      "pin-error": "Failed to update pinned menu items",
+      "pinned-list-label": "Pinned",
+      "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12326,7 +12359,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -12498,9 +12530,6 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
-    "save-provisioned": {
-      "drawer-title": "Save provisioned playlist"
-    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12517,9 +12546,6 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
-    },
-    "delete-provisioned": {
-      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -12862,6 +12888,7 @@
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",
@@ -13240,6 +13267,10 @@
       "url-description": "The GitHub repository URL",
       "url-required": "Repository URL is required"
     },
+    "github-enterprise": {
+      "server-url-description": "The custom server URL where your GitHub Enterprise is hosted",
+      "server-url-label": "Custom server URL"
+    },
     "gitlab": {
       "branch-required": "Branch is required",
       "permissions": {
@@ -13352,7 +13383,6 @@
     },
     "migrate": {
       "all-resources": "All resources",
-      "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
@@ -13374,8 +13404,8 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "playlists": "Playlists",
-      "playlists-folder-title": "Playlists",
+      "partial-error-body": "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
+      "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13597,6 +13627,9 @@
       "bitbucket-tooltip": "Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
+      "github-enterprise": "GitHub Enterprise",
+      "github-enterprise-description": "Connect to GitHub Enterprise Server or GitHub Enterprise Cloud repositories",
+      "github-enterprise-tooltip": "Enhanced GitHub integration for self-hosted GitHub Enterprise Server or GitHub Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
@@ -13607,6 +13640,16 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
+    },
+    "resource-kind": {
+      "dashboard": "dashboard",
+      "dashboards": "Dashboards",
+      "folder": "folder",
+      "folders": "Folders",
+      "library-panel": "library panel",
+      "library-panels": "Library panels",
+      "playlist": "playlist",
+      "playlists": "Playlists"
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -13646,6 +13689,8 @@
       "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "drawer-title-delete": "Delete provisioned {{resource}}",
+      "drawer-title-save": "Save provisioned {{resource}}",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly."
@@ -13742,6 +13787,9 @@
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
+    "view-repository-button": {
+      "label": "View repository"
+    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -13802,8 +13850,6 @@
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
       "github-app-select-connection": "Select a GitHub App connection",
-      "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
-      "github-enterprise-alert-title": "GitHub Enterprise Server",
       "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
@@ -14444,6 +14490,9 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
+    },
+    "description-tooltip": {
+      "label": "Description"
     },
     "generate-columns": {
       "score": "Score"

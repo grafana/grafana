@@ -51,7 +51,6 @@ describe('Selector', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
-    config.featureToggles.useScopeSingleNodeEndpoint = true;
   });
 
   beforeEach(async () => {

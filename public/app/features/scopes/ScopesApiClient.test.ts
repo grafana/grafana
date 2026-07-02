@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { MOCK_NODES, MOCK_SCOPES } from '@grafana/test-utils/unstable';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 
@@ -43,8 +42,6 @@ describe('ScopesApiClient', () => {
 
   beforeEach(() => {
     apiClient = new ScopesApiClient();
-    config.featureToggles.useMultipleScopeNodesEndpoint = true;
-    config.featureToggles.useScopeSingleNodeEndpoint = true;
     jest.clearAllMocks();
   });
 
@@ -184,17 +181,6 @@ describe('ScopesApiClient', () => {
       expect(result).toEqual([]);
     });
 
-    it('should return empty array when feature toggle is disabled', async () => {
-      config.featureToggles.useMultipleScopeNodesEndpoint = false;
-
-      const result = await apiClient.fetchMultipleScopeNodes(['applications-grafana']);
-
-      expect(result).toEqual([]);
-
-      // Restore feature toggle
-      config.featureToggles.useMultipleScopeNodesEndpoint = true;
-    });
-
     it('should handle API errors gracefully', async () => {
       // Expected: No node with this name exists in MOCK_NODES
       const nonExistentNodeName = 'non-existent-node';
@@ -277,17 +263,6 @@ describe('ScopesApiClient', () => {
 
       // Validate: result matches the expected node from MOCK_NODES
       expect(result).toEqual(expectedNode);
-    });
-
-    it('should return undefined when feature toggle is disabled', async () => {
-      config.featureToggles.useScopeSingleNodeEndpoint = false;
-
-      const result = await apiClient.fetchScopeNode('applications-grafana');
-
-      expect(result).toBeUndefined();
-
-      // Restore feature toggle
-      config.featureToggles.useScopeSingleNodeEndpoint = true;
     });
 
     it('should return undefined on API error', async () => {
