@@ -619,12 +619,43 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 
 	// Jobs subresource - check jobs permissions with the verb (editors can manage jobs)
 	case "jobs":
-		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+		err := b.accessWithEditor.Check(ctx, authlib.CheckRequest{
 			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.JobResourceInfo.GetName(),
 			Namespace: a.GetNamespace(),
-		}, ""))
+		}, "")
+		if err == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		// Fallback for Git Sync: Users with write permissions on the sync root folder can manage sync jobs
+		if a.GetName() != "" {
+			obj, getErr := b.repoStore.Get(ctx, a.GetName(), &metav1.GetOptions{})
+			if getErr == nil && obj != nil {
+				if repo, ok := obj.(*provisioning.Repository); ok {
+					if repo.Spec.Sync.Target == provisioning.SyncTargetTypeFolder {
+						folderUID := repo.Name
+						verb := a.GetVerb()
+						if verb == apiutils.VerbList {
+							verb = apiutils.VerbGet
+						}
+						// Check if the user has dashboard edit permissions in this root folder.
+						folderErr := b.access.Check(ctx, authlib.CheckRequest{
+							Verb:      verb,
+							Group:     resources.DashboardResource.Group,
+							Resource:  resources.DashboardResource.Resource,
+							Namespace: a.GetNamespace(),
+						}, folderUID)
+						if folderErr == nil {
+							return authorizer.DecisionAllow, "", nil
+						}
+					}
+				}
+			}
+		}
+
+		return toAuthorizerDecision(err)
 
 	default:
 		id, err := identity.GetRequester(ctx)
