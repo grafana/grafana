@@ -16,7 +16,6 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
-import { isAdmin } from '../utils/misc';
 
 import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
@@ -65,13 +64,16 @@ export function RuleListActions() {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
-  const canImportRulesToGMA =
-    config.featureToggles.alertingMigrationUI &&
+  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status.
+  // Gates both import entry points (and their routes in ../../routes) so non-admins with these
+  // permissions get the same experience as admins.
+  const hasImportToGMAPermissions =
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
+  const canImportRulesToGMA = config.featureToggles.alertingMigrationUI && hasImportToGMAPermissions;
+
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
 
   const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
 
