@@ -4,12 +4,15 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 )
 
 // fakeTransport is an http.RoundTripper that returns a fixed response and counts calls.
@@ -32,6 +35,7 @@ func newTestRoundTripper(ttl time.Duration, next http.RoundTripper) *cachedRound
 		next:  next,
 		cache: xsync.NewMap[uint64, *cachedEntry](),
 		ttl:   ttl,
+		sf:    &singleflight.Group{},
 	}
 }
 
@@ -124,4 +128,66 @@ func TestCachedRoundTripperDifferentTenantsCachedIndependently(t *testing.T) {
 	defer func() { _ = resp2.Body.Close() }()
 
 	assert.Equal(t, 2, backend.calls)
+}
+
+type concurrentFakeTransport struct {
+	called  int32
+	barrier chan struct{}
+}
+
+func (c *concurrentFakeTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	atomic.AddInt32(&c.called, 1)
+	<-c.barrier
+	return &http.Response{
+		StatusCode: 200,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(`{"key":"myFlag","value":true,"reason":"STATIC","variant":"true"}`)),
+	}, nil
+}
+
+func TestCachedRoundTripperConcurrentRequests(t *testing.T) {
+	barrier := make(chan struct{})
+	backend := &concurrentFakeTransport{barrier: barrier}
+	rt := newTestRoundTripper(time.Minute, backend)
+
+	const numReqs = 3
+	var wg sync.WaitGroup
+	wg.Add(numReqs)
+
+	results := make([]string, numReqs)
+	errs := make([]error, numReqs)
+
+	for i := 0; i < numReqs; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			req := makeReq(t, "http://localhost/ofrep/v1/evaluate/flags/myFlag", `{"context":{"namespace":"stack-1"}}`)
+			resp, err := rt.RoundTrip(req)
+			if err != nil {
+				errs[idx] = err
+				return
+			}
+			defer func() { _ = resp.Body.Close() }()
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				errs[idx] = err
+				return
+			}
+			results[idx] = string(body)
+		}(i)
+	}
+
+	// Give the goroutines a moment to start and enter RoundTrip/block on the barrier
+	time.Sleep(50 * time.Millisecond)
+	close(barrier) // release the barrier
+
+	wg.Wait()
+
+	// Assert backend was called only once
+	assert.Equal(t, int32(1), atomic.LoadInt32(&backend.called))
+
+	// Assert all callers got the correct result
+	for i := 0; i < numReqs; i++ {
+		require.NoError(t, errs[i])
+		assert.JSONEq(t, `{"key":"myFlag","value":true,"reason":"STATIC","variant":"true"}`, results[i])
+	}
 }

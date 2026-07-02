@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cespare/xxhash/v2"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/puzpuzpuz/xsync/v4"
+	"golang.org/x/sync/singleflight"
 )
 
 type cachedEntry struct {
@@ -23,6 +25,7 @@ type cachedRoundTripper struct {
 	next  http.RoundTripper
 	cache *xsync.Map[uint64, *cachedEntry]
 	ttl   time.Duration
+	sf    *singleflight.Group
 }
 
 func (c *cachedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -42,31 +45,72 @@ func (c *cachedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		return entryToResponse(entry), nil
 	}
 
-	// TODO: concurrent requests with the same key all miss the cache and hit the backend. Add singleflight if this becomes a problem.
-	resp, err := c.next.RoundTrip(req)
-	if err != nil {
-		return nil, err
+	if c.sf == nil {
+		c.sf = &singleflight.Group{}
 	}
 
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+	keyStr := strconv.FormatUint(key, 16)
+
+	type sfResult struct {
+		body    []byte
+		status  int
+		headers http.Header
+	}
+
+	val, err, _ := c.sf.Do(keyStr, func() (any, error) {
+		if entry, ok := c.cache.Load(key); ok && time.Now().Before(entry.expiry) {
+			return &sfResult{
+				body:    entry.body,
+				status:  entry.status,
+				headers: entry.headers,
+			}, nil
+		}
+
+		resp, err := c.next.RoundTrip(req)
+		if err != nil {
+			return nil, err
+		}
 		defer func() { _ = resp.Body.Close() }()
+
 		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
 
-		entry := &cachedEntry{
+		res := &sfResult{
 			body:    respBody,
 			status:  resp.StatusCode,
 			headers: resp.Header.Clone(),
-			expiry:  time.Now().Add(c.ttl),
 		}
-		c.cache.Store(key, entry)
 
-		return entryToResponse(entry), nil
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			entry := &cachedEntry{
+				body:    respBody,
+				status:  resp.StatusCode,
+				headers: res.headers,
+				expiry:  time.Now().Add(c.ttl),
+			}
+			c.cache.Store(key, entry)
+		}
+
+		return res, nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	return resp, nil
+	res, ok := val.(*sfResult)
+	if !ok {
+		return nil, fmt.Errorf("unexpected singleflight result type: %T", val)
+	}
+
+	return &http.Response{
+		StatusCode: res.status,
+		Status:     fmt.Sprintf("%d %s", res.status, http.StatusText(res.status)),
+		Header:     res.headers.Clone(),
+		Body:       io.NopCloser(bytes.NewReader(res.body)),
+	}, nil
 }
 
 func entryToResponse(e *cachedEntry) *http.Response {
@@ -82,6 +126,6 @@ func newCacheMiddleware(ttl time.Duration) sdkhttpclient.Middleware {
 	cache := xsync.NewMap[uint64, *cachedEntry]()
 
 	return sdkhttpclient.MiddlewareFunc(func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
-		return &cachedRoundTripper{next: next, cache: cache, ttl: ttl}
+		return &cachedRoundTripper{next: next, cache: cache, ttl: ttl, sf: &singleflight.Group{}}
 	})
 }
