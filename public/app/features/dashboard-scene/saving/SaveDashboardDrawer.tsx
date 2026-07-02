@@ -7,6 +7,7 @@ import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisi
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { DashboardDiffView } from './DashboardDiffView';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -16,6 +17,7 @@ import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashbo
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   showDiff?: boolean;
+  showVisualDiff?: boolean;
   saveTimeRange?: boolean;
   saveVariables?: boolean;
   saveRefresh?: boolean;
@@ -55,6 +57,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboardDrawer>) {
   const {
     showDiff,
+    showVisualDiff,
     saveAsCopy,
     saveAsDashboardTemplate,
     saveDashboardTemplate,
@@ -77,15 +80,22 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     <TabsBar>
       <Tab
         label={t('dashboard-scene.save-dashboard-drawer.tabs.label-details', 'Details')}
-        active={!showDiff}
-        onChangeTab={() => model.setState({ showDiff: false })}
+        active={!showDiff && !showVisualDiff}
+        onChangeTab={() => model.setState({ showDiff: false, showVisualDiff: false })}
       />
       {changesCount > 0 && !managedResourceCannotBeEdited && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
-          onChangeTab={() => model.setState({ showDiff: true })}
+          onChangeTab={() => model.setState({ showDiff: true, showVisualDiff: false })}
           counter={changesCount}
+        />
+      )}
+      {changesCount > 0 && !managedResourceCannotBeEdited && (
+        <Tab
+          label={t('dashboard-scene.save-dashboard-drawer.tabs.label-visual-diff', 'Visual diff')}
+          active={showVisualDiff}
+          onChangeTab={() => model.setState({ showDiff: false, showVisualDiff: true })}
         />
       )}
     </TabsBar>
@@ -103,6 +113,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   }
 
   const renderBody = () => {
+    if (showVisualDiff) {
+      return <DashboardDiffView dashboard={dashboard} oldValue={initialSaveModel} newValue={changedSaveModel} />;
+    }
+
     if (showDiff) {
       return (
         <SaveDashboardDiff
@@ -154,7 +168,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs} size="lg">
       {renderBody()}
     </Drawer>
   );
