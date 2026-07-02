@@ -10,8 +10,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { setStore } from 'app/store/store';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { setStore } from 'app/store/store';
 
 import { listDashboards, listFolders, listStarredFolders } from './services';
 
@@ -237,14 +237,15 @@ describe('browse-dashboards services', () => {
         setTestFlags({});
       });
 
-      it('inserts the starred folders item after shared with me and before real folders', async () => {
+      it('inserts the starred folders item after team folders and before real folders', async () => {
         server.use(getCustomSearchHandler(allHits));
 
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
         const uids = result.map((f) => f.uid);
 
         expect(uids[0]).toBe('sharedwithme');
-        expect(uids[1]).toBe('starred_folders');
+        expect(uids[1]).toBe('teamfolders');
+        expect(uids[2]).toBe('starred_folders');
         expect(uids.indexOf('starred_folders')).toBeLessThan(uids.indexOf('root-folder-1'));
         // The virtual container is a plain text row with no folder URL.
         expect(result.find((f) => f.uid === 'starred_folders')?.url).toBeUndefined();
