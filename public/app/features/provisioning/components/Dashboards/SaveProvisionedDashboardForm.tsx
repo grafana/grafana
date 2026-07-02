@@ -105,9 +105,10 @@ export function SaveProvisionedDashboardForm({
     };
   }, []);
 
-  // Update the form if default values change
+  // Update the form if default values change. keepDirtyValues so a background refetch
+  // (e.g. cache invalidation after creating a folder) doesn't wipe fields the user changed.
   useEffect(() => {
-    reset(defaultValues);
+    reset(defaultValues, { keepDirtyValues: true });
   }, [defaultValues, reset]);
 
   const templateVars: CommitTemplateVars = {
@@ -257,9 +258,10 @@ export function SaveProvisionedDashboardForm({
         body: { title: newFolderName, type: 'folder' },
       }).unwrap();
       const uid = data.resource?.upsert?.metadata?.name;
-      setValue('folder', { uid, title: newFolderName });
+      // shouldDirty so keepDirtyValues preserves the selection when defaults recompute
+      setValue('folder', { uid, title: newFolderName }, { shouldDirty: true });
       const { filename } = splitPath(getValues('path'));
-      setValue('path', joinPath(folderPath, filename));
+      setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
       setShowNewFolderForm(false);
       setNewFolderName('');
     } catch (err) {

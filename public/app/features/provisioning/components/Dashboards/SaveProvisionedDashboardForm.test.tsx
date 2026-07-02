@@ -1274,6 +1274,66 @@ describe('SaveProvisionedDashboardForm', () => {
     );
   });
 
+  it('keeps the created folder selection when default values recompute', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          return HttpResponse.json({
+            resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+          });
+        }
+        dashboardRequest = { url, body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props, rerender } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        target: 'folderless',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'dashboards/test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'dashboards-uid', title: 'dashboards' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
+
+    // cache invalidation after the folder POST recomputes defaultValues upstream;
+    // a new object identity triggers the form's reset effect
+    rerender(
+      <SaveProvisionedDashboardForm {...props} defaultValues={{ ...props.defaultValues, path: 'dashboards/x.json' }} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/My Team/test-dashboard.json'
+    );
+  });
+
   it('rejects invalid folder names without sending a request', async () => {
     let folderRequest = false;
     server.use(
