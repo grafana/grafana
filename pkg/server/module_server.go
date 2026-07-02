@@ -369,6 +369,7 @@ func (s *ModuleServer) Run() error {
 			return true, nil
 		}),
 			resourcepb.ResourceStore_ServiceDesc.ServiceName,
+			resourcepb.ResourceStats_ServiceDesc.ServiceName,
 			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
 			resourcepb.BlobStore_ServiceDesc.ServiceName,

@@ -1295,3 +1295,151 @@ func NewMockResourceClient(t interface {
 
 	return mock
 }
+
+// RecordEvent provides a mock function with given fields: ctx, in, opts
+func (_m *MockResourceClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordEvent")
+	}
+
+	var r0 *resourcepb.RecordEventResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.RecordEventRequest, ...grpc.CallOption) (*resourcepb.RecordEventResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.RecordEventRequest, ...grpc.CallOption) *resourcepb.RecordEventResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resourcepb.RecordEventResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *resourcepb.RecordEventRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceClient_RecordEvent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordEvent'
+type MockResourceClient_RecordEvent_Call struct {
+	*mock.Call
+}
+
+// RecordEvent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *resourcepb.RecordEventRequest
+//   - opts ...grpc.CallOption
+func (_e *MockResourceClient_Expecter) RecordEvent(ctx interface{}, in interface{}, opts ...interface{}) *MockResourceClient_RecordEvent_Call {
+	return &MockResourceClient_RecordEvent_Call{Call: _e.mock.On("RecordEvent",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *MockResourceClient_RecordEvent_Call) Run(run func(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption)) *MockResourceClient_RecordEvent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*resourcepb.RecordEventRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_RecordEvent_Call) Return(_a0 *resourcepb.RecordEventResponse, _a1 error) *MockResourceClient_RecordEvent_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceClient_RecordEvent_Call) RunAndReturn(run func(context.Context, *resourcepb.RecordEventRequest, ...grpc.CallOption) (*resourcepb.RecordEventResponse, error)) *MockResourceClient_RecordEvent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetResourceDailyStats provides a mock function with given fields: ctx, in, opts
+func (_m *MockResourceClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (*resourcepb.GetResourceDailyStatsResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetResourceDailyStats")
+	}
+
+	var r0 *resourcepb.GetResourceDailyStatsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.GetResourceDailyStatsRequest, ...grpc.CallOption) (*resourcepb.GetResourceDailyStatsResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.GetResourceDailyStatsRequest, ...grpc.CallOption) *resourcepb.GetResourceDailyStatsResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resourcepb.GetResourceDailyStatsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *resourcepb.GetResourceDailyStatsRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceClient_GetResourceDailyStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetResourceDailyStats'
+type MockResourceClient_GetResourceDailyStats_Call struct {
+	*mock.Call
+}
+
+// GetResourceDailyStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *resourcepb.GetResourceDailyStatsRequest
+//   - opts ...grpc.CallOption
+func (_e *MockResourceClient_Expecter) GetResourceDailyStats(ctx interface{}, in interface{}, opts ...interface{}) *MockResourceClient_GetResourceDailyStats_Call {
+	return &MockResourceClient_GetResourceDailyStats_Call{Call: _e.mock.On("GetResourceDailyStats",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *MockResourceClient_GetResourceDailyStats_Call) Run(run func(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption)) *MockResourceClient_GetResourceDailyStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*resourcepb.GetResourceDailyStatsRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_GetResourceDailyStats_Call) Return(_a0 *resourcepb.GetResourceDailyStatsResponse, _a1 error) *MockResourceClient_GetResourceDailyStats_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceClient_GetResourceDailyStats_Call) RunAndReturn(run func(context.Context, *resourcepb.GetResourceDailyStatsRequest, ...grpc.CallOption) (*resourcepb.GetResourceDailyStatsResponse, error)) *MockResourceClient_GetResourceDailyStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
