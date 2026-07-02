@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"net/url"
 	"testing"
 	"time"
 
@@ -533,6 +534,140 @@ func TestCache_reset(t *testing.T) {
 		`
 		err = testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedAfter), "grafana_alerting_alerts")
 		require.NoError(t, err)
+	})
+}
+
+func Test_expandAnnotationsAndLabels_includesRuleLabelsInAnnotations(t *testing.T) {
+	ctx := context.Background()
+	l := log.NewNopLogger()
+
+	gen := models.RuleGen
+	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
+
+	t.Run("rule-level static labels are available in $labels during annotation templating", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(3, "result-"),
+		}
+
+		// Set an annotation that references a rule-level label via $labels
+		rule.Annotations = map[string]string{
+			"summary": "Rule label env={{ $labels.env }}",
+		}
+		// Set a static rule label
+		rule.Labels["env"] = "production"
+
+		lbls, annotations := expandAnnotationsAndLabels(ctx, l, rule, result, extraLabels, nil)
+
+		// The annotation should have been expanded with the rule label value
+		require.Equal(t, "Rule label env=production", annotations["summary"])
+
+		// Labels themselves should NOT contain rule labels in $labels during expansion
+		// (they should still be present in the final labels output though)
+		_ = lbls
+	})
+
+	t.Run("result labels are still available in annotation templating", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(3, "result-"),
+		}
+
+		// Set an annotation that references a result label
+		var resultLabelKey string
+		for k := range result.Instance {
+			resultLabelKey = k
+			break
+		}
+		rule.Annotations = map[string]string{
+			"summary": "Result label value={{ $labels." + resultLabelKey + " }}",
+		}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, l, rule, result, extraLabels, nil)
+
+		// The annotation should have been expanded with the result label value
+		expected := "Result label value=" + result.Instance[resultLabelKey]
+		require.Equal(t, expected, annotations["summary"])
+	})
+
+	t.Run("extra labels are still available in annotation templating", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(3, "result-"),
+		}
+
+		// Set an annotation that references an extra label
+		var extraLabelKey string
+		for k := range extraLabels {
+			extraLabelKey = k
+			break
+		}
+		rule.Annotations = map[string]string{
+			"summary": "Extra label value={{ $labels." + extraLabelKey + " }}",
+		}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, l, rule, result, extraLabels, nil)
+
+		// The annotation should have been expanded with the extra label value
+		expected := "Extra label value=" + extraLabels[extraLabelKey]
+		require.Equal(t, expected, annotations["summary"])
+	})
+
+	t.Run("rule labels do not appear in $labels when templating rule labels themselves", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(3, "result-"),
+		}
+
+		// Set a rule label that references another rule label - this should NOT resolve
+		// because rule labels are templated without rule labels in $labels
+		rule.Labels["env"] = "production"
+		rule.Labels["derived"] = "{{ $labels.env }}"
+
+		lbls, _ := expandAnnotationsAndLabels(ctx, l, rule, result, extraLabels, nil)
+
+		// "derived" should be expanded to "<no value>" (or the literal template) since
+		// rule labels are not in $labels when expanding rule labels
+		// The env label itself should be "production" (no template)
+		require.Equal(t, "production", lbls["env"])
+		// derived should NOT be "production" - it should be "[no value]" since env
+		// is a rule label and not available in $labels during rule label expansion
+		require.NotEqual(t, "production", lbls["derived"])
+	})
+
+	t.Run("annotations see both rule labels and result labels in $labels", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(3, "result-"),
+		}
+
+		// Set a static rule label
+		rule.Labels["env"] = "production"
+
+		// Set an annotation that references both a rule label and a result label
+		var resultLabelKey string
+		for k := range result.Instance {
+			resultLabelKey = k
+			break
+		}
+		rule.Annotations = map[string]string{
+			"summary": "env={{ $labels.env }}, result={{ $labels." + resultLabelKey + " }}",
+		}
+
+		_, annotations := expandAnnotationsAndLabels(ctx, l, rule, result, extraLabels, nil)
+
+		expected := "env=production, result=" + result.Instance[resultLabelKey]
+		require.Equal(t, expected, annotations["summary"])
 	})
 }
 
