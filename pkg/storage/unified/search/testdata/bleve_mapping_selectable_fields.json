@@ -45,7 +45,7 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true
+        "dynamic": false
       },
       "folder": {
         "enabled": true,

@@ -1662,6 +1662,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	batch := b.index.NewBatch()
+	var undeclaredFields map[string]struct{}
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
@@ -1669,6 +1670,18 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+
+			// The static fields.* mapping drops values written under an undeclared
+			// name; collect them so the loss is logged, not silent.
+			for name := range doc.Fields {
+				if b.isDeclaredField(name) {
+					continue
+				}
+				if undeclaredFields == nil {
+					undeclaredFields = map[string]struct{}{}
+				}
+				undeclaredFields[name] = struct{}{}
+			}
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
@@ -1678,11 +1691,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			batch.Delete(resource.SearchID(item.Key))
 		}
 	}
+	for name := range undeclaredFields {
+		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// isDeclaredField reports whether name is a declared search field for this
+// index (per-kind or standard). The fields.* prefix is stripped, so a bare
+// doc.Fields key matches.
+func (b *bleveIndex) isDeclaredField(name string) bool {
+	if b.fields != nil && b.fields.Field(name) != nil {
+		return true
+	}
+	return b.standard != nil && b.standard.Field(name) != nil
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {

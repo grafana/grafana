@@ -52,9 +52,17 @@ func TestBleveBackend(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
+	// Register the dashboard provider so the static fields.* mapping is built
+	// from declared fields, as in production; without it custom fields drop.
+	dashInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
+		},
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
