@@ -5,20 +5,12 @@ set -e
 [ -f /etc/sysconfig/grafana-server ] && . /etc/sysconfig/grafana-server
 
 startGrafana() {
-  if command -v systemctl > /dev/null 2>&1; then
-    systemctl daemon-reload
-    systemctl start grafana-server.service || :
-  elif [ -x /etc/init.d/grafana-server ]; then
-    /etc/init.d/grafana-server start || :
-  fi
+  systemctl daemon-reload
+  systemctl start grafana-server.service || :
 }
 
 stopGrafana() {
-  if command -v systemctl > /dev/null 2>&1; then
-    systemctl stop grafana-server.service > /dev/null 2>&1 || :
-  elif [ -x /etc/init.d/grafana-server ]; then
-    /etc/init.d/grafana-server stop > /dev/null 2>&1 || :
-  fi
+  systemctl stop grafana-server.service > /dev/null 2>&1 || :
 }
 
 case "$1" in
