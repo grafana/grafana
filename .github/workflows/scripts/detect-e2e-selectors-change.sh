@@ -4,61 +4,67 @@ set -euo pipefail
 # Decides whether the pre-release @grafana/e2e-selectors package needs publishing.
 # Prints "true" or "false" on stdout; all diagnostics go to stderr.
 #
-# We publish e2e-selectors as a pre-release only when it has actually changed since
-# the last time we published it under the given dist-tag. To avoid an unbounded git
-# history fetch (main is very active), we look up the publish time of the last tagged
-# release from NPM and deepen the shallow checkout back to that point *by date*.
+# We anchor on the exact source commit of the last published artifact rather than on
+# wall-clock time: npm records `gitHead` in the packument, so `npm view <pkg>@<tag>
+# gitHead` yields the SHA the published tarball was built from. Comparing the package
+# directory between that commit and the commit being built is exact - no date fuzz and
+# no shallow-clone graft/boundary edge cases. `git diff` needs only the two commit
+# snapshots (not the history between them), so it works in a shallow checkout once the
+# previous commit is fetched.
 #
-# When we cannot determine the answer confidently we default to publishing, so a
-# selector change is never silently withheld from consumers.
+# We fail open (publish) whenever the answer can't be determined confidently - no
+# published version yet, no recorded gitHead, or any git failure - so a real selector
+# change is never silently withheld from consumers.
 
 PACKAGE="${PACKAGE:-@grafana/e2e-selectors}"
 NPM_TAG="${NPM_TAG:-nightly}"
 PACKAGE_DIR="${PACKAGE_DIR:-packages/grafana-e2e-selectors}"
 GIT_COMMIT="${GRAFANA_COMMIT:-HEAD}"
 
-# Resolve the version currently behind the dist-tag (what plugin e2e follows).
-LAST_VERSION="$(npm view --silent "${PACKAGE}@${NPM_TAG}" version 2>/dev/null || true)"
-if [ -z "$LAST_VERSION" ]; then
-  echo "No existing '${NPM_TAG}' release of ${PACKAGE}; publishing (bootstrap)." >&2
+# gitHead (source SHA) of the version currently behind the dist-tag.
+PREV_SHA="$(npm view --silent "${PACKAGE}@${NPM_TAG}" gitHead 2>/dev/null || true)"
+if [ -z "$PREV_SHA" ]; then
+  echo "No published '${NPM_TAG}' gitHead for ${PACKAGE}; publishing (fail open)." >&2
   echo "true"
   exit 0
 fi
+echo "Last '${NPM_TAG}' publish of ${PACKAGE} was built from ${PREV_SHA}." >&2
 
-# Find when that version was published.
-PUBLISH_TIME="$(npm view --silent "${PACKAGE}" time --json 2>/dev/null \
-  | jq -r --arg v "$LAST_VERSION" '.[$v] // empty')"
-if [ -z "$PUBLISH_TIME" ]; then
-  echo "Could not resolve publish time for ${PACKAGE}@${LAST_VERSION}; publishing (safe default)." >&2
-  echo "true"
-  exit 0
-fi
-echo "Last '${NPM_TAG}' publish: ${PACKAGE}@${LAST_VERSION} at ${PUBLISH_TIME}" >&2
-
-# Ensure we have history back to the last publish. In CI the checkout is shallow
-# (fetch-depth: 1) so we deepen it — bounded by date, not commit count. We ONLY do
-# this when the repo is already shallow: running --shallow-since against a complete
-# clone would truncate it into a shallow one and destroy local history, so a full
-# clone (the usual local dev case) is left untouched and its existing history used.
-if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
-  if ! git fetch --quiet --shallow-since="$PUBLISH_TIME" origin "$GIT_COMMIT" 2>/dev/null; then
-    echo "Could not deepen shallow history to ${PUBLISH_TIME}; publishing (safe default)." >&2
-    echo "true"
-    exit 0
+# Ensure the previous commit is available locally. Fetch just that commit if missing;
+# never use --depth on a complete clone (that would truncate it into a shallow one).
+if ! git cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
+  if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+    git fetch --quiet --depth=1 origin "$PREV_SHA" 2>/dev/null || true
+  else
+    git fetch --quiet origin "$PREV_SHA" 2>/dev/null || true
   fi
-else
-  echo "Repository is complete; using existing history (no fetch)." >&2
 fi
 
-# --min-parents=1 excludes the shallow-clone boundary commit: after the date-bounded
-# deepen above it is grafted parentless, so git treats it as a root that "adds" the
-# whole tree and would otherwise report every path (including this one) as changed.
-CHANGES="$(git log --min-parents=1 --since="$PUBLISH_TIME" --format='  %h %ad %s' --date=short -- "$PACKAGE_DIR" 2>/dev/null)"
-if [ -n "$CHANGES" ]; then
-  echo "${PACKAGE_DIR} changed since ${PUBLISH_TIME}; publishing. Commits:" >&2
-  echo "$CHANGES" >&2
+if ! git rev-parse -q --verify "${PREV_SHA}^{commit}" >/dev/null 2>&1; then
+  echo "Could not resolve ${PREV_SHA} locally; publishing (fail open)." >&2
   echo "true"
-else
-  echo "${PACKAGE_DIR} unchanged since ${PUBLISH_TIME}; skipping publish." >&2
-  echo "false"
+  exit 0
 fi
+
+# Compare the package directory between the two commits.
+# git diff --quiet exits 0 (identical), 1 (differs), or >1 (error -> fail open).
+set +e
+git diff --quiet "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR"
+STATUS=$?
+set -e
+
+case "$STATUS" in
+  0)
+    echo "${PACKAGE_DIR} unchanged since ${PREV_SHA}; skipping publish." >&2
+    echo "false"
+    ;;
+  1)
+    echo "${PACKAGE_DIR} changed since ${PREV_SHA}; publishing. Changed files:" >&2
+    git diff --stat "$PREV_SHA" "$GIT_COMMIT" -- "$PACKAGE_DIR" >&2 || true
+    echo "true"
+    ;;
+  *)
+    echo "git diff failed (status ${STATUS}); publishing (fail open)." >&2
+    echo "true"
+    ;;
+esac
