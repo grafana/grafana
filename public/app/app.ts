@@ -196,13 +196,20 @@ export class GrafanaApp {
 
         // Eagerly import journey wirings - these only use onInteraction,
         // no heavy feature-level imports
-        await Promise.all([import('./core/journeys/searchToResource')]);
+        await Promise.all([
+          import('./core/journeys/searchToResource'),
+          import('./core/journeys/browseToResource'),
+          import('./core/journeys/dashboardEdit'),
+          import('./core/journeys/panelEdit'),
+          import('./core/journeys/datasourceConfigure'),
+          import('./core/journeys/exploreToDashboard'),
+        ]);
 
         // Warn about registry entries that have no start trigger wired up
         registry.warnUnregistered();
       }
 
-      setLocale(contextSrv.user.language);
+      setLocale(config.regionalFormat);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
