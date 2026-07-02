@@ -3148,6 +3148,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.dashboardSettingsRedesign",
+			Description: "Redesigns dashboard settings page into Advanced Settings in a modal window",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+		},
+		{
 			Name:            "kubernetesReporting",
 			Description:     "Add support for Kubernetes reporting new APIs",
 			Stage:           FeatureStageExperimental,
