@@ -219,16 +219,19 @@ func (s *Server) runGroupResourcePhase(
 			continue
 		}
 
-		checkID := fmt.Sprintf("%s_gr", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: item.relation,
-				Object:   item.resource.GroupResourceIdent(),
-			},
-			CorrelationId: checkID,
-		})
+		// One sub-check per wildcard object, allow-if-any (see WildcardGroupResourceIdents).
+		for i, ident := range item.resource.WildcardGroupResourceIdents() {
+			checkID := fmt.Sprintf("%s_gr_%d", item.correlationID, i)
+			checkIDToCorrelation[checkID] = item.correlationID
+			checks = append(checks, &openfgav1.BatchCheckItem{
+				TupleKey: &openfgav1.CheckRequestTupleKey{
+					User:     subject,
+					Relation: item.relation,
+					Object:   ident,
+				},
+				CorrelationId: checkID,
+			})
+		}
 	}
 
 	if len(checks) == 0 {
@@ -240,16 +243,21 @@ func (s *Server) runGroupResourcePhase(
 		return len(checks), err
 	}
 
-	// Process results
+	// An item may have several sub-checks; an "allowed" from any wins over a sibling error.
 	for checkID, result := range results {
 		correlationID := checkIDToCorrelation[checkID]
 		item := items[correlationID]
 
-		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
-		} else if result.GetAllowed() {
+		if item.allowed {
+			continue
+		}
+
+		if result.GetAllowed() {
 			item.allowed = true
+			item.resolved = true
+			item.err = ""
+		} else if err := result.GetError(); err != nil {
+			item.err = err.GetMessage()
 			item.resolved = true
 		}
 	}
