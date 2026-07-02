@@ -124,14 +124,7 @@ export function RuleListErrors(): ReactElement {
                   size="sm"
                   onClick={() => setExpanded(true)}
                 >
-                  <Trans
-                    i18nKey="alerting.rule-list-errors.more-errors"
-                    count={errors.length - 1}
-                    tOptions={{
-                      defaultValue_one: '{{count}} more errors',
-                      defaultValue_other: '{{count}} more errors',
-                    }}
-                  >
+                  <Trans i18nKey="alerting.rule-list-errors.more-errors" count={errors.length - 1}>
                     {'{{count}}'} more errors
                   </Trans>
                 </Button>
@@ -159,14 +152,7 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
         placement="bottom"
       >
         <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
-          <Trans
-            i18nKey="alerting.rule-list-errors.button-errors"
-            count={count}
-            tOptions={{
-              defaultValue_one: '{{count}} errors',
-              defaultValue_other: '{{count}} errors',
-            }}
-          >
+          <Trans i18nKey="alerting.rule-list-errors.button-errors" count={count}>
             {'{{count}}'} errors
           </Trans>
         </Button>
