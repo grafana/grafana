@@ -2458,13 +2458,16 @@
     {
       "metadata": {
         "name": "grafana.assetSriChecks",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782832293915",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
-        "codeowner": "@grafana/frontend-ops",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
     },
