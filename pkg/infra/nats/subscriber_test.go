@@ -156,4 +156,50 @@ func TestSubscriber(t *testing.T) {
 		_, err = sub.Subscribe(ctx, "grafana.test.b", func(string, []byte) {})
 		require.ErrorIs(t, err, context.Canceled)
 	})
+
+	t.Run("WithOnReconnect records the callback on the config", func(t *testing.T) {
+		var called atomic.Bool
+		var cfg subscribeConfig
+		WithOnReconnect(func() { called.Store(true) })(&cfg)
+
+		require.NotNil(t, cfg.onReconnect, "WithOnReconnect must set the callback")
+		cfg.onReconnect()
+		require.True(t, called.Load(), "the stored callback must be the one passed in")
+	})
+
+	t.Run("Subscribe without WithOnReconnect registers no callback", func(t *testing.T) {
+		sub := newTestSubscriber(t, startTestServer(t))
+
+		_, err := sub.Subscribe(context.Background(), "grafana.test.plain", func(string, []byte) {})
+		require.NoError(t, err)
+
+		sub.mu.Lock()
+		require.Empty(t, sub.reconnectCbs, "no reconnect callback must be registered without the option")
+		sub.mu.Unlock()
+	})
+
+	// The callback is a per-subscription option, not a single subscriber-wide
+	// setting: each subscription's callback fires on reconnect, and unsubscribing
+	// one leaves the others untouched.
+	t.Run("each subscription gets its own reconnect callback", func(t *testing.T) {
+		sub := newTestSubscriber(t, startTestServer(t))
+
+		var a, b atomic.Int64
+		sa, err := sub.Subscribe(context.Background(), "grafana.test.a", func(string, []byte) {},
+			WithOnReconnect(func() { a.Add(1) }))
+		require.NoError(t, err)
+		_, err = sub.Subscribe(context.Background(), "grafana.test.b", func(string, []byte) {},
+			WithOnReconnect(func() { b.Add(1) }))
+		require.NoError(t, err)
+
+		sub.fireReconnect()
+		require.EqualValues(t, 1, a.Load())
+		require.EqualValues(t, 1, b.Load())
+
+		// Unsubscribing one drops only its callback; the other keeps firing.
+		require.NoError(t, sa.Unsubscribe())
+		sub.fireReconnect()
+		require.EqualValues(t, 1, a.Load(), "unsubscribed subscription must not fire again")
+		require.EqualValues(t, 2, b.Load(), "other subscription must keep firing")
+	})
 }

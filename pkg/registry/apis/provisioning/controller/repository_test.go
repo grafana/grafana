@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -1032,7 +1033,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				MockStore: jobs.NewMockStore(t),
 			}
 
-			repoGetter := NewCachedRepositoryGetter(repoLister)
+			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
 				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
@@ -1130,7 +1131,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	patcher := &capturePatcher{}
 
-	repoGetter := NewCachedRepositoryGetter(mockLister)
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
@@ -1280,7 +1281,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:             repoGetter,
 		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
@@ -1492,7 +1493,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		MockStore: jobs.NewMockStore(t),
 	}
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
@@ -1551,7 +1552,7 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 		MockStore: jobs.NewMockStore(t),
 	}
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),

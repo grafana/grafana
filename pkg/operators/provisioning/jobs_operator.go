@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,22 +33,20 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	var startHistoryInformers func()
+	// Historic-job cleanup is resync-driven: each re-list delivers every job as an
+	// update so the handler can act on its age (resync == expiration). The source
+	// stays nil when cleanup is disabled.
+	var historyInformer informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
-		// History jobs informer and controller (separate factory with resync == expiration)
-		historyInformerFactory := newInformerFactory(provisioningClient, controllerCfg.historyExpiration)
-		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
+		historyInformer = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration)
+		if _, err := historyInformer.AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("failed to add history job event handler: %w", err)
 		}
 		logger.Info("history cleanup enabled", "expiration", controllerCfg.historyExpiration.String())
-		startHistoryInformers = func() { historyInformerFactory.Start(ctx.Done()) }
-	} else {
-		startHistoryInformers = func() {}
 	}
 	// HistoryWriter can be either Loki or the API server
 	// TODO: Loki configuration and setup in the same way we do for the API server
@@ -81,8 +80,10 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		logger.Info("job cleanup controller stopped")
 	}()
 
-	// Start informers
-	go startHistoryInformers()
+	// Start the history informer; cleanup relies on its resync events.
+	if historyInformer != nil {
+		go historyInformer.Run(ctx.Done())
+	}
 
 	logger.Info("jobs operator is ready")
 	deps.HealthNotifier.SetReady()
