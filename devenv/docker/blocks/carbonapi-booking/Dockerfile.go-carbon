@@ -1,0 +1,21 @@
+FROM golang:alpine AS builder
+RUN apk add --no-cache git gcc musl-dev
+RUN git clone --depth=1 https://github.com/go-graphite/go-carbon /src
+WORKDIR /src
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/go-carbon .
+
+FROM alpine:latest
+RUN apk add --no-cache python3
+
+COPY --from=builder /usr/local/bin/go-carbon /usr/local/bin/go-carbon
+COPY go-carbon.conf /etc/go-carbon/go-carbon.conf
+COPY storage-schemas.conf /etc/go-carbon/storage-schemas.conf
+
+# Pre-seed a whisper metric at image build time so the carbonserver's startup
+# filesystem scan finds it immediately.  Without this, go-carbon returns HTTP
+# 500 for find queries on an empty index, which carbonapi propagates as 422
+# (Unprocessable Entity) rather than treating it as "not found".
+COPY seed-whisper.py /tmp/seed-whisper.py
+RUN python3 /tmp/seed-whisper.py
+
+CMD ["/usr/local/bin/go-carbon", "-config", "/etc/go-carbon/go-carbon.conf"]

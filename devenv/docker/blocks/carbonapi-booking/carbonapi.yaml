@@ -1,0 +1,18 @@
+listen: ":8580"
+listenInternal: ":7580"
+graphiteVersionForGrafana: "1.1.0"
+# upstreams.backends must be non-empty — it is validated before zipperConfig is
+# read. The actual backend connection goes through the zipper config below.
+upstreams:
+  backends:
+    - "http://go-carbon:8080"
+cache:
+  type: "mem"
+  size_mb: 10
+  defaultTimeoutSec: 5
+expireDelaySec: 0
+loggerConfig:
+  outputPaths: ["stdout"]
+  level: "info"
+  encoding: "console"
+zipperConfig: "/etc/carbonapi/carbonzipper.yaml"

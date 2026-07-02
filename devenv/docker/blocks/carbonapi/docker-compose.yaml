@@ -1,0 +1,44 @@
+services:
+  # go-carbon provides the carbon plaintext protocol receiver and whisper storage
+  # backend required by carbonapi.
+  go-carbon:
+    image: ghcr.io/go-graphite/go-carbon:latest
+    ports:
+      - "2013:2003"   # carbon plaintext
+      - "2014:2004"   # carbon pickle
+      - "8580:8080"   # carbonserver HTTP (exposed for CI health checks)
+    volumes:
+      - ./go-carbon.conf:/etc/go-carbon/go-carbon.conf
+      - ./storage-schemas.conf:/etc/go-carbon/storage-schemas.conf
+
+  # carbonapi is the HTTP API layer (upstream of Booking's bookingcom/carbonapi fork).
+  # It exposes the same /render, /metrics/find, /metrics/expand, /tags/* endpoints
+  # as graphite-web, but with different behaviour around query formatting strictness.
+  #
+  # Port 8480 is used to avoid collision with existing graphite (8180) and graphite1 (8280) blocks.
+  carbonapi:
+    image: ghcr.io/go-graphite/carbonapi:latest
+    ports:
+      - "8480:8080"
+    volumes:
+      - ./carbonapi.yaml:/etc/carbonapi/carbonapi.yaml
+    command: ["-config", "/etc/carbonapi/carbonapi.yaml"]
+    depends_on:
+      - go-carbon
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/render?target=constantLine(1)&format=json&from=-1min"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  fake-carbonapi-data:
+    image: grafana/fake-data-gen
+    environment:
+      FD_DATASOURCE: graphite
+      FD_SERVER: go-carbon
+      FD_PORT: 2003
+      FD_GRAPHITE_VERSION: 1.1
+    depends_on:
+      - go-carbon
+    # Restart if connection to go-carbon fails on first attempt (TCP not ready yet).
+    restart: on-failure
