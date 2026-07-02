@@ -152,11 +152,6 @@ export class GeomapPanel extends Component<Props, State> {
       }
     }
 
-    // External data changed
-    if (this.props.data !== nextProps.data) {
-      this.dataChanged(nextProps.data);
-    }
-
     return true; // always?
   }
 
@@ -246,11 +241,8 @@ export class GeomapPanel extends Component<Props, State> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    // Only update if panel data matches component data
-    if (data === this.props.data) {
-      for (const state of this.layers) {
-        applyLayerFilter(state.handler, state.options, this.props.data);
-      }
+    for (const state of this.layers) {
+      applyLayerFilter(state.handler, state.options, data);
     }
 
     // Because data changed, check map view and change if needed (data fit)
