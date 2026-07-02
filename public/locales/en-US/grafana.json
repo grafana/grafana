@@ -2632,6 +2632,10 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded.",
+      "no-query": "No data source query to run for this rule."
+    },
     "queryAndExpressionsStep": {
       "custom": "Custom",
       "disableAdvancedOptions": {
@@ -4923,6 +4927,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4937,6 +4946,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
@@ -5431,11 +5441,6 @@
       "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
       }
     },
     "dashboard-srv": {
@@ -9364,6 +9369,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Accessible",
+        "experimentalGroup": "Experimental",
         "otherGroup": "Others"
       }
     },
@@ -14485,6 +14491,9 @@
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
     },
+    "description-tooltip": {
+      "label": "Description"
+    },
     "generate-columns": {
       "score": "Score"
     },
@@ -15358,7 +15367,7 @@
       },
       "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
-      "new-team": "New Team",
+      "new-team": "New team",
       "placeholder-search-teams": "Search teams"
     },
     "team-pages": {

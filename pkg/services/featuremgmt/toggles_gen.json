@@ -1415,6 +1415,23 @@
     },
     {
       "metadata": {
+        "name": "cujTracking",
+        "resourceVersion": "1782510975281",
+        "creationTimestamp": "2026-04-20T08:50:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 21:56:15.281108 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Critical User Journey (CUJ) tracking",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -1466,6 +1483,23 @@
         "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardJourneyTracking",
+        "resourceVersion": "1776076870100",
+        "creationTimestamp": "2026-04-13T00:00:00Z",
+        "deletionTimestamp": "2026-04-20T08:50:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-04-13 12:00:00.000000 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Critical User Journey tracking for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -2056,13 +2090,16 @@
     {
       "metadata": {
         "name": "enableScopesInMetricsExplore",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-11-06T13:11:33Z"
+        "resourceVersion": "1782915825637",
+        "creationTimestamp": "2024-11-06T13:11:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 14:23:45.637495 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the scopes usage in Metrics Explore",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2696,6 +2733,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.vectorSearchCmdk",
+        "resourceVersion": "1782378994121",
+        "creationTimestamp": "2026-06-25T09:16:34Z"
+      },
+      "spec": {
+        "description": "Enables semantic (vector) dashboard search in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.viewPanelPane",
         "resourceVersion": "1778761195995",
         "creationTimestamp": "2026-05-14T12:19:55Z"
@@ -2868,6 +2919,20 @@
         "description": "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "heatmapNegativeLogBuckets",
+        "resourceVersion": "1780479590437",
+        "creationTimestamp": "2026-06-03T09:39:50Z"
+      },
+      "spec": {
+        "description": "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3331,6 +3396,23 @@
       },
       "spec": {
         "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesReporting",
+        "resourceVersion": "1782923989000",
+        "creationTimestamp": "2026-07-01T15:36:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 16:39:49.000516 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Add support for Kubernetes reporting new APIs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
@@ -4928,13 +5010,16 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T15:41:19Z"
+        "resourceVersion": "1782915825637",
+        "creationTimestamp": "2024-03-05T15:41:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 14:23:45.637495 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the use of scope filters in Grafana",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true,
         "expression": "false"
       }

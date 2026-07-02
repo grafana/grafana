@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -103,7 +104,7 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 // every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
 	list, err := s.k8sClient.List(ctx, orgID, v1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.legacyID=%d", annotationID),
+		LabelSelector: fmt.Sprintf("%s=%d", annotationpkg.LabelKeyLegacyID, annotationID),
 	})
 	if err != nil {
 		return nil, err

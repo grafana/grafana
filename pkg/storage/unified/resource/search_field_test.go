@@ -233,7 +233,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	const expected = "4cbe51ac08dd6cbc987b353d503f253a9aa0b478b4c7ef09ee0c5e5f29644a20"
+	const expected = "fde7f709479cdb925bf11296f3d422c58ad2c2cbfa0fd457218c2e0bd638827f"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }

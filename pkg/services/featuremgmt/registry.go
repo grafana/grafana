@@ -900,15 +900,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useMultipleScopeNodesEndpoint",
-			Description:  "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true",
-			Generate:     Generate{LegacyFrontend: true},
-			HideFromDocs: true,
-		},
-		{
 			Name:         "logQLScope",
 			Description:  "In-development feature that will allow injection of labels into loki queries.",
 			Stage:        FeatureStagePrivatePreview,
@@ -973,7 +964,7 @@ var (
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDashboardsSquad,
+			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: false,
 			HideFromDocs:    true,
 			Expression:      "false",
@@ -1263,7 +1254,7 @@ var (
 			Description:     "Enables the scopes usage in Metrics Explore",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDashboardsSquad,
+			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: false,
 			HideFromDocs:    true,
 			Expression:      "false",
@@ -2089,14 +2080,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "teamFolders",
-			Description: "Enables team folders functionality",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "true",
-		},
-		{
 			Name:        "grafana.starredFolders",
 			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
 			Stage:       FeatureStageExperimental,
@@ -2227,6 +2210,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "heatmapNegativeLogBuckets",
+			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
@@ -3076,7 +3067,15 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "grafana.vectorSearchCmdk",
+			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "splunk.useLegacyResultsApi",
@@ -3123,6 +3122,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+
+			Name:        "cujTracking",
+			Description: "Enables Critical User Journey (CUJ) tracking",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "auth.tokenRotationGracePeriod",
 			Description:  "Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts",
 			Stage:        FeatureStageExperimental,
@@ -3130,6 +3138,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:            "kubernetesReporting",
+			Description:     "Add support for Kubernetes reporting new APIs",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

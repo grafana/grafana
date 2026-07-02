@@ -1127,7 +1127,10 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The deadline must comfortably cover writing the fixture events below on a
+	// loaded CI runner. The List call under test uses its own 1µs timeout, so
+	// this budget only guards setup, not the assertion.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
