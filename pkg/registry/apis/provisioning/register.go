@@ -348,8 +348,6 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
-
-	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -387,10 +385,12 @@ func RegisterAPIService(
 		return nil, err
 	}
 
-	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
+	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+
 	return builder, nil
 }
 
