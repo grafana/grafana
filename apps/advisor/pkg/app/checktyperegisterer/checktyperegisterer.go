@@ -234,9 +234,9 @@ func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger loggi
 		for i, s := range steps {
 			stepTypes[i] = advisorv0alpha1.CheckTypeStep{
 				Title:       s.Title(),
-				Description: s.Description(),
+				Description: checks.RenderDescription(s),
 				StepID:      s.ID(),
-				Resolution:  s.Resolution(),
+				Resolution:  checks.RenderResolution(s),
 			}
 		}
 		obj := &advisorv0alpha1.CheckType{
