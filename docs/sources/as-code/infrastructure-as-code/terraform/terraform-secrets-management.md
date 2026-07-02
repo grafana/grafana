@@ -1,19 +1,20 @@
 ---
 description: Use the Grafana Terraform provider to create, rotate, and manage secure values in Grafana Secrets Management as version-controlled, declarative infrastructure alongside the rest of your Grafana stack.
 keywords:
+  - Infrastructure as Code
+  - Grafana Cloud
   - Terraform
-  - secure values
-  - secrets management
-  - provisioning
-  - infrastructure as code
+  - Secrets Management
+  - Secure values
 labels:
   products:
     - cloud
   stage: public-preview
 menuTitle: Provision with Terraform
 title: Use Terraform to provision secure values
-weight: 100
+weight: 130
 review_date: "2026-06-17"
+canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-secrets-management/
 ---
 
 # Use Terraform to provision secure values
