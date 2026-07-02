@@ -633,6 +633,7 @@ func (ng *AlertNG) init() error {
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
 		AlertsRouter:          alertsRouter,
+		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,
 		ConditionValidator:    conditionValidator,
 		FeatureManager:        ng.FeatureToggles,
