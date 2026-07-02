@@ -329,6 +329,37 @@ func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 	assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
 }
 
+// A failing initial list must not mark the informer synced: HasSynced stays false
+// (so WaitForCacheSync keeps blocking) until the first list succeeds, then the
+// seeded objects are delivered as adds.
+func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
+	sub := newFakeSubscriber()
+	handler := &recordingHandler{}
+
+	var calls atomic.Int64
+	list := func(context.Context) ([]runtime.Object, error) {
+		if calls.Add(1) < 3 {
+			return nil, fmt.Errorf("api unavailable")
+		}
+		return []runtime.Object{obj("a")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.retryInterval = 10 * time.Millisecond // shorten the initial-list retry for the test
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+
+	stopCh := make(chan struct{})
+	go n.Run(stopCh)
+	t.Cleanup(func() { close(stopCh) })
+
+	// While the list keeps failing, the informer must not report synced.
+	require.Never(t, n.HasSynced, 20*time.Millisecond, 5*time.Millisecond, "must not sync while the initial list fails")
+
+	// Once a list succeeds, it syncs and delivers the seeded object as an add.
+	require.Eventually(t, n.HasSynced, 5*time.Second, 5*time.Millisecond, "must sync after the initial list succeeds")
+	assert.Equal(t, []string{"a"}, handler.addedNames())
+}
+
 // signalReconnect never blocks: a pending signal coalesces additional reconnects
 // so a burst of reconnects while the run loop is busy cannot deadlock the client's
 // reconnect goroutine.

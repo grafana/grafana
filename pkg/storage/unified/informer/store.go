@@ -53,9 +53,9 @@ func NewStore() Store {
 	return &store{items: map[string]runtime.Object{}}
 }
 
-// List returns a snapshot of the objects in the store. It returns nil until the
-// first Replace. The context is accepted for signature parity with API-backed
-// readers; the read itself is in-memory.
+// List returns a snapshot of the objects in the store. It returns an empty
+// (non-nil) slice before the first Replace. The context is accepted for signature
+// parity with API-backed readers; the read itself is in-memory.
 func (s *store) List(_ context.Context) []runtime.Object {
 	s.mu.Lock()
 	defer s.mu.Unlock()

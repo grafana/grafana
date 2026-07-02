@@ -185,13 +185,27 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		}
 	}()
 
-	// Seed the initial reconcile and report HasSynced before opening the live
-	// subscription: the informer is correct on the periodic re-list alone, so a
-	// slow or not-yet-started NATS server must never block the controller waiting
-	// on HasSynced. Live notifications are only a latency optimisation layered on
-	// top, and any event missed in the window before the subscription opens is
-	// healed by the next re-list.
-	n.relist(ctx, true)
+	// Seed the initial reconcile before reporting HasSynced, retrying until the
+	// first list succeeds. HasSynced releases WaitForCacheSync, so marking it
+	// synced after a failed list would start the controllers against an empty
+	// snapshot — existing objects would go unreconciled and quota counts read as
+	// zero until the next successful resync. A transient API error must therefore
+	// hold HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
+	//
+	// This gates on the API list, not the NATS subscription: the subscription is
+	// opened afterwards and its failure is non-fatal (the periodic re-list keeps
+	// the informer correct), so a slow or not-yet-started bus never blocks the
+	// controller.
+	for {
+		if err := n.relist(ctx, true); err == nil {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(n.retryInterval):
+		}
+	}
 	n.synced.Store(true)
 	close(n.syncedCh)
 
@@ -304,11 +318,11 @@ func (n *Informer) onNotification() nats.MessageHandler {
 //   - objects that were in the previous snapshot but are gone now are delivered as
 //     deletes, carrying the last-known object — this is how a hard delete (which no
 //     live notification reliably reaches under round-robin delivery) is caught.
-func (n *Informer) relist(ctx context.Context, initial bool) {
+func (n *Informer) relist(ctx context.Context, initial bool) error {
 	objs, err := n.list(ctx)
 	if err != nil {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
-		return
+		return err
 	}
 
 	// Swap the snapshot for the fresh set; removed is the objects that vanished
@@ -327,12 +341,13 @@ func (n *Informer) relist(ctx context.Context, initial bool) {
 	// Emit a delete for every vanished object. Skipped on the initial list, which
 	// has nothing to diff against (the store started empty).
 	if initial {
-		return
+		return nil
 	}
 	for _, obj := range removed {
 		o := obj
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
+	return nil
 }
 
 func (n *Informer) dispatch(fn func(cache.ResourceEventHandler)) {
