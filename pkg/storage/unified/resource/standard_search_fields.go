@@ -19,7 +19,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name:         SEARCH_FIELD_NAME,
 			Type:         SearchFieldTypeString,
-			Capabilities: []SearchCapability{SearchCapabilityFilter},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort},
 			Description:  "Kubernetes name. Unique identifier within a namespace+group+resource.",
 		},
 		{

@@ -2346,7 +2346,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	sorting := getSortFields(req, b.fields)
 	searchrequest.SortBy(sorting)
 
-	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
+	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title.
+	// Always add name as the final tie-breaker so offset pagination sees a total order.
 	if len(sorting) == 0 {
 		if req.Query != "" && req.Query != "*" {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
@@ -2358,6 +2359,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Desc:  false,
 			})
 		}
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+			Field: resource.SEARCH_FIELD_NAME,
+			Desc:  false,
+		})
 	}
 
 	return searchrequest, nil
@@ -2551,7 +2556,12 @@ func safeInt64ToInt(i64 int64) (int, error) {
 }
 
 func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
-	sorting := make([]string, 0, len(req.SortBy))
+	if len(req.SortBy) == 0 {
+		return nil
+	}
+
+	sorting := make([]string, 0, len(req.SortBy)+1)
+	hasNameSort := false
 	for _, sort := range req.SortBy {
 		input := sort.Field
 		if field, ok := textSortFields[input]; ok {
@@ -2566,10 +2576,14 @@ func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.Search
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
+		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
 		if sort.Desc {
 			input = "-" + input
 		}
 		sorting = append(sorting, input)
+	}
+	if !hasNameSort {
+		sorting = append(sorting, resource.SEARCH_FIELD_NAME)
 	}
 	return sorting
 }
