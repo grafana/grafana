@@ -412,7 +412,11 @@ After you import a secure value, keep the following points in mind:
 
 A _keeper_ defines where Grafana stores the encrypted material for your secure values. By default, Grafana uses the built-in system keeper, which encrypts values at rest in Grafana's database and requires no setup.
 
-To store secrets in an external secret manager instead, provision a keeper with the [`grafana_apps_secret_keeper_v1beta1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_secret_keeper_v1beta1) resource. Grafana currently supports AWS Secrets Manager as a keeper. Grafana connects to AWS Secrets Manager through cross-account role assumption with AWS Security Token Service. Grafana never stores your AWS credentials. You create an AWS Identity and Access Management (IAM) role in your AWS account that Grafana can assume, and the keeper references that role.
+To store secrets in an external secret manager instead, provision a keeper with the [`grafana_apps_secret_keeper_v1beta1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_secret_keeper_v1beta1) resource.
+Grafana currently supports AWS Secrets Manager as a keeper.
+
+Grafana connects to AWS Secrets Manager through cross-account role assumption with AWS Security Token Service, and never stores your AWS credentials.
+You create an AWS Identity and Access Management (IAM) role in your AWS account that Grafana can assume, and the keeper references that role.
 
 ### Keeper requirements
 
