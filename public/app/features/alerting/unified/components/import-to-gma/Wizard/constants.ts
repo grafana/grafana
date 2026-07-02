@@ -1,6 +1,20 @@
 import { t } from '@grafana/i18n';
 
-import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
+import {
+  type ImportMethod,
+  type NotificationsSourceOption,
+  type RulesSourceOption,
+  StepKey,
+  type WizardStep,
+} from './types';
+
+/**
+ * Whether the selected import method is the continuous auto-sync method (which
+ * collapses the wizard to a confirmation step) rather than a one-time import.
+ */
+export function isAutoSyncMethod(method: ImportMethod): boolean {
+  return method === 'autosync';
+}
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.
@@ -13,29 +27,55 @@ export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
  * Returns the wizard steps configuration.
  * Uses a function to ensure translations are evaluated at runtime.
  */
-export const getWizardSteps = (): WizardStep[] => [
-  {
-    id: StepKey.Notifications,
-    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification resources'),
-    description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
-  },
-  {
-    id: StepKey.Rules,
-    name: t('alerting.import-to-gma.wizard.step-rules', 'Alert rules'),
-    description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
-  },
-  {
-    id: StepKey.Review,
-    name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
-    description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
-  },
-];
+/**
+ * Returns the wizard steps configuration for the selected import method.
+ * Uses a function to ensure translations are evaluated at runtime.
+ */
+export const getWizardSteps = (method: ImportMethod): WizardStep[] => {
+  const methodStep: WizardStep = {
+    id: StepKey.Method,
+    name: t('alerting.import-to-gma.wizard.step-method', 'Import method'),
+    description: t('alerting.import-to-gma.wizard.step-method-desc', 'How to bring resources into Grafana'),
+  };
+
+  // Auto-sync needs no per-resource configuration, so the import steps are skipped
+  // entirely and the wizard collapses to a single confirmation step.
+  if (isAutoSyncMethod(method)) {
+    return [
+      methodStep,
+      {
+        id: StepKey.ReviewEnable,
+        name: t('alerting.import-to-gma.wizard.step-review-enable', 'Review & enable'),
+        description: t('alerting.import-to-gma.wizard.step-review-enable-desc', 'Confirm and enable auto-sync'),
+      },
+    ];
+  }
+
+  return [
+    methodStep,
+    {
+      id: StepKey.Notifications,
+      name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification resources'),
+      description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
+    },
+    {
+      id: StepKey.Rules,
+      name: t('alerting.import-to-gma.wizard.step-rules', 'Alert rules'),
+      description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
+    },
+    {
+      id: StepKey.Review,
+      name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
+      description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
+    },
+  ];
+};
 
 /**
  * Get the next step in the wizard
  */
-export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export const getNextStep = (currentStep: StepKey, method: ImportMethod): WizardStep | undefined => {
+  const steps = getWizardSteps(method);
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   return steps[currentIndex + 1];
 };
@@ -43,8 +83,8 @@ export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
 /**
  * Get the previous step in the wizard
  */
-export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined => {
-  const steps = getWizardSteps();
+export const getPreviousStep = (currentStep: StepKey, method: ImportMethod): WizardStep | undefined => {
+  const steps = getWizardSteps(method);
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
   return currentIndex > 0 ? steps[currentIndex - 1] : undefined;
 };
@@ -53,14 +93,14 @@ export const getPreviousStep = (currentStep: StepKey): WizardStep | undefined =>
  * Check if the current step is the first step
  */
 export const isFirstStep = (currentStep: StepKey): boolean => {
-  return currentStep === StepKey.Notifications;
+  return currentStep === StepKey.Method;
 };
 
 /**
  * Check if the current step is the last step (review)
  */
-export const isLastStep = (currentStep: StepKey): boolean => {
-  return currentStep === StepKey.Review;
+export const isLastStep = (currentStep: StepKey, method: ImportMethod): boolean => {
+  return currentStep === (isAutoSyncMethod(method) ? StepKey.ReviewEnable : StepKey.Review);
 };
 
 /**
