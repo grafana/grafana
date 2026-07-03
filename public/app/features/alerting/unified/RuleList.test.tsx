@@ -1,11 +1,12 @@
 import { type SerializedError } from '@reduxjs/toolkit';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
@@ -163,8 +164,25 @@ describe('RuleList', () => {
     setupDataSources(...Object.values(dataSources));
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.resetAllMocks();
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('renders the v3 list view when alerting.listViewV3 is enabled', async () => {
+    setTestFlags({ 'alerting.listViewV3': true });
+
+    mocks.api.fetchRules.mockResolvedValue([]);
+    mocks.api.fetchRulerRules.mockResolvedValue({});
+
+    renderRuleList();
+
+    await waitFor(() => expect(mocks.api.fetchRules).not.toHaveBeenCalled());
+    expect(ui.rulesFilterInput.query()).not.toBeInTheDocument();
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {

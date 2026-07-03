@@ -118,6 +118,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.listViewV3",
+        "resourceVersion": "1783073098017",
+        "creationTimestamp": "2026-07-03T10:04:58Z"
+      },
+      "spec": {
+        "description": "Enables the pure k8s-backed alert list view design",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.notificationsAPIV1Beta1",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -437,6 +451,21 @@
       "spec": {
         "description": "Enables the alerting list view v2 preview toggle",
         "stage": "preview",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingListViewV3",
+        "resourceVersion": "1783070337443",
+        "creationTimestamp": "2026-07-03T09:18:57Z",
+        "deletionTimestamp": "2026-07-03T10:04:58Z"
+      },
+      "spec": {
+        "description": "Enables the pure k8s-backed alert list view design",
+        "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "false"

@@ -3118,6 +3118,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:        "alerting.listViewV3",
+			Description: "Enables the pure k8s-backed alert list view design",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:         "grafana.enableScopesFirstMode",
 			Description:  "Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)",
 			Stage:        FeatureStageExperimental,

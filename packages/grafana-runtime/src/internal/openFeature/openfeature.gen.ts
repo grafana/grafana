@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables the pure k8s-backed alert list view design */
+  AlertingListViewV3: "alerting.listViewV3",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
@@ -102,6 +104,17 @@ export const FlagKeys = {
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
 } as const;
+
+/**
+ * Enables the pure k8s-backed alert list view design
+ *
+ * **Details:**
+ * - flag key: `alerting.listViewV3`
+ * - default value: `false`
+ */
+export const useFlagAlertingListViewV3 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.listViewV3", false, options).value;
+};
 
 /**
  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
