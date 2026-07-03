@@ -242,8 +242,7 @@ async function initGrafana() {
 
     const theme = window.grafanaBootData.user.theme;
     if (theme === 'system') {
-      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      window.grafanaBootData.user.lightTheme = !darkQuery.matches;
+      window.grafanaBootData.user.lightTheme = window.matchMedia('(prefers-color-scheme: light)').matches;
     }
 
     const isLightTheme = window.grafanaBootData.user.lightTheme;

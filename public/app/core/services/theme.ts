@@ -8,12 +8,14 @@ import { appEvents } from '../app_events';
 import { contextSrv } from '../services/context_srv';
 
 import { PreferencesService } from './PreferencesService';
+import { startSystemThemeListener, stopSystemThemeListener } from './systemThemeListener';
 
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   const oldTheme = config.theme2;
 
   const newTheme = getThemeById(themeId);
 
+  config.bootData.user.theme = themeId;
   appEvents.publish(new ThemeChangedEvent(newTheme));
 
   // Add css file for new theme
@@ -38,8 +40,18 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
     document.head.insertBefore(newCssLink, document.head.firstChild);
   }
 
+  // Always stop the system listener when switching to an explicit theme, even on runtime-only
+  // calls (e.g. toggleTheme), so OS changes don't silently override the user's selection.
+  if (themeId !== 'system') {
+    stopSystemThemeListener();
+  }
+
   if (runtimeOnly) {
     return;
+  }
+
+  if (themeId === 'system') {
+    startSystemThemeListener(() => changeTheme('system', true));
   }
 
   if (!contextSrv.isSignedIn) {

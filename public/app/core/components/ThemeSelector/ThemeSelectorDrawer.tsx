@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type ThemeRegistryItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Drawer, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Drawer, TextLink, useStyles2 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
 
 import { ThemeCard } from './ThemeCard';
@@ -16,8 +16,6 @@ interface Props {
 export function ThemeSelectorDrawer({ onClose }: Props) {
   const styles = useStyles2(getStyles);
   const themes = getSelectableThemes();
-  const currentTheme = useTheme2();
-
   const onChange = (theme: ThemeRegistryItem) => {
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: theme.id,
@@ -54,7 +52,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
             isExperimental={themeOption.isExtra}
             key={themeOption.id}
             onSelect={() => onChange(themeOption)}
-            isSelected={currentTheme.name === themeOption.name}
+            isSelected={config.bootData.user.theme === themeOption.id}
           />
         ))}
       </div>

@@ -104,7 +104,6 @@ for (const [name, json] of Object.entries(extraThemes)) {
 }
 
 function getSystemPreferenceTheme() {
-  const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
-  const id = mediaResult.matches ? 'dark' : 'light';
+  const id = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   return getThemeById(id);
 }

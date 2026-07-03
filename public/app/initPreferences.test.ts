@@ -1,6 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
+jest.mock('app/core/services/systemThemeListener', () => ({
+  startSystemThemeListener: jest.fn(),
+  stopSystemThemeListener: jest.fn(),
+}));
+
 import { fetchMergedPreferences, initPreferences } from './initPreferences';
 
 const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1alpha1/namespaces/:ns/preferences/merged';
@@ -170,9 +175,9 @@ describe('applyTheme', () => {
     window.matchMedia = originalMatchMedia;
   });
 
-  function mockPrefersDark(matches: boolean) {
+  function mockColorScheme(scheme: 'dark' | 'light' | 'no-preference') {
     window.matchMedia = ((query: string) => ({
-      matches,
+      matches: scheme === 'light' && query === '(prefers-color-scheme: light)',
       media: query,
       onchange: null,
       addListener: jest.fn(),
@@ -199,12 +204,13 @@ describe('applyTheme', () => {
   });
 
   it.each([
-    { prefersDark: true, expectedClass: 'theme-dark', otherClass: 'theme-light' },
-    { prefersDark: false, expectedClass: 'theme-light', otherClass: 'theme-dark' },
+    { scheme: 'dark' as const, expectedClass: 'theme-dark', otherClass: 'theme-light' },
+    { scheme: 'light' as const, expectedClass: 'theme-light', otherClass: 'theme-dark' },
+    { scheme: 'no-preference' as const, expectedClass: 'theme-dark', otherClass: 'theme-light' },
   ])(
-    'theme "system" applies $expectedClass when prefersDark=$prefersDark',
-    async ({ prefersDark, expectedClass, otherClass }) => {
-      mockPrefersDark(prefersDark);
+    'theme "system" applies $expectedClass when color scheme is "$scheme"',
+    async ({ scheme, expectedClass, otherClass }) => {
+      mockColorScheme(scheme);
 
       server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'system' } })));
 

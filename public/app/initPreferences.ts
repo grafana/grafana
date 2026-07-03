@@ -1,4 +1,12 @@
 import type { PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { startSystemThemeListener } from 'app/core/services/systemThemeListener';
+
+// Dynamic import avoids pulling theme.ts (and its store deps) into the early bundle.
+// By the time the OS preference changes, the app is fully loaded.
+async function onSystemThemeChange() {
+  const { changeTheme } = await import('app/core/services/theme');
+  await changeTheme('system', true);
+}
 
 export const initPreferences = async () => {
   const preferences = await fetchMergedPreferences();
@@ -18,6 +26,9 @@ export const initPreferences = async () => {
   if (themeWithOverride !== undefined) {
     window.grafanaBootData.user.theme = themeWithOverride;
     applyTheme(themeWithOverride);
+    if (themeWithOverride === 'system') {
+      startSystemThemeListener(onSystemThemeChange);
+    }
   }
   if (languageWithOverride !== undefined) {
     window.grafanaBootData.user.language = languageWithOverride;
@@ -56,8 +67,7 @@ export async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec 
 // but using the merged-preferences value. Updates lightTheme, the <body> class,
 // and the theme stylesheet <link href>.
 function applyTheme(theme: string) {
-  const isLightTheme =
-    theme === 'system' ? !window.matchMedia('(prefers-color-scheme: dark)').matches : theme === 'light';
+  const isLightTheme = theme === 'system' ? window.matchMedia('(prefers-color-scheme: light)').matches : theme === 'light';
 
   window.grafanaBootData.user.lightTheme = isLightTheme;
 
