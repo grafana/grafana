@@ -530,6 +530,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/splash-screen.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/swagger.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/various-suite/theme-system-preference.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/trace-view-scrolling.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/verify-i18n.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/visualization-suggestions*.spec.ts @grafana/dataviz-squad
@@ -930,6 +931,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
+/public/app/core/services/systemThemeListener.ts @grafana/grafana-frontend-platform
 /public/app/core/services/theme* @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/factors.test.ts @grafana/dashboards-squad
