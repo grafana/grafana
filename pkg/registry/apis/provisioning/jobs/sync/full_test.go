@@ -1957,7 +1957,7 @@ func TestWrapWithTimeout(t *testing.T) {
 			deadline, ok := timeoutCtx.Deadline()
 			require.True(t, ok, "expected a deadline to be set")
 			// Allow slack for execution time; it must be well above the default fallback.
-			require.Greater(t, time.Until(deadline), defaultResourceWriteTimeout)
+			require.Greater(t, time.Until(deadline), defaultResourceTimeout)
 		})
 	})
 
@@ -1966,8 +1966,8 @@ func TestWrapWithTimeout(t *testing.T) {
 			wrapWithTimeout(context.Background(), timeout, func(timeoutCtx context.Context) {
 				deadline, ok := timeoutCtx.Deadline()
 				require.True(t, ok, "expected a deadline to be set")
-				// The fallback deadline should be close to defaultResourceWriteTimeout from now.
-				require.Greater(t, time.Until(deadline), defaultResourceWriteTimeout-time.Second)
+				// The fallback deadline should be close to defaultResourceTimeout from now.
+				require.Greater(t, time.Until(deadline), defaultResourceTimeout-time.Second)
 			})
 		}
 	})

@@ -15,7 +15,7 @@ import (
 )
 
 //go:generate mockery --name FullSyncFn --structname MockFullSyncFn --inpackage --filename full_sync_fn_mock.go --with-expecter
-type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, resourceWriteTimeout time.Duration) error
+type FullSyncFn func(ctx context.Context, repo repository.Reader, compare CompareFn, clients resources.ResourceClients, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, resourceTimeout time.Duration) error
 
 //go:generate mockery --name CompareFn --structname MockCompareFn --inpackage --filename compare_fn_mock.go --with-expecter
 type CompareFn func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error)
@@ -36,10 +36,10 @@ type syncer struct {
 	metrics               jobs.JobMetrics
 	maxSyncWorkers        int
 	folderMetadataEnabled bool
-	resourceWriteTimeout  time.Duration
+	resourceTimeout       time.Duration
 }
 
-func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceWriteTimeout time.Duration) Syncer {
+func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync IncrementalSyncFn, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, folderMetadataEnabled bool, resourceTimeout time.Duration) Syncer {
 	return &syncer{
 		compare:               compare,
 		fullSync:              fullSync,
@@ -48,7 +48,7 @@ func NewSyncer(compare CompareFn, fullSync FullSyncFn, incrementalSync Increment
 		metrics:               metrics,
 		maxSyncWorkers:        maxSyncWorkers,
 		folderMetadataEnabled: folderMetadataEnabled,
-		resourceWriteTimeout:  resourceWriteTimeout,
+		resourceTimeout:       resourceTimeout,
 	}
 }
 
@@ -75,5 +75,5 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 		}
 	}
 	progress.SetMessage(ctx, "full sync")
-	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker, r.folderMetadataEnabled, r.resourceWriteTimeout)
+	return currentRef, r.fullSync(ctx, repo, r.compare, clients, currentRef, repositoryResources, progress, r.tracer, r.maxSyncWorkers, r.metrics, quotaTracker, r.folderMetadataEnabled, r.resourceTimeout)
 }
