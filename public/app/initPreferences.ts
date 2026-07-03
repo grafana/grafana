@@ -67,7 +67,8 @@ export async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec 
 // but using the merged-preferences value. Updates lightTheme, the <body> class,
 // and the theme stylesheet <link href>.
 function applyTheme(theme: string) {
-  const isLightTheme = theme === 'system' ? window.matchMedia('(prefers-color-scheme: light)').matches : theme === 'light';
+  const isLightTheme =
+    theme === 'system' ? window.matchMedia('(prefers-color-scheme: light)').matches : theme === 'light';
 
   window.grafanaBootData.user.lightTheme = isLightTheme;
 
