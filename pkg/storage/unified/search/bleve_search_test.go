@@ -662,16 +662,6 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
-	}, nil)
-	require.NoError(t, err)
-
-	t.Cleanup(backend.Stop)
-
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		return &builders.DashboardDocumentBuilder{
 			Namespace:        namespace,
@@ -682,13 +672,24 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	})
 	require.NoError(t, err)
 
-	fields, err := info.SearchableFields()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": info.SearchFieldsProvider,
+		},
+	}, nil)
 	require.NoError(t, err)
+
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, fields, "test", writer, nil, false, time.Time{}, 0)
+	}, size, "test", writer, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	return index
@@ -724,10 +725,8 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	fields, err := resource.NewSearchableDocumentFields(columns)
-	require.NoError(t, err)
 
-	index, err := backend.BuildIndex(ctx, key, 2, fields, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
@@ -797,7 +796,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, nil, "test", noop, nil, false, time.Time{}, 0)
+	}, 10, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{
@@ -1011,16 +1010,6 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
-	}, nil)
-	require.NoError(t, err)
-	t.Cleanup(backend.Stop)
-
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		return &builders.DashboardDocumentBuilder{
 			Namespace:        namespace,
@@ -1031,13 +1020,24 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 	})
 	require.NoError(t, err)
 
-	fields, err := info.SearchableFields()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": info.SearchFieldsProvider,
+		},
+	}, nil)
 	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, fields, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
@@ -1648,7 +1648,7 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, nil, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
