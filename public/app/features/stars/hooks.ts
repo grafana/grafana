@@ -59,10 +59,15 @@ export const useStarItem = (group: string, kind: string) => {
     return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
       const name = `user-${contextSrv.user.uid}`;
       const mutationArgs = { id, name, group, kind };
-      if (newStarredState) {
-        await addStar(mutationArgs);
-      } else {
-        await removeStar(mutationArgs);
+      try {
+        if (newStarredState) {
+          await addStar(mutationArgs).unwrap();
+        } else {
+          await removeStar(mutationArgs).unwrap();
+        }
+      } catch {
+        // Server rejected the change — leave the nav as-is rather than showing state that didn't persist
+        return;
       }
 
       const entry = starredNavEntry(group, kind, id);

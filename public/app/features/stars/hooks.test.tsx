@@ -1,3 +1,4 @@
+import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
@@ -307,6 +308,49 @@ describe('useStarItem', () => {
       });
 
       // ...but the gated-out kind dispatched nothing into the nav tree
+      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
+      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
+    });
+  });
+
+  // Folder gates on: a successful star would land in the nav, so a rejected one must not.
+  describe('with starsFromAPIServer on and starred folders enabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+      // Provide a starred section in the nav tree so the reducer has a target
+      config.bootData.navTree = [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'starred', text: 'Starred', children: [] },
+      ];
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('leaves the nav starred section untouched when the server rejects the star', async () => {
+      const folderUid = folderA.item.uid;
+      setMockStarredFolders([]);
+
+      server.use(
+        http.put(
+          '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
+          () => new HttpResponse(null, { status: 500 })
+        )
+      );
+
+      const { user } = render(<StarFolderHarness uid={folderUid} />);
+
+      await user.click(screen.getByRole('button', { name: 'star folder' }));
+
+      // The star round-trip finished without an unhandled rejection escaping the click handler...
+      await waitFor(() => {
+        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
+      });
+
+      // ...and the rejected star never mutated the nav tree
       expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
       expect(screen.getByTestId('starred-list').children).toHaveLength(0);
     });

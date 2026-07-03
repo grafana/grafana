@@ -216,6 +216,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
         }
@@ -367,6 +368,9 @@ export const browseDashboardsAPI = createApi({
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
+          for (const folderUID of folderUIDs) {
+            dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         });
       },
     }),

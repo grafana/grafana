@@ -12,6 +12,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
+import { setStarred } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -55,6 +56,36 @@ describe('browseDashboardsAPI', () => {
     });
     setStore(store as unknown as Store);
     return store;
+  };
+
+  // Mirrors createTestStore but records setStarred dispatches so tests can assert on nav-star cleanup
+  const createStoreWithSetStarredRecorder = () => {
+    const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
+    const recorder: Middleware = () => (next) => (action) => {
+      if (isAnyOf(setStarred)(action)) {
+        setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
+      }
+      return next(action);
+    };
+
+    const store = configureStore({
+      reducer: {
+        [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+        [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
+        [legacyAPI.reducerPath]: legacyAPI.reducer,
+        browseDashboards: browseDashboardsReducer,
+      },
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware().concat(
+          browseDashboardsAPI.middleware,
+          folderAPIv1beta1.middleware,
+          legacyAPI.middleware,
+          recorder
+        ),
+    });
+    setStore(store as unknown as Store);
+    return { store, setStarredPayloads };
   };
 
   testWithFeatureToggles({ disable: ['provisioning'] });
@@ -194,6 +225,20 @@ describe('browseDashboardsAPI', () => {
 
     expect(getProvisionedFolderSpy).not.toHaveBeenCalled();
     expect(deleteFolderSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes a deleted folder from the nav starred section', async () => {
+    const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+    server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+    await store.dispatch(
+      browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+    );
+
+    await waitFor(() => {
+      expect(setStarredPayloads).toEqual([{ id: 'folder-1', isStarred: false }]);
+    });
   });
 
   describe('getAffectedItems', () => {
@@ -421,6 +466,23 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('removes each bulk-deleted folder from the nav starred section', async () => {
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(setStarredPayloads).toEqual([
+          { id: 'folder-1', isStarred: false },
+          { id: 'folder-2', isStarred: false },
+        ]);
+      });
     });
   });
 
