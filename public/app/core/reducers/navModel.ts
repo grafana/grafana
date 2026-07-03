@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+import { getConfigurationSubtitle } from 'app/core/utils/configurationSubtitle';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
@@ -111,7 +112,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
 
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {
-    const subTitle = `Organization: ${action.payload}`;
+    const subTitle = getConfigurationSubtitle(action.payload);
 
     return {
       ...state,
