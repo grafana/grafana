@@ -56,7 +56,7 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
-  it('uses fetchLabelValues if preselected labels have no equality matcher', async () => {
+  it('scopes fetchLabelValues to a negative matcher in the other label filters', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
     props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
@@ -73,11 +73,12 @@ describe('LokiQueryBuilder', () => {
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
     expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      streamSelector: '{cluster!="cluster1"}',
       timeRange: mockTimeRange,
     });
   });
 
-  it('no streamSelector in fetchLabelValues if preselected label have regex equality matcher with match everything value (.*)', async () => {
+  it('scopes fetchLabelValues to a match-everything regex in the other label filters', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
     props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
@@ -94,6 +95,7 @@ describe('LokiQueryBuilder', () => {
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
     expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      streamSelector: '{cluster=~".*"}',
       timeRange: mockTimeRange,
     });
   });
