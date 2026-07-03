@@ -11,7 +11,8 @@ import { getExpireOptions } from '../../ShareSnapshotTab';
 const DASHBOARD_SNAPSHOT_URL =
   'https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#share-a-snapshot';
 
-const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#panel-snapshot';
+const PANEL_SNAPSHOT_URL =
+  'https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#panel-snapshot';
 
 interface Props {
   name: string;
