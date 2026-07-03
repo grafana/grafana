@@ -38,6 +38,12 @@ describe('signatureHelp extension', () => {
     expect(activeTooltip(stateFor(() => null))).toBeUndefined();
   });
 
+  it('shows no tooltip when the provider returns help without signatures', () => {
+    const emptyHelp: SignatureHelp = { signatures: [], activeSignature: 0, activeParameter: 0 };
+
+    expect(activeTooltip(stateFor(() => emptyHelp))).toBeUndefined();
+  });
+
   it('recomputes the tooltip when the selection changes', () => {
     const provider: SignatureHelpProvider = (_state, pos) => (pos >= 3 ? HELP : null);
     const initial = stateFor(provider, 'abcdef', 0);

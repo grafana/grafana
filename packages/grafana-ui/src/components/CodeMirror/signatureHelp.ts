@@ -27,8 +27,7 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
   const field = StateField.define<SignatureHelpState | null>({
     create(state) {
       const pos = state.selection.main.head;
-      const help = provider(state, pos);
-      return help ? { help, pos } : null;
+      return toState(provider(state, pos), pos);
     },
     update(value, tr) {
       // Only recompute when the document or selection changes; other transactions
@@ -38,8 +37,7 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
       }
 
       const pos = tr.state.selection.main.head;
-      const help = provider(tr.state, pos);
-      return help ? { help, pos } : null;
+      return toState(provider(tr.state, pos), pos);
     },
     provide: (stateField) =>
       showTooltip.from(stateField, (value) => (value ? createSignatureTooltip(value.help, value.pos) : null)),
@@ -52,6 +50,12 @@ export function signatureHelp(provider: SignatureHelpProvider, options: Signatur
   }
 
   return extensions;
+}
+
+// Treat help without any signatures as "no help" so the tooltip is never created
+// with an empty signature list (which would otherwise fail to render).
+function toState(help: SignatureHelp | null, pos: number): SignatureHelpState | null {
+  return help?.signatures.length ? { help, pos } : null;
 }
 
 function createSignatureTooltip(help: SignatureHelp, pos: number): Tooltip {

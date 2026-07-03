@@ -12,6 +12,7 @@ const SQL_KEYWORD_NODE_NAME = 'Keyword';
 const SQL_BUILTIN_NODE_NAME = 'Builtin';
 const SQL_TYPE_NODE_NAME = 'Type';
 const SQL_PARENS_NODE_NAME = 'Parens';
+const SQL_CLOSE_PAREN_NODE_NAME = ')';
 const SQL_PUNCTUATION_NODE_NAME = 'Punctuation';
 
 // Nodes that can carry a function name immediately before a Parens group. The
@@ -139,7 +140,7 @@ export function getEnclosingFunctionCall(state: EditorState, pos: number): Enclo
   // Walk up to the innermost Parens node that actually encloses the cursor.
   let parens: SyntaxNode | null = null;
   while (node) {
-    if (node.name === SQL_PARENS_NODE_NAME && node.from < resolvedPos && resolvedPos <= node.to) {
+    if (node.name === SQL_PARENS_NODE_NAME && isCursorInsideParens(node, resolvedPos)) {
       parens = node;
       break;
     }
@@ -167,6 +168,21 @@ export function getEnclosingFunctionCall(state: EditorState, pos: number): Enclo
     name,
     activeParameter: countActiveParameter(state, parens, resolvedPos),
   };
+}
+
+/**
+ * Determines whether the cursor sits inside a call's parentheses. A closed call
+ * ends with a `)` token, so the cursor dismisses once it moves onto or past it
+ * (matching VSCode). Unclosed calls that are still being typed have no `)` and
+ * extend to the cursor, so the signature stays while typing arguments.
+ */
+function isCursorInsideParens(parens: SyntaxNode, pos: number): boolean {
+  if (pos <= parens.from) {
+    return false;
+  }
+
+  const isClosed = parens.lastChild?.name === SQL_CLOSE_PAREN_NODE_NAME;
+  return isClosed ? pos < parens.to : pos <= parens.to;
 }
 
 /**

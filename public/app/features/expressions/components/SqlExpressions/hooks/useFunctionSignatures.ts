@@ -22,7 +22,9 @@ export function useFunctionSignatures(enabled: boolean): SqlFunctionSignature[] 
           setFunctionSignatures(FUNCTION_SIGNATURES);
         }
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.warn('Failed to load SQL function signatures for signature help', error);
+      });
 
     return () => {
       cancelled = true;

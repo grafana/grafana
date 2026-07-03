@@ -44,8 +44,17 @@ describe('getEnclosingFunctionCall', () => {
     expect(enclosingCall('SELECT value')).toBeNull();
   });
 
+  it('returns null when the cursor is immediately after the closing parenthesis', () => {
+    expect(enclosingCall('SELECT round(value, 2)')).toBeNull();
+  });
+
   it('returns null once the cursor moves past the closing parenthesis', () => {
     const doc = 'SELECT round(value, 2) ';
     expect(enclosingCall(doc)).toBeNull();
+  });
+
+  it('falls back to the outer call when the cursor is just after a nested call', () => {
+    const doc = 'SELECT pow(mod(a, b), c)';
+    expect(enclosingCall(doc, 'SELECT pow(mod(a, b)'.length)).toEqual({ name: 'pow', activeParameter: 0 });
   });
 });
