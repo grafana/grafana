@@ -9,6 +9,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -22,6 +23,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -144,6 +146,24 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		authnlib.WithClientInterceptorTracer(g.tracer),
 		authnlib.WithClientInterceptorNamespace(namespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+	}
+
+	// === DEBUG ===
+	authInfo, ok := types.AuthInfoFrom(ctx)
+	if ok && authInfo != nil {
+		logging.FromContext(ctx).Info("===SEKRET_GRPC_CLIENT_AUTH_DETAILS===",
+			"service", serviceName,
+			"username", authInfo.GetUsername(),
+			"id_type", authInfo.GetIdentityType(),
+			"at_empty", authInfo.GetAccessToken() != "",
+			"id_empty", authInfo.GetIDToken() != "",
+			"tok_perm", strings.Join(authInfo.GetTokenPermissions(), ";"),
+			"tok_del_perm", strings.Join(authInfo.GetTokenDelegatedPermissions(), ";"),
+		)
+
+		if at := authInfo.GetAccessToken(); at != "" {
+			opts = append(opts, authnlib.WithClientInterceptorSubjectToken(at))
+		}
 	}
 
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
