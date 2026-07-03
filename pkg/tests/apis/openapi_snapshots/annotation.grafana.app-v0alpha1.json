@@ -869,6 +869,60 @@
         }
       ]
     },
+    "/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite": {
+      "post": {
+        "operationId": "createGraphite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteRequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search": {
       "get": {
         "operationId": "getSearch",
@@ -1119,6 +1173,58 @@
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteRequestBody": {
+        "type": "object",
+        "required": [
+          "what",
+          "tags"
+        ],
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "tags": {
+            "description": "tags accepts either an array of strings or a single space-separated string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "when": {
+            "type": "integer"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.CreateGraphiteResponse": {
+        "type": "object",
+        "required": [
+          "spec",
+          "apiVersion",
+          "kind",
+          "metadata"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+              }
+            ]
+          },
+          "spec": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
       },
       "com.github.grafana.grafana.apps.annotation.pkg.apis.annotation.v0alpha1.GetSearchResponse": {
         "type": "object",

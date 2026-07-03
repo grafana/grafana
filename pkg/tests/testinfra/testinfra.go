@@ -445,8 +445,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 		_, err = annotationSect.NewKey("enabled", "true")
 		require.NoError(t, err)
-		_, err = annotationSect.NewKey("store_backend", "memory")
-		require.NoError(t, err)
 	}
 
 	if opts.LicensePath != "" {
