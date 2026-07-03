@@ -16761,6 +16761,7 @@
       "empty-body": "Variables created here can be shared across dashboards, either globally or scoped to a folder.",
       "empty-cta": "New variable",
       "empty-title": "You haven't created any variables yet",
+      "load-error": "Failed to load variables",
       "move": "Move",
       "new-variable": "New variable",
       "selected-count_one": "{{count}} selected",

@@ -29,6 +29,7 @@ import {
   isEditableVariableType,
   EDITABLE_VARIABLES_SELECT_ORDER,
   getEditableVariables,
+  getVariableTypeLabel,
   getVariableTypeSelectOptions,
   getVariableEditor,
   getVariableScene,
@@ -234,6 +235,32 @@ describe('getVariableTypeSelectOptions', () => {
       const adhoc = standaloneOptions.find((o) => o.value === 'adhoc');
       expect(adhoc?.label).toBe('Filter');
       expect(standaloneOptions.map((o) => o.value)).toContain('groupby');
+    });
+  });
+});
+
+describe('getVariableTypeLabel', () => {
+  afterEach(() => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = false;
+  });
+
+  it('returns the editable variable name by default', () => {
+    expect(getVariableTypeLabel('adhoc')).toBe('Filter');
+    expect(getVariableTypeLabel('custom')).toBe('Custom');
+  });
+
+  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    });
+
+    it('relabels adhoc in the standalone context only', () => {
+      expect(getVariableTypeLabel('adhoc', { standalone: true })).toBe('Filter and Group by');
+      expect(getVariableTypeLabel('adhoc')).toBe('Filter');
+    });
+
+    it('still labels existing groupby variables even though the type is hidden from the standalone selector', () => {
+      expect(getVariableTypeLabel('groupby', { standalone: true })).toBe('Group by');
     });
   });
 });

@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
-import { getEditableVariables } from 'app/features/dashboard-scene/settings/variables/utils';
+import { getVariableTypeLabel } from 'app/features/dashboard-scene/settings/variables/utils';
 
 import {
   getVariableEditableType,
@@ -156,7 +156,9 @@ function VariableRow({ variable, indented, selected, onSetSelected, onEdit }: Va
   const styles = useStyles2(getStyles);
   const metadataName = variable.metadata.name ?? '';
   const specName = getVariableSpecName(variable);
-  const typeLabel = getEditableVariables()[getVariableEditableType(variable)].name;
+  // Standalone so the type column matches the editor's type selector labels
+  // (e.g. adhoc as "Filter and Group by" under unified drilldown controls).
+  const typeLabel = getVariableTypeLabel(getVariableEditableType(variable), { standalone: true });
 
   return (
     <tr>

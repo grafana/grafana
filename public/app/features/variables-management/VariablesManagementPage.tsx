@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -39,7 +39,7 @@ export default function VariablesManagementPage() {
   const [pendingAction, setPendingAction] = useState<'move' | 'delete' | undefined>();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: variables = [], isLoading } = useListAllVariablesQuery();
+  const { data: variables = [], isLoading, isError, error } = useListAllVariablesQuery();
 
   const folderUids = useMemo(
     () => [...new Set(variables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
@@ -164,6 +164,9 @@ export default function VariablesManagementPage() {
         <Page.Contents isLoading={!isNew && isLoading}>
           {isNew || editVariable ? (
             <VariableEditorView source={editVariable} onBack={backToList} />
+          ) : isError ? (
+            // Don't claim "not found" when the list simply failed to load.
+            <LoadVariablesError error={error} onBack={backToList} />
           ) : (
             <EmptyState
               variant="not-found"
@@ -180,7 +183,8 @@ export default function VariablesManagementPage() {
     );
   }
 
-  const isEmpty = !isLoading && variables.length === 0;
+  // An error must never look like "no variables yet" — the CTA would be misleading.
+  const isEmpty = !isLoading && !isError && variables.length === 0;
 
   return (
     <Page
@@ -194,7 +198,9 @@ export default function VariablesManagementPage() {
       }
     >
       <Page.Contents isLoading={isLoading}>
-        {isEmpty ? (
+        {isError ? (
+          <LoadVariablesError error={error} />
+        ) : isEmpty ? (
           <EmptyState
             variant="call-to-action"
             message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
@@ -264,6 +270,21 @@ export default function VariablesManagementPage() {
         )}
       </Page.Contents>
     </Page>
+  );
+}
+
+function LoadVariablesError({ error, onBack }: { error: unknown; onBack?: () => void }) {
+  return (
+    <Alert severity="error" title={t('variables-management.page.load-error', 'Failed to load variables')}>
+      <Stack direction="column" gap={1} alignItems="flex-start">
+        {extractErrorMessage(error, '')}
+        {onBack && (
+          <Button variant="secondary" onClick={onBack}>
+            <Trans i18nKey="variables-management.editor-nav.back-to-list">Back to variables</Trans>
+          </Button>
+        )}
+      </Stack>
+    </Alert>
   );
 }
 

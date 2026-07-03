@@ -167,30 +167,41 @@ export interface VariableTypeSelectOptionsArgs {
   standalone?: boolean;
 }
 
+/**
+ * Display label for a variable type, shared by the type selector and any list
+ * views so the same variable is never called two different things. Under
+ * unified drilldown controls the adhoc type is presented as "Filter and Group
+ * by" in standalone contexts.
+ */
+export function getVariableTypeLabel(
+  variableType: EditableVariableType,
+  { standalone }: VariableTypeSelectOptionsArgs = {}
+): string {
+  if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
+    return t('dashboard-scene.add-filters.label', 'Filter and Group by');
+  }
+  return getEditableVariables()[variableType].name;
+}
+
 export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectOptionsArgs = {}): Array<
   SelectableValue<EditableVariableType>
 > {
   const editableVariables = getEditableVariables();
   const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
 
-  const results = EDITABLE_VARIABLES_SELECT_ORDER.map((variableType): SelectableValue<EditableVariableType> => {
-    if (variableType === 'adhoc' && unifiedDrilldown && standalone) {
-      return {
-        label: t('dashboard-scene.add-filters.label', 'Filter and Group by'),
-        value: variableType,
-        description: t(
-          'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
-          'Add key/value filters and group by keys on the fly'
-        ),
-      };
-    }
-
-    return {
-      label: editableVariables[variableType].name,
+  const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
+    (variableType): SelectableValue<EditableVariableType> => ({
+      label: getVariableTypeLabel(variableType, { standalone }),
       value: variableType,
-      description: editableVariables[variableType].description,
-    };
-  });
+      description:
+        variableType === 'adhoc' && unifiedDrilldown && standalone
+          ? t(
+              'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
+              'Add key/value filters and group by keys on the fly'
+            )
+          : editableVariables[variableType].description,
+    })
+  );
 
   return results.filter((option) => {
     if (option.value === 'groupby') {
