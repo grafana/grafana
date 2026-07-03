@@ -115,7 +115,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	metrics := jobs.RegisterJobMetrics(registry)
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled)
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncWriteTimeout)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,

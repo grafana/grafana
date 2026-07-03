@@ -70,6 +70,14 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningSyncWriteTimeoutDefault is the default value for the
+// [provisioning] sync_write_timeout key. It bounds how long applying a
+// single resource (or folder) may take during a sync job before that
+// operation is cancelled. Large resources (e.g. multi-MB dashboards) can
+// exceed a short timeout, which is why it is configurable. 30s matches the
+// timeout used by the provisioning files write API.
+const ProvisioningSyncWriteTimeoutDefault = 30 * time.Second
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -173,6 +181,7 @@ type Cfg struct {
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningSyncWriteTimeout              time.Duration // per-resource apply timeout during sync; default 15s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
@@ -2585,6 +2594,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningSyncWriteTimeout = iniFile.Section("provisioning").Key("sync_write_timeout").MustDuration(ProvisioningSyncWriteTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
