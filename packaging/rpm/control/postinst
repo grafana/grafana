@@ -5,8 +5,8 @@ set -e
 [ -f /etc/sysconfig/grafana-server ] && . /etc/sysconfig/grafana-server
 
 startGrafana() {
-  /bin/systemctl daemon-reload
-  /bin/systemctl start grafana-server.service
+  /bin/systemctl daemon-reload || :
+  /bin/systemctl start grafana-server.service || :
 }
 
 stopGrafana() {
@@ -84,7 +84,7 @@ if [ $1 -eq 1 ] ; then
   echo " sudo /bin/systemctl start grafana-server.service"
 
 elif [ $1 -ge 2 ] ; then
-  if [ "$RESTART_ON_UPGRADE" == "true" ]; then
+  if [ "$RESTART_ON_UPGRADE" = "true" ]; then
     stopGrafana
     startGrafana
   fi

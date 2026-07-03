@@ -76,34 +76,16 @@ if [ "$1" = configure ]; then
     IS_UPGRADE=true
   fi
 
-  if [ "x$IS_UPGRADE" != "xtrue" ]; then
-    if command -v systemctl >/dev/null; then
-      echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
-      echo " sudo /bin/systemctl daemon-reload"
-      echo " sudo /bin/systemctl enable grafana-server"
-      echo "### You can start grafana-server by executing"
-      echo " sudo /bin/systemctl start grafana-server"
-    elif command -v update-rc.d >/dev/null; then
-      echo "### NOT starting grafana-server by default on bootup, please execute"
-      echo " sudo update-rc.d grafana-server defaults 95 10"
-      echo "### In order to start grafana-server, execute"
-      echo " sudo service grafana-server start"
-    fi
+  if [ "$IS_UPGRADE" != "true" ]; then
+    echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
+    echo " sudo /bin/systemctl daemon-reload"
+    echo " sudo /bin/systemctl enable grafana-server"
+    echo "### You can start grafana-server by executing"
+    echo " sudo /bin/systemctl start grafana-server"
   elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
-
-    echo -n "Restarting grafana-server service..."
-
-    if command -v systemctl >/dev/null; then
-      systemctl daemon-reload
-      systemctl restart grafana-server || true
-    elif [ -x /etc/init.d/grafana-server ]; then
-      if command -v invoke-rc.d >/dev/null; then
-        invoke-rc.d grafana-server restart || true
-      else
-        /etc/init.d/grafana-server restart || true
-      fi
-    fi
+    printf 'Restarting grafana-server service...'
+    systemctl daemon-reload || true
+    systemctl restart grafana-server || true
     echo " OK"
-
   fi
 fi
