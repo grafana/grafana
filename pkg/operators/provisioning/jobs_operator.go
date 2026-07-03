@@ -80,6 +80,18 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 		logger.Info("job cleanup controller stopped")
 	}()
 
+	if controllerCfg.queueSizeMetricInterval > 0 {
+		queueSizeReporter := jobs.NewQueueSizeReporter(jobStore, deps.Registerer, controllerCfg.queueSizeMetricInterval)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := queueSizeReporter.Run(ctx); err != nil {
+				logger.Error("queue size reporter failed", "error", err)
+			}
+			logger.Info("queue size reporter stopped")
+		}()
+	}
+
 	// Start the history informer; cleanup relies on its resync events.
 	if historyInformer != nil {
 		go historyInformer.Run(ctx.Done())
@@ -111,8 +123,9 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 
 type jobsControllerConfig struct {
 	ControllerConfig
-	historyExpiration time.Duration
-	cleanupInterval   time.Duration
+	historyExpiration       time.Duration
+	cleanupInterval         time.Duration
+	queueSizeMetricInterval time.Duration
 }
 
 func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobsControllerConfig, error) {
@@ -124,8 +137,9 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
 	return &jobsControllerConfig{
-		ControllerConfig:  *controllerCfg,
-		historyExpiration: operatorSec.Key("history_expiration").MustDuration(0),
-		cleanupInterval:   operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+		ControllerConfig:        *controllerCfg,
+		historyExpiration:       operatorSec.Key("history_expiration").MustDuration(0),
+		cleanupInterval:         operatorSec.Key("cleanup_interval").MustDuration(time.Minute),
+		queueSizeMetricInterval: operatorSec.Key("queue_size_metric_interval").MustDuration(30 * time.Second),
 	}, nil
 }

@@ -933,10 +933,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
+			jobStore, err := jobs.NewJobStore(b.client, 30*time.Second, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
+			b.jobs = jobStore
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			healthMetricsRecorder := controller.NewHealthMetricsRecorder(b.registry)
@@ -1084,6 +1085,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go func() {
 				if err := jobCleanupController.Run(postStartHookCtx.Context); err != nil {
 					logging.FromContext(postStartHookCtx.Context).Error("job cleanup controller failed", "error", err)
+				}
+			}()
+
+			queueSizeReporter := jobs.NewQueueSizeReporter(jobStore, b.registry, 30*time.Second)
+			go func() {
+				if err := queueSizeReporter.Run(postStartHookCtx.Context); err != nil {
+					logging.FromContext(postStartHookCtx.Context).Error("queue size reporter failed", "error", err)
 				}
 			}()
 

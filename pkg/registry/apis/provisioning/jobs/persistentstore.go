@@ -323,7 +323,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
-	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")
 	return nil
@@ -377,6 +376,41 @@ func (s *persistentStore) ListExpiredJobs(ctx context.Context, expiredBefore tim
 	logger.Debug("found expired jobs", "count", len(result))
 
 	return result, nil
+}
+
+// CountJobsByAction counts all active jobs (pending and claimed) across all
+// namespaces, grouped by action.
+func (s *persistentStore) CountJobsByAction(ctx context.Context) (map[provisioning.JobAction]int, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.count_jobs_by_action")
+	defer span.End()
+
+	// Set up provisioning identity to access jobs across all namespaces
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*")
+	if err != nil {
+		span.RecordError(err)
+		return nil, apifmt.Errorf("failed to grant provisioning identity for counting jobs: %w", err)
+	}
+
+	counts := make(map[provisioning.JobAction]int)
+	opts := metav1.ListOptions{Limit: 500}
+	for {
+		jobList, err := s.client.Jobs("").List(ctx, opts)
+		if err != nil {
+			span.RecordError(err)
+			return nil, apifmt.Errorf("failed to list jobs: %w", err)
+		}
+
+		for i := range jobList.Items {
+			counts[jobList.Items[i].Spec.Action]++
+		}
+
+		if jobList.Continue == "" {
+			break
+		}
+		opts.Continue = jobList.Continue
+	}
+
+	return counts, nil
 }
 
 // RenewLease renews the lease for a claimed job, extending its expiry time.
@@ -514,8 +548,6 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		span.RecordError(err)
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
-
-	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
 
 	logger.Info("insert job complete")
 	return created, nil

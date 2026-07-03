@@ -34,7 +34,6 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}
@@ -85,7 +84,6 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}
@@ -137,7 +135,6 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}
@@ -175,4 +172,55 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 	assert.NoError(t, err,
 		"Update after RenewLease should not conflict. "+
 			"If it does, RenewLease stored a stale ResourceVersion.")
+}
+
+func TestCountJobsByAction(t *testing.T) {
+	fakeClient := newTestClientset()
+
+	store := &persistentStore{
+		client: fakeClient,
+		clock:  time.Now,
+		expiry: 30 * time.Second,
+		queueMetrics: QueueMetrics{
+			queueWaitTime: nil,
+		},
+	}
+
+	counts, err := store.CountJobsByAction(context.Background())
+	require.NoError(t, err)
+	assert.Empty(t, counts, "empty store should return no counts")
+
+	// Jobs across namespaces, both claimed and unclaimed, must all be counted.
+	for _, job := range []*provisioning.Job{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "pull-1", Namespace: "stacks-123"},
+			Spec:       provisioning.JobSpec{Repository: "repo-1", Action: provisioning.JobActionPull},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pull-2",
+				Namespace: "stacks-123",
+				Labels:    map[string]string{LabelJobClaim: "1000000000000"},
+			},
+			Spec: provisioning.JobSpec{Repository: "repo-2", Action: provisioning.JobActionPull},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "pull-3", Namespace: "stacks-456"},
+			Spec:       provisioning.JobSpec{Repository: "repo-3", Action: provisioning.JobActionPull},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "migrate-1", Namespace: "stacks-456"},
+			Spec:       provisioning.JobSpec{Repository: "repo-3", Action: provisioning.JobActionMigrate},
+		},
+	} {
+		_, err := fakeClient.Jobs(job.Namespace).Create(context.Background(), job, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	counts, err = store.CountJobsByAction(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, map[provisioning.JobAction]int{
+		provisioning.JobActionPull:    3,
+		provisioning.JobActionMigrate: 1,
+	}, counts)
 }
