@@ -51,6 +51,7 @@ func (i *fakeListIterator) Value() []byte          { return i.item().Value }
 // resourceembedder tests. ReadResource looks up by full key; ListIterator yields
 // the configured items in order.
 type fakeStorage struct {
+	resource.UnimplementedStorageBackend
 	mu sync.Mutex
 	// resources[ns/group/resource/name] = (value, rv).
 	resources map[string]storedResource
@@ -158,6 +159,7 @@ func (f *fakeStorage) WatchWriteEvents(context.Context) (<-chan *resource.Writte
 func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResource, int) ([]resource.ResourceStats, error) {
 	panic("not implemented")
 }
+
 func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	panic("not implemented")
 }
