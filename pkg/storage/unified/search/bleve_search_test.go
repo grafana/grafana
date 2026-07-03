@@ -1010,16 +1010,6 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
-	}, nil)
-	require.NoError(t, err)
-	t.Cleanup(backend.Stop)
-
-	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 		return &builders.DashboardDocumentBuilder{
 			Namespace:        namespace,
@@ -1030,13 +1020,24 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 	})
 	require.NoError(t, err)
 
-	fields, err := info.SearchableFields()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": info.SearchFieldsProvider,
+		},
+	}, nil)
 	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, fields, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
@@ -1647,7 +1648,7 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, nil, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
