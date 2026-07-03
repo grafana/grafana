@@ -48,7 +48,7 @@ The following Git Sync per-tier limits apply:
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
 | Amount of synced resources per repository | 20               | 1,000             | No limit        | No limit               |
 
-**We don't recommend syncing more than 1,000 resources per repository connection today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, and you may see slower syncs and increased database load. We're actively improving this and expect to raise the recommended ceiling in upcoming releases.
+**Do not sync more than 1,000 resources per repository connection as of today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, which may result in slower syncs and increased database load. In any case, Git Sync is under continuous development and the recommended ceiling will increase in upcoming releases.
 
 The limit of 10 repository connections is a per-stack limit.
 
@@ -58,11 +58,13 @@ For details on usage and storage limits, refer to [Dashboard and folder limits](
 
 If a single repository holds more than 1,000 resources, you don't have to raise the per-repository limit. Instead, connect the same repository multiple times, with each connection pointing to a different folder (path) in the repository. Each connection syncs its own subset of resources and counts toward the 1,000-resource recommendation independently.
 
-Because a stack allows up to 10 repository connections, this lets you sync up to roughly 10,000 resources from a single monorepo while keeping each connection within the recommended range. If you need a bit more than that, the 10-connection limit can be increased slightly for Cloud stacks on request — contact Support to discuss your use case.
-
-On Grafana Cloud, syncing this many resources may also exceed your stack's maximum number of dashboards. If it does, you'll need to increase that limit as well. Refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits) to review and adjust your dashboard limits.
+Because a stack allows up to 10 repository connections, this lets you sync up to roughly 10,000 resources from a single monorepo while keeping each connection within the recommended range.
 
 When you split a monorepo across several connections, use [folderless sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets) for each connection. With folder sync (the default), every connection creates its own wrapper folder named after the repository, so splitting the monorepo would change your folder hierarchy and nest resources one level deeper. Folderless sync places each connection's resources at the top level, so the split has no effect on how your dashboards and folders are organized in Grafana.
+
+If you need more than that, the 10-connection limit can be increased slightly for Cloud stacks on request. Contact Support to discuss your use case.
+
+On Grafana Cloud, syncing this many resources may also exceed your stack's maximum number of dashboards. If it does, you'll need to increase that limit as well. Refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits) to review and adjust your dashboard limits.
 
 #### Shard by capacity, not by team
 
@@ -89,7 +91,7 @@ If sharding isn't practical for your setup, we can also raise the per-connection
 
 Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
 
-Limit increases aren't granted automatically. When you request one, we'll ask you to describe your use case so we can understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. In many cases, splitting a monorepo across multiple connections (see [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository)) is a better option than raising the limits.
+Limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. In many cases, splitting a monorepo across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
 
 How you change the limits depends on your deployment:
 
