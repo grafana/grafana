@@ -797,6 +797,35 @@ func TestRuleRoutine(t *testing.T) {
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 			sender.AssertExpectations(t)
 		})
+
+		t.Run("and use a non-cancelled context when sending resolved notifications for a deleted rule", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sender := NewSyncAlertsSenderMock()
+			var sendCalled bool
+			var sendCtxErr error
+			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Run(func(ctx context.Context, _ models.AlertRuleKey, _ definitions.PostableAlerts) {
+				sendCalled = true
+				sendCtxErr = ctx.Err()
+			}).Times(1)
+			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
+
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+
+			factory := ruleFactoryFromScheduler(sch)
+			ruleInfo := factory.new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+			go func() {
+				stoppedChan <- ruleInfo.Run()
+			}()
+
+			ruleInfo.Stop(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.True(t, sendCalled)
+			require.NoError(t, sendCtxErr, "resolved notifications for a deleted rule must be sent with a non-cancelled context, otherwise they are dropped")
+			sender.AssertExpectations(t)
+		})
 	})
 
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
