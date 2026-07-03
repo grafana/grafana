@@ -57,7 +57,13 @@ export const QueryOptions = ({
           }
         }}
       >
-        <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
+        <button
+          type="button"
+          className={styles.actionLink}
+          aria-label={t('alerting.query-options.aria-toggle-options', 'Toggle query options')}
+          aria-expanded={showOptions}
+          onClick={() => setShowOptions(!showOptions)}
+        >
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
           {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
         </button>
