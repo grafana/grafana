@@ -7,6 +7,14 @@ on:
         type: string
         required: false
         default: workflow_dispatch
+      enterprise-commit:
+        description: >
+          When dispatched from grafana-enterprise on a main merge, the enterprise commit SHA that
+          triggered the build. Forwarded to the Pro build to attribute its PR comment; empty for
+          grafana's own builds.
+        type: string
+        required: false
+        default: ''
   schedule:
     # Every weeknight at midnight
     # "Scheduled workflows will only run on the default branch." (docs.github.com)
@@ -114,10 +122,11 @@ jobs:
           PUBLIC_COMMIT: ${{ needs.setup.outputs.public-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
+          ENTERPRISE_COMMIT: ${{ inputs.enterprise-commit }}
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO, ENTERPRISE_COMMIT} = process.env;
             // grafana-enterprise has no #patched branches, so dispatch it on the plain
             // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
             const enterpriseRef = REF.replace(/#patched$/, '');
@@ -147,6 +156,11 @@ jobs:
               // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
               // fail together.
               inputs["upstream-run-id"] = String(BUILD_ID);
+            }
+            // For enterprise main merges the Pro build annotates the triggering enterprise PR;
+            // forward the commit so it comments on the exact PR. Absent for grafana's own builds.
+            if (workflow === 'release-build-pro.yml' && ENTERPRISE_COMMIT) {
+              inputs["notify-enterprise-commit"] = ENTERPRISE_COMMIT;
             }
 
             await github.rest.actions.createWorkflowDispatch({
