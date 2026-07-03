@@ -52,9 +52,9 @@ The following Git Sync per-tier limits apply:
 
 The limit of 10 repository connections is a per-stack limit.
 
-Both of these limits are early figures. We plan to raise them by orders of magnitude as Git Sync matures: we're working toward supporting around 100 repository connections per stack, and up to roughly 1,000 in the longer term, with similar increases to the number of resources you can sync per connection.
+Both of these limits are early figures. As Git Sync matures, these limits will raise by orders of magnitude. The goal is for Git Sync to support around 100 repository connections per stack, and up to roughly 1,000 in the longer term, with similar increases to the number of resources you can sync per connection.
 
-If these limits are affecting your use of Git Sync, let us know through the [Grafana roadmap portal](https://grafana.ideas.aha.io/ideas). Open or vote on a feature request for more repository connections or more resources per repository, so we can prioritize the improvements that matter most to you.
+If these limits are affecting your use of Git Sync, let us know through the [Grafana roadmap portal](https://grafana.ideas.aha.io/ideas). Open or vote on a feature request for more repository connections or more resources per repository to prioritize it.
 
 For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits).
 
@@ -89,7 +89,7 @@ your-org/grafana-manifests/
 
 As the number of resources grows, add `shard-2`, `shard-3`, and later shards, and connect each one. You can move teams between shards at any time to balance the load, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
 
-If sharding isn't practical for your setup, we can also raise the per-connection resource limit modestly — for example from 1,000 to around 1,200 or 1,500. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase: we don't recommend going well beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scale, sharding remains the recommended approach.
+If sharding isn't practical for your setup, try raising the per-connection resource limit modestly, for example from 1,000 to a limit in the 1,200 - 1,500 range. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase. Still, do not go beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scales, sharding remains the recommended approach.
 
 ### Modify your usage limits
 
