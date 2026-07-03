@@ -35,11 +35,11 @@ import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { validateProvisionedFolderName } from '../Folders/NewProvisionedFolderForm';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
+import { validateProvisionedFolderName } from '../utils/folderName';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 import { ensureFolderPathTrailingSlash, joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
@@ -70,8 +70,10 @@ export function SaveProvisionedDashboardForm({
   const [newFolderName, setNewFolderName] = useState('');
   const [folderError, setFolderError] = useState<string | undefined>(undefined);
   const [showNewFolderForm, setShowNewFolderForm] = useState(false);
+  // Spans the whole create-folder flow, unlike the mutation's isLoading which ends before the selection sync
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const [createFolder, createFolderRequest] = useCreateRepositoryFilesWithPathMutation();
+  const [createFolder] = useCreateRepositoryFilesWithPathMutation();
 
   const {
     handleSubmit,
@@ -140,17 +142,21 @@ export function SaveProvisionedDashboardForm({
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
   // This lets us stop auto-syncing once the user has intentionally customised the filename.
+  // `path` is a dep so the sync re-applies after a defaults recompute replaces the filename.
   useEffect(() => {
     if (!isNew || dirtyFields.path) {
       return;
     }
     const slugified = slugifyForFilename(title);
-    if (slugified) {
-      const currentPath = getValues('path');
-      const { directory } = splitPath(currentPath);
-      setValue('path', joinPath(directory, `${slugified}.json`));
+    if (!slugified) {
+      return;
     }
-  }, [title, isNew, dirtyFields.path, setValue, getValues]);
+    const { directory } = splitPath(path);
+    const nextPath = joinPath(directory, `${slugified}.json`);
+    if (nextPath !== path) {
+      setValue('path', nextPath);
+    }
+  }, [title, path, isNew, dirtyFields.path, setValue]);
 
   const showError = (error: unknown) => {
     setError(
@@ -239,7 +245,27 @@ export function SaveProvisionedDashboardForm({
     },
     [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
   );
+  // Updating the dashboard meta (not just the form field) makes the defaults recompute
+  // against the selected folder, so path and post-save handlers stay in sync.
+  const selectFolder = useCallback(
+    async (uid?: string, title?: string) => {
+      setValue('folder', { uid, title });
+      updateURLParams('folderUid', uid);
+      const meta = await getProvisionedMeta(uid);
+      dashboard.setState({
+        meta: {
+          ...meta,
+          folderUid: uid,
+        },
+      });
+    },
+    [setValue, dashboard]
+  );
+
   const handleCreateFolder = useCallback(async () => {
+    if (isCreatingFolder) {
+      return;
+    }
     setFolderError(undefined);
     if (!newFolderName || !repository?.name) {
       return;
@@ -249,21 +275,25 @@ export function SaveProvisionedDashboardForm({
       setFolderError(validationResult);
       return;
     }
-    const folderPath = ensureFolderPathTrailingSlash(newFolderName);
+    // Nest the new folder under the currently selected target folder
+    const { directory, filename } = splitPath(getValues('path'));
+    const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, newFolderName));
+    reportInteraction('grafana_provisioning_folder_create_submitted', {
+      workflow,
+      repositoryName: repository.name,
+      repositoryType: repository.type ?? 'unknown',
+      source: 'save-dashboard',
+    });
+    setIsCreatingFolder(true);
+    let uid: string | undefined;
     try {
       const data = await createFolder({
         name: repository.name,
         path: folderPath,
-        message,
+        message: `Create folder: ${newFolderName}`,
         body: { title: newFolderName, type: 'folder' },
       }).unwrap();
-      const uid = data.resource?.upsert?.metadata?.name;
-      // shouldDirty so keepDirtyValues preserves the selection when defaults recompute
-      setValue('folder', { uid, title: newFolderName }, { shouldDirty: true });
-      const { filename } = splitPath(getValues('path'));
-      setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
-      setShowNewFolderForm(false);
-      setNewFolderName('');
+      uid = data.resource?.upsert?.metadata?.name;
     } catch (err) {
       setFolderError(
         getProvisionedRequestError(
@@ -271,8 +301,34 @@ export function SaveProvisionedDashboardForm({
           t('dashboard-scene.save-provisioned-dashboard-form.folder-create-error', 'Failed to create folder')
         )
       );
+      setIsCreatingFolder(false);
+      return;
     }
-  }, [newFolderName, repository?.name, createFolder, setValue, getValues, message]);
+    if (uid) {
+      setValue('path', joinPath(folderPath, filename));
+      try {
+        await selectFolder(uid, newFolderName);
+      } catch {
+        // The folder was created; a failed selection sync must not surface as a creation error
+      }
+    } else {
+      // Sync disabled: no folder resource to select, mark path dirty so resets keep the new location
+      setValue('path', joinPath(folderPath, filename), { shouldDirty: true });
+    }
+    setShowNewFolderForm(false);
+    setNewFolderName('');
+    setIsCreatingFolder(false);
+  }, [
+    isCreatingFolder,
+    newFolderName,
+    repository?.name,
+    repository?.type,
+    workflow,
+    createFolder,
+    setValue,
+    getValues,
+    selectFolder,
+  ]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -390,17 +446,7 @@ export function SaveProvisionedDashboardForm({
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
                       <ProvisioningAwareFolderPicker
-                        onChange={async (uid?: string, title?: string) => {
-                          onChange({ uid, title });
-                          updateURLParams('folderUid', uid);
-                          const meta = await getProvisionedMeta(uid);
-                          dashboard.setState({
-                            meta: {
-                              ...meta,
-                              folderUid: uid,
-                            },
-                          });
-                        }}
+                        onChange={selectFolder}
                         value={value.uid}
                         {...field}
                         showAllFolders
@@ -409,10 +455,18 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
-              {isFolderless && workflow !== 'branch' && (
+              {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
-                    <Button variant="secondary" size="sm" icon="plus" onClick={() => setShowNewFolderForm(true)}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="plus"
+                      onClick={() => {
+                        setFolderError(undefined);
+                        setShowNewFolderForm(true);
+                      }}
+                    >
                       <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.new-folder">New folder</Trans>
                     </Button>
                   )}
@@ -421,10 +475,7 @@ export function SaveProvisionedDashboardForm({
                     <Stack direction="column" gap={1}>
                       <Field
                         noMargin
-                        label={t(
-                          'dashboard-scene.save-provisioned-dashboard-form.folder-name-placeholder',
-                          'Folder name'
-                        )}
+                        label={t('dashboard-scene.save-provisioned-dashboard-form.label-folder-name', 'Folder name')}
                       >
                         <Input
                           value={newFolderName}
@@ -443,7 +494,7 @@ export function SaveProvisionedDashboardForm({
                           variant="primary"
                           size="sm"
                           onClick={handleCreateFolder}
-                          disabled={!newFolderName || createFolderRequest.isLoading}
+                          disabled={!newFolderName || isCreatingFolder}
                         >
                           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.create-folder">Create</Trans>
                         </Button>

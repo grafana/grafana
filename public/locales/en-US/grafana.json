@@ -7349,7 +7349,6 @@
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "folder-create-error": "Failed to create folder",
-      "folder-name-placeholder": "Folder name",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
@@ -7358,6 +7357,7 @@
         "v2-resource": "V2 Resource"
       },
       "label-description": "Description",
+      "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
