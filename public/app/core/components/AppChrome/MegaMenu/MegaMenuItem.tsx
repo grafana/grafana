@@ -92,10 +92,25 @@ export function MegaMenuItem({
     return null;
   }
 
+  // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
+  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
+  // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
+  // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
+  let starredLeafIconTitle: string | undefined;
+  if (isStarredLeaf) {
+    if (link.icon === 'folder') {
+      starredLeafIconTitle = t('navigation.megamenu-item.starred-folder-icon', 'Folder');
+    } else if (link.icon === 'apps') {
+      starredLeafIconTitle = t('navigation.megamenu-item.starred-dashboard-icon', 'Dashboard');
+    }
+  }
+
   let iconElement: React.JSX.Element | null = null;
 
   if (link.icon) {
-    iconElement = <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />;
+    iconElement = (
+      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+    );
   } else if (link.img) {
     iconElement = (
       <Stack width={3} justifyContent="center">
@@ -137,6 +152,9 @@ export function MegaMenuItem({
             itemName={link.text}
             canCustomise={canCustomise}
           >
+            {/* labelWrapperWithIcon spacing is a top-level alignment concern; starred leaves are a
+                uniform indented group that already align among themselves, so they intentionally
+                render the icon without it. */}
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,

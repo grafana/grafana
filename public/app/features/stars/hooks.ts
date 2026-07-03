@@ -179,7 +179,7 @@ export const useSyncStarredItemsInNav = () => {
       return undefined;
     }
     const combined = [...dashboardUids, ...(foldersEnabled ? (folderUids ?? []) : [])];
-    return [...combined].sort().join(',');
+    return combined.sort().join(',');
   }, [dashboardUids, folderUids, foldersEnabled]);
 
   useEffect(() => {

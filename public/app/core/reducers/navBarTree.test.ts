@@ -93,6 +93,17 @@ describe('navBarTree reducer', () => {
       const names = starred?.children?.map((c) => c.text);
       expect(names).toEqual(['Beta', 'Charlie', 'Zulu']);
     });
+
+    it('keeps dashboards before folders after rename even when the new title sorts after the folder', () => {
+      const state = buildState([
+        { id: ID_PREFIX + 'b', text: 'BBB dash', url: '/d/b' },
+        { id: ID_PREFIX + 'a', text: 'A dash', url: '/d/a' },
+        { id: ID_PREFIX + 'f1', text: 'AAA folder', url: '/dashboards/f/f1', sortWeight: 1 },
+      ]);
+      const next = navTreeReducer(state, updateDashboardName({ id: 'a', title: 'ZZZ dash', url: '/d/a/zzz-dash' }));
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
+    });
   });
 
   describe('setStarredItems', () => {

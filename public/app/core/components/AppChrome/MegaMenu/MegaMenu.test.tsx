@@ -479,6 +479,11 @@ describe('MegaMenu', () => {
       // Same name, but the per-kind icons make the two rows distinguishable.
       expect(starredSection().getByTestId('icon-apps')).toBeInTheDocument();
       expect(starredSection().getByTestId('icon-folder')).toBeInTheDocument();
+
+      // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
+      // so screen readers don't hear the two rows as identical links.
+      expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
+      expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
     });
   });
 });

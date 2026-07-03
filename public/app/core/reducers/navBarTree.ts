@@ -31,6 +31,10 @@ export interface StarredNavItem {
 }
 // Single shared collator avoids per-call Intl.Collator construction
 const collator = new Intl.Collator();
+// Starred children group by sortWeight (dashboards carry none, folders a positive weight), alphabetical within a group.
+// Shared so setStarred (optimistic), setStarredItems (sync), and updateDashboardName (rename) never diverge and reorder the nav.
+const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
+  (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text);
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
@@ -62,11 +66,7 @@ const navTreeSlice = createSlice({
             sortWeight,
           };
           starredItems.children.push(newStarredItem);
-          // Group by sortWeight first (dashboards carry none, folders a positive weight), alphabetical within a group.
-          // Must match the setStarredItems sort or the nav reorders when the sync replaces an optimistic insert.
-          starredItems.children.sort(
-            (a, b) => (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text)
-          );
+          starredItems.children.sort(compareStarredChildren);
         } else {
           const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
@@ -104,7 +104,7 @@ const navTreeSlice = createSlice({
         if (navItem) {
           navItem.text = title;
           navItem.url = url;
-          starredItems.children?.sort((a, b) => collator.compare(a.text, b.text));
+          starredItems.children?.sort(compareStarredChildren);
         }
       }
     },
@@ -146,10 +146,7 @@ const navTreeSlice = createSlice({
           }
         }
       }
-      // Same ordering as the setStarred optimistic insert
-      starred.children = children.sort(
-        (a, b) => (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text)
-      );
+      starred.children = children.sort(compareStarredChildren);
     },
   },
 });

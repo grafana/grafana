@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
@@ -12,7 +13,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSelector } from 'app/types/store';
 
-import { useSyncStarredItemsInNav } from './hooks';
+import { useStarItem, useSyncStarredItemsInNav } from './hooks';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -38,6 +39,35 @@ const TestHarness = () => {
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
           <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon}>
+            {child.text}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+};
+
+/** Renders the folder star callback plus a read-only list of nav starred children */
+const StarFolderHarness = ({ uid }: { uid: string }) => {
+  const starItem = useStarItem('folder.grafana.app', 'Folder');
+  const [starDone, setStarDone] = useState(false);
+  const navTree = useSelector((state) => state.navBarTree);
+  const starred = navTree.find((item) => item.id === 'starred');
+
+  return (
+    <>
+      <button
+        onClick={async () => {
+          await starItem({ id: uid, title: 'My Folder' }, true);
+          setStarDone(true);
+        }}
+      >
+        star folder
+      </button>
+      <span data-testid="star-done">{String(starDone)}</span>
+      <ul data-testid="starred-list">
+        {starred?.children?.map((child) => (
+          <li key={child.id} data-testid={`synced-${child.id}`}>
             {child.text}
           </li>
         ))}
@@ -245,6 +275,40 @@ describe('useSyncStarredItemsInNav', () => {
         el.getAttribute('data-testid')
       );
       expect(rowIds).toEqual([`synced-starred/${dashUid}`, `synced-starred/${folderUid}`]);
+    });
+  });
+});
+
+describe('useStarItem', () => {
+  // starsFromAPIServer alone: the folder gates (grafana.starredFolders flag, foldersAppPlatformAPI)
+  // stay off, so kind Folder must never surface in the nav Starred section.
+  describe('with starsFromAPIServer on and starred folders disabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer'] });
+
+    beforeEach(() => {
+      // Provide a starred section in the nav tree so the reducer has a target
+      config.bootData.navTree = [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'starred', text: 'Starred', children: [] },
+      ];
+    });
+
+    it('stars a folder without adding it to the nav starred section', async () => {
+      const folderUid = folderA.item.uid;
+      setMockStarredFolders([]);
+
+      const { user } = render(<StarFolderHarness uid={folderUid} />);
+
+      await user.click(screen.getByRole('button', { name: 'star folder' }));
+
+      // The star mutation round-trip finished...
+      await waitFor(() => {
+        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
+      });
+
+      // ...but the gated-out kind dispatched nothing into the nav tree
+      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
+      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
     });
   });
 });
