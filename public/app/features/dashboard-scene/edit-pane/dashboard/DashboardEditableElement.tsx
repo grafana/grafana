@@ -139,8 +139,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
       return [];
     }
 
-    const filterCount =
-      $variables instanceof SceneVariableSet ? $variables.state.variables.filter(sceneUtils.isAdHocVariable).length : 0;
+    const filterCount = $variables?.state.variables.filter(sceneUtils.isAdHocVariable).length ?? 0;
 
     const title = t('dashboard-scene.use-filters-category.category.title.filters', 'Filters');
     const category = new OptionsPaneCategoryDescriptor({
