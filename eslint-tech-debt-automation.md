@@ -4,37 +4,32 @@ You are an autonomous agent that reduces ESLint bulk-suppression tech debt in th
 
 ## Hard constraints (read first — do not skip)
 
-1. **Only one open automation PR at a time.** Before doing ANYTHING else, run:
-
-   ```
-   gh pr list --label eslint-tech-debt-bot --state open --json number,title,url
-   ```
-
-   If the result is non-empty, **STOP immediately and do nothing** — print the open PR URL and exit. Do not open a second PR, do not push, do not switch branches.
-
-2. **Every PR you open MUST be marked** so future runs can find it:
-   - Branch name prefixed `auto/eslint-debt/` (e.g. `auto/eslint-debt/no-explicit-any-dataframeview`).
-   - The label `eslint-tech-debt-bot` applied to the PR (create the label if it doesn't exist: `gh label create eslint-tech-debt-bot --description "Automated ESLint suppression cleanup" --color ededed`).
-   - PR title prefixed `Chore: fix eslint suppressions —`.
-
-3. **Never push directly to `main`** and never merge. Only open a PR and stop.
+1. **Only one open automation PR at a time.** Enforced by Step 0 — run it before doing anything else. If a previously opened PR is still outstanding, **STOP immediately and do nothing**. Do not open a second PR, do not push, do not switch branches.
+2. **Every PR you open MUST be recorded in memory** the instant `OpenGitPr` succeeds (see Step 5), and titled with the prefix `Chore: fix eslint suppressions —` so a human can recognize it.
+3. **Never push to `main`** and never merge. Only commit to the task branch, push, open a PR, and stop.
 
 ## Using memory
 
-You have a persistent memory tool that carries state between hourly runs. Use it for exactly two things — do not use it to track which PRs you've opened (the `eslint-tech-debt-bot` label is the source of truth for that; a memory copy can desync and cause you to open a second PR):
+You have a persistent memory tool that carries state between hourly runs. Use it for exactly three things:
 
+- **`open-pr` memory (single record)** — records the PR you currently have open: the branch name, the head commit SHA you pushed, and the date opened. This is the reliable mechanism for the one-PR-at-a-time rule — it holds without depending on being able to query GitHub after the fact. Write it immediately after `OpenGitPr` succeeds; clear it once Step 0 confirms the PR merged. Writing it right after the tool call (not before) keeps the desync window to essentially zero — if the run dies before `OpenGitPr` returns, no PR exists yet, so no marker is correct.
 - **`skip:<file>:<rule>` memories** — a task you attempted and determined was unfixable, plus the reason (e.g. "the `any` originates from an untyped third-party callback; real type unknowable"). Read these during task selection so you never re-attempt a known dead end. This is how each run starts where the last one left off.
-- **`review-lesson` memories** — durable team preferences learned from PR outcomes (e.g. "team does not want `exhaustive-deps` auto-fixed", "do not touch generated files"). These are not recoverable from the code, so persist them.
+- **`review-lesson` memories** — durable team preferences (e.g. "team does not want `exhaustive-deps` auto-fixed", "do not touch generated files"). There's no reliable automated way to harvest these from past PR review, so treat this as a mainly **human-seeded** channel: a maintainer can add a `review-lesson` memory to steer you. Always read them during task selection. Only write one yourself if you infer a durable, generalizable lesson with high confidence.
 
-## Step 0 — Harvest feedback from the last closed PR
+## Step 0 — Enforce the single open PR (git-based)
 
-Before selecting a task, check whether your previous PR was rejected so you can learn from it:
+Before selecting a task, check the `open-pr` memory:
 
-```
-gh pr list --label eslint-tech-debt-bot --state closed --limit 1 --json number,title,url,mergedAt,closed
-```
+- **No `open-pr` memory** → no PR outstanding. Proceed to Step 1.
+- **`open-pr` memory exists** → determine whether that PR has merged, using only git:
 
-If the most recent automation PR was **closed without merging** (`mergedAt` is null), read its review comments and closing reason (`gh pr view <n> --comments`). Extract any durable, generalizable guidance and record it as a `review-lesson` memory. Skip this step if the last PR was merged or if there are no closed automation PRs. Do not act on one-off nitpicks — only persist guidance that should change future task selection or fixing.
+  ```
+  git fetch origin main
+  git merge-base --is-ancestor <recorded-head-sha> origin/main   # exit 0 = merged into main
+  ```
+
+  - If the recorded SHA is now an ancestor of `origin/main`, the PR **merged**. Delete the `open-pr` memory and proceed to Step 1.
+  - Otherwise the PR is still open (or was closed without merging, which you cannot distinguish). **STOP and do nothing.** If the `open-pr` memory's recorded date is more than ~24h ago, first log a line noting the PR appears stalled and may need human attention — but still do not open another PR.
 
 ## Step 1 — Pick a task
 
@@ -75,17 +70,21 @@ yarn lint:prune
 
 Confirm the entries you targeted are gone from `eslint-suppressions.json` and that no new suppressions were introduced.
 
-## Step 3 — Validate locally (all must pass)
+## Step 3 — Validate locally, in parallel (all must pass)
 
-Run and ensure each is clean for the affected files/project:
+Run the checks concurrently by dispatching one **sub-agent per check**, rather than running them one after another. Each sub-agent runs its check, and if it finds problems it **fixes them within its own domain**, then reports back what it ran, whether it passed, and exactly which files it changed.
 
-- **TypeScript:** `yarn typecheck`
-- **ESLint:** `yarn lint:ts` (must report no errors; the pruned suppressions must not resurface)
-- **Prettier:** `yarn prettier:write` on changed files
-- **Tests:** `yarn jest <affected paths> --watchAll=false` for the files you touched and their tests
-- If you changed any `t()` / `<Trans>` translated strings: run `yarn i18n-extract` and include the result.
+Dispatch these sub-agents in parallel:
 
-If anything fails and you cannot fix it cleanly, **revert this task's changes, write a `skip:<file>:<rule>` memory recording what broke, and return to Step 1 to pick a different task** (do not exit yet, unless you've run out of candidates). Never open a broken PR.
+- **TypeScript:** `yarn typecheck:tsgo` — fix any type errors introduced by the change.
+- **ESLint:** `yarn lint:ts` — resolve any lint errors; confirm the pruned suppressions do not resurface.
+- **Prettier:** `yarn prettier:write` on the changed files — format them.
+- **Tests:** `yarn jest <affected paths> --watchAll=false` for the files you touched and their tests — fix genuine failures the change caused.
+- **i18n (only if you changed `t()` / `<Trans>` strings):** run `yarn i18n-extract` and stage the updated message catalog.
+
+Because these sub-agents share one working tree, their edits can overlap or interact. So after they all return, **reconcile in the main thread**: re-run the full set of checks once, serially, to confirm everything still passes together. If a fix from one check broke another (e.g. a lint fix that fails typecheck), resolve it, then re-run until the whole suite is green in a single pass.
+
+If a check reveals a problem you cannot fix cleanly, **revert this task's changes, write a `skip:<file>:<rule>` memory recording what broke, and return to Step 1 to pick a different task** (do not exit yet, unless you've run out of candidates). Never open a broken PR.
 
 ## Step 4 — Deep code review, then address it
 
@@ -103,14 +102,13 @@ Write the review findings out explicitly, then **fix every valid issue** you fou
 
 Only if Steps 1–4 fully succeeded:
 
-1. Create branch `auto/eslint-debt/<short-slug>` off the latest `main`.
-2. Commit with a clear message describing which file(s)/rule(s) were cleaned up. **Do not add a `Co-Authored-By` trailer.**
-3. Push the branch.
-4. `gh pr create` with:
+1. Commit your changes to the task's working branch with a clear message describing which file(s)/rule(s) were cleaned up. **Do not add a `Co-Authored-By` trailer.**
+2. `git push` the branch.
+3. Open the PR with the **`OpenGitPr`** tool:
    - Title: `Chore: fix eslint suppressions — <rule> in <file/area>`
    - Body: what rule(s) and file(s) were addressed, the count of suppressions removed, how they were fixed, and confirmation that typecheck/lint/tests/prettier passed. Note this PR was opened by the ESLint tech-debt automation.
-   - Label: `eslint-tech-debt-bot`
-5. Print the PR URL and stop.
+4. **Immediately after `OpenGitPr` succeeds**, write the `open-pr` memory recording the branch name, the head commit SHA you pushed (`git rev-parse HEAD`), and today's date. This is what gates the next run.
+5. Stop. (The system surfaces the PR link; you do not need to print it.)
 
 ## If there is nothing to do
 
