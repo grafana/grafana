@@ -15,11 +15,12 @@
 import { css, keyframes } from '@emotion/css';
 import cx from 'clsx';
 import * as React from 'react';
+import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
-import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
+import { Icon, stylesFactory, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';
@@ -35,7 +36,6 @@ import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
-import { memo, useMemo } from 'react';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
@@ -384,7 +384,7 @@ export type SpanBarRowProps = {
   criticalPath: CriticalPathSection[];
 };
 
-const SpanBarRow = memo((props: SpanBarRowProps) => {
+export const SpanBarRow = memo((props: SpanBarRowProps) => {
   const {
     className = '',
     color,
@@ -407,7 +407,6 @@ const SpanBarRow = memo((props: SpanBarRowProps) => {
     removeHoverIndentGuideId,
     clippingLeft,
     clippingRight,
-    theme,
     createSpanLink,
     datasourceType,
     showServiceName,
@@ -425,7 +424,8 @@ const SpanBarRow = memo((props: SpanBarRowProps) => {
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
   const viewStart = viewBounds.start;
   const viewEnd = viewBounds.end;
-  const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles, showSpanFilterMatchesOnly, color);
 
   const labelDetail = `${serviceDisplayName}::${operationName}`;
   let longLabel;

@@ -61,7 +61,7 @@ const MAX_LINKS = 3;
 
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
-export const getSpanDetailLinkButtons = (props: Props) => {
+export const SpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
     props;
 
