@@ -653,6 +653,117 @@ func TestUserK8sService_GetByUID(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_ServiceAccountFallback(t *testing.T) {
+	newTestK8sServiceAccount := func(uid, namespace string) v0alpha1.ServiceAccount {
+		return v0alpha1.ServiceAccount{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: v0alpha1.GroupVersion.Identifier(),
+				Kind:       "ServiceAccount",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      uid,
+				Namespace: namespace,
+				Labels:    map[string]string{"grafana.app/deprecatedInternalID": "17"},
+			},
+			Spec: v0alpha1.ServiceAccountSpec{
+				Title: "My Service Account",
+				Role:  v0alpha1.ServiceAccountOrgRoleViewer,
+			},
+		}
+	}
+
+	writeNotFound := func(w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(metav1.Status{
+			TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+			Status:   metav1.StatusFailure,
+			Reason:   metav1.StatusReasonNotFound,
+			Code:     http.StatusNotFound,
+		})
+	}
+
+	assertServiceAccountUser := func(t *testing.T, result *user.User) {
+		t.Helper()
+		assert.Equal(t, int64(17), result.ID)
+		assert.Equal(t, "sa-uid", result.UID)
+		assert.Equal(t, int64(1), result.OrgID)
+		assert.Equal(t, "My Service Account", result.Login)
+		assert.Equal(t, "My Service Account", result.Name)
+		assert.Equal(t, "Viewer", result.OrgRole)
+		assert.True(t, result.IsServiceAccount)
+	}
+
+	t.Run("GetByUID falls back to the serviceaccounts API when the users API misses", func(t *testing.T) {
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 1,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if strings.Contains(r.URL.Path, "/serviceaccounts/") {
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(newTestK8sServiceAccount("sa-uid", "org-1"))
+					return
+				}
+				writeNotFound(w)
+			},
+		})
+
+		result, err := svc.GetByUID(ctx, &user.GetUserByUIDQuery{UID: "sa-uid"})
+		require.NoError(t, err)
+		assertServiceAccountUser(t, result)
+	})
+
+	t.Run("GetByUID returns ErrUserNotFound when both APIs miss", func(t *testing.T) {
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 1,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				writeNotFound(w)
+			},
+		})
+
+		_, err := svc.GetByUID(ctx, &user.GetUserByUIDQuery{UID: "missing-uid"})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+	})
+
+	t.Run("GetByID falls back to the serviceaccounts API when the users API misses", func(t *testing.T) {
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 1,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				items := []any{}
+				if strings.Contains(r.URL.Path, "/serviceaccounts") {
+					items = append(items, newTestK8sServiceAccount("sa-uid", "org-1"))
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": "v1",
+					"kind":       "List",
+					"items":      items,
+				})
+			},
+		})
+
+		result, err := svc.GetByID(ctx, &user.GetUserByIDQuery{ID: 17})
+		require.NoError(t, err)
+		assertServiceAccountUser(t, result)
+	})
+
+	t.Run("GetByID returns ErrUserNotFound when both APIs miss", func(t *testing.T) {
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 1,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"apiVersion": "v1",
+					"kind":       "List",
+					"items":      []any{},
+				})
+			},
+		})
+
+		_, err := svc.GetByID(ctx, &user.GetUserByIDQuery{ID: 99})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+	})
+}
+
 func TestUserK8sService_ListByIdOrUID(t *testing.T) {
 	mkUser := func(uid string) v0alpha1.User {
 		return v0alpha1.User{

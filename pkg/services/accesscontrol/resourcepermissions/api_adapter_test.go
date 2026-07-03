@@ -34,50 +34,115 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TestGetPermissionKind tests the permission kind mapping logic
-func TestGetPermissionKind(t *testing.T) {
-	api := &api{
-		service: &Service{
-			options: Options{
-				Resource:          "dashboards",
-				ResourceAttribute: "uid",
-			},
-		},
-	}
-
+// TestResolvePermissionSubject tests the permission kind and subject name resolution
+func TestResolvePermissionSubject(t *testing.T) {
 	tests := []struct {
-		name     string
-		perm     accesscontrol.SetResourcePermissionCommand
-		expected string
+		name         string
+		perm         accesscontrol.SetResourcePermissionCommand
+		userSvc      func() *usertest.MockService
+		teamSvc      *teamtest.FakeService
+		expectedKind string
+		expectedName string
+		expectErr    bool
 	}{
 		{
-			name:     "user permission",
-			perm:     accesscontrol.SetResourcePermissionCommand{UserID: 123},
-			expected: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+			name: "user permission",
+			perm: accesscontrol.SetResourcePermissionCommand{UserID: 123},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(123)}).
+					Return(&user.User{ID: 123, UID: "user-uid-1"}, nil)
+				return svc
+			},
+			expectedKind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+			expectedName: "user-uid-1",
 		},
 		{
-			name:     "team permission",
-			perm:     accesscontrol.SetResourcePermissionCommand{TeamID: 456},
-			expected: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+			name: "service account permission",
+			perm: accesscontrol.SetResourcePermissionCommand{UserID: 456},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(456)}).
+					Return(&user.User{ID: 456, UID: "sa-uid-1", IsServiceAccount: true}, nil)
+				return svc
+			},
+			expectedKind: string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount),
+			expectedName: "sa-uid-1",
 		},
 		{
-			name:     "builtin role permission",
-			perm:     accesscontrol.SetResourcePermissionCommand{BuiltinRole: "Editor"},
-			expected: string(iamv0.ResourcePermissionSpecPermissionKindBasicRole),
+			name:         "team permission",
+			perm:         accesscontrol.SetResourcePermissionCommand{TeamID: 789},
+			teamSvc:      teamtest.NewFakeServiceWithTeamDTO(&team.TeamDTO{ID: 789, UID: "team-uid-1"}),
+			expectedKind: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+			expectedName: "team-uid-1",
 		},
 		{
-			name:     "empty permission returns empty kind",
-			perm:     accesscontrol.SetResourcePermissionCommand{},
-			expected: "",
+			name:         "builtin role permission",
+			perm:         accesscontrol.SetResourcePermissionCommand{BuiltinRole: "Editor"},
+			expectedKind: string(iamv0.ResourcePermissionSpecPermissionKindBasicRole),
+			expectedName: "Editor",
+		},
+		{
+			name: "user lookup failure returns error",
+			perm: accesscontrol.SetResourcePermissionCommand{UserID: 999},
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("user not found"))
+				return svc
+			},
+			expectErr: true,
+		},
+		{
+			name:      "empty permission returns error",
+			perm:      accesscontrol.SetResourcePermissionCommand{},
+			expectErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			kind := api.getPermissionKind(tt.perm)
-			assert.Equal(t, tt.expected, kind)
+			svc := &Service{
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+				},
+			}
+			if tt.userSvc != nil {
+				svc.userService = tt.userSvc()
+			}
+			if tt.teamSvc != nil {
+				svc.teamService = tt.teamSvc
+			}
+			api := &api{service: svc}
+
+			kind, name, err := api.resolvePermissionSubject(context.Background(), tt.perm)
+			if tt.expectErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedKind, kind)
+			assert.Equal(t, tt.expectedName, name)
 		})
 	}
+}
+
+// TestSameSubjectKind tests that User and ServiceAccount kinds are treated as the
+// same subject namespace when matching existing permission entries.
+func TestSameSubjectKind(t *testing.T) {
+	userKind := string(iamv0.ResourcePermissionSpecPermissionKindUser)
+	saKind := string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount)
+	teamKind := string(iamv0.ResourcePermissionSpecPermissionKindTeam)
+	basicRoleKind := string(iamv0.ResourcePermissionSpecPermissionKindBasicRole)
+
+	assert.True(t, sameSubjectKind(userKind, userKind))
+	assert.True(t, sameSubjectKind(saKind, saKind))
+	assert.True(t, sameSubjectKind(userKind, saKind))
+	assert.True(t, sameSubjectKind(saKind, userKind))
+	assert.True(t, sameSubjectKind(teamKind, teamKind))
+	assert.False(t, sameSubjectKind(userKind, teamKind))
+	assert.False(t, sameSubjectKind(teamKind, saKind))
+	assert.False(t, sameSubjectKind(basicRoleKind, userKind))
 }
 
 // TestGetDynamicClient_RestConfigNotAvailable tests error handling when rest config is not available

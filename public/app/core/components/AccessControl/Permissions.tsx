@@ -117,15 +117,17 @@ export const Permissions = ({
   const teams = useMemo(
     () =>
       sortBy(
-        (permissions.value || []).filter((i) => i.teamId),
+        (permissions.value || []).filter((i) => i.teamId || i.teamUid),
         ['team', 'isManaged']
       ),
     [permissions.value]
   );
+  // Subjects stored in unified storage may not resolve to a numeric ID, so
+  // accept the UID as an alternative row identifier (mutations key off it).
   const users = useMemo(
     () =>
       sortBy(
-        (permissions.value || []).filter((i) => i.userId && !i.isServiceAccount),
+        (permissions.value || []).filter((i) => (i.userId || i.userUid) && !i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
     [permissions.value]
@@ -133,7 +135,7 @@ export const Permissions = ({
   const serviceAccounts = useMemo(
     () =>
       sortBy(
-        (permissions.value || []).filter((i) => i.userId && i.isServiceAccount),
+        (permissions.value || []).filter((i) => (i.userId || i.userUid) && i.isServiceAccount),
         ['userLogin', 'isManaged']
       ),
     [permissions.value]

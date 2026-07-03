@@ -171,6 +171,10 @@ func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePer
 				permDTO.IsServiceAccount = userDetails.IsServiceAccount
 				permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
 				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+			} else {
+				permDTO.UserUID = name
+				permDTO.UserLogin = name
+				permDTO.IsServiceAccount = kind == iamv0.ResourcePermissionSpecPermissionKindServiceAccount
 			}
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
 			teamDetails, err := a.service.teamService.GetTeamByID(lookupCtx, &team.GetTeamByIDQuery{
@@ -435,10 +439,9 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 			continue
 		}
 
-		kind := a.getPermissionKind(perm)
-		name, err := a.getPermissionName(ctx, perm)
+		kind, name, err := a.resolvePermissionSubject(ctx, perm)
 		if err != nil {
-			return fmt.Errorf("failed to get permission name: %w", err)
+			return fmt.Errorf("failed to resolve permission subject: %w", err)
 		}
 
 		k8sPermissions = append(k8sPermissions, iamv0.ResourcePermissionspecPermission{
@@ -493,7 +496,14 @@ func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace strin
 		return fmt.Errorf("failed to get user details: %w", err)
 	}
 
-	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
+	// The legacy /users/:userID endpoint serves both users and service accounts,
+	// but the ResourcePermission spec distinguishes the two kinds.
+	kind := iamv0.ResourcePermissionSpecPermissionKindUser
+	if userDetails.IsServiceAccount {
+		kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+	}
+
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(kind), userDetails.UID, permission)
 }
 
 func (a *api) setTeamPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, teamID int64, permission string) error {
@@ -530,7 +540,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 
 	newPermissions := make([]iamv0.ResourcePermissionspecPermission, 0)
 	for _, perm := range existingResourcePerm.Spec.Permissions {
-		if string(perm.Kind) == kind && perm.Name == name {
+		if perm.Name == name && sameSubjectKind(string(perm.Kind), kind) {
 			continue
 		}
 		newPermissions = append(newPermissions, perm)
@@ -582,17 +592,47 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 	return a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
 }
 
-func (a *api) getPermissionKind(perm accesscontrol.SetResourcePermissionCommand) string {
+// resolvePermissionSubject resolves the K8s permission kind and subject name (UID)
+// for a legacy SetResourcePermissionCommand. UserID may reference either a user or
+// a service account: the two share the legacy ID space but map to distinct kinds
+// in the ResourcePermission spec.
+func (a *api) resolvePermissionSubject(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) (string, string, error) {
 	if perm.UserID != 0 {
-		return string(iamv0.ResourcePermissionSpecPermissionKindUser)
+		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
+		}
+		kind := iamv0.ResourcePermissionSpecPermissionKindUser
+		if userDetails.IsServiceAccount {
+			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+		}
+		return string(kind), userDetails.UID, nil
 	}
 	if perm.TeamID != 0 {
-		return string(iamv0.ResourcePermissionSpecPermissionKindTeam)
+		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			ID: perm.TeamID,
+		})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
+		}
+		return string(iamv0.ResourcePermissionSpecPermissionKindTeam), teamDetails.UID, nil
 	}
 	if perm.BuiltinRole != "" {
-		return string(iamv0.ResourcePermissionSpecPermissionKindBasicRole)
+		return string(iamv0.ResourcePermissionSpecPermissionKindBasicRole), perm.BuiltinRole, nil
 	}
-	return ""
+	return "", "", fmt.Errorf("no valid permission subject found")
+}
+
+// sameSubjectKind reports whether two permission kinds address the same subject
+// namespace. User and ServiceAccount are interchangeable here: both resolve
+// through the legacy user table (UIDs are unique across the two), and service
+// account assignments were historically written with the User kind.
+func sameSubjectKind(a, b string) bool {
+	isUserish := func(k string) bool {
+		return k == string(iamv0.ResourcePermissionSpecPermissionKindUser) ||
+			k == string(iamv0.ResourcePermissionSpecPermissionKindServiceAccount)
+	}
+	return a == b || (isUserish(a) && isUserish(b))
 }
 
 func (a *api) getExistingResourcePermission(ctx context.Context, resourcePermResource dynamic.ResourceInterface, resourcePermName string) (*iamv0.ResourcePermission, string, error) {
@@ -632,29 +672,6 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 	}
 
 	return nil
-}
-
-func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) (string, error) {
-	if perm.UserID != 0 {
-		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
-		if err != nil {
-			return "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
-		}
-		return userDetails.UID, nil
-	}
-	if perm.TeamID != 0 {
-		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID: perm.TeamID,
-		})
-		if err != nil {
-			return "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
-		}
-		return teamDetails.UID, nil
-	}
-	if perm.BuiltinRole != "" {
-		return perm.BuiltinRole, nil
-	}
-	return "", fmt.Errorf("no valid permission subject found")
 }
 
 // Teams-specific redirect functions reading and writing Team.Spec.Members.
