@@ -31,7 +31,9 @@ export default function VariablesManagementPage() {
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
   const location = useLocation();
-  const isNew = location.pathname.endsWith('/new');
+  // The edit route (/edit/:name) always carries a name param, so a variable
+  // named "new" (URL /edit/new) is never mistaken for the create route.
+  const isNew = !editName && location.pathname.endsWith('/new');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<'move' | 'delete' | undefined>();
@@ -144,7 +146,7 @@ export default function VariablesManagementPage() {
   const backToList = () => locationService.push(LIST_URL);
   const onEdit = (variable: Variable) => {
     if (variable.metadata.name) {
-      locationService.push(`${LIST_URL}/${encodeURIComponent(variable.metadata.name)}`);
+      locationService.push(`${LIST_URL}/edit/${encodeURIComponent(variable.metadata.name)}`);
     }
   };
 
