@@ -103,6 +103,10 @@ func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Request
 		})
 	}
 
+	// Unlike GetFolders, folderimpl.SearchFolders authorizes off the requester in
+	// the context (not the query), so install it — callers may pass a bare context
+	// with the identity supplied only via SignedInUser (e.g. async snapshot builds).
+	ctx = identity.WithRequester(ctx, user)
 	hits, err := c.folderSvc.SearchFolders(ctx, folder.SearchFoldersQuery{
 		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
