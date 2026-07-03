@@ -1,0 +1,177 @@
+name: "Grafana Bundle Types"
+description: "Bundles a Grafana plugins types and and opens a PR against grafana/plugin-extension-types."
+
+outputs:
+  typesFilePath:
+    description: "The path to the built types file."
+    value: ${{ steps.set-outputs.outputs.typesFilePath }}
+
+inputs:
+  entry-point:
+    description: "Location of types file to bundle."
+    required: false
+    default: "./src/types/index.ts"
+  ts-config:
+    description: "A path to the tsconfig file to use when bundling types."
+    required: false
+    default: ""
+  plugin-json-path:
+    description: "A path to the plugins plugin.json file."
+    required: false
+    default: "src/plugin.json"
+  package-json-path:
+    description: "A path to the plugins package.json file."
+    required: false
+    default: "package.json"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check if repository lives within the grafana organization
+      if: ${{ github.repository_owner != 'grafana' }}
+      run: |
+        echo "This workflow can only be run from within the Grafana organization."
+        exit 1
+      shell: bash
+
+    - name: Check OIDC token availability
+      run: |
+        if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL}" ]; then
+          echo "::error::This action requires 'id-token: write' permission and GATB to be configured. See https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/035-github-app-permissions/#bundle-types-plugin-actions for setup instructions."
+          exit 1
+        fi
+
+      shell: bash
+
+    - name: Get plugin id and version
+      id: metadata
+      run: |
+        PLUGIN_ID=$(cat $PLUGIN_JSON_PATH | jq -r .id)
+        echo "plugin-id=${PLUGIN_ID}" >> $GITHUB_OUTPUT
+        PLUGIN_VERSION=$(cat $PACKAGE_JSON_PATH | jq -r .version)
+        echo "plugin-version=${PLUGIN_VERSION}" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        PLUGIN_JSON_PATH: ${{ inputs.plugin-json-path }}
+        PACKAGE_JSON_PATH: ${{ inputs.package-json-path }}
+
+    - name: Generate token
+      id: generate-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+      with:
+        github_app: grafana-plugins-platform-bot
+        permission_set: bundle-types
+
+    - name: Clone NPM types package repo
+      run: |
+        cd ..
+        gh auth status
+        gh repo clone grafana/plugin-extension-types -- --depth=1
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+    - name: Bundle types
+      run: yarn bundle-plugin-types --entry-point $ENTRY_POINT --ts-config $TS_CONFIG --out-dir="../plugin-extension-types/types/${PLUGIN_ID}"
+      shell: bash
+      env:
+        ENTRY_POINT: ${{ inputs.entry-point }}
+        TS_CONFIG: ${{ inputs.ts-config }}
+        PLUGIN_ID: ${{ steps.metadata.outputs.plugin-id }}
+
+    - name: Check diff for changes
+      id: check-diff
+      run: |
+        cd ../plugin-extension-types
+        if [[ -n $(git status --porcelain) ]]; then
+          echo "Changes to $ENTRY_POINT detected..."
+          echo "has-changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "No changes found"
+          echo "has-changes=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+      env:
+        ENTRY_POINT: ${{ inputs.entry-point }}
+
+    - name: Create branch and commit via API
+      if: ${{ steps.check-diff.outputs.has-changes == 'true' }}
+      run: |
+        cd ../plugin-extension-types
+
+        BRANCH_NAME="${PLUGIN_ID}-${PLUGIN_VERSION}"
+        BASE_SHA=$(git rev-parse HEAD)
+
+        if ! gh api repos/grafana/plugin-extension-types/branches/${BRANCH_NAME} --silent 2>/dev/null; then
+          gh api repos/grafana/plugin-extension-types/git/refs \
+            -X POST \
+            -f "ref=refs/heads/${BRANCH_NAME}" \
+            -f "sha=${BASE_SHA}"
+        fi
+
+        ADDITIONS="[]"
+        DELETIONS="[]"
+
+        while IFS= read -r line; do
+          STATUS="${line:0:2}"
+          FILE="${line:3}"
+          if [[ "$STATUS" == "??" || "$STATUS" == " M" || "$STATUS" == "MM" ]]; then
+            CONTENTS=$(base64 -w 0 "$FILE")
+            ADDITIONS=$(echo "$ADDITIONS" | jq --arg path "$FILE" --arg contents "$CONTENTS" '. + [{path: $path, contents: $contents}]')
+          elif [[ "$STATUS" == " D" ]]; then
+            DELETIONS=$(echo "$DELETIONS" | jq --arg path "$FILE" '. + [{path: $path}]')
+          fi
+        done < <(git status --porcelain -uall)
+
+        jq -n \
+          --arg repo "grafana/plugin-extension-types" \
+          --arg branch "$BRANCH_NAME" \
+          --arg message "types: updating ${PLUGIN_ID}" \
+          --arg headOid "$BASE_SHA" \
+          --argjson additions "$ADDITIONS" \
+          --argjson deletions "$DELETIONS" \
+          '{
+            query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { url } } }",
+            variables: {
+              input: {
+                branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+                message: { headline: $message },
+                fileChanges: { additions: $additions, deletions: $deletions },
+                expectedHeadOid: $headOid
+              }
+            }
+          }' | gh api graphql --input -
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        PLUGIN_ID: ${{ steps.metadata.outputs.plugin-id }}
+        PLUGIN_VERSION: ${{ steps.metadata.outputs.plugin-version }}
+
+    - name: Create or Update PR
+      if: ${{ steps.check-diff.outputs.has-changes == 'true' }}
+      env:
+        GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        PLUGIN_ID: ${{ steps.metadata.outputs.plugin-id }}
+        PLUGIN_VERSION: ${{ steps.metadata.outputs.plugin-version }}
+      run: |
+        cd ../plugin-extension-types
+
+        PR_NUMBER=$(gh pr list --base main --head $PLUGIN_ID-$PLUGIN_VERSION --json number -q '.[0].number')
+
+        PR_BODY=$(cat <<EOF
+        Hello! 👋
+
+        This PR was auto generated by the Grafana Bundle Types action by $PLUGIN_ID plugin version $PLUGIN_VERSION.
+
+        **Notes for reviewer:**
+        This is an auto-generated PR which ran \`yarn bundle-plugin-types\`.
+        Please review the changes thoroughly before merging.
+        EOF
+        )
+
+        if [ -z "$PR_NUMBER" ]; then
+          gh pr create --base main --head $PLUGIN_ID-$PLUGIN_VERSION --title "Chore: Add $PLUGIN_ID-$PLUGIN_VERSION types" --body "$PR_BODY" --label "types-update"
+          PR_NUMBER=$(gh pr list --base main --head $PLUGIN_ID-$PLUGIN_VERSION --json number -q '.[0].number')
+          gh pr merge --auto $PR_NUMBER
+        fi
+      shell: bash
