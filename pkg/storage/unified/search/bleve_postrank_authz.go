@@ -318,9 +318,10 @@ func (b *bleveIndex) finalizePostFilter(
 	stats *resource.SearchStats,
 ) error {
 	// Exact authorized total only when the scan started from the top (no
-	// incoming SearchAfter) and exhausted it. With a SearchAfter cursor bleve
-	// starts after the cursor, so `authorized` on exhaustion is the tail count,
-	// not the whole-query total — fall back to the unfiltered firstRes.Total.
+	// incoming SearchAfter) and exhausted it. With a SearchAfter cursor the
+	// runner only authorizes hits returned after the cursor, so `authorized`
+	// on exhaustion is the tail count, not the whole-query total — fall back
+	// to the unfiltered firstRes.Total.
 	if exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 {
 		response.TotalHits = authorized
 	} else {
