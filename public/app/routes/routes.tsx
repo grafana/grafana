@@ -157,7 +157,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.globalDashboardVariables && {
       path: '/dashboards/variables',
-      roles: () => ['Editor', 'Admin'],
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -167,7 +168,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.globalDashboardVariables && {
       path: '/dashboards/variables/new',
-      roles: () => ['Editor', 'Admin'],
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -177,7 +179,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.globalDashboardVariables && {
       path: '/dashboards/variables/:name',
-      roles: () => ['Editor', 'Admin'],
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
       component: SafeDynamicImport(
         () =>
           import(

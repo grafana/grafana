@@ -72,8 +72,14 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
 
     Promise.all(
       missing.map(async (uid) => {
-        const result = await dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid }));
-        return [uid, result.data?.spec.title ?? uid] as const;
+        const subscription = dispatch(folderAPIv1beta1.endpoints.getFolder.initiate({ name: uid }));
+        try {
+          const result = await subscription;
+          return [uid, result.data?.spec.title ?? uid] as const;
+        } finally {
+          // Release the cache subscription; the resolved title lives in local state.
+          subscription.unsubscribe();
+        }
       })
     ).then((entries) => {
       if (!cancelled) {
