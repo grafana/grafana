@@ -150,6 +150,7 @@ export function SelectBase<T, Rest = {}>({
   virtualized = false,
   noMultiValueWrap,
   width,
+  minWidth,
   isValidNewOption,
   formatOptionLabel,
   hideSelectedOptions,
@@ -166,7 +167,7 @@ export function SelectBase<T, Rest = {}>({
 
   const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
-  const selectStyles = useCustomSelectStyles(theme, width);
+  const selectStyles = useCustomSelectStyles(theme, width, minWidth);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
   // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
   const [open, setOpen] = useState(!!isOpen);

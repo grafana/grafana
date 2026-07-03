@@ -57,6 +57,11 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
   trace?: ExploreTracePanelState;
   logs?: ExploreLogsPanelState;
+  graph?: ExploreGraphPanelState;
+}
+
+export interface ExploreGraphPanelState {
+  unit?: string;
 }
 
 /**

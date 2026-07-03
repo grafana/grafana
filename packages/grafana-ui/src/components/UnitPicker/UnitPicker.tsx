@@ -9,7 +9,9 @@ import { Cascader, type CascaderOption } from '../Cascader/Cascader';
 export interface UnitPickerProps {
   onChange: (item?: string) => void;
   value?: string;
-  width?: number;
+  width?: number | 'auto';
+  minWidth?: string;
+  placeholder?: string;
   id?: string;
 }
 
@@ -20,7 +22,7 @@ function formatCreateLabel(input: string) {
 /**
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-unitpicker--docs
  */
-export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, id }) => {
+export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, minWidth, placeholder, id }) => {
   // Set the current selection
   let current: SelectableValue<string> | undefined = undefined;
 
@@ -52,16 +54,22 @@ export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, id })
     current = { value, label: value };
   }
 
+  // Auto-size to the displayed label when no explicit width given.
+  // Label chars * ~0.875 (7px/8px spacing unit) + 4 units for padding/clear button, min 14.
+  const placeholderLen = placeholder?.length ?? 4;
+  const effectiveWidth = width ?? Math.max(14, Math.ceil((current?.label?.length ?? placeholderLen) * 0.875) + 4);
+
   return (
     <Cascader
       id={id}
-      width={width}
+      width={effectiveWidth}
+      minWidth={minWidth}
       initialValue={current && current.label}
       allowCustomValue
       changeOnSelect={false}
       formatCreateLabel={formatCreateLabel}
       options={groupOptions}
-      placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
+      placeholder={placeholder ?? t('grafana-ui.unit-picker.placeholder', 'Choose')}
       isClearable
       onSelect={onChange}
       data-testid={selectors.components.UnitPicker.container}
