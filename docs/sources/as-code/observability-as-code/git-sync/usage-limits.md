@@ -76,10 +76,12 @@ your-org/grafana-manifests/
 │   ├── team-a/
 │   ├── team-b/
 │   └── ...
-└── shard-2/        ← empty for now, add a connection when shard-1 approaches 1,000
+├── shard-2/        ← empty for now, add a connection when shard-1 approaches 1,000
+├── shard-3/        ← add later as you keep growing
+└── shard-4/        ← ...up to 10 shards / connections per stack
 ```
 
-As the number of resources grows, add `shard-2` (and later shards) and connect each one. You can move teams between shards at any time to rebalance, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
+As the number of resources grows, add `shard-2`, `shard-3`, and later shards, and connect each one. You can move teams between shards at any time to rebalance, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
 
 If sharding isn't practical for your setup, we can also raise the per-connection resource limit modestly — for example from 1,000 to around 1,200 or 1,500. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase: we don't recommend going well beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scale, sharding remains the recommended approach.
 
