@@ -38,6 +38,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink: undefined,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: undefined,
       timeRange,
       app: CoreApp.Explore,
@@ -53,6 +54,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: undefined,
       timeRange,
       app: CoreApp.Explore,
@@ -70,6 +72,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',
         profileTypeId: 'test-type',
@@ -91,6 +94,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: undefined,
       timeRange,
       app: CoreApp.Explore,
@@ -118,6 +122,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',
         profileTypeId: 'test-type',
@@ -150,6 +155,7 @@ describe('getSpanDetailLinkButtons', () => {
       span,
       createSpanLink,
       datasourceType: 'test',
+      datasourceUid: 'test-datasource-uid',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',
         profileTypeId: 'test-type',

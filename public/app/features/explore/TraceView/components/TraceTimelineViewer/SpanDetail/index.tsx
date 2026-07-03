@@ -412,6 +412,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     span,
     createSpanLink,
     datasourceType,
+    datasourceUid,
     traceToProfilesOptions,
     timeRange,
     app,

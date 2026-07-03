@@ -34,6 +34,7 @@ export type Props = {
   span: TraceSpan;
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
+  datasourceUid: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
   app: CoreApp;
@@ -61,7 +62,8 @@ const MAX_LINKS = 3;
 const ABSOLUTE_LINK_PATTERN = /^https?:\/\//i;
 
 export const getSpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app, shareButton } = props;
+  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
+    props;
 
   let linkToProfiles: SpanLinkDef | undefined;
   let content = shareButton ? <>{shareButton}</> : undefined;
