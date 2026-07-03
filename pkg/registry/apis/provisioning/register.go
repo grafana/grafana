@@ -153,6 +153,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
@@ -389,6 +390,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
@@ -431,6 +433,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
@@ -985,7 +988,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.folderAPIVersion,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,

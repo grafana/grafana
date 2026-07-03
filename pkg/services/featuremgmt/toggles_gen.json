@@ -2762,8 +2762,8 @@
     {
       "metadata": {
         "name": "grafana.useDefaultScopesEndpoint",
-        "resourceVersion": "1783080149115",
-        "creationTimestamp": "2026-07-03T12:02:29Z"
+        "resourceVersion": "1783088074749",
+        "creationTimestamp": "2026-07-03T14:14:34Z"
       },
       "spec": {
         "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
