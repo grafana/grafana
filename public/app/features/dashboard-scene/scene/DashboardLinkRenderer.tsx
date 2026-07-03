@@ -99,7 +99,6 @@ function getStyles(theme: GrafanaTheme2) {
     linkContainer: css({
       display: 'inline-flex',
       alignItems: 'center',
-      verticalAlign: 'middle',
       lineHeight: 1,
       flexWrap: 'wrap',
       gap: theme.spacing(1),
