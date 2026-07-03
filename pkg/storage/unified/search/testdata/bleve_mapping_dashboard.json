@@ -126,8 +126,7 @@
             "fields": [
               {
                 "type": "number",
-                "store": true,
-                "index": true
+                "store": true
               }
             ]
           },
@@ -222,8 +221,7 @@
             "fields": [
               {
                 "type": "number",
-                "store": true,
-                "index": true
+                "store": true
               }
             ]
           },
