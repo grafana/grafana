@@ -39,6 +39,8 @@ interface VariableEditorFormProps {
   onDelete: (variableName: string) => void;
   /** True when rendering outside a dashboard (e.g. the variables management page). */
   standalone?: boolean;
+  /** Notifies the host when the name field enters or leaves an invalid state, so it can gate its own save action. */
+  onNameErrorChange?: (hasError: boolean) => void;
 }
 export function VariableEditorForm({
   variable,
@@ -46,6 +48,7 @@ export function VariableEditorForm({
   onGoBack,
   onDelete,
   standalone,
+  onNameErrorChange,
 }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
@@ -66,12 +69,13 @@ export function VariableEditorForm({
       const result = validateVariableName(variable, e.currentTarget.value);
       if (result.errorMessage !== nameError) {
         setNameError(result.errorMessage);
+        onNameErrorChange?.(Boolean(result.errorMessage));
       }
       if (result.warningMessage !== nameWarning) {
         setNameWarning(result.warningMessage);
       }
     },
-    [variable, nameError, nameWarning]
+    [variable, nameError, nameWarning, onNameErrorChange]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
@@ -155,36 +159,41 @@ export function VariableEditorForm({
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>
-          <ModalsController>
-            {({ showModal, hideModal }) => (
-              <Button
-                variant="destructive"
-                fill="outline"
-                onClick={() => {
-                  showModal(ConfirmModal, {
-                    title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
-                    body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: t(
-                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
-                      'Delete variable'
-                    ),
-                    onConfirm: onDeleteVariable(hideModal),
-                    onDismiss: hideModal,
-                    isOpen: true,
-                  });
-                }}
-              >
-                <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
-              </Button>
-            )}
-          </ModalsController>
-          <Button
-            variant="secondary"
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-            onClick={onGoBack}
-          >
-            <Trans i18nKey="dashboard-scene.variable-editor-form.back-to-list">Back to list</Trans>
-          </Button>
+          {/* Standalone hosts render their own delete and navigation actions in a single row. */}
+          {!standalone && (
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <Button
+                  variant="destructive"
+                  fill="outline"
+                  onClick={() => {
+                    showModal(ConfirmModal, {
+                      title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
+                      body: `Are you sure you want to delete: ${name}?`,
+                      confirmText: t(
+                        'dashboard-scene.variable-editor-form.confirmText.delete-variable',
+                        'Delete variable'
+                      ),
+                      onConfirm: onDeleteVariable(hideModal),
+                      onDismiss: hideModal,
+                      isOpen: true,
+                    });
+                  }}
+                >
+                  <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
+                </Button>
+              )}
+            </ModalsController>
+          )}
+          {!standalone && (
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              onClick={onGoBack}
+            >
+              <Trans i18nKey="dashboard-scene.variable-editor-form.back-to-list">Back to list</Trans>
+            </Button>
+          )}
 
           {isHasVariableOptions && (
             <Button

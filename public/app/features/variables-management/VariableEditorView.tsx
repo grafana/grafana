@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Button, Field, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Field, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
   useDeleteVariableMutation,
@@ -62,6 +62,8 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
   const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
   const [deleteVariable, { isLoading: isDeleting }] = useDeleteVariableMutation();
   const [isRecreating, setIsRecreating] = useState(false);
+  const [hasNameError, setHasNameError] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isSaving = isCreating || isUpdating || isDeleting || isRecreating;
 
   const scene = useMemo(
@@ -79,6 +81,8 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
   const onTypeChange = (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
     setSceneVariable(getVariableScene(type, { name, label }));
+    // The new scene carries over the last committed (valid) name.
+    setHasNameError(false);
   };
 
   const onSave = async () => {
@@ -116,20 +120,25 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
       // Renaming or moving is a create-then-delete under the hood; surface it as
       // a single operation instead of separate "created" + "deleted" toasts.
       setIsRecreating(true);
+      let recreateResult;
       try {
-        await recreateVariable(sourceName, kind, folderUid || undefined);
+        recreateResult = await recreateVariable(sourceName, kind, folderUid || undefined);
       } finally {
         setIsRecreating(false);
       }
-      dispatch(
-        notifyApp(
-          createSuccessNotification(
-            folderUid !== sourceFolderUid
-              ? t('variables-management.editor.moved', 'Variable moved')
-              : t('variables-management.editor.updated', 'Variable updated')
+      // When the original could not be removed, recreateVariable already surfaced
+      // a warning about the leftover copy — a success toast would contradict it.
+      if (recreateResult.deletedOriginal) {
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              folderUid !== sourceFolderUid
+                ? t('variables-management.editor.moved', 'Variable moved')
+                : t('variables-management.editor.updated', 'Variable updated')
+            )
           )
-        )
-      );
+        );
+      }
       onBack();
     } catch {
       // Error already notified.
@@ -166,11 +175,12 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
         onTypeChange={onTypeChange}
         onGoBack={onBack}
         onDelete={onDelete}
+        onNameErrorChange={setHasNameError}
         standalone
       />
 
       <Stack gap={2}>
-        <Button variant="primary" onClick={onSave} disabled={isSaving}>
+        <Button variant="primary" onClick={onSave} disabled={isSaving || hasNameError}>
           {isSaving
             ? t('variables-management.editor.saving', 'Saving...')
             : t('variables-management.editor.save', 'Save')}
@@ -178,7 +188,28 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
         <Button variant="secondary" fill="outline" onClick={onBack}>
           <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
         </Button>
+        {!isNew && (
+          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isSaving}>
+            <Trans i18nKey="variables-management.editor.delete">Delete</Trans>
+          </Button>
+        )}
       </Stack>
+
+      {showDeleteModal && (
+        <ConfirmModal
+          isOpen
+          title={t('variables-management.editor.delete-modal-title', 'Delete variable')}
+          body={t('variables-management.editor.delete-modal-body', 'Are you sure you want to delete "{{name}}"?', {
+            name: sceneVariable.state.name,
+          })}
+          confirmText={t('variables-management.editor.delete-modal-confirm', 'Delete')}
+          onConfirm={() => {
+            setShowDeleteModal(false);
+            onDelete();
+          }}
+          onDismiss={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { dashboardAPIv2beta1, type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { extractErrorMessage } from 'app/api/utils';
+import { createWarningNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariableSpecName } from './utils';
@@ -98,11 +102,18 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
 
 export interface BulkOperationResult {
   succeeded: number;
-  failed: Array<{ name: string; error: unknown }>;
+  /** Variables that were already in the requested state, so no calls were made. */
+  skipped: number;
+  failed: Array<{ name: string; metadataName: string; error: unknown }>;
 }
 
 function invalidateVariablesList() {
   dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
+}
+
+export interface RecreateVariableResult {
+  /** False when the copy was created but the original could not be removed. */
+  deletedOriginal: boolean;
 }
 
 /**
@@ -112,19 +123,38 @@ function invalidateVariablesList() {
  * exists — a failure can never lose the variable. Uses direct backend calls
  * instead of the RTK mutations so the caller can show a single operation-specific
  * notification instead of separate "created" + "deleted" toasts.
+ *
+ * A create failure throws (nothing changed). A delete failure does not: the copy
+ * already exists, so the operation is surfaced as a warning about the leftover
+ * original and reported via {@link RecreateVariableResult.deletedOriginal}.
  */
 export async function recreateVariable(
   sourceMetadataName: string,
   kind: VariableKind,
   targetFolderUid?: string
-): Promise<void> {
+): Promise<RecreateVariableResult> {
   await getBackendSrv().post(`${BASE_URL}/variables`, buildVariableResource(kind, targetFolderUid));
   try {
-    await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(sourceMetadataName)}`);
-  } finally {
-    // The copy exists even if the delete fails, so the list is stale either way.
+    await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(sourceMetadataName)}`, undefined, {
+      showErrorAlert: false,
+    });
+  } catch (error) {
+    dispatch(
+      notifyApp(
+        createWarningNotification(
+          t(
+            'variables-management.recreate.delete-failed',
+            'The variable was saved to the new location, but the previous version could not be removed. Delete it manually to avoid duplicates.'
+          ),
+          extractErrorMessage(error, '')
+        )
+      )
+    );
     invalidateVariablesList();
+    return { deletedOriginal: false };
   }
+  invalidateVariablesList();
+  return { deletedOriginal: true };
 }
 
 /**
@@ -133,7 +163,7 @@ export async function recreateVariable(
  * of one toast per variable; the RTK cache is invalidated once at the end.
  */
 export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOperationResult> {
-  const result: BulkOperationResult = { succeeded: 0, failed: [] };
+  const result: BulkOperationResult = { succeeded: 0, skipped: 0, failed: [] };
 
   for (const variable of variables) {
     const name = variable.metadata.name;
@@ -146,7 +176,7 @@ export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOp
       });
       result.succeeded++;
     } catch (error) {
-      result.failed.push({ name: getVariableSpecName(variable), error });
+      result.failed.push({ name: getVariableSpecName(variable), metadataName: name, error });
     }
   }
 
@@ -161,7 +191,7 @@ export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOp
  * exists, so a failure can never lose the variable.
  */
 export async function bulkMoveVariables(variables: Variable[], targetFolderUid?: string): Promise<BulkOperationResult> {
-  const result: BulkOperationResult = { succeeded: 0, failed: [] };
+  const result: BulkOperationResult = { succeeded: 0, skipped: 0, failed: [] };
 
   for (const variable of variables) {
     const name = variable.metadata.name;
@@ -169,8 +199,8 @@ export async function bulkMoveVariables(variables: Variable[], targetFolderUid?:
       continue;
     }
     if (getVariableFolderUid(variable) === targetFolderUid) {
-      // Already in the target scope.
-      result.succeeded++;
+      // Already in the target scope; report separately so the "moved" toast is honest.
+      result.skipped++;
       continue;
     }
     try {
@@ -181,7 +211,7 @@ export async function bulkMoveVariables(variables: Variable[], targetFolderUid?:
       });
       result.succeeded++;
     } catch (error) {
-      result.failed.push({ name: getVariableSpecName(variable), error });
+      result.failed.push({ name: getVariableSpecName(variable), metadataName: name, error });
     }
   }
 

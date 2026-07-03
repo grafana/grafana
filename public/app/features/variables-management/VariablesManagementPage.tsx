@@ -88,6 +88,8 @@ export default function VariablesManagementPage() {
         )
       );
     }
+    // Keep the variables that failed selected so a retry doesn't require re-finding them.
+    setSelected(new Set(result.failed.map((failure) => failure.metadataName)));
   };
 
   const onBulkDelete = async () => {
@@ -105,7 +107,6 @@ export default function VariablesManagementPage() {
     } finally {
       setIsProcessing(false);
       setPendingAction(undefined);
-      setSelected(new Set());
     }
   };
 
@@ -121,10 +122,22 @@ export default function VariablesManagementPage() {
           defaultValue_other: '{{count}} variables moved',
         })
       );
+      if (result.skipped > 0) {
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              t('variables-management.bulk.move-skipped', '', {
+                count: result.skipped,
+                defaultValue_one: '{{count}} variable was already in the selected folder',
+                defaultValue_other: '{{count}} variables were already in the selected folder',
+              })
+            )
+          )
+        );
+      }
     } finally {
       setIsProcessing(false);
       setPendingAction(undefined);
-      setSelected(new Set());
     }
   };
 
