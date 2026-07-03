@@ -150,7 +150,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 
 	// === DEBUG ===
 	authInfo, ok := types.AuthInfoFrom(ctx)
-	if ok && authInfo != nil && types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy) {
+	if ok && authInfo != nil {
 		logging.FromContext(ctx).Info("===SEKRET_GRPC_CLIENT_AUTH_DETAILS===",
 			"service", serviceName,
 			"username", authInfo.GetUsername(),
@@ -161,10 +161,11 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 			"tok_del_perm", strings.Join(authInfo.GetTokenDelegatedPermissions(), ";"),
 		)
 
+		isAccessPolicy := types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
 		id := authInfo.GetIDToken()
 		at := authInfo.GetAccessToken()
 
-		if id == "" && at != "" {
+		if isAccessPolicy && id == "" && at != "" {
 			opts = append(opts, authnlib.WithClientInterceptorSubjectToken(at))
 		}
 	}
