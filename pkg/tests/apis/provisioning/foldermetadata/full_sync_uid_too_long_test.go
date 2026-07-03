@@ -96,22 +96,31 @@ func TestIntegrationProvisioning_FullSync_FolderUIDTooLong(t *testing.T) {
 	// the sync.
 	helper.RequireRepoDashboardCount(t, repo, 1)
 
-	folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-
-	managedSourcePaths := make(map[string]struct{})
-	for _, f := range folders.Items {
-		managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID != repo {
-			continue
+	// Poll the folders list: the sync job completing does not guarantee the
+	// folders-list index has observed the newly-created shallow folder (its
+	// grafana.app/managerId annotation lags independently of the dashboards
+	// index under SQLite write contention). A single List here races that lag.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err) {
+			return
 		}
-		sourcePath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		managedSourcePaths[sourcePath] = struct{}{}
-	}
 
-	assert.Contains(t, managedSourcePaths, "shallow",
-		"the shallow folder must be created normally despite the UID violation in another branch; got managed paths: %v",
-		managedSourcePaths)
+		managedSourcePaths := make(map[string]struct{})
+		for _, f := range folders.Items {
+			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID != repo {
+				continue
+			}
+			sourcePath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			managedSourcePaths[sourcePath] = struct{}{}
+		}
+
+		assert.Contains(c, managedSourcePaths, "shallow",
+			"the shallow folder must be created normally despite the UID violation in another branch; got managed paths: %v",
+			managedSourcePaths)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"expected the shallow folder to be created and managed by repo %s", repo)
 
 	// Pull condition must be a warning state, not Failure. The condition
 	// reason currently buckets generic warnings under

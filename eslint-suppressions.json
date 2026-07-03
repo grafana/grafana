@@ -1483,11 +1483,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/shared.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -1882,14 +1877,6 @@
   "public/app/features/dashboard/state/getPanelPluginToMigrateTo.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/panelMerge.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "public/app/features/datasources/components/ButtonRow.tsx": {
@@ -2304,11 +2291,6 @@
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
     "react/no-unescaped-entities": {
       "count": 26
-    }
-  },
-  "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
@@ -2981,10 +2963,10 @@
   },
   "public/app/plugins/datasource/influxdb/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 11
+      "count": 9
     }
   },
   "public/app/plugins/datasource/influxdb/influx_query_model.ts": {

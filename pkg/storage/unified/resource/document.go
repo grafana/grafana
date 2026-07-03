@@ -36,10 +36,6 @@ type DocumentBuilderInfo struct {
 	// The target resource (empty will be used to match anything)
 	GroupResource schema.GroupResource
 
-	// Defines the searchable fields
-	// NOTE: this does not include the root/common fields, only values specific to the the builder
-	Fields SearchableDocumentFields
-
 	// simple/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
@@ -58,10 +54,25 @@ type DocumentBuilderInfo struct {
 	// SearchFieldsProvider is the manifest-driven source of truth for this
 	// builder's search fields. When non-nil, the bleve mapping for
 	// GroupResource is built from the provider's SearchFieldDefinition
-	// declarations rather than from the legacy Fields (column-definition)
-	// translation. Fields may still be populated alongside the provider for
-	// downstream consumers that read column metadata directly.
+	// declarations. The provider is also the source for the column-definition
+	// view of the kind's fields that the search backend uses for result
+	// metadata and sort-field prefixing (see SearchableFields).
 	SearchFieldsProvider SearchFieldsProvider
+}
+
+// SearchableFields returns the column-definition view of this kind's custom
+// search fields, derived from its provider. The provider is the single source
+// of truth; the search backend uses this view for result column metadata and
+// sort-field prefixing. Returns nil when the builder has no provider.
+func (b DocumentBuilderInfo) SearchableFields() (SearchableDocumentFields, error) {
+	if b.SearchFieldsProvider == nil {
+		return nil, nil
+	}
+	sfds := b.SearchFieldsProvider.Fields(schema.GroupVersionResource{
+		Group:    b.GroupResource.Group,
+		Resource: b.GroupResource.Resource,
+	})
+	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
 }
 
 // SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
@@ -76,22 +87,6 @@ func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]st
 		}
 		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
 		out[key] = b.SearchFieldsHash
-	}
-	return out
-}
-
-// SearchFieldProvidersForBuilders returns a lower-cased "group/resource" map
-// of SearchFieldsProvider values collected from the given DocumentBuilderInfo
-// entries. Builders with a nil provider are skipped, so the map's keys list
-// the kinds whose bleve mapping is provider-driven.
-func SearchFieldProvidersForBuilders(builders []DocumentBuilderInfo) map[string]SearchFieldsProvider {
-	out := map[string]SearchFieldsProvider{}
-	for _, b := range builders {
-		if b.SearchFieldsProvider == nil {
-			continue
-		}
-		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
-		out[key] = b.SearchFieldsProvider
 	}
 	return out
 }

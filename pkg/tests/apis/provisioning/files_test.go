@@ -322,9 +322,9 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 		// and updated/content-updated.json). Two files mapping to the same dashboard UID
 		// are written in parallel by the full sync below and would race into an
 		// optimistic-lock conflict ("the object has been modified").
-		timelineContent := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"uid": "mIJjFy8Kz"`, `"uid": "move-dir-timeline"`, 1)
+		timelineContent := strings.Replace(string(helper.LoadFile("testdata/timeline-demo.json")), `"name": "mIJjFy8Kz"`, `"name": "move-dir-timeline"`, 1)
 		helper.WriteToProvisioningPath(t, "source-dir/timeline-demo.json", []byte(timelineContent))
-		textOptionsContent := strings.Replace(string(helper.LoadFile("testdata/text-options.json")), `"uid": "WZ7AhQiVz"`, `"uid": "move-dir-text"`, 1)
+		textOptionsContent := strings.Replace(string(helper.LoadFile("testdata/text-options.json")), `"name": "WZ7AhQiVz"`, `"name": "move-dir-text"`, 1)
 		helper.WriteToProvisioningPath(t, "source-dir/text-options.json", []byte(textOptionsContent))
 
 		// Sync to ensure files are recognized

@@ -12,11 +12,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       },
@@ -48,8 +45,104 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "properties": {
+          "ds_types": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "errors_last_1_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "errors_last_30_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "errors_last_7_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "errors_today": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "errors_total": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "link_count": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
+          "panel_title": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "standard",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
           "panel_types": {
             "enabled": true,
             "dynamic": true,
@@ -60,6 +153,150 @@
                 "store": true,
                 "index": true,
                 "skip_freq_norm": true
+              }
+            ]
+          },
+          "queries_last_1_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "queries_last_30_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "queries_last_7_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "queries_today": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "queries_total": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "schema_version": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
+          "transformation": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "views_last_1_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "views_last_30_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "views_last_7_days": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "views_today": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
+              }
+            ]
+          },
+          "views_total": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "docvalues": true
               }
             ]
           }
@@ -135,6 +372,7 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
+            "docvalues": true,
             "skip_freq_norm": true
           }
         ]
@@ -260,11 +498,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       }

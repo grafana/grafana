@@ -35,6 +35,7 @@ import kbn from '../../../../core/utils/kbn';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -440,9 +441,10 @@ export function useCreateFolder() {
         metadata: {
           ...partialMetadata,
           generateName: 'f',
-          annotations: {
-            ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
-          },
+          annotations:
+            folder.parentUid && !isRootFolderUID(folder.parentUid)
+              ? { [AnnoKeyFolder]: folder.parentUid }
+              : { [AnnoKeyGrantPermissions]: 'default' },
         },
       },
     };

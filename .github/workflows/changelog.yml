@@ -168,7 +168,7 @@ jobs:
       # the previous `git commit --allow-empty` behaviour for runs with no changelog diff.
       - name: "Commit changelog changes"
         if: inputs.dry_run != true
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "Update changelog"
           repo: ${{ github.repository }}

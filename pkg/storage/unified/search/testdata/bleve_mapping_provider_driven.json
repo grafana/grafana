@@ -12,11 +12,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       },
@@ -48,8 +45,30 @@
       },
       "fields": {
         "enabled": true,
-        "dynamic": true,
+        "dynamic": false,
         "properties": {
+          "active": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "boolean",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
+          "count": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true
+              }
+            ]
+          },
           "description": {
             "enabled": true,
             "dynamic": true,
@@ -147,6 +166,7 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
+            "docvalues": true,
             "skip_freq_norm": true
           }
         ]
@@ -272,11 +292,8 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "text",
-            "analyzer": "keyword",
-            "store": true,
-            "index": true,
-            "skip_freq_norm": true
+            "type": "number",
+            "store": true
           }
         ]
       }
