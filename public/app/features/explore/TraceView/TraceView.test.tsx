@@ -212,6 +212,23 @@ describe('TraceView', () => {
       await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
       expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
     });
+
+    it('shows the banner again after dismiss when navigating directly to a different restored trace', async () => {
+      mockUseAppPluginInstalled.mockReturnValue({
+        loading: false,
+        error: undefined,
+        value: true,
+      });
+      const { rerender } = render(getTraceView([frameRestoredByAdaptiveTraces]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+
+      // Navigating straight from one restored trace to another must surface the banner again.
+      rerender(getTraceView([frameRestoredByAdaptiveTracesB]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+    });
   });
 });
 
@@ -447,6 +464,24 @@ const frameRestoredByAdaptiveTraces = new MutableDataFrame({
     {
       name: 'trace',
       values: [restoredResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponseB: TraceData & { spans: TraceSpanData[] } = {
+  ...restoredResponse,
+  traceID: '2bc49126597198db',
+  spans: restoredResponse.spans.map((span) => ({ ...span, traceID: '2bc49126597198db' })),
+};
+
+const frameRestoredByAdaptiveTracesB = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponseB],
     },
   ],
   meta: {

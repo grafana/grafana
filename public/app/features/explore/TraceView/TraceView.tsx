@@ -199,7 +199,8 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
-          {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner />}
+          {/* Key by trace ID so the dismissed state resets when navigating directly between restored traces. */}
+          {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner key={traceProp.traceID} />}
 
           <TracePageHeader
             trace={traceProp}
