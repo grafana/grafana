@@ -105,11 +105,6 @@ func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resou
 // and its documents are extracted by the standard builder, so only the resource
 // and its field set differ per kind.
 func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefinition) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(searchFields))
-	if err != nil {
-		return resource.DocumentBuilderInfo{}, err
-	}
-
 	gvr := ri.GroupVersionResource()
 	gr := ri.GroupResource()
 	provider := resource.NewMapProvider(
@@ -123,7 +118,6 @@ func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefini
 
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
-		Fields:               fields,
 		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
 		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,

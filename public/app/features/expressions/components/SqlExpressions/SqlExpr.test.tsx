@@ -63,6 +63,12 @@ jest.mock('./SqlQueryActions', () => ({
   SqlQueryActions: jest.fn(() => null),
 }));
 
+// The lazy signature-metadata load is covered by its own hook test; stub it here
+// so the async import doesn't schedule state updates outside act().
+jest.mock('./hooks/useFunctionSignatures', () => ({
+  useFunctionSignatures: jest.fn(() => undefined),
+}));
+
 const mockBackendSrv = {
   post: jest.fn().mockResolvedValue({
     kind: 'SQLSchemaResponse',

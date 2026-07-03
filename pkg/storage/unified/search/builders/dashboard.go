@@ -53,11 +53,6 @@ var DashboardSearchFields = resource.NewManifestBackedProvider(
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(DashboardSearchFields))
-	if err != nil {
-		return resource.DocumentBuilderInfo{}, err
-	}
-
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
@@ -83,7 +78,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 	gr := dashV1.DashboardResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
-		Fields:               fields,
 		Namespaced:           namespaced,
 		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,

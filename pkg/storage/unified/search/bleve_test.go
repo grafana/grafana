@@ -113,11 +113,13 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			},
 		}
 	}
+	fields, err := info.SearchableFields()
+	require.NoError(t, err)
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 3, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+	}, 3, fields, "test", func(index resource.ResourceIndex) (int64, error) {
 		if err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				doc("legacy-root", ""),
@@ -202,11 +204,13 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		})
 		require.NoError(t, err)
 
+		fields, err := info.SearchableFields()
+		require.NoError(t, err)
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		}, 2, fields, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
@@ -834,7 +838,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 func TestGetSortFields(t *testing.T) {
 	dashboardInfo, err := builders.DashboardBuilder(nil)
 	require.NoError(t, err)
-	dashboardFields := dashboardInfo.Fields
+	dashboardFields, err := dashboardInfo.SearchableFields()
+	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{

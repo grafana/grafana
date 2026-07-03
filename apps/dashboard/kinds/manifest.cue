@@ -92,91 +92,91 @@ manifest: {
 						{
 							name: "errors_today"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of errors that occurred today"
 						},
 						{
 							name: "errors_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of errors that occurred in the last 1 days"
 						},
 						{
 							name: "errors_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of errors that occurred in the last 7 days"
 						},
 						{
 							name: "errors_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of errors that occurred in the last 30 days"
 						},
 						{
 							name: "errors_total"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Total number of errors"
 						},
 						{
 							name: "queries_today"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of queries that occurred today"
 						},
 						{
 							name: "queries_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of queries that occurred in the last 1 days"
 						},
 						{
 							name: "queries_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of queries that occurred in the last 7 days"
 						},
 						{
 							name: "queries_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of queries that occurred in the last 30 days"
 						},
 						{
 							name: "queries_total"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Total number of queries"
 						},
 						{
 							name: "views_today"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of views that occurred today"
 						},
 						{
 							name: "views_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of views that occurred in the last 1 days"
 						},
 						{
 							name: "views_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of views that occurred in the last 7 days"
 						},
 						{
 							name: "views_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Number of views that occurred in the last 30 days"
 						},
 						{
 							name: "views_total"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["filter", "sort", "retrieve"]
 							description: "Total number of views"
 						},
 					]
