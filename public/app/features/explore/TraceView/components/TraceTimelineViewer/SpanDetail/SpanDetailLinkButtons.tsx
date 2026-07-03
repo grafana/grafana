@@ -65,6 +65,16 @@ export const SpanDetailLinkButtons = (props: Props) => {
   const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, datasourceUid, app, shareButton } =
     props;
 
+  // Hooks must run unconditionally on every render, so fetch the plugin links up front.
+  // The context only depends on props, and the fetched links are only consumed below when
+  // a profiles link exists and we're in Explore.
+  const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
+  const { links: pluginLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.TraceViewDetails,
+    context,
+    limitPerPlugin: 1,
+  });
+
   let linkToProfiles: SpanLinkDef | undefined;
   let content = shareButton ? <>{shareButton}</> : undefined;
 
@@ -98,9 +108,6 @@ export const SpanDetailLinkButtons = (props: Props) => {
     if (linkToProfiles && app === CoreApp.Explore) {
       // ensure we have a profile link
       const profilesDrilldownPluginId = 'grafana-pyroscope-app';
-      const context = getProfileLinkButtonsContext(span, traceToProfilesOptions, timeRange);
-      const extensionPointId = PluginExtensionPoints.TraceViewDetails;
-      const { links: pluginLinks } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
       const link =
         pluginLinks && pluginLinks.length > 0
           ? pluginLinks.find((link) => link.pluginId === profilesDrilldownPluginId)
