@@ -3140,6 +3140,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.growthHomepage",
+			Description: "Enables PLG-focused growth redesign of the unified homepage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:            "kubernetesReporting",
 			Description:     "Add support for Kubernetes reporting new APIs",
 			Stage:           FeatureStageExperimental,

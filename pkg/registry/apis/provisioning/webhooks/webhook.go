@@ -251,6 +251,9 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, repo 
 		return nil, err
 	}
 
+	ctx = event.ToCtxLogger(ctx)
+	logging.FromContext(ctx).Debug("webhook event received")
+
 	switch event.Type {
 	case repository.WebhookEventPush:
 		if event.RepoSlug != repo.Slug() {
