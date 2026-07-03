@@ -1045,10 +1045,12 @@ type countingAccessClient struct {
 	allowAll       bool
 	allowedFolders map[string]bool
 	checked        int
-	// batchCalls counts BatchCheck invocations, i.e. one per post-rank bleve
-	// window (FilterAuthorized is called once per window). Lets tests assert
-	// that window growth reduces the number of bleve searches.
-	batchCalls int
+	// batchChecks counts BatchCheck invocations. It equals the number of
+	// post-rank bleve windows only when each window fits in one FilterAuthorized
+	// batch (batch size 500); with larger windows one window can produce
+	// multiple BatchCheck calls. The growth test uses small windows (MaxWindow
+	// 40) so batchChecks == window count there.
+	batchChecks int
 }
 
 func (c *countingAccessClient) allow(folder string) bool {
@@ -1067,7 +1069,7 @@ func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ 
 }
 
 func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	c.batchCalls++
+	c.batchChecks++
 	c.checked += len(req.Checks)
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
@@ -1231,8 +1233,10 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, 200, ac.checked)
 		// Growth: far fewer bleve searches than the 20 a constant window-10
 		// scan would issue, but spanning several growing windows (not just one).
-		require.Less(t, ac.batchCalls, 15, "growth should reduce the search count")
-		require.GreaterOrEqual(t, ac.batchCalls, 5, "scan should span multiple growing windows")
+		// Windows are small (MaxWindow 40 < FilterAuthorized batch size 500), so
+		// batchChecks == number of bleve windows here.
+		require.Less(t, ac.batchChecks, 15, "growth should reduce the search count")
+		require.GreaterOrEqual(t, ac.batchChecks, 5, "scan should span multiple growing windows")
 	})
 
 	t.Run("returns first limit authorized hits in sort order", func(t *testing.T) {
