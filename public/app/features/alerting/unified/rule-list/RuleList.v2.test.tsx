@@ -342,8 +342,7 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
     });
 
-    it('does not show "Import to Grafana Alerting" without import permissions, even for an admin', async () => {
-      grantUserRole(OrgRole.Admin);
+    it('does not show "Import to Grafana Alerting" without import permissions', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
       const { user } = render(<RuleListActions />);

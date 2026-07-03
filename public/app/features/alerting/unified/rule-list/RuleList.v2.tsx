@@ -64,9 +64,6 @@ export function RuleListActions() {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status.
-  // Gates both import entry points (and their routes in ../../routes) so non-admins with these
-  // permissions get the same experience as admins.
   const hasImportToGMAPermissions =
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);

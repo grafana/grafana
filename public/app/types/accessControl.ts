@@ -156,7 +156,7 @@ export enum AccessControlAction {
   AlertingRoutesRead = 'alert.notifications.routes:read',
   AlertingRoutesWrite = 'alert.notifications.routes:write',
 
-  // Alerting notifications config actions (new, scoped per-resource). Read is granted to Viewer.
+  // Alerting notifications config actions (new, scoped per-resource)
   ActionAlertingNotificationsConfigRead = 'notifications.alerting.grafana.app/configs:get',
 
   // Alerting managed routes actions (new, scoped per-resource)
