@@ -4,6 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, testWithFeatureToggles, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -33,7 +34,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import NotificationPolicies from './NotificationPoliciesPage';
+import NotificationPolicies, { sortPoliciesDefaultFirst } from './NotificationPoliciesPage';
 import { findRoutesMatchingFilters } from './components/notification-policies/PoliciesTree';
 import PolicyPage from './components/notification-policies/PolicyPage';
 import {
@@ -49,6 +50,7 @@ import {
 import {
   deleteRoutingTree,
   getRoutingTree,
+  presentDefaultRoutingTreeAs,
   resetRoutingTreeMap,
   setAllRoutingTreePermissions,
   setRoutingTree,
@@ -717,3 +719,45 @@ describe('alertingNavigationV2 respects alertingMultiplePolicies', () => {
     });
   });
 });
+
+describe('sortPoliciesDefaultFirst', () => {
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+    'force-sorts the default policy (named "%s") first, ahead of an alphabetically-earlier named policy',
+    (name) => {
+      // `billing` sorts alphabetically before `default`, so the default policy is first only if recognised.
+      const sorted = sortPoliciesDefaultFirst([{ name: 'billing' }, { name }, { name: 'team-a' }]);
+      expect(sorted[0].name).toBe(name);
+    }
+  );
+
+  it('leaves named policies in their original order', () => {
+    const sorted = sortPoliciesDefaultFirst([{ name: 'billing' }, { name: 'team-a' }]);
+    expect(sorted.map((p) => p.name)).toEqual(['billing', 'team-a']);
+  });
+});
+
+describe.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+  'default policy display when the backend names the default tree "%s"',
+  (backendName) => {
+    beforeEach(() => {
+      setupDataSources(...Object.values(dataSources));
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+        ...PERMISSIONS_NOTIFICATION_POLICIES,
+      ]);
+      resetRoutingTreeMap();
+      presentDefaultRoutingTreeAs(backendName);
+    });
+
+    afterEach(() => {
+      resetRoutingTreeMap();
+    });
+
+    it('labels the root policy "Default policy", not its raw name', async () => {
+      renderNotificationPolicies();
+      const rootRoute = await getRootRoute();
+      expect(rootRoute).toHaveTextContent(/default policy/i);
+    });
+  }
+);
