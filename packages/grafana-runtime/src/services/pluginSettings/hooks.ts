@@ -2,10 +2,9 @@ import { useAsync } from 'react-use';
 
 import { type PluginMeta } from '@grafana/data';
 
-import { isFetchError } from '../backendSrv';
-
 import { getPluginSettings } from './getPluginSettings';
-import { getAppPluginEnabled } from './settings';
+import { getAppPluginEnabled, getAppPluginEnabledState } from './settings';
+import { isNotFoundError } from './utils';
 
 /**
  * Hook that checks if an app plugin is installed and enabled.
@@ -15,6 +14,17 @@ import { getAppPluginEnabled } from './settings';
  */
 export function useAppPluginEnabled(pluginId: string) {
   const { loading, error, value } = useAsync(async () => getAppPluginEnabled(pluginId), [pluginId]);
+  return { loading, error, value };
+}
+
+/**
+ * Hook variant of {@link getAppPluginEnabledState} that distinguishes a definitive answer
+ * (`enabled` / `not-an-enabled-app`) from an indeterminate one (`unknown`, e.g. a failed request).
+ * @param pluginId - The ID of the app plugin.
+ * @returns loading, error and the resolved `AppPluginEnabledState` (undefined while loading).
+ */
+export function useAppPluginEnabledState(pluginId: string) {
+  const { loading, error, value } = useAsync(async () => getAppPluginEnabledState(pluginId), [pluginId]);
   return { loading, error, value };
 }
 
@@ -33,10 +43,8 @@ export function usePluginSettings(pluginId: string) {
     try {
       return await getPluginSettings(pluginId);
     } catch (err) {
-      // getLegacySettings wraps the raw fetch error as the `cause`. A 404 means the
-      // plugin is simply not installed — treat it as a normal absence, not an error.
-      const cause = err instanceof Error ? err.cause : err;
-      if (isFetchError(cause) && cause.status === 404) {
+      // A 404 means the plugin is simply not installed — treat it as a normal absence, not an error.
+      if (isNotFoundError(err)) {
         return undefined;
       }
       throw err;

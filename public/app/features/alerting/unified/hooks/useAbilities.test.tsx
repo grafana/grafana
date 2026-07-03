@@ -3,8 +3,9 @@ import { getWrapper, render, renderHook, screen, waitFor } from 'test/test-utils
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { failPlugin, setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -12,9 +13,9 @@ import {
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule } from 'app/types/unified-alerting';
 
-import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
+import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource, mockGrafanaRulerRule } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
-import { grantPermissionsHelper } from '../test/test-utils';
+import { flushMicrotasks, grantPermissionsHelper } from '../test/test-utils';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import * as misc from '../utils/misc';
@@ -241,6 +242,40 @@ describe('AlertRule abilities', () => {
 
     expect(updateSupported).toBe(true);
     expect(deleteSupported).toBe(true);
+  });
+
+  it('keeps a plugin-owned rule immutable when the plugin-enabled check fails (uncertain)', async () => {
+    // A rule owned by an app whose `GET /api/plugins/<id>/settings` transiently fails (5xx/auth/
+    // network). The failure must NOT be read as "not an app" — that would wrongly expose Edit/Delete
+    // on a genuinely app-owned rule. A definitively not-installed (404) or disabled app stays
+    // editable (the escape hatch above); an uncertain result keeps the rule managed.
+    // A real app id (not a built-in SupportedPlugin) so the settings request goes through the
+    // legacy /api/plugins/<id>/settings path that failPlugin intercepts and fails with a 500.
+    const pluginId = 'grafana-costmanagementui-app';
+    // Wait for the actual failing settings request rather than flushing a fixed number of microtasks
+    // — otherwise the assertion could pass on a still-loading hook (immutable while loading), which
+    // would mask the regression. The bug only surfaces once the failing check resolves.
+    const settingsRequest = waitForServerRequest(failPlugin(pluginId, 500));
+
+    // The origin label must live on the ruler rule's top-level labels — that is where
+    // getRulePluginOrigin reads it for the ruler ability path.
+    const rule = getGrafanaRule({
+      rulerRule: { ...mockGrafanaRulerRule(), labels: { __grafana_origin: `plugin/${pluginId}` } },
+    });
+
+    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+
+    // The settings request has been handled; flush its rejection into the hook's state so we assert
+    // the fully SETTLED result.
+    await settingsRequest;
+    await flushMicrotasks();
+
+    // Uncertain plugin state -> rule stays managed -> Update/Delete are not supported.
+    const [updateSupported] = result.current[AlertRuleAction.Update];
+    const [deleteSupported] = result.current[AlertRuleAction.Delete];
+
+    expect(updateSupported).toBe(false);
+    expect(deleteSupported).toBe(false);
   });
 });
 

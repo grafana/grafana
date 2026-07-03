@@ -9,7 +9,7 @@ import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta } from '../pluginMeta/test-fixtures/v0alpha1Response';
 
-import { isAppPluginEnabled } from './settings';
+import { getAppPluginEnabledState, isAppPluginEnabled } from './settings';
 import { legacyClockPanelOnPrem, legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { myOrgTestAppSettings } from './test-fixtures/v0alpha1Response';
 jest.mock('../pluginMeta/plugins', () => ({
@@ -216,6 +216,63 @@ describe('settings', () => {
 
         expect(enabled).toEqual(false);
         expect(backendSrv.get).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('getAppPluginEnabledState', () => {
+      it("returns 'enabled' for an installed, enabled app", async () => {
+        const state = await getAppPluginEnabledState(legacyMyOrgTestAppSettings.id);
+
+        expect(state).toBe('enabled');
+      });
+
+      it("returns 'not-an-enabled-app' for a disabled app", async () => {
+        backendSrv.get = jest.fn().mockResolvedValue({ ...legacyMyOrgTestAppSettings, enabled: false });
+
+        const state = await getAppPluginEnabledState(legacyMyOrgTestAppSettings.id);
+
+        expect(state).toBe('not-an-enabled-app');
+      });
+
+      it("returns 'not-an-enabled-app' for a non-app plugin", async () => {
+        backendSrv.get = jest.fn().mockResolvedValue(legacyClockPanelOnPrem);
+
+        const state = await getAppPluginEnabledState(legacyClockPanelOnPrem.id);
+
+        expect(state).toBe('not-an-enabled-app');
+      });
+
+      it("returns 'not-an-enabled-app' when the plugin is not installed (404)", async () => {
+        backendSrv.get = jest.fn().mockRejectedValue({ status: 404, data: { message: 'Plugin not found' } });
+
+        const state = await getAppPluginEnabledState('myorg-someplugin-app');
+
+        expect(state).toBe('not-an-enabled-app');
+      });
+
+      it("returns 'unknown' when the settings request fails with a server error", async () => {
+        backendSrv.get = jest.fn().mockRejectedValue({ status: 500, data: { message: 'Internal Server Error' } });
+
+        const state = await getAppPluginEnabledState('myorg-test-app');
+
+        expect(state).toBe('unknown');
+      });
+
+      it("returns 'unknown' when the settings request fails with an auth error", async () => {
+        backendSrv.get = jest.fn().mockRejectedValue({ status: 403, data: { message: 'Forbidden' } });
+
+        const state = await getAppPluginEnabledState('myorg-test-app');
+
+        expect(state).toBe('unknown');
+      });
+
+      it("returns 'not-an-enabled-app' for an empty plugin id without making a request", async () => {
+        backendSrv.get = jest.fn();
+
+        const state = await getAppPluginEnabledState('');
+
+        expect(state).toBe('not-an-enabled-app');
+        expect(backendSrv.get).not.toHaveBeenCalled();
       });
     });
   });

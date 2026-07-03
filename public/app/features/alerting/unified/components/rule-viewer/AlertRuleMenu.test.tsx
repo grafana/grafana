@@ -2,8 +2,10 @@ import { render, screen, testWithFeatureToggles, userEvent, waitFor } from 'test
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { useAssistant } from '@grafana/assistant';
+import { type PluginMeta, PluginType } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setPluginLinksHook } from '@grafana/runtime';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { mockFolderApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
@@ -17,7 +19,9 @@ import {
   mockPromRecordingRule,
   mockRulerGrafanaRecordingRule,
 } from 'app/features/alerting/unified/mocks';
-import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { addPlugin, failPlugin, setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
+import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import * as miscUtils from 'app/features/alerting/unified/utils/misc';
 import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
@@ -1678,5 +1682,244 @@ describe('AlertRuleMenu', () => {
         createShareLinkSpy.mockRestore();
       });
     });
+  });
+});
+
+/**
+ * Reproduces the exact case from the reported bug: alert rules owned by the Grafana Cloud
+ * Cost Management and Billing app, viewed on the rule-group detail page (which has only the
+ * Prometheus rule, no ruler rule). The rule is NOT provisioned (no `provenance`); its only
+ * immutability signal is the `__grafana_origin: plugin/<id>` label, gated by whether that app
+ * is an installed + enabled app (useAppPluginEnabled).
+ */
+describe('AlertRuleMenu — Grafana Cloud Cost Management app rules (reported bug)', () => {
+  // NOTE: confirm this id against a real Cloud instance — it's the value of the rule's
+  // `__grafana_origin` label (`plugin/<id>`). The behaviour under test does not depend on the
+  // exact string, only on whether the app resolves as installed + enabled.
+  const COST_MANAGEMENT_PLUGIN_ID = 'grafana-costmanagementui-app';
+
+  const costManagementApp = {
+    id: COST_MANAGEMENT_PLUGIN_ID,
+    name: 'Grafana Cloud Cost Management and Billing',
+    type: PluginType.app,
+    enabled: true,
+    info: {
+      author: { name: 'Grafana Labs', url: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
+      screenshots: [],
+      version: '',
+      updated: '',
+    },
+    module: '',
+    baseUrl: '',
+  } as PluginMeta;
+
+  const groupIdentifier = {
+    groupOrigin: 'grafana' as const,
+    namespace: { uid: 'namespace-uid' },
+    groupName: 'group-name',
+  };
+
+  // A firing, Grafana-managed alerting rule owned by the Cost Management app, with NO provenance.
+  // Mirrors a row like "Traces Usage: 50% of 20,000 GiB" from the screenshot.
+  const makeCostManagementPromRule = () =>
+    mockPromAlertingRule({
+      uid: 'cost-rule-uid',
+      folderUid: 'namespace-uid',
+      name: 'Traces Usage: 50% of 20,000 GiB',
+      state: PromAlertingRuleState.Firing,
+      labels: { __grafana_origin: `plugin/${COST_MANAGEMENT_PLUGIN_ID}` },
+      annotations: { summary: 'This alert is provisioned by the Grafana Cloud Cost Management and Billing app.' },
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.Enterprise, env: 'production' };
+
+    // Assistant available -> "Analyze rule" shows (as in the screenshot).
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant: mockOpenAssistant,
+    } as unknown as ReturnType<typeof useAssistant>);
+
+    // Admin with FULL permissions, including delete — so that anything hidden is hidden because of
+    // plugin ownership, not lack of RBAC.
+    const fullFolderAccess = {
+      [AccessControlAction.AlertingRuleRead]: true,
+      [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.AlertingRuleDelete]: true,
+      [AccessControlAction.AlertingRuleCreate]: true,
+      [AccessControlAction.FoldersRead]: true,
+    };
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingInstanceCreate,
+      AccessControlAction.AlertingSilenceCreate,
+      AccessControlAction.AlertingEnrichmentsRead,
+    ]);
+    setFolderAccessControl(fullFolderAccess);
+    mockFolderApi(server).folder(
+      'namespace-uid',
+      mockFolder({ uid: 'namespace-uid', title: 'Usage Alerts', accessControl: fullFolderAccess })
+    );
+
+    invalidatePluginSettingsCache(COST_MANAGEMENT_PLUGIN_ID);
+  });
+
+  // Enrichment menu item requires both feature toggles enabled.
+  testWithFeatureToggles({ enable: ['alertEnrichment', 'alertingEnrichmentPerRule'] });
+
+  it('matches the screenshot menu (no Edit/Delete) when the owning app is installed and enabled', async () => {
+    const settingsRequest = waitForServerRequest(addPlugin(costManagementApp)); // installed + enabled -> isPluginManaged = true
+
+    render(
+      <AlertRuleMenu
+        promRule={makeCostManagementPromRule()}
+        rulerRule={undefined}
+        identifier={{ ruleSourceName: 'grafana', uid: 'cost-rule-uid' }}
+        groupIdentifier={groupIdentifier}
+        handleSilence={handleSilence}
+        handleDelete={handleDelete}
+        handleDuplicateRule={handleDuplicateRule}
+        handleManageEnrichments={jest.fn()}
+      />
+    );
+
+    await openMenu();
+
+    // Present — exactly the actions visible in the reported screenshot.
+    expect(await ui.menuItems.manageEnrichments.find()).toBeInTheDocument();
+    expect(await ui.menuItems.silence.find()).toBeInTheDocument();
+    expect(await ui.menuItems.declareIncident.find()).toBeInTheDocument();
+    expect(await ui.menuItems.analyzeRule.find()).toBeInTheDocument();
+    expect(await ui.menuItems.copyLink.find()).toBeInTheDocument();
+    expect(await ui.menuItems.export.find()).toBeInTheDocument();
+
+    // Wait for the settings request to resolve so the 'enabled' -> managed branch is what hides these
+    // actions, not merely the immutable-while-loading default (which would mask a broken enabled path).
+    await settingsRequest;
+    await flushMicrotasks();
+
+    // Absent — these must stay hidden for an app-owned rule, despite full delete/edit permissions.
+    expect(ui.menuItems.delete.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.resume.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.duplicate.query()).not.toBeInTheDocument();
+  });
+
+  it('silencing does not unlock Delete for an app-owned rule (silencing is not causal)', async () => {
+    // Recreates the reported sequence: the owning app is installed + enabled, so the rule is
+    // immutable. The user silences it (their proxy for "unlock Delete") and Delete must STAY hidden.
+    // The silence click is cosmetic here — the real driver of visibility is the async plugin check,
+    // which has already resolved on the first menu open.
+    const settingsRequest = waitForServerRequest(addPlugin(costManagementApp));
+
+    render(
+      <AlertRuleMenu
+        promRule={makeCostManagementPromRule()}
+        rulerRule={undefined}
+        identifier={{ ruleSourceName: 'grafana', uid: 'cost-rule-uid' }}
+        groupIdentifier={groupIdentifier}
+        handleSilence={handleSilence}
+        handleDelete={handleDelete}
+        handleDuplicateRule={handleDuplicateRule}
+        handleManageEnrichments={jest.fn()}
+      />
+    );
+
+    await openMenu();
+    // Wait for the plugin check to resolve so we assert against the settled (enabled -> managed) state.
+    await settingsRequest;
+    await flushMicrotasks();
+    // Primary assertion: the app-owned rule offers Silence but no Delete (the screenshot state).
+    expect(await ui.menuItems.silence.find()).toBeInTheDocument();
+    expect(ui.menuItems.delete.query()).not.toBeInTheDocument();
+
+    // User silences the rule. (Secondary check — mirrors the existing handleSilence test.)
+    await user.click(await ui.menuItems.silence.find());
+    expect(handleSilence).toHaveBeenCalledTimes(1);
+
+    // Reopen the menu: Delete must still be hidden. Silencing did not "unlock" anything.
+    await waitFor(() => expect(ui.menu.query()).not.toBeInTheDocument());
+    await openMenu();
+    expect(await ui.menuItems.silence.find()).toBeInTheDocument();
+    expect(ui.menuItems.delete.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.duplicate.query()).not.toBeInTheDocument();
+  });
+
+  it('exposes Delete/Pause/Duplicate when the owning app is installed but disabled (intended escape hatch)', async () => {
+    // A definitively-disabled app is the intended escape hatch: management actions become available
+    // so users are not locked out by an app they have turned off. This is NOT the reported bug —
+    // see the hook-level test for the genuine defect (an enabled app whose settings check fails).
+    addPlugin({ ...costManagementApp, enabled: false }); // installed but disabled -> isPluginManaged = false
+
+    render(
+      <AlertRuleMenu
+        promRule={makeCostManagementPromRule()}
+        rulerRule={undefined}
+        identifier={{ ruleSourceName: 'grafana', uid: 'cost-rule-uid' }}
+        groupIdentifier={groupIdentifier}
+        handleSilence={handleSilence}
+        handleDelete={handleDelete}
+        handleDuplicateRule={handleDuplicateRule}
+        handleManageEnrichments={jest.fn()}
+      />
+    );
+
+    await openMenu();
+
+    // Silence remains available (it is intentionally not gated by plugin ownership).
+    expect(await ui.menuItems.silence.find()).toBeInTheDocument();
+
+    // Disabled app -> escape hatch -> management actions are available.
+    expect(await ui.menuItems.delete.find()).toBeInTheDocument();
+    expect(await ui.menuItems.pause.find()).toBeInTheDocument();
+    expect(await ui.menuItems.duplicate.find()).toBeInTheDocument();
+  });
+
+  it('keeps Delete/Pause/Duplicate hidden when the owning app check fails (the reported bug)', async () => {
+    // The genuine defect: the owning app is installed + enabled, but its `GET /api/plugins/<id>/settings`
+    // request transiently fails (5xx / auth / network). That failure must NOT be read as "not an app"
+    // — otherwise an app-owned rule wrongly exposes management actions (the user's "Delete appears"
+    // report). An uncertain check keeps the rule managed; only a definitive not-an-enabled-app result
+    // (the disabled case above) releases it.
+    const settingsRequest = waitForServerRequest(failPlugin(COST_MANAGEMENT_PLUGIN_ID, 500));
+
+    render(
+      <AlertRuleMenu
+        promRule={makeCostManagementPromRule()}
+        rulerRule={undefined}
+        identifier={{ ruleSourceName: 'grafana', uid: 'cost-rule-uid' }}
+        groupIdentifier={groupIdentifier}
+        handleSilence={handleSilence}
+        handleDelete={handleDelete}
+        handleDuplicateRule={handleDuplicateRule}
+        handleManageEnrichments={jest.fn()}
+      />
+    );
+
+    await openMenu();
+
+    // Silence remains available (it is intentionally not gated by plugin ownership).
+    expect(await ui.menuItems.silence.find()).toBeInTheDocument();
+
+    // Wait for the failing plugin-settings request to be handled and its rejection to propagate, so
+    // we assert the SETTLED menu — while the check is in flight the rule is immutable regardless,
+    // which would mask the bug.
+    await settingsRequest;
+    await flushMicrotasks();
+
+    // Uncertain plugin state -> rule stays managed -> management actions stay hidden.
+    expect(ui.menuItems.delete.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.pause.query()).not.toBeInTheDocument();
+    expect(ui.menuItems.duplicate.query()).not.toBeInTheDocument();
   });
 });
