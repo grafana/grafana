@@ -60,9 +60,9 @@ For details on usage and storage limits, refer to [Dashboard and folder limits](
 
 If a single repository holds more than 1,000 resources, you don't have to raise the per-repository limit. Instead, connect the same repository multiple times, with each connection pointing to a different folder (path) in the repository. Each connection syncs its own subset of resources and counts toward the 1,000-resource recommendation independently.
 
-Because a stack allows up to 10 repository connections, this lets you sync up to roughly 10,000 resources from a single monorepo while keeping each connection within the recommended range.
+Because a stack allows up to 10 repository connections, this lets you sync up to roughly 10,000 resources from a single repository while keeping each connection within the recommended range.
 
-When you split a monorepo across several connections, use [folderless sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets) for each connection. With folder sync (the default), every connection creates its own wrapper folder named after the repository, so splitting the monorepo would change your folder hierarchy and nest resources one level deeper. Folderless sync places each connection's resources at the top level, so the split has no effect on how your dashboards and folders are organized in Grafana.
+When you split a single repository across several connections, use [folderless sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets) for each connection. With folder sync (the default), every connection creates its own wrapper folder named after the repository, so splitting the repository would change your folder hierarchy and nest resources one level deeper. Folderless sync places each connection's resources at the top level, so the split has no effect on how your dashboards and folders are organized in Grafana.
 
 If you need more than that, the 10-connection limit can be increased slightly for Cloud stacks on request. Contact Support to discuss your use case.
 
@@ -72,7 +72,7 @@ On Grafana Cloud, syncing this many resources may also exceed your stack's maxim
 
 When you have many teams or tenants, it's tempting to create one connection per team so each team maps to its own connection. Avoid this: it consumes connections quickly, doesn't scale as teams grow, and on Grafana Cloud a single stack can't be granted the hundreds of connections this would require.
 
-Instead, shard by capacity. Create one monorepo and group teams into a small number of shard folders, each holding up to about 1,000 resources, and connect each shard folder separately. For example, a customer with 190 teams and 900 resources fits comfortably in a single shard today:
+Instead, shard by capacity. Create one repository and group teams into a small number of shard folders, each holding up to about 1,000 resources, and connect each shard folder separately. For example, a customer with 190 teams and 900 resources fits comfortably in a single shard today:
 
 ```
 your-org/grafana-manifests/
@@ -85,7 +85,7 @@ your-org/grafana-manifests/
 └── shard-4/        ← ...up to 10 shards / connections per stack
 ```
 
-As the number of resources grows, add `shard-2`, `shard-3`, and later shards, and connect each one. You can move teams between shards at any time to rebalance, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
+As the number of resources grows, add `shard-2`, `shard-3`, and later shards, and connect each one. You can move teams between shards at any time to balance the load, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
 
 If sharding isn't practical for your setup, we can also raise the per-connection resource limit modestly — for example from 1,000 to around 1,200 or 1,500. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase: we don't recommend going well beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scale, sharding remains the recommended approach.
 
@@ -93,12 +93,12 @@ If sharding isn't practical for your setup, we can also raise the per-connection
 
 Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
 
-On Grafana Cloud, limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. On-prem users don't need to make a request: you can change the limits directly through configuration settings, as described below. In many cases, splitting a monorepo across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
+On Grafana Cloud, limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. On-prem users don't need to make a request: you can change the limits directly through configuration settings, as described below. In many cases, splitting a single repository across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
 
 How you change the limits depends on your deployment:
 
-- **Grafana Cloud**: Limits are enforced per tier and can't be edited from configuration. The 10-connection limit can be increased slightly on request — contact Support to discuss your use case. Splitting a monorepo across multiple connections (see [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository)) is the recommended way to sync more resources without changing tier limits.
-- **On-prem (OSS or Enterprise)**: There's no hard resource limit, but the 1,000-resources-per-connection recommendation still applies for performance reasons. You can customize both limits through configuration settings (see below), though splitting a monorepo across connections is preferable to raising `max_resources_per_repository`.
+- **Grafana Cloud**: Limits are enforced per tier and can't be edited from configuration. The 10-connection limit can be increased slightly on request — contact Support to discuss your use case. Splitting a single repository across multiple connections (see [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository)) is the recommended way to sync more resources without changing tier limits.
+- **On-prem (OSS or Enterprise)**: There's no hard resource limit, but the 1,000-resources-per-connection recommendation still applies for performance reasons. You can customize both limits through configuration settings (see below), though splitting a single repository across connections is preferable to raising `max_resources_per_repository`.
 
 On-prem users can customize the limits with the following configuration settings:
 
