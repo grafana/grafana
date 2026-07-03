@@ -151,9 +151,8 @@ export const Examples = () => {
             description: 'This is a description',
           })}
           {renderPanel('Content', {
-            title: 'With description in sub-header',
-            description: 'This is a description',
-            descriptionInSubHeader: true,
+            title: 'With a subtitle',
+            subtitle: 'This is a sub title with <a href="http://www.google.com">Link</a> and <em>emphasized</em> text',
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
@@ -379,6 +378,7 @@ const description =
 
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,

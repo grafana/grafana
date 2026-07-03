@@ -32,9 +32,10 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
+  /** Shown in info icon tooltip next to the title, supports simple html markup */
   description?: string | (() => string);
-  /** If true, the description will be displayed in the sub-header area instead of the main header. */
-  descriptionInSubHeader?: boolean;
+  /** Shown in as text below the title, supports simple html markup */
+  subtitle?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -165,7 +166,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
-  descriptionInSubHeader = false,
+  subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -190,18 +191,16 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
-  const descriptionTitleItem = description && !descriptionInSubHeader && (
+  const descriptionTitleItem = description && (
     <PanelDescription description={description} className={dragClassCancel} />
   );
 
-  const descriptionSubHeader = description && descriptionInSubHeader && (
-    <PanelDescription description={description} inSubHeader />
-  );
+  const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
 
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
-  const showSubHeader = !collapsed && Boolean(subHeaderContent || descriptionSubHeader);
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
   // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
   const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
@@ -466,9 +465,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && (subHeaderContent || descriptionSubHeader) && (
+            {!collapsed && (subHeaderContent || subtitleContent) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
-                {descriptionSubHeader}
+                {subtitleContent}
                 {subHeaderContent}
               </div>
             )}
