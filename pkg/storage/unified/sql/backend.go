@@ -790,6 +790,46 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 	return res, err
 }
 
+// ListStoredResources implements Backend.
+func (b *backend) ListStoredResources(ctx context.Context, filter resource.NamespacedResource) ([]resource.NamespacedResource, error) {
+	b.logCall("ListStoredResources")
+	ctx, span := tracer.Start(ctx, "sql.backend.ListStoredResources", trace.WithAttributes(
+		attribute.String("namespace", filter.Namespace),
+		attribute.String("group", filter.Group),
+		attribute.String("resource", filter.Resource),
+	))
+	defer span.End()
+
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+
+	req := &sqlStoredResourcesRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Namespace:   filter.Namespace,
+		Group:       filter.Group,
+		Resource:    filter.Resource,
+	}
+
+	res := make([]resource.NamespacedResource, 0, 100)
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStoredList, req)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			row := resource.NamespacedResource{}
+			if err := rows.Scan(&row.Namespace, &row.Group, &row.Resource); err != nil {
+				return err
+			}
+			res = append(res, row)
+		}
+		return rows.Err()
+	})
+
+	return res, err
+}
+
 // toMicrosecondRV converts a snowflake RV to microsecond format if needed.
 // This ensures that RVs arriving at the SQL backend are in the native
 // microsecond format. No-op for values ≤ 0 or values already in microsecond format.

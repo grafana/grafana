@@ -1,6 +1,7 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneObject } from '@grafana/scenes';
@@ -39,6 +40,7 @@ export function AddVariable({
   return (
     <AddButton
       icon="brackets-curly"
+      testId={selectors.components.Sidebar.addNewVariableButton}
       label={t('dashboard-scene.add-variable.label-variable', 'Variable')}
       onClick={onAddVariableClick}
     />

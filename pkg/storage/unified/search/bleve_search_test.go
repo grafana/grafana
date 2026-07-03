@@ -682,11 +682,13 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 	})
 	require.NoError(t, err)
 
+	fields, err := info.SearchableFields()
+	require.NoError(t, err)
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", writer, nil, false, time.Time{}, 0)
+	}, size, fields, "test", writer, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	return index
@@ -1029,11 +1031,13 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 	})
 	require.NoError(t, err)
 
+	fields, err := info.SearchableFields()
+	require.NoError(t, err)
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, info.Fields, "test", noop, nil, false, time.Time{}, 0)
+	}, size, fields, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }

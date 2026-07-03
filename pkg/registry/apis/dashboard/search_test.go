@@ -1374,6 +1374,10 @@ func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts 
 func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
 	return nil, nil
 }
+
+func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
+	return nil, nil
+}
 func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
 	return nil, nil
 }
