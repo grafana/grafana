@@ -85,6 +85,7 @@ type BulkIndexItem struct {
 	Action IndexAction
 	Key    *resourcepb.ResourceKey // Only used for delete actions
 	Doc    *IndexableDocument      // Only used for index actions
+	RV     int64                   // Resource version for delete CAS (push-on-write)
 }
 
 type BulkIndexRequest struct {
@@ -228,6 +229,9 @@ type searchServer struct {
 	indexModificationCacheTTL time.Duration
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+
+	useSearchEngine bool
+	engineHooks     SearchEngineHooks
 }
 
 // getIndexMaxAge returns the configured rebuild interval for the given
@@ -317,6 +321,20 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	s.builders, err = newBuilderCache(info, 100, time.Minute*2) // TODO? opts
 	if s.builders != nil {
 		s.builders.blob = blob
+	}
+
+	s.useSearchEngine = opts.UseSearchEngine
+	if s.useSearchEngine && opts.EngineProviderSetup != nil && s.builders != nil {
+		hooks, hookErr := opts.EngineProviderSetup(EngineSetupConfig{
+			Backend:            opts.Backend,
+			Access:             access,
+			SearchFieldsHashes: opts.SearchFieldsHashesForKinds,
+			GetFields:          s.builders.GetFields,
+		})
+		if hookErr != nil {
+			return nil, hookErr
+		}
+		s.engineHooks = hooks
 	}
 
 	return s, err
@@ -556,6 +574,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+	if s.useSearchEngine && s.engineHooks.Search != nil {
+		if !s.engineHooks.SkipLegacyIndex {
+			_, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
+			if err != nil {
+				return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+			}
+		}
+		return s.engineHooks.Search(ctx, req, stats)
+	}
+
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -1674,6 +1702,69 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+func (s *searchServer) bulkIndex(ctx context.Context, key NamespacedResource, index ResourceIndex, items []*BulkIndexItem, rv int64) error {
+	if s.useSearchEngine && s.engineHooks.Index != nil {
+		return s.engineHooks.Index(ctx, key, items, rv)
+	}
+	return index.BulkIndex(&BulkIndexRequest{Items: items, ResourceVersion: rv})
+}
+
+// PushOnWrite reports whether the configured engine indexes synchronously on writes.
+func (s *searchServer) PushOnWrite() bool {
+	return s.useSearchEngine && s.engineHooks.PushOnWrite
+}
+
+// PushWrite indexes a single write into the search engine on the storage write path.
+func (s *searchServer) PushWrite(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte, deleted bool) error {
+	if !s.useSearchEngine || !s.engineHooks.PushOnWrite || s.engineHooks.Index == nil {
+		return nil
+	}
+	if key == nil || s.builders == nil {
+		return nil
+	}
+	nsr := NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}
+	if !s.builders.supportsKey(nsr) {
+		return nil
+	}
+
+	failPush := func(err error) error {
+		if err != nil && s.indexMetrics != nil {
+			s.indexMetrics.EnginePushFailures.Inc()
+		}
+		return err
+	}
+
+	var items []*BulkIndexItem
+	if deleted {
+		items = []*BulkIndexItem{{
+			Action: ActionDelete,
+			Key:    key,
+			RV:     rv,
+		}}
+	} else {
+		builder, err := s.builders.get(ctx, nsr)
+		if err != nil {
+			return failPush(fmt.Errorf("push-on-write document builder: %w", err))
+		}
+		doc, err := builder.BuildDocument(ctx, key, rv, value)
+		if err != nil {
+			return failPush(fmt.Errorf("push-on-write build document: %w", err))
+		}
+		items = []*BulkIndexItem{{
+			Action: ActionIndex,
+			Doc:    doc,
+		}}
+	}
+	if err := s.engineHooks.Index(ctx, nsr, items, rv); err != nil {
+		return failPush(fmt.Errorf("push-on-write index: %w", err))
+	}
+	return nil
+}
+
 //nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
@@ -1744,7 +1835,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				// When we reach the batch size, perform bulk index and reset the batch.
 				if len(items) >= maxBatchSize {
 					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+					if err = s.bulkIndex(ctx, nsr, index, items, 0); err != nil {
 						return err
 					}
 
@@ -1755,7 +1846,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = s.bulkIndex(ctx, nsr, index, items, 0); err != nil {
 					return err
 				}
 			}
@@ -1849,6 +1940,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				items = append(items, &BulkIndexItem{
 					Action: ActionDelete,
 					Key:    &res.Key,
+					RV:     res.ResourceVersion,
 				})
 			default:
 				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
@@ -1860,7 +1952,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = s.bulkIndex(ctx, nsr, index, items, rv); err != nil {
 					return 0, 0, err
 				}
 
@@ -1873,7 +1965,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// Index any remaining items in the final batch.
 		if len(items) > 0 {
 			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+			if err = s.bulkIndex(ctx, nsr, index, items, rv); err != nil {
 				return 0, 0, err
 			}
 
@@ -1972,6 +2064,15 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 
 func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
 	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
+}
+
+func (s *builderCache) supportsKey(key NamespacedResource) bool {
+	g, ok := s.lookup[key.Group]
+	if !ok {
+		return false
+	}
+	_, ok = g[key.Resource]
+	return ok
 }
 
 // context is typically background.  Holds an LRU cache for a

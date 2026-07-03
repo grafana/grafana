@@ -124,6 +124,8 @@ func NewSearchOptions(
 
 		return resource.SearchOptions{
 			Backend:                   bleve,
+			UseSearchEngine:           true,
+			EngineProviderSetup:       engineProviderSetup(cfg.SearchEngineType, cfg.ElasticsearchAddresses, cfg.ElasticsearchIndexPrefix),
 			Resources:                 docs,
 			InitWorkerThreads:         cfg.IndexWorkers,
 			IndexRebuildWorkers:       cfg.IndexRebuildWorkers,
