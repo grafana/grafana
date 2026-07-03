@@ -821,7 +821,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 func TestGetSortFields(t *testing.T) {
 	dashboardInfo, err := builders.DashboardBuilder(nil)
 	require.NoError(t, err)
-	dashboardFields, err := dashboardInfo.SearchableFields()
+	dashboardFields, err := resource.SearchableFieldsFromProvider(dashboardInfo.SearchFieldsProvider, dashboardInfo.GroupResource.Group, dashboardInfo.GroupResource.Resource)
 	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
