@@ -51,7 +51,10 @@ const mapRoute = (route: Route): RoutingTreeRoute => {
   };
 };
 
-export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => RoutingTree = (config) => {
+export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig, name?: string) => RoutingTree = (
+  config,
+  name = ROOT_ROUTE_NAME
+) => {
   const route = config.alertmanager_config?.route || {};
 
   const { routes, ...defaults } = route;
@@ -64,7 +67,7 @@ export const getUserDefinedRoutingTree: (config: AlertManagerCortexConfig) => Ro
       }) || [],
   };
 
-  return routingTreeFromSpec(ROOT_ROUTE_NAME, spec);
+  return routingTreeFromSpec(name, spec);
 };
 
 const routingTreeFromSpec: (routeName: string, spec: RoutingTreeSpec, provenance?: string) => RoutingTree = (
@@ -222,6 +225,15 @@ export const deleteRoutingTree = (treeName: string) => {
 
 export const resetDefaultRoutingTree = () => {
   ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig));
+};
+
+/**
+ * Presents the default (root) routing tree in LIST responses under a chosen name, so tests can exercise
+ * the frontend against both the current emitted name (`user-defined`) and the future canonical name (`default`).
+ * The map key stays ROOT_ROUTE_NAME so GET/DELETE-by-name (send side, always `user-defined`) still resolve.
+ */
+export const presentDefaultRoutingTreeAs = (name: string) => {
+  ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig, name));
 };
 
 export const resetRoutingTreeMap = () => {
