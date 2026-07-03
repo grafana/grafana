@@ -363,10 +363,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,preferences.rerouteLegacyAPIs,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
+2026-07-03,alerting.listViewV3,experimental,@grafana/alerting-squad,false,false,true
 2026-05-22,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-22,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-05-26,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-27,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
-2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
