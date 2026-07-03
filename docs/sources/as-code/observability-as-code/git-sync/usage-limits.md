@@ -54,6 +54,8 @@ The limit of 10 repository connections is a per-stack limit.
 
 Both of these limits are early figures. We plan to raise them by orders of magnitude as Git Sync matures: we're working toward supporting around 100 repository connections per stack, and up to roughly 1,000 in the longer term, with similar increases to the number of resources you can sync per connection.
 
+If these limits are affecting your use of Git Sync, let us know through the [Grafana roadmap portal](https://grafana.ideas.aha.io/ideas). Open or vote on a feature request for more repository connections or more resources per repository, so we can prioritize the improvements that matter most to you.
+
 For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits).
 
 ### Scale beyond 1,000 resources per repository
