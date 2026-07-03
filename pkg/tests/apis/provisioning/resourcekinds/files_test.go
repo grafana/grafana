@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			name := rk.name + "-files"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})

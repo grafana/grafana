@@ -36,10 +36,6 @@ type DocumentBuilderInfo struct {
 	// The target resource (empty will be used to match anything)
 	GroupResource schema.GroupResource
 
-	// Defines the searchable fields
-	// NOTE: this does not include the root/common fields, only values specific to the the builder
-	Fields SearchableDocumentFields
-
 	// simple/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
@@ -48,12 +44,35 @@ type DocumentBuilderInfo struct {
 
 	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
 	// slices registered for GroupResource across every version. The hash is
-	// stored in IndexBuildInfo when an index is built and re-checked on
-	// startup so the index is rebuilt automatically when index-affecting
-	// search-field metadata changes.
+	// stored in IndexBuildInfo when an index is built and re-checked
+	// whenever a rebuild is considered, so the index is rebuilt
+	// automatically when index-affecting search-field metadata changes.
 	//
 	// Empty when the builder does not use a SearchFieldsProvider.
 	SearchFieldsHash string
+
+	// SearchFieldsProvider is the manifest-driven source of truth for this
+	// builder's search fields. When non-nil, the bleve mapping for
+	// GroupResource is built from the provider's SearchFieldDefinition
+	// declarations. The provider is also the source for the column-definition
+	// view of the kind's fields that the search backend uses for result
+	// metadata and sort-field prefixing (see SearchableFields).
+	SearchFieldsProvider SearchFieldsProvider
+}
+
+// SearchableFields returns the column-definition view of this kind's custom
+// search fields, derived from its provider. The provider is the single source
+// of truth; the search backend uses this view for result column metadata and
+// sort-field prefixing. Returns nil when the builder has no provider.
+func (b DocumentBuilderInfo) SearchableFields() (SearchableDocumentFields, error) {
+	if b.SearchFieldsProvider == nil {
+		return nil, nil
+	}
+	sfds := b.SearchFieldsProvider.Fields(schema.GroupVersionResource{
+		Group:    b.GroupResource.Group,
+		Resource: b.GroupResource.Resource,
+	})
+	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
 }
 
 // SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map

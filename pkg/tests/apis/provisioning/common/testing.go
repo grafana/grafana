@@ -125,7 +125,8 @@ type ProvisioningTestHelper struct {
 
 // WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
 // This is useful for multi-org testing where you need separate helpers for different organizations.
-func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, user apis.User) *ProvisioningTestHelper {
+	t.Helper()
 	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
 
 	return &ProvisioningTestHelper{
@@ -178,9 +179,9 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 			Namespace: namespace,
 			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 		}),
-		AdminREST:  user.RESTClient(nil, gv),
-		EditorREST: user.RESTClient(nil, gv),
-		ViewerREST: user.RESTClient(nil, gv),
+		AdminREST:  user.RESTClient(t, gv),
+		EditorREST: user.RESTClient(t, gv),
+		ViewerREST: user.RESTClient(t, gv),
 	}
 }
 
@@ -377,17 +378,23 @@ func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
 	lastState := MustNestedString(job.Object, "status", "state")
+	// A worker that returns an error records it in status.message, not
+	// status.errors, so surface it explicitly — otherwise a failed job only
+	// reports state=error with no reason.
+	lastMessage := MustNestedString(job.Object, "status", "message")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 
 	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		t.Logf("job '%s' did not succeed: state=%q message=%q errors=%v",
+			job.GetName(), lastState, lastMessage, lastErrors)
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
 
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
+		"historic job '%s' was not successful (message: %q)", job.GetName(), lastMessage)
 }
 
 func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
@@ -1162,7 +1169,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 			return
 		}
 		errType := MustNestedString(repoStatus.Object, "status", "health", "error")
-		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		assert.Empty(collect, errType, "repository %s has health error: %s - %v", name, errType, repoStatus.Object)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
 		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")

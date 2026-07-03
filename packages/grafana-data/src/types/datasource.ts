@@ -151,6 +151,13 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setErrorsAndNoticesInspector(
+    ErrorsAndNoticesInspector: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>
+  ) {
+    this.components.ErrorsAndNoticesInspector = ErrorsAndNoticesInspector;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: System.Module) {
     throwIfAngular(pluginExports);
 
@@ -213,6 +220,7 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
+  ErrorsAndNoticesInspector?: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>;
 }
 
 // Only exported for tests
@@ -497,6 +505,18 @@ export interface MetadataInspectorProps<
 
   // All Data from this DataSource
   data: DataFrame[];
+}
+
+export interface ErrorsAndNoticesInspectorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+> {
+  datasource: DSType;
+
+  data: DataFrame[];
+
+  errors?: DataQueryError[];
 }
 
 export interface LegacyMetricFindQueryOptions {
@@ -815,6 +835,22 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
+}
+
+/**
+ * A lightweight view of a data source used for listing and selection. Carries
+ * identity fields (`uid`, `type`, `apiVersion`) and plugin metadata (`meta`),
+ * but not the per-instance settings (`jsonData`, `url`, secrets, `access`, …)
+ * which are fetched on demand when a data source is actually used.
+ */
+export interface DataSourceInstanceListItem {
+  uid: string;
+  type: string;
+  apiVersion?: string;
+  name: string;
+  meta: DataSourcePluginMeta;
+  readOnly: boolean;
+  isDefault: boolean;
 }
 
 /**

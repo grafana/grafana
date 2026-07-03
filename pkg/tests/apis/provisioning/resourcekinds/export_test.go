@@ -38,7 +38,7 @@ func TestIntegrationProvisioning_ResourceKinds_Export(t *testing.T) {
 			repo := rk.name + "-export-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance", // export is only supported for instance sync
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})
@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_ResourceKinds_SelectiveExport(t *testing.T) {
 			repo := rk.name + "-selective-export-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})

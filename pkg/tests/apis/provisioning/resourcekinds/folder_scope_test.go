@@ -2,6 +2,7 @@ package resourcekinds
 
 import (
 	"context"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 			subPath := "team-a/" + rk.name + ".json"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})
@@ -51,8 +52,9 @@ func TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope(t *testin
 				Message:    "create " + rk.name,
 				Body:       string(common.ResourceToJSON(t, rk.newResource(t, name, "Folderscope "+rk.kind))),
 			})
+			createBody, _ := io.ReadAll(createResp.Body)
 			require.NoError(t, createResp.Body.Close())
-			require.Equalf(t, 200, createResp.StatusCode, "%s create in a subdirectory should succeed", rk.name)
+			require.Equalf(t, 200, createResp.StatusCode, "%s create in a subdirectory should succeed; body: %s", rk.name, createBody)
 			require.Contains(t, repositoryFilePaths(t, ctx, helper, repo), subPath, "the file should exist in the repository subdirectory")
 
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {

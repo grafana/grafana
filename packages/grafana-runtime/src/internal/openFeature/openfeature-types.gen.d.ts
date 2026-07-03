@@ -21,16 +21,15 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
+    | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
-    | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
-    | "newLogsPanel"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
-    | "newLogContext"
     | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
@@ -43,6 +42,7 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
@@ -57,8 +57,14 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "dashboard.vectorSearch"
+    | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
-    | "dataviz.experimentalColorSchemes";
+    | "table.refactorNested"
+    | "dataviz.experimentalColorSchemes"
+    | "grafana.customizableMegaMenu"
+    | "grafana.dashboardSettingsRedesign"
+    | "grafana.growthHomepage";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

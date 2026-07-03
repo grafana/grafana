@@ -38,7 +38,6 @@ import (
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -91,6 +90,13 @@ type BleveOptions struct {
 	// value is recorded in each new index's IndexBuildInfo so a future run
 	// can detect drift and rebuild. Keys must be lower-case.
 	SearchFieldsHashesForKinds map[string]string
+
+	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
+	// mapping for that (group, resource). When a provider is registered
+	// for a kind, the bleve mapping is built from the provider's
+	// SearchFieldDefinitions rather than from the legacy column-definition
+	// list carried by SearchableDocumentFields. Keys must be lower-case.
+	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -175,8 +181,9 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields   map[string][]string
-	searchFieldsHashes map[string]string
+	selectableFields     map[string][]string
+	searchFieldsHashes   map[string]string
+	searchFieldsProvider map[string]resource.SearchFieldsProvider
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -258,6 +265,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		indexMetrics:            indexMetrics,
 		selectableFields:        opts.SelectableFieldsForKinds,
 		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
+		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -739,8 +747,9 @@ func (b *bleveBackend) BuildIndex(
 	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
 	selectableFields := b.selectableFields[sfKey]
 	searchFieldsHash := b.searchFieldsHashes[sfKey]
+	searchFieldsProvider := b.searchFieldsProvider[sfKey]
 
-	mapper, err := GetBleveMappings(fields, selectableFields)
+	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
 		return nil, err
 	}
@@ -1653,6 +1662,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	batch := b.index.NewBatch()
+	var undeclaredFields map[string]struct{}
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
@@ -1660,6 +1670,18 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+
+			// The static fields.* mapping drops values written under an undeclared
+			// name; collect them so the loss is logged, not silent.
+			for name := range doc.Fields {
+				if b.isDeclaredField(name) {
+					continue
+				}
+				if undeclaredFields == nil {
+					undeclaredFields = map[string]struct{}{}
+				}
+				undeclaredFields[name] = struct{}{}
+			}
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
@@ -1669,11 +1691,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			batch.Delete(resource.SearchID(item.Key))
 		}
 	}
+	for name := range undeclaredFields {
+		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// isDeclaredField reports whether name is a declared search field for this
+// index (per-kind or standard). The fields.* prefix is stripped, so a bare
+// doc.Fields key matches.
+func (b *bleveIndex) isDeclaredField(name string) bool {
+	if b.fields != nil && b.fields.Field(name) != nil {
+		return true
+	}
+	return b.standard != nil && b.standard.Field(name) != nil
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -2111,11 +2146,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields.
-	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
+	// Convert resource-specific fields to bleve fields. Any field declared
+	// on this index's per-kind SearchableDocumentFields lives under the
+	// fields.* sub-document and must be prefixed before the bleve query.
+	// Skip inputs that already carry the prefix.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(builders.DashboardFields(), f) {
+		if b.fields != nil && !strings.HasPrefix(f, resource.SEARCH_FIELD_PREFIX) && b.fields.Field(f) != nil {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -2261,7 +2298,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = standard.Name               // analyze the text
+					// Match the analyzer used to index each field: the ngram field
+					// must be analyzed with TITLE_ANALYZER, not the standard analyzer
+					// (which splits on punctuation and drops sub-ngram-length fragments).
+					if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						q.Analyzer = TITLE_ANALYZER
+					} else {
+						q.Analyzer = standard.Name
+					}
 					q.Operator = query.MatchQueryOperatorAnd // all terms must match
 					disjoin.AddQuery(q)
 
@@ -2325,10 +2369,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// Add the sort fields
-	sorting := getSortFields(req)
+	sorting := getSortFields(req, b.fields)
 	searchrequest.SortBy(sorting)
 
-	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
+	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title.
+	// Always add name as the final tie-breaker so offset pagination sees a total order.
 	if len(sorting) == 0 {
 		if req.Query != "" && req.Query != "*" {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
@@ -2340,6 +2385,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Desc:  false,
 			})
 		}
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+			Field: resource.SEARCH_FIELD_NAME,
+			Desc:  false,
+		})
 	}
 
 	return searchrequest, nil
@@ -2532,23 +2581,35 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
-	sorting := make([]string, 0, len(req.SortBy))
+func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
+	if len(req.SortBy) == 0 {
+		return nil
+	}
+
+	sorting := make([]string, 0, len(req.SortBy)+1)
+	hasNameSort := false
 	for _, sort := range req.SortBy {
 		input := sort.Field
 		if field, ok := textSortFields[input]; ok {
 			input = field
 		}
 
-		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
-		if slices.Contains(builders.DashboardFields(), input) {
+		// Per-kind sort fields live under the fields.* sub-document, prefix
+		// them by consulting this index's SearchableDocumentFields. Skip
+		// inputs that already carry the prefix (Field() would strip it and
+		// match again, leading to a double prefix).
+		if fields != nil && !strings.HasPrefix(input, resource.SEARCH_FIELD_PREFIX) && fields.Field(input) != nil {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 
+		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
 		if sort.Desc {
 			input = "-" + input
 		}
 		sorting = append(sorting, input)
+	}
+	if !hasNameSort {
+		sorting = append(sorting, resource.SEARCH_FIELD_NAME)
 	}
 	return sorting
 }

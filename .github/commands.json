@@ -125,23 +125,7 @@
   },
   {
     "type": "label",
-    "name": "datasource/Tempo",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/grafana-pyroscope",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/457"
@@ -993,14 +977,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
