@@ -823,6 +823,73 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 			},
 		},
 		{
+			name: "datasource with CA cert",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuthWithCACert": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsCACert": []byte("ca-cert-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:       "https://localhost:9093",
+				TLSCACert: "ca-cert-content",
+			},
+		},
+		{
+			name: "datasource with CA cert and client auth",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuthWithCACert": true,
+					"tlsAuth":           true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsCACert":     []byte("ca-cert-content"),
+					"tlsClientCert": []byte("client-cert-content"),
+					"tlsClientKey":  []byte("client-key-content"),
+				},
+			},
+			expected: ExternalAMcfg{
+				URL:           "https://localhost:9093",
+				TLSCACert:     "ca-cert-content",
+				TLSClientCert: "client-cert-content",
+				TLSClientKey:  "client-key-content",
+			},
+		},
+		{
+			name: "tlsAuthWithCACert enabled but SecureJsonData is nil - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuthWithCACert": true,
+				}),
+				SecureJsonData: nil,
+			},
+			expectError: true,
+		},
+		{
+			name: "tlsAuthWithCACert enabled but tlsCACert is empty - should error",
+			datasource: &datasources.DataSource{
+				URL:   "https://localhost:9093",
+				OrgID: 1,
+				Type:  datasources.DS_ALERTMANAGER,
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"tlsAuthWithCACert": true,
+				}),
+				SecureJsonData: map[string][]byte{},
+			},
+			expectError: true,
+		},
+		{
 			name: "tlsAuth enabled but SecureJsonData is nil - should error",
 			datasource: &datasources.DataSource{
 				URL:   "https://localhost:9093",
@@ -984,6 +1051,7 @@ func TestExternalAMcfg_SHA256(t *testing.T) {
 		},
 		Timeout:            30 * time.Second,
 		InsecureSkipVerify: true,
+		TLSCACert:          "ca-cert-content",
 		TLSClientCert:      "client-cert-content",
 		TLSClientKey:       "client-key-content",
 	}
@@ -1024,6 +1092,14 @@ func TestExternalAMcfg_SHA256(t *testing.T) {
 			name: "mutate InsecureSkipVerify - hash should change",
 			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
 				cfg.InsecureSkipVerify = false
+				return cfg
+			},
+			shouldDiffer: true,
+		},
+		{
+			name: "mutate TLSCACert - hash should change",
+			mutateFn: func(cfg ExternalAMcfg) ExternalAMcfg {
+				cfg.TLSCACert = "different-ca-cert"
 				return cfg
 			},
 			shouldDiffer: true,
