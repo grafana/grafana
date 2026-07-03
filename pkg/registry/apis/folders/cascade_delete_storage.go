@@ -183,8 +183,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	}
 
 	// Then the alert rules and library elements in this folder. Runs in the request path so a
-	// failure aborts the cascade, same as the dashboard sweep above.
-	if s.contentsDeleter != nil {
+	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
+	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
+	if s.contentsDeleter != nil && len(options.DryRun) == 0 {
 		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name); err != nil {
 			// Surface a permission failure as 403 rather than a generic 500, so the client sees why.
 			if errors.Is(err, folder.ErrAccessDenied) {
