@@ -111,6 +111,10 @@ On-prem users can customize the limits with the following configuration settings
 
 Git Sync supports up to four nested folders within a repository.
 
+### Git Sync accross multiple organizations
+
+Starting in Grafana 13.0.4, Git Sync works across multiple organizations for self-managed Grafana instances. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another.
+
 ## Compatible Git providers
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
