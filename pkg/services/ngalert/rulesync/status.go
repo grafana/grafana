@@ -112,12 +112,14 @@ func reasonOf(err error) SyncReason {
 }
 
 // computeSyncStatus maps a sync outcome (nil = success) to the
-// ExternalRulerSynced condition and folds it into prev.
-func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+// ExternalRulerSynced condition and folds it into prev. appliedHash is stored
+// only on success (empty keeps the previous one) so a later restart/replica can
+// skip an unchanged re-apply.
+func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	if syncErr == nil {
-		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
+		return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now, appliedHash)
 	}
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now, "")
 }
 
 // computePromotedStatus is the terminal status once the synced rules have been
@@ -125,7 +127,7 @@ func computeSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, ori
 // and are owned by the org), the reason flips to PromotionCommitted, and sync
 // stops.
 func computePromotedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingrulesv0alpha1.ConfigStatus {
-	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromotionCommitted, "rules promoted to native Grafana rules; sync stopped", now)
+	return buildSyncStatus(prev, uid, origin, alertingrulesv0alpha1.ConfigConditionStatusTrue, conditionReasonPromotionCommitted, "rules promoted to native Grafana rules; sync stopped", now, "")
 }
 
 // computeNotConfiguredStatus updates only the ExternalRulerSynced condition to
@@ -160,15 +162,24 @@ func computeNotConfiguredStatus(prev *alertingrulesv0alpha1.ConfigStatus, now ti
 // condition FSM: lastTransitionTime advances only on a status flip. Preserves
 // other condition types so future controllers aren't clobbered, and preserves
 // the operator-status fields the codegen adds to ConfigStatus.
-func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingrulesv0alpha1.ConfigStatus {
+func buildSyncStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingrulesv0alpha1.ConfigConditionStatus, reason, message string, now time.Time, appliedHash string) alertingrulesv0alpha1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
+	// Store the just-applied hash on success; on failure/promotion (appliedHash
+	// == "") keep the previous one so we can still skip an unchanged re-apply.
+	hash := appliedHash
+	if hash == "" && prev != nil && prev.ExternalRulerSync != nil && prev.ExternalRulerSync.LastAppliedHash != nil {
+		hash = *prev.ExternalRulerSync.LastAppliedHash
+	}
 
 	st := alertingrulesv0alpha1.ConfigStatus{
 		ExternalRulerSync: &alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSync{
 			DatasourceUid: &uidCopy,
 			Origin:        &originCopy,
 		},
+	}
+	if hash != "" {
+		st.ExternalRulerSync.LastAppliedHash = &hash
 	}
 	// Preserve codegen operator-status fields so a status write doesn't drop
 	// state an operator may have recorded.

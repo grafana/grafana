@@ -2,6 +2,7 @@ package rulesync
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -22,15 +23,16 @@ import (
 // --- fakes ---
 
 type fakeConfigStore struct {
-	uid       string
-	targetUID string
-	promote   bool
-	uidErr    error
-	lastWrite *alertingrulesv0alpha1.ConfigStatus
+	uid             string
+	targetUID       string
+	promote         bool
+	lastAppliedHash string
+	uidErr          error
+	lastWrite       *alertingrulesv0alpha1.ConfigStatus
 }
 
 func (f *fakeConfigStore) GetSyncSpec(context.Context, int64) (syncSpec, error) {
-	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID, Promote: f.promote}, f.uidErr
+	return syncSpec{DatasourceUID: f.uid, TargetDatasourceUID: f.targetUID, Promote: f.promote, LastAppliedHash: f.lastAppliedHash}, f.uidErr
 }
 func (f *fakeConfigStore) WriteStatus(_ context.Context, _ int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) error {
 	st := compute(f.lastWrite)
@@ -151,10 +153,39 @@ func TestSyncOrg_HappyPath(t *testing.T) {
 	// SourceIdentifier stamped on the converted rule.
 	require.NotNil(t, rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule)
 	assert.Equal(t, "ds1", rs.replaced[0].Rules[0].Metadata.PrometheusStyleRule.SourceIdentifier)
-	// Success status written True.
+	// Success status written True, with the applied hash persisted for dedup.
 	require.NotNil(t, cs.lastWrite)
 	cond := findSyncedCondition(t, *cs.lastWrite)
 	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, cond.Status)
+	require.NotNil(t, cs.lastWrite.ExternalRulerSync)
+	require.NotNil(t, cs.lastWrite.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "111", *cs.lastWrite.ExternalRulerSync.LastAppliedHash)
+}
+
+func TestSyncOrg_DedupViaPersistedHash(t *testing.T) {
+	// A fresh syncer (empty in-memory cache) must still skip when the persisted
+	// hash matches the upstream — this is what stops restarts/replicas from
+	// re-applying and churning every rule's version.
+	cs := &fakeConfigStore{uid: "ds1", lastAppliedHash: strconv.FormatUint(111, 10)}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "skipped via persisted hash without re-applying")
+}
+
+func TestSyncOrg_DedupViaPersistedHash_IniRoute(t *testing.T) {
+	// The ini route must dedup identically to the api route via the persisted
+	// hash (read best-effort from the Config), not just the in-memory cache.
+	cs := &fakeConfigStore{uid: "from-config", lastAppliedHash: strconv.FormatUint(111, 10)}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 111}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Nil(t, rs.replaced, "ini route also skips via persisted hash")
 }
 
 func TestSyncOrg_NotConfigured(t *testing.T) {

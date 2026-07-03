@@ -98,6 +98,12 @@ spec:
                       datasourceUid is the UID actually used on the last sync attempt; may lag
                       spec until the next tick. When origin=ini, this is the ini override value.
                     type: string
+                  lastAppliedHash:
+                    description: |-
+                      lastAppliedHash is the upstream config hash from the last successful sync.
+                      The worker reads it to skip unchanged re-applies across restarts and
+                      replicas. Internal bookkeeping; not user-facing.
+                    type: string
                   origin:
                     description: |-
                       origin records which source supplied datasourceUid on the last run. "ini"

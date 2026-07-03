@@ -91,6 +91,10 @@ type syncSpec struct {
 	// Promote requests a one-way conversion of the synced rules into native
 	// Grafana rules the org owns, after which sync stops.
 	Promote bool
+	// LastAppliedHash is the upstream config hash from the last successful sync
+	// (read from status); lets the worker skip unchanged re-applies across
+	// restarts/replicas, unlike the in-memory cache. Empty if never synced.
+	LastAppliedHash string
 }
 
 func (s *k8sConfigStore) GetSyncSpec(ctx context.Context, orgID int64) (syncSpec, error) {
@@ -163,6 +167,9 @@ func syncSpecFromConfig(c *alertingrulesv0alpha1.Config) syncSpec {
 	}
 	if p := c.Spec.ExternalRulerSync.Promote; p != nil {
 		spec.Promote = *p
+	}
+	if st := c.Status.ExternalRulerSync; st != nil && st.LastAppliedHash != nil {
+		spec.LastAppliedHash = *st.LastAppliedHash
 	}
 	return spec
 }

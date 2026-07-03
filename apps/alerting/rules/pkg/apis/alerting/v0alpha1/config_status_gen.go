@@ -86,6 +86,10 @@ type ConfigV0alpha1StatusExternalRulerSync struct {
 	// (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
 	// (spec.externalRulerSync.datasourceUid).
 	Origin *ConfigV0alpha1StatusExternalRulerSyncOrigin `json:"origin,omitempty"`
+	// lastAppliedHash is the upstream config hash from the last successful sync.
+	// The worker reads it to skip unchanged re-applies across restarts and
+	// replicas. Internal bookkeeping; not user-facing.
+	LastAppliedHash *string `json:"lastAppliedHash,omitempty"`
 }
 
 // NewConfigV0alpha1StatusExternalRulerSync creates a new ConfigV0alpha1StatusExternalRulerSync object.

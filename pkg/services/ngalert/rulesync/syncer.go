@@ -246,8 +246,14 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
 
-	// Cross-tick dedup against the last successful save. Updated only after a
-	// successful apply, so a failed tick is retried next time.
+	// Skip if the upstream is unchanged since the last successful apply. The
+	// persisted hash (from Config status) survives restarts/replicas; the
+	// in-memory map is the fast path and the fallback when it's unavailable.
+	hashStr := strconv.FormatUint(hash, 10)
+	if rc.persistedHash != "" && rc.persistedHash == hashStr {
+		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		return
+	}
 	s.lastSyncHashMu.RLock()
 	prev, has := s.lastSyncHash[orgID]
 	s.lastSyncHashMu.RUnlock()
@@ -265,7 +271,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.lastSyncHash[orgID] = hash
 	s.lastSyncHashMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
-	s.recordSyncResult(ctx, orgID, rc.queryUID, rc.origin, nil)
+	s.recordSyncResult(ctx, orgID, rc.queryUID, rc.origin, nil, hashStr)
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
 }
 
@@ -397,22 +403,28 @@ func (s *ExternalRulerSyncer) promote(ctx context.Context, user identity.Request
 // resolvedSync is the effective external-ruler-sync configuration for one org,
 // after applying the ini override and target/promote defaults.
 type resolvedSync struct {
-	queryUID  string             // datasource to sync rules from
-	targetUID string             // recording-rules write target (defaults to queryUID)
-	origin    externalSyncOrigin // where queryUID came from (ini vs api)
-	promote   bool               // one-way promote-to-native requested
+	queryUID      string             // datasource to sync rules from
+	targetUID     string             // recording-rules write target (defaults to queryUID)
+	origin        externalSyncOrigin // where queryUID came from (ini vs api)
+	promote       bool               // one-way promote-to-native requested
+	persistedHash string             // last-applied upstream hash from Config status
 }
 
 // resolveExternalRulerConfig computes the effective sync config for the org.
 // The operator-level ini override wins over the per-org Config value for the
-// query datasource; the ini path deliberately does not read the Config resource
-// (so ini-only deployments stay unaffected by apiserver availability), which
-// means target/promote — both spec-only knobs — are not honoured while the ini
-// override is set. Under ini, the target defaults to the query datasource and
-// promotion is off.
+// query datasource, and ini UID resolution never fails on a Config read error
+// (so ini-only deployments stay unaffected by apiserver availability). Under
+// ini, target/promote (spec-only knobs) are off, but the persisted dedup hash
+// is still read best-effort so both routes dedup the same way.
 func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedSync, error) {
 	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
-		return resolvedSync{queryUID: iniUID, targetUID: iniUID, origin: originIni}, nil
+		rc := resolvedSync{queryUID: iniUID, targetUID: iniUID, origin: originIni}
+		// Best-effort read of the persisted hash so the ini route dedups like the
+		// api route; a Config read failure just falls back to the in-memory cache.
+		if spec, err := s.configStore.GetSyncSpec(ctx, orgID); err == nil {
+			rc.persistedHash = spec.LastAppliedHash
+		}
+		return rc, nil
 	}
 	spec, err := s.configStore.GetSyncSpec(ctx, orgID)
 	if err != nil {
@@ -422,7 +434,7 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 	if targetUID == "" {
 		targetUID = spec.DatasourceUID
 	}
-	return resolvedSync{queryUID: spec.DatasourceUID, targetUID: targetUID, origin: originAPI, promote: spec.Promote}, nil
+	return resolvedSync{queryUID: spec.DatasourceUID, targetUID: targetUID, origin: originAPI, promote: spec.Promote, persistedHash: spec.LastAppliedHash}, nil
 }
 
 // recordFailure logs, counts, and records a classified failure onto the org's
@@ -430,7 +442,7 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
-	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
+	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }
 
 // recordNotConfigured seeds the org's Config singleton (Unknown/NotConfigured)
@@ -457,10 +469,10 @@ func (s *ExternalRulerSyncer) recordPromotionCommitted(ctx context.Context, orgI
 
 // recordSyncResult writes the latest outcome (nil = success) onto the org's
 // Config status. Best-effort.
-func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
+func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error, appliedHash string) {
 	now := time.Now()
 	if err := s.configStore.WriteStatus(ctx, orgID, func(prev *configStatus) configStatus {
-		return computeSyncStatus(prev, uid, origin, syncErr, now)
+		return computeSyncStatus(prev, uid, origin, syncErr, now, appliedHash)
 	}); err != nil {
 		s.logger.Warn("Failed to write external ruler sync status", "org_id", orgID, "error", err)
 	}

@@ -909,6 +909,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref
 							Format:      "",
 						},
 					},
+					"lastAppliedHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastAppliedHash is the upstream config hash from the last successful sync. The worker reads it to skip unchanged re-applies across restarts and replicas. Internal bookkeeping; not user-facing.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
