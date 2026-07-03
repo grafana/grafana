@@ -261,3 +261,16 @@ func (p *grpcPlugin) ConvertObjects(ctx context.Context, request *backend.Conver
 	}
 	return pc.ConvertObjects(ctx, request)
 }
+
+// StreamStoredObjectEvents implements the optional
+// backendplugin.StoredObjectEventsStreamer seam; see that interface for why
+// this is not part of the Plugin interface.
+func (p *grpcPlugin) StreamStoredObjectEvents(ctx context.Context) (backendplugin.StoredObjectEventsStream, error) {
+	pc, ok := p.getPluginClient(ctx)
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pc.StreamStoredObjectEvents(ctx)
+}
+
+var _ backendplugin.StoredObjectEventsStreamer = (*grpcPlugin)(nil)

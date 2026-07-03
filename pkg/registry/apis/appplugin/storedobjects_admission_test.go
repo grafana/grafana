@@ -72,8 +72,8 @@ func watchlistStoredObject() pluginschema.StoredObject {
 		Plural:     "watchlists",
 		Singular:   "watchlist",
 		Spec:       objectSchema(),
-		Validation: []pluginschema.AdmissionOperation{pluginschema.AdmissionOperationCreate},
-		Mutation:   []pluginschema.AdmissionOperation{pluginschema.AdmissionOperationCreate},
+		Validation: []pluginschema.Operation{pluginschema.OperationCreate},
+		Mutation:   []pluginschema.Operation{pluginschema.OperationCreate},
 	}
 }
 

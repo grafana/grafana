@@ -188,7 +188,7 @@ func mapStoredObjectOperation(verb admission.Operation) (backend.AdmissionReques
 	}
 }
 
-func storedObjectOpsContain(declared []pluginschema.AdmissionOperation, op backend.AdmissionRequestOperation) bool {
+func storedObjectOpsContain(declared []pluginschema.Operation, op backend.AdmissionRequestOperation) bool {
 	if len(declared) == 0 {
 		return false
 	}
@@ -201,14 +201,14 @@ func storedObjectOpsContain(declared []pluginschema.AdmissionOperation, op backe
 	return false
 }
 
-func storedObjectOpToSchema(op backend.AdmissionRequestOperation) pluginschema.AdmissionOperation {
+func storedObjectOpToSchema(op backend.AdmissionRequestOperation) pluginschema.Operation {
 	switch op {
 	case backend.AdmissionRequestCreate:
-		return pluginschema.AdmissionOperationCreate
+		return pluginschema.OperationCreate
 	case backend.AdmissionRequestUpdate:
-		return pluginschema.AdmissionOperationUpdate
+		return pluginschema.OperationUpdate
 	case backend.AdmissionRequestDelete:
-		return pluginschema.AdmissionOperationDelete
+		return pluginschema.OperationDelete
 	default:
 		return ""
 	}

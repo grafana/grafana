@@ -21,6 +21,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginregistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	pluginspec "github.com/grafana/grafana/pkg/plugins/openapi"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -32,10 +33,11 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder         = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupValidation      = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupMutation        = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupVersionProvider       = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupValidation            = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupMutation              = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*AppPluginAPIBuilder)(nil)
 )
 
 // PluginClient is a subset of the plugins.Client interface with only the
@@ -89,6 +91,17 @@ type AppPluginAPIBuilder struct {
 	// Defaults to getPluginContext (which reads the live settings resource);
 	// tests inject a stub to avoid standing up real settings storage.
 	pluginContextFn func(ctx context.Context) (context.Context, backend.PluginContext, error)
+
+	// eventWatchers is populated in UpdateAPIGroupInfo with one watch source
+	// per declared stored object kind. The stored-object event pusher starts
+	// and stops watches from this set as the plugin (un)subscribes.
+	eventWatchers []storedObjectEventSource
+
+	// eventsOpener opens the bidirectional stored-object events stream to the
+	// plugin backend. Wired by RegisterAPIService via the plugin manager
+	// registry (see newStoredObjectEventsOpener); tests inject fakes. While
+	// nil, GetPostStartHooks registers no hook and no pusher is started.
+	eventsOpener storedObjectEventsOpener
 }
 
 func NewAppPluginAPIBuilder(
@@ -126,6 +139,7 @@ func RegisterAPIService(
 	contextProvider PluginContextWrapper,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
+	pluginRegistry pluginregistry.Service, // resolves the raw gRPC handle for event streaming
 	accessControl ac.AccessControl,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
@@ -179,6 +193,7 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+		b.eventsOpener = newStoredObjectEventsOpener(pluginRegistry, plugin.JSONData.ID)
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}

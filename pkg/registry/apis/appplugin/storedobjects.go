@@ -27,8 +27,8 @@ type storedObjectKind struct {
 	Cluster    bool
 	Spec       *openapispec.Schema
 	Status     *openapispec.Schema
-	Validation []pluginschema.AdmissionOperation
-	Mutation   []pluginschema.AdmissionOperation
+	Validation []pluginschema.Operation
+	Mutation   []pluginschema.Operation
 }
 
 // HasStatus reports whether the kind declares a status schema and therefore
@@ -116,6 +116,7 @@ func (b *AppPluginAPIBuilder) installStoredObjectStorage(storage map[string]rest
 	if err != nil {
 		return err
 	}
+	b.eventWatchers = b.eventWatchers[:0]
 	for _, k := range kinds {
 		ri := b.storedObjectResourceInfo(k)
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, ri, opts.OptsGetter)
@@ -126,6 +127,10 @@ func (b *AppPluginAPIBuilder) installStoredObjectStorage(storage map[string]rest
 		if k.HasStatus() {
 			storage[ri.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store)
 		}
+		// Every declared kind is a candidate event source; whether events
+		// actually flow is decided at runtime by the plugin subscribing on
+		// the StoredObjectEvents stream, not by a schema declaration.
+		b.eventWatchers = append(b.eventWatchers, storedObjectEventSource{kind: k.Kind, watcher: store})
 	}
 	return nil
 }
@@ -221,7 +226,7 @@ func storedObjectDefinition(gvks []interface{}) openapi.OpenAPIDefinition {
 
 func goReflectPath(obj interface{}) string {
 	t := reflect.TypeOf(obj)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t.PkgPath() + "." + t.Name()
