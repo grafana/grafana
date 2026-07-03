@@ -40,7 +40,9 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
             index={index}
           >
             <div className={styles.itemLabel}>
-              <Text truncate>{renderItemLabel(item)}</Text>
+              <Text variant="body" truncate>
+                {renderItemLabel(item)}
+              </Text>
             </div>
             <div className={styles.itemButtons}>
               <IconButton
@@ -89,6 +91,7 @@ function getStyles(theme: GrafanaTheme2) {
     itemLabel: css({
       flexGrow: 1,
       overflow: 'hidden',
+      paddingLeft: theme.spacing(1),
     }),
     itemButtons: css({
       visibility: 'hidden',

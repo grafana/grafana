@@ -19,7 +19,7 @@ export function DroppableCategory({ droppableId, title, children, itemsCount }: 
   return (
     <Droppable droppableId={droppableId} direction="vertical">
       {(provided) => (
-        <div ref={provided.innerRef} {...provided.droppableProps}>
+        <div ref={provided.innerRef} {...provided.droppableProps} className={styles.container}>
           <OptionsPaneCategory
             id={droppableId}
             title={title}
@@ -27,6 +27,7 @@ export function DroppableCategory({ droppableId, title, children, itemsCount }: 
             headerActionPlacement="left"
             compactIcons
             isNested
+            className={styles.category}
             renderTitle={() => (
               <span className={styles.title}>
                 {title}
@@ -45,6 +46,14 @@ export function DroppableCategory({ droppableId, title, children, itemsCount }: 
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css({
+      '&:last-child': {
+        marginBottom: theme.spacing(1),
+      },
+    }),
+    category: css({
+      marginBottom: theme.spacing(0),
+    }),
     title: css({
       display: 'inline-flex',
       alignItems: 'center',
