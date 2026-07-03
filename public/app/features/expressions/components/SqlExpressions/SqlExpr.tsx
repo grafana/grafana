@@ -22,7 +22,7 @@ import { SchemaInspectorPanel } from './SchemaInspector/SchemaInspectorPanel';
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { type SqlCompletionProvider } from './SqlEditor/utils';
 import { SqlQueryActions } from './SqlQueryActions';
-import { FUNCTION_SIGNATURES } from './functionSignatures';
+import { useFunctionSignatures } from './hooks/useFunctionSignatures';
 import { useSQLSchemas } from './hooks/useSQLSchemas';
 
 const SQLEditor = lazy(() =>
@@ -52,6 +52,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const interpolationFilters = metadata?.data?.request?.filters;
   const interpolationRange = metadata?.range;
   const useCodeMirrorEditor = useBooleanFlagValue('sqlExpressionsCodeMirror', false);
+
+  // Signature metadata is large, so it is loaded lazily only for the CodeMirror path.
+  const functionSignatures = useFunctionSignatures(useCodeMirrorEditor);
 
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
@@ -268,7 +271,7 @@ LIMIT
                   value={query.expression ?? initialQuery}
                   onChange={onEditorChange}
                   completionProvider={completionProvider}
-                  functionSignatures={FUNCTION_SIGNATURES}
+                  functionSignatures={functionSignatures}
                   formatter={formatSQL}
                   height={editorHeight}
                   ariaLabel={t('expressions.sql-expression.editor.aria-label', 'SQL expression editor')}
