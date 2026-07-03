@@ -2632,6 +2632,10 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded.",
+      "no-query": "No data source query to run for this rule."
+    },
     "queryAndExpressionsStep": {
       "custom": "Custom",
       "disableAdvancedOptions": {
@@ -4923,6 +4927,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4937,6 +4946,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
@@ -5431,11 +5441,6 @@
       "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
       }
     },
     "dashboard-srv": {
@@ -6444,9 +6449,17 @@
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
+      "delete-confirm-body": "This permanently deletes \"{{templateTitle}}\". This action cannot be undone.",
+      "delete-confirm-cancel": "Cancel",
+      "delete-confirm-confirm": "Delete",
+      "delete-confirm-prompt": "Delete",
+      "delete-confirm-title": "Delete this template?",
+      "delete-template-button-label": "Delete template: {{title}}",
+      "delete-template-menu-item": "Delete",
       "details-tooltip": "Details",
-      "edit-template-button": "Edit",
       "edit-template-button-label": "Edit template: {{title}}",
+      "edit-template-menu-item": "Edit",
+      "more-actions-label": "More actions for {{title}}",
       "no-preview": "No preview available ",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
@@ -6813,6 +6826,18 @@
     "dashboard-scene-page-state-manager-v2": {
       "message": {
         "dashboard-not-found": "Dashboard not found"
+      }
+    },
+    "dashboard-settings": {
+      "annotations": {
+        "button-moved": "Take me there",
+        "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for annotations?"
+      },
+      "variables": {
+        "button-moved": "Take me there",
+        "description-moved": "Variable settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for variable settings?"
       }
     },
     "dashboard-side-pane-new": {
@@ -9364,6 +9389,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Accessible",
+        "experimentalGroup": "Experimental",
         "otherGroup": "Others"
       }
     },
@@ -10703,6 +10729,19 @@
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
+    },
+    "recommendations": {
+      "existing": "Enabled solution",
+      "go-to": "Go to recommendation {{index}}",
+      "hide": "Hide",
+      "next": "Next",
+      "pause": "Pause",
+      "previous": "Previous",
+      "recommended": "Recommended",
+      "resume": "Resume",
+      "show": "Show",
+      "switch": "Switch to another app you run",
+      "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -14485,6 +14524,9 @@
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
     },
+    "description-tooltip": {
+      "label": "Description"
+    },
     "generate-columns": {
       "score": "Score"
     },
@@ -15358,7 +15400,7 @@
       },
       "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
-      "new-team": "New Team",
+      "new-team": "New team",
       "placeholder-search-teams": "Search teams"
     },
     "team-pages": {
@@ -16678,6 +16720,9 @@
     },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "Show dependencies"
     },
     "variables-unknown-button": {
       "usage-title": "Showing usages for: {{variableId}}",

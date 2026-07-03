@@ -66,6 +66,7 @@
     "themes:usage": "eslint . --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --plugin '@grafana' --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "typecheck:tsgo": "tsgo --noEmit",
+    "typecheck:smoke": "tsc -p tsconfig.smoke.json",
     "plugins:build-bundled": "echo 'bundled plugins are no longer supported'",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
@@ -75,6 +76,7 @@
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "plugin:test:ci": "nx run-many -t test:ci --projects='tag:scope:plugin' --maxParallel=2",
     "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
+    "cuj:new": "node --experimental-strip-types scripts/cuj-new.ts",
     "generate-apis": "yarn workspace @grafana/api-clients generate-apis",
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
     "generate:openapi": "yarn workspace @grafana/openapi generate:openapi",
@@ -281,8 +283,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^8.9.0",
-    "@grafana/scenes-react": "^8.9.0",
+    "@grafana/scenes": "8.9.5",
+    "@grafana/scenes-react": "8.9.5",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -446,7 +448,10 @@
     "@types/slate-react/immutable": "^4.0.0",
     "ws": "^8.20.1",
     "js-cookie": "^3.0.7",
-    "@opentelemetry/core": "2.8.0"
+    "@opentelemetry/core": "2.8.0",
+    "shell-quote": "1.9.0",
+    "tmp": "0.2.7",
+    "yaml@npm:^1.10.0": "1.10.3"
   },
   "workspaces": {
     "packages": [

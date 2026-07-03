@@ -1964,8 +1964,11 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 		}
 		g[b.GroupResource.Resource] = b
 
-		// Any custom fields
-		cache.fields[b.GroupResource] = b.Fields
+		f, err := b.SearchableFields()
+		if err != nil {
+			return cache, err
+		}
+		cache.fields[b.GroupResource] = f
 	}
 	return cache, nil
 }

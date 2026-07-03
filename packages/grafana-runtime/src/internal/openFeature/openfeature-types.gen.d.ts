@@ -58,10 +58,14 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "dashboard.vectorSearch"
+    | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
     | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
-    | "grafana.customizableMegaMenu";
+    | "grafana.customizableMegaMenu"
+    | "grafana.dashboardSettingsRedesign"
+    | "grafana.growthHomepage";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

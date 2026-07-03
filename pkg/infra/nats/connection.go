@@ -40,9 +40,14 @@ type connection struct {
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
 
-	mu     sync.Mutex
-	conn   *natsclient.Conn
-	closed bool
+	mu       sync.Mutex
+	conn     *natsclient.Conn
+	closed   bool
+	nextCbID int
+	// reconnectCbs holds callbacks registered by subscriptions, invoked after the
+	// connection re-establishes (the nats client auto-resumes the subscriptions,
+	// but a caller may still want to reconcile events missed while it was down).
+	reconnectCbs map[int]func()
 }
 
 func newConnection(role connRole, logger log.Logger, m connectionMetrics, config *Config, credentials func() string) *connection {
@@ -56,6 +61,40 @@ func newConnection(role connRole, logger log.Logger, m connectionMetrics, config
 }
 
 func (c *connection) Enabled() bool { return c.config.Enabled() }
+
+// onReconnect registers fn to run after each reconnect and returns a function
+// that unregisters it. fn must not block: it runs on the NATS client's reconnect
+// goroutine.
+func (c *connection) onReconnect(fn func()) (remove func()) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.reconnectCbs == nil {
+		c.reconnectCbs = map[int]func(){}
+	}
+	id := c.nextCbID
+	c.nextCbID++
+	c.reconnectCbs[id] = fn
+	return func() {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		delete(c.reconnectCbs, id)
+	}
+}
+
+// fireReconnect invokes every registered reconnect callback. It snapshots the
+// callbacks under the lock and calls them outside it, so a callback can register
+// or remove others without deadlocking.
+func (c *connection) fireReconnect() {
+	c.mu.Lock()
+	fns := make([]func(), 0, len(c.reconnectCbs))
+	for _, fn := range c.reconnectCbs {
+		fns = append(fns, fn)
+	}
+	c.mu.Unlock()
+	for _, fn := range fns {
+		fn()
+	}
+}
 
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
@@ -162,6 +201,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 				c.metrics.disconnectedSeconds.Observe(time.Since(time.Unix(0, down)).Seconds())
 			}
 			c.log.Info("nats reconnected", "role", roleStr, "url", nc.ConnectedUrl())
+			c.fireReconnect()
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(0)
@@ -219,16 +259,36 @@ func (c *connection) healthy() error {
 	return nil
 }
 
-// close drains the connection so in-flight work flushes before shutdown. It is
-// terminal: once closed, get() refuses to reopen a connection.
+// close drains the connection and waits for the drain to complete so it does not
+// outlive the caller. Terminal: once closed, get() refuses to reopen.
 func (c *connection) close() {
+	// Drain outside the lock: waiting for it can take up to drainTimeout, and
+	// holding c.mu that long would stall a concurrent Health().
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.closed = true
-	if c.conn != nil && !c.conn.IsClosed() {
-		if err := c.conn.Drain(); err != nil {
-			c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
-		}
-	}
+	nc := c.conn
 	c.conn = nil
+	c.closed = true
+	c.mu.Unlock()
+
+	if nc == nil || nc.IsClosed() {
+		return
+	}
+
+	// Drain closes the connection on a background goroutine; wait for it below.
+	if err := nc.Drain(); err != nil {
+		c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
+		nc.Close()
+		return
+	}
+
+	// A broker that has gone away never closes, so force it at the deadline.
+	deadline := time.Now().Add(drainTimeout + time.Second)
+	for !nc.IsClosed() {
+		if time.Now().After(deadline) {
+			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
+			nc.Close()
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
