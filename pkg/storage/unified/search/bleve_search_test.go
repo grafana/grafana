@@ -1045,6 +1045,10 @@ type countingAccessClient struct {
 	allowAll       bool
 	allowedFolders map[string]bool
 	checked        int
+	// batchCalls counts BatchCheck invocations, i.e. one per post-rank bleve
+	// window (FilterAuthorized is called once per window). Lets tests assert
+	// that window growth reduces the number of bleve searches.
+	batchCalls int
 }
 
 func (c *countingAccessClient) allow(folder string) bool {
@@ -1063,6 +1067,7 @@ func (c *countingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ 
 }
 
 func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.batchCalls++
 	c.checked += len(req.Checks)
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
@@ -1200,6 +1205,34 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// batch size of 500 the first batch already fills the page of 100.
 		require.LessOrEqual(t, ac.checked, 500)
 		require.Less(t, ac.checked, 700)
+	})
+
+	t.Run("window growth reduces bleve searches for a zero-auth scan", func(t *testing.T) {
+		// A zero-auth user can't fill the page, so the scan runs to exhaustion
+		// and walks the whole match set. With a constant window the 200-doc
+		// match set would take 20 same-sized bleve searches; geometric growth
+		// (10 -> 20 -> 40, capped at MaxWindow) covers the same ground in far
+		// fewer. Each SearchAfter is a fresh bleve search that re-walks the
+		// match set, so fewer windows = less total scoring work.
+		cfg := search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 40}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 200)
+		for i := 0; i < 200; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{}} // deny all
+		names, res := searchNames(t, index, ac, listQuery(10))
+
+		require.Empty(t, names, "deny-all -> no authorized hits")
+		require.Equal(t, int64(0), res.TotalHits, "exhausted -> exact authorized total")
+		// Every doc was examined (exhaustion), so candidates == doc count.
+		require.Equal(t, 200, ac.checked)
+		// Growth: far fewer bleve searches than the 20 a constant window-10
+		// scan would issue, but spanning several growing windows (not just one).
+		require.Less(t, ac.batchCalls, 15, "growth should reduce the search count")
+		require.GreaterOrEqual(t, ac.batchCalls, 5, "scan should span multiple growing windows")
 	})
 
 	t.Run("returns first limit authorized hits in sort order", func(t *testing.T) {

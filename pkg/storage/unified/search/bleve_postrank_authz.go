@@ -25,9 +25,13 @@ import (
 // and authorization runs app-side in rank order, paging via SearchAfter until
 // the page is filled or the candidate budget is hit.
 type PostRankAuthzConfig struct {
-	// OverFetchFactor multiplies the requested limit to size each bleve window.
+	// OverFetchFactor multiplies the requested limit to size the first bleve
+	// window. Subsequent windows grow geometrically (see growWindow).
 	OverFetchFactor int
-	// MaxWindow is the ceiling on each per-window bleve Size.
+	// MaxWindow is the ceiling on each per-window bleve Size, and the cap the
+	// geometric window growth saturates at. Bounds per-search peak memory (the
+	// post-rank path loads all stored fields per hit) while letting sparse
+	// scans cover ground in fewer searches.
 	MaxWindow int
 	// MaxCandidates is the page-fill candidate budget: the scan stops after
 	// authorizing this many ranked hits. Bounds work for low authorized
@@ -52,13 +56,34 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 	return c
 }
 
-// windowSize returns the per-window bleve Size: limit * OverFetchFactor clamped
-// to MaxWindow. Ranking is unaffected: bleve ranks the full match set and
-// returns the top-N regardless of Size.
+// windowSize returns the per-window bleve Size for the first window:
+// limit * OverFetchFactor clamped to MaxWindow. Ranking is unaffected: bleve
+// ranks the full match set and returns the top-N regardless of Size.
 func (c PostRankAuthzConfig) windowSize(limit int) int {
 	w := limit * c.OverFetchFactor
 	if w > c.MaxWindow {
 		w = c.MaxWindow
+	}
+	return w
+}
+
+// growWindow sizes each bleve window after the first. The first window uses
+// windowSize(limit); subsequent windows double so a sparse-access or
+// deep-offset scan covers ground in fewer, larger windows. Each bleve
+// SearchAfter is a fresh search that re-walks the match set (SearchAfter
+// filters inside the collector, after per-hit sort values are computed), so
+// fewer searches means less total scoring work. Capped at MaxWindow — the
+// per-search peak-memory bound, which matters here because the post-rank
+// path loads all stored fields per hit. The common case (high authorized
+// fraction) still fills the page on the first small window, so growth only
+// kicks in when early windows come back sparse.
+func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
+	w := base
+	for i := 0; i < nextWindow; i++ {
+		w <<= 1
+		if w >= c.MaxWindow {
+			return c.MaxWindow
+		}
 	}
 	return w
 }
@@ -257,13 +282,15 @@ func (b *bleveIndex) runPostFilterAuthz(
 			exhausted = true
 			break // no sort values -> cannot build a SearchAfter cursor
 		}
-		// Page on a shallow copy of the current request: only the cursor and the
-		// window Size change between windows; query, sort, and fields are
-		// identical.
+		// Page on a shallow copy of the current request: only the cursor and
+		// the window Size change between windows; query, sort, and fields are
+		// identical. Grow the window geometrically (capped at MaxWindow) so a
+		// sparse-access or deep-offset scan reaches its first authorized hit in
+		// fewer, larger windows rather than many same-sized bleve searches.
 		next := *windowReq
 		next.SearchAfter = cursor
 		next.SearchBefore = nil
-		next.Size = cfg.windowSize(limit)
+		next.Size = cfg.growWindow(cfg.windowSize(limit), window+1)
 		windowReq = &next
 	}
 
