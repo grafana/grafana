@@ -200,6 +200,82 @@ describe('Check field state calculations (displayName and id)', () => {
     expect(title).toEqual('A-series');
   });
 
+  it('should not duplicate field name when it equals frame name in single frame', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'MyMetric',
+          fields: [{ name: 'MyMetric' }],
+        }),
+      ],
+    });
+    expect(title).toEqual('MyMetric');
+  });
+
+  it('should not duplicate when all frames have same field name matching their frame name', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'A-series',
+          fields: [{ name: 'A-series' }],
+        }),
+        toDataFrame({
+          name: 'A-series',
+          fields: [{ name: 'A-series' }],
+        }),
+      ],
+    });
+    expect(title).toEqual('A-series');
+  });
+
+  it('should not duplicate field name matching frame name even with labels', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'cpu',
+          fields: [{ name: 'cpu', labels: { host: 'server1' } }],
+        }),
+        toDataFrame({
+          name: '',
+          fields: [{ name: 'cpu', labels: { host: 'server2' } }],
+        }),
+      ],
+    });
+    expect(title).toEqual('cpu {host="server1"}');
+  });
+
+  it('should still show field name when it differs from frame name', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Series A',
+          fields: [{ name: 'Field 1' }],
+        }),
+        toDataFrame({
+          name: 'Series B',
+          fields: [{ name: 'Field 1' }],
+        }),
+      ],
+    });
+    expect(title).toEqual('Series A Field 1');
+  });
+
+  it('should show frame name when field name is empty', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          name: 'Series A',
+          fields: [{ name: '' }],
+        }),
+        toDataFrame({
+          name: 'Series B',
+          fields: [{ name: '' }],
+        }),
+      ],
+    });
+    expect(title).toEqual('Series A');
+  });
+
   it('should add field name count to name if it exists more than once and is equal to TIME_SERIES_VALUE_FIELD_NAME', () => {
     const title = checkScenario({
       frames: [
