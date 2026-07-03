@@ -64,6 +64,23 @@ On Grafana Cloud, syncing this many resources may also exceed your stack's maxim
 
 When you split a monorepo across several connections, use [folderless sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets) for each connection. With folder sync (the default), every connection creates its own wrapper folder named after the repository, so splitting the monorepo would change your folder hierarchy and nest resources one level deeper. Folderless sync places each connection's resources at the top level, so the split has no effect on how your dashboards and folders are organized in Grafana.
 
+#### Shard by capacity, not by team
+
+When you have many teams or tenants, it's tempting to create one connection per team so each team maps to its own connection. Avoid this: it consumes connections quickly, doesn't scale as teams grow, and on Grafana Cloud a single stack can't be granted the hundreds of connections this would require.
+
+Instead, shard by capacity. Create one monorepo and group teams into a small number of shard folders, each holding up to about 1,000 resources, and connect each shard folder separately. For example, a customer with 190 teams and 900 resources fits comfortably in a single shard today:
+
+```
+your-org/grafana-manifests/
+├── shard-1/        ← ~900 resources today, connected now
+│   ├── team-a/
+│   ├── team-b/
+│   └── ...
+└── shard-2/        ← empty for now, add a connection when shard-1 approaches 1,000
+```
+
+As the number of resources grows, add `shard-2` (and later shards) and connect each one. You can move teams between shards at any time to rebalance, so you only pay for the connections you actually need and can grow up to the 10-connection limit without restructuring your repository.
+
 ### Modify your usage limits
 
 Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
