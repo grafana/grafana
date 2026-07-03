@@ -211,6 +211,40 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 }
 
+func TestRepositorySecureValues_NotFoundSentinel(t *testing.T) {
+	missing := func(_ *testing.T, _ ...string) (map[string]decrypt.DecryptResult, error) {
+		return map[string]decrypt.DecryptResult{}, nil
+	}
+	transient := func(_ *testing.T, _ ...string) (map[string]decrypt.DecryptResult, error) {
+		return nil, fmt.Errorf("service down")
+	}
+
+	t.Run("missing token wraps both ErrSecretNotFound and ErrTokenNotFound", func(t *testing.T) {
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: missing}, nil)
+		_, err := decrypter(cfg).Token(context.Background())
+		require.ErrorIs(t, err, ErrTokenNotFound)
+		require.ErrorIs(t, err, ErrSecretNotFound)
+	})
+
+	t.Run("transient token error is not treated as not-found", func(t *testing.T) {
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{Token: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: transient}, nil)
+		_, err := decrypter(cfg).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, ErrTokenNotFound)
+		require.NotErrorIs(t, err, ErrSecretNotFound)
+	})
+
+	t.Run("missing non-token secret does not carry ErrTokenNotFound", func(t *testing.T) {
+		cfg := &provisioning.Repository{Secure: provisioning.SecureValues{CommitSigningKey: v0alpha1.InlineSecureValue{Name: "secret"}}}
+		decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: missing}, nil)
+		_, err := decrypter(cfg).CommitSigningKey(context.Background())
+		require.ErrorIs(t, err, ErrSecretNotFound)
+		require.NotErrorIs(t, err, ErrTokenNotFound)
+	})
+}
+
 type decryptFn = func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error)
 
 type dummyDecryptService struct {

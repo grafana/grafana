@@ -2,12 +2,25 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+)
+
+var (
+	// ErrSecretNotFound indicates that a secure value is referenced by name but the
+	// underlying secret could not be resolved to a value (deleted or otherwise
+	// undecryptable). It is distinct from a transient decrypt-service failure, which
+	// is returned unwrapped so callers keep retrying instead of regenerating.
+	ErrSecretNotFound = errors.New("secure value could not be decrypted")
+
+	// ErrTokenNotFound is ErrSecretNotFound scoped to the repository token, letting
+	// the controller regenerate only when the token itself is the missing secret.
+	ErrTokenNotFound = errors.New("token secure value could not be decrypted")
 )
 
 type secretTypeLabel string
@@ -58,17 +71,21 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 
 	v, found := results[sv.Name]
 	if !found {
-		return "", fmt.Errorf("not found")
+		return "", fmt.Errorf("%w: %q not found", ErrSecretNotFound, sv.Name)
 	}
-	if v.Error() != nil {
-		return "", v.Error()
+	if err := v.Error(); err != nil {
+		return "", fmt.Errorf("%w: %q: %w", ErrSecretNotFound, sv.Name, err)
 	}
 
 	return common.RawSecureValue(*v.Value()), nil
 }
 
 func (s *secureValues) Token(ctx context.Context) (common.RawSecureValue, error) {
-	return s.get(ctx, s.names.Token, secretTypeToken)
+	v, err := s.get(ctx, s.names.Token, secretTypeToken)
+	if errors.Is(err, ErrSecretNotFound) {
+		return "", fmt.Errorf("%w: %w", ErrTokenNotFound, err)
+	}
+	return v, err
 }
 
 func (s *secureValues) WebhookSecret(ctx context.Context) (common.RawSecureValue, error) {

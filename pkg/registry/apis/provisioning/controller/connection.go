@@ -234,8 +234,20 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	c, err := cc.connectionFactory.Build(ctx, conn)
 	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). Clear the reference on a copy so
+		// the rebuild skips token decryption; shouldGenerateToken then re-mints it from
+		// the private key. Rebuild on a copy to avoid mutating the shared informer cache.
+		if errors.Is(err, connection.ErrTokenNotFound) {
+			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
+			conn = conn.DeepCopy()
+			conn.Secure.Token = common.InlineSecureValue{}
+			c, err = cc.connectionFactory.Build(ctx, conn)
+		}
+		if err != nil {
+			logger.Error("failed to build connection", "error", err)
+			return err
+		}
 	}
 
 	tokenConn, isTokenConnection := c.(connection.TokenConnection)

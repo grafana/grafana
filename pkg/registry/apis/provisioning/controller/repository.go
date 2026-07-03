@@ -714,7 +714,35 @@ func (rc *RepositoryController) process(key string) error {
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
-		return fmt.Errorf("unable to create repository from configuration: %w", err)
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). When the token is minted from a
+		// connection, regenerate it and rebuild rather than failing the reconcile forever.
+		// shouldGenerateToken being false guarantees we did not already mint one this pass.
+		if errors.Is(err, repository.ErrTokenNotFound) && !shouldGenerateToken &&
+			obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
+				"connection", obj.Spec.Connection.Name, "error", err)
+
+			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+			if cerr != nil {
+				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+			}
+
+			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
+			if gerr != nil {
+				return fmt.Errorf("regenerating repository token: %w", gerr)
+			}
+
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			obj.Secure.Token.Create = token
+
+			repo, err = rc.repoFactory.Build(ctx, obj)
+		}
+		if err != nil {
+			return fmt.Errorf("unable to create repository from configuration: %w", err)
+		}
 	}
 
 	// Handle hooks - may return early if hooks fail
