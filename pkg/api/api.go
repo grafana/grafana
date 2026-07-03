@@ -502,6 +502,9 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
+		// On-demand datasource diagnostics (admin-only, experimental)
+		apiRoute.Post("/ds/diagnostics", reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
