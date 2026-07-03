@@ -2408,6 +2408,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/levitate@npm:^0.17.0":
+  version: 0.17.3
+  resolution: "@grafana/levitate@npm:0.17.3"
+  dependencies:
+    "@tsd/typescript": "npm:^5.6.2"
+    "@types/node": "npm:^24.0.1"
+    chalk: "npm:^5.0.0"
+    debug: "npm:^4.3.2"
+    diff: "npm:^8.0.0"
+    tar: "npm:^7.4.3"
+    tty-table: "npm:^5.0.0"
+    typescript: "npm:5.9.3"
+    yargs: "npm:^18.0.0"
+    yocto-spinner: "npm:^1.2.0"
+  bin:
+    levitate: dist/bin.js
+  checksum: 10/0395881cc43846e9215eb952ae74f5516edc5ecc6dc6fb71ff0905a6e16c1933ffa55266b2de9fd2a8da2ae2e8cf1cc97da433203d6cda6f770bbb5bb3887474
+  languageName: node
+  linkType: hard
+
 "@grafana/lezer-logql@npm:0.2.9":
   version: 0.2.9
   resolution: "@grafana/lezer-logql@npm:0.2.9"
@@ -2531,6 +2551,22 @@ __metadata:
     "@axe-core/playwright":
       optional: true
   checksum: 10/d31d3ed7c4c89801accc7a9f9b4d7b814eb61cbfe6d0d61fa288aa1260674cd229c7601ca051c96fa5513b6645056a1e3eb4eb3b3e99d027a4212870f8322e41
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-types-bundler@npm:0.6.0":
+  version: 0.6.0
+  resolution: "@grafana/plugin-types-bundler@npm:0.6.0"
+  dependencies:
+    "@grafana/levitate": "npm:^0.17.0"
+    "@types/minimist": "npm:^1.2.2"
+    "@types/node": "npm:^24.0.0"
+    debug: "npm:^4.3.4"
+    jackw-dts-bundle-gen-test: "npm:^9.5.1"
+    minimist: "npm:^1.2.8"
+  bin:
+    plugin-types-bundler: dist/bin/run.js
+  checksum: 10/fbeb08961c64b6df6a54f683223b9e4a9bca861de3ab8a1d69278f9b93496cdeda266a013b1dabed8045bef6b1c15350565ddccb713986a0b49fee3c4ee4969e
   languageName: node
   linkType: hard
 
@@ -10034,7 +10070,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/minimist@npm:^1.2.0":
+"@types/minimist@npm:^1.2.0, @types/minimist@npm:^1.2.2":
   version: 1.2.5
   resolution: "@types/minimist@npm:1.2.5"
   checksum: 10/477047b606005058ab0263c4f58097136268007f320003c348794f74adedc3166ffc47c80ec3e94687787f2ab7f4e72c468223946e79892cf0fd9e25e9970a90
@@ -10095,6 +10131,15 @@ __metadata:
   dependencies:
     undici-types: "npm:~7.16.0"
   checksum: 10/3e76ad89cca317c0886deedab0245b6b2a04ef6c47362bd3918020296f3e9630334795af9cee8c6633eae774c85d848ff2e6bed5a7c3133fc94968364fc3ee36
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^24.0.0":
+  version: 24.13.2
+  resolution: "@types/node@npm:24.13.2"
+  dependencies:
+    undici-types: "npm:~7.18.0"
+  checksum: 10/2b8cb95ada191ecc788fef91d7cdb86dff24f6895b510e1fb495cc001832709fa8fc3e1eeb27d64bda52b3f74f9e91acf42431e98e3e6876de1e53acce7f7602
   languageName: node
   linkType: hard
 
@@ -18293,6 +18338,7 @@ __metadata:
     "@grafana/llm": "npm:1.0.9"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:3.7.2"
+    "@grafana/plugin-types-bundler": "npm:0.6.0"
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
@@ -20435,6 +20481,18 @@ __metadata:
   dependencies:
     "@isaacs/cliui": "npm:^8.0.2"
   checksum: 10/ffceb270ec286841f48413bfb4a50b188662dfd599378ce142b6540f3f0a66821dc9dcb1e9ebc55c6c3b24dc2226c96e5819ba9bd7a241bd29031b61911718c7
+  languageName: node
+  linkType: hard
+
+"jackw-dts-bundle-gen-test@npm:^9.5.1":
+  version: 9.5.1
+  resolution: "jackw-dts-bundle-gen-test@npm:9.5.1"
+  dependencies:
+    typescript: "npm:>=5.0.2"
+    yargs: "npm:^17.6.0"
+  bin:
+    jackw-dts-bundle-gen-test: dist/bin/dts-bundle-generator.js
+  checksum: 10/306fb6dab33f960d91dfa2e2bffaf61f8a974f559f2357e224fe69624f8a5faf4a038c821c090324c11632415d9368f1c0268e42428f2a27adeee4891d11a71e
   languageName: node
   linkType: hard
 
@@ -31560,6 +31618,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tty-table@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "tty-table@npm:5.0.0"
+  dependencies:
+    chalk: "npm:^4.1.2"
+    csv: "npm:^5.5.3"
+    kleur: "npm:^4.1.5"
+    smartwrap: "npm:^2.0.2"
+    strip-ansi: "npm:^6.0.1"
+    wcwidth: "npm:^1.0.1"
+    yargs: "npm:^17.7.1"
+  bin:
+    tty-table: adapters/terminal-adapter.js
+  checksum: 10/396fe7b8cede9044902801443239c24ef416337200420a3a95d338a02ad11b39135daa9cc64b89073a335bdac6fabbc4af5c5e2df0d6f57bd83ae2f60e3db388
+  languageName: node
+  linkType: hard
+
 "tuf-js@npm:^4.1.0":
   version: 4.1.0
   resolution: "tuf-js@npm:4.1.0"
@@ -31790,6 +31865,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:>=5.0.2":
+  version: 6.0.3
+  resolution: "typescript@npm:6.0.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/0ef2357a4cffd916b52b683a021cdab0f81eea4e9aa35f2d254581c9a5106da02224e3392e1b0ed42b7a48f80c966e5f52b8e1a27941fa0523c1705a9c2e0330
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>":
   version: 5.6.1-rc
   resolution: "typescript@patch:typescript@npm%3A5.6.1-rc#optional!builtin<compat/typescript>::version=5.6.1-rc&hash=8c6c40"
@@ -31817,6 +31902,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10/e5501dfcf8c5b6b9a61f6fa53decc40187cebe3a2b7b2bd51c615007ad4cf6d58298461fef63294f6be9d5f2f33019b2a2e2bf02d9cb7d7f6ec94372bf24ffa2
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@npm%3A>=5.0.2#optional!builtin<compat/typescript>":
+  version: 6.0.3
+  resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10/22b67a18dafedf9b1468b64ca20d9aa02ea61d449b65413d8aa6552aeb63f52ef369e86beb25b6b4c91a803d9726ee5c196f391a9b64201263263410a4223ee6
   languageName: node
   linkType: hard
 
@@ -31868,6 +31963,13 @@ __metadata:
   version: 7.16.0
   resolution: "undici-types@npm:7.16.0"
   checksum: 10/db43439f69c2d94cc29f75cbfe9de86df87061d6b0c577ebe9bb3255f49b22c50162a7d7eb413b0458b6510b8ca299ac7cff38c3a29fbd31af9f504bcf7fbc0d
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~7.18.0":
+  version: 7.18.2
+  resolution: "undici-types@npm:7.18.2"
+  checksum: 10/e61a5918f624d68420c3ca9d301e9f15b61cba6e97be39fe2ce266dd6151e4afe424d679372638826cb506be33952774e0424141200111a9857e464216c009af
   languageName: node
   linkType: hard
 
@@ -33353,6 +33455,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"yargs@npm:^17.6.0":
+  version: 17.7.3
+  resolution: "yargs@npm:17.7.3"
+  dependencies:
+    cliui: "npm:^8.0.1"
+    escalade: "npm:^3.1.1"
+    get-caller-file: "npm:^2.0.5"
+    require-directory: "npm:^2.1.1"
+    string-width: "npm:^4.2.3"
+    y18n: "npm:^5.0.5"
+    yargs-parser: "npm:^21.1.1"
+  checksum: 10/a3826798c03b159e139d0580a3b2733953889a9a1bac8e4e1ca7a1a249b55315b213c323a6a1dbdb305f6e59496a9eaa810742c87e34abcf1a0584d8f59212a1
+  languageName: node
+  linkType: hard
+
 "yargs@npm:^18.0.0":
   version: 18.0.0
   resolution: "yargs@npm:18.0.0"
@@ -33378,6 +33495,15 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: 10/f77b3d8d00310def622123df93d4ee654fc6a0096182af8bd60679ddcdfb3474c56c6c7190817c84a2785648cdee9d721c0154eb45698c62176c322fb46fc700
+  languageName: node
+  linkType: hard
+
+"yocto-spinner@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "yocto-spinner@npm:1.2.0"
+  dependencies:
+    yoctocolors: "npm:^2.1.1"
+  checksum: 10/29728e568e92959ed5400266d9b5901521199a0aa853d0f4fb2f1a69ac53e83da1797bf64c30d52ff35c51f9f875b3150a48d19f3964911516f11d85e371d26e
   languageName: node
   linkType: hard
 

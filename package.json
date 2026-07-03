@@ -81,6 +81,7 @@
     "generate:api-client": "yarn workspace @grafana/api-clients generate:api-client",
     "generate:openapi": "yarn workspace @grafana/openapi generate:openapi",
     "gen-plugin-schema-types": "jq '.title = \"PluginSchema\"' docs/sources/developers/plugins/plugin.schema.json | yarn json2ts --ignoreMinAndMaxItems > \"${PLUGIN_SCHEMA_TYPES_OUT:-./plugin-schema.d.ts}\"",
+    "bundle-plugin-types": "plugin-types-bundler",
     "check-enterprise-linked": "./scripts/check-enterprise-linked.sh",
     "knip": "yarn check-enterprise-linked && knip --no-config-hints",
     "knip:fix": "yarn check-enterprise-linked && knip --fix --allow-remove-files --no-config-hints"
@@ -97,6 +98,7 @@
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/levitate": "0.17.2",
     "@grafana/plugin-e2e": "3.7.2",
+    "@grafana/plugin-types-bundler": "0.6.0",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
