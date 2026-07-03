@@ -152,7 +152,7 @@ export const Examples = () => {
           })}
           {renderPanel('Content', {
             title: 'With a subtitle',
-            subtitle: 'This is a sub title with <a href="http://www.google.com">Link</a> and <em>emphasized</em> text',
+            subtitle: 'This is a sub title with',
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
