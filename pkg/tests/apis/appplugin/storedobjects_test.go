@@ -123,6 +123,115 @@ func TestIntegrationPluginSchemaCreate(t *testing.T) {
 	require.Equal(t, apiVersion, applied.GetAPIVersion())
 }
 
+// TestIntegrationPluginSchemaStatus exercises the /status subresource that is
+// registered because the fixture's Watchlist declares a status schema.
+func TestIntegrationPluginSchemaStatus(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupStoredObjectsHelper(t)
+
+	gvr := schema.GroupVersionResource{
+		Group:    storedObjectsGroup,
+		Version:  storedObjectsVersion,
+		Resource: "watchlists",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default",
+		GVR:       gvr,
+	})
+
+	apiVersion := storedObjectsGroup + "/" + storedObjectsVersion
+	ctx := context.Background()
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": apiVersion,
+		"kind":       "Watchlist",
+		"metadata": map[string]any{
+			"name":      "watchlist-status",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title":    "outages",
+			"patterns": []any{"5xx"},
+			"severity": "warn",
+		},
+	}}
+
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+	})
+
+	// Write status through the /status subresource, as a plugin reconciler
+	// would.
+	withStatus := created.DeepCopy()
+	withStatus.Object["status"] = map[string]any{
+		"state":   "synced",
+		"message": "all patterns active",
+	}
+	updated, err := client.Resource.UpdateStatus(ctx, withStatus, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	state, found, err := unstructured.NestedString(updated.Object, "status", "state")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "synced", state)
+
+	// The status write persists.
+	got, err := client.Resource.Get(ctx, "watchlist-status", metav1.GetOptions{})
+	require.NoError(t, err)
+	msg, found, err := unstructured.NestedString(got.Object, "status", "message")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "all patterns active", msg)
+
+	// A status update does not change spec: the status write above carried
+	// the original spec, and it is intact afterwards.
+	title, _, err := unstructured.NestedString(got.Object, "spec", "title")
+	require.NoError(t, err)
+	require.Equal(t, "outages", title)
+
+	// A status update that also tampers with spec: the generic status
+	// strategy (genericStatusStrategy.PrepareForUpdate) only restores
+	// metadata from the old object, not spec, so a spec change smuggled
+	// through /status is persisted. Assert the actual behavior so a future
+	// fix to the strategy shows up as a test failure here.
+	tampered := got.DeepCopy()
+	require.NoError(t, unstructured.SetNestedField(tampered.Object, "tampered-via-status", "spec", "title"))
+	afterTamper, err := client.Resource.UpdateStatus(ctx, tampered, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	title, _, err = unstructured.NestedString(afterTamper.Object, "spec", "title")
+	require.NoError(t, err)
+	require.Equal(t, "tampered-via-status", title,
+		"expected the known gap: /status updates are not supposed to change spec, but the generic status strategy does not restore the old spec")
+
+	// A plain spec update from a client that does not send a status field.
+	// The generic strategy's PrepareForUpdate tries to carry status forward
+	// via MetaAccessor GetStatus/SetStatus, but those only work for objects
+	// with a Status Go field or *unstructured.Unstructured. Stored objects
+	// decode into an UntypedObject wrapper that keeps status in a generic
+	// Subresources map, so both calls silently fail and the previously
+	// written status is clobbered by the spec write. Assert the actual
+	// (lossy) behavior rather than papering over it; when the machinery
+	// learns to preserve status for untyped objects this assertion should
+	// flip.
+	specUpdate, err := client.Resource.Get(ctx, "watchlist-status", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NoError(t, unstructured.SetNestedField(specUpdate.Object, "crit", "spec", "severity"))
+	delete(specUpdate.Object, "status")
+	afterSpec, err := client.Resource.Update(ctx, specUpdate, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	severity, _, err := unstructured.NestedString(afterSpec.Object, "spec", "severity")
+	require.NoError(t, err)
+	require.Equal(t, "crit", severity)
+	_, statusSurvived, err := unstructured.NestedMap(afterSpec.Object, "status")
+	require.NoError(t, err)
+	require.False(t, statusSurvived,
+		"expected the known gap: spec updates clobber status for untyped stored objects because GetStatus/SetStatus cannot see the Subresources map")
+}
+
 func setupStoredObjectsHelper(t *testing.T) *apis.K8sTestHelper {
 	t.Helper()
 

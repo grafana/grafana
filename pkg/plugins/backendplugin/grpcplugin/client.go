@@ -40,6 +40,9 @@ var pluginSet = map[int]goplugin.PluginSet{
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
 		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
+		// Client-side entry only: plugins that don't serve the stored object
+		// events service simply return Unimplemented when the stream opens.
+		"storedobjectevents": &grpcplugin.StoredObjectEventsGRPCPlugin{},
 	},
 }
 

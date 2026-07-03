@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/hashicorp/go-plugin"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,6 +18,7 @@ import (
 	errstatus "github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -32,6 +34,7 @@ type ClientV2 struct {
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
+	grpcplugin.StoredObjectEventsClient
 
 	// Chunking will fallback to DataQuery
 	chunkUnimplemented atomic.Bool
@@ -64,6 +67,11 @@ func newClientV2(rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	}
 
 	rawStream, err := rpcClient.Dispense("stream")
+	if err != nil {
+		return nil, err
+	}
+
+	rawStoredObjectEvents, err := rpcClient.Dispense("storedobjectevents")
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +110,12 @@ func newClientV2(rpcClient plugin.ClientProtocol) (*ClientV2, error) {
 	if rawStream != nil {
 		if streamClient, ok := rawStream.(grpcplugin.StreamClient); ok {
 			c.StreamClient = streamClient
+		}
+	}
+
+	if rawStoredObjectEvents != nil {
+		if storedObjectEventsClient, ok := rawStoredObjectEvents.(grpcplugin.StoredObjectEventsClient); ok {
+			c.StoredObjectEventsClient = storedObjectEventsClient
 		}
 	}
 
@@ -417,6 +431,46 @@ func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRe
 	}
 
 	return backend.FromProto().ConversionResponse(protoResp), nil
+}
+
+// StreamStoredObjectEvents opens the bidirectional stored-object events
+// stream and adapts it to the SDK-typed backendplugin.StoredObjectEventsStream.
+// This shadows the promoted raw-proto method from the embedded
+// StoredObjectEventsClient on purpose, same as the other handler methods.
+func (c *ClientV2) StreamStoredObjectEvents(ctx context.Context) (backendplugin.StoredObjectEventsStream, error) {
+	if c.StoredObjectEventsClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	stream, err := c.StoredObjectEventsClient.StreamStoredObjectEvents(ctx)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+		return nil, fmt.Errorf("%v: %w", "Failed to StreamStoredObjectEvents", err)
+	}
+
+	return &storedObjectEventsStream{stream: stream}, nil
+}
+
+type storedObjectEventsStream struct {
+	stream grpc.BidiStreamingClient[pluginv2.StoredObjectEvent, pluginv2.StoredObjectEventsSubscription]
+}
+
+func (s *storedObjectEventsStream) Send(event *backend.StoredObjectEvent) error {
+	return s.stream.Send(backend.ToProto().StoredObjectEvent(event))
+}
+
+func (s *storedObjectEventsStream) RecvSubscription() ([]string, error) {
+	sub, err := s.stream.Recv()
+	if err != nil {
+		return nil, err
+	}
+	return sub.Kinds, nil
+}
+
+func (s *storedObjectEventsStream) Close() error {
+	return s.stream.CloseSend()
 }
 
 // handleGrpcStatusError sets the error source via context based on the error source provided. Regardless of its value,

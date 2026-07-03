@@ -70,6 +70,12 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
+	// Publish the typed spec/status schemas for any stored objects the plugin
+	// declares in its artifact.
+	if err := b.addStoredObjectComponentSchemas(oas); err != nil {
+		return nil, err
+	}
+
 	// Always transform results
 	switch {
 	case schema.IsZero():

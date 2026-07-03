@@ -3,7 +3,6 @@ package appplugin
 import (
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
@@ -11,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 	openapispec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -25,8 +25,16 @@ type storedObjectKind struct {
 	Plural     string
 	Singular   string
 	Cluster    bool
-	Validation []pluginschema.AdmissionOperation
-	Mutation   []pluginschema.AdmissionOperation
+	Spec       *openapispec.Schema
+	Status     *openapispec.Schema
+	Validation []pluginschema.Operation
+	Mutation   []pluginschema.Operation
+}
+
+// HasStatus reports whether the kind declares a status schema and therefore
+// gets a /status subresource.
+func (k storedObjectKind) HasStatus() bool {
+	return k.Status != nil
 }
 
 // parseStoredObjects returns the declared stored objects for the builder's
@@ -45,19 +53,19 @@ func (b *AppPluginAPIBuilder) parseStoredObjects() ([]storedObjectKind, error) {
 		if so.Name == "" {
 			return nil, fmt.Errorf("plugin %q has a stored object without a name", b.pluginJSON.ID)
 		}
-		plural := so.Plural
-		if plural == "" {
-			plural = strings.ToLower(so.Name) + "s"
-		}
-		singular := so.Singular
-		if singular == "" {
-			singular = strings.ToLower(so.Name)
+		// The SDK reflector always fills plural/singular in the artifact.
+		// Deriving them here as well would risk drifting from the SDK's rules,
+		// so an incomplete artifact is rejected instead.
+		if so.Plural == "" || so.Singular == "" {
+			return nil, fmt.Errorf("plugin %q stored object %q is missing plural or singular: generate the artifact with the SDK tooling", b.pluginJSON.ID, so.Name)
 		}
 		out = append(out, storedObjectKind{
 			Kind:       so.Name,
-			Plural:     plural,
-			Singular:   singular,
+			Plural:     so.Plural,
+			Singular:   so.Singular,
 			Cluster:    so.Scope == pluginschema.ScopeCluster,
+			Spec:       so.Spec,
+			Status:     so.Status,
 			Validation: so.Validation,
 			Mutation:   so.Mutation,
 		})
@@ -108,6 +116,7 @@ func (b *AppPluginAPIBuilder) installStoredObjectStorage(storage map[string]rest
 	if err != nil {
 		return err
 	}
+	b.eventWatchers = b.eventWatchers[:0]
 	for _, k := range kinds {
 		ri := b.storedObjectResourceInfo(k)
 		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, ri, opts.OptsGetter)
@@ -115,6 +124,13 @@ func (b *AppPluginAPIBuilder) installStoredObjectStorage(storage map[string]rest
 			return fmt.Errorf("creating storage for stored object %s: %w", ri.GetName(), err)
 		}
 		storage[ri.StoragePath()] = store
+		if k.HasStatus() {
+			storage[ri.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store)
+		}
+		// Every declared kind is a candidate event source; whether events
+		// actually flow is decided at runtime by the plugin subscribing on
+		// the StoredObjectEvents stream, not by a schema declaration.
+		b.eventWatchers = append(b.eventWatchers, storedObjectEventSource{kind: k.Kind, watcher: store})
 	}
 	return nil
 }
@@ -143,6 +159,55 @@ func (b *AppPluginAPIBuilder) mergeStoredObjectOpenAPIDefinitions(defs map[strin
 	defs[goReflectPath(&storedList{})] = storedObjectDefinition(listGVKs)
 }
 
+// addStoredObjectComponentSchemas publishes one component schema per declared
+// stored object into the served OpenAPI document. The generic GVK-tagged
+// definitions above stay as-is (server-side apply resolves Go types through
+// them); these per-kind schemas exist so API consumers can see the actual
+// spec/status shapes the plugin declared in its artifact.
+func (b *AppPluginAPIBuilder) addStoredObjectComponentSchemas(oas *spec3.OpenAPI) error {
+	kinds, err := b.parseStoredObjects()
+	if err != nil {
+		return err
+	}
+	if len(kinds) == 0 {
+		return nil
+	}
+	if oas.Components == nil {
+		oas.Components = &spec3.Components{}
+	}
+	if oas.Components.Schemas == nil {
+		oas.Components.Schemas = map[string]*openapispec.Schema{}
+	}
+	genericObject := func() openapispec.Schema {
+		return openapispec.Schema{SchemaProps: openapispec.SchemaProps{
+			Type:                 []string{"object"},
+			AdditionalProperties: &openapispec.SchemaOrBool{Allows: true},
+		}}
+	}
+	for _, k := range kinds {
+		props := map[string]openapispec.Schema{
+			"apiVersion": *openapispec.StringProperty().WithEnum(b.groupVersion.String()),
+			"kind":       *openapispec.StringProperty().WithEnum(k.Kind),
+			"metadata":   genericObject(),
+		}
+		if k.Spec != nil {
+			props["spec"] = *k.Spec
+		} else {
+			props["spec"] = genericObject()
+		}
+		if k.Status != nil {
+			props["status"] = *k.Status
+		}
+		name := fmt.Sprintf("%s/%s/%s", b.groupVersion.Group, b.groupVersion.Version, k.Kind)
+		oas.Components.Schemas[name] = &openapispec.Schema{SchemaProps: openapispec.SchemaProps{
+			Description: fmt.Sprintf("Stored object %s declared by plugin %s", k.Kind, b.pluginJSON.ID),
+			Type:        []string{"object"},
+			Properties:  props,
+		}}
+	}
+	return nil
+}
+
 func storedObjectDefinition(gvks []interface{}) openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
 		Schema: openapispec.Schema{
@@ -161,7 +226,7 @@ func storedObjectDefinition(gvks []interface{}) openapi.OpenAPIDefinition {
 
 func goReflectPath(obj interface{}) string {
 	t := reflect.TypeOf(obj)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t.PkgPath() + "." + t.Name()

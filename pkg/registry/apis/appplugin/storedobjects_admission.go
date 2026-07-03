@@ -17,7 +17,15 @@ import (
 // everything else (settings, other kinds, non-opt-in operations) passes
 // through unchanged.
 func (b *AppPluginAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	kind, ok := b.findStoredObjectKind(a)
+	// Subresource writes (e.g. /status from a plugin reconciler) must not
+	// recurse into the spec admission path.
+	if a.GetSubresource() != "" {
+		return nil
+	}
+	kind, ok, err := b.findStoredObjectKind(a)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return nil
 	}
@@ -52,7 +60,15 @@ func (b *AppPluginAPIBuilder) Validate(ctx context.Context, a admission.Attribut
 // those are decoded back into the live object in place so the admission
 // pipeline sees the mutation.
 func (b *AppPluginAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	kind, ok := b.findStoredObjectKind(a)
+	// Subresource writes (e.g. /status from a plugin reconciler) must not
+	// recurse into the spec admission path.
+	if a.GetSubresource() != "" {
+		return nil
+	}
+	kind, ok, err := b.findStoredObjectKind(a)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return nil
 	}
@@ -94,22 +110,26 @@ func (b *AppPluginAPIBuilder) Mutate(ctx context.Context, a admission.Attributes
 // findStoredObjectKind returns the declared stored object matching the
 // admission attributes, or false if the request targets a kind the builder
 // doesn't own (e.g. the settings resource itself, or another builder's kind
-// under the same group).
-func (b *AppPluginAPIBuilder) findStoredObjectKind(a admission.Attributes) (storedObjectKind, bool) {
+// under the same group). A parse error is propagated so admission fails
+// closed instead of silently skipping the plugin's checks.
+func (b *AppPluginAPIBuilder) findStoredObjectKind(a admission.Attributes) (storedObjectKind, bool, error) {
 	kinds, err := b.parseStoredObjects()
-	if err != nil || len(kinds) == 0 {
-		return storedObjectKind{}, false
+	if err != nil {
+		return storedObjectKind{}, false, fmt.Errorf("parsing stored objects for plugin %s: %w", b.pluginJSON.ID, err)
+	}
+	if len(kinds) == 0 {
+		return storedObjectKind{}, false, nil
 	}
 	gvk := a.GetKind()
 	if gvk.Group != b.groupVersion.Group || gvk.Version != b.groupVersion.Version {
-		return storedObjectKind{}, false
+		return storedObjectKind{}, false, nil
 	}
 	for _, k := range kinds {
 		if k.Kind == gvk.Kind {
-			return k, true
+			return k, true, nil
 		}
 	}
-	return storedObjectKind{}, false
+	return storedObjectKind{}, false, nil
 }
 
 func (b *AppPluginAPIBuilder) toBackendAdmissionRequest(ctx context.Context, a admission.Attributes, op backend.AdmissionRequestOperation) (context.Context, *backend.AdmissionRequest, error) {
@@ -117,7 +137,7 @@ func (b *AppPluginAPIBuilder) toBackendAdmissionRequest(ctx context.Context, a a
 	// uses for CallResource and health. This pulls the app's settings,
 	// decrypts secure values, and returns a PluginContext bound to the
 	// caller's identity.
-	ctx, pluginCtx, err := b.getPluginContext(ctx)
+	ctx, pluginCtx, err := b.pluginContext(ctx)
 	if err != nil {
 		return ctx, nil, fmt.Errorf("getting plugin context for %s: %w", b.pluginJSON.ID, err)
 	}
@@ -168,7 +188,7 @@ func mapStoredObjectOperation(verb admission.Operation) (backend.AdmissionReques
 	}
 }
 
-func storedObjectOpsContain(declared []pluginschema.AdmissionOperation, op backend.AdmissionRequestOperation) bool {
+func storedObjectOpsContain(declared []pluginschema.Operation, op backend.AdmissionRequestOperation) bool {
 	if len(declared) == 0 {
 		return false
 	}
@@ -181,14 +201,14 @@ func storedObjectOpsContain(declared []pluginschema.AdmissionOperation, op backe
 	return false
 }
 
-func storedObjectOpToSchema(op backend.AdmissionRequestOperation) pluginschema.AdmissionOperation {
+func storedObjectOpToSchema(op backend.AdmissionRequestOperation) pluginschema.Operation {
 	switch op {
 	case backend.AdmissionRequestCreate:
-		return pluginschema.AdmissionOperationCreate
+		return pluginschema.OperationCreate
 	case backend.AdmissionRequestUpdate:
-		return pluginschema.AdmissionOperationUpdate
+		return pluginschema.OperationUpdate
 	case backend.AdmissionRequestDelete:
-		return pluginschema.AdmissionOperationDelete
+		return pluginschema.OperationDelete
 	default:
 		return ""
 	}
