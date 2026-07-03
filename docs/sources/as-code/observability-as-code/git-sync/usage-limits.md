@@ -93,7 +93,7 @@ If sharding isn't practical for your setup, we can also raise the per-connection
 
 Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
 
-Limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. In many cases, splitting a monorepo across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
+On Grafana Cloud, limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. On-prem users don't need to make a request: you can change the limits directly through configuration settings, as described below. In many cases, splitting a monorepo across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
 
 How you change the limits depends on your deployment:
 
