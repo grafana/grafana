@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func newAnnotation(text string, tags ...string) *unstructured.Unstructured {
 			},
 			"spec": map[string]any{
 				"text": text,
-				"time": int64(1700000000000),
+				"time": time.Now().UnixMilli(),
 				"tags": tagSlice,
 			},
 		},
@@ -325,4 +326,41 @@ func TestIntegrationAnnotationTags(t *testing.T) {
 	for _, tag := range rsp.Result.Tags {
 		require.Contains(t, tag.Tag, "env")
 	}
+}
+
+func TestIntegrationAnnotationGraphite(t *testing.T) {
+	helper, client := setupTest(t)
+	ctx := t.Context()
+
+	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	path := fmt.Sprintf("/apis/annotation.grafana.app/v0alpha1/namespaces/%s/graphite", namespace)
+
+	// Post a Graphite-format event with array tags and a data field; the response is the created Annotation resource.
+	when := time.Now().Unix()
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   path,
+		Body:   []byte(fmt.Sprintf(`{"what":"deployment","when":%d,"data":"v1.2.3","tags":["release","prod"]}`, when)),
+	}, &annotationV0.Annotation{})
+	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+	require.NotEmpty(t, rsp.Result.GetName())
+	// `what` and `data` are joined into the text and the tags are preserved.
+	require.Equal(t, "deployment\nv1.2.3", rsp.Result.Spec.Text)
+	require.ElementsMatch(t, []string{"release", "prod"}, rsp.Result.Spec.Tags)
+
+	// The created annotation is retrievable by the returned name.
+	fetched, err := client.Resource.Get(ctx, rsp.Result.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
+	text, _, _ := unstructured.NestedString(fetched.Object, "spec", "text")
+	require.Equal(t, "deployment\nv1.2.3", text)
+
+	// An empty `what` is rejected.
+	rsp = apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   path,
+		Body:   []byte(`{"what":""}`),
+	}, &annotationV0.Annotation{})
+	require.Equal(t, http.StatusInternalServerError, rsp.Response.StatusCode)
 }

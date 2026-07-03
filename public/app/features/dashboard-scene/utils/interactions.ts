@@ -349,6 +349,11 @@ export const DashboardInteractions = {
   editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);
   },
+
+  // click "Take me there" button from the dashboard settings for annotations or variables
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' }) => {
+    reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
+  },
 };
 
 const reportDashboardInteraction = (

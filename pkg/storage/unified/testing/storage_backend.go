@@ -36,6 +36,7 @@ const (
 	TestList                      = "list"
 	TestBlobSupport               = "blob support"
 	TestGetResourceStats          = "get resource stats"
+	TestListStoredResources       = "list stored resources"
 	TestListHistory               = "list history"
 	TestListHistoryErrorReporting = "list history error reporting"
 	TestListModifiedSince         = "list events since rv"
@@ -87,6 +88,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestList, runTestIntegrationBackendList},
 		{TestBlobSupport, runTestIntegrationBlobSupport},
 		{TestGetResourceStats, runTestIntegrationBackendGetResourceStats},
+		{TestListStoredResources, runTestIntegrationBackendListStoredResources},
 		{TestListHistory, runTestIntegrationBackendListHistory},
 		{TestListHistoryErrorReporting, runTestIntegrationBackendListHistoryErrorReporting},
 		{TestListTrash, runTestIntegrationBackendTrash},
@@ -336,6 +338,73 @@ func runTestIntegrationBackendGetResourceStats(t *testing.T, backend resource.St
 	})
 }
 
+func runTestIntegrationBackendListStoredResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+
+	sortFunc := func(a, b resource.NamespacedResource) int {
+		if a.Namespace != b.Namespace {
+			return strings.Compare(a.Namespace, b.Namespace)
+		}
+		if a.Group != b.Group {
+			return strings.Compare(a.Group, b.Group)
+		}
+		return strings.Compare(a.Resource, b.Resource)
+	}
+
+	ns1 := nsPrefix + "-stored-ns1"
+	ns2 := nsPrefix + "-stored-ns2"
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	_, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item3", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns1), WithGroup("group"), WithResource("resource2"))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "item4", resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns2), WithGroup("group"), WithResource("resource1"))
+	require.NoError(t, err)
+
+	t.Run("discover resources in ns1", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1})
+		require.NoError(t, err)
+		slices.SortFunc(got, sortFunc)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource1"},
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("discover resources in ns2", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns2})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns2, Group: "group", Resource: "resource1"},
+		}, got)
+	})
+
+	t.Run("resource filter", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: ns1, Resource: "resource2"})
+		require.NoError(t, err)
+		require.Equal(t, []resource.NamespacedResource{
+			{Namespace: ns1, Group: "group", Resource: "resource2"},
+		}, got)
+	})
+
+	t.Run("non-existent namespace is empty", func(t *testing.T) {
+		got, err := backend.ListStoredResources(ctx, resource.NamespacedResource{Namespace: nsPrefix + "-stored-missing"})
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("empty namespace is rejected", func(t *testing.T) {
+		_, err := backend.ListStoredResources(ctx, resource.NamespacedResource{})
+		require.Error(t, err)
+	})
+}
 func runTestIntegrationBackendWatchWriteEvents(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 
@@ -1127,7 +1196,10 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 }
 
 func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	// The deadline must comfortably cover writing the fixture events below on a
+	// loaded CI runner. The List call under test uses its own 1µs timeout, so
+	// this budget only guards setup, not the assertion.
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 	server := newServer(t, backend)
 
 	ns := nsPrefix + "-short"
