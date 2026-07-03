@@ -7,6 +7,7 @@ import {
   LoadingState,
   type QueryResultMetaStat,
   generateUUID,
+  store,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -375,7 +376,7 @@ function getInitialGroupSize(shards: number[]) {
 }
 
 // Enable to output debugging logs
-const DEBUG_ENABLED = Boolean(localStorage.getItem(`loki.sharding_debug_enabled`));
+const DEBUG_ENABLED = Boolean(store.get(`loki.sharding_debug_enabled`));
 function debug(message: string) {
   if (!DEBUG_ENABLED) {
     return;

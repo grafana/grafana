@@ -3,7 +3,7 @@ import { memo, type SyntheticEvent, useCallback, useEffect, useId, useState } fr
 import { usePrevious } from 'react-use';
 
 import { QueryWithAssistantButton } from '@grafana/assistant';
-import { CoreApp, LoadingState } from '@grafana/data';
+import { CoreApp, LoadingState, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   EditorHeader,
@@ -42,7 +42,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
-  const [explain, setExplain] = useState(window.localStorage.getItem(lokiQueryEditorExplainKey) === 'true');
+  const [explain, setExplain] = useState(store.get(lokiQueryEditorExplainKey) === 'true');
 
   const previousTimeRange = usePrevious(timeRange);
 
@@ -58,7 +58,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
     (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
 
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
-    window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
+    store.set(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
     setExplain(event.currentTarget.checked);
   };
 
