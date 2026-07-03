@@ -215,7 +215,7 @@ var appManifestData = app.ManifestData{
 							Name:         "email",
 							Path:         "spec.email",
 							Type:         "string",
-							Capabilities: []string{"retrieve"},
+							Capabilities: []string{"sort", "retrieve"},
 							Description:  "Email of the team",
 						},
 						{

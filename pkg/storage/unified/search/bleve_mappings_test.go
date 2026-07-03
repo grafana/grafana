@@ -248,7 +248,7 @@ func TestDocValuesConfiguration(t *testing.T) {
 		assert.False(t, impl.DocValuesDynamic, "DocValuesDynamic should be false to prevent dynamic fields from getting DocValues")
 	})
 
-	t.Run("only folder and title_phrase have DocValues", func(t *testing.T) {
+	t.Run("only sortable fields have DocValues", func(t *testing.T) {
 		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
@@ -271,6 +271,7 @@ func TestDocValuesConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		fieldsWithDocValues := map[string]bool{
+			resource.SEARCH_FIELD_NAME:         true,
 			resource.SEARCH_FIELD_FOLDER:       true,
 			resource.SEARCH_FIELD_TITLE_PHRASE: true,
 		}
