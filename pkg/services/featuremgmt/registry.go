@@ -3140,6 +3140,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.dashboardSettingsRedesign",
+			Description: "Redesigns dashboard settings page into Advanced Settings in a modal window",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+		},
+		{
 			Name:        "grafana.growthHomepage",
 			Description: "Enables PLG-focused growth redesign of the unified homepage",
 			Stage:       FeatureStageExperimental,

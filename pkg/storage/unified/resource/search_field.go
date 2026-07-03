@@ -32,8 +32,7 @@ const (
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
 	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant, which the authz searcher reads column-wise to
-	// check folder permissions on every matching document.
+	// on the keyword variant for column-wise reads and stable sort tie-breakers.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results

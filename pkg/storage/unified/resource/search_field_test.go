@@ -233,7 +233,8 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	const expected = "fde7f709479cdb925bf11296f3d422c58ad2c2cbfa0fd457218c2e0bd638827f"
+	// The standard name field has sort capability so Bleve can use it as a stable pagination tie-breaker.
+	const expected = "c4587931c884566e46c37eb573565b9b0d7246aeef6d7b7e3bf95d5aac24ca01"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }

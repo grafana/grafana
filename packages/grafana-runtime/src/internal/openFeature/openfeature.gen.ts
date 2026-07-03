@@ -45,6 +45,8 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Redesigns dashboard settings page into Advanced Settings in a modal window */
+  GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables PLG-focused growth redesign of the unified homepage */
@@ -299,6 +301,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
+ * Redesigns dashboard settings page into Advanced Settings in a modal window
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardSettingsRedesign`
+ * - default value: `true`
+ */
+export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
 };
 
 /**
