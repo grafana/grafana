@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import {
   CoreApp,
+  type DataSourceInstanceSettings,
   type GrafanaTheme2,
   type IconName,
   type LinkModel,
@@ -13,7 +15,8 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import { Button, DataLinkButton, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 export const RelatedProfilesTitle = 'Related profiles';
 
@@ -75,16 +78,17 @@ export const SpanDetailLinkButtons = (props: Props) => {
     limitPerPlugin: 1,
   });
 
-  let linkToProfiles: SpanLinkDef | undefined;
-  let content = shareButton ? <>{shareButton}</> : undefined;
+  const { settings } = useDataSourceInstanceSettings(datasourceUid);
 
-  if (createSpanLink) {
-    const links = (createSpanLink(span) || [])
+  const links = useMemo(() => {
+    let linkToProfiles: SpanLinkDef | undefined;
+
+    const links = (createSpanLink?.(span) || [])
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
         if (link.type === SpanLinkType.Logs) {
-          return createLinkModel(link, SpanLinkType.Logs, 'Logs for this span', 'gf-logs', datasourceType);
+          return createLinkModel(link, SpanLinkType.Logs, getLogsButtonCTA(settings), 'gf-logs', datasourceType);
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
@@ -131,44 +135,53 @@ export const SpanDetailLinkButtons = (props: Props) => {
       return aValue - bValue;
     });
 
-    if (links.length > MAX_LINKS) {
-      content = (
-        <>
-          <DropDownMenu links={links}></DropDownMenu>
-          {shareButton}
-        </>
-      );
-    } else if (links.length > 0) {
-      content = (
-        <>
-          {links.map((spanLinkModel, index) => (
-            <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />
-          ))}
-          {shareButton}
-        </>
-      );
-    }
-  }
+    return links;
+  }, [app, createSpanLink, datasourceType, pluginLinks, settings, span]);
 
-  if (!content) {
-    return <></>;
+  if (!links.length && !shareButton) {
+    return null;
   }
 
   return (
-    <span
-      className={css({
-        display: 'flex',
-        width: '100%',
-        flexDisplay: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'flex-end',
-        gap: '5px',
-      })}
-    >
-      {content}
+    <span className={styles.linksContainer}>
+      {links.length > MAX_LINKS ? (
+        <DropDownMenu links={links}></DropDownMenu>
+      ) : (
+        links.map((spanLinkModel, index) => <SingleLinkButton spanLinkModel={spanLinkModel} key={index} />)
+      )}
+      {shareButton}
     </span>
   );
 };
+
+const styles = {
+  linksContainer: css({
+    display: 'flex',
+    width: '100%',
+    flexDisplay: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: '5px',
+  }),
+};
+
+function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
+  const defaultCTA = 'Related logs';
+  if (!settings || settings.type !== 'tempo') {
+    return defaultCTA;
+  }
+
+  if ('tracesToLogsV2' in settings) {
+    if ('filterBySpanId' in settings && settings.filterBySpanId) {
+      return 'Logs for this span';
+    }
+    if ('filterByTraceID' in settings && settings.filterByTraceID) {
+      return 'Logs for this trace';
+    }
+  }
+
+  return defaultCTA;
+}
 
 function getResponsibleButtonStyles(theme: GrafanaTheme2) {
   return css({

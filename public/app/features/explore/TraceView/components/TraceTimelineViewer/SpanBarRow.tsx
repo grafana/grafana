@@ -341,7 +341,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
 
 export type SpanBarRowProps = {
   className?: string;
-  theme: GrafanaTheme2;
   color: string;
   spanBarOptions: SpanBarOptions | undefined;
   columnDivision: number;
