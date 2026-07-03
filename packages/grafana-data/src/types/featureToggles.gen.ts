@@ -1110,11 +1110,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enables team folders functionality
-  * @default true
-  */
-  teamFolders?: boolean;
-  /**
   * Enables the interactive learning app
   * @default false
   */

@@ -74,6 +74,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
 ## Public preview feature toggles
 
@@ -99,7 +100,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
-| `teamFolders`                     | Enables team folders functionality                                                             |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |

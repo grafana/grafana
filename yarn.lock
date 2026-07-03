@@ -2704,13 +2704,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^8.9.0":
-  version: 8.9.0
-  resolution: "@grafana/scenes-react@npm:8.9.0"
+"@grafana/scenes-react@npm:8.9.5":
+  version: 8.9.5
+  resolution: "@grafana/scenes-react@npm:8.9.5"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@emotion/react": "npm:11.14.0"
-    "@grafana/scenes": "npm:8.9.0"
+    "@emotion/css": "npm:^11.13.5"
+    "@emotion/react": "npm:^11.14.0"
+    "@grafana/scenes": "npm:8.9.5"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -2724,16 +2724,16 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/20c1955d906112851a304ea9eaf798033fc7f1baa8c73eda5add4ab7958986814ff26c977d2dd580ba54f6da2a1b9ca58f57efe59bf58dd563a313315687c80c
+  checksum: 10/f20645c9d0bb2535d1454535ea37741d32f852599226a1c4b3cdad8d62b45b15c8e3d1173fc0fa00b7173082efacb90f92502a7d58ff1e1946fc0b21c82a272c
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.9.0, @grafana/scenes@npm:^8.9.0":
-  version: 8.9.0
-  resolution: "@grafana/scenes@npm:8.9.0"
+"@grafana/scenes@npm:8.9.5":
+  version: 8.9.5
+  resolution: "@grafana/scenes@npm:8.9.5"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@emotion/react": "npm:11.14.0"
+    "@emotion/css": "npm:^11.13.5"
+    "@emotion/react": "npm:^11.14.0"
     "@floating-ui/react": "npm:^0.27.0"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
     "@tanstack/react-virtual": "npm:^3.9.0"
@@ -2755,7 +2755,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/a7b1d1bec57f1b605528b6392c260a42b6b5c64ceac6b9a36175a2f225d9a4adeedac911adeb24d06b782faecdaff289d31a7a5b07bdea50be0189242bb98e03
+  checksum: 10/1010ccffdcc33fec6596919e295be2fd8731414032dc51e5d9c5d5829beb759dc542f1ed1ebd170a11264fcead490fca59f8d6921fbe49a47b4a9058ff1b4fcc
   languageName: node
   linkType: hard
 
@@ -18296,8 +18296,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^8.9.0"
-    "@grafana/scenes-react": "npm:^8.9.0"
+    "@grafana/scenes": "npm:8.9.5"
+    "@grafana/scenes-react": "npm:8.9.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -29368,10 +29368,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shell-quote@npm:^1.8.3":
-  version: 1.8.3
-  resolution: "shell-quote@npm:1.8.3"
-  checksum: 10/5473e354637c2bd698911224129c9a8961697486cff1fb221f234d71c153fc377674029b0223d1d3c953a68d451d79366abfe53d1a0b46ee1f28eb9ade928f4c
+"shell-quote@npm:1.9.0":
+  version: 1.9.0
+  resolution: "shell-quote@npm:1.9.0"
+  checksum: 10/c3bc91e74a469c4f96b6fd13b0c777fff16bcbda202692a4e5402d3d6b78fc6e02fe92fdf8dc0bddf992a9c6758e43207bfc5bdbefbf8a58190b1c885cbcc171
   languageName: node
   linkType: hard
 
@@ -31160,10 +31160,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tmp@npm:~0.2.1":
-  version: 0.2.5
-  resolution: "tmp@npm:0.2.5"
-  checksum: 10/dd4b78b32385eab4899d3ae296007b34482b035b6d73e1201c4a9aede40860e90997a1452c65a2d21aee73d53e93cd167d741c3db4015d90e63b6d568a93d7ec
+"tmp@npm:0.2.7":
+  version: 0.2.7
+  resolution: "tmp@npm:0.2.7"
+  checksum: 10/0a3bc90beb0c6275273c3475fb57e466eaab1c9c4a101d029ff62b18146ce136e7f75d09de34863d9f2c2a492751402508f9e028bc98eb34a1416195d4b15619
   languageName: node
   linkType: hard
 
@@ -33257,10 +33257,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^1.10.0":
-  version: 1.10.2
-  resolution: "yaml@npm:1.10.2"
-  checksum: 10/e088b37b4d4885b70b50c9fa1b7e54bd2e27f5c87205f9deaffd1fb293ab263d9c964feadb9817a7b129a5bf30a06582cb08750f810568ecc14f3cdbabb79cb3
+"yaml@npm:1.10.3":
+  version: 1.10.3
+  resolution: "yaml@npm:1.10.3"
+  checksum: 10/e2ef2feb92c708138f016c69777a0f1e45f6d3c5e7cbcda30807a98a37eda2e008bd4fa57352b043c65245a4c799d0c99d1f9b3425de40e70929e26d2ea38215
   languageName: node
   linkType: hard
 

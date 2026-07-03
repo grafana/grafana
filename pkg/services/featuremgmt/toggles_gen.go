@@ -658,10 +658,6 @@ const (
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
 
-	// FlagTeamFolders
-	// Enables team folders functionality
-	FlagTeamFolders = "teamFolders"
-
 	// FlagInteractiveLearning
 	// Enables the interactive learning app
 	FlagInteractiveLearning = "interactiveLearning"
@@ -961,4 +957,8 @@ const (
 	// FlagAuthTokenRotationGracePeriod
 	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
 	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
+
+	// FlagKubernetesReporting
+	// Add support for Kubernetes reporting new APIs
+	FlagKubernetesReporting = "kubernetesReporting"
 )

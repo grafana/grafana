@@ -70,6 +70,14 @@ import (
 
 const repoControllerWorkers = 1
 
+// jobClaimExpiry is how long a job claim is considered valid before it is
+// treated as abandoned. It governs both claim staleness in the job store and
+// the cleanup controller that reaps expired jobs, so the two must use the same
+// value. The lease renewal interval is derived as a fraction of this so a
+// worker renews several times before its claim goes stale; otherwise a single
+// delayed renewal can let a running job be reaped and re-run by another worker.
+const jobClaimExpiry = 60 * time.Second
+
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
 	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
@@ -145,6 +153,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
@@ -381,6 +390,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
@@ -423,6 +433,7 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
@@ -933,7 +944,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -977,7 +988,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.folderAPIVersion,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -1052,19 +1063,27 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 
 			// Create job cleanup controller
-			jobExpiry := 30 * time.Second
 			jobCleanupController := jobs.NewJobCleanupController(
 				b.jobs,
 				jobHistoryWriter,
-				jobExpiry,
+				jobClaimExpiry,
 			)
+
+			// Renew the lease well before it expires. Using jobClaimExpiry as
+			// the renewal interval would schedule the single renewal at the
+			// exact moment the claim goes stale, so any delay (GC pause,
+			// apiserver blip) lets the cleanup controller reap a job that is
+			// still running and risks duplicate execution. A third of the
+			// expiry gives three renewal attempts before the claim is
+			// considered abandoned.
+			leaseRenewalInterval := jobClaimExpiry / 3
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,              // 3 drivers for now
-				20*time.Minute, // Max time for each job
-				30*time.Second, // Periodically look for new jobs
-				jobExpiry,      // Lease renewal interval
+				3,                    // 3 drivers for now
+				20*time.Minute,       // Max time for each job
+				30*time.Second,       // Periodically look for new jobs
+				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,

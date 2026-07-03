@@ -42,7 +42,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	}
 
 	resourceLister := resources.NewResourceLister(unified)
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}

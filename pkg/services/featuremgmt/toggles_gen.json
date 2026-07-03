@@ -2513,6 +2513,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardSettingsRedesign",
+        "resourceVersion": "1782823244633",
+        "creationTimestamp": "2026-06-30T12:40:44Z"
+      },
+      "spec": {
+        "description": "Redesigns dashboard settings page into Advanced Settings in a modal window",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2536,6 +2550,20 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.growthHomepage",
+        "resourceVersion": "1782913620784",
+        "creationTimestamp": "2026-07-01T13:47:00Z"
+      },
+      "spec": {
+        "description": "Enables PLG-focused growth redesign of the unified homepage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2731,6 +2759,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.useDefaultScopesEndpoint",
+        "resourceVersion": "1783088074749",
+        "creationTimestamp": "2026-07-03T14:14:34Z"
+      },
+      "spec": {
+        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3399,6 +3442,23 @@
       },
       "spec": {
         "description": "Adds support for Kubernetes querycaching",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesReporting",
+        "resourceVersion": "1782923989000",
+        "creationTimestamp": "2026-07-01T15:36:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 16:39:49.000516 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Add support for Kubernetes reporting new APIs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,

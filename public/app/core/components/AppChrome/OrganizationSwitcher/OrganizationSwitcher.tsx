@@ -26,7 +26,9 @@ export function OrganizationSwitcher() {
       // backendSrv shows the error toast; abort so we don't reload into the wrong org
       return;
     }
-    window.location.assign(`${config.appSubUrl}/?orgId=${option.value.orgId}`);
+    // Plain reload to root: the POST above persisted the switch server-side, so re-bootstrap lands in
+    // the new org without the ?orgId redirect path, which breaks under gateway/JWT auth
+    window.location.assign(`${config.appSubUrl}/`);
   };
   useEffect(() => {
     if (

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	blevesearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -51,9 +52,17 @@ func TestBleveBackend(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
+	// Register the dashboard provider so the static fields.* mapping is built
+	// from declared fields, as in production; without it custom fields drop.
+	dashInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
+		},
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -104,11 +113,13 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			},
 		}
 	}
+	fields, err := info.SearchableFields()
+	require.NoError(t, err)
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 3, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+	}, 3, fields, "test", func(index resource.ResourceIndex) (int64, error) {
 		if err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				doc("legacy-root", ""),
@@ -193,11 +204,13 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		})
 		require.NoError(t, err)
 
+		fields, err := info.SearchableFields()
+		require.NoError(t, err)
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		}, 2, fields, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
@@ -825,7 +838,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 func TestGetSortFields(t *testing.T) {
 	dashboardInfo, err := builders.DashboardBuilder(nil)
 	require.NoError(t, err)
-	dashboardFields := dashboardInfo.Fields
+	dashboardFields, err := dashboardInfo.SearchableFields()
+	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -834,7 +848,7 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := getSortFields(searchReq, dashboardFields)
-		assert.Equal(t, []string{"fields.views_total"}, sortFields)
+		assert.Equal(t, []string{"fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -843,7 +857,7 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := getSortFields(searchReq, dashboardFields)
-		assert.Equal(t, []string{"-fields.views_total"}, sortFields)
+		assert.Equal(t, []string{"-fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -852,7 +866,65 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := getSortFields(searchReq, dashboardFields)
-		assert.Equal(t, []string{"description"}, sortFields)
+		assert.Equal(t, []string{"description", resource.SEARCH_FIELD_NAME}, sortFields)
+	})
+	t.Run("will use title_phrase for title and append name as tie-breaker", func(t *testing.T) {
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
+				{Field: resource.SEARCH_FIELD_TITLE, Desc: false},
+			},
+		}
+		sortFields := getSortFields(searchReq, dashboardFields)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_NAME}, sortFields)
+	})
+	t.Run("will not append a duplicate name sort", func(t *testing.T) {
+		searchReq := &resourcepb.ResourceSearchRequest{
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
+				{Field: resource.SEARCH_FIELD_NAME, Desc: true},
+			},
+		}
+		sortFields := getSortFields(searchReq, dashboardFields)
+		assert.Equal(t, []string{"-" + resource.SEARCH_FIELD_NAME}, sortFields)
+	})
+}
+
+func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
+	idx := &bleveIndex{fields: resource.StandardSearchFields()}
+
+	t.Run("sorts match-all by title then name", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+		}, nil, false)
+		require.Nil(t, errResult)
+		require.Len(t, searchReq.Sort, 2)
+
+		titleSort, ok := searchReq.Sort[0].(*blevesearch.SortField)
+		require.True(t, ok)
+		assert.Equal(t, resource.SEARCH_FIELD_TITLE_PHRASE, titleSort.Field)
+		assert.False(t, titleSort.Desc)
+
+		nameSort, ok := searchReq.Sort[1].(*blevesearch.SortField)
+		require.True(t, ok)
+		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
+		assert.False(t, nameSort.Desc)
+	})
+
+	t.Run("sorts queries by score then name", func(t *testing.T) {
+		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			Limit:   10,
+			Query:   "grafana",
+		}, nil, false)
+		require.Nil(t, errResult)
+		require.Len(t, searchReq.Sort, 2)
+		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
+		require.True(t, ok)
+
+		nameSort, ok := searchReq.Sort[1].(*blevesearch.SortField)
+		require.True(t, ok)
+		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
+		assert.False(t, nameSort.Desc)
 	})
 }
 

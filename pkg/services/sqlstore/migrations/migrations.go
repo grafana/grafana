@@ -178,4 +178,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedRoutesPermissions(mg)
 
 	addNatsDiscoveryMigrations(mg)
+
+	ualert.AddAlertRuleStateBigIntMigration(mg)
 }
