@@ -24,7 +24,7 @@ import { Icon, stylesFactory, Tooltip, withTheme2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';
 import type TNil from '../types/TNil';
-import { type SpanLinkFunc } from '../types/links';
+import { SpanLinkType, type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
@@ -35,6 +35,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
+import { memo, useMemo } from 'react';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
@@ -383,7 +384,7 @@ export type SpanBarRowProps = {
   criticalPath: CriticalPathSection[];
 };
 
-const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
+const SpanBarRow = memo((props: SpanBarRowProps) => {
   const {
     className = '',
     color,
@@ -477,6 +478,11 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
     []
   );
 
+  const links = useMemo(
+    () => (createSpanLink?.(span) || []).filter((link) => link.type === SpanLinkType.Traces),
+    [createSpanLink, span]
+  );
+
   return (
     <TimelineRow
       className={cx(
@@ -567,45 +573,31 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               </span>
             </Tooltip>
           )}
-          {createSpanLink &&
-            (() => {
-              const links = createSpanLink(span);
-              const count = links?.length || 0;
-              if (links && count === 1) {
-                if (!links[0]) {
-                  return null;
-                }
-
-                return (
-                  <a
-                    href={links[0].href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{
-                      borderBottom: `2px solid ${color}CF`,
-                      paddingInline: '4px',
-                    }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      links[0].onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
-                              event.preventDefault();
-                              links[0].onClick(event);
-                            }
-                          }
-                        : undefined
+          {links.length === 1 && (
+            <a
+              href={links[0].href}
+              // Needs to have target otherwise preventDefault would not work due to angularRouter.
+              target={'_blank'}
+              style={{
+                borderBottom: `2px solid ${color}CF`,
+                paddingInline: '4px',
+              }}
+              rel="noopener noreferrer"
+              onClick={
+                links[0].onClick
+                  ? (event) => {
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                        event.preventDefault();
+                        links[0].onClick(event);
+                      }
                     }
-                  >
-                    {links[0].content}
-                  </a>
-                );
-              } else if (links && count > 1) {
-                return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
-              } else {
-                return null;
+                  : undefined
               }
-            })()}
+            >
+              {links[0].content}
+            </a>
+          )}
+          {links.length > 1 && <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />}
         </div>
       </TimelineRow.Cell>
       <TimelineRow.Cell
@@ -639,6 +631,4 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
   );
 });
 
-UnthemedSpanBarRow.displayName = 'UnthemedSpanBarRow';
-
-export default withTheme2(UnthemedSpanBarRow);
+SpanBarRow.displayName = 'SpanBarRow';
