@@ -1431,6 +1431,40 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, int64(1), res1.TotalHits, "total stays exact at offset=1 — no phantom 2nd result")
 	})
 
+	t.Run("TotalHits on a cursor page that exhausts the tail stays the unfiltered match count", func(t *testing.T) {
+		// With req.SearchAfter set, the scan only authorizes the tail beyond the
+		// cursor; on exhaustion that's not the whole-query total, so the final
+		// short cursor page must fall back to firstRes.Total (unfiltered).
+		index := newTestDashboardsIndexPostRank(t, 2)
+		const n = 25
+		docs := make([]*resource.BulkIndexItem, 0, n)
+		for i := 0; i < n; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+		ac := &countingAccessClient{allowAll: true}
+
+		// Page 1 (no cursor): fills early -> unfiltered total.
+		p1, r1 := searchNames(t, index, ac, listQuery(10))
+		require.Len(t, p1, 10)
+		require.Equal(t, int64(n), r1.TotalHits)
+
+		// Page 2: still fills early -> unfiltered total.
+		q2 := listQuery(10)
+		q2.SearchAfter = r1.Results.GetRows()[9].SortFields
+		p2, r2 := searchNames(t, index, ac, q2)
+		require.Len(t, p2, 10)
+		require.Equal(t, int64(n), r2.TotalHits)
+
+		// Page 3: the tail (5 docs) exhausts. Pre-fix this reported
+		// TotalHits=5 (the tail authorized count); it must stay n (25).
+		q3 := listQuery(10)
+		q3.SearchAfter = r2.Results.GetRows()[9].SortFields
+		p3, r3 := searchNames(t, index, ac, q3)
+		require.Len(t, p3, 5)
+		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
+	})
+
 	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
 		// Small cap, with the first authorized hit beyond it. The scan should
 		// keep going until it finds that hit, then stop short of the full index.

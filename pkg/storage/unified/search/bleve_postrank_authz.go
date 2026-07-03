@@ -317,14 +317,11 @@ func (b *bleveIndex) finalizePostFilter(
 	exhausted bool,
 	stats *resource.SearchStats,
 ) error {
-	// When the scan exhausted the index (small result sets), every match was
-	// seen and authorized, so `authorized` is the exact total — report it so
-	// offset pagers don't loop past a partial page (e.g. totalHits=2 but only 1
-	// authorized). Count-only queries (limit==0) keep the unfiltered match
-	// count: they authorize nothing and only need a fast total. When the scan
-	// stopped early (page filled, or candidate cap hit), the authorized total is
-	// unknown, so fall back to the unfiltered count — fast over exact.
-	if exhausted && req.Limit > 0 {
+	// Exact authorized total only when the scan started from the top (no
+	// incoming SearchAfter) and exhausted it. With a SearchAfter cursor bleve
+	// starts after the cursor, so `authorized` on exhaustion is the tail count,
+	// not the whole-query total — fall back to the unfiltered firstRes.Total.
+	if exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 {
 		response.TotalHits = authorized
 	} else {
 		response.TotalHits = int64(firstRes.Total)
