@@ -646,14 +646,17 @@ loop:
 	return ctx.Err()
 }
 
-// defaultResourceTimeout is the fallback per-resource apply timeout used
-// when a non-positive timeout is passed (e.g. an unset config value). It
-// matches setting.ProvisioningSyncResourceTimeoutDefault.
+// defaultResourceTimeout is the fallback per-resource apply timeout used when a
+// non-positive timeout is passed to wrapWithTimeout. Callers normally supply the
+// configured value (see the [provisioning] sync_resource_timeout setting); this
+// only guards against a caller passing <=0. Kept in sync with the setting's
+// default by convention, not by reference (this package does not import setting).
 const defaultResourceTimeout = 30 * time.Second
 
-// wrapWithTimeout runs fn with a derived context that times out after the given duration.
-// A non-positive timeout falls back to defaultResourceTimeout so a resource apply is
-// always bounded.
+// wrapWithTimeout runs fn with a context derived from ctx that is cancelled after
+// the given duration, or earlier if ctx itself is cancelled or already has a
+// nearer deadline. A non-positive timeout falls back to defaultResourceTimeout so
+// a resource apply is always bounded.
 func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultResourceTimeout

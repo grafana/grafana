@@ -67,6 +67,10 @@ func (r *syncer) Sync(ctx context.Context, repo repository.ReaderWriter, options
 
 		if cfg.Status.Sync.LastRef != "" && options.Incremental && !quotas.IsQuotaExceeded(cfg.Status.Conditions) {
 			progress.SetMessage(ctx, "incremental sync")
+			// resourceTimeout is deliberately not passed to incremental sync: it has no
+			// per-resource timeout today (applies are bounded only by the overall job
+			// timeout). Imposing the default here would newly cap large incremental
+			// writes and regress repositories that currently sync them successfully.
 			return currentRef, r.incrementalSync(ctx, versionedRepo, cfg.Status.Sync.LastRef, currentRef, repositoryResources, progress, r.tracer, r.metrics, quotaTracker, r.folderMetadataEnabled)
 		}
 
