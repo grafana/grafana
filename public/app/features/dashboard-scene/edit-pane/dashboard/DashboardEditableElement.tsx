@@ -19,9 +19,9 @@ import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSe
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 
-import { DashboardAnnotationsList } from './DashboardAnnotationsList';
+import { AddAnnotationButton, DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
-import { AddFilterButton, DashboardFiltersList } from './DashboardFiltersList';
+import { AddFilterIconButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
@@ -132,7 +132,6 @@ export class DashboardEditableElement implements EditableDashboardElement {
 function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { $variables } = dashboard.useState();
   const filterListId = useId();
-  const addFilterButtonId = useId();
 
   return useMemo(() => {
     if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
@@ -142,6 +141,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-filters-category.category.title.filters', 'Filters'),
       id: 'dashboard-filters',
+      headerActions: <AddFilterIconButton dashboard={dashboard} />,
     });
 
     const hasFilters =
@@ -158,28 +158,19 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
       );
     }
 
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: addFilterButtonId,
-        skipField: true,
-        render: () => <AddFilterButton dashboard={dashboard} />,
-      })
-    );
-
     return [category];
-  }, [$variables, addFilterButtonId, filterListId, dashboard]);
+  }, [$variables, filterListId, dashboard]);
 }
 
 function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { $variables } = dashboard.useState();
   const variableListId = useId();
-  const addVariableButtonId = useId();
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-variables-category.category.title.variables', 'Variables'),
       id: 'dashboard-variables',
+      headerActions: <AddVariableButton dashboard={dashboard} />,
     });
 
     if ($variables instanceof SceneVariableSet && $variables.state.variables.length) {
@@ -199,14 +190,6 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
       }
     }
 
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: addVariableButtonId,
-        skipField: true,
-        render: () => <AddVariableButton dashboard={dashboard} />,
-      })
-    );
     if ($variables?.state.variables.length) {
       category.addItem(
         new OptionsPaneItemDescriptor({
@@ -219,7 +202,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
     }
 
     return [category];
-  }, [$variables, addVariableButtonId, variableListId, dashboard]);
+  }, [$variables, variableListId, dashboard]);
 }
 
 function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPaneCategoryDescriptor[] {
@@ -229,6 +212,7 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-annotations-category.category.title.annotations', 'Annotations'),
       id: 'dashboard-annotations',
+      headerActions: <AddAnnotationButton dataLayerSet={dataLayerSet} />,
     });
 
     category.addItem(
@@ -247,12 +231,12 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
 function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { links } = dashboard.useState();
   const linksListId = useId();
-  const addLinkButtonId = useId();
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard-scene.use-links-category.category.title.links', 'Links'),
       id: 'dashboard-links',
+      headerActions: <AddLinkButton dashboard={dashboard} />,
     });
 
     if (links.length) {
@@ -266,15 +250,6 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
       );
     }
 
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: addLinkButtonId,
-        skipField: true,
-        render: () => <AddLinkButton dashboard={dashboard} />,
-      })
-    );
-
     return [category];
-  }, [addLinkButtonId, dashboard, links.length, linksListId]);
+  }, [dashboard, links.length, linksListId]);
 }
