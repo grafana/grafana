@@ -240,6 +240,59 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 	}
 }
 
+// TestTeamAuthorizerListDefersToStorage verifies that a collection list of teams
+// (no subresource, no name) is allowed at the authorizer layer without a
+// per-request RBAC Check, so unified storage can filter the results per-team.
+// Zanzana maps a nameless list to a group_resource (wildcard) check, so routing
+// it through the ResourceAuthorizer would 403 any user who cannot read every
+// team. Named get stays strict.
+func TestTeamAuthorizerListDefersToStorage(t *testing.T) {
+	teamAttr := func(verb, name string) authorizer.AttributesRecord {
+		return authorizer.AttributesRecord{
+			ResourceRequest: true,
+			APIGroup:        iamv0.TeamResourceInfo.GroupResource().Group,
+			Resource:        iamv0.TeamResourceInfo.GroupResource().Resource,
+			Name:            name,
+			Verb:            verb,
+			Namespace:       "org-1",
+		}
+	}
+
+	t.Run("list is allowed without calling Check", func(t *testing.T) {
+		checkCalled := false
+		fakeClient := &fakeAccessClient{
+			checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+				checkCalled = true
+				return types.CheckResponse{Allowed: false}, nil
+			},
+		}
+		auth := newTeamAuthorizer(fakeClient)
+		ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+		decision, _, err := auth.Authorize(ctx, teamAttr("list", ""))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionAllow, decision)
+		assert.False(t, checkCalled, "list must not perform a group-resource Check; storage filters per-team")
+	})
+
+	t.Run("named get still delegates to Check", func(t *testing.T) {
+		checkCalled := false
+		fakeClient := &fakeAccessClient{
+			checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+				checkCalled = true
+				return types.CheckResponse{Allowed: false}, nil
+			},
+		}
+		auth := newTeamAuthorizer(fakeClient)
+		ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+		decision, _, err := auth.Authorize(ctx, teamAttr("get", "team-abc"))
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionDeny, decision)
+		assert.True(t, checkCalled, "named get must still be authorized per-team")
+	})
+}
+
 // TestUserAuthorizerStatusVerbMapping verifies that the user/status subresource
 // maps request verbs to the correct RBAC check verbs (GET→get, UPDATE→update, PATCH→update).
 func TestUserAuthorizerStatusVerbMapping(t *testing.T) {
