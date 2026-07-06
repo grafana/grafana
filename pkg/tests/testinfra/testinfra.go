@@ -449,6 +449,22 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.AnnotationMigrationPhase != "" {
+		migrationSect, err := cfg.NewSection("annotations.app_platform")
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_migration_phase", opts.AnnotationMigrationPhase)
+		require.NoError(t, err)
+		_, err = migrationSect.NewKey("api_server_url", opts.AnnotationAPIServerURL)
+		require.NoError(t, err)
+	}
+
+	if opts.AnnotationProxyStaticToken != "" {
+		grpcClientSect, err := cfg.NewSection("grpc_client_authentication")
+		require.NoError(t, err)
+		_, err = grpcClientSect.NewKey("token", opts.AnnotationProxyStaticToken)
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -1086,7 +1102,11 @@ type GrafanaOpts struct {
 	HARedisPeerName        string
 	HASingleNodeEvaluation bool
 
+	// Annotation app platform configuration
 	EnableAnnotationAppPlatform bool
+	AnnotationMigrationPhase    string
+	AnnotationAPIServerURL      string
+	AnnotationProxyStaticToken  string
 
 	// Enables Scope Api
 	ScopesApiEnabled bool

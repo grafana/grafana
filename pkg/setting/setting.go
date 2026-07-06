@@ -1205,12 +1205,18 @@ type AnnotationAppPlatformSettings struct {
 	APIServerURL string
 }
 
+const (
+	AnnotationAPIMigrationPhaseOff         = "off"
+	AnnotationAPIMigrationPhaseProxyWrites = "proxy-writes"
+	AnnotationAPIMigrationPhaseProxyAll    = "proxy-all"
+)
+
 func (s AnnotationAppPlatformSettings) ProxyEnabled() bool {
-	return s.APIMigrationPhase == "proxy-writes" || s.APIMigrationPhase == "proxy-all"
+	return s.APIMigrationPhase == AnnotationAPIMigrationPhaseProxyWrites || s.APIMigrationPhase == AnnotationAPIMigrationPhaseProxyAll
 }
 
 func (s AnnotationAppPlatformSettings) ProxyAll() bool {
-	return s.APIMigrationPhase == "proxy-all"
+	return s.APIMigrationPhase == AnnotationAPIMigrationPhaseProxyAll
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSettings, error) {
@@ -1221,7 +1227,7 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSett
 		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
 		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
 		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
-		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
+		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
 		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
