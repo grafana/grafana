@@ -57,11 +57,19 @@ type fakeProxy struct {
 	createErr   error
 	createItems []*annotations.Item
 
+	createWithLegacyIDErr   error
+	createWithLegacyIDCalls []createWithLegacyIDCall
+
 	updateErr   error
 	updateCalls int
 
 	deleteErr   error
 	deleteCalls int
+}
+
+type createWithLegacyIDCall struct {
+	item     *annotations.Item
+	legacyID int64
 }
 
 func (f *fakeProxy) List(_ context.Context, _ int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, map[int64]bool, error) {
@@ -76,12 +84,21 @@ func (f *fakeProxy) Create(_ context.Context, _ int64, item *annotations.Item) (
 	f.createItems = append(f.createItems, item)
 	return f.createID, f.createErr
 }
+func (f *fakeProxy) CreateWithLegacyID(_ context.Context, _ int64, item *annotations.Item, legacyID int64) error {
+	f.createWithLegacyIDCalls = append(f.createWithLegacyIDCalls, createWithLegacyIDCall{item: item, legacyID: legacyID})
+	return f.createWithLegacyIDErr
+}
 func (f *fakeProxy) Update(context.Context, int64, int64, *annotations.Item) error {
 	f.updateCalls++
 	return f.updateErr
 }
 func (f *fakeProxy) Delete(context.Context, int64, int64) error {
 	f.deleteCalls++
+	// Model the real store: once the record has been migrated in via CreateWithLegacyID it
+	// exists, so a subsequent delete (the tombstone write) succeeds rather than 404-ing.
+	if len(f.createWithLegacyIDCalls) > 0 {
+		return nil
+	}
 	return f.deleteErr
 }
 
@@ -435,15 +452,45 @@ func TestMigrationRepository_Update(t *testing.T) {
 		assert.Empty(t, legacy.updateItems)
 	})
 
-	t.Run("ErrNotFound falls back to legacy", func(t *testing.T) {
-		legacy := &fakeLegacy{}
+	t.Run("ErrNotFound migrates the legacy record with the update applied, never writing legacy", func(t *testing.T) {
+		uid := "dash-1"
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{
+			{ID: 5, Text: "old", Tags: []string{"a"}, DashboardUID: &uid, PanelID: 7, Time: 100, TimeEnd: 200},
+		}}
 		proxy := &fakeProxy{updateErr: ErrNotFound}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
-		item := &annotations.Item{OrgID: 1, ID: 5, Text: "edited"}
+		// UpdateAnnotation's item carries text/time/tags but not the dashboard/panel binding.
+		item := &annotations.Item{OrgID: 1, ID: 5, Text: "edited", Tags: []string{"b"}, Epoch: 150, EpochEnd: 250}
 		require.NoError(t, repo.Update(context.Background(), item))
-		require.Len(t, legacy.updateItems, 1)
-		assert.Same(t, item, legacy.updateItems[0])
+
+		// Legacy is read (to resolve the record) but never written.
+		require.Len(t, legacy.findCalls, 1)
+		assert.Equal(t, int64(5), legacy.findCalls[0].AnnotationID)
+		assert.Empty(t, legacy.updateItems)
+
+		// The migrated record keeps the legacy ID, applies the update, and preserves the
+		// dashboard/panel binding the update command omitted.
+		require.Len(t, proxy.createWithLegacyIDCalls, 1)
+		call := proxy.createWithLegacyIDCalls[0]
+		assert.Equal(t, int64(5), call.legacyID)
+		assert.Equal(t, "edited", call.item.Text)
+		assert.Equal(t, []string{"b"}, call.item.Tags)
+		assert.Equal(t, int64(150), call.item.Epoch)
+		assert.Equal(t, int64(250), call.item.EpochEnd)
+		assert.Equal(t, uid, call.item.DashboardUID)
+		assert.Equal(t, int64(7), call.item.PanelID)
+	})
+
+	t.Run("ErrNotFound with no legacy record returns ErrNotFound", func(t *testing.T) {
+		legacy := &fakeLegacy{} // Find returns nothing
+		proxy := &fakeProxy{updateErr: ErrNotFound}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		err := repo.Update(context.Background(), &annotations.Item{OrgID: 1, ID: 5})
+		require.ErrorIs(t, err, ErrNotFound)
+		assert.Empty(t, proxy.createWithLegacyIDCalls)
+		assert.Empty(t, legacy.updateItems)
 	})
 
 	t.Run("ErrGone propagates without falling back to legacy", func(t *testing.T) {
@@ -479,14 +526,42 @@ func TestMigrationRepository_Delete(t *testing.T) {
 		assert.Empty(t, legacy.deleteParams)
 	})
 
-	t.Run("single delete falls back to legacy on ErrNotFound", func(t *testing.T) {
-		legacy := &fakeLegacy{}
+	t.Run("single delete on ErrNotFound migrates the legacy record then soft-deletes it, never writing legacy", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{{ID: 5, Text: "old"}}}
+		// First proxy.Delete reports not-found; after the migrate-create the second succeeds.
 		proxy := &fakeProxy{deleteErr: ErrNotFound}
 		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
-		assert.Equal(t, 1, proxy.deleteCalls)
-		require.Len(t, legacy.deleteParams, 1)
+
+		// Legacy is read to resolve the record but never deleted.
+		require.Len(t, legacy.findCalls, 1)
+		assert.Equal(t, int64(5), legacy.findCalls[0].AnnotationID)
+		assert.Empty(t, legacy.deleteParams)
+
+		// Migrated under its original ID, then tombstoned.
+		require.Len(t, proxy.createWithLegacyIDCalls, 1)
+		assert.Equal(t, int64(5), proxy.createWithLegacyIDCalls[0].legacyID)
+		assert.Equal(t, 2, proxy.deleteCalls) // initial not-found probe + the tombstone delete
+	})
+
+	t.Run("single delete on ErrNotFound with no legacy record is an idempotent success", func(t *testing.T) {
+		legacy := &fakeLegacy{} // Find returns nothing
+		proxy := &fakeProxy{deleteErr: ErrNotFound}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}))
+		assert.Empty(t, proxy.createWithLegacyIDCalls)
+		assert.Empty(t, legacy.deleteParams)
+	})
+
+	t.Run("single delete surfaces the error when the migrate-create fails", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{{ID: 5}}}
+		proxy := &fakeProxy{deleteErr: ErrNotFound, createWithLegacyIDErr: assert.AnError}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		require.ErrorIs(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, ID: 5}), assert.AnError)
+		assert.Empty(t, legacy.deleteParams)
 	})
 
 	t.Run("single delete treats ErrGone as an idempotent success", func(t *testing.T) {
