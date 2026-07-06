@@ -333,6 +333,23 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+func (r *Repository) ShouldGenerateDashboardPreviews() bool {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.GenerateDashboardPreviews
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.GenerateDashboardPreviews
+		}
+	default:
+		return false
+	}
+
+	return false
+}
+
 // ConnectionName returns the name of the connection referenced by this repository,
 // or an empty string if the repository does not use a connection.
 func (r *Repository) ConnectionName() string {
