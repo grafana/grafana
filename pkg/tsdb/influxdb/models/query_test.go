@@ -311,6 +311,72 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			require.Equal(t, `"key" > '12.2'`, strings.Join(query.renderTags(), ""))
 		})
+
+		t.Run("can render integer field without quotes using =", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "42", Key: "intfield::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"intfield"::field = 42`)
+		})
+
+		t.Run("can render integer field without quotes using !=", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "!=", Value: "42", Key: "intfield::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"intfield"::field != 42`)
+		})
+
+		t.Run("can render negative number field without quotes", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "-1.5", Key: "temp::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"temp"::field = -1.5`)
+		})
+
+		t.Run("can render boolean field without quotes and lowercased", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "True", Key: "enabled::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"enabled"::field = true`)
+		})
+
+		t.Run("can render string field with quotes", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "hello", Key: "message::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"message"::field = 'hello'`)
+		})
+
+		t.Run("can escape backslashes when rendering string field", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: `C:\test\`, Key: "path::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"path"::field = 'C:\\test\\'`)
+		})
+
+		t.Run("keeps quotes for string field when dataType is string even if value looks numeric", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "42", Key: "version::field", Type: "string"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"version"::field = '42'`)
+		})
+
+		t.Run("removes quotes for integer field when dataType is integer", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "42", Key: "count::field", Type: "integer"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"count"::field = 42`)
+		})
+
+		t.Run("still quotes numeric values for tag selectors", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "42", Key: "host::tag"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"host"::tag = '42'`)
+		})
+
+		t.Run("still quotes numeric values for plain keys", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "42", Key: "host"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"host" = '42'`)
+		})
+
+		t.Run("can render field without quotes using Is with integer value", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "42", Key: "count::field"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"count"::field = 42`)
+		})
 	})
 }
 
