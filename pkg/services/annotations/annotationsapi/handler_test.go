@@ -16,11 +16,12 @@ func TestMerge(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		new    []*annotations.ItemDTO
-		legacy []*annotations.ItemDTO
-		limit  int64
-		want   []*annotations.ItemDTO
+		name    string
+		new     []*annotations.ItemDTO
+		legacy  []*annotations.ItemDTO
+		deleted map[int64]bool
+		limit   int64
+		want    []*annotations.ItemDTO
 	}{
 		{
 			name:   "both empty",
@@ -57,11 +58,41 @@ func TestMerge(t *testing.T) {
 			limit:  0,
 			want:   []*annotations.ItemDTO{item(1, 30), item(2, 20), item(3, 10)},
 		},
+		{
+			// A soft-deleted annotation whose legacy copy has not been purged must not
+			// resurface: the tombstoned ID drops the legacy-only item from the merge.
+			name:    "tombstoned legacy-only item is suppressed",
+			new:     []*annotations.ItemDTO{item(1, 30)},
+			legacy:  []*annotations.ItemDTO{item(2, 20), item(3, 10)},
+			deleted: map[int64]bool{2: true},
+			limit:   10,
+			want:    []*annotations.ItemDTO{item(1, 30), item(3, 10)},
+		},
+		{
+			// New store is authoritative for its own items, so a tombstone that also
+			// names a live new-store ID does not remove that item.
+			name:    "deletedIDs does not drop new-store items",
+			new:     []*annotations.ItemDTO{item(1, 30)},
+			legacy:  []*annotations.ItemDTO{item(2, 20)},
+			deleted: map[int64]bool{1: true},
+			limit:   10,
+			want:    []*annotations.ItemDTO{item(1, 30), item(2, 20)},
+		},
+		{
+			// The same ID being both duplicated (in new) and tombstoned still yields no
+			// legacy copy — dedupe and suppression agree.
+			name:    "tombstoned duplicate ID stays de-duplicated",
+			new:     []*annotations.ItemDTO{item(1, 10)},
+			legacy:  []*annotations.ItemDTO{item(1, 10)},
+			deleted: map[int64]bool{1: true},
+			limit:   10,
+			want:    []*annotations.ItemDTO{item(1, 10)},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Merge(tt.new, tt.legacy, tt.limit)
+			got := Merge(tt.new, tt.legacy, tt.deleted, tt.limit)
 			require.Equal(t, tt.want, got)
 		})
 	}

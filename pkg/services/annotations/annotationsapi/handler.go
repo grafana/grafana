@@ -15,11 +15,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
 var ErrNotFound = errors.New("annotation not found in new store")
+
+// ErrGone is returned by proxy methods when the annotation was explicitly deleted
+// (soft-deleted / tombstoned) in the new store. Unlike ErrNotFound, callers must
+// NOT fall back to legacy on this error as the record is authoritatively deleted.
+var ErrGone = errors.New("annotation has been deleted in new store")
+
+// mapClientErr translates the new API server's HTTP status into proxy sentinels so
+// callers can distinguish "never migrated" (404 → fall back to legacy) from
+// "explicitly deleted" (410 → do not fall back).
+func mapClientErr(err error) error {
+	switch {
+	case err == nil:
+		return nil
+	case apierrors.IsGone(err):
+		return ErrGone
+	case apierrors.IsNotFound(err):
+		return ErrNotFound
+	default:
+		return err
+	}
+}
 
 // partialDecodeError signals that one or more optional fields could not be decoded
 // from an annotation. The annotation is still usable without those fields, so callers
@@ -69,18 +91,34 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 	}, nil
 }
 
-// List fetches annotations from the new store matching query and returns them as ItemDTOs.
-// All filtering including tags is handled server-side via the /search custom route.
-func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+// List fetches annotations from the new store matching query and returns the live ones as
+// ItemDTOs, plus the legacy IDs of any soft-deleted matches. All filtering including tags is
+// handled server-side via the /search custom route (which includes tombstones). The deleted
+// IDs let the caller suppress un-purged legacy copies from merged reads.
+func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, map[int64]bool, error) {
 	annos, err := h.client.Search(ctx, orgID, query)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	// Split live annotations from tombstones. Tombstones are not results; they only mark
+	// which legacy IDs must be suppressed from the merge.
+	live := annos[:0]
+	deletedIDs := map[int64]bool{}
+	for _, anno := range annos {
+		if anno.GetDeletionTimestamp() != nil {
+			if id := annotationpkg.GetLegacyID(anno); id != 0 {
+				deletedIDs[id] = true
+			}
+			continue
+		}
+		live = append(live, anno)
 	}
 
 	// Collect unique createdBy values for batch user hydration.
 	seen := make(map[string]bool)
 	var createdByMeta []string
-	for _, anno := range annos {
+	for _, anno := range live {
 		if cb := anno.GetCreatedBy(); cb != "" && !seen[cb] {
 			createdByMeta = append(createdByMeta, cb)
 			seen[cb] = true
@@ -95,8 +133,8 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 		}
 	}
 
-	dtos := make([]*annotations.ItemDTO, 0, len(annos))
-	for _, anno := range annos {
+	dtos := make([]*annotations.ItemDTO, 0, len(live))
+	for _, anno := range live {
 		dto, err := annoToItemDTO(anno)
 		if err != nil {
 			var decodeErr *partialDecodeError
@@ -115,12 +153,13 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 		}
 		dtos = append(dtos, dto)
 	}
-	return dtos, nil
+	return dtos, deletedIDs, nil
 }
 
 // Merge combines new-store and legacy items, deduplicates by legacyID (new store wins),
-// sorts by time descending, and applies limit.
-func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotations.ItemDTO {
+// drops legacy items whose legacyID is tombstoned in the new store (deletedIDs), sorts by
+// time descending, and applies limit.
+func Merge(newItems, legacyItems []*annotations.ItemDTO, deletedIDs map[int64]bool, limit int64) []*annotations.ItemDTO {
 	inNew := make(map[int64]bool, len(newItems))
 	for _, item := range newItems {
 		inNew[item.ID] = true
@@ -129,9 +168,10 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 	merged := make([]*annotations.ItemDTO, 0, len(newItems)+len(legacyItems))
 	merged = append(merged, newItems...)
 	for _, item := range legacyItems {
-		if !inNew[item.ID] {
-			merged = append(merged, item)
+		if inNew[item.ID] || deletedIDs[item.ID] {
+			continue // new store owns it, or it was explicitly deleted there
 		}
+		merged = append(merged, item)
 	}
 
 	slices.SortFunc(merged, func(a, b *annotations.ItemDTO) int {
@@ -160,10 +200,24 @@ func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotati
 	return annotationpkg.GetLegacyID(result), nil
 }
 
+// getByLegacyID fetches the annotation for annotationID and maps a tombstone to ErrGone,
+// so callers can distinguish a never-migrated record (ErrNotFound → fall back to legacy)
+// from one explicitly deleted in the new store (ErrGone → do NOT fall back).
+func (h *MigrationProxy) getByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
+	anno, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
+	if err != nil {
+		return nil, err
+	}
+	if anno.GetDeletionTimestamp() != nil {
+		return nil, ErrGone
+	}
+	return anno, nil
+}
+
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
 // TODO: only text/tags are updated; editing time needs annotation delete + re-insert since the store partitions on time.
 func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
-	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
+	existing, err := h.getByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
@@ -182,21 +236,26 @@ func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID i
 		anno.Spec.PanelID = existing.Spec.PanelID
 	}
 	_, err = h.client.Update(ctx, orgID, anno)
-	return err
+	// A concurrent delete between resolve and write surfaces as 410; map it so the
+	// caller treats it as Gone (no legacy fallback) rather than a raw error.
+	return mapClientErr(err)
 }
 
-// Delete removes from new store. Returns ErrNotFound if the record is not there yet — caller falls back to legacy.
+// Delete soft-deletes in the new store. Returns ErrNotFound if the record is not
+// there yet (caller falls back to legacy) or ErrGone if it was already deleted.
 func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID int64) error {
-	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
+	existing, err := h.getByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return err
 	}
-	return h.client.Delete(ctx, orgID, existing.GetName())
+	return mapClientErr(h.client.Delete(ctx, orgID, existing.GetName()))
 }
 
-// TODO: soft-delete not yet implemented
+// Get reads a single annotation from the new store. Returns ErrNotFound if the
+// record is not there yet (caller falls back to legacy) or ErrGone if it was
+// explicitly deleted (caller must not fall back).
 func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error) {
-	anno, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
+	anno, err := h.getByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
 		return nil, err
 	}
