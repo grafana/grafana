@@ -85,7 +85,7 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline visualization with two time columns showing the status of two servers" >}}
 
-If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
+If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to achieve this.
 
 ### Time series data
 
@@ -117,7 +117,7 @@ Use these options to refine the visualization.
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
 | Row height | Controls bar height as a fraction of each row. `1` fills the row, and lower values leave more space between rows. |
-| [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
+| [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. The default is 20. |
 | Line width | Controls line width of state regions. This is a field option and can be set in field defaults or overrides. |
 | Fill opacity | Controls the fill opacity of state regions. This is a field option and can be set in field defaults or overrides. |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
@@ -127,7 +127,7 @@ Use these options to refine the visualization.
 
 #### Page size (enable pagination)
 
-The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. With paginated results, the visualization displays a subset of all series on each page:
+The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. The default page size is 20, which means pagination is enabled for new panels. Clear the value or set it to `0` to disable pagination. With paginated results, the visualization displays a subset of all series on each page:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
 

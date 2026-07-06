@@ -97,7 +97,7 @@ We recommend that you only use one dataset in a bar chart because using multiple
 In bar charts, you can apply filters directly from the visualization.
 Filters are available when the x-axis field is filterable and the data source supports dashboard drilldown filters, such as Prometheus or Loki.
 
-To display the filter button, hover your cursor over the bar that has the value for which you want to filter and click the bar:
+To display the filter button, hover your cursor over the bar that has the value for which you want to filter, and then use the filter control in the tooltip:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-icon-bar-v12.2.png" max-width="300px" alt="The filter button in a bar chart tooltip">}}
 
@@ -111,7 +111,7 @@ For more information about applying filters this way, refer to [Dashboard drilld
 Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
 
 - **Constant** - Show the first value as a constant line.
-- **Negative Y transform** - Flip the results to negative values on the y-axis.
+- **Negative Y** - Flip the results to negative values on the y-axis.
 
 ## Configuration options
 
@@ -144,6 +144,7 @@ Use these options to refine your visualization.
 | Line width                       | Controls line width of the bars. This is a field option and can be set in field defaults or overrides.    |
 | Fill opacity                     | Controls the fill opacity of bars. This is a field option and can be set in field defaults or overrides.                    |
 | [Gradient mode](#gradient-mode)  | Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. Gradient appearance is influenced by the **Fill opacity** setting. This is a field option and can be set in field defaults or overrides.                                                                               |
+| Show thresholds                  | Controls whether thresholds are shown. This field override is in the **Thresholds** category. |
 
 <!-- prettier-ignore-end -->
 

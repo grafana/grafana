@@ -226,38 +226,19 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are eight map layer types to choose from in a geomap.
+There are nine data layer types to choose from in a geomap.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
+- **Icon at last point (Alpha)** renders an icon at the last data point.
 - [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
+- [Dynamic GeoJSON (Alpha)](#dynamic-geojson-layer) styles a GeoJSON file based on query results.
 - [Night / Day](#night--day-layer) renders a night / day region.
 - [Route](#route-layer) render data points as a route.
 - [Photos](#photos-layer) renders a photo at each data point.
 - [Network](#network-layer) visualizes a network graph from the data.
-- [OpenStreetMap](#openstreetmap-layer) adds a map from a collaborative free geographic world database.
-- [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
-- [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
-There are also two experimental (or alpha) layer types.
-
-- **Icon at last point (alpha)** renders an icon at the last data point.
-- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-
-To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the experimental layers using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
+The **Icon at last point (Alpha)** and **Dynamic GeoJSON (Alpha)** layers are shown only when alpha panels are enabled in Grafana.
 
 #### Data
 
@@ -289,10 +270,10 @@ The markers layer allows you to display data points as different marker shapes s
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
 | Size | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
 | Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
-| Symbol Vertical Align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
-| Symbol Horizontal Align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Symbol vertical align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol horizontal align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
 | Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
-| Fill opacity | Configures the transparency of each marker. |
+| Opacity | Configures the transparency of each marker. |
 | Rotation angle | Configures the rotation angle of each marker in degrees. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
 | Text label | Configures a text label for each marker. |
 | Show legend | Allows you to toggle the legend for the layer. |
@@ -315,7 +296,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Scales the distribution for each row. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -330,8 +311,8 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | Option | Description |
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
-| Default Style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
-| Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
+| Default style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
+| Style rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
@@ -352,6 +333,19 @@ Styles can be set within the "properties" object of the GeoJSON with support for
 
 - **"stroke"** - The color of the line(s)
 - **"stroke-width"** - The width of the line(s)
+
+#### Dynamic GeoJSON layer
+
+The Dynamic GeoJSON layer styles a GeoJSON file based on query results.
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| GeoJSON URL | Enter the URL of the GeoJSON file. |
+| ID Field | Select the field that matches GeoJSON feature IDs to query results. |
+| Data style | Configure the style that comes from query data. |
+| Default style | Configure the style to apply when no query result matches a feature. |
+<!-- prettier-ignore-end -->
 
 #### Night / Day layer
 
@@ -387,10 +381,7 @@ The layer can also render a route with arrows.
 | ------ | ----------- |
 | Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Size | sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale. |
-| Color | sets the route color. Set to `Fixed color` by default. You can also tie the color to field data. |
-| Fill opacity | configures the opacity of the route. |
-| Text label | configures a text label for each route. |
+| Style | Configures the route thickness, color, opacity, and text label. |
 | Arrow | sets the arrow styling to display along route, in order of data. Choose from: **None**, **Forward**, and **Reverse** |
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
@@ -439,7 +430,7 @@ You can convert node graph data to a network layer:
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-##### Node styles options
+##### Node Styles options
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -452,7 +443,7 @@ You can convert node graph data to a network layer:
 | Text label | Configures a text label for each node. |
 <!-- prettier-ignore-end -->
 
-##### Edge styles options
+##### Edge Styles options
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -536,12 +527,12 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
-- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+- **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
 
 ### Basemap layer options
 
@@ -556,7 +547,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 

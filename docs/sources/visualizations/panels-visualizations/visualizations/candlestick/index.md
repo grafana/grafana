@@ -115,7 +115,7 @@ The following options let you control which data is displayed in the visualizati
 | [Color strategy](#color-strategy)                      | Controls how colors are applied to dimensions. Choose from:<ul><li>**Since Open** - This mode uses the **Up color** if the intra-period price movement is positive.</li><li>**Since Prior Close** - The color of the candle is based on the inter-period price movement or change in value.</li></ul>                                         |
 | Up color/Down color                                    | These options control which colors are used when the price movement is up or down. Note that the **Color strategy** selection determines if intra-period or inter-period price movement is used to select the candle or OHLC bar color.                                                                                                       |
 | [Open, High, Low, Close, Volume](#open-high-low-close) | The candlestick visualization attempts to map fields from your data to these dimensions, as appropriate dimension.                                                                                                                                                                                                                            |
-| [Additional fields](#additional-fields)                | The **Include** and **Ignore** options allow the candlestick visualization to display other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.                                                     |
+| [Additional fields](#additional-fields)                | Choose **Ignore** or **Include** to control whether the candlestick visualization displays other data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.                                                         |
 
 #### Color strategy
 
@@ -149,7 +149,7 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 #### Additional fields
 
 The candlestick visualization is based on the time series visualization, and it can visualize additional data dimensions beyond open, high, low, close, and volume.
-The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
+Under **Additional fields**, choose **Ignore** or **Include** to control whether the visualization displays other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
 ### Tooltip options
 
@@ -166,6 +166,7 @@ Tooltip options control the information overlay that appears when you hover over
 #### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
+The default tooltip mode is **All**.
 
 - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
 - **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
@@ -210,6 +211,8 @@ The options under the **Graph styles** section let you control the general appea
 | Fill opacity                                | Set the series area fill color using the **Fill opacity** slider. |
 | [Gradient mode](#gradient-mode)             | Choose a gradient mode to control the gradient fill, which is based on the series color. |
 | [Line style](#line-style)                   | Choose a solid, dashed, or dotted line style. |
+| Transform                                   | Choose **Constant** or **Negative Y** to transform series values without affecting the values shown in the tooltip, context menu, or legend. |
+| Show thresholds                             | Controls whether thresholds are shown. This field override is in the **Thresholds** category. |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |

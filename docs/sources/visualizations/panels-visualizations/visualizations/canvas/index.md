@@ -80,7 +80,7 @@ The following sections describe the different elements available.
 - [Triangle](#basic-shapes)
 - [Cloud](#basic-shapes)
 - [Parallelogram](#basic-shapes)
-- [Button](#button)
+- [Experimental element types](#experimental-element-types)
 
 {{< /column-list >}}
 
@@ -127,6 +127,16 @@ If you don't have an SVG file, you can use a rectangle element instead of an ico
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
 
 {{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="650px" alt="Canvas server element" >}}
+
+#### Experimental element types
+
+When **Experimental element types** is enabled, you can add the following additional elements:
+
+- Button
+- Drone (front)
+- Drone (side)
+- Drone (top)
+- Wind turbine
 
 #### Button
 
@@ -245,36 +255,9 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" alt="Inline editing toggle demo" >}}
 
-#### Experimental Element types
+#### Experimental element types
 
 Toggle the switch to include experimental element types in the available selections.
-
-#### Pan and zoom
-
-You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
-
-{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
-
-Use the following pointer and keyboard strokes:
-
-- **Zoom in** - Scroll up
-- **Zoom out** - Scroll down
-- **Pan** - Middle mouse/wheel + drag OR Control + right-click + drag
-- **Reset** - Double-click
-
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
-
-##### Zoom to content
-
-When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
-
-##### Infinite panning
-
-You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
-
-{{< admonition type="note" >}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{< /admonition >}}
 
 ### Tooltip options
 
@@ -364,7 +347,7 @@ This section is named based on the element type. Control the appearance of text 
 
 | Option         | Description                                               |
 | -------------- | --------------------------------------------------------- |
-| Style          | Buttons only. Select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. |
+| Style          | Buttons only. Under **Selected element > Button > Style**, select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. |
 | Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you selected **Fixed**, enter text in the **Value** field. If you selected **Field**, choose the field. |
 | Text color     | Choose a text color.     |
 | Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.  |
@@ -466,12 +449,12 @@ To add a data link, follow these steps:
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
    | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
    | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Method               | Select from **GET** or **POST**.                                                                                                                                                                                                            |
    | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**.                                                                                                            |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.

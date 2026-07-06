@@ -50,7 +50,7 @@ The following video provides beginner steps for creating node panel visualizatio
 
 ## Supported data formats
 
-To create node graphs, you need two datasets: one containing the records for the displayed elements (nodes) and one dataset containing the records for the connections between those elements (edges).
+To create node graphs, you need at least one dataset that describes either the displayed elements (nodes), the connections between those elements (edges), or both. If you provide only an edges dataset, Grafana infers the nodes from the edge source and target fields. You can also provide a separate nodes dataset to add node-specific metadata.
 
 ### Nodes dataset
 
@@ -73,10 +73,10 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 #### Example
 
-| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
-| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
-| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+| id    | source | target | mainstat | secondarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | ------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub        | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2          | 1         | false       | orange |
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
@@ -94,7 +94,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 #### Nodes
 
 {{< admonition type="note" >}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs can show only 200 nodes. If this limit is crossed a warning is visible in the upper right corner, and some nodes are hidden. You can expand hidden parts of the graph by clicking the **Hidden nodes** markers in the graph.
 {{< /admonition >}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -165,7 +165,7 @@ Use the following options to refine your node graph visualization.
 
 Choose how the node graph should handle zoom and scroll events:
 
-- **Cooperative** - Allows you to scroll the visualization normally.
+- **Cooperative** - Lets you scroll the page normally.
 - **Greedy** - Reacts to all zoom gestures.
 
 #### Layout algorithm
@@ -173,12 +173,14 @@ Choose how the node graph should handle zoom and scroll events:
 Choose how the visualization layout is generated:
 
 - **Layered** - Default. Creates a predictable and orderly layout, especially useful for service graphs.
-- **Force** - Uses a physics-based force layout algorithm that's useful with a large number of nodes (500+).
+- **Force** - Uses a physics-based force layout algorithm.
 - **Grid** - Arranges nodes into a grid format to provide a better overview of the most interesting nodes in the graph. This layout shows nodes in a grid without edges and can be sorted by the stats shown inside the node or by the ones represented by the a colored border of the nodes.
 
   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid.png" max-width="650px" alt="Node graph in grid layout" >}}
 
   For more information about using the graph in grid layout, refer to [Switch layouts](#switch-layouts).
+
+When the **Layered** layout has more than 500 nodes, Grafana displays a warning because the layout can affect panel performance.
 
 ### Nodes options
 
@@ -213,7 +215,13 @@ In node graphs, some data fields may have pre-configured data links. To add a di
 
 This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
 
-Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
+Node graphs require at least one data frame describing edges, nodes, or both. If you provide only edges, Grafana computes the nodes from the edge source and target fields. You can optionally send a second data frame describing nodes when you need to show node-specific metadata.
+
+Each frame must be identifiable as node graph data. Use one of these methods:
+
+- Set `frame.meta.preferredVisualisationType = 'nodeGraph'`.
+- Name the frame or query `nodes` or `edges`.
+- Include an `id` field that matches the node graph frame structure.
 
 ### Edges data frame structure
 
@@ -235,7 +243,7 @@ Optional fields:
 | thickness       | number        | The thickness of the edge. Default: `1`                                                                                                                                                                                                                                   |
 | highlighted     | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                     |
 | color           | string        | Sets the default color of the edge. It can be an acceptable HTML color string. Default: `#999`                                                                                                                                                                            |
-| strokeDasharray | string        | Sets the pattern of dashes and gaps used to render the edge. If unset, a solid line is used as edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray). |
+| strokedasharray | string        | Sets the pattern of dashes and gaps used to render the edge. If unset, a solid line is used as edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray). |
 
 {{< admonition type="caution" >}}
 Starting with 10.5, `highlighted` is deprecated.
@@ -253,15 +261,18 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
-| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                         |
-| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                        |
-| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                            |
-| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                    |
-| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
-| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
-| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
-| nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
-| highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+| Field name     | Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
+| -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| title          | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                         |
+| subtitle       | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                        |
+| mainstat       | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                            |
+| secondarystat  | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                    |
+| arc\_\_\*      | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
+| detail\_\_\*   | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
+| color          | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
+| icon           | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
+| noderadius     | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
+| highlighted    | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+| fixedx         | number        | Fixed x-coordinate for the node. Use with `fixedy`; both fields must be present for fixed positioning.                                                                                                                                                                                                                                                                   |
+| fixedy         | number        | Fixed y-coordinate for the node. Use with `fixedx`; both fields must be present for fixed positioning.                                                                                                                                                                                                                                                                   |
+| isinstrumented | boolean       | Indicates whether the node is instrumented.                                                                                                                                                                                                                                                                                                                              |
