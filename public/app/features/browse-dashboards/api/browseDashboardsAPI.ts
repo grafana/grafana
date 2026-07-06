@@ -352,11 +352,15 @@ export const browseDashboardsAPI = createApi({
             continue;
           }
 
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
+          if (!response.error) {
+            // Only clear the nav starred entry for folders that were actually deleted
+            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         }
 
         return { data: undefined };
@@ -368,9 +372,6 @@ export const browseDashboardsAPI = createApi({
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
-          for (const folderUID of folderUIDs) {
-            dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
-          }
         });
       },
     }),

@@ -405,7 +405,7 @@ describe('browseDashboardsAPI', () => {
     });
 
     it('refreshes parents for requested folders even when bulk delete yields no successes', async () => {
-      const store = createTestStore();
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
       const dispatch = store.dispatch as ThunkDispatch;
       const listFoldersSpy = jest.fn();
       const hasPermissionSpy = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -431,6 +431,7 @@ describe('browseDashboardsAPI', () => {
         );
 
         expect(listFoldersSpy).toHaveBeenCalledTimes(2);
+        expect(setStarredPayloads).toEqual([]);
       } finally {
         hasPermissionSpy.mockRestore();
       }
@@ -482,6 +483,82 @@ describe('browseDashboardsAPI', () => {
           { id: 'folder-1', isStarred: false },
           { id: 'folder-2', isStarred: false },
         ]);
+      });
+    });
+
+    it('only un-stars folders that were actually deleted when some are provisioned', async () => {
+      config.featureToggles.provisioning = true;
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      const deletedUids: string[] = [];
+
+      server.use(
+        http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-1', () =>
+          HttpResponse.json({
+            apiVersion: 'folder.grafana.app/v1beta1',
+            kind: 'Folder',
+            metadata: {
+              name: 'folder-1',
+              namespace: 'default',
+              annotations: {
+                [AnnoKeyManagerKind]: ManagerKind.Repo,
+              },
+            },
+            spec: { title: 'Folder 1' },
+          })
+        ),
+        http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/folder-2', () =>
+          HttpResponse.json({
+            apiVersion: 'folder.grafana.app/v1beta1',
+            kind: 'Folder',
+            metadata: {
+              name: 'folder-2',
+              namespace: 'default',
+            },
+            spec: { title: 'Folder 2' },
+          })
+        ),
+        http.delete('/api/folders/:uid', ({ params }) => {
+          deletedUids.push(String(params.uid));
+          return HttpResponse.json({});
+        })
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(deletedUids).toEqual(['folder-2']);
+        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+      });
+    });
+
+    it('does not un-star folders whose delete failed', async () => {
+      const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
+
+      const deleteFolder1Spy = jest.fn();
+      const deleteFolder2Spy = jest.fn();
+
+      server.use(
+        http.delete('/api/folders/folder-1', () => {
+          deleteFolder1Spy();
+          return HttpResponse.json({ message: 'err' }, { status: 500 });
+        }),
+        http.delete('/api/folders/folder-2', () => {
+          deleteFolder2Spy();
+          return HttpResponse.json({});
+        })
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+      );
+
+      await waitFor(() => {
+        expect(deleteFolder1Spy).toHaveBeenCalledTimes(1);
+        expect(deleteFolder2Spy).toHaveBeenCalledTimes(1);
+        expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
       });
     });
   });
