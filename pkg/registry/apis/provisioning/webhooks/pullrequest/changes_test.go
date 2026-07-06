@@ -63,6 +63,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -137,6 +138,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -216,6 +218,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -290,6 +293,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -367,6 +371,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -444,6 +449,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -516,6 +522,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "org-2",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -588,6 +595,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -837,6 +845,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1184,6 +1193,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1257,6 +1267,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
@@ -1327,6 +1338,7 @@ func TestCalculateChanges(t *testing.T) {
 						Namespace: "x",
 					},
 					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
 						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
