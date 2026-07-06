@@ -16,11 +16,19 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
 
+// sqlCommenterRegExp matches a SQLCommenter attribution block: a block comment
+// made up of one or more key='value' pairs, e.g. /*application='grafana',source='bi'*/.
+var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9_.-]+='[^']*'(\s*,\s*[a-zA-Z0-9_.-]+='[^']*')*\s*\*/$`)
+
+// macroRegExp matches a Grafana macro of the form $name(...).
+var macroRegExp = regexp.MustCompile(sExpr)
+
 // stripSQLComments removes SQL line comments (--, #) and block comments (/* */)
 // from the query string while preserving comment-like characters that appear
 // inside quoted strings (single-quoted, double-quoted, and backtick-quoted).
 // MySQL supports # as a line comment delimiter in addition to the standard
-// -- and /* */ forms.
+// -- and /* */ forms. SQLCommenter attribution blocks are preserved so query
+// tagging metadata reaches the database, unless they embed a macro.
 func stripSQLComments(sql string) string {
 	var result strings.Builder
 	result.Grow(len(sql))
@@ -61,16 +69,26 @@ func stripSQLComments(sql string) string {
 
 		// Block comment: /* ... */
 		if i+1 < len(sql) && sql[i] == '/' && sql[i+1] == '*' {
+			start := i
 			i += 2
+			closed := false
 			for i+1 < len(sql) {
 				if sql[i] == '*' && sql[i+1] == '/' {
 					i += 2
+					closed = true
 					break
 				}
 				i++
 			}
-			if i >= len(sql) {
+			if !closed {
+				// Unterminated block comment: drop the remainder.
 				break
+			}
+			// Keep SQLCommenter tags so attribution reaches the database; strip
+			// every other block comment so macros inside them are not interpolated.
+			comment := sql[start:i]
+			if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
+				result.WriteString(comment)
 			}
 			continue
 		}

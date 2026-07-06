@@ -298,4 +298,26 @@ func TestStripSQLComments(t *testing.T) {
 		result := stripSQLComments(sql)
 		require.Equal(t, sql, result)
 	})
+
+	t.Run("preserves trailing SQLCommenter tag before semicolon", func(t *testing.T) {
+		sql := "SELECT 1 AS value\n/*application='grafana',source='bi',route='test',feature='repro'*/;"
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("preserves inline SQLCommenter tag", func(t *testing.T) {
+		sql := "SELECT 1 /*application='grafana',feature='panel'*/"
+		result := stripSQLComments(sql)
+		require.Equal(t, sql, result)
+	})
+
+	t.Run("still strips non-SQLCommenter block comments", func(t *testing.T) {
+		result := stripSQLComments("SELECT /* just a note */ 1")
+		require.Equal(t, "SELECT  1", result)
+	})
+
+	t.Run("strips block comment shaped like a tag but containing a macro", func(t *testing.T) {
+		result := stripSQLComments("SELECT 1 /*range='$__timeFilter(t)'*/")
+		require.Equal(t, "SELECT 1 ", result)
+	})
 }
