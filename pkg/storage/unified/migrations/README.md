@@ -60,13 +60,18 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 
 #### Migration registrars (owned by each team)
 
+Every team follows the same convention: a `migration_registrar.go` file in the team's **root
+package** exposing a `Xxx**Migration**` factory function (not `MigrationDefinition`).
+
 - **`pkg/registry/apis/dashboard/migration_registrar.go`**: `FoldersDashboardsMigration` — folders and dashboards definition
 - **`pkg/registry/apps/playlist/migration_registrar.go`**: `PlaylistMigration` — playlists definition
 - **`pkg/registry/apps/shorturl/migration_registrar.go`**: `ShortURLMigration` — short URLs definition
-- **`pkg/registry/apis/datasource/migrator/registrar.go`**: `DataSourceMigration` — datasources definition
+- **`pkg/registry/apis/datasource/migration_registrar.go`**: `DataSourceMigration` — datasources definition
 - **`pkg/registry/apps/querycaching/migration_registrar.go`**: `QueryCacheConfigMigration` — query cache configs definition
+- **`pkg/registry/apis/preferences/migration_registrar.go`**: `PreferencesMigration` — preferences definition
+- **`pkg/registry/apis/collections/migration_registrar.go`**: `StarsMigration` — stars definition
 
-Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`).
+Each team also provides a migrator interface in a `migrator/` subpackage (e.g., `pkg/registry/apis/dashboard/migrator/`). Preferences and collections keep their migrator implementation in the existing `legacy/` subpackage.
 
 ## How migrations work
 
