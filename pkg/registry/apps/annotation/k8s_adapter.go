@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -59,6 +60,17 @@ func toAPIError(err error, name string) error {
 	default:
 		return err
 	}
+}
+
+// goneError builds the 410 Gone returned when a caller reads or updates a
+// soft-deleted annotation, letting clients tell a tombstone from a missing one.
+func goneError(name string) error {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusGone,
+		Reason:  metav1.StatusReasonGone,
+		Message: fmt.Sprintf("annotation %q has been deleted", name),
+	}}
 }
 
 var (
@@ -219,6 +231,11 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, apierrors.NewNotFound(annotationGR, name)
 	}
 
+	// Surface the tombstone only after authz so 410 does not leak existence.
+	if annotation.DeletionTimestamp != nil {
+		return nil, goneError(name)
+	}
+
 	return annotation, nil
 }
 
@@ -338,6 +355,11 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
 	}
 
+	// Surface the tombstone only after authz, so 410 does not leak existence.
+	if existing.DeletionTimestamp != nil {
+		return nil, false, goneError(name)
+	}
+
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
 	if _, ok := GetLegacyData(resource); !ok {
@@ -382,6 +404,11 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 			return nil, false, apierrors.NewNotFound(annotationGR, name)
 		}
 		return nil, false, apierrors.NewForbidden(annotationGR, name, fmt.Errorf("insufficient permissions"))
+	}
+
+	// Deleting an already-tombstoned annotation is a no-op
+	if annotation.DeletionTimestamp != nil {
+		return nil, false, nil
 	}
 
 	if err := s.store.Delete(ctx, namespace, name); err != nil {
@@ -479,7 +506,7 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 		return err
 	}
 
-	return validateNames(anno)
+	return validateMetadata(anno)
 }
 
 func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
@@ -518,9 +545,12 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 	return nil
 }
 
-func validateNames(anno *annotationV0.Annotation) error {
+func validateMetadata(anno *annotationV0.Annotation) error {
 	if anno.Name == "" && anno.GenerateName == "" {
 		return apierrors.NewBadRequest("metadata.name or metadata.generateName is required")
+	}
+	if anno.DeletionTimestamp != nil {
+		return apierrors.NewBadRequest("metadata.deletionTimestamp cannot be set on create")
 	}
 
 	return nil
