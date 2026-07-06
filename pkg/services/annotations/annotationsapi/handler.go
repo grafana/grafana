@@ -200,6 +200,20 @@ func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotati
 	return annotationpkg.GetLegacyID(result), nil
 }
 
+// CreateWithLegacyID writes item to the new store pinned to a specific legacy ID, migrating
+// a record that only exists in legacy. The store keeps a supplied legacyID label instead of
+// minting a fresh one, so the migrated record — and any tombstone left on it — matches the
+// un-purged legacy copy by ID in merged reads.
+func (h *MigrationProxy) CreateWithLegacyID(ctx context.Context, orgID int64, item *annotations.Item, legacyID int64) error {
+	anno, err := itemToAnnotation(item)
+	if err != nil {
+		return err
+	}
+	annotationpkg.SetLegacyID(anno, legacyID)
+	_, err = h.client.Create(ctx, orgID, anno)
+	return err
+}
+
 // getByLegacyID fetches the annotation for annotationID and maps a tombstone to ErrGone,
 // so callers can distinguish a never-migrated record (ErrNotFound → fall back to legacy)
 // from one explicitly deleted in the new store (ErrGone → do NOT fall back).

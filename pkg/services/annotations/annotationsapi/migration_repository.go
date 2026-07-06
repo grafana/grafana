@@ -15,6 +15,7 @@ import (
 // Implemented by *MigrationProxy.
 type annotationProxy interface {
 	Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error)
+	CreateWithLegacyID(ctx context.Context, orgID int64, item *annotations.Item, legacyID int64) error
 	Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error
 	Delete(ctx context.Context, orgID int64, annotationID int64) error
 	Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error)
@@ -160,23 +161,35 @@ func (r *migrationRepository) SaveMany(ctx context.Context, items []annotations.
 	return r.legacy.SaveMany(ctx, items)
 }
 
-// Update writes to the new store. On ErrNotFound (older record) it falls back to legacy,
-// which preserves any Data the caller omits. On ErrGone (explicitly deleted in the new
-// store) it returns the error without falling back, so a tombstoned annotation is not
-// silently resurrected via the legacy copy.
+// Update writes to the new store. Legacy is read-only from proxy-writes on, so a record that
+// only exists in legacy (ErrNotFound) is migrated: the update is applied over the legacy copy
+// and the result is created in the new store under its original ID, leaving legacy untouched.
+// On ErrGone (explicitly deleted in the new store) it returns the error without migrating, so
+// a tombstoned annotation is not silently resurrected.
 func (r *migrationRepository) Update(ctx context.Context, item *annotations.Item) error {
 	err := r.proxy.Update(ctx, item.OrgID, item.ID, item)
 	if err == nil || !errors.Is(err, ErrNotFound) {
 		return err
 	}
-	return r.legacy.Update(ctx, item)
+
+	// Not in the new store yet. Migrate the legacy copy with the update applied.
+	existing, err := r.findLegacyByID(ctx, item.OrgID, item.ID)
+	if err != nil {
+		return err // ErrNotFound here means the record exists nowhere.
+	}
+	merged := mergeUpdateOverLegacy(existing, item)
+	return r.proxy.CreateWithLegacyID(ctx, item.OrgID, merged, item.ID)
 }
 
-// Delete soft-deletes one annotation in the new store. The legacy copy is left
-// untouched (legacy stays read-only during the migration); the tombstone in the new
-// store suppresses that copy from merged reads, so the annotation does not resurface.
+// Delete soft-deletes one annotation in the new store. The legacy copy is left untouched
+// (legacy stays read-only during the migration); the tombstone in the new store suppresses
+// that copy from merged reads, so the annotation does not resurface. A record that only
+// exists in legacy (ErrNotFound) is first migrated under its original ID, then soft-deleted,
+// so the tombstone matches the legacy copy. ErrGone means it was already deleted, treated as
+// an idempotent success.
 func (r *migrationRepository) Delete(ctx context.Context, params *annotations.DeleteParams) error {
 	// No ID means a mass delete by dashboard/panel, which the proxy can't express.
+	// TODO: mass delete still writes to legacy; the new store can't express it yet.
 	if params.ID == 0 {
 		return r.legacy.Delete(ctx, params)
 	}
@@ -184,11 +197,78 @@ func (r *migrationRepository) Delete(ctx context.Context, params *annotations.De
 	switch {
 	case err == nil, errors.Is(err, ErrGone):
 		return nil
-	case errors.Is(err, ErrNotFound):
-		return r.legacy.Delete(ctx, params)
-	default:
+	case !errors.Is(err, ErrNotFound):
 		return err
 	}
+
+	// Not in the new store yet. Migrate the legacy copy, then soft-delete it so the
+	// tombstone suppresses the un-purged legacy row from merged reads.
+	existing, err := r.findLegacyByID(ctx, params.OrgID, params.ID)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return nil // nothing anywhere; delete is idempotent
+		}
+		return err
+	}
+	if err := r.proxy.CreateWithLegacyID(ctx, params.OrgID, legacyDTOToItem(existing), params.ID); err != nil {
+		return err
+	}
+	// Create succeeded; if the soft-delete fails we surface the error. A retry re-enters
+	// Delete, finds the now-migrated record, and tombstones it directly.
+	return r.proxy.Delete(ctx, params.OrgID, params.ID)
+}
+
+// findLegacyByID reads a single annotation from legacy by ID, returning ErrNotFound when the
+// record does not exist there either.
+func (r *migrationRepository) findLegacyByID(ctx context.Context, orgID, id int64) (*annotations.ItemDTO, error) {
+	items, err := r.legacy.Find(ctx, &annotations.ItemQuery{OrgID: orgID, AnnotationID: id})
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, ErrNotFound
+	}
+	return items[0], nil
+}
+
+// legacyDTOToItem builds the Item to migrate from a legacy annotation, carrying the fields
+// the new store persists on create.
+func legacyDTOToItem(dto *annotations.ItemDTO) *annotations.Item {
+	item := &annotations.Item{
+		Epoch:    dto.Time,
+		EpochEnd: dto.TimeEnd,
+		Text:     dto.Text,
+		Tags:     dto.Tags,
+		PanelID:  dto.PanelID,
+		UserID:   dto.UserID,
+		Data:     dto.Data,
+	}
+	if dto.DashboardUID != nil {
+		item.DashboardUID = *dto.DashboardUID
+	}
+	return item
+}
+
+// mergeUpdateOverLegacy applies the caller's update fields on top of the legacy record. The
+// UpdateAnnotation command carries text/time/tags/data but not the dashboard/panel binding,
+// so those are taken from the legacy copy to avoid clearing them on migration.
+func mergeUpdateOverLegacy(existing *annotations.ItemDTO, update *annotations.Item) *annotations.Item {
+	merged := legacyDTOToItem(existing)
+	merged.Text = update.Text
+	merged.Epoch = update.Epoch
+	merged.EpochEnd = update.EpochEnd
+	merged.Tags = update.Tags
+	if update.Data != nil {
+		merged.Data = update.Data
+	}
+	// The update may carry the dashboard/panel binding (PatchAnnotation does); prefer it.
+	if update.DashboardUID != "" {
+		merged.DashboardUID = update.DashboardUID
+	}
+	if update.PanelID != 0 {
+		merged.PanelID = update.PanelID
+	}
+	return merged
 }
 
 // TODO: FindTags reads from legacy only. Follow up to proxy tag searches to the new store.
