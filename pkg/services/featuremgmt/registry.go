@@ -2147,14 +2147,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "nestedFramesFieldOverrides",
-			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "vizLegendFacetedFilter",
 			Description: "Enable faceted labels filter for series visibility in the legend",
 			Stage:       FeatureStageGeneralAvailability,

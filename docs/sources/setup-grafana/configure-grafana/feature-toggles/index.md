@@ -100,7 +100,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
-| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                             |
