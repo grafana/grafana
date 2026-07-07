@@ -182,6 +182,7 @@ type MetaRoute struct {
 	Url         *string `json:"url,omitempty"`
 	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
 	ReqRole     *string `json:"reqRole,omitempty"`
+	ReqAuthBy   *string `json:"reqAuthBy,omitempty"`
 	ReqAction   *string `json:"reqAction,omitempty"`
 	// +listType=atomic
 	Headers      []MetaV0alpha1RouteHeaders     `json:"headers,omitempty"`

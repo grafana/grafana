@@ -282,6 +282,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					Method:    "GET",
 					URL:       "https://api.example.com",
 					ReqRole:   identity.RoleAdmin,
+					ReqAuthBy: "oauth_azuread",
 					ReqAction: "read",
 					Headers:   []plugins.Header{{Name: "Authorization", Content: "Bearer token"}},
 					URLParams: []plugins.URLParam{{Name: "param1", Content: "value1"}},
@@ -314,6 +315,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.Len(t, meta.Routes, 1)
 		assert.Equal(t, "/api/endpoint", *meta.Routes[0].Path)
 		assert.Equal(t, "Admin", *meta.Routes[0].ReqRole)
+		assert.Equal(t, "oauth_azuread", *meta.Routes[0].ReqAuthBy)
 		assert.NotNil(t, meta.Routes[0].TokenAuth)
 		assert.NotNil(t, meta.Routes[0].JwtTokenAuth)
 	})

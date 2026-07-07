@@ -167,6 +167,7 @@ export interface Route {
 	url?: string;
 	reqSignedIn?: boolean;
 	reqRole?: string;
+	reqAuthBy?: string;
 	reqAction?: string;
 	// +listType=atomic
 	headers?: {

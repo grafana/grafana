@@ -393,10 +393,24 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			ReqRole: org.RoleAdmin, // Protected by role
 		},
 		{
+			Path:      "sso-settings",
+			Method:    "GET",
+			URL:       "http://localhost/api/sso-settings",
+			ReqRole:   org.RoleAdmin,
+			ReqAuthBy: "oauth_azuread",
+		},
+		{
 			Path:      "projects",
 			Method:    "GET",
 			URL:       "http://localhost/api/projects",
 			ReqAction: "test-app.projects:read", // Protected by RBAC action
+		},
+		{
+			Path:      "projects-sso",
+			Method:    "GET",
+			URL:       "http://localhost/api/projects-sso",
+			ReqAction: "test-app.projects:read", // Protected by RBAC action
+			ReqAuthBy: "oauth_azuread",
 		},
 		{
 			Path:      "home",
@@ -409,6 +423,7 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 	tcs := []struct {
 		proxyPath       string
 		usrRole         org.RoleType
+		usrAuthBy       string
 		usrPerms        map[string][]string
 		expectedURLPath string
 		expectedStatus  int
@@ -426,6 +441,20 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			expectedStatus:  http.StatusForbidden,
 		},
 		{
+			proxyPath:       "/sso-settings",
+			usrRole:         org.RoleAdmin,
+			usrAuthBy:       "oauth_azuread",
+			expectedURLPath: "/api/sso-settings",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/sso-settings",
+			usrRole:         org.RoleAdmin,
+			usrAuthBy:       "saml",
+			expectedURLPath: "/api/sso-settings",
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
 			proxyPath:       "/projects",
 			usrPerms:        map[string][]string{"test-app.projects:read": {}},
 			expectedURLPath: "/api/projects",
@@ -435,6 +464,20 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			proxyPath:       "/projects",
 			usrPerms:        map[string][]string{},
 			expectedURLPath: "/api/projects",
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			proxyPath:       "/projects-sso",
+			usrAuthBy:       "oauth_azuread",
+			usrPerms:        map[string][]string{"test-app.projects:read": {}},
+			expectedURLPath: "/api/projects-sso",
+			expectedStatus:  http.StatusOK,
+		},
+		{
+			proxyPath:       "/projects-sso",
+			usrAuthBy:       "saml",
+			usrPerms:        map[string][]string{"test-app.projects:read": {}},
+			expectedURLPath: "/api/projects-sso",
 			expectedStatus:  http.StatusForbidden,
 		},
 		{
@@ -480,9 +523,10 @@ func TestPluginProxyRoutesAccessControl(t *testing.T) {
 			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 			req := httptest.NewRequest("GET", tc.proxyPath, nil)
 			signedInUser := &user.SignedInUser{
-				OrgID:       1,
-				OrgRole:     tc.usrRole,
-				Permissions: map[int64]map[string][]string{1: tc.usrPerms},
+				OrgID:           1,
+				OrgRole:         tc.usrRole,
+				AuthenticatedBy: tc.usrAuthBy,
+				Permissions:     map[int64]map[string][]string{1: tc.usrPerms},
 			}
 			ps := &pluginsettings.DTO{
 				PluginID:       "test-app",

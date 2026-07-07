@@ -303,6 +303,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 				reqRole := string(route.ReqRole)
 				v0Route.ReqRole = &reqRole
 			}
+			if route.ReqAuthBy != "" {
+				v0Route.ReqAuthBy = &route.ReqAuthBy
+			}
 			if route.ReqAction != "" {
 				v0Route.ReqAction = &route.ReqAction
 			}

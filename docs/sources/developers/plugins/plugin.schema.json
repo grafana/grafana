@@ -399,6 +399,9 @@
           "reqRole": {
             "type": "string"
           },
+          "reqAuthBy": {
+            "type": "string"
+          },
           "reqAction": {
             "type": "string",
             "description": "The RBAC action a user must have to use this route. **Warning**: unless the action targets the plugin (or a nested datasource plugin), only the action is verified, not what it applies to."

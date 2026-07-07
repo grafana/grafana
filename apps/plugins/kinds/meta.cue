@@ -168,6 +168,7 @@ metaV0Alpha1: {
 	url?:         string
 	reqSignedIn?: bool
 	reqRole?:     string
+	reqAuthBy?:   string
 	reqAction?:   string
 	// +listType=atomic
 	headers?: [...{

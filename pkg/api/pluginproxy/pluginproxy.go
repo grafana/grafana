@@ -137,6 +137,10 @@ func (proxy *PluginProxy) HandleRequest() {
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
+	if route.ReqAuthBy != "" && !proxy.signedInUser.IsAuthenticatedBy(route.ReqAuthBy) {
+		logger.FromContext(proxy.req.Context()).Debug("plugin route auth module mismatch", "route", proxy.req.URL.Path, "requiredAuthBy", route.ReqAuthBy, "authenticatedBy", proxy.signedInUser.GetAuthenticatedBy())
+		return false
+	}
 	if route.ReqAction != "" {
 		routeEval := pluginac.GetPluginRouteEvaluator(proxy.ps.PluginID, route.ReqAction)
 		hasAccess, err := proxy.accessControl.Evaluate(proxy.req.Context(), proxy.signedInUser, routeEval)

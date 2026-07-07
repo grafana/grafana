@@ -221,6 +221,7 @@ type Route struct {
 	Path         string            `json:"path"`
 	Method       string            `json:"method"`
 	ReqRole      identity.RoleType `json:"reqRole"`
+	ReqAuthBy    string            `json:"reqAuthBy"`
 	ReqAction    string            `json:"reqAction"`
 	URL          string            `json:"url"`
 	URLParams    []URLParam        `json:"urlParams"`
