@@ -5021,6 +5021,20 @@
     },
     {
       "metadata": {
+        "name": "timeNavigator",
+        "resourceVersion": "1783453754106",
+        "creationTimestamp": "2026-07-07T19:49:14Z"
+      },
+      "spec": {
+        "description": "Adds a dashboard timebar / time navigator control that drives the dashboard time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-22T10:52:33Z"

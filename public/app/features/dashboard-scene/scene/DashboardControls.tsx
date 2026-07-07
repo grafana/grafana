@@ -45,6 +45,7 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+import { SceneTimeNavigator } from './time-navigator/SceneTimeNavigator';
 
 function getPanelEditVariables(
   dashboard: DashboardScene,
@@ -92,6 +93,7 @@ function getPanelEditVariables(
 export interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
+  timebar: SceneTimeNavigator;
   hideTimeControls?: boolean;
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
@@ -155,6 +157,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     super({
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
+      timebar: state.timebar ?? new SceneTimeNavigator({}),
       ...state,
     });
 
@@ -209,6 +212,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const {
     refreshPicker,
     timePicker,
+    timebar,
     hideTimeControls,
     hideVariableControls,
     hideLinksControls,
@@ -262,48 +266,56 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   return (
-    <div
-      data-testid={selectors.pages.Dashboard.Controls}
-      className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
-    >
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
-        {!hideTimeControls && (
-          <div className={styles.fixedControls}>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </div>
-        )}
-        {config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
-            <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
-          </div>
-        )}
-        {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
-          !config.featureToggles.dashboardNewLayouts && (
+    <>
+      <div
+        data-testid={selectors.pages.Dashboard.Controls}
+        className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+      >
+        <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+          {!hideTimeControls && (
             <div className={styles.fixedControls}>
-              <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+              <timePicker.Component model={timePicker} />
+              <refreshPicker.Component model={refreshPicker} />
             </div>
           )}
+          {config.featureToggles.dashboardNewLayouts && (
+            <div className={styles.fixedControls}>
+              <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
+            </div>
+          )}
+          {(config.featureToggles.dashboardFiltersOverview ||
+            config.featureToggles.dashboardUnifiedDrilldownControls) &&
+            !config.featureToggles.dashboardNewLayouts && (
+              <div className={styles.fixedControls}>
+                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+              </div>
+            )}
+        </div>
+        {config.featureToggles.scopeFilters && !editPanel && (
+          <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+        )}
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
+            <DashboardDataLayerControls dashboard={dashboard} />
+          </>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        <DefaultControlsLoadingSkeleton
+          dashboard={dashboard}
+          hideVariableControls={hideVariableControls}
+          hideLinksControls={hideLinksControls}
+        />
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
+        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+      {config.featureToggles.timeNavigator && !hideTimeControls && (
+        <div style={{ width: '100%', padding: '4px 8px' }}>
+          <timebar.Component model={timebar} />
+        </div>
       )}
-      {!hideVariableControls && (
-        <>
-          <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
-          <DashboardDataLayerControls dashboard={dashboard} />
-        </>
-      )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-      <DefaultControlsLoadingSkeleton
-        dashboard={dashboard}
-        hideVariableControls={hideVariableControls}
-        hideLinksControls={hideLinksControls}
-      />
-      {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-    </div>
+    </>
   );
 }
 
