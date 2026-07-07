@@ -17,7 +17,7 @@ export {
 export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
+export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
