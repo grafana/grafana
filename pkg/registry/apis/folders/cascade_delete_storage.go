@@ -36,7 +36,8 @@ var childFolderPageSize int64 = 1000
 var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 
 // FolderContentsDeleter deletes the non-dashboard resources in a folder (alert rules, library
-// elements) during cascade delete. Declared here, not in folderimpl, to keep the apiserver -> folder edge one-way.
+// elements) during cascade delete. Satisfied by *cleaner.ContentsCleaner; kept as an interface here
+// so the cascade can be faked in tests and the cleaner package need not import the apiserver.
 type FolderContentsDeleter interface {
 	DeleteInFolder(ctx context.Context, namespace, folderUID string) error
 }

@@ -25,21 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/librarypanels"
-	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
-
-// ProvideFolderContentsDeleter assembles the cascade cleaner from the alerting store and
-// library-panels service. Wired only here in the composition root, so the folder package never
-// imports alerting or library panels.
-func ProvideFolderContentsDeleter(alertRules *ngalertstore.DBstore, libPanels *librarypanels.LibraryPanelService) folders.FolderContentsDeleter {
-	c := folder.NewContentsCleaner()
-	c.Register(alertRules)
-	c.Register(libPanels)
-	return c
-}
 
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
@@ -92,7 +80,8 @@ var WireSet = wire.NewSet(
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	datasource.RegisterAPIService,
-	ProvideFolderContentsDeleter,
+	cleaner.ProvideFolderContentsDeleter,
+	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,
