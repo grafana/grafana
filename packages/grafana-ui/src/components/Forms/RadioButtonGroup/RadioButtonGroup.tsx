@@ -118,7 +118,6 @@ export function RadioButtonGroup<T>({
             name={groupName.current}
             description={opt.description}
             title={labelTitle}
-            fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
             {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
