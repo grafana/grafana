@@ -22,8 +22,6 @@ import {
   extendedContext,
   midOf,
   panRange,
-  wheelZoomRange,
-  zoomRange,
 } from './timeModel';
 
 export type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
@@ -46,6 +44,30 @@ type Action =
   | { type: 'applyRelativeContext'; duration: string; now: number }
   | { type: 'syncFromDashboard'; range: TimeRangeMs; now: number };
 
+/**
+ * Shift a proposed context window so it fully contains the selection — the selection (blue bar) must stay
+ * within the visible view. Panning/zooming therefore stops when the selection reaches an edge, rather than
+ * letting the selection drift off-screen (where the overlay would misleadingly pin to the edge). If the
+ * context is narrower than the selection, centre it on the selection instead.
+ */
+function containSelection(context: TimeRangeMs, selection: TimeRangeMs): TimeRangeMs {
+  const span = context.to - context.from;
+  const selSpan = selection.to - selection.from;
+  if (span <= selSpan) {
+    const mid = midOf(selection);
+    return { from: mid - span / 2, to: mid + span / 2 };
+  }
+  let { from, to } = context;
+  if (selection.from < from) {
+    from = selection.from;
+    to = from + span;
+  } else if (selection.to > to) {
+    to = selection.to;
+    from = to - span;
+  }
+  return { from, to };
+}
+
 export function reducer(state: TimebarState, action: Action): TimebarState {
   switch (action.type) {
     case 'beginGesture':
@@ -57,9 +79,11 @@ export function reducer(state: TimebarState, action: Action): TimebarState {
     case 'setSelection':
       return { ...state, selection: clampRange(action.range) };
 
-    case 'setContextWindow':
-      // Any manual context manipulation drops the relative framing.
-      return { ...state, contextWindow: clampRange(action.range, { maxTo: action.now }), relativeDuration: null };
+    case 'setContextWindow': {
+      // Any manual context manipulation drops the relative framing, and must keep the selection in view.
+      const contextWindow = containSelection(clampRange(action.range, { maxTo: action.now }), state.selection);
+      return { ...state, contextWindow, relativeDuration: null };
+    }
 
     case 'applyRelativeContext': {
       const ms = durationToMs(action.duration);
@@ -117,7 +141,6 @@ export interface TimebarActions {
   setContextWindow: (range: TimeRangeMs) => void;
   zoom: (factor: number) => void;
   pan: (direction: 'left' | 'right') => void;
-  wheelZoom: (cursorVal: number, deltaY: number) => void;
   reset: () => void;
   applyRelativeContext: (duration: string) => void;
   applyAbsoluteContext: (range: TimeRangeMs) => void;
@@ -199,9 +222,15 @@ export function useTimebar({
   }, []);
 
   const zoom = useCallback((factor: number) => {
+    // Zoom the context window around the SELECTION (not the context midpoint) so the selection stays
+    // framed and centered, and never shrink the context below the selection span (which would make the
+    // selection overflow the view and appear clamped/smaller).
+    const { contextWindow, selection } = stateRef.current;
+    const newSpan = Math.max((contextWindow.to - contextWindow.from) * factor, selection.to - selection.from);
+    const mid = midOf(selection);
     dispatch({
       type: 'setContextWindow',
-      range: zoomRange(stateRef.current.contextWindow, factor),
+      range: { from: mid - newSpan / 2, to: mid + newSpan / 2 },
       now: nowRef.current,
     });
   }, []);
@@ -210,14 +239,6 @@ export function useTimebar({
     dispatch({
       type: 'setContextWindow',
       range: panRange(stateRef.current.contextWindow, direction),
-      now: nowRef.current,
-    });
-  }, []);
-
-  const wheelZoom = useCallback((cursorVal: number, deltaY: number) => {
-    dispatch({
-      type: 'setContextWindow',
-      range: wheelZoomRange(stateRef.current.contextWindow, cursorVal, deltaY),
       now: nowRef.current,
     });
   }, []);
@@ -266,7 +287,6 @@ export function useTimebar({
       setContextWindow,
       zoom,
       pan,
-      wheelZoom,
       reset,
       applyRelativeContext,
       applyAbsoluteContext,

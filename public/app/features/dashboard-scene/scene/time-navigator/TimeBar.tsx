@@ -8,7 +8,7 @@ import { ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { AxisPlacement, IconButton, Popover, UPlotChart, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ContextWindowSelector } from './ContextWindowSelector';
-import { type TimeRangeMs } from './timeModel';
+import { WHEEL_ZOOM_BASE, type TimeRangeMs } from './timeModel';
 import { type TimebarActions, useTimebar } from './timebarState';
 
 /** Fixed height of the uPlot time ruler, in px. */
@@ -193,13 +193,10 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       const ctx = stateRef.current.contextWindow;
       u.setScale('x', { min: ctx.from, max: ctx.to });
 
-      // Wheel = zoom the context window about the cursor.
+      // Wheel = zoom the context window around the selection (same as the zoom buttons), not the cursor.
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        const over = u.over;
-        const rect = over.getBoundingClientRect();
-        const cursorVal = overPxToVal(over, e.clientX - rect.left, stateRef.current.contextWindow);
-        actionsRef.current.wheelZoom(cursorVal, e.deltaY);
+        actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
       };
       u.over.addEventListener('wheel', onWheel, { passive: false });
 
@@ -334,13 +331,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   }, []);
 
   const onOverlayWheel = useCallback((e: React.WheelEvent) => {
-    const u = uplotRef.current;
-    if (!u) {
-      return;
-    }
-    const over = u.over;
-    const rect = over.getBoundingClientRect();
-    actionsRef.current.wheelZoom(overPxToVal(over, e.clientX - rect.left, stateRef.current.contextWindow), e.deltaY);
+    actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
   }, []);
 
   const handleHeight = overlay ? overlay.height * 0.6 : 0;
