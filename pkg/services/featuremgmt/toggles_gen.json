@@ -7,7 +7,8 @@
       "metadata": {
         "name": "adHocFilterDefaultValues",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables configuring default origin filters for ad-hoc filter variables",
@@ -1476,7 +1477,8 @@
       "metadata": {
         "name": "dashboardFiltersOverview",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables the dashboard filters overview pane",
@@ -1940,7 +1942,8 @@
       "metadata": {
         "name": "drilldownRecommendations",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-17T12:52:59Z"
+        "creationTimestamp": "2025-12-17T12:52:59Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
@@ -4084,7 +4087,8 @@
       "metadata": {
         "name": "panelGroupBy",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-28T13:03:11Z"
+        "creationTimestamp": "2025-11-28T13:03:11Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables a group by action per panel",
@@ -4154,7 +4158,8 @@
       "metadata": {
         "name": "perPanelFiltering",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-08T16:18:04Z"
+        "creationTimestamp": "2025-12-08T16:18:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables filtering by grouping labels on the panel level through legend or tooltip",
