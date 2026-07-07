@@ -5704,6 +5704,7 @@
         "name": "vizLegendFacetedFilter",
         "resourceVersion": "1779387149240",
         "creationTimestamp": "2026-03-10T07:54:22Z",
+        "deletionTimestamp": "2026-07-07T16:17:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.240952 +0000 UTC"
         }

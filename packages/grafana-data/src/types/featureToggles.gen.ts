@@ -1171,11 +1171,6 @@ export interface FeatureToggles {
   */
   nestedFramesFieldOverrides?: boolean;
   /**
-  * Enable faceted labels filter for series visibility in the legend
-  * @default true
-  */
-  vizLegendFacetedFilter?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */

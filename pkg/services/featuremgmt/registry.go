@@ -2155,14 +2155,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "vizLegendFacetedFilter",
-			Description: "Enable faceted labels filter for series visibility in the legend",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
