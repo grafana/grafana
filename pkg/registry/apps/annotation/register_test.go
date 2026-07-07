@@ -1,10 +1,19 @@
 package annotation
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,9 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	restclient "k8s.io/client-go/rest"
 )
 
 func TestK8sRESTAdapter_Create(t *testing.T) {
@@ -362,4 +369,67 @@ func TestK8sRESTAdapter_NotFound(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, apierrors.IsNotFound(err), "expected IsNotFound, got: %v", err)
 	})
+}
+
+func TestNewAppInstaller_GraphiteHandlerWritesAPIStatusResponse(t *testing.T) {
+	tests := []struct {
+		name            string
+		accessClient    authtypes.AccessClient
+		body            string
+		statusCode      int
+		reason          metav1.StatusReason
+		messageContains string
+	}{
+		{
+			name:            "malformed json writes 400",
+			accessClient:    authtypes.FixedAccessClient(true),
+			body:            `not json`,
+			statusCode:      http.StatusBadRequest,
+			reason:          metav1.StatusReasonBadRequest,
+			messageContains: "bad request data",
+		},
+		{
+			name:            "unauthorized create writes 403",
+			accessClient:    &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }},
+			body:            `{"what":"deploy","tags":[]}`,
+			statusCode:      http.StatusForbidden,
+			reason:          metav1.StatusReasonForbidden,
+			messageContains: "insufficient permissions",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			installer, err := NewAppInstaller(Config{
+				StoreBackend: "memory",
+				RetentionTTL: defaultRetentionTTL,
+			}, nil, nil, tt.accessClient, newFakeFolderResolver(nil), tracing.InitializeTracerForTest(), nil)
+			require.NoError(t, err)
+			require.NoError(t, installer.InitializeApp(restclient.Config{}))
+			annotationApp, err := installer.App()
+			require.NoError(t, err)
+
+			writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
+			ctx := identity.WithServiceIdentityContext(t.Context(), 1)
+			err = annotationApp.CallCustomRoute(ctx, writer, &app.CustomRouteRequest{
+				ResourceIdentifier: resource.FullIdentifier{
+					Version:   "v0alpha1",
+					Namespace: metav1.NamespaceDefault,
+				},
+				Path:   "graphite",
+				Method: http.MethodPost,
+				Body:   io.NopCloser(strings.NewReader(tt.body)),
+			})
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.statusCode, writer.code)
+			assert.Equal(t, "application/json", writer.header.Get("Content-Type"))
+
+			var status metav1.Status
+			require.NoError(t, json.Unmarshal(writer.body.Bytes(), &status))
+			assert.Equal(t, int32(tt.statusCode), status.Code)
+			assert.Equal(t, tt.reason, status.Reason)
+			assert.Contains(t, status.Message, tt.messageContains)
+		})
+	}
 }
