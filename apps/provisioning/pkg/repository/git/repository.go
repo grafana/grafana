@@ -976,7 +976,8 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 	}
 
 	// Use signature from context if available
-	if sig := repository.GetAuthorSignature(ctx); sig != nil {
+	userAttribution := r.config.Spec.Commit != nil && r.config.Spec.Commit.UserAttribution
+	if sig := repository.GetAuthorSignature(ctx); sig != nil && userAttribution {
 		if sig.Name != "" {
 			author.Name = sig.Name
 		}
