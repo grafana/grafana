@@ -47,7 +47,11 @@ export default function resetSelectStyles(theme: GrafanaTheme2): Partial<StylesC
   };
 }
 
-export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | string | undefined, minWidth?: string): Partial<StylesConfig> {
+export function useCustomSelectStyles(
+  theme: GrafanaTheme2,
+  width: number | string | undefined,
+  minWidth?: string
+): Partial<StylesConfig> {
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
