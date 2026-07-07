@@ -794,6 +794,14 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
 	}
 
+	// The plugin.json embedded in the grafana.com response often omits the version
+	// (especially for nested/child plugins, which inherit it from the parent). Fall
+	// back to the authoritative version from the grafana.com versions endpoint. For
+	// child plugins this is set to the parent's version in grafanaComChildPluginVersionToMetaSpec.
+	if metaSpec.PluginJson.Info.Version == "" {
+		metaSpec.PluginJson.Info.Version = gcomMeta.Version
+	}
+
 	// Extract aliasIDs from the JSON wrapper
 	if len(gcomMeta.JSON.AliasIDs) > 0 {
 		metaSpec.AliasIds = gcomMeta.JSON.AliasIDs

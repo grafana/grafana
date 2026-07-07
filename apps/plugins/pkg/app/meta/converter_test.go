@@ -581,6 +581,8 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 		assert.Equal(t, "child-plugin", meta.PluginJson.Id)
 		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, meta.Class)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, meta.Signature.Status)
+		// Child plugin.json has no version, so it inherits the parent's version.
+		assert.Equal(t, "1.0.0", meta.PluginJson.Info.Version)
 	})
 }
 
@@ -614,6 +616,36 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Equal(t, "hash123", *meta.Module.Hash)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", meta.BaseURL)
 		assert.Equal(t, []string{"child1", "child2"}, meta.Children)
+	})
+
+	t.Run("falls back to gcom version when plugin.json version is empty", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "2.3.4", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("keeps plugin.json version when present", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug:          "test-plugin",
+			Version:             "2.3.4",
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Info: pluginsv0alpha1.MetaInfo{Version: "9.9.9"}}},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest:            grafanaComPluginManifest{Files: map[string]string{}},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "test-plugin")
+		require.NoError(t, err)
+		assert.Equal(t, "9.9.9", meta.PluginJson.Info.Version)
 	})
 
 	t.Run("converts all signature types", func(t *testing.T) {
