@@ -1079,7 +1079,11 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	if k.rvManager != nil {
 		dataKey.GUID = uuid.New().String()
 		var err error
-		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
+		// ExecWithRV commits the data on its own context regardless of client cancellation.
+		// Passing a detached context makes ExecWithRV wait for that guaranteed commit
+		// instead of bailing out on cancellation and losing the assigned resource version (which would
+		// leave the data committed but the event unwritten).
+		rv, err = k.rvManager.ExecWithRV(context.WithoutCancel(ctx), event.Key, func(txnCtx context.Context, tx db.Tx) (string, error) {
 			if err := k.dataStore.Save(kv.ContextWithTx(txnCtx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
@@ -1114,6 +1118,10 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			return 0, fmt.Errorf("failed to write data: %w", err)
 		}
 	}
+
+	// The data is now durably committed. From here on the data store and event
+	// store must not diverge, so detach from client cancellation
+	ctx = context.WithoutCancel(ctx)
 
 	// Optimistic concurrency control to verify our write is the latest version
 	// and that the resource still had the expected PreviousRV when we wrote it.
