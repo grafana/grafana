@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useCopyToClipboard } from 'react-use';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { useCopyToClipboard } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { reportInteraction } from '@grafana/runtime';
@@ -98,7 +98,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   const { __name__, ...allLabels } = listItemData;
   // We must know whether it is a utf8 metric name or not
   const isLegacyMetric = isValidLegacyName(__name__ ?? '');
-  const [_, copyToClipboard] = useCopyToClipboard();
+  const copyToClipboard = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
 

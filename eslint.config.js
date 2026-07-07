@@ -75,8 +75,8 @@ const baseImportConfig = {
     },
     {
       name: 'react-use',
-      importNames: ['useObservable'],
-      message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
+      importNames: ['useObservable', 'useCopyToClipboard'],
+      message: 'react-use is being phased out. Import the equivalent hook from @grafana/data/unstable instead.',
     },
   ],
 };

@@ -9,5 +9,6 @@
  * and be subject to the standard policies
  */
 
+export { useCopyToClipboard } from './hooks/useCopyToClipboard';
 export { useObservable } from './hooks/useObservable';
 export { DEFAULT_TAG_COLORS } from './themes/createComponents';

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useCopyToClipboard } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { useCopyToClipboard } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Field, IconButton, useStyles2 } from '@grafana/ui';
@@ -14,8 +14,7 @@ type PreviewProps = {
 };
 
 export function Preview({ rawSql, datasourceType }: PreviewProps) {
-  // TODO: use zero index to give feedback about copy success
-  const [_, copyToClipboard] = useCopyToClipboard();
+  const copyToClipboard = useCopyToClipboard();
   const styles = useStyles2(getStyles);
 
   const copyPreview = (rawSql: string) => {
