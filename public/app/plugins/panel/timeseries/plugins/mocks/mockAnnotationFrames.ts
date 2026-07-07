@@ -712,7 +712,7 @@ export const mockClusterRegions: DataFrame = {
   ],
 };
 
-export const mockAnnotationRegionFrame: DataFrame = {
+const mockAnnotationRegionFrame: DataFrame = {
   length: 4,
   meta: {
     dataTopic: DataTopic.Annotations,

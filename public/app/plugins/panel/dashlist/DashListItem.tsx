@@ -41,7 +41,7 @@ export function DashListItem({
     <>
       {layoutMode === 'list' ? (
         <div className={css.dashlistLink}>
-          <Link href={url}>
+          <Link href={url} onClick={onCardLinkClick}>
             <Text element="p">{dashboard.name}</Text>
             {showFolderNames && locationInfo && (
               <Text color="secondary" variant="bodySmall" element="p">

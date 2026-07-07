@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
 
@@ -29,6 +30,7 @@ type Mapping interface {
 	SkipScope(verb string) bool
 	// Resource returns the K8s resource name for this mapping.
 	Resource() string
+	SkipWildcard() bool
 }
 
 type translation struct {
@@ -41,6 +43,7 @@ type translation struct {
 	skipScopeOnVerb map[string]bool
 	// use this option if you need to limit access to users that can access all resources
 	useWildcardScope bool
+	skipWildcard     bool
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -90,6 +93,10 @@ func (t translation) SkipScope(verb string) bool {
 
 func (t translation) Resource() string {
 	return t.resource
+}
+
+func (t translation) SkipWildcard() bool {
+	return t.skipWildcard
 }
 
 // MapperRegistry is a registry of mappers that maps a group and resource to a translation.
@@ -195,6 +202,23 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
+func newDatasourceQueryTranslation() translation {
+	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
+
+	dsTranslation.actionSetMapping = map[string][]string{
+		// utils.VerbWatch: {"datasources:query"},
+		utils.VerbGet:              {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbList:             {"datasources:query", "datasources:admin", "datasources:edit"},
+		utils.VerbUpdate:           {"datasources:edit", "datasources:admin"},
+		utils.VerbPatch:            {"datasources:edit", "datasources:admin"},
+		utils.VerbDelete:           {"datasources:edit", "datasources:admin"},
+		utils.VerbDeleteCollection: {"datasources:edit", "datasources:admin"},
+		utils.VerbGetPermissions:   {"datasources:admin"},
+		utils.VerbSetPermissions:   {"datasources:admin"},
+	}
+	return dsTranslation
+}
+
 // newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
 // Service accounts only have Edit and Admin permission levels — there is no View level.
 func newServiceAccountTranslation() translation {
@@ -220,6 +244,74 @@ func newServiceAccountTranslation() translation {
 	return saTranslation
 }
 
+// newRoutingTreeTranslation maps the notifications.alerting.grafana.app
+// routingtrees resource to the granular, per-resource managed route actions
+// (notifications.alerting.grafana.app/routingtrees:get, ...:uid:<name>) and to
+// the view/edit/admin action sets registered by RoutePermissionsService.
+func newRoutingTreeTranslation() translation {
+	verbMapping := map[string]string{
+		utils.VerbGet:              accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbList:             accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbWatch:            accesscontrol.ActionAlertingManagedRoutesRead,
+		utils.VerbCreate:           accesscontrol.ActionAlertingManagedRoutesCreate,
+		utils.VerbUpdate:           accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbPatch:            accesscontrol.ActionAlertingManagedRoutesWrite,
+		utils.VerbDelete:           accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbDeleteCollection: accesscontrol.ActionAlertingManagedRoutesDelete,
+		utils.VerbGetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsWrite,
+		utils.VerbSetPermissions:   accesscontrol.ActionAlertingRoutesPermissionsRead,
+	}
+
+	const (
+		viewSet  = "notifications.alerting.grafana.app/routingtrees:view"
+		editSet  = "notifications.alerting.grafana.app/routingtrees:edit"
+		adminSet = "notifications.alerting.grafana.app/routingtrees:admin"
+	)
+
+	actionSetMapping := make(map[string][]string)
+	for verb, action := range verbMapping {
+		switch {
+		case slices.Contains(ossaccesscontrol.RoutesViewActions, action):
+			actionSetMapping[verb] = []string{viewSet, editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesEditActions, action):
+			actionSetMapping[verb] = []string{editSet, adminSet}
+		case slices.Contains(ossaccesscontrol.RoutesAdminActions, action):
+			actionSetMapping[verb] = []string{adminSet}
+		}
+	}
+
+	return translation{
+		resource:         accesscontrol.AlertingRoutesKind,
+		attribute:        "uid",
+		verbMapping:      verbMapping,
+		actionSetMapping: actionSetMapping,
+		folderSupport:    false,
+		skipScopeOnVerb:  map[string]bool{utils.VerbCreate: true},
+	}
+}
+
+// newAlertmanagerImportsTranslation maps the notifications.alerting.grafana.app
+// alertmanagerimports resource to its granular, per-resource actions. There is
+// no resource permissions service for this resource, so it has no action sets.
+func newAlertmanagerImportsTranslation() translation {
+	return translation{
+		resource:  accesscontrol.AlertingAlertmanagerImportsKind,
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbList:             accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingAlertmanagerImportsRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingAlertmanagerImportsCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+		},
+		folderSupport:   false,
+		skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+	}
+}
+
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -235,6 +327,10 @@ func NewMapperRegistry() MapperRegistry {
 	}
 
 	mapper := mapper(map[string]map[string]translation{
+		"notifications.alerting.grafana.app": {
+			"routingtrees":        newRoutingTreeTranslation(),
+			"alertmanagerimports": newAlertmanagerImportsTranslation(),
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
@@ -270,7 +366,40 @@ func NewMapperRegistry() MapperRegistry {
 		"folder.grafana.app": {
 			"folders": newFolderTranslation(),
 		},
+		"playlist.grafana.app": {
+			// Playlists only define two actions (playlists:read / playlists:write) and are
+			// neither folder-scoped nor scope-checked by their own authorizer, so writes map
+			// to playlists:write and create skips scope. This lets the provisioning export
+			// preflight (run under the requesting user) authorize playlists like other kinds.
+			"playlists": translation{
+				resource:  "playlists",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "playlists:read",
+					utils.VerbList:             "playlists:read",
+					utils.VerbWatch:            "playlists:read",
+					utils.VerbCreate:           "playlists:write",
+					utils.VerbUpdate:           "playlists:write",
+					utils.VerbPatch:            "playlists:write",
+					utils.VerbDelete:           "playlists:write",
+					utils.VerbDeleteCollection: "playlists:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+			},
+		},
 		"iam.grafana.app": {
+			"permissions": translation{
+				resource:  "permissions",
+				attribute: "type",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "roles:write",
+					utils.VerbUpdate: "roles:write",
+					utils.VerbPatch:  "roles:write",
+				},
+				folderSupport: false,
+				skipWildcard:  true,
+			},
 			// Users is a special case. We translate user permissions from id to uid based.
 			"users": translation{
 				resource:  "users",
@@ -373,7 +502,16 @@ func NewMapperRegistry() MapperRegistry {
 			},
 		},
 		"*.datasource.grafana.app": {
-			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+			"datasources": newDatasourceQueryTranslation(),
+			"datasources/query": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),

@@ -13,7 +13,7 @@ import { makeFragment } from '../utils/slate';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 
-export const TYPEAHEAD_DEBOUNCE = 250;
+const TYPEAHEAD_DEBOUNCE = 250;
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {

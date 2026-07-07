@@ -282,7 +282,7 @@ function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
     });
 }
 
-export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {
+function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {
   const mode = thresholds.mode ?? ThresholdsMode.Absolute;
   return {
     mode,

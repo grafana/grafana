@@ -13,12 +13,13 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
+import { deserializeSectionVariables } from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const addRowPayloadSchema = payloads.addRow;
+const addRowPayloadSchema = payloads.addRow;
 
 export type AddRowPayload = z.infer<typeof addRowPayloadSchema>;
 
@@ -58,6 +59,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           conditionalRendering: row.spec.conditionalRendering
             ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
             : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         const currentRows = [...rowsManager.state.rows];
@@ -84,6 +86,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
           conditionalRendering: row.spec.conditionalRendering
             ? ConditionalRenderingGroup.deserialize(row.spec.conditionalRendering)
             : undefined,
+          $variables: deserializeSectionVariables(row.spec.variables),
         });
 
         rowsManager = new RowsLayoutManager({ rows: [newRow] });

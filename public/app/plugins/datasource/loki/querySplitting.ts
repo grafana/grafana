@@ -125,7 +125,7 @@ const addLimitsToSplitRequests = (splitQueryIndex: number, shardQueryIndex: numb
   }));
 };
 
-export function runSplitGroupedQueries(
+function runSplitGroupedQueries(
   datasource: LokiDatasource,
   requests: LokiGroupedRequest[],
   options: QuerySplittingOptions = {}

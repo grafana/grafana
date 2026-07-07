@@ -5,10 +5,11 @@ import { useMemo, useState } from 'react';
 import {
   type DataFrame,
   type GrafanaTheme2,
+  type NestedValueAccess,
   type PanelOptionsEditorBuilder,
+  type PanelOptionsSupplier,
   type StandardEditorContext,
 } from '@grafana/data';
-import { type NestedValueAccess, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';

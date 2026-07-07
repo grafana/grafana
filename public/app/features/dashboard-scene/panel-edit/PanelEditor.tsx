@@ -25,8 +25,10 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent, EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
+import { DashboardEditActionEvent } from '../edit-pane/events';
+import { EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -74,6 +76,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
+  private _tableViewPanelActivationAdded = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -338,6 +341,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._changesHaveBeenMade = true;
   }
 
+  public getLibraryPanelBehavior(): LibraryPanelBehavior | undefined {
+    return getLibraryPanelBehavior(this.getPanel());
+  }
+
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
   };
@@ -381,6 +388,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dataProvider = panel.state.$data;
     if (!dataProvider) {
       return;
+    }
+
+    // In order to maintain panel active state when switching to table view call activate here so that the panel is never deactivated
+    // This is to make sure panel state subscriptions remain activate from the queries pane
+    if (!this._tableViewPanelActivationAdded) {
+      this._subs.add(panel.activate());
+      this._tableViewPanelActivationAdded = true;
     }
 
     this.setState({

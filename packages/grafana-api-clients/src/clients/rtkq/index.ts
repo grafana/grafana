@@ -23,7 +23,7 @@ import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
-// PLOP_INJECT_IMPORT
+// GENERATED:IMPORT
 
 /** RTK Query middleware for all API clients  */
 export const allMiddleware = [
@@ -49,7 +49,7 @@ export const allMiddleware = [
   dashboardAPIv1beta1.middleware,
   dashboardAPIv2.middleware,
   dashboardAPIv2beta1.middleware,
-  // PLOP_INJECT_MIDDLEWARE
+  // GENERATED:MIDDLEWARE
 ] as const;
 
 /** RTK Query reducers for all API clients  */
@@ -76,7 +76,7 @@ export const allReducers = {
   [dashboardAPIv1beta1.reducerPath]: dashboardAPIv1beta1.reducer,
   [dashboardAPIv2.reducerPath]: dashboardAPIv2.reducer,
   [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
-  // PLOP_INJECT_REDUCER
+  // GENERATED:REDUCER
 };
 
 export * from './createBaseQuery';

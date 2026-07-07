@@ -29,12 +29,12 @@ export function clearClipboard() {
   store.delete(LS_STYLES_COPY_KEY);
 }
 
-export interface RowStore {
+interface RowStore {
   elements: DashboardV2Spec['elements'];
   row: RowsLayoutRowKind;
 }
 
-export interface TabStore {
+interface TabStore {
   elements: DashboardV2Spec['elements'];
   tab: TabsLayoutTabKind;
 }

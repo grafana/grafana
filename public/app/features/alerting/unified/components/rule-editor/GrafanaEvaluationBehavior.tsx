@@ -7,6 +7,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
+  Alert,
   Box,
   Button,
   Divider,
@@ -51,6 +52,7 @@ import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { RuleEvaluationIntervalField } from './RuleEvaluationIntervalField';
 
 type EvaluationMode = 'rule-based' | 'group-based';
 
@@ -156,7 +158,7 @@ export function GrafanaEvaluationBehaviorStep({
     setValue,
     getValues,
     clearErrors,
-    formState: { errors },
+    formState: { errors, defaultValues },
     control,
     register,
   } = useFormContext<RuleFormValues>();
@@ -208,6 +210,7 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
   const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
   const showGroupSelection = evaluationMode === 'group-based';
 
@@ -286,30 +289,20 @@ export function GrafanaEvaluationBehaviorStep({
             />
           </Field>
         )}
-        {!showGroupSelection && (
-          <Stack direction="column" gap={1.5}>
-            <Field
-              noMargin
-              label={t('alerting.rule-form.evaluation.interval-label', 'Evaluation interval')}
-              className={styles.inlineField}
-              error={errors.evaluateEvery?.message}
-              invalid={Boolean(errors.evaluateEvery?.message)}
-              htmlFor="evaluate-every-no-group"
-            >
-              <Input
-                id="evaluate-every-no-group"
-                width={8}
-                {...register('evaluateEvery', evaluateEveryValidationOptions<{ evaluateEvery: string }>([]))}
-              />
-            </Field>
-            <EvaluationGroupQuickPick
-              currentInterval={evaluateEvery}
-              onSelect={(interval) => setValue('evaluateEvery', interval)}
-            />
-          </Stack>
+        {v2Enabled && wasGroupedRule && evaluationMode === 'rule-based' && (
+          <Alert
+            severity="warning"
+            title={t(
+              'alerting.rule-form.evaluation.ungroup-warning-title',
+              'This will remove the alert rule from its group'
+            )}
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
+              This action is irreversible. After you save, you will not be able to add it back to a group.
+            </Trans>
+          </Alert>
         )}
-
-        {showGroupSelection && (
+        {showGroupSelection ? (
           <Stack alignItems="end" gap={1}>
             <div style={{ width: 420 }}>
               <Field
@@ -393,6 +386,8 @@ export function GrafanaEvaluationBehaviorStep({
               />
             )}
           </Stack>
+        ) : (
+          <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
         )}
 
         {folder?.title && group && !isUngroupedRuleGroup(group) && (
@@ -702,7 +697,7 @@ export function EvaluationGroupCreationModal({
   );
 }
 
-export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,

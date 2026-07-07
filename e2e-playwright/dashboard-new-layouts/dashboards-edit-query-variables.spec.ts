@@ -23,7 +23,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
@@ -36,20 +36,16 @@ test.describe(
         label: 'VariableUnderTest', // constant doesn't really need a label
       };
 
-      // common steps to add a new variable
-      await flows.newEditPaneVariableClick(dashboardPage, selectors);
-      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
       // open the modal query variable editor
       await dashboardPage
         .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton)
         .click();
       // select a core data source that just runs a query during preview
-      await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
-
       const dataSource = 'gdev-cloudwatch';
       // this will trigger an API call to get the query options
-      await page.getByText(dataSource).click();
+      await components.dataSourcePicker.set(dataSource);
 
       // show the preview of the query results
       await dashboardPage

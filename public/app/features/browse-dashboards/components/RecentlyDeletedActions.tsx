@@ -8,6 +8,7 @@ import { buildNotificationButton } from 'app/core/components/AppNotifications/No
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
@@ -90,13 +91,26 @@ export function RecentlyDeletedActions() {
     setIsBulkRestoreLoading(true);
 
     const promises = selectedDashboards.map(async (uid) => {
-      const deletedDashboards = await deletedDashboardsCache.getAsResourceList();
-      const dashboard = deletedDashboards?.items.find((d) => d.metadata.name === uid);
-      if (!dashboard) {
+      const table = await deletedDashboardsCache.getAsTable();
+      const row = table.rows.find((r) => r.object.metadata.name === uid);
+      if (!row) {
         console.warn(`Dashboard ${uid} not found in deleted items`);
         return { uid, error: 'not_found' };
       }
-      // Clone the dashboard to be able to edit the immutable data from the store
+
+      const deleteRV = row.object.metadata.resourceVersion;
+      if (!deleteRV) {
+        console.warn(`Dashboard ${uid} is missing a resourceVersion in the trash listing`);
+        return { uid, error: 'not_found' };
+      }
+      // The RV on a trash row is the delete event's RV, which points at the
+      // tombstone (and on some storage backends returns 404). Step back by one
+      // so the read resolves to the dashboard as it was just before delete.
+      const previousRV = (BigInt(deleteRV) - BigInt(1)).toString();
+
+      const api = await getDashboardAPI();
+      const dashboard = await api.getDashboard(uid, { resourceVersion: previousRV });
+
       const copy = structuredClone(dashboard);
       copy.metadata = {
         ...copy.metadata,
@@ -144,7 +158,7 @@ export function RecentlyDeletedActions() {
     dispatch(clearFolders(Array.from(parentUIDs)));
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    deletedDashboardsCache.clear();
+    deletedDashboardsCache.removeItems(successful);
     await stateManager.doSearch();
 
     const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);

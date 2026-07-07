@@ -8,11 +8,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -126,7 +128,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, "test?kiosk", opts.Path)
 						require.Equal(t, int64(1), opts.OrgID)
-						require.Equal(t, int64(1), opts.UserID)
+						require.Equal(t, int64(0), opts.UserID)
 						require.Equal(t, 1024, opts.Width)
 						require.Equal(t, -1, opts.Height)
 						require.Equal(t, models.ThemeDark, opts.Theme)
@@ -235,6 +237,72 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/test-ns/repositories/test-repo/render/test-uid",
 		},
 		{
+			name: "should render as the render-service identity in the org that owns the repository namespace",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "org-3",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
+						require.Equal(t, int64(3), opts.OrgID)
+						// UserID 0 selects the synthetic render-service identity
+						// rather than a real user, so OrgRedirect never fires.
+						require.Equal(t, int64(0), opts.UserID)
+						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resourcepb.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/org-3/repositories/test-repo/render/test-uid",
+		},
+		{
+			name: "should render in org 1 as the render-service identity for the default namespace",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "default",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
+						require.Equal(t, int64(1), opts.OrgID)
+						require.Equal(t, int64(0), opts.UserID)
+						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resourcepb.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/render/test-uid",
+		},
+		{
 			name: "should append query parameters correctly",
 			path: "test",
 			queryParams: url.Values{
@@ -273,8 +341,15 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			render := tc.setupRender(ctrl)
 			blobstore := tc.setupBlobstore(t)
 
+			// Mirror production: the job driver stamps the worker identity for the
+			// repository's org onto the context before the renderer runs.
+			ctx := context.Background()
+			if identityCtx, _, idErr := identity.WithProvisioningIdentity(ctx, tc.repoInfo.Namespace); idErr == nil {
+				ctx = identityCtx
+			}
+
 			renderer := NewScreenshotRenderer(render, blobstore)
-			url, err := renderer.RenderScreenshot(context.Background(), tc.repoInfo, tc.path, tc.queryParams)
+			url, err := renderer.RenderScreenshot(ctx, tc.repoInfo, tc.path, tc.queryParams)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
@@ -291,4 +366,55 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			}
 		})
 	}
+}
+
+// PutBlob on the unified storage server requires a user in ctx; a refactor
+// that drops the ctx between the renderer boundary and PutBlob would 401
+// every PR screenshot in production. Identity is stamped two callers
+// upstream (jobs/driver.go), so this test only verifies the renderer
+// doesn't strip it.
+func TestScreenshotRenderer_PropagatesIdentity(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tmpFile, cleanup := setupTempFile(t)
+	t.Cleanup(cleanup)
+
+	render := rendering.NewMockService(ctrl)
+	render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+		Return(&rendering.RenderResult{FilePath: tmpFile}, nil)
+
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "worker",
+		UserID:    1,
+		UserUID:   "u1",
+		Namespace: "test-ns",
+	}
+	inCtx := authlib.WithAuthInfo(context.Background(), user)
+
+	// Assert outside the mock callback: require.* inside MatchedBy calls
+	// runtime.Goexit on failure and deadlocks the test waiting on a PutBlob
+	// that never returns.
+	var capturedCtx context.Context
+	blobstore := NewMockBlobStoreClient(t)
+	blobstore.On("PutBlob", mock.MatchedBy(func(callCtx context.Context) bool {
+		capturedCtx = callCtx
+		return true
+	}), mock.Anything).Return(&resourcepb.PutBlobResponse{Uid: "blob-uid"}, nil)
+
+	renderer := NewScreenshotRenderer(render, blobstore)
+	_, err := renderer.RenderScreenshot(inCtx, provisioning.ResourceRepositoryInfo{
+		Name:      "test-repo",
+		Namespace: "test-ns",
+	}, "test", nil)
+	require.NoError(t, err)
+
+	require.NotNil(t, capturedCtx, "PutBlob was never called")
+	got, ok := authlib.AuthInfoFrom(capturedCtx)
+	require.True(t, ok, "PutBlob received ctx with no AuthInfo -- identity was dropped by the renderer")
+	require.NotNil(t, got)
+	require.Equal(t, "test-ns", got.GetNamespace(), "AuthInfo namespace must survive the renderer")
+	// GetIdentifier returns the raw UID; GetUID is the type-prefixed form.
+	require.Equal(t, user.UserUID, got.GetIdentifier(), "AuthInfo UID must survive the renderer")
 }

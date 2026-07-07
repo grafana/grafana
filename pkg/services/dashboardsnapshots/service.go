@@ -143,7 +143,7 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 func saveAndRespond(c *contextmodel.ReqContext, svc Service, cmd CreateDashboardSnapshotCommand, snapshotURL string) {
 	result, err := svc.CreateDashboardSnapshot(c.Req.Context(), &cmd)
 	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Failed to create snapshot", err)
+		c.WriteErrOrFallback(http.StatusInternalServerError, "Failed to create snapshot", err)
 		return
 	}
 

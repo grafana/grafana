@@ -346,7 +346,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn)
+		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
 		if err != nil {
 			return "", err
 		}

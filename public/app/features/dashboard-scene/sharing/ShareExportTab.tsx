@@ -10,7 +10,7 @@ import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
-import { type ObjectMeta } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl, type ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -260,11 +260,23 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   };
 }
 
+const FOLDER_EXPORT_ANNOTATIONS = [AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl] as const;
+
+function stripFolderAnnotations(annotations: Record<string, string> | undefined) {
+  if (!annotations) {
+    return;
+  }
+  for (const key of FOLDER_EXPORT_ANNOTATIONS) {
+    delete annotations[key];
+  }
+}
+
 function stripMetadataForExport(metadata: ObjectMeta, isSharingExternally: boolean): Partial<ObjectMeta> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: Record<string, any> = cloneDeep(metadata);
 
   delete result['managedFields'];
+  stripFolderAnnotations(result['annotations']);
 
   if (isSharingExternally) {
     delete result['uid'];

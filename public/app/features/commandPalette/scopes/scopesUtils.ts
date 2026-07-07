@@ -8,7 +8,7 @@ import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { type ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { type NodesMap, type SelectedScope, type TreeNode } from '../../scopes/selector/types';
 import { type CommandPaletteAction } from '../types';
-import { SCOPES_PRIORITY } from '../values';
+import { SECTION_SCOPES, SCOPES_PRIORITY } from '../values';
 
 const defaultState: ScopesSelectorServiceState = {
   loading: false,
@@ -73,6 +73,7 @@ export function getScopesParentAction(): CommandPaletteAction {
   return {
     id: 'scopes',
     section: t('command-palette.action.scopes', 'Scopes'),
+    sectionId: SECTION_SCOPES,
     name: t('command-palette.action.scopes', 'Scopes'),
     keywords: 'scopes filters',
     priority: SCOPES_PRIORITY,
@@ -162,6 +163,7 @@ export function mapScopeNodeToAction(
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       section: t('command-palette.action.scopes', 'Scopes'),
+      sectionId: SECTION_SCOPES,
       subtitle: subtitle,
       perform: () => {
         selectScope(scopeNode.metadata.name);

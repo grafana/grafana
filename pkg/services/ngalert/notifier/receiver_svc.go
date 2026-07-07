@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/alerting/receivers/schema"
+
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -393,6 +394,11 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
 
 	createdReceiver := r.Clone()
+	for _, integration := range createdReceiver.Integrations {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = createdReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -514,11 +520,17 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		}
 	}
 
-	// We need to perform two important steps to process settings on an updated integration:
-	// 1. Encrypt new or updated secret fields as they will arrive in plain text.
-	// 2. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
-	//      to load these secure settings from the existing integration.
+	// We need to perform three important steps to process settings on an updated integration:
+	// 1. Validate no duplicate settings field exists (could happen if the user uses different casing)
+	// 2. Encrypt new or updated secret fields as they will arrive in plain text.
+	// 3. For updates, callers do not re-send unchanged secure settings and instead mark them in SecureFields. We need
+	//    to load these secure settings from the existing integration.
 	updatedReceiver := r.Clone()
+	for _, integration := range updatedReceiver.Integrations {
+		if err := rs.validateNoDuplicateSecretFields(integration.Config, integration.Settings); err != nil {
+			return nil, models.ErrReceiverInvalid(err)
+		}
+	}
 	err = updatedReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
 		return nil, err
@@ -877,6 +889,32 @@ func (rs *ReceiverService) validateReceiver(ctx context.Context, orgID int64, re
 		}
 		if err := rs.emailValidator.ValidateIntegration(ctx, orgID, *integration, l); err != nil {
 			return fmt.Errorf("invalid email integration[%d]: %w", idx, err)
+		}
+	}
+	return nil
+}
+
+func (rs *ReceiverService) validateNoDuplicateSecretFields(typeSchema schema.IntegrationSchemaVersion, settings map[string]any) error {
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		node := settings
+		for _, segment := range secretPath {
+			var matches []string
+			for k := range node {
+				if strings.EqualFold(k, segment) {
+					matches = append(matches, k)
+				}
+			}
+			if len(matches) == 0 {
+				break
+			}
+			if len(matches) > 1 {
+				return fmt.Errorf("duplicate keys found for secret field %s", secretPath.String())
+			}
+			next, ok := node[matches[0]].(map[string]any)
+			if !ok {
+				break
+			}
+			node = next
 		}
 	}
 	return nil

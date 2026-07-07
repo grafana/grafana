@@ -15,7 +15,7 @@ import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/sche
 import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
 import { getGazetteer, type Gazetteer } from '../gazetteer/gazetteer';
 
-export type FieldFinder = (frame: DataFrame) => Field | undefined;
+type FieldFinder = (frame: DataFrame) => Field | undefined;
 
 function getFieldFinder(matcher: FieldMatcher): FieldFinder {
   return (frame: DataFrame) => {

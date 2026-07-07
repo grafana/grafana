@@ -304,9 +304,9 @@ func snowflakeFromTime(t time.Time) int64 {
 	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
 }
 
-// subtractDurationFromSnowflake subtracts a duration from a snowflake ID by
+// SubtractDurationFromSnowflake subtracts a duration from a snowflake ID by
 // converting it to time, subtracting the duration, and converting back to a snowflake ID
-func subtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
+func SubtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
 	// Extract timestamp from snowflake (returns milliseconds since epoch)
 	timestamp := snowflake.ID(snowflakeID).Time()
 	// Convert to time.Time

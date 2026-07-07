@@ -51,7 +51,7 @@ export function runStream(
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
 
-export function runSignalStream(
+function runSignalStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -131,7 +131,7 @@ export function runSignalStream(
   });
 }
 
-export function runLogsStream(
+function runLogsStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -183,7 +183,7 @@ interface StreamMessage {
   value: number;
 }
 
-export function runWatchStream(
+function runWatchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -260,7 +260,7 @@ export function runWatchStream(
   });
 }
 
-export function runFetchStream(
+function runFetchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -340,7 +340,7 @@ export function runFetchStream(
   });
 }
 
-export function runTracesStream(
+function runTracesStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>

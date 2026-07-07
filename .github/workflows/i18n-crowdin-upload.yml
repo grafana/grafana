@@ -34,6 +34,6 @@ jobs:
       - name: Upload to Crowdin
         uses: grafana/grafana-github-actions/crowdin-upload@main
         with:
-          crowdin_token: ${{ env.CROWDIN_TOKEN }}
+          crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
           crowdin_project_id: 5
 

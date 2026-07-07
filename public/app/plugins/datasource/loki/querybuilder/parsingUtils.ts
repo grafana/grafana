@@ -130,11 +130,3 @@ export function getAllByType(expr: string, cur: SyntaxNode, type: number | strin
   }
   return values;
 }
-
-/**
- * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
- */
-export const regexifyLabelValuesQueryString = (query: string) => {
-  const queryArray = query.split(' ');
-  return queryArray.map((query) => `${query}.*`).join('');
-};

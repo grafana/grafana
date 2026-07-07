@@ -67,13 +67,13 @@ export const usaQueryModes = [
   'timeseries-wide',
 ].map((f) => ({ label: f, value: f }));
 
-export const fieldNames = [
+const fieldNames = [
   'foo',
   'bar',
   'baz', // all short
 ].map((f) => ({ label: f, value: f }));
 
-export const stateNames = [
+const stateNames = [
   'AL',
   'AK',
   'AZ',

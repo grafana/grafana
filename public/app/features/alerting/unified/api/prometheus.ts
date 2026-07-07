@@ -20,13 +20,13 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-export interface PrometheusDataSourceConfig {
+interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
   identifier?: RuleIdentifier;
 }
 
-export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
+function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
   const { dataSourceName, limitAlerts, identifier } = dataSourceConfig;
 
   return {

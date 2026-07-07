@@ -308,7 +308,7 @@ export const InlineLogLineDetails = memo(({ logs, log, onResize, timeRange, time
 });
 InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
-export const LOG_LINE_DETAILS_HEIGHT = 45;
+const LOG_LINE_DETAILS_HEIGHT = 45;
 
 const getStyles = (
   theme: GrafanaTheme2,

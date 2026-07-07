@@ -28,7 +28,7 @@ export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToD
   );
 }
 
-export function EssentialContent({
+function EssentialContent({
   essentialContent,
   stepsDone,
   totalStepsToDo,

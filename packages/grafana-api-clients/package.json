@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.1.0-pre",
+  "version": "13.2.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -187,18 +187,18 @@
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
     "generate-apis": "yarn workspace @grafana/openapi process-specs && NODE_OPTIONS='--disable-warning=ExperimentalWarning' rtk-query-codegen-openapi ./src/scripts/generate-rtk-apis.ts",
-    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types --disable-warning=ExperimentalWarning' plop --plopfile src/generator/plopfile.ts"
+    "generate:api-client": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/generator/generate.ts"
   },
   "devDependencies": {
     "@rtk-query/codegen-openapi": "^2.0.0",
+    "enquirer": "^2.4.1",
     "openapi-types": "^12.1.3",
-    "plop": "^4.0.1",
     "rollup": "^4.60.1",
     "typescript": "6.0.2"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@reduxjs/toolkit": "^2.10.0",
-    "rxjs": "7.8.2"
+    "rxjs": "^7.8.2"
   }
 }

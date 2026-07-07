@@ -91,6 +91,16 @@ describe('transformDataFrame', () => {
     });
   });
 
+  it('Skips over transforms whose id is not in the registry without throwing', async () => {
+    const cfg = [{ id: 'Transformation', options: {} }];
+
+    await expect(transformDataFrame(cfg, [getSeriesAWithSingleField()])).toEmitValuesWith((received) => {
+      const processed = received[0];
+      expect(processed[0].length).toEqual(4);
+      expect(processed[0].fields.length).toEqual(2);
+    });
+  });
+
   it('Skips over disabled transforms', async () => {
     const cfg = [
       {

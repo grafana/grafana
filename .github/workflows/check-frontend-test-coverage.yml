@@ -17,6 +17,7 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
+    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -35,6 +36,7 @@ jobs:
 
   detect-changes:
     name: Detect changed files
+    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -59,7 +61,7 @@ jobs:
 
       - name: Detect changed files
         id: changed-files
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32 # v46.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           separator: ' '
 
@@ -160,7 +162,7 @@ jobs:
   coverage:
     name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
     runs-on: ubuntu-x64-large
     permissions:
       contents: read
@@ -328,7 +330,10 @@ jobs:
       - name: Check if skipped
         id: check-skip
         run: |
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "⏭️ Coverage checks skipped for fork PR"
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
           else

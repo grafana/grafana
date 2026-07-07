@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"strconv"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -69,7 +71,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -105,14 +106,16 @@ func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHa
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService         dashboards.DashboardService
-	features                 featuremgmt.FeatureToggles
-	accessControl            accesscontrol.AccessControl
-	accessClient             authlib.AccessClient
-	legacy                   legacy.DashboardAccessor
-	unified                  resource.ResourceClient
-	dashboardPermissions     dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	dashboardService        dashboards.DashboardService
+	features                featuremgmt.FeatureToggles
+	accessControl           accesscontrol.AccessControl
+	accessClient            authlib.AccessClient
+	legacy                  legacy.DashboardAccessor
+	unified                 resource.ResourceClient
+	dashboardPermissions    dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissionsSvc and add integration test afterDelete hook
+	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
+	// built lazily from restConfigProvider and is nil until the first call.
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
@@ -132,6 +135,11 @@ type DashboardsAPIBuilder struct {
 	dashboardActivityChannel live.DashboardActivityChannel
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
+
+	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
+	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
+	restConfigProvider       apiserver.RestConfigProvider
+	resourcePermissionsSvcMu sync.Mutex
 }
 
 func RegisterAPIService(
@@ -202,6 +210,11 @@ func RegisterAPIService(
 		dashboardActivityChannel: dashboardActivityChannel,
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
+	}
+
+	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		builder.restConfigProvider = restConfigProvider
 	}
 
 	migration.RegisterMetrics(reg)
@@ -770,18 +783,35 @@ func validateDashboardTags(obj runtime.Object) error {
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storageOpts := apistore.StorageOptions{
-		Scheme:                      opts.Scheme,
-		EnableFolderSupport:         true,
-		RequireDeprecatedInternalID: true,
+		Scheme:               opts.Scheme,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+		EnableFolderSupport:  true,
 	}
 
-	if b.isStandalone {
+	// Standalone, or embedded with the flag on, uses the App Platform setter; else the legacy one.
+	if b.isStandalone || b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
 		storageOpts.Permissions = b.setDefaultDashboardPermissions
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
+
+	// Library panels live inside folders, so the unified storage backend must accept the
+	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
+	// a separate registration from dashboards; without it they default to
+	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
+	// into a managed folder) is rejected with "folders are not supported". The folder is
+	// optional (panels may live at the root), so RequireFolder stays false.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.libraryPanelsEnabled {
+		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+			Scheme:              opts.Scheme,
+			Index:               b.unified,
+			EnableFolderSupport: true,
+		})
+	}
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
@@ -963,6 +993,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
+		features:                b.features,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
@@ -1036,13 +1067,49 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	return nil
 }
 
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
+// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
+func (b *DashboardsAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	// Standalone: injected directly, never mutated, restConfigProvider nil.
+	if b.restConfigProvider == nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
+	// data race; failures aren't cached so a transient error doesn't poison later creates.
+	b.resourcePermissionsSvcMu.Lock()
+	defer b.resourcePermissionsSvcMu.Unlock()
+
+	if b.resourcePermissionsSvc != nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
+	b.resourcePermissionsSvc = &client
+	return b.resourcePermissionsSvc, nil
+}
+
 func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
-	if util.IsInterfaceNil(b.resourcePermissionsSvc) {
+	ctx := context.Background()
+	log := logging.DefaultLogger
+
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		log.Error("failed to build resource permissions client", "error", err)
+		return
+	}
+	if resourcePermissionsSvc == nil {
 		return
 	}
 
-	ctx := context.Background()
-	log := logging.DefaultLogger
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		log.Error("Failed to access deleted dashboard object metadata", "error", err)
@@ -1050,7 +1117,7 @@ func (b *DashboardsAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteO
 	}
 
 	log.Debug("deleting dashboard permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-	client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+	client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, meta.GetName())
 	err = client.Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
@@ -1071,8 +1138,40 @@ var defaultDashboardPermissions = []map[string]any{
 	},
 }
 
+// buildDefaultDashboardPermissions returns the permission list applied to a newly created
+// root dashboard. The creator (a user or service account) is granted admin so they can
+// manage the dashboard they just created, mirroring the legacy SetDefaultPermissionsAfterCreate.
+func buildDefaultDashboardPermissions(id authlib.AuthInfo) []map[string]any {
+	var creatorKind string
+	switch id.GetIdentityType() {
+	case authlib.TypeUser:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
+	case authlib.TypeServiceAccount:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	default:
+		// Other identity types (API keys, anonymous, render service, etc.) do not get
+		// creator-admin permissions; they fall back to the default permission set.
+	}
+
+	if creatorKind == "" {
+		return defaultDashboardPermissions
+	}
+
+	permissions := make([]map[string]any, 0, len(defaultDashboardPermissions)+1)
+	permissions = append(permissions, map[string]any{
+		"kind": creatorKind,
+		"name": id.GetIdentifier(),
+		"verb": "admin",
+	})
+	return append(permissions, defaultDashboardPermissions...)
+}
+
 func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	if b.resourcePermissionsSvc == nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		return err
+	}
+	if resourcePermissionsSvc == nil {
 		return nil
 	}
 
@@ -1083,7 +1182,21 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	log := logging.FromContext(ctx)
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
-	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	// Setting the default permissions is a system operation triggered by the creation
+	// of the dashboard, not an action the requester performs directly. The creator does
+	// not yet have permission to manage permissions on the brand-new dashboard, so we use
+	// a service identity to write them through the ResourcePermission API.
+	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("parse namespace: %w", err)
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+	// The creator gets admin on their dashboard, in addition to the default basic-role
+	// permissions. Anonymous and other non-user identities don't get an explicit grant.
+	permissions := buildDefaultDashboardPermissions(id)
+
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
@@ -1099,7 +1212,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
 						"name":     obj.GetName(),
 					},
-					"permissions": defaultDashboardPermissions,
+					"permissions": permissions,
 				},
 			},
 		}, metav1.UpdateOptions{})
@@ -1111,7 +1224,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return nil
 	}
 
-	_, err := client.Create(ctx, &unstructured.Unstructured{
+	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
 				"name":      name,
@@ -1123,7 +1236,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
 					"name":     obj.GetName(),
 				},
-				"permissions": defaultDashboardPermissions,
+				"permissions": permissions,
 			},
 		},
 	}, metav1.CreateOptions{})

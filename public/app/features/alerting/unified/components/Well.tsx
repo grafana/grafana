@@ -10,7 +10,7 @@ export const Well = ({ children, className }: Props) => {
   const styles = useStyles2(getStyles);
   return <div className={cx(styles.wrapper, className)}>{children}</div>;
 };
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     backgroundColor: theme.components.panel.background,
     border: `solid 1px ${theme.components.input.borderColor}`,

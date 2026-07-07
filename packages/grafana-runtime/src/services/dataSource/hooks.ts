@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAsync, useAsyncFn } from 'react-use';
+import { useAsync } from 'react-use';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import {
+  type DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
-import { getDataSourceInstanceSettings, getDataSourceInstanceSettingsList } from './settings';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceList,
+} from './settings';
 
 /**
  * @public
@@ -20,14 +28,10 @@ export interface UseDataSourceInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseDataSourceInstanceSettingsListResult {
+export interface UseDataSourceInstanceListResult {
   isLoading: boolean;
   error?: Error;
-  /** Flattened items across all pages fetched so far. */
-  items: DataSourceInstanceSettings[];
-  hasMore: boolean;
-  /** Fetch the next page and append to items. */
-  fetchMore: () => void;
+  items: DataSourceInstanceListItem[];
 }
 
 /**
@@ -43,7 +47,7 @@ function stableKey(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
-function filtersKey(filters: GetDataSourceListFilters | undefined): string {
+function filtersKey(filters: GetDataSourceInstanceListFilters | GetDataSourceListFilters | undefined): string {
   if (!filters) {
     return stableKey(null);
   }
@@ -70,64 +74,25 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
- * React hook wrapping {@link getDataSourceInstanceSettingsList}. Items are flattened
- * across pages; call `fetchMore` to load additional pages. Items reset when
+ * React hook wrapping {@link getDataSourceInstanceList}. Re-fetches when
  * `filters` changes (compared by value, so inline objects are safe).
  * When `filters.filter` (a callback) is set, the hook re-fetches when the
  * function reference changes. Wrap inline filter callbacks in `useCallback`
  * to avoid unnecessary re-fetches.
  *
- * @internal
+ * @public
  */
-export function useDataSourceInstanceSettingsList(
-  filters?: GetDataSourceListFilters
-): UseDataSourceInstanceSettingsListResult {
+export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
-
   const filterFunc = filters?.filter;
-  const filterFuncKey = useMemo(() => {
-    if (filterFunc) {
-      return Date.now();
-    }
-    return null;
-  }, [filterFunc]);
 
-  const [items, setItems] = useState<DataSourceInstanceSettings[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
-
-  const [fetchState, fetchPage] = useAsyncFn(
-    (nextCursor?: string) => getDataSourceInstanceSettingsList({ filters, cursor: nextCursor }),
+  const { loading, error, value } = useAsync(
+    () => getDataSourceInstanceList(filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filterValuesKey, filterFuncKey],
-    { loading: true }
+    [filterValuesKey, filterFunc]
   );
 
-  useEffect(() => {
-    if (!fetchState.value) {
-      return;
-    }
-    const page = fetchState.value;
-    setItems((prev) => prev.concat(page.items));
-    setCursor(page.nextCursor);
-    setHasMore(page.hasMore);
-  }, [fetchState.value]);
-
-  useEffect(() => {
-    setItems([]);
-    setCursor(undefined);
-    setHasMore(true);
-    fetchPage();
-  }, [fetchPage]);
-
-  const fetchMore = useCallback(() => {
-    if (!hasMore || fetchState.loading) {
-      return;
-    }
-    fetchPage(cursor);
-  }, [fetchPage, cursor, hasMore, fetchState.loading]);
-
-  return { isLoading: fetchState.loading, error: fetchState.error, items, hasMore, fetchMore };
+  return { isLoading: loading, error, items: value ?? [] };
 }
 
 /**

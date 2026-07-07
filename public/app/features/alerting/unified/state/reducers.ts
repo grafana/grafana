@@ -10,7 +10,7 @@ import {
   updateAlertManagerConfigAction,
 } from './actions';
 
-export const reducer = combineReducers({
+const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,

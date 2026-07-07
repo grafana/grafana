@@ -20,6 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('../../utils/data', () => ({
   dataToSpec: jest.fn(() => ({ type: 'github', github: { url: 'https://github.com/test/repo' } })),
+  deriveSigningKeySecret: jest.fn(() => undefined),
 }));
 
 jest.mock('../../utils/getFormErrors', () => ({
