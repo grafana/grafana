@@ -108,7 +108,7 @@ Use these options to refine the visualization.
 | Show values  | Controls whether values are rendered inside the status cells. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Row height  | Controls the height of boxes. `1` creates the largest boxes, and `0` creates the smallest boxes with more gap. |
 | Column width | Controls the width of boxes. `1` creates the widest boxes, and `0` creates the narrowest boxes with more gap. |
-| Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. This is useful when you have many series. |
+| Page size (enable pagination) | The **Page size** option lets you paginate the status history visualization to limit how many series are visible at once. The default is 20, which means pagination is enabled for new panels. |
 | Line width | Controls line width of status cells. This is a field option and can be set in field defaults or overrides. |
 | Fill opacity | Controls the fill opacity of status cells. This is a field option and can be set in field defaults or overrides. |
 

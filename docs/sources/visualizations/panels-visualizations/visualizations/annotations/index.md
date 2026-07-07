@@ -72,7 +72,7 @@ These options control additional metadata included in the annotations list displ
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | Show user | Show or hide which user created the annotation.  |
-| Show time | Show or hide the time the annotation creation time. |
+| Show time | Show or hide the annotation creation time. |
 | Show tags | Show or hide the tags associated with an annotation. Note that you can use the tags to filter the annotations list. |
 
 <!-- prettier-ignore-end -->
@@ -85,8 +85,12 @@ Use the following options to control the behavior of annotation links in the lis
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
-| Link target | Set how to view the annotated data. The default is **Panel**. Choose from:<ul><li>**Panel** - The link takes you directly to a full-screen view of the panel with the corresponding annotation.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul> |
+| Link target | Set how to view the annotated data. The default is **Panel**. Choose from:<ul><li>**Panel** - Opens the dashboard focused on the annotated panel.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul> |
 | Time before | Set the time range before the annotation. Use duration string values like `1h` for one hour and `10m` for 10 minutes. The default is `10m`. |
 | Time after | Set the time range after the annotation. The default is `10m`. |
 
 <!-- prettier-ignore-end -->
+
+Click an annotation user's avatar to filter the list by that user. The active **Filter:** chip shows the current filter and lets you clear it.
+
+When dashboard scopes are active, the annotations list is filtered by those scopes.

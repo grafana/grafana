@@ -108,12 +108,10 @@ Use the following options to refine your histogram visualization.
 | Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range). |
 | [Bucket offset](#bucket-offset) | If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. |
 | Combine series | This will merge all series and fields into a combined histogram. |
-| Stacking | Controls how multiple series are displayed in the histogram. Choose from the following:<ul><li>**Off** - Series are not stacked, but instead shown side by side.</li><li>**Normal** - Series are stacked on top of each other, showing cumulative values.</li><li>**100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.</li></ul> |
-| Line width | Controls line width of the bars. |
-| Fill opacity | Controls the fill opacity bars. |
-| [Gradient mode](#gradient-mode) | Set the mode of the gradient fill. Fill gradient is based on the line color. |
 
 <!-- prettier-ignore-end -->
+
+When the query returns a pre-calculated histogram data frame, Grafana shows the read-only **Values** option with frequencies calculated in the query. In this case, the bucket, stacking, and combine controls are hidden.
 
 #### Bucket offset
 
@@ -122,6 +120,21 @@ If the first bucket should not start at zero, a non-zero offset has the effect o
 For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing.
 
 Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range have the same effect as values within this range.
+
+### Histogram field options
+
+Use these field options or field overrides to refine how histogram bars are displayed.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Stacking | Controls how multiple series are displayed in the histogram. Choose from the following:<ul><li>**Off** - Series are not stacked, but instead shown side by side.</li><li>**Normal** - Series are stacked on top of each other, showing cumulative values.</li><li>**100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.</li></ul> |
+| Line width | Controls line width of the bars. |
+| Fill opacity | Controls the fill opacity bars. |
+| [Gradient mode](#gradient-mode) | Set the mode of the gradient fill. Fill gradient is based on the line color. |
+
+<!-- prettier-ignore-end -->
 
 #### Gradient mode
 
@@ -132,7 +145,7 @@ Gradient display is influenced by the **Fill opacity** setting.
 Choose from the following:
 
 - **None** - No gradient fill. This is the default setting.
-- **Opacity** - Transparency of the gradient is calculated based on the values on the Y-axis. The opacity of the fill is increasing with the values on the Y-axis.
+- **Opacity** - Enables a fill opacity gradient.
 - **Hue** - Gradient color is generated based on the hue of the line color.
 - **Scheme** - The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 

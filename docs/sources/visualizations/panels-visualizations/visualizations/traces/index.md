@@ -178,7 +178,7 @@ You should now see a list of matching traces in the table visualization. While s
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Span filters options
+### Span filters
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 

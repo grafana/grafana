@@ -43,7 +43,7 @@ Alert lists allow you to display a list of important alerts that you want to tra
 
 ![An alert list visualization](/media/docs/grafana/panels-visualizations/screenshot-alert-list-v11.3.png)
 
-On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
+On each dashboard load and dashboard time-range change, this visualization queries the alert list, always providing the most up-to-date results.
 
 {{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
@@ -94,6 +94,10 @@ Select how to order the alerts displayed. Choose from:
   - inactive: 5
 - **Time (asc)** - Oldest active alert instances first.
 - **Time (desc)** - Newest active alert instances first.
+
+When you expand a rule in the default list view, alert instances use their own importance order: error has the highest priority, followed by pending, recovering, and inactive, then no data, and then normal.
+
+In the default list view, each alert rule includes a **View alert rule** link that opens the alert rule details in Grafana Alerting in a new tab.
 
 ### Filter options
 
