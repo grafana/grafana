@@ -133,12 +133,14 @@ export function MegaMenuItem({
   }
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
-  // every item shows it (the signed-in / non-bookmarks gating lives in MegaMenuItemText). With it
-  // on, Home and individual starred dashboards (the `starred/` prefix) are never pinnable; every
-  // other row is actionable, including intermediate subsections in the pinned area (so a child
-  // section of a whole-pinned section — e.g. Administration → General — can be unpinned).
+  // every item shows it (gating lives in MegaMenuItemText). With it on: only **non-top-level** items
+  // are pinnable — top-level sections aren't, except Starred (a special case). In the pinned box the
+  // control is the unpin on each pinned endpoint (structural-ancestor rows, which still have children,
+  // show nothing).
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
-  const showPin = !canCustomise || isPinnableItem;
+  const isPinnableTopLevel = level > 0 || link.id === 'starred';
+  const showPin =
+    !canCustomise || (pinned ? !linkHasChildren(link) && isPinnableItem : isPinnableTopLevel && isPinnableItem);
 
   return (
     <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
@@ -171,8 +173,8 @@ export function MegaMenuItem({
             itemName={link.text}
             canCustomise={canCustomise}
             editMode={editMode}
-            // Pinned rows offer unpin (the pin control), never the hide/eye control.
-            isHideable={pinned ? false : isHideable?.(link)}
+            // Hiding is top-level-only: only offer the eye on top-level nav rows (never in the box).
+            isHideable={!pinned && level === 0 ? isHideable?.(link) : false}
             isHidden={effectivelyHidden}
             onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
           >

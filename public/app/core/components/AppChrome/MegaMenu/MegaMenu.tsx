@@ -7,7 +7,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, IconButton, ScrollContainer, Switch, Text, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -18,12 +18,7 @@ import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
 
-export const MENU_WIDTH = '300px';
-
-// id on the unpinned-items list so the collapse toggle can reference it via aria-controls.
-const UNPINNED_ITEMS_ID = 'megamenu-unpinned-items';
-// id linking the "only show pinned items" switch to its label.
-const ONLY_PINNED_ID = 'megamenu-only-pinned';
+export const MENU_WIDTH = '320px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -55,19 +50,9 @@ export const MegaMenu = memo(
       onSaveEdit,
       onResetToDefault,
       onReorderPinned,
+      onReorderSection,
       isSaving,
-      unpinnedCollapsible,
-      showUnpinnedItems,
-      setUnpinnedExpanded,
-      onlyShowPinned,
-      onToggleOnlyShowPinned,
     } = useNavCustomization();
-
-    const onPinnedDragEnd = (result: DropResult) => {
-      if (result.destination) {
-        onReorderPinned(result.source.index, result.destination.index);
-      }
-    };
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -88,8 +73,7 @@ export const MegaMenu = memo(
         isPinned={pinned ? () => true : isPinned}
         onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
-        // Pinned-area controls unpin (remove); normal-nav controls pin (add).
-        onPin={(item) => onPinItem(item, pinned)}
+        onPin={onPinItem}
         editMode={editMode}
         isHideable={isHideable}
         isHidden={isHidden}
@@ -103,69 +87,85 @@ export const MegaMenu = memo(
       />
     );
 
+    const navLabel = t('navigation.megamenu.list-label', 'Navigation');
     const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
     const pinnedKey = (link: NavModelItem) => `pinned-${link.id ?? link.url}`;
+    const sectionKey = (link: NavModelItem) => `section-${link.id ?? link.text}`;
 
-    // Customised layout: the pinned block (if any), then the collapsible rest. While editing, the
-    // pinned block is drag-and-drop reorderable (top-level blocks only).
-    const renderCustomisableItems = () => (
-      <>
-        {pinnedNavItems.length > 0 && (
-          <>
-            <li>
-              {editMode ? (
-                <DragDropContext onDragEnd={onPinnedDragEnd}>
-                  <Droppable droppableId="megamenu-pinned">
-                    {(dropProvided) => (
-                      <ul
-                        className={styles.pinnedList}
-                        aria-label={pinnedListLabel}
-                        ref={dropProvided.innerRef}
-                        {...dropProvided.droppableProps}
-                      >
-                        {pinnedNavItems.map((link, index) => (
-                          <Draggable key={pinnedKey(link)} draggableId={pinnedKey(link)} index={index}>
-                            {(dragProvided) => renderNavItem(link, pinnedKey(link), true, dragProvided)}
-                          </Draggable>
-                        ))}
-                        {dropProvided.placeholder}
-                      </ul>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              ) : (
-                <ul className={styles.pinnedList} aria-label={pinnedListLabel}>
-                  {pinnedNavItems.map((link) => renderNavItem(link, pinnedKey(link), true))}
-                </ul>
-              )}
-            </li>
-            {(unpinnedCollapsible || showUnpinnedItems) && <li className={styles.divider} aria-hidden="true" />}
-          </>
-        )}
-        {/* Collapse toggle sits at the top of the unpinned list, below the pinned divider. */}
-        {unpinnedCollapsible && (
-          <li>
-            <button
-              type="button"
-              className={styles.unpinnedToggle}
-              onClick={() => setUnpinnedExpanded(!showUnpinnedItems)}
-              aria-expanded={showUnpinnedItems}
-              aria-controls={UNPINNED_ITEMS_ID}
-            >
-              <Icon name={showUnpinnedItems ? 'angle-up' : 'angle-down'} size="lg" />
-              <Text color="secondary">{t('navigation.megamenu.all-items', 'All items')}</Text>
-            </button>
-          </li>
-        )}
-        {showUnpinnedItems && (
-          <li>
-            <ul id={UNPINNED_ITEMS_ID} className={styles.pinnedList}>
-              {navItems.map((link) => renderNavItem(link))}
-            </ul>
-          </li>
-        )}
-      </>
-    );
+    const onPinnedDragEnd = (result: DropResult) => {
+      if (result.destination) {
+        onReorderPinned(result.source.index, result.destination.index);
+      }
+    };
+    const onSectionDragEnd = (result: DropResult) => {
+      if (result.destination) {
+        onReorderSection(result.source.index, result.destination.index);
+      }
+    };
+
+    // Pinned box: a subtle grey box of pinned items as a mini tree, duplicated from the nav. The
+    // top-level blocks are drag-reorderable while editing.
+    const renderPinnedBox = () =>
+      pinnedNavItems.length > 0 && (
+        <>
+          <div className={styles.pinnedBox}>
+            {editMode ? (
+              <DragDropContext onDragEnd={onPinnedDragEnd}>
+                <Droppable droppableId="megamenu-pinned">
+                  {(dropProvided) => (
+                    <ul
+                      className={styles.list}
+                      aria-label={pinnedListLabel}
+                      ref={dropProvided.innerRef}
+                      {...dropProvided.droppableProps}
+                    >
+                      {pinnedNavItems.map((link, index) => (
+                        <Draggable key={pinnedKey(link)} draggableId={pinnedKey(link)} index={index}>
+                          {(dragProvided) => renderNavItem(link, pinnedKey(link), true, dragProvided)}
+                        </Draggable>
+                      ))}
+                      {dropProvided.placeholder}
+                    </ul>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            ) : (
+              <ul className={styles.list} aria-label={pinnedListLabel}>
+                {pinnedNavItems.map((link) => renderNavItem(link, pinnedKey(link), true))}
+              </ul>
+            )}
+          </div>
+          <hr className={styles.pinnedDivider} />
+        </>
+      );
+
+    // Top-level nav sections, drag-reorderable while editing.
+    const renderSectionList = () =>
+      editMode ? (
+        <DragDropContext onDragEnd={onSectionDragEnd}>
+          <Droppable droppableId="megamenu-sections">
+            {(dropProvided) => (
+              <ul
+                className={styles.itemList}
+                aria-label={navLabel}
+                ref={dropProvided.innerRef}
+                {...dropProvided.droppableProps}
+              >
+                {navItems.map((link, index) => (
+                  <Draggable key={sectionKey(link)} draggableId={sectionKey(link)} index={index}>
+                    {(dragProvided) => renderNavItem(link, sectionKey(link), false, dragProvided)}
+                  </Draggable>
+                ))}
+                {dropProvided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        </DragDropContext>
+      ) : (
+        <ul className={styles.itemList} aria-label={navLabel}>
+          {navItems.map((link) => renderNavItem(link))}
+        </ul>
+      );
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
@@ -174,19 +174,20 @@ export const MegaMenu = memo(
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
-                <ul
-                  className={styles.itemList}
-                  aria-label={t('navigation.megamenu.list-label', 'Navigation')}
-                  aria-busy={isLoading || undefined}
-                >
-                  {isLoading ? (
+                {isLoading ? (
+                  <ul className={styles.itemList} aria-label={navLabel} aria-busy>
                     <MegaMenuSkeleton />
-                  ) : canCustomise ? (
-                    renderCustomisableItems()
-                  ) : (
-                    navItems.map((link) => renderNavItem(link))
-                  )}
-                </ul>
+                  </ul>
+                ) : canCustomise ? (
+                  <>
+                    {renderPinnedBox()}
+                    {renderSectionList()}
+                  </>
+                ) : (
+                  <ul className={styles.itemList} aria-label={navLabel}>
+                    {navItems.map((link) => renderNavItem(link))}
+                  </ul>
+                )}
                 <MegaMenuExtensionPoint />
               </>
             </ScrollContainer>
@@ -199,34 +200,19 @@ export const MegaMenu = memo(
           )}
           {editMode && (
             <div className={styles.editFooter}>
-              {/* Always shown while editing, but disabled until something is pinned (with nothing
-                  pinned it would hide the whole menu). */}
-              <div className={styles.onlyPinnedRow}>
-                <label htmlFor={ONLY_PINNED_ID}>
-                  <Text color="secondary">{t('navigation.megamenu.only-pinned', 'Only show pinned items')}</Text>
-                </label>
-                <Switch
-                  id={ONLY_PINNED_ID}
-                  value={onlyShowPinned}
-                  onChange={onToggleOnlyShowPinned}
-                  disabled={pinnedNavItems.length === 0}
-                />
-              </div>
-              <div className={styles.controlsRow}>
-                {/* Feedback placeholder — not wired up yet. */}
-                <IconButton
-                  name="comment-alt-message"
-                  tooltip={t('navigation.megamenu.feedback', 'Feedback')}
-                  variant="secondary"
-                />
-                <MegaMenuCustomiseControls
-                  canReset={canReset}
-                  onResetToDefault={onResetToDefault}
-                  onCancelEdit={onCancelEdit}
-                  onSaveEdit={onSaveEdit}
-                  saving={isSaving}
-                />
-              </div>
+              {/* Feedback placeholder — not wired up yet. */}
+              <IconButton
+                name="comment-alt-message"
+                tooltip={t('navigation.megamenu.feedback', 'Feedback')}
+                variant="secondary"
+              />
+              <MegaMenuCustomiseControls
+                canReset={canReset}
+                onResetToDefault={onResetToDefault}
+                onCancelEdit={onCancelEdit}
+                onSaveEdit={onSaveEdit}
+                saving={isSaving}
+              />
             </div>
           )}
         </nav>
@@ -260,36 +246,25 @@ const getStyles = (theme: GrafanaTheme2) => {
         width: MENU_WIDTH,
       },
     }),
-    divider: css({
-      listStyleType: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(1, 1, 1, 0.5),
-    }),
-    pinnedList: css({
+    list: css({
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
       padding: 0,
       margin: 0,
     }),
-    // Collapse toggle at the top of the unpinned list (below the pinned divider).
-    unpinnedToggle: css({
-      alignItems: 'center',
-      background: 'none',
+    // Subtle grey box around the pinned items.
+    pinnedBox: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(1.5, 1.5, 1, 1.5),
+      padding: theme.spacing(1),
+    }),
+    // Divider separating the pinned box from the rest of the nav.
+    pinnedDivider: css({
       border: 'none',
-      cursor: 'pointer',
-      display: 'flex',
-      flexShrink: 0,
-      gap: theme.spacing(1),
-      padding: theme.spacing(1, 2),
-      width: '100%',
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      margin: theme.spacing(0, 2, 1, 2),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({
@@ -311,27 +286,14 @@ const getStyles = (theme: GrafanaTheme2) => {
         outlineOffset: '-2px',
       },
     }),
-    // Footer holding the edit-mode controls (feedback, then the only-show-pinned switch) — distinct
-    // from the full-width nav rows above it.
+    // Edit-mode footer: feedback on the left, the Reset/Cancel/Done controls on the right.
     editFooter: css({
+      alignItems: 'center',
       borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
-      flexDirection: 'column',
       flexShrink: 0,
-      gap: theme.spacing(1.5),
+      justifyContent: 'space-between',
       padding: theme.spacing(1.5, 2),
-    }),
-    // Feedback on the left, the Reset/Cancel/Done controls on the right, on one line.
-    controlsRow: css({
-      alignItems: 'center',
-      display: 'flex',
-      justifyContent: 'space-between',
-    }),
-    onlyPinnedRow: css({
-      alignItems: 'center',
-      display: 'flex',
-      gap: theme.spacing(1),
-      justifyContent: 'space-between',
     }),
   };
 };

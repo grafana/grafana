@@ -167,6 +167,7 @@ export const availableIconsIndex = {
   'gf-service-account': true,
   'gf-show-context': true,
   'gf-pin': true,
+  'gf-unpin': true,
   'gf-prometheus': true,
   'gf-traces': true,
   globe: true,

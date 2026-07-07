@@ -8,15 +8,12 @@ import {
   getEnrichedHelpItem,
   getActiveItem,
   findByUrl,
-  partitionNavForPinning,
+  buildPinnedTree,
   reorderPinnedBlocks,
   getPinnableLeafUrls,
-  expandPinnedUrls,
-  normalizePinnedUrls,
+  orderTopLevelSections,
   isHideable,
   removeHiddenItems,
-  hideItem,
-  revealItem,
 } from './utils';
 
 const starredDashboardUid = 'foo';
@@ -227,60 +224,49 @@ describe('pinning helpers', () => {
     },
   ];
 
-  describe('partitionNavForPinning', () => {
-    it('moves a pinned leaf into the pinned tree and out of the rest', () => {
-      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/explore']));
-      expect(pinned.map((i) => i.text)).toEqual(['Explore']);
-      expect(rest.find((i) => i.id === 'explore')).toBeUndefined();
+  describe('buildPinnedTree (the pinned box mini-tree)', () => {
+    it('shows a pinned leaf as a top-level endpoint', () => {
+      expect(buildPinnedTree(tree, new Set(['/explore'])).map((i) => i.text)).toEqual(['Explore']);
     });
 
-    it('leaves everything in the rest when nothing is pinned', () => {
-      const { pinned, rest } = partitionNavForPinning(tree, new Set());
-      expect(pinned).toHaveLength(0);
-      expect(rest.map((i) => i.id)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
+    it('is empty when nothing is pinned', () => {
+      expect(buildPinnedTree(tree, new Set())).toHaveLength(0);
     });
 
-    it('pins a child via its ancestor chain, keeping the partially-pinned parent in the rest', () => {
-      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/playlists']));
+    it('surfaces a pinned child under its ancestor chain', () => {
+      const pinned = buildPinnedTree(tree, new Set(['/playlists']));
       expect(pinned).toHaveLength(1);
       expect(pinned[0].text).toBe('Dashboards');
       expect(pinned[0].children?.map((c) => c.text)).toEqual(['Playlists']);
-
-      const dashboards = rest.find((i) => i.id === 'dashboards');
-      expect(dashboards).toBeDefined();
-      expect(dashboards?.children?.map((c) => c.text)).toEqual(['New', 'Snapshots']);
     });
 
-    it('moves a section pinned in its own right with all its live children', () => {
-      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/dashboards']));
-      expect(pinned).toHaveLength(1);
-      expect(pinned[0].text).toBe('Dashboards');
-      const childText = pinned[0].children?.map((c) => c.text);
-      expect(childText).toContain('Playlists');
-      expect(childText).toContain('Snapshots');
-      expect(rest.find((i) => i.id === 'dashboards')).toBeUndefined();
+    it('renders a directly-pinned section as an endpoint (children not expanded)', () => {
+      const pinned = buildPinnedTree(tree, new Set(['/dashboards']));
+      expect(pinned.map((i) => i.text)).toEqual(['Dashboards']);
+      expect(pinned[0].children).toBeUndefined();
     });
 
-    it('only moves a section once every child is pinned', () => {
-      const partial = partitionNavForPinning(tree, new Set(['/playlists']));
-      expect(partial.rest.find((i) => i.id === 'dashboards')).toBeDefined();
-
-      const full = partitionNavForPinning(tree, new Set(['/playlists', '/snapshots']));
-      expect(full.rest.find((i) => i.id === 'dashboards')).toBeUndefined();
+    it('renders a pinned top-level Starred section as a childless endpoint', () => {
+      const withStarred: NavModelItem[] = [
+        ...tree,
+        {
+          text: 'Starred',
+          id: 'starred',
+          url: '/dashboards?starred',
+          children: [{ text: 'My dashboard', id: 'starred/abc', url: '/d/abc' }],
+        },
+      ];
+      const pinned = buildPinnedTree(withStarred, new Set(['/dashboards?starred']));
+      expect(pinned.map((i) => i.text)).toEqual(['Starred']);
+      expect(pinned[0].children).toBeUndefined();
     });
 
-    it('moves a single-child section once that child is pinned', () => {
-      const { pinned, rest } = partitionNavForPinning(tree, new Set(['/admin/settings']));
-      expect(pinned.find((i) => i.id === 'cfg')).toBeDefined();
-      expect(rest.find((i) => i.id === 'cfg')).toBeUndefined();
-    });
-
-    it('orders the pinned blocks by the supplied order, not the nav-tree order', () => {
+    it('orders the top-level blocks by the supplied pin order', () => {
       const set = new Set(['/explore', '/admin/settings']);
       // Without an order, blocks follow the nav tree (Explore before Administration)
-      expect(partitionNavForPinning(tree, set).pinned.map((i) => i.text)).toEqual(['Explore', 'Administration']);
+      expect(buildPinnedTree(tree, set).map((i) => i.text)).toEqual(['Explore', 'Administration']);
       // With a user order, the blocks follow it
-      expect(partitionNavForPinning(tree, set, ['/admin/settings', '/explore']).pinned.map((i) => i.text)).toEqual([
+      expect(buildPinnedTree(tree, set, ['/admin/settings', '/explore']).map((i) => i.text)).toEqual([
         'Administration',
         'Explore',
       ]);
@@ -301,40 +287,25 @@ describe('pinning helpers', () => {
       expect(reorderPinnedBlocks(['/explore', '/dashboards'], tree, 0, 5)).toEqual(['/explore', '/dashboards']);
     });
   });
-});
 
-describe('More apps hoisting', () => {
-  const tree: NavModelItem[] = [
-    { text: 'Explore', id: 'explore', url: '/explore' },
-    {
-      text: 'More apps',
-      id: 'apps',
-      children: [
-        {
-          text: 'My App',
-          id: 'plugin-page-my-app',
-          url: '/a/my-app',
-          children: [
-            { text: 'Page one', id: 'plugin-page-my-app-1', url: '/a/my-app/one' },
-            { text: 'Page two', id: 'plugin-page-my-app-2', url: '/a/my-app/two' },
-          ],
-        },
-      ],
-    },
-  ];
+  describe('orderTopLevelSections', () => {
+    it('orders sections by the stored id list', () => {
+      expect(orderTopLevelSections(tree, ['cfg', 'explore']).map((i) => i.id)).toEqual([
+        'cfg',
+        'explore',
+        'home',
+        'dashboards',
+      ]);
+    });
 
-  it('surfaces a pinned app at the top level, not under a "More apps" parent', () => {
-    const { pinned, rest } = partitionNavForPinning(tree, new Set(['/a/my-app/one']));
-    // The pinned block is the app itself (carrying the pinned page) — no "More apps" wrapper
-    expect(pinned.map((i) => i.text)).toEqual(['My App']);
-    expect(pinned[0].children?.map((c) => c.text)).toEqual(['Page one']);
-    expect(pinned.find((i) => i.id === 'apps')).toBeUndefined();
-    // "More apps" stays in the normal nav for the un-pinned pages
-    expect(rest.find((i) => i.id === 'apps')).toBeDefined();
-  });
-
-  it('stores the pinned app page by its own url, never a "More apps" url', () => {
-    expect(normalizePinnedUrls(new Set(['/a/my-app/one']), tree)).toEqual(['/a/my-app/one']);
+    it('appends sections not in the stored order, keeping their nav-tree order', () => {
+      expect(orderTopLevelSections(tree, ['dashboards']).map((i) => i.id)).toEqual([
+        'dashboards',
+        'home',
+        'explore',
+        'cfg',
+      ]);
+    });
   });
 });
 
@@ -373,50 +344,6 @@ describe('canonical pin set helpers', () => {
       expect(getPinnableLeafUrls(tree[2])).toEqual(['/dashboards?starred']);
     });
   });
-
-  describe('expandPinnedUrls', () => {
-    it('expands a stored section url into its leaves', () => {
-      expect(expandPinnedUrls(['/dashboards'], tree)).toEqual(new Set(['/playlists', '/snapshots']));
-    });
-
-    it('keeps a stored leaf url as-is', () => {
-      expect(expandPinnedUrls(['/playlists'], tree)).toEqual(new Set(['/playlists']));
-    });
-  });
-
-  describe('normalizePinnedUrls', () => {
-    it('collapses a fully-pinned top-level section to the section url', () => {
-      expect(normalizePinnedUrls(new Set(['/playlists', '/snapshots']), tree)).toEqual(['/dashboards']);
-    });
-
-    it('keeps a partially-pinned section as individual leaves', () => {
-      expect(normalizePinnedUrls(new Set(['/playlists']), tree)).toEqual(['/playlists']);
-    });
-
-    it('keeps top-level leaves and the Starred section as their own url', () => {
-      expect(normalizePinnedUrls(new Set(['/explore', '/dashboards?starred']), tree)).toEqual([
-        '/explore',
-        '/dashboards?starred',
-      ]);
-    });
-
-    it('collapses some sections while keeping others individual', () => {
-      expect(normalizePinnedUrls(new Set(['/explore', '/playlists', '/snapshots']), tree)).toEqual([
-        '/explore',
-        '/dashboards',
-      ]);
-    });
-
-    it('keeps the block order given by orderUrls', () => {
-      const leaves = new Set(['/explore', '/playlists', '/snapshots']);
-      expect(normalizePinnedUrls(leaves, tree, ['/dashboards', '/explore'])).toEqual(['/dashboards', '/explore']);
-    });
-
-    it('appends newly-pinned blocks after the ones already in the order', () => {
-      const leaves = new Set(['/explore', '/playlists', '/snapshots']);
-      expect(normalizePinnedUrls(leaves, tree, ['/explore'])).toEqual(['/explore', '/dashboards']);
-    });
-  });
 });
 
 describe('hiding helpers', () => {
@@ -453,61 +380,28 @@ describe('hiding helpers', () => {
   ];
 
   describe('isHideable', () => {
-    it('is true for a normal item but false for Home, create actions and starred sub-items', () => {
-      expect(isHideable(tree[1])).toBe(true);
+    it('is true for a top-level section but false for Home, Bookmarks and Starred', () => {
+      expect(isHideable(tree[1])).toBe(true); // Explore
       expect(isHideable(tree[0])).toBe(false); // Home
-      expect(isHideable({ text: 'New', id: 'dashboards/new', url: '/x', isCreateAction: true })).toBe(false);
-      expect(isHideable({ text: 'Starred dash', id: 'starred/abc', url: '/d/abc' })).toBe(false);
+      expect(isHideable({ text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' })).toBe(false);
+      // Starred is pinnable instead of hideable.
+      expect(isHideable({ text: 'Starred', id: 'starred', url: '/dashboards?starred' })).toBe(false);
     });
   });
 
   describe('removeHiddenItems', () => {
-    it('drops a hidden section with its whole subtree', () => {
-      const result = removeHiddenItems(tree, new Set(['dashboards']));
-      expect(result.find((i) => i.id === 'dashboards')).toBeUndefined();
+    it('drops hidden top-level sections', () => {
+      expect(removeHiddenItems(tree, new Set(['dashboards'])).map((i) => i.id)).toEqual(['home', 'explore', 'cfg']);
     });
 
-    it('keeps a partially-hidden parent with its remaining children', () => {
+    it('leaves child ids alone (hiding is top-level only)', () => {
       const result = removeHiddenItems(tree, new Set(['dashboards/playlists']));
-      const dashboards = result.find((i) => i.id === 'dashboards');
-      expect(dashboards?.children?.map((c) => c.text)).toEqual(['New', 'Snapshots']);
-    });
-  });
-
-  describe('hideItem', () => {
-    it('adds the id', () => {
-      expect(hideItem([], tree, 'dashboards/playlists')).toEqual(['dashboards/playlists']);
-    });
-
-    it('replaces redundant descendant ids when hiding their parent', () => {
-      expect(hideItem(['dashboards/playlists', 'dashboards/snapshots'], tree, 'dashboards')).toEqual(['dashboards']);
-    });
-
-    it('never collapses individually-hidden children into the parent', () => {
-      expect(hideItem(['dashboards/playlists'], tree, 'dashboards/snapshots')).toEqual([
-        'dashboards/playlists',
-        'dashboards/snapshots',
+      expect(result.map((i) => i.id)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
+      expect(result.find((i) => i.id === 'dashboards')?.children?.map((c) => c.text)).toEqual([
+        'New',
+        'Playlists',
+        'Snapshots',
       ]);
-    });
-  });
-
-  describe('revealItem', () => {
-    it('just removes the id of an explicitly-hidden item', () => {
-      expect(revealItem(['dashboards/playlists'], tree, 'dashboards/playlists')).toEqual([]);
-    });
-
-    it('breaks apart a hidden parent, hiding the siblings of the revealed child', () => {
-      // Dashboards hidden -> reveal Playlists -> Snapshots stays hidden individually (New is a
-      // create action and isn't hideable, so it isn't added).
-      expect(revealItem(['dashboards'], tree, 'dashboards/playlists')).toEqual(['dashboards/snapshots']);
-    });
-
-    it('reveals only the target path through a deep hidden subtree', () => {
-      const result = revealItem(['cfg'], tree, 'cfg/access/users');
-      expect(result).toEqual(expect.arrayContaining(['cfg/settings', 'cfg/access/teams']));
-      expect(result).not.toContain('cfg');
-      expect(result).not.toContain('cfg/access');
-      expect(result).not.toContain('cfg/access/users');
     });
   });
 });

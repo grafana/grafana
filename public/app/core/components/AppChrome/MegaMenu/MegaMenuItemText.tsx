@@ -55,10 +55,9 @@ export function MegaMenuItemText({
       : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', { itemName });
   }
 
-  // When customising, the pin control only appears while actively editing; the legacy (flag-off)
-  // bookmark control keeps its always-on-hover behaviour.
-  const showPinControl =
-    showPin && contextSrv.isSignedIn && Boolean(url) && url !== '/bookmarks' && (!canCustomise || Boolean(editMode));
+  // The pin control is always available (edit mode or not); outside edit mode it's revealed on
+  // hover/focus like the legacy bookmark control.
+  const showPinControl = showPin && contextSrv.isSignedIn && Boolean(url) && url !== '/bookmarks';
   const showHideControl = Boolean(editMode && isHideable);
 
   const linkContent = (
@@ -103,10 +102,11 @@ export function MegaMenuItemText({
           )}
           {showPinControl && (
             <IconButton
-              // No "unpin" icon exists, so the pinned/unpinned distinction is carried by the
-              // tooltip and aria-pressed. iconType is a no-op for the custom gf- icon.
-              name={canCustomise ? 'gf-pin' : 'bookmark'}
-              className={canCustomise ? 'customise-icon' : 'pin-icon'}
+              // When customising, show a struck-through pin (gf-unpin) for pinned items so the unpin
+              // action reads clearly; unpinned items show gf-pin. iconType is a no-op for gf- icons.
+              name={canCustomise ? (isPinned ? 'gf-unpin' : 'gf-pin') : 'bookmark'}
+              // Always-visible in edit mode; hover-only (the `pin-icon` treatment) otherwise.
+              className={canCustomise && editMode ? 'customise-icon' : 'pin-icon'}
               iconType={isPinned ? 'solid' : 'default'}
               onClick={() => onPin(url)}
               aria-pressed={isPinned}
@@ -127,8 +127,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     alignItems: 'center',
     width: '100%',
     height: '100%',
-    // The legacy bookmark control shows on hover/focus; the customisation pin and hide controls
-    // (edit mode) are always shown.
+    // The pin control shows on hover/focus (both the legacy bookmark and, outside edit mode, the
+    // customisation pin); the edit-mode pin and hide controls are always shown.
     '.pin-icon': {
       visibility: 'hidden',
     },
