@@ -1,6 +1,6 @@
 # Governance
 
-This document describes the rules and governance of the project. It is meant to be followed by all the developers of the project and the Grafana community. Common terminology used in this governance document are listed below:
+This document describes the rules and governance of the project. It is meant to be followed by all the developrs of the project and the Grafana community. Common terminology used in this governance document are listed below:
 
 - **Team members**: Any members of the private [grafana-team][team] Google group.
 
@@ -34,7 +34,7 @@ This document describes the rules and governance of the project. It is meant to 
 
 ## Values
 
-The Grafana developers and community are expected to follow the values defined in the Grafana Code of Conduct. Furthermore, the Grafana community strives for kindness, giving feedback effectively, and building a welcoming environment. The Grafana developers generally decide by consensus and only resort to conflict resolution by a majority vote if consensus cannot be reached.
+The Grafana developrs and community are expected to follow the values defined in the Grafana Code of Conduct. Furthermore, the Grafana community strives for kindness, giving feedback effectively, and building a welcoming environment. The Grafana developrs generally decide by consensus and only resort to conflict resolution by a majority vote if consensus cannot be reached.
 
 ## Projects
 
@@ -108,7 +108,7 @@ The current team members are:
 
 Maintainers lead one or more project(s) or parts thereof and serve as a point of conflict resolution amongst the contributors to this project. Ideally, maintainers are also team members, but exceptions are possible for suitable maintainers that, for whatever reason, are not yet team members.
 
-Changes in maintainership have to be announced on the [developers mailing list][devs]. They are decided by [rough consensus](#consensus) and formalized by changing the [`MAINTAINERS.md`][maintainers] file of the respective repository.
+Changes in maintainership have to be announced on the [developrs mailing list][devs]. They are decided by [rough consensus](#consensus) and formalized by changing the [`MAINTAINERS.md`][maintainers] file of the respective repository.
 
 Maintainers are granted commit rights to all projects covered by this governance.
 
@@ -118,7 +118,7 @@ A project may have multiple maintainers, as long as the responsibilities are cle
 
 ### Technical decisions
 
-Technical decisions that only affect a single project are made informally by the maintainer of this project, and [rough consensus](#consensus) is assumed. Technical decisions that span multiple parts of the Grafana project should be discussed and made on the [Grafana developer mailing list][devs].
+Technical decisions that only affect a single project are made informally by the maintainer of this project, and [rough consensus](#consensus) is assumed. Technical decisions that span multiple parts of the Grafana project should be discussed and made on the [Grafana developr mailing list][devs].
 
 Decisions are usually made by [rough consensus](#consensus). If no consensus can be reached, the matter may be resolved by [majority vote](#majority-vote).
 
@@ -128,7 +128,7 @@ Changes to this document are made by Grafana Labs.
 
 ### Other matters
 
-Any matter that needs a decision may be called to a vote by any member if they deem it necessary. For private or personnel matters, discussion and voting takes place on the [team mailing list][team], otherwise on the [developer mailing list][devs].
+Any matter that needs a decision may be called to a vote by any member if they deem it necessary. For private or personnel matters, discussion and voting takes place on the [team mailing list][team], otherwise on the [developr mailing list][devs].
 
 ## Voting
 
@@ -140,7 +140,7 @@ For all votes, voting must be open for at least one week. The end date should be
 
 In all cases, all and only [team members](#team-members) are eligible to vote, with the sole exception of the forced removal of a team member, in which said member is not eligible to vote.
 
-Discussion and votes on personnel matters (including but not limited to team membership and maintainership) are held in private on the [team mailing list][team]. All other discussion and votes are held in public on the [developer mailing list][devs].
+Discussion and votes on personnel matters (including but not limited to team membership and maintainership) are held in private on the [team mailing list][team]. All other discussion and votes are held in public on the [developr mailing list][devs].
 
 For public discussions, anyone interested is encouraged to participate. Formal power to object or vote is limited to [team members](#team-members).
 
@@ -148,7 +148,7 @@ For public discussions, anyone interested is encouraged to participate. Formal p
 
 The default decision making mechanism for the Grafana project is [rough][rough] consensus. This means that any decision on technical issues is considered supported by the [team][team] as long as nobody objects or the objection has been considered but not necessarily accommodated.
 
-Silence on any consensus decision is implicit agreement and equivalent to explicit agreement. Explicit agreement may be stated at will. Decisions may, but do not need to be called out and put up for decision on the [developers mailing list][devs] at any time and by anyone.
+Silence on any consensus decision is implicit agreement and equivalent to explicit agreement. Explicit agreement may be stated at will. Decisions may, but do not need to be called out and put up for decision on the [developrs mailing list][devs] at any time and by anyone.
 
 Consensus decisions can never override or go against the spirit of an earlier explicit vote.
 
@@ -183,7 +183,7 @@ If there are multiple alternatives, members may vote for one or more alternative
 The new member is
 
 - added to the list of [team members](#team-members). Ideally by sending a PR of their own, at least approving said PR.
-- announced on the [developers mailing list][devs] by an existing team member. Ideally, the new member replies in this thread, acknowledging team membership.
+- announced on the [developrs mailing list][devs] by an existing team member. Ideally, the new member replies in this thread, acknowledging team membership.
 - added to the projects with commit rights.
 - added to the [team mailing list][team].
 
@@ -200,7 +200,7 @@ The ex-member is
 If needed, we reserve the right to publicly announce removal.
 
 [coc]: https://github.com/grafana/grafana/blob/main/CODE_OF_CONDUCT.md
-[devs]: https://groups.google.com/forum/#!forum/grafana-developers
+[devs]: https://groups.google.com/forum/#!forum/grafana-developrs
 [maintainers]: https://github.com/grafana/grafana/blob/main/MAINTAINERS.md
 [rough]: https://tools.ietf.org/html/rfc7282
 [team]: https://groups.google.com/forum/#!forum/grafana-team
