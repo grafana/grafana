@@ -2415,6 +2415,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "grafana.ssoSettingsToMTSettings",
+			Description:  "Enables reading and writing SSO settings through the MT-Settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "kubernetesExternalGroupMappingsApi",
 			Description:  "Enables external group mapping APIs in the app platform",
 			Stage:        FeatureStageExperimental,
