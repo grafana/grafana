@@ -344,6 +344,21 @@ func TestStripSQLComments(t *testing.T) {
 			input: "SELECT $1 -- comment",
 			want:  "SELECT $1 ",
 		},
+		{
+			name:  "preserves trailing SQLCommenter tag before semicolon",
+			input: "SELECT 1 AS value\n/*application='grafana',source='bi',route='test',feature='repro'*/;",
+			want:  "SELECT 1 AS value\n/*application='grafana',source='bi',route='test',feature='repro'*/;",
+		},
+		{
+			name:  "preserves inline SQLCommenter tag",
+			input: "SELECT 1 /*application='grafana',feature='panel'*/",
+			want:  "SELECT 1 /*application='grafana',feature='panel'*/",
+		},
+		{
+			name:  "strips block comment shaped like a tag but containing a macro",
+			input: "SELECT 1 /*range='$__timeFilter(t)'*/",
+			want:  "SELECT 1 ",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

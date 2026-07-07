@@ -13,10 +13,18 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
+// sqlCommenterRegExp matches a SQLCommenter attribution block: a block comment
+// made up of one or more key='value' pairs, e.g. /*application='grafana',source='bi'*/.
+var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9_.-]+='[^']*'(\s*,\s*[a-zA-Z0-9_.-]+='[^']*')*\s*\*/$`)
+
+// macroRegExp matches a Grafana macro of the form $name(...).
+var macroRegExp = regexp.MustCompile(sExpr)
+
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
 // string literals, double-quoted identifiers, and T-SQL bracket-quoted identifiers
-// are preserved verbatim.
+// are preserved verbatim. SQLCommenter attribution blocks are also preserved so
+// query tagging metadata reaches the database, unless they embed a macro.
 func stripSQLComments(sql string) string {
 	var out strings.Builder
 	out.Grow(len(sql))
@@ -85,13 +93,25 @@ func stripSQLComments(sql string) string {
 			}
 		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
 			// Block comment: skip to closing */.
+			start := i
 			i += 2
+			closed := false
 			for i+1 < n {
 				if sql[i] == '*' && sql[i+1] == '/' {
 					i += 2
+					closed = true
 					break
 				}
 				i++
+			}
+			// Preserve SQLCommenter attribution tags so query-tagging metadata
+			// reaches the database; strip every other block comment, and also strip
+			// a tag-shaped comment that embeds a macro so the macro is not interpolated.
+			if closed {
+				comment := sql[start:i]
+				if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
+					out.WriteString(comment)
+				}
 			}
 		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
 			// Line comment: skip to end of line (newline is preserved).
