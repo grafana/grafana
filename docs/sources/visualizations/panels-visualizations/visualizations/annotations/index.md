@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../features/panels/annotations/ # /docs/grafana/next/features/panels/annotations/
-  - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../annotations/ # /docs/grafana/next/visualizations/annotations/
   - ../../../panels-visualizations/visualizations/annotations/ # /docs/grafana/next/panels-visualizations/visualizations/annotations/
 description: Configure options for Grafana's annotations list visualization

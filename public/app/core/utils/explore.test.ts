@@ -1,6 +1,5 @@
 import {
   type DataSourceApi,
-  type DataSourceRef,
   dateTime,
   type ExploreUrlState,
   type GrafanaConfig,
@@ -70,11 +69,6 @@ const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => getDataSourceSrvMock(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: (ref?: DataSourceRef | string) => datasourceSrv.get(ref),
 }));
 
 // Avoids errors caused by circular dependencies

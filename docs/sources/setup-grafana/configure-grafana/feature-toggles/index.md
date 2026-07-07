@@ -74,6 +74,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
 ## Public preview feature toggles
 
@@ -85,7 +86,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability |
 | `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                          |
-| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                    |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                      |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                              |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
