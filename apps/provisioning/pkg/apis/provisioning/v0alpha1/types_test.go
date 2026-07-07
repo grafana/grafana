@@ -229,3 +229,85 @@ func TestRepository_SetBranch(t *testing.T) {
 		}
 	})
 }
+
+func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
+	tests := []struct {
+		name string
+		repo v0alpha1.Repository
+		want bool
+	}{
+		{
+			name: "github with previews enabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitHubRepositoryType,
+					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "github with previews disabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitHubRepositoryType,
+					GitHub: &v0alpha1.GitHubRepositoryConfig{GenerateDashboardPreviews: false},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "github type with nil github config",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubRepositoryType,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "githubEnterprise with previews enabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
+					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "githubEnterprise with previews disabled",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
+					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: false},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "githubEnterprise type with nil config",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubEnterpriseRepositoryType,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "non-github type returns false",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitLabRepositoryType,
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.repo.ShouldGenerateDashboardPreviews())
+		})
+	}
+}
