@@ -414,6 +414,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               smimeCertificateName="smimeCertificate"
               signerNameName="commit.signerName"
               signerEmailName="commit.signerEmail"
+              signerIsAuthorName="commit.signerIsAuthor"
               defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
             />
             {/* Pull requests are not supported by the pure git type. */}
