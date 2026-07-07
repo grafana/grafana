@@ -961,4 +961,8 @@ const (
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagGrafanaOnDemandDiagnostics
+	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
 )

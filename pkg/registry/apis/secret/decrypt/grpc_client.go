@@ -146,14 +146,6 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	}
 
-	// if the incoming context has an access token, use it as the subject token for exchange
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if ok && authInfo != nil {
-		if at := authInfo.GetAccessToken(); at != "" {
-			opts = append(opts, authnlib.WithClientInterceptorSubjectToken(at))
-		}
-	}
-
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		g.tokenExchanger,
 		opts...,

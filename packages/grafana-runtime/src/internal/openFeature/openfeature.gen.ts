@@ -59,6 +59,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
+  GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
@@ -69,6 +71,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled. */
+  GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
   GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
@@ -379,6 +383,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+ *
+ * **Details:**
+ * - flag key: `grafana.onDemandDiagnostics`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.onDemandDiagnostics", false, options).value;
+};
+
+/**
  * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
  *
  * **Details:**
@@ -431,6 +446,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.
+ *
+ * **Details:**
+ * - flag key: `grafana.useDefaultScopesEndpoint`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
 };
 
 /**
