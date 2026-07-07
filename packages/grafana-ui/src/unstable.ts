@@ -12,6 +12,7 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type {
   CodeMirrorCompletion,
   CodeMirrorCompletionContext,
@@ -21,5 +22,10 @@ export type {
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
   CodeMirrorExtension,
+  SignatureHelp,
+  SignatureHelpProvider,
+  SignatureInformation,
+  SignatureParameter,
 } from './components/CodeMirror/types';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export { TableNG } from './components/Table/TableNG/TableNG';

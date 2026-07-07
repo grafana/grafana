@@ -77,6 +77,18 @@ export interface SelectionModifiers {
   range?: boolean;
 }
 
+export interface StackedEditorItem {
+  type: QueryEditorType.Query | QueryEditorType.Expression | QueryEditorType.Transformation;
+  id: string;
+}
+
+export interface StackedEditorState {
+  enabled: boolean;
+  enter: () => void;
+  exit: () => void;
+  syncActiveItem: (item: StackedEditorItem) => void;
+}
+
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
@@ -109,6 +121,7 @@ export interface QueryEditorUIState {
   pendingTransformation: PendingTransformation | null;
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
+  stackedMode: StackedEditorState;
   showVersionBanner: boolean;
   /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
   confirmingDeleteActionKey: string | null;

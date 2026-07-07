@@ -24,12 +24,13 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import {
-  dashboardEditActions,
-  NewObjectAddedToCanvasEvent,
-  ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
-} from '../../edit-pane/shared';
+  ObjectRemovedFromCanvasEvent,
+  NewObjectAddedToCanvasEvent,
+} from '../../edit-pane/events';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
+import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
@@ -44,7 +45,6 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, Icon, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
+
+import { DashboardTabError } from './DashboardTabError';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -23,29 +25,26 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
 
   if (error) {
     return (
-      <Alert
-        severity="warning"
+      <DashboardTabError
         title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
-        action={
-          <Button onClick={retry} variant="secondary" size="sm">
-            <Trans i18nKey="home.starred-dashboards-tab.retry">Retry</Trans>
-          </Button>
-        }
+        retry={retry}
       />
     );
   }
 
   if (dashboards.length === 0) {
     return (
-      <EmptyState
-        hideImage
-        variant="completed"
-        message={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
-      >
-        <Trans i18nKey="home.starred-dashboards-tab.empty-description">
-          You can star your favorite dashboards by clicking the <Icon name="star" /> from the dashboard page.
-        </Trans>
-      </EmptyState>
+      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
+        <EmptyState
+          hideImage
+          variant="completed"
+          message={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
+        >
+          <Trans i18nKey="home.starred-dashboards-tab.empty-description">
+            You can star your favorite dashboards by clicking the <Icon name="star" /> from the dashboard page.
+          </Trans>
+        </EmptyState>
+      </Stack>
     );
   }
 

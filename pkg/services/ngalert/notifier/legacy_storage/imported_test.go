@@ -3,8 +3,6 @@ package legacy_storage
 import (
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -294,70 +292,63 @@ receivers:
 
 		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
-		require.Equal(t, v1.ManagedInhibitionRules{
-			"test-imported-inhibition-rule-00000000000": {
-				Name:       "test-imported-inhibition-rule-00000000000",
-				Provenance: "converted_prometheus",
-				InhibitRule: config.InhibitRule{
-					SourceMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "SourceAlert",
-						},
-					},
-					TargetMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "TargetAlert",
-						},
-					},
-					Equal: []string{"cluster"},
-				},
+		require.Len(t, result, 2)
+
+		// UIDs are hash-based; collect them to verify properties without hardcoding the hash.
+		for uid, rule := range result {
+			require.Equal(t, uid, rule.UID)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance)
+
+			// Identifier scope matcher must be present in both source and target.
+			var hasSourceScope, hasTargetScope bool
+			for _, m := range rule.SourceMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasSourceScope = true
+				}
+			}
+			for _, m := range rule.TargetMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasTargetScope = true
+				}
+			}
+			assert.True(t, hasSourceScope, "uid=%s: source matchers should contain identifier scope", uid)
+			assert.True(t, hasTargetScope, "uid=%s: target matchers should contain identifier scope", uid)
+
+			// The identifier scope matcher is appended last.
+			assert.Equal(t, "__grafana_managed_route__", rule.SourceMatchers[len(rule.SourceMatchers)-1].Label)
+			assert.Equal(t, "__grafana_managed_route__", rule.TargetMatchers[len(rule.TargetMatchers)-1].Label)
+		}
+	})
+
+	t.Run("should return stable UIDs across multiple calls", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result1, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		result2, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("should only return rules from imported config, not pre-existing ones", func(t *testing.T) {
+		existingUID := v1.ResourceUID("existing-rule")
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+			func(rev *ConfigRevision) {
+				rev.Config.InhibitionRules = map[v1.ResourceUID]v1.InhibitionRule{
+					existingUID: v1.NewInhibitionRule(string(existingUID), nil, nil, nil, models.ProvenanceNone),
+				}
 			},
-			"test-imported-inhibition-rule-00000000001": {
-				Name:       "test-imported-inhibition-rule-00000000001",
-				Provenance: "converted_prometheus",
-				InhibitRule: config.InhibitRule{
-					SourceMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "critical",
-						},
-					},
-					TargetMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "warning",
-						},
-					},
-					Equal: []string{"instance"},
-				},
-			},
-		}, result)
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.NotContains(t, result, existingUID)
+		assert.Len(t, result, 2)
 	})
 }
 

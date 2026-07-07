@@ -3,6 +3,8 @@ package navtreeimpl
 import (
 	"sort"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -28,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/navtree/navtreeimpl")
 
 type ServiceImpl struct {
 	cfg                  *setting.Cfg
@@ -85,6 +89,13 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+	// The context is restored on the ReqContext return so the span doesn't leak to sibling operations.
+	ctx, span := tracer.Start(c.Req.Context(), "navtree.GetNavTree")
+	defer span.End()
+	prevReq := c.Req
+	c.Req = c.Req.WithContext(ctx)
+	defer func() { c.Req = prevReq }()
+
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
@@ -372,7 +383,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	if c.IsSignedIn {
+	// Playlists are visible to anonymous users too, so the nav stays consistent
+	// with the playlist page and API which both serve anonymous Viewers.
+	if c.IsSignedIn || c.IsAnonymous {
 		showPlaylist := c.HasRole(org.RoleViewer)
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
@@ -383,7 +396,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
 		}
+	}
 
+	if c.IsSignedIn {
 		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",

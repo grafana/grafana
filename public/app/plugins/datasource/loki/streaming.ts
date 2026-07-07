@@ -19,7 +19,7 @@ import { type LokiQuery } from './types';
  * be unique for each distinct query execution plan.  This key is not secure and is only picked to avoid
  * possible collisions
  */
-export async function getLiveStreamKey(query: LokiQuery): Promise<string> {
+async function getLiveStreamKey(query: LokiQuery): Promise<string> {
   const str = JSON.stringify({ expr: query.expr });
 
   const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array

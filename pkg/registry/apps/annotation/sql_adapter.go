@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -187,7 +188,8 @@ func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
 	})
 }
 
-func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
+// Cleanup runs the legacy SQL cleaner; before is ignored because cleanupSettings carries its own cutoff.
+func (a *sqlAdapter) Cleanup(ctx context.Context, _ time.Time) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
 	}
@@ -241,8 +243,11 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 		anno.Spec.PanelID = &item.PanelID
 	}
 
-	if item.UserUID != "" {
-		if m, err := utils.MetaAccessor(anno); err == nil {
+	if item.ID > 0 {
+		SetLegacyID(anno, item.ID)
+	}
+	if m, err := utils.MetaAccessor(anno); err == nil {
+		if item.UserUID != "" {
 			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
 		}
 	}

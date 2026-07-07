@@ -107,7 +107,7 @@ interface RolesLabelProps {
   numberOfRoles: number;
 }
 
-export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
+const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
   const styles = useStyles2((theme) => getTooltipStyles(theme));
 
   return (

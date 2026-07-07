@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
+import { withSavedByTrailer } from '../../utils/currentUser';
 import { type StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
@@ -15,8 +16,8 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
   const createSyncJob = useCallback(
-    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => {
-      const { skipStatusUpdates = false } = options || {};
+    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean; resources?: ResourceRef[] }) => {
+      const { skipStatusUpdates = false, resources } = options || {};
 
       if (!repoName) {
         if (!skipStatusUpdates) {
@@ -36,10 +37,28 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
         const jobSpec = requiresMigration
           ? {
               action: 'migrate' as const,
-              migrate: {},
+              // The Grafana-saved-by trailer rides through the top-level
+              // JobSpec.Message to the resulting git commit.
+              message: withSavedByTrailer(
+                t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
+              ),
+              migrate: {
+                // Always generate fresh folder UIDs on export so the migrated
+                // folders are created anew on the subsequent pull rather than
+                // taking over the existing folders (which would leave their
+                // alerts and library panels orphaned under a now-managed
+                // folder). Has no effect unless folder metadata is written.
+                generateNewFolderIDs: true,
+                // When resources are passed, only those (unmanaged) dashboards
+                // are migrated; otherwise the migrate object keeps the legacy
+                // "migrate everything unmanaged" behavior the wizard relies on.
+                ...(resources?.length ? { resources } : {}),
+              },
             }
           : {
               action: 'pull' as const,
+              // A pull replicates the remote branch locally and produces no
+              // git commit, so there's no commit message to tag.
               pull: {
                 incremental: false,
               },

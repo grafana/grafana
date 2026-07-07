@@ -8,24 +8,6 @@ import { systemDateFormats } from './formats';
 import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
 
 /**
- * Converts a Grafana timezone string to an IANA timezone string.
- */
-export function toIANATimezone(grafanaTimezone: string) {
-  // Intl APIs will use the browser's timezone by default (if tz is undefined)
-  if (grafanaTimezone === 'browser') {
-    return undefined;
-  }
-
-  const zone = moment.tz.zone(grafanaTimezone);
-  if (!zone) {
-    // If the timezone is invalid, we default to the browser's timezone
-    return undefined;
-  }
-
-  return grafanaTimezone;
-}
-
-/**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
  * helper function to control how the date and time value passed to the function is
  * formatted.

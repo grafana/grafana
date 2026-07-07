@@ -13,7 +13,7 @@ import { type PopoverContentProps } from '../Tooltip/types';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';
 
-export type ColorPickerChangeHandler = (color: string) => void;
+type ColorPickerChangeHandler = (color: string) => void;
 
 export interface ColorPickerProps {
   color: string;

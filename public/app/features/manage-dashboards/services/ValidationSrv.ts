@@ -10,7 +10,7 @@ class ValidationError extends Error {
   }
 }
 
-export class ValidationSrv {
+class ValidationSrv {
   rootName = 'general';
 
   validateNewDashboardName(folderUID: string, name: string) {

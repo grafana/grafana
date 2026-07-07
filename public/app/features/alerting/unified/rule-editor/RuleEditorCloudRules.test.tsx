@@ -1,9 +1,11 @@
+import { type UserEvent } from '@testing-library/user-event';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import * as pluginSettings from 'app/features/plugins/pluginSettings';
+import * as pluginSettings from '@grafana/runtime/unstable';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
@@ -27,13 +29,27 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
+jest.setTimeout(60 * 1000);
+
 setupMswServer();
 mimirDataSource();
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
 setupPluginsExtensionsHook();
 
+// Paste in one event instead of typing char-by-char, which re-renders the heavy
+// rule-editor form on every keystroke and is the largest CI-amplified cost here.
+async function pasteIntoInput(user: UserEvent, input: HTMLElement, value: string) {
+  await user.click(input);
+  await user.clear(input);
+  await user.paste(value);
+}
+
 describe('RuleEditor cloud', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   beforeEach(() => {
     localStorage.removeItem(SIMPLIFIED_QUERY_EDITOR_KEY);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
@@ -82,17 +98,14 @@ describe('RuleEditor cloud', () => {
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 
-    await user.type(await ui.inputs.expr.find(), 'up == 1');
+    await pasteIntoInput(user, await ui.inputs.expr.find(), 'up == 1');
 
-    await user.type(ui.inputs.name.get(), 'my great new rule');
+    await pasteIntoInput(user, ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), NAMESPACE_2);
     await clickSelectOption(ui.inputs.group.get(), GROUP_3);
 
-    await user.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await user.click(ui.buttons.addLabel.get());
+    await pasteIntoInput(user, ui.inputs.annotationValue(0).get(), 'some summary');
+    await pasteIntoInput(user, ui.inputs.annotationValue(1).get(), 'some description');
 
     // save and check what was sent to backend
     const capture = captureRequests();
@@ -130,17 +143,14 @@ describe('RuleEditor cloud', () => {
     await user.click(dataSourceSelect);
     await user.click(screen.getByText(MIMIR_DATASOURCE_UID));
 
-    await user.type(await ui.inputs.expr.find(), 'up == 1');
+    await pasteIntoInput(user, await ui.inputs.expr.find(), 'up == 1');
 
-    await user.type(ui.inputs.name.get(), 'my great new rule with 3m interval');
+    await pasteIntoInput(user, ui.inputs.name.get(), 'my great new rule with 3m interval');
     await clickSelectOption(ui.inputs.namespace.get(), NAMESPACE_2);
     await clickSelectOption(ui.inputs.group.get(), GROUP_4);
 
-    await user.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
-
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await user.click(ui.buttons.addLabel.get());
+    await pasteIntoInput(user, ui.inputs.annotationValue(0).get(), 'some summary');
+    await pasteIntoInput(user, ui.inputs.annotationValue(1).get(), 'some description');
 
     // save and check what was sent to backend
     const capture = captureRequests();

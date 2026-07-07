@@ -6,6 +6,7 @@ import { screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { type FeatureToggles } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
@@ -14,7 +15,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup } from './mocks/grafanaRulerApi';
 import { captureRequests, serializeRequests } from './mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from './mocks/server/handlers/folders';
 import { setupDataSources } from './testSetup/datasources';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
 
@@ -48,6 +49,10 @@ const dataSources = {
 
 // Setup plugin extensions hook to prevent setPluginLinksHook errors
 setupPluginsExtensionsHook();
+
+beforeAll(() => {
+  mockBoundingClientRect();
+});
 
 describe('RuleEditor grafana recording rules', () => {
   beforeEach(() => {

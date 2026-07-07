@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+const DEFAULT_BORDER_RADIUS_SM = 4;
+const DEFAULT_BORDER_RADIUS_MD = 6;
+const DEFAULT_BORDER_RADIUS_LG = 10;
+
 /** @beta */
 export interface ThemeShape {
   /**
@@ -25,7 +29,7 @@ export interface Radii {
    */
   sm: string;
   /**
-   * Use for large things, like modals
+   * Use for large things, like modals and containers
    */
   lg: string;
   /**
@@ -37,20 +41,24 @@ export interface Radii {
 
 /** @internal */
 export const ThemeShapeInputSchema = z.object({
+  borderRadiusSm: z.int().nonnegative().optional(),
   borderRadius: z.int().nonnegative().optional(),
+  borderRadiusLg: z.int().nonnegative().optional(),
 });
 
 /** @internal */
 export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
 
-export function createShape(options: ThemeShapeInput): ThemeShape {
-  const baseBorderRadius = options.borderRadius ?? 6;
-
+export function createShape({
+  borderRadiusSm = DEFAULT_BORDER_RADIUS_SM,
+  borderRadius: borderRadiusMd = DEFAULT_BORDER_RADIUS_MD,
+  borderRadiusLg = DEFAULT_BORDER_RADIUS_LG,
+}: ThemeShapeInput): ThemeShape {
   const radius = {
-    default: `${baseBorderRadius}px`,
-    md: `${baseBorderRadius}px`,
-    sm: `${Math.ceil(baseBorderRadius * (2 / 3))}px`, // for default base becomes 4
-    lg: `${Math.ceil(baseBorderRadius * (5 / 3))}px`, // for default base becomes 10
+    default: `${borderRadiusMd}px`,
+    sm: `${borderRadiusSm}px`,
+    md: `${borderRadiusMd}px`,
+    lg: `${borderRadiusLg}px`,
     pill: '9999px',
     circle: '100%',
   };
@@ -60,7 +68,7 @@ export function createShape(options: ThemeShapeInput): ThemeShape {
    * @param amount
    */
   const borderRadius = (amount?: number) => {
-    const value = (amount ?? 1) * baseBorderRadius;
+    const value = (amount ?? 1) * borderRadiusMd;
     return `${value}px`;
   };
 

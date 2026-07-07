@@ -26,9 +26,9 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { type DashboardEditPane } from './DashboardEditPane';
-import { DashboardOutline } from './DashboardOutline';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { dashboardEditActions } from './shared';
+import { type DashboardEditPaneLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -214,6 +214,24 @@ describe('DashboardEditPane', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  it('clone should preserve the outline collapsed state', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+    const outlinePane = editPane.state.outlinePane!;
+
+    outlinePane.setNodeCollapsed('some-key', false);
+    outlinePane.setNodeCollapsed('another-key', true);
+
+    const cloned = editPane.clone({});
+    const clonedOutline = cloned.state.outlinePane!;
+
+    expect(clonedOutline.isNodeCollapsed('some-key', true)).toBe(false);
+    expect(clonedOutline.isNodeCollapsed('another-key', false)).toBe(true);
+
+    clonedOutline.setNodeCollapsed('new-key', false);
+    expect(outlinePane.isNodeCollapsed('new-key', true)).toBe(false);
   });
 
   it('keeps the variable selected when undoing and redoing variable type changes', () => {
@@ -556,7 +574,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
 
 function setupEmptyDashboard(): {
   dashboard: DashboardScene;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -573,7 +591,7 @@ function setupWithTwoTabs(): {
   tab1: TabItem;
   tab2: TabItem;
   tab1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });
@@ -597,7 +615,7 @@ function setupWithTwoRows(): {
   row1: RowItem;
   row2: RowItem;
   row1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });

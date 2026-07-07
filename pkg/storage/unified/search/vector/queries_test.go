@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 	"text/template"
+	"time"
 
 	pgvector "github.com/pgvector/pgvector-go"
 
@@ -102,6 +103,17 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorBackfillJobsCreate: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsCreateRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Model:       "text-embedding-005",
+						Resource:    "dashboards",
+						StoppingRV:  12345,
+					},
+				},
+			},
 			sqlVectorBackfillJobsUpdate: {
 				{
 					Name: "simple",
@@ -129,6 +141,70 @@ func TestVectorQueries(t *testing.T) {
 					Data: &sqlVectorBackfillJobsCompleteRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						ID:          7,
+					},
+				},
+			},
+			sqlQueryCacheGet: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheGetRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						QueryHash:   "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+						Response:    &sqlQueryCacheGetResponse{},
+					},
+				},
+			},
+			sqlQueryCacheCount: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheCountRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Response:    &sqlQueryCacheCountResponse{},
+					},
+				},
+			},
+			sqlQueryCacheEvictOldest: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheEvictOldestRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Limit:       5,
+					},
+				},
+			},
+			sqlQueryCacheInsert: {
+				{
+					Name: "simple",
+					Data: &sqlQueryCacheInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						QueryHash:   "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+						Embedding:   pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
+					},
+				},
+			},
+			sqlRateBucketIncrement: {
+				{
+					Name: "simple",
+					Data: &sqlRateBucketIncrementRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+						WindowStart: time.Date(2026, 5, 20, 12, 0, 0, 0, time.UTC),
+						Response:    &sqlRateBucketIncrementResponse{},
+					},
+				},
+			},
+			sqlRateBucketSweep: {
+				{
+					Name: "simple",
+					Data: &sqlRateBucketSweepRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Cutoff:      time.Date(2026, 5, 20, 11, 58, 0, 0, time.UTC),
 					},
 				},
 			},

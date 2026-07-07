@@ -22,6 +22,11 @@ jobs:
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-pr-automation
+      - name: Get GitHub App token
+        id: get-github-approver-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-approver
       - name: 'Get vault secrets'
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -33,11 +38,10 @@ jobs:
       - name: Download from Crowdin
         uses: grafana/grafana-github-actions/crowdin-download@main
         with:
-          crowdin_token: ${{ env.CROWDIN_TOKEN }}
+          crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
           crowdin_project_id: 5
           pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
           github_board_id: 78 # Frontend Platform project
           en_paths: public/locales/en-US/grafana.json, public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json, public/app/plugins/datasource/mssql/locales/en-US/mssql.json, packages/grafana-sql/src/locales/en-US/grafana-sql.json
           github_repo_token: ${{ steps.get-github-app-token.outputs.token }}
-          # TODO
-          # github_pr_approver_token: ${{ steps.get-pr-approver-token.outputs.token }}
+          github_pr_approver_token: ${{ steps.get-github-approver-token.outputs.token }}

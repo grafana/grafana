@@ -1,7 +1,7 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { testWithFeatureToggles } from 'test/test-utils';
+import { testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
@@ -11,6 +11,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { legacyAPI } from 'app/api/clients/legacy';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -41,10 +42,16 @@ describe('browseDashboardsAPI', () => {
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
+        [legacyAPI.reducerPath]: legacyAPI.reducer,
         browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware),
+        getDefaultMiddleware().concat(
+          browseDashboardsAPI.middleware,
+          folderAPIv1beta1.middleware,
+          legacyAPI.middleware
+        ),
     });
     setStore(store as unknown as Store);
     return store;
@@ -223,7 +230,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 5,
         dashboards: 6,
-        library_elements: 7,
+        librarypanels: 7,
         alertrules: 9,
       });
     });
@@ -252,7 +259,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 3,
         dashboards: 3,
-        library_elements: 4,
+        librarypanels: 4,
         alertrules: 5,
       });
     });
@@ -272,7 +279,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 1,
         dashboards: 5,
-        library_elements: 0,
+        librarypanels: 0,
         alertrules: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
@@ -414,6 +421,137 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('saveDashboard refreshes folder children', () => {
+    const dashboardUid = 'dash-1';
+    const oldFolderUid = 'folder-old';
+    const newFolderUid = 'folder-new';
+
+    const createStoreWithRefetchSpy = () => {
+      const refetchPendingArgs: Array<{ parentUID: string | undefined }> = [];
+      const recorder: Middleware = () => (next) => (action) => {
+        if (isAnyOf(refetchChildren.pending)(action)) {
+          refetchPendingArgs.push({ parentUID: action.meta.arg.parentUID });
+        }
+        return next(action);
+      };
+
+      const store = configureStore({
+        reducer: {
+          [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+          [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+          browseDashboards: browseDashboardsReducer,
+        },
+        middleware: (getDefaultMiddleware) =>
+          getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware, recorder),
+      });
+      setStore(store as unknown as Store);
+      return { store, refetchPendingArgs };
+    };
+
+    const seedDashboardInFolder = (store: ReturnType<typeof createStoreWithRefetchSpy>['store']) => {
+      // Populate childrenByParentUID[oldFolderUid] with the dashboard so getDashboardFolder finds it.
+      store.dispatch(
+        refetchChildren.fulfilled(
+          {
+            children: [
+              {
+                kind: 'dashboard',
+                uid: dashboardUid,
+                title: 'Test dashboard',
+                parentUID: oldFolderUid,
+              },
+            ],
+            kind: 'dashboard',
+            page: 1,
+            lastPageOfKind: true,
+          },
+          'test-request-id',
+          { parentUID: oldFolderUid, pageSize: PAGE_SIZE }
+        )
+      );
+    };
+
+    beforeEach(() => {
+      getDashboardAPIMock.mockImplementation(() =>
+        createMockDashboardAPI(jest.fn().mockResolvedValue({ uid: dashboardUid }))
+      );
+    });
+
+    it('refetches both new and previous parent folder when a v1 dashboard is moved', async () => {
+      const { store, refetchPendingArgs } = createStoreWithRefetchSpy();
+      seedDashboardInFolder(store);
+      // Drop the seed action from the recorder so we only assert on saveDashboard's dispatches.
+      refetchPendingArgs.length = 0;
+
+      const cmd: SaveDashboardCommand<Dashboard> = {
+        dashboard: { uid: dashboardUid, title: 'V1', panels: [], schemaVersion: 1 } as unknown as Dashboard,
+        folderUid: newFolderUid,
+      };
+
+      await store.dispatch(browseDashboardsAPI.endpoints.saveDashboard.initiate(cmd));
+
+      await waitFor(() => {
+        const parents = refetchPendingArgs.map((a) => a.parentUID);
+        expect(parents).toHaveLength(2);
+        expect(parents).toEqual(expect.arrayContaining([newFolderUid, oldFolderUid]));
+      });
+    });
+
+    it('refetches both new and previous parent folder when a v2 dashboard is moved (uid from k8s.name)', async () => {
+      const { store, refetchPendingArgs } = createStoreWithRefetchSpy();
+      seedDashboardInFolder(store);
+      refetchPendingArgs.length = 0;
+
+      const v2Dashboard: DashboardV2Spec = { title: 'V2', elements: [] } as unknown as DashboardV2Spec;
+      const cmd: SaveDashboardCommand<DashboardV2Spec> = {
+        dashboard: v2Dashboard,
+        folderUid: newFolderUid,
+        k8s: { name: dashboardUid },
+      };
+
+      await store.dispatch(browseDashboardsAPI.endpoints.saveDashboard.initiate(cmd));
+
+      await waitFor(() => {
+        const parents = refetchPendingArgs.map((a) => a.parentUID);
+        expect(parents).toHaveLength(2);
+        expect(parents).toEqual(expect.arrayContaining([newFolderUid, oldFolderUid]));
+      });
+    });
+
+    it('only refetches the target folder when the dashboard is saved to the same folder', async () => {
+      const { store, refetchPendingArgs } = createStoreWithRefetchSpy();
+      seedDashboardInFolder(store);
+      refetchPendingArgs.length = 0;
+
+      const cmd: SaveDashboardCommand<Dashboard> = {
+        dashboard: { uid: dashboardUid, title: 'V1', panels: [], schemaVersion: 1 } as unknown as Dashboard,
+        folderUid: oldFolderUid,
+      };
+
+      await store.dispatch(browseDashboardsAPI.endpoints.saveDashboard.initiate(cmd));
+
+      await waitFor(() => {
+        expect(refetchPendingArgs).toEqual([{ parentUID: oldFolderUid }]);
+      });
+    });
+
+    it('does not look up a previous folder when the dashboard is unknown to the store', async () => {
+      const { store, refetchPendingArgs } = createStoreWithRefetchSpy();
+      // No seedDashboardInFolder — store has no record of dashboardUid.
+
+      const cmd: SaveDashboardCommand<Dashboard> = {
+        dashboard: { uid: dashboardUid, title: 'V1', panels: [], schemaVersion: 1 } as unknown as Dashboard,
+        folderUid: newFolderUid,
+      };
+
+      await store.dispatch(browseDashboardsAPI.endpoints.saveDashboard.initiate(cmd));
+
+      await waitFor(() => {
+        expect(refetchPendingArgs).toEqual([{ parentUID: newFolderUid }]);
+      });
     });
   });
 });

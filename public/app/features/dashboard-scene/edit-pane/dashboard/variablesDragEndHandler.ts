@@ -11,7 +11,7 @@ export interface ListIds {
   hidden: string;
 }
 
-export function getTargetHide(
+function getTargetHide(
   droppableId: string,
   currentHide: VariableHide,
   visibleListId: string,

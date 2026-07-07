@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -23,13 +24,49 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		require.True(t, ok, "Get(%q, \"datasources\") should find mapping", group)
 		require.NotNil(t, mapping)
 		assert.Equal(t, "datasources:uid:", mapping.Prefix())
+
+		// The datasources/query subresource is also mapped to a query action.
+		queryMapping, ok := reg.Get(group, "datasources", "query")
+		require.True(t, ok, "Get(%q, \"datasources\", \"query\") should find mapping", group)
+		require.NotNil(t, queryMapping)
+		action, ok := queryMapping.Action(utils.VerbCreate)
+		assert.True(t, ok)
+		assert.Equal(t, "datasources:query", action)
+
+		// The group exposes both the datasources resource and its query subresource.
 		all := reg.GetAll(group)
-		require.Len(t, all, 1)
+		require.Len(t, all, 2)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
 	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards", "")
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
+}
+
+// TestMapperRegistry_Playlist verifies playlists map to their real two-action model
+// (playlists:read / playlists:write) rather than the default create/delete actions, and
+// that create skips scope since playlists are neither folder-scoped nor scope-checked.
+// This is what lets the provisioning export preflight authorize playlists.
+func TestMapperRegistry_Playlist(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("playlist.grafana.app", "playlists", "")
+	require.True(t, ok, "playlists should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:read", action, "verb %q should map to read", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:write", action, "verb %q should map to write (no playlists:create/delete action exists)", verb)
+	}
+
+	assert.True(t, mapping.SkipScope(utils.VerbCreate), "create must skip scope; playlists are not folder-scoped")
+	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
 }
 
 // TestFindGroupKey_WildcardMatching exercises findGroupKey via a minimal mapper.

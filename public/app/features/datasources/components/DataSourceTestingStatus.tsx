@@ -264,7 +264,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 
   if (message) {
     return (
-      <div className={cx('gf-form-group', styles.container)}>
+      <div className={styles.container}>
         <Alert severity={severity} title={message} data-testid={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
@@ -281,6 +281,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                         DashboardLibraryInteractions.entryPointClicked({
                           entryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_SUCCESS_BANNER,
                           contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                          contentKinds: [CONTENT_KINDS.SUGGESTED_DASHBOARDS],
                         });
                         openModal();
                       };
@@ -352,6 +353,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
   container: css({
     paddingTop: theme.spacing(3),
+    marginBottom: theme.spacing(5),
   }),
   moreLink: css({
     marginBlock: theme.spacing(1),

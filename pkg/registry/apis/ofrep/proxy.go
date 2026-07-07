@@ -17,13 +17,13 @@ import (
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
 )
 
-func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, namespace string, w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(ofrepPath)
+	proxy, err := b.newProxy(ofrepPath, namespace)
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "error", err)
@@ -66,13 +66,13 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, w h
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedUser bool, namespace string, w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
 	r = r.WithContext(ctx)
 
-	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey))
+	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace)
 	if err != nil {
 		err = tracing.Error(span, err)
 		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
@@ -90,7 +90,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	proxy.ServeHTTP(w, r)
 }
 
-func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) {
+func (b *APIBuilder) newProxy(proxyPath, namespace string) (*httputil.ReverseProxy, error) {
 	if proxyPath == "" {
 		return nil, fmt.Errorf("proxy path is required")
 	}
@@ -103,9 +103,17 @@ func (b *APIBuilder) newProxy(proxyPath string) (*httputil.ReverseProxy, error) 
 		req.URL.Scheme = b.url.Scheme
 		req.URL.Host = b.url.Host
 		req.URL.Path = proxyPath
+		req.Header.Set("User-Agent", namespaceUserAgent(namespace))
 	}
 
 	proxy := proxyutil.NewReverseProxy(b.logger, director)
 	proxy.Transport = b.transport
 	return proxy, nil
+}
+
+func namespaceUserAgent(namespace string) string {
+	if namespace == "" {
+		return "features-grafana-app"
+	}
+	return "features-grafana-app/" + namespace
 }

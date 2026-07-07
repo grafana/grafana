@@ -18,12 +18,6 @@ const PANELS_WITHOUT_PRESETS = [
   { id: '24', name: 'Pie chart' },
 ];
 
-test.use({
-  featureToggles: {
-    vizPresets: true,
-  },
-});
-
 function getPanelStylesSection(page: Page) {
   return page.getByTestId('data-testid Options group panel-styles');
 }

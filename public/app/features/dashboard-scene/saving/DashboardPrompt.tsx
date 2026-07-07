@@ -130,7 +130,7 @@ interface UnsavedChangesModalProps {
   onSaveDashboardClick?: () => void;
 }
 
-export const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick }: UnsavedChangesModalProps) => {
+const UnsavedChangesModal = ({ onDiscard, onDismiss, onSaveDashboardClick }: UnsavedChangesModalProps) => {
   const styles = useStyles2(getStyles);
 
   return (

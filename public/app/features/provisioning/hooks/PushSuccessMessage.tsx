@@ -3,15 +3,15 @@ import { TextLink } from '@grafana/ui';
 
 export interface PushSuccessMessageProps {
   branch: string;
-  repositoryURL?: string;
+  url?: string;
 }
 
-export function PushSuccessMessage({ branch, repositoryURL }: PushSuccessMessageProps) {
+export function PushSuccessMessage({ branch, url }: PushSuccessMessageProps) {
   return (
     <span>
       <Trans i18nKey="provisioned-request.push-success.prefix">Changes successfully pushed to</Trans>{' '}
-      {repositoryURL ? (
-        <TextLink href={repositoryURL} external>
+      {url ? (
+        <TextLink href={url} external>
           {branch}
         </TextLink>
       ) : (

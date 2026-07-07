@@ -131,7 +131,7 @@ export const buildMetadataQuery = (params: {
 };
 
 // Function to validate the provided time filter value
-export function isValidTimeFilter(value?: string): boolean {
+function isValidTimeFilter(value?: string): boolean {
   if (!value || typeof value !== 'string') {
     return false;
   }
@@ -159,7 +159,7 @@ export function isValidTimeFilter(value?: string): boolean {
 }
 
 // A merge of query_builder/renderTagCondition and influx_query_model/renderTagCondition
-export function renderTagCondition(
+function renderTagCondition(
   tag: InfluxQueryTag,
   index: number,
   templateSrv: TemplateSrv,

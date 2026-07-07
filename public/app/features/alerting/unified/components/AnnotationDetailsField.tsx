@@ -65,7 +65,7 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
   return <>{tokenizeValue}</>;
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   well: css({
     wordBreak: 'break-word',
   }),

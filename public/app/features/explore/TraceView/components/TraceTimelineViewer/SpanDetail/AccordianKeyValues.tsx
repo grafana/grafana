@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
@@ -27,7 +27,7 @@ import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       textOverflow: 'ellipsis',

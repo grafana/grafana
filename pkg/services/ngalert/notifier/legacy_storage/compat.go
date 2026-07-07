@@ -4,20 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"maps"
-	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
-	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 var NameToUid = models.NameToUid
@@ -76,7 +70,7 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (*v1.PostableApiReceiver,
 
 func PostableApiReceiverToReceiver(postable *v1.PostableApiReceiver, provenance models.Provenance, origin models.ResourceOrigin) (*models.Receiver, error) {
 	if postable.HasMimirIntegrations() {
-		p, err := PostableMimirReceiverToPostableGrafanaReceiver(postable)
+		p, err := v1.PostableMimirReceiverToPostableGrafanaReceiver(postable)
 		if err != nil {
 			return nil, err
 		}
@@ -130,65 +124,6 @@ func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaRecei
 	}
 
 	return integrations, nil
-}
-
-// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to apimodels.PostableGrafanaReceiver.
-// If receiver does not have any legacy receivers, returns the original receiver.
-// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
-func PostableMimirReceiverToPostableGrafanaReceiver(r *v1.PostableApiReceiver) (*v1.PostableApiReceiver, error) {
-	if !r.HasMimirIntegrations() {
-		return r, nil
-	}
-	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
-	}
-	result := &v1.PostableApiReceiver{
-		Receiver: apimodels.Receiver{
-			Name: r.Name,
-		},
-		PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*v1.PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
-		},
-	}
-	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
-	typeCount := make(map[string]int)
-	for _, config := range v0 {
-		integrationType := string(config.Schema.Type())
-		idx := typeCount[integrationType]
-		typeCount[integrationType]++
-		integration, err := MimirIntegrationConfigToPostableGrafanaReceiver(config, r.Name, idx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
-		}
-		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
-	}
-	return result, nil
-}
-
-// MimirIntegrationConfigToPostableGrafanaReceiver Converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
-func MimirIntegrationConfigToPostableGrafanaReceiver(config alertingNotify.MimirIntegrationConfig, receiverName string, idx int) (*v1.PostableGrafanaReceiver, error) {
-	raw, err := config.ConfigJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	return &v1.PostableGrafanaReceiver{
-		// mimirIntegrationUID generates a stable, fixed-length UID for a converted Mimir integration that passes ValidateUID, 40-char limit for long names in particular
-		UID:                   mimirIntegrationUID(receiverName, string(config.Schema.Type()), idx),
-		Name:                  receiverName,
-		Type:                  string(config.Schema.Type()),
-		Version:               string(config.Schema.Version),
-		DisableResolveMessage: false, // V0 ignore this flag as they have their own SendResolved one.
-		Settings:              raw,
-		SecureSettings:        nil,
-	}, nil
-}
-
-func mimirIntegrationUID(receiverName string, integrationType string, idx int) string {
-	h := fnv.New64a()
-	_, _ = fmt.Fprintf(h, "%s-%s-%d", receiverName, integrationType, idx)
-	return fmt.Sprintf("%016x", h.Sum64())
 }
 
 func PostableMimirReceiverToIntegrations(r alertingNotify.ConfigReceiver) ([]*models.Integration, error) {
@@ -280,29 +215,4 @@ func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName
 		}
 	}
 	return false, groupBy
-}
-
-func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance v1.Provenance) (*v1.InhibitionRule, error) {
-	if name = strings.TrimSpace(name); name == "" {
-		return nil, fmt.Errorf("inhibition rule name must not be empty")
-	}
-
-	if strings.Contains(name, ":") {
-		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
-	}
-
-	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
-		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
-	}
-
-	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
-	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > ualert.UIDMaxLength {
-		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", ualert.UIDMaxLength)
-	}
-
-	return &v1.InhibitionRule{
-		Name:        name,
-		InhibitRule: rule,
-		Provenance:  provenance,
-	}, nil
 }

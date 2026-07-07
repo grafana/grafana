@@ -298,6 +298,53 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1))
 	})
 
+	t.Run("removing the last annotation drops the map (nil, not empty)", func(t *testing.T) {
+		res := &unstructured.Unstructured{Object: map[string]any{}}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		meta.SetAnnotation("grafana.app/a", "1")
+		meta.SetAnnotation("grafana.app/b", "2")
+
+		// Removing one of several annotations leaves the rest untouched
+		meta.SetAnnotation("grafana.app/a", "")
+		require.Equal(t, map[string]string{"grafana.app/b": "2"}, res.GetAnnotations())
+
+		// Removing the final annotation clears the whole map so it is not
+		// serialized as an empty {}
+		meta.SetAnnotation("grafana.app/b", "")
+		require.Nil(t, res.GetAnnotations())
+	})
+
+	t.Run("clearing the internal ID preserves other labels", func(t *testing.T) {
+		res := &unstructured.Unstructured{Object: map[string]any{}}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		res.SetLabels(map[string]string{
+			utils.LabelKeyDeprecatedInternalID: "7",
+			"example.com/keep":                 "yes",
+		})
+
+		// Only the internal ID label is removed; unrelated labels survive
+		meta.SetDeprecatedInternalID(0)
+		require.Equal(t, map[string]string{"example.com/keep": "yes"}, res.GetLabels())
+	})
+
+	t.Run("clearing the only label drops the map (nil, not empty)", func(t *testing.T) {
+		res := &unstructured.Unstructured{Object: map[string]any{}}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		meta.SetDeprecatedInternalID(9)
+		require.Equal(t, map[string]string{
+			utils.LabelKeyDeprecatedInternalID: "9",
+		}, res.GetLabels())
+
+		meta.SetDeprecatedInternalID(0)
+		require.Nil(t, res.GetLabels())
+	})
+
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
 		// Error reading spec+status when missing
 		res := &unstructured.Unstructured{

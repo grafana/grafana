@@ -75,8 +75,8 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -173,8 +173,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -258,8 +258,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -312,8 +312,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -373,8 +373,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -424,8 +424,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -462,8 +462,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -516,8 +516,8 @@ func TestIntegrationPatch(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -618,8 +618,8 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -786,8 +786,8 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:          v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState:         v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:          common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState:         common.ToK8sExecErrState(rule.ExecErrState),
 				NotificationSettings: ns,
 			},
 		}
@@ -979,8 +979,8 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}
@@ -1063,8 +1063,8 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}
@@ -1438,8 +1438,8 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}

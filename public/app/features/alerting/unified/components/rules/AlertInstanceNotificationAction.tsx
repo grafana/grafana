@@ -157,14 +157,34 @@ export const AlertInstanceNotificationAction = ({
             }
           >
             <Button fill="text" variant="primary" size="sm">
-              <Trans i18nKey="alerting.alert-instance-extension-point.n-contact-points" count={policyReceivers.length}>
+              <Trans
+                i18nKey="alerting.alert-instance-extension-point.n-contact-points"
+                count={policyReceivers.length}
+                tOptions={{
+                  defaultValue_one: '{{count}} contact point',
+                  defaultValue_other: '{{count}} contact points',
+                }}
+              >
                 {'{{count}}'} contact point
               </Trans>
             </Button>
           </PopupCard>
         )}
-        <Button fill="outline" variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
-          <Trans i18nKey="alerting.alert-instance-extension-point.view-route" count={journeys.length}>
+        <Button
+          fill="outline"
+          variant="secondary"
+          size="sm"
+          disabled={!isFresh || journeys.length === 0}
+          onClick={() => setIsOpen(true)}
+        >
+          <Trans
+            i18nKey="alerting.alert-instance-extension-point.view-route"
+            count={journeys.length}
+            tOptions={{
+              defaultValue_one: 'View route',
+              defaultValue_other: 'View routes',
+            }}
+          >
             View route
           </Trans>
         </Button>

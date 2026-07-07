@@ -170,7 +170,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   }
 }
 
-export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
+function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
   const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);

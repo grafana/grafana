@@ -154,7 +154,7 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
   return sortVariableValues(options, sort);
 };
 
-export const queryVariableSlice = createSlice({
+const queryVariableSlice = createSlice({
   name: 'templating/query',
   initialState: initialVariablesState,
   reducers: {

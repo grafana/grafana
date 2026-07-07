@@ -4,6 +4,7 @@ import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
   type DataFrame,
+  type DataQuery,
   type DataQueryRequest,
   type DataSourceApi,
   type GrafanaTheme2,
@@ -14,10 +15,16 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
-import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
+
+interface TempoQuery extends DataQuery {
+  query?: string;
+  queryType?: string;
+  tableType?: string;
+  filters: unknown[];
+}
 
 import { useLogListContext } from './LogListContext';
-import { type EmbeddedInternalLink } from './links';
+import { getTraceIdFromTraceQlQuery, type EmbeddedInternalLink } from './links';
 
 interface Props {
   traceRef: EmbeddedInternalLink;
@@ -49,15 +56,17 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
       return;
     }
     setDataFrames(undefined);
+    // Tempo only returns renderable trace spans for a bare trace ID, so unwrap `{ trace:id = "..." }` lookups.
+    const traceQuery = getTraceIdFromTraceQlQuery(traceRef.query) ?? traceRef.query;
     const request: DataQueryRequest<TempoQuery> = {
       app,
-      requestId: `log-details-trace-${traceRef.query}`,
+      requestId: `log-details-trace-${traceQuery}`,
       targets: [
         {
-          query: traceRef.query,
+          query: traceQuery,
           queryType: 'traceql',
-          refId: `log-details-trace-${traceRef.query}`,
-          tableType: SearchTableType.Traces,
+          refId: `log-details-trace-${traceQuery}`,
+          tableType: 'traces',
           filters: [],
         },
       ],

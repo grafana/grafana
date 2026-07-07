@@ -22,7 +22,14 @@ export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
   return (
     <div className={styles.info}>
       <div className={styles.libraryPanelInfo}>
-        <Trans i18nKey="library-panels.library-panel-info.usage-count" count={meta.connectedDashboards}>
+        <Trans
+          i18nKey="library-panels.library-panel-info.usage-count"
+          count={meta.connectedDashboards}
+          tOptions={{
+            defaultValue_one: 'Used on {{count}} dashboards',
+            defaultValue_other: 'Used on {{count}} dashboards',
+          }}
+        >
           Used on {'{{count}}'} dashboards
         </Trans>
       </div>

@@ -26,10 +26,13 @@ type BleveIndexMetrics struct {
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
-	IndexSnapshotColdStarts               *prometheus.CounterVec
+	IndexSnapshotBuildCoordinations       *prometheus.CounterVec
 	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
 	IndexSnapshotDeleted                  *prometheus.CounterVec
 	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
+
+	IndexDiskCleanupRuns        *prometheus.CounterVec
+	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -122,10 +125,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		IndexSnapshotColdStarts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "index_server_snapshot_cold_start_total",
-			Help: "Number of cold-start build coordination outcomes, by outcome.",
-		}, []string{"outcome"}), // outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
+		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_build_coordinations_total",
+			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -138,6 +141,14 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_snapshot_incomplete_uploads_cleaned_total",
 			Help: "Number of incomplete (partial) index snapshots deleted by cleanup.",
 		}),
+		IndexDiskCleanupRuns: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_disk_cleanup_runs_total",
+			Help: "Number of on-disk index cleanup pass attempts, by outcome.",
+		}, []string{"outcome"}), // outcome: success, error
+		IndexDiskCleanupDirsDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_disk_cleanup_dirs_deleted_total",
+			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
+		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
@@ -170,11 +181,13 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("acquired_lock").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("downloaded_after_wait").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("wait_timed_out").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("lock_error").Add(0)
-	m.IndexSnapshotColdStarts.WithLabelValues("context_canceled").Add(0)
+	for _, flow := range []string{"cold_start", "rebuild"} {
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
+	}
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)
 	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_lock_held").Add(0)
@@ -182,4 +195,20 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 	m.IndexSnapshotDeleted.WithLabelValues("success").Add(0)
 	m.IndexSnapshotDeleted.WithLabelValues("error").Add(0)
 	m.IndexSnapshotIncompleteUploadsCleaned.Add(0)
+}
+
+// InitDiskCleanupMetrics zero-initialises the per-label series of the disk
+// cleanup counters. Call once at startup only when the disk cleanup loop is
+// configured to run on this instance, so disabled instances don't emit
+// permanently-zero `index_server_disk_cleanup_*` series.
+func (m *BleveIndexMetrics) InitDiskCleanupMetrics() {
+	if m == nil {
+		return
+	}
+	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
+	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
+	for _, kind := range []string{"index", "snapshot_staging"} {
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "success").Add(0)
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "error").Add(0)
+	}
 }

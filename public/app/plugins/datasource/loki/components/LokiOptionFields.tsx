@@ -55,7 +55,7 @@ export function getQueryDirectionLabel(direction: LokiQueryDirection) {
   return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
 }
 
-export function LokiOptionFields(props: LokiOptionFieldsProps) {
+export const LokiOptionFields = memo((props: LokiOptionFieldsProps) => {
   const { lineLimitValue, onRunQuery, runOnBlur, onChange } = props;
   const query = props.query ?? {};
 
@@ -103,9 +103,9 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
       </Stack>
     </Stack>
   );
-}
+});
 
-export default memo(LokiOptionFields);
+LokiOptionFields.displayName = 'LokiOptionFields';
 
 export function preprocessMaxLines(value: string): number | undefined {
   const maxLines = parseInt(value, 10);

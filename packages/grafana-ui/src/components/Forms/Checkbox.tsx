@@ -96,7 +96,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
+const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
@@ -134,11 +134,11 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
        * for angular components styling
        * */
       '&:checked + span': {
-        background: theme.colors.primary.main,
-        border: `1px solid ${getBorderColor(theme.colors.primary.main)}`,
+        background: theme.colors.accent.main,
+        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
 
         '&:hover': {
-          background: theme.colors.primary.shade,
+          background: theme.colors.accent.shade,
         },
 
         '&:after': {
@@ -149,7 +149,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
           top: 0,
           width: theme.spacing(0.75),
           height: theme.spacing(1.5),
-          border: `solid ${theme.colors.primary.contrastText}`,
+          border: `solid ${theme.colors.accent.contrastText}`,
           borderWidth: '0 3px 3px 0',
           transform: 'rotate(45deg)',
         },
@@ -172,11 +172,11 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
 
     inputIndeterminate: css({
       '&:indeterminate + span': {
-        border: `1px solid ${getBorderColor(theme.colors.primary.main)}`,
-        background: theme.colors.primary.main,
+        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
+        background: theme.colors.accent.main,
 
         '&:hover': {
-          background: theme.colors.primary.shade,
+          background: theme.colors.accent.shade,
         },
 
         '&:after': {
@@ -187,8 +187,8 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
           right: '2px',
           top: 'calc(50% - 1.5px)',
           height: '3px',
-          border: `1.5px solid ${theme.colors.primary.contrastText}`,
-          backgroundColor: theme.colors.primary.contrastText,
+          border: `1.5px solid ${theme.colors.accent.contrastText}`,
+          backgroundColor: theme.colors.accent.contrastText,
           width: 'auto',
           transform: 'none',
         },

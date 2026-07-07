@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -118,8 +119,10 @@ func (s *storeGRPC) Delete(ctx context.Context, namespace, name string) error {
 	return nil
 }
 
-func (s *storeGRPC) Cleanup(ctx context.Context) (int64, error) {
-	req := &storev1.CleanupRequest{}
+func (s *storeGRPC) Cleanup(ctx context.Context, before time.Time) (int64, error) {
+	req := &storev1.CleanupRequest{
+		BeforeMs: before.UnixMilli(),
+	}
 
 	resp, err := s.client.Cleanup(ctx, req)
 	if err != nil {
@@ -165,6 +168,7 @@ func toProtoListOptions(opts ListOptions) *storev1.ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		IncludeDeleted: opts.IncludeDeleted,
 	}
 }
 
@@ -186,6 +190,7 @@ func fromProtoListOptions(opts *storev1.ListOptions) ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		IncludeDeleted: opts.IncludeDeleted,
 	}
 }
 
@@ -278,6 +283,10 @@ func toProtoAnnotation(anno *annotationV0.Annotation) *storev1.Annotation {
 	if anno.Spec.PanelID != nil {
 		protoAnno.Spec.PanelId = anno.Spec.PanelID
 	}
+	if anno.DeletionTimestamp != nil {
+		deletedAt := anno.DeletionTimestamp.UnixMilli()
+		protoAnno.DeletedAt = &deletedAt
+	}
 
 	return protoAnno
 }
@@ -298,6 +307,11 @@ func fromProtoAnnotation(protoAnno *storev1.Annotation) *annotationV0.Annotation
 
 	if protoAnno.CreatedBy != "" {
 		anno.SetCreatedBy(protoAnno.CreatedBy)
+	}
+
+	if protoAnno.DeletedAt != nil {
+		ts := metav1.NewTime(time.UnixMilli(*protoAnno.DeletedAt))
+		anno.DeletionTimestamp = &ts
 	}
 
 	if protoAnno.Spec != nil {

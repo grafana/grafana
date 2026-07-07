@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { upperFirst } from 'lodash';
 
 import {
   type DataQueryRequest,
@@ -232,7 +232,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       infoBlocks.push(text);
     }
 
-    newTimeData.timeInfo = capitalize(infoBlocks.join(' + '));
+    newTimeData.timeInfo = upperFirst(infoBlocks.join(' + '));
     return newTimeData;
   }
 

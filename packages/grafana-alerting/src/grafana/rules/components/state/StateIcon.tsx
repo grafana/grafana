@@ -28,7 +28,7 @@ interface RecordingStateIconProps extends CommonStateIconsProps {
 
 type StateIconProps = AlertingStateIconProps | RecordingStateIconProps;
 
-export type RuleOperation = 'creating' | 'deleting';
+type RuleOperation = 'creating' | 'deleting';
 
 const icons: Record<State, IconName> = {
   normal: 'check-circle',

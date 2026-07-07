@@ -20,7 +20,7 @@ import { type AzureMonitorQuery } from './types/query';
 import { type RawAzureResourceItem } from './types/types';
 import messageFromError from './utils/messageFromError';
 
-export function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
+function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
   return resources.map((r) => {
     if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
       return {

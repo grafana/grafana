@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
@@ -28,7 +28,7 @@ import jsonMarkup from './jsonMarkup';
 
 const copyIconClassName = 'copyIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css({
       label: 'KeyValueTable',

@@ -25,13 +25,21 @@ import { createSimpleConditionExpressions } from '../rule-editor/formProcessing'
 import { type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 
 import { EvaluationGroupFieldRow } from './rule-editor/EvaluationGroupFieldRow';
+import { RuleEvaluationIntervalField } from './rule-editor/RuleEvaluationIntervalField';
 
 const DEFAULT_SIMPLE_CONDITION: SimpleCondition = {
   whenField: ReducerID.last,
   evaluator: { params: [0], type: EvalFunction.IsAbove },
 };
 
-export function RuleConditionSection() {
+interface RuleConditionSectionProps {
+  // Hides the evaluation group selector and exposes a per-rule evaluation
+  // interval input instead. Used by the drawer when the v2 groupless flow is
+  // active, since the rule won't belong to a group at all.
+  hideEvaluationGroup?: boolean;
+}
+
+export function RuleConditionSection({ hideEvaluationGroup = false }: RuleConditionSectionProps = {}) {
   const base = useStyles2(getStyles);
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const evaluateFor = watch('evaluateFor') || '0s';
@@ -172,7 +180,11 @@ export function RuleConditionSection() {
             </InlineField>
           </InlineFieldRow>
 
-          <EvaluationGroupFieldRow enableProvisionedGroups={false} />
+          {hideEvaluationGroup ? (
+            <RuleEvaluationIntervalField />
+          ) : (
+            <EvaluationGroupFieldRow enableProvisionedGroups={false} />
+          )}
 
           {evaluateFor === '0s' && (
             <Stack direction="row" gap={0.5} alignItems="center">
