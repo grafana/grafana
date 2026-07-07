@@ -2767,15 +2767,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "clearPreviousFieldValues",
-			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-			HideFromDocs: true,
-		},
-		{
 			Name:        "enableColorblindSafePanelOptions",
 			Description: "Enables new colorblind safe palette and line fill patterns for panels",
 			Stage:       FeatureStageExperimental,
