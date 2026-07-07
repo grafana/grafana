@@ -263,7 +263,6 @@ type BranchHandler interface {
 //
 //go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --inpackage --filename pull_request_repo_mock.go --with-expecter
 type PullRequestRepo interface {
-	BranchHandler
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
