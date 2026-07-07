@@ -73,11 +73,18 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 
   const fields = [...new Set([...suggestedFields, ...otelFields])];
 
+  const availableLabels = new Set<string>();
+  logs.forEach((log) => {
+    for (const label in log.labels) {
+      availableLabels.add(label.toLowerCase());
+    }
+  });
+
   return fields.filter(
     (field) =>
       field === LOG_LINE_BODY_FIELD_NAME ||
       field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME ||
-      logs.some((log) => log.labels[field] !== undefined)
+      availableLabels.has(field.toLowerCase())
   );
 }
 
