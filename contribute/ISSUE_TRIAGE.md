@@ -43,7 +43,7 @@ If you don't have the knowledge or time to code, consider helping with triage. Y
 
 ### Subscribe to all notifications
 
-One way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configured email address. Read this [guide](https://help.github.com/en/articles/watching-and-unwatching-repositories#watching-a-single-repository) for help with setting this up.
+One way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configured email address. Read this [guide](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-user-account-settings/setting-your-subscriptions) for help with setting this up.
 
 It's highly recommended that you set up filters to automatically remove emails from the inbox and label them accordingly. When issues are properly categorized you can easily understand when you need to act upon a notification or where to look to find issues that haven't been triaged.
 

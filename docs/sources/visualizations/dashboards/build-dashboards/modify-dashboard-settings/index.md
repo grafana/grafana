@@ -56,7 +56,7 @@ To access the dashboard setting page:
 
 Adjust dashboard time settings when you want to change the dashboard timezone, the local browser time, and specify auto-refresh time intervals.
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Time options** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Time options** section.
 1. Specify time settings as follows.
    - **Time zone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
@@ -75,7 +75,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 Use this option to control tooltip and hover highlight behavior across graph panels (for example, time series).
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
 1. Choose from the following options to control the tooltip and hover highlight behavior across graph panels:
    - **Default** - Tooltip and hover highlight behavior isn't shared across panels.
    - **Shared crosshair** - When you hover the cursor over one graph panel in the dashboard, the crosshair is also displayed on all other graph panels in the dashboard.
@@ -94,7 +94,7 @@ Tags can be up to 50 characters long, including spaces.
 
 To add tags to a dashboard, follow these steps:
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Tags** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Tags** section.
 1. In the field, enter a new or existing tag.
 
    If you're entering an existing tag, make sure that you spell it the same way or a new tag is created.
