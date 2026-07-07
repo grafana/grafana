@@ -1,6 +1,9 @@
 package nats
 
 import (
+	"context"
+
+	authnlib "github.com/grafana/authlib/authn"
 	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -12,13 +15,26 @@ import (
 type Config struct {
 	cfg    setting.NATSSettings
 	server *Server
+	// tokenExchanger is non-nil only when token-exchange auth is configured; it
+	// mints the short-lived access token each connection presents. The authlib
+	// client caches tokens internally, so exchanging per (re)connect is cheap.
+	tokenExchanger authnlib.TokenExchanger
 }
 
 func newConfig(cfg setting.NATSSettings, server *Server) *Config {
-	return &Config{
+	c := &Config{
 		cfg:    cfg,
 		server: server,
 	}
+	if cfg.Auth.TokenExchangeEnabled() {
+		// NewTokenExchangeClient only errors when the token or URL is empty, and
+		// TokenExchangeEnabled has already established both are set.
+		c.tokenExchanger, _ = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Auth.TokenExchangeToken,
+			TokenExchangeURL: cfg.Auth.TokenExchangeURL,
+		})
+	}
+	return c
 }
 
 // ProvideNATSConfig builds the shared connection config from configuration and
@@ -35,6 +51,42 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
+
+// audiencesFor returns the token-exchange audiences a role's connection should
+// request. Per-role audiences let the auth-callout service derive least-privilege
+// permissions from the token itself rather than a client-supplied hint.
+func (c *Config) audiencesFor(role connRole) []string {
+	switch role {
+	case rolePublisher:
+		return c.cfg.Auth.PublisherAudiences()
+	case roleSubscriber:
+		return c.cfg.Auth.SubscriberAudiences()
+	default:
+		return c.cfg.Auth.TokenExchangeAudiences
+	}
+}
+
+// TokenExchangeConfiguredFor reports whether the given role's connection should
+// present a minted access token: the exchanger was built successfully and the
+// role resolves to at least one audience to request.
+func (c *Config) TokenExchangeConfiguredFor(role connRole) bool {
+	return c.tokenExchanger != nil && len(c.audiencesFor(role)) > 0
+}
+
+// exchangeAccessToken mints a fresh access token scoped to the given role's
+// audiences. Callers present the returned token as the NATS connect token; an
+// external auth-callout service verifies it and derives the connection's
+// permissions from the token's audience.
+func (c *Config) exchangeAccessToken(ctx context.Context, role connRole) (string, error) {
+	resp, err := c.tokenExchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
+		Namespace: c.cfg.Auth.TokenExchangeNamespace,
+		Audiences: c.audiencesFor(role),
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
 
 // PublisherCredentials returns the credentials file the publisher connection
 // should use, falling back to the shared credentials when none is set.

@@ -2,6 +2,8 @@ package nats
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -14,6 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// applyOptions resolves a set of nats options into a concrete Options struct so a
+// test can assert which auth mechanism connectOptions selected.
+func applyOptions(t *testing.T, opts []natsclient.Option) *natsclient.Options {
+	t.Helper()
+	var o natsclient.Options
+	for _, opt := range opts {
+		require.NoError(t, opt(&o))
+	}
+	return &o
+}
 
 // newDisabledConnection builds a connection with NATS turned off, for the paths
 // that must short-circuit before any dial.
@@ -183,6 +196,86 @@ func TestConnection(t *testing.T) {
 
 			_, err := c.connectOptions()
 			require.Error(t, err)
+		})
+
+		t.Run("uses a static token when set", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{Token: "s3cret"}}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			require.Equal(t, "s3cret", o.Token)
+			require.Nil(t, o.TokenHandler)
+		})
+
+		t.Run("token exchange registers a token handler over a static token", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Token:                  "s3cret",
+				TokenExchangeAudiences: []string{"us-nats"},
+				TokenExchangeURL:       "http://signer/sign",
+				TokenExchangeToken:     "boot-token",
+			}}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			// The exchanged token takes precedence: a handler is installed and the
+			// static token is left unset.
+			require.NotNil(t, o.TokenHandler)
+			require.Empty(t, o.Token)
+		})
+
+		t.Run("per-role audiences enable the token handler", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				PublisherTokenExchangeAudiences: []string{"us-nats-publish"},
+				TokenExchangeURL:                "http://signer/sign",
+				TokenExchangeToken:              "boot-token",
+			}}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			require.NotNil(t, o.TokenHandler)
+		})
+
+		t.Run("a role with no resolvable audiences does not register a handler", func(t *testing.T) {
+			// Only the publisher audience is set, so the subscriber connection has
+			// nothing to request and must not present a token.
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				PublisherTokenExchangeAudiences: []string{"us-nats-publish"},
+				TokenExchangeURL:                "http://signer/sign",
+				TokenExchangeToken:              "boot-token",
+			}}
+			c := newConnection(roleSubscriber, log.NewNopLogger(), newConnectionMetrics(roleSubscriber), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			require.Nil(t, o.TokenHandler)
+		})
+
+		t.Run("credentials file wins over token exchange", func(t *testing.T) {
+			credsFile := filepath.Join(t.TempDir(), "pub.creds")
+			require.NoError(t, os.WriteFile(credsFile, []byte("dummy"), 0o600))
+
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				PublisherCredentialsFile: credsFile,
+				TokenExchangeAudiences:   []string{"us-nats"},
+				TokenExchangeURL:         "http://signer/sign",
+				TokenExchangeToken:       "boot-token",
+			}}
+			config := newConfig(cfg, nil)
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), config, config.PublisherCredentials)
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			require.NotNil(t, o.UserJWT)
+			require.Nil(t, o.TokenHandler)
+			require.Empty(t, o.Token)
 		})
 	})
 

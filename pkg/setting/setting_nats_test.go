@@ -38,6 +38,14 @@ tls_ca_cert_path = /etc/ca.pem
 token = s3cret
 publisher_credentials_file = /etc/pub.creds
 subscriber_credentials_file = /etc/sub.creds
+token_exchange_audiences = us-nats, other
+publisher_token_exchange_audiences = us-nats-publish
+subscriber_token_exchange_audiences = us-nats-subscribe
+
+[grpc_client_authentication]
+token = boot-token
+token_exchange_url = http://signer/sign
+token_namespace = *
 `))
 		require.NoError(t, err)
 		cfg.Raw = f
@@ -53,6 +61,18 @@ subscriber_credentials_file = /etc/sub.creds
 		require.Equal(t, "s3cret", cfg.NATS.Auth.Token)
 		require.Equal(t, "/etc/pub.creds", cfg.NATS.Auth.PublisherCredentialsFile)
 		require.Equal(t, "/etc/sub.creds", cfg.NATS.Auth.SubscriberCredentialsFile)
+
+		// Token exchange: audiences come from [nats]; endpoint/token/namespace are
+		// shared with [grpc_client_authentication].
+		require.Equal(t, []string{"us-nats", "other"}, cfg.NATS.Auth.TokenExchangeAudiences)
+		require.Equal(t, []string{"us-nats-publish"}, cfg.NATS.Auth.PublisherTokenExchangeAudiences)
+		require.Equal(t, []string{"us-nats-subscribe"}, cfg.NATS.Auth.SubscriberTokenExchangeAudiences)
+		require.Equal(t, []string{"us-nats-publish"}, cfg.NATS.Auth.PublisherAudiences())
+		require.Equal(t, []string{"us-nats-subscribe"}, cfg.NATS.Auth.SubscriberAudiences())
+		require.Equal(t, "http://signer/sign", cfg.NATS.Auth.TokenExchangeURL)
+		require.Equal(t, "boot-token", cfg.NATS.Auth.TokenExchangeToken)
+		require.Equal(t, "*", cfg.NATS.Auth.TokenExchangeNamespace)
+		require.True(t, cfg.NATS.Auth.TokenExchangeEnabled())
 	})
 
 	t.Run("rejects invalid mode", func(t *testing.T) {
@@ -100,5 +120,72 @@ func TestNATSAuthCredentialsPrecedence(t *testing.T) {
 	t.Run("subscriber empty when nothing set", func(t *testing.T) {
 		a := NATSAuthSettings{}
 		require.Empty(t, a.SubscriberCredentials())
+	})
+}
+
+func TestNATSAuthAudiences(t *testing.T) {
+	t.Run("per-role overrides shared", func(t *testing.T) {
+		a := NATSAuthSettings{
+			TokenExchangeAudiences:          []string{"shared"},
+			PublisherTokenExchangeAudiences: []string{"us-nats-publish"},
+		}
+		require.Equal(t, []string{"us-nats-publish"}, a.PublisherAudiences())
+	})
+
+	t.Run("falls back to shared audiences", func(t *testing.T) {
+		a := NATSAuthSettings{TokenExchangeAudiences: []string{"shared"}}
+		require.Equal(t, []string{"shared"}, a.PublisherAudiences())
+		require.Equal(t, []string{"shared"}, a.SubscriberAudiences())
+	})
+
+	t.Run("subscriber per-role overrides shared", func(t *testing.T) {
+		a := NATSAuthSettings{
+			TokenExchangeAudiences:           []string{"shared"},
+			SubscriberTokenExchangeAudiences: []string{"us-nats-subscribe"},
+		}
+		require.Equal(t, []string{"us-nats-subscribe"}, a.SubscriberAudiences())
+	})
+
+	t.Run("empty when nothing set", func(t *testing.T) {
+		a := NATSAuthSettings{}
+		require.Empty(t, a.PublisherAudiences())
+		require.Empty(t, a.SubscriberAudiences())
+	})
+}
+
+func TestNATSAuthTokenExchangeEnabled(t *testing.T) {
+	base := NATSAuthSettings{
+		TokenExchangeAudiences: []string{"us-nats"},
+		TokenExchangeURL:       "http://signer/sign",
+		TokenExchangeToken:     "boot-token",
+	}
+
+	t.Run("enabled when audience, url and token are set", func(t *testing.T) {
+		require.True(t, base.TokenExchangeEnabled())
+	})
+
+	t.Run("enabled via per-role audiences only", func(t *testing.T) {
+		a := base
+		a.TokenExchangeAudiences = nil
+		a.PublisherTokenExchangeAudiences = []string{"us-nats-publish"}
+		require.True(t, a.TokenExchangeEnabled())
+	})
+
+	t.Run("disabled without audiences", func(t *testing.T) {
+		a := base
+		a.TokenExchangeAudiences = nil
+		require.False(t, a.TokenExchangeEnabled())
+	})
+
+	t.Run("disabled without exchange url", func(t *testing.T) {
+		a := base
+		a.TokenExchangeURL = ""
+		require.False(t, a.TokenExchangeEnabled())
+	})
+
+	t.Run("disabled without bootstrap token", func(t *testing.T) {
+		a := base
+		a.TokenExchangeToken = ""
+		require.False(t, a.TokenExchangeEnabled())
 	})
 }
