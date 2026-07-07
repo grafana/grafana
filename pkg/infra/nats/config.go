@@ -10,16 +10,13 @@ import (
 // resolves URLs and dial options based on deployment mode (embedded or
 // external). Its exported methods form the contract consumed by connection.
 type Config struct {
-	cfg  setting.NATSSettings
-	urls []string
-
+	cfg    setting.NATSSettings
 	server *Server
 }
 
 func newConfig(cfg setting.NATSSettings, server *Server) *Config {
 	return &Config{
 		cfg:    cfg,
-		urls:   append([]string(nil), cfg.ClientURLs...),
 		server: server,
 	}
 }
@@ -39,14 +36,22 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
 
+// PublisherCredentials returns the credentials file the publisher connection
+// should use, falling back to the shared credentials when none is set.
+func (c *Config) PublisherCredentials() string { return c.cfg.Auth.PublisherCredentials() }
+
+// SubscriberCredentials returns the credentials file the subscriber connection
+// should use, falling back to the shared credentials when none is set.
+func (c *Config) SubscriberCredentials() string { return c.cfg.Auth.SubscriberCredentials() }
+
 // URLs returns the client URLs known so far. In embedded mode the running
 // server's local URL is prepended ahead of the configured peers. Safe for
 // concurrent use.
 func (c *Config) URLs() []string {
 	if local := c.server.clientURL(); local != "" {
-		return append([]string{local}, c.urls...)
+		return append([]string{local}, c.cfg.ClientURLs...)
 	}
-	return append([]string(nil), c.urls...)
+	return append([]string(nil), c.cfg.ClientURLs...)
 }
 
 // DialOptions returns extra dial options. In embedded mode this carries the

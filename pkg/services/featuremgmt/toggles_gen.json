@@ -7,7 +7,8 @@
       "metadata": {
         "name": "adHocFilterDefaultValues",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables configuring default origin filters for ad-hoc filter variables",
@@ -910,7 +911,8 @@
       "metadata": {
         "name": "annotationsClustering",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-30T15:06:45Z"
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
@@ -1476,7 +1478,8 @@
       "metadata": {
         "name": "dashboardFiltersOverview",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables the dashboard filters overview pane",
@@ -1940,7 +1943,8 @@
       "metadata": {
         "name": "drilldownRecommendations",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-17T12:52:59Z"
+        "creationTimestamp": "2025-12-17T12:52:59Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables",
@@ -2510,6 +2514,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardSettingsRedesign",
+        "resourceVersion": "1782823244633",
+        "creationTimestamp": "2026-06-30T12:40:44Z"
+      },
+      "spec": {
+        "description": "Redesigns dashboard settings page into Advanced Settings in a modal window",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2533,6 +2551,20 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.growthHomepage",
+        "resourceVersion": "1782913620784",
+        "creationTimestamp": "2026-07-01T13:47:00Z"
+      },
+      "spec": {
+        "description": "Enables PLG-focused growth redesign of the unified homepage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2641,6 +2673,22 @@
     },
     {
       "metadata": {
+        "name": "grafana.onDemandDiagnostics",
+        "resourceVersion": "1782469062023",
+        "creationTimestamp": "2026-06-26T10:14:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 10:17:42.023006 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.orgDashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -2728,6 +2776,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.useDefaultScopesEndpoint",
+        "resourceVersion": "1783088074749",
+        "creationTimestamp": "2026-07-03T14:14:34Z"
+      },
+      "spec": {
+        "description": "Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3404,6 +3467,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesReporting",
+        "resourceVersion": "1782923989000",
+        "creationTimestamp": "2026-07-01T15:36:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-01 16:39:49.000516 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Add support for Kubernetes reporting new APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountTokensApi",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3790,7 +3870,8 @@
       "metadata": {
         "name": "nestedFramesFieldOverrides",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-07T16:17:18Z"
       },
       "spec": {
         "description": "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
@@ -4008,7 +4089,8 @@
       "metadata": {
         "name": "panelGroupBy",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-28T13:03:11Z"
+        "creationTimestamp": "2025-11-28T13:03:11Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables a group by action per panel",
@@ -4078,7 +4160,8 @@
       "metadata": {
         "name": "perPanelFiltering",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-08T16:18:04Z"
+        "creationTimestamp": "2025-12-08T16:18:04Z",
+        "deletionTimestamp": "2026-07-02T09:46:17Z"
       },
       "spec": {
         "description": "Enables filtering by grouping labels on the panel level through legend or tooltip",
@@ -5622,6 +5705,7 @@
         "name": "vizLegendFacetedFilter",
         "resourceVersion": "1779387149240",
         "creationTimestamp": "2026-03-10T07:54:22Z",
+        "deletionTimestamp": "2026-07-07T16:17:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.240952 +0000 UTC"
         }

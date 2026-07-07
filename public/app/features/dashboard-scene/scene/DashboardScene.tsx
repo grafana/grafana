@@ -582,14 +582,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       text: title,
       url: isProvisioningPreview
         ? locationUtil.getUrlForPartial(location, clearPanelView)
-        : getDashboardUrl({
-            uid,
-            slug: meta.slug,
-            currentQueryParams: location.search,
-            updateQuery: clearPanelView,
-            isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
-            isSnapshot: meta.isSnapshot,
-          }),
+        : locationUtil.assureBaseUrl(
+            getDashboardUrl({
+              uid,
+              slug: meta.slug,
+              currentQueryParams: location.search,
+              updateQuery: clearPanelView,
+              isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+              isSnapshot: meta.isSnapshot,
+            })
+          ),
     };
 
     const { folderUid } = meta;

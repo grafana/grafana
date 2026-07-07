@@ -53,11 +53,6 @@ var DashboardSearchFields = resource.NewManifestBackedProvider(
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(DashboardSearchFields))
-	if err != nil {
-		return resource.DocumentBuilderInfo{}, err
-	}
-
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
@@ -83,7 +78,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 	gr := dashV1.DashboardResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
 		GroupResource:        gr,
-		Fields:               fields,
 		Namespaced:           namespaced,
 		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
 		SearchFieldsProvider: provider,
@@ -151,7 +145,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
-	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
 	doc := resource.NewIndexableDocument(key, rv, obj, summary.Title)
 	// TODO: add selectable fields
@@ -201,9 +194,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION:        summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:            summary.LinkCount,
-		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
+		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:     summary.LinkCount,
 	}
 
 	if len(panelTitles) > 0 {

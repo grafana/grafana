@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -1032,7 +1033,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				MockStore: jobs.NewMockStore(t),
 			}
 
-			repoGetter := NewCachedRepositoryGetter(repoLister)
+			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 			rc := &RepositoryController{
 				repos:         repoGetter,
 				quotaGetter:   quotas.NewFixedQuotaGetter(tc.newQuota),
@@ -1130,7 +1131,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	patcher := &capturePatcher{}
 
-	repoGetter := NewCachedRepositoryGetter(mockLister)
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
@@ -1280,7 +1281,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:             repoGetter,
 		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
@@ -1394,10 +1395,11 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 	})
 }
 
-// hookRepoStub implements repository.Repository and repository.Hooks so we can
-// observe whether the reconcile path attempts to run webhook hooks.
+// hookRepoStub implements repository.WebhookRepository so we can observe whether
+// the reconcile path attempts to run the webhook lifecycle. It doubles as its own
+// repository.WebhookClient, recording create/edit calls.
 //
-// hookErr controls what OnCreate / OnUpdate return — when nil the hook is
+// hookErr controls what the webhook client returns — when nil the call is
 // considered successful. The default zero-value preserves the historical
 // behaviour of always failing with assert.AnError.
 type hookRepoStub struct {
@@ -1409,12 +1411,28 @@ type hookRepoStub struct {
 	hookErrSet    bool
 }
 
+var _ repository.WebhookRepository = (*hookRepoStub)(nil)
+
 func (s *hookRepoStub) Config() *provisioning.Repository { return s.cfg }
 
 func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	s.testCalls.Add(1)
 	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
 }
+
+func (s *hookRepoStub) Slug() string { return "" }
+
+func (s *hookRepoStub) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
+	return nil, nil
+}
+
+func (s *hookRepoStub) ProcessRequest(context.Context, *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	return repository.WebhookEvent{}, nil
+}
+
+func (s *hookRepoStub) WebhookClient() repository.WebhookClient { return s }
+func (s *hookRepoStub) WebhookURL() string                      { return "http://example.com/webhook" }
+func (s *hookRepoStub) SubscribedEvents() []string              { return []string{"push"} }
 
 func (s *hookRepoStub) hookResult() error {
 	if s.hookErrSet {
@@ -1423,17 +1441,23 @@ func (s *hookRepoStub) hookResult() error {
 	return assert.AnError
 }
 
-func (s *hookRepoStub) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+func (s *hookRepoStub) CreateWebhook(context.Context, string, []string, string) (repository.WebhookConfig, error) {
 	s.onCreateCalls.Add(1)
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	s.onUpdateCalls.Add(1)
+func (s *hookRepoStub) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) OnDelete(ctx context.Context) error { return nil }
+func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) error {
+	s.onUpdateCalls.Add(1)
+	return s.hookResult()
+}
+
+func (s *hookRepoStub) DeleteWebhook(context.Context, int64) error {
+	return s.hookResult()
+}
 
 // TestRepositoryController_process_HookFailureCooldownSuppressesRetry verifies
 // that while the hook-failure cooldown is still active, the reconcile loop does
@@ -1492,7 +1516,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		MockStore: jobs.NewMockStore(t),
 	}
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
@@ -1551,7 +1575,7 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 		MockStore: jobs.NewMockStore(t),
 	}
 
-	repoGetter := NewCachedRepositoryGetter(repoLister)
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:         repoGetter,
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
