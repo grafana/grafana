@@ -137,5 +137,12 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		}
 	}
 
+	// includeDeleted surfaces soft-deleted annotations as tombstones
+	if v := queryParams.Get("includeDeleted"); v != "" {
+		if includeDeleted, err := strconv.ParseBool(v); err == nil {
+			opts.IncludeDeleted = includeDeleted
+		}
+	}
+
 	return opts
 }

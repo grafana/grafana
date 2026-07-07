@@ -735,7 +735,6 @@ func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
 	docCount int64,
-	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
@@ -759,6 +758,13 @@ func (b *bleveBackend) BuildIndex(
 	searchFieldsProvider := b.searchFieldsProvider[sfKey]
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
+	if err != nil {
+		return nil, err
+	}
+
+	// The kind's custom column fields come from the same provider that drives
+	// the mapping, so the index and its result columns stay in agreement.
+	fields, err := resource.SearchableFieldsFromProvider(searchFieldsProvider, key.Group, key.Resource)
 	if err != nil {
 		return nil, err
 	}

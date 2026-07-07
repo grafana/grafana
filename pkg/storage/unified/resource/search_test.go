@@ -148,9 +148,8 @@ type mockSearchBackend struct {
 }
 
 type buildIndexCall struct {
-	key    NamespacedResource
-	size   int64
-	fields SearchableDocumentFields
+	key  NamespacedResource
+	size int64
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
@@ -167,7 +166,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 
 	// Call the builder function (required by the contract)
@@ -187,9 +186,8 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:    key,
-		size:   size,
-		fields: fields,
+		key:  key,
+		size: size,
 	})
 
 	return index, nil
@@ -1317,11 +1315,11 @@ func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *block
 	}
 }
 
-func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
 	b.buildCalls.Add(1)
 	b.startedOnce.Do(func() { close(b.onStarted) })
 	<-b.proceed
-	return b.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
 }
 
 // TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the
