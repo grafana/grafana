@@ -2974,6 +2974,7 @@
         "name": "groupToNestedTableV2",
         "resourceVersion": "1779387430820",
         "creationTimestamp": "2026-03-27T20:18:08Z",
+        "deletionTimestamp": "2026-07-07T16:17:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:17:10.820324 +0000 UTC"
         }

@@ -1279,14 +1279,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "groupToNestedTableV2",
-			Description: "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "alertingQueryAndExpressionsStepMode",
 			Description: "Enables step mode for alerting queries and expressions",
 			Stage:       FeatureStageGeneralAvailability,
