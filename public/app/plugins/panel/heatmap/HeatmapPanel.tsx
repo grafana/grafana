@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { DashboardCursorSync, type PanelProps, type TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { type ScaleDistributionConfig } from '@grafana/schema';
+import { type LegendPlacement, type ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
   TooltipDisplayMode,
@@ -174,6 +174,7 @@ const HeatmapPanelViz = ({
       return null;
     }
 
+    const placement: LegendPlacement = options.legend.placement ?? 'bottom';
     let hoverValue: number | undefined = undefined;
 
     // let heatmapType = dataRef.current?.heatmap?.meta?.type;
@@ -187,8 +188,12 @@ const HeatmapPanelViz = ({
     // }
 
     return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <div className={styles.colorScaleWrapper}>
+      <VizLayout.Legend
+        placement={placement}
+        // maxHeight="20%"
+        width={placement === 'right' ? options.legend.width : undefined}
+      >
+        <div className={placement === 'right' ? styles.colorScaleWrapperRight : styles.colorScaleWrapper}>
           <ColorScale
             hoverValue={hoverValue}
             colorPalette={palette}
@@ -281,5 +286,9 @@ const getStyles = () => ({
     marginLeft: '25px',
     padding: '10px 0',
     maxWidth: '300px',
+  }),
+  colorScaleWrapperRight: css({
+    padding: '10px 0',
+    minWidth: '120px',
   }),
 });
