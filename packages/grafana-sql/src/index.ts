@@ -30,3 +30,4 @@ export { applyQueryDefaults } from './defaults';
 export { makeVariable } from './utils/testHelpers';
 export { QueryEditorExpressionType } from './expressions';
 export { loadResources } from './loadResources';
+export { mysqlIdentifier, MYSQL_RESERVED_WORDS } from './dialects/mysql';
