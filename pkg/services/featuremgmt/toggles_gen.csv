@@ -78,11 +78,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
 2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
-2025-12-17,drilldownRecommendations,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
-2025-11-28,panelGroupBy,experimental,@grafana/dashboards-squad,false,false,true
-2025-12-08,perPanelFiltering,experimental,@grafana/dashboards-squad,false,false,true
-2026-05-22,dashboardFiltersOverview,preview,@grafana/dashboards-squad,false,false,true
 2024-12-02,feedbackButton,preview,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,reporting.pdfTablesFrontend,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -115,7 +111,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-19,refreshTokenRequired,experimental,@grafana/identity-access-team,false,false,false
 2024-04-04,newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 2026-03-09,dashboardUnifiedDrilldownControls,GA,@grafana/dashboards-squad,false,false,true
-2026-05-22,adHocFilterDefaultValues,experimental,@grafana/dashboards-squad,false,false,true
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
@@ -369,3 +364,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-30,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-07-01,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false

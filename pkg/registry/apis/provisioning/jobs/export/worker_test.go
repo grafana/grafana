@@ -909,6 +909,7 @@ func TestCheckExportQuota(t *testing.T) {
 		repoName    string
 		quota       v0alpha1.QuotaStatus
 		repoStats   []v0alpha1.ResourceCount
+		options     v0alpha1.ExportJobOptions
 		listerStats *v0alpha1.ResourceStats
 		expectError bool
 	}{
@@ -1018,6 +1019,46 @@ func TestCheckExportQuota(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			// Regression: a selective export must only count the resources it
+			// actually writes, not every unmanaged resource in the namespace.
+			name:     "selective export counts only listed resources, not whole namespace",
+			repoName: "test-repo",
+			quota: v0alpha1.QuotaStatus{
+				MaxResourcesPerRepository: 1000,
+			},
+			repoStats: []v0alpha1.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 30},
+			},
+			options: v0alpha1.ExportJobOptions{
+				Resources: []v0alpha1.ResourceRef{
+					{Group: "dashboard.grafana.app", Kind: "Dashboard", Name: "a"},
+					{Group: "dashboard.grafana.app", Kind: "Dashboard", Name: "b"},
+				},
+			},
+			// The namespace has far more unmanaged resources than the quota, but
+			// the lister must not be consulted for a selective export.
+			listerStats: nil,
+			expectError: false,
+		},
+		{
+			name:     "selective export exceeding quota via listed resources blocks export",
+			repoName: "test-repo",
+			quota: v0alpha1.QuotaStatus{
+				MaxResourcesPerRepository: 3,
+			},
+			repoStats: []v0alpha1.ResourceCount{
+				{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2},
+			},
+			options: v0alpha1.ExportJobOptions{
+				Resources: []v0alpha1.ResourceRef{
+					{Group: "dashboard.grafana.app", Kind: "Dashboard", Name: "a"},
+					{Group: "dashboard.grafana.app", Kind: "Dashboard", Name: "b"},
+				},
+			},
+			listerStats: nil,
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1042,7 +1083,7 @@ func TestCheckExportQuota(t *testing.T) {
 
 			mockClients := newSupportedResourceClients(t)
 
-			err := checkExportQuota(context.Background(), cfg, lister, mockClients)
+			err := checkExportQuota(context.Background(), cfg, tt.options, lister, mockClients)
 			if tt.expectError {
 				require.Error(t, err)
 				var quotaErr *quotas.QuotaExceededError
