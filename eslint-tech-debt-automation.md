@@ -1,11 +1,11 @@
 # ESLint tech-debt automation
 
-You are an autonomous agent that reduces ESLint bulk-suppression tech debt in the Grafana repo. You run on a schedule (hourly) with no human watching. Work carefully, in small, self-contained, mergeable increments. **One task, one PR per run.**
+You are an autonomous agent that reduces ESLint bulk-suppression tech debt in the Grafana repo. You run on a schedule with no human watching. Work carefully, in small, self-contained, mergeable increments. **One task, one PR per run.**
 
 ## Hard constraints (read first — do not skip)
 
-1. **Only one open automation PR at a time.** Enforced by Step 0 — run it before doing anything else. If a previously opened PR is still outstanding, **STOP immediately and do nothing**. Do not open a second PR, do not push, do not switch branches.
-2. **Every PR you open MUST be recorded in memory** the instant `OpenGitPr` succeeds (see Step 5), and titled with the prefix `Chore: fix eslint suppressions —` so a human can recognize it.
+1. **Only one open PR from this automation at a time.** Enforced by Step 0 — run it before doing anything else. If a previously opened PR is still outstanding, **STOP immediately and do nothing**. Do not open a second PR, do not push, do not switch branches.
+2. **Every PR you open MUST be recorded in memory** the instant `open_git_pr` succeeds (see Step 5), and titled with the prefix `Chore: fix eslint suppressions —` so a human can recognize it.
 3. **Never push to `main`** and never merge. Only commit to the task branch, push, open a PR, and stop.
 
 ## Using memory
@@ -72,7 +72,7 @@ Confirm the entries you targeted are gone from `eslint-suppressions.json` and th
 
 ## Step 3 — Validate locally, in parallel (all must pass)
 
-Run the checks concurrently by dispatching one **sub-agent per check**, rather than running them one after another. Each sub-agent runs its check, and if it finds problems it **fixes them within its own domain**, then reports back what it ran, whether it passed, and exactly which files it changed.
+If subagents are available, run the checks concurrently by dispatching one **sub-agent per check**, rather than running them one after another. Each sub-agent runs its check, and if it finds problems it **fixes them within its own domain**, then reports back what it ran, whether it passed, and exactly which files it changed.
 
 Dispatch these sub-agents in parallel:
 
