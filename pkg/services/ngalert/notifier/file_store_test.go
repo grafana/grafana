@@ -76,6 +76,41 @@ func TestFileStore_FilepathFor(t *testing.T) {
 	}
 }
 
+func TestFileStore_FilepathFor_PreloadedState(t *testing.T) {
+	store := fakes.NewFakeKVStore(t)
+	workingDir := t.TempDir()
+	fs := NewFileStore(1, store, workingDir)
+	filekey := "silences"
+	filePath := filepath.Join(workingDir, filekey)
+
+	// Preloaded state for this org is used and written to disk without touching the kvstore
+	// (nothing was Set on the store, so a fallback kv.Get would find nothing and write no file).
+	{
+		ctx := WithPreloadedFileState(context.Background(), map[int64]map[string]string{
+			1: {filekey: encode([]byte("silence-from-preload"))},
+		})
+		r, err := fs.FilepathFor(ctx, filekey)
+		require.NoError(t, err)
+		require.Equal(t, filePath, r)
+		f, err := os.ReadFile(filepath.Clean(filePath))
+		require.NoError(t, err)
+		require.Equal(t, "silence-from-preload", string(f))
+		require.NoError(t, os.Remove(filePath))
+	}
+
+	// Preloaded state present but this org has no entry: no-op, no file written.
+	{
+		ctx := WithPreloadedFileState(context.Background(), map[int64]map[string]string{
+			2: {filekey: encode([]byte("other-org"))},
+		})
+		r, err := fs.FilepathFor(ctx, filekey)
+		require.NoError(t, err)
+		require.Equal(t, filePath, r)
+		_, err = os.ReadFile(filepath.Clean(filePath))
+		require.Error(t, err)
+	}
+}
+
 func TestFileStore_GetFullState(t *testing.T) {
 	ctx := context.Background()
 

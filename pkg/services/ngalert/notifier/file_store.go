@@ -16,6 +16,21 @@ import (
 
 const KVNamespace = "alertmanager"
 
+// preloadedFileStateKey is the context key for a bulk-loaded snapshot of Alertmanager file state.
+type preloadedFileStateKey struct{}
+
+// WithPreloadedFileState returns a context carrying a bulk-loaded snapshot of Alertmanager file
+// state (orgID -> filename -> base64 content). When present, FilepathFor hydrates from it instead
+// of issuing a per-org kvstore read. See MultiOrgAlertmanager.SyncAlertmanagersForOrgs.
+func WithPreloadedFileState(ctx context.Context, state map[int64]map[string]string) context.Context {
+	return context.WithValue(ctx, preloadedFileStateKey{}, state)
+}
+
+func preloadedFileStateFromContext(ctx context.Context) (map[int64]map[string]string, bool) {
+	state, ok := ctx.Value(preloadedFileStateKey{}).(map[int64]map[string]string)
+	return state, ok
+}
+
 // FileStore is in charge of persisting the alertmanager files to the database.
 // It uses the KVstore table and encodes the files as a base64 string.
 type FileStore struct {
@@ -40,7 +55,7 @@ func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *Fi
 // If there is a file in the database, it decodes it and writes to disk for Alertmanager consumption.
 func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (string, error) {
 	// Then, let's attempt to read it from the database.
-	content, exists, err := fileStore.kv.Get(ctx, filename)
+	content, exists, err := fileStore.readContent(ctx, filename)
 	if err != nil {
 		return "", fmt.Errorf("error reading file '%s' from database: %w", filename, err)
 	}
@@ -61,6 +76,17 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 	}
 
 	return fileStore.pathFor(filename), err
+}
+
+// readContent returns the stored (base64) content for a file. If the context carries a bulk-loaded
+// state snapshot (WithPreloadedFileState), it is used to avoid a per-org kvstore read; that snapshot
+// is authoritative, so an absent org/key means "no stored file". Otherwise it reads the single key directly.
+func (fileStore *FileStore) readContent(ctx context.Context, filename string) (string, bool, error) {
+	if state, ok := preloadedFileStateFromContext(ctx); ok {
+		content, exists := state[fileStore.orgID][filename]
+		return content, exists, nil
+	}
+	return fileStore.kv.Get(ctx, filename)
 }
 
 // GetFullState receives a list of keys, looks for the corresponding values in the kvstore,

@@ -101,6 +101,21 @@ func (fkv *FakeKVStore) GetAll(ctx context.Context, orgId int64, namespace strin
 	fkv.Mtx.Lock()
 	defer fkv.Mtx.Unlock()
 
+	// orgId == AllOrganizations returns the namespace's entries for every org (mirrors the real store).
+	if orgId == kvstore.AllOrganizations {
+		all := map[int64]map[string]string{}
+		for storedOrg, namespaces := range fkv.Store {
+			if values, ok := namespaces[namespace]; ok {
+				m := make(map[string]string, len(values))
+				for k, v := range values {
+					m[k] = v
+				}
+				all[storedOrg] = m
+			}
+		}
+		return all, nil
+	}
+
 	all := map[int64]map[string]string{
 		orgId: make(map[string]string),
 	}

@@ -373,6 +373,20 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 	return true, nil
 }
 
+// skipMarkConfigAppliedKey is the context key that suppresses the "configuration applied" DB write.
+type skipMarkConfigAppliedKey struct{}
+
+// WithSkipMarkConfigApplied returns a context that tells ApplyConfig not to write the
+// MarkConfigurationAsApplied record (used by the warm-up sync; see SyncAlertmanagersForOrgs).
+func WithSkipMarkConfigApplied(ctx context.Context) context.Context {
+	return context.WithValue(ctx, skipMarkConfigAppliedKey{}, true)
+}
+
+func skipMarkConfigApplied(ctx context.Context) bool {
+	skip, _ := ctx.Value(skipMarkConfigAppliedKey{}).(bool)
+	return skip
+}
+
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
 func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
 	configChanged, err := am.applyConfig(cfg)
@@ -380,7 +394,7 @@ func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg
 		return err
 	}
 
-	if configChanged {
+	if configChanged && !skipMarkConfigApplied(ctx) {
 		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
 			OrgID:             am.orgID,
 			ConfigurationHash: hash,

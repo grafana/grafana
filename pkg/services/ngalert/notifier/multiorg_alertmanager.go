@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
@@ -68,6 +69,10 @@ type MultiOrgAlertmanager struct {
 
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]Alertmanager
+
+	// warmedUp is false until the first sync completes; the warm-up sync does extra work — see
+	// SyncAlertmanagersForOrgs.
+	warmedUp atomic.Bool
 
 	settings       *setting.Cfg
 	featureManager featuremgmt.FeatureToggles
@@ -251,9 +256,13 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 		"org_count", len(orgIDs),
 		"duration_seconds", loadingTime,
 		"load_configs_seconds", timings.loadConfigsSeconds,
+		"preload_state_seconds", timings.preloadStateSeconds,
 		"sync_loop_seconds", timings.syncLoopSeconds,
+		"factory_seconds_total", timings.factorySeconds,
+		"apply_config_seconds_total", timings.applyConfigSeconds,
 		"cleanup_seconds", timings.cleanupSeconds,
 		"concurrency", timings.concurrency,
+		"warmup", timings.warmUp,
 	)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
@@ -278,10 +287,17 @@ func (moa *MultiOrgAlertmanager) getLatestConfigs(ctx context.Context) (map[int6
 // syncPhaseTimings breaks down where a sync spends time so the dominant phase (config load,
 // the per-org sync loop, or orphan cleanup) is visible in the completion log.
 type syncPhaseTimings struct {
-	loadConfigsSeconds float64
-	syncLoopSeconds    float64
-	cleanupSeconds     float64
-	concurrency        int
+	loadConfigsSeconds  float64
+	preloadStateSeconds float64
+	syncLoopSeconds     float64
+	cleanupSeconds      float64
+	concurrency         int
+	warmUp              bool
+	// factorySeconds and applyConfigSeconds are aggregate work-seconds summed across all concurrent
+	// workers (so they exceed wall-clock); their ratio shows which step dominates the sync loop, and
+	// each divided by concurrency approximates its wall-clock contribution.
+	factorySeconds     float64
+	applyConfigSeconds float64
 }
 
 // SyncAlertmanagersForOrgs syncs configuration of the Alertmanager required by each organization.
@@ -295,6 +311,29 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		return timings, err
 	}
 	timings.loadConfigsSeconds = time.Since(loadConfigsStart).Seconds()
+
+	// The first (warm-up) sync is the only one that constructs an Alertmanager for every org, and it's
+	// where startup cost concentrates. Two things happen only on that sync:
+	//  1. Bulk-load all orgs' file state in one query so the factory hydrates from memory instead of a
+	//     per-org kvstore read (the factory reads it via FilepathFor). Later polls construct AMs only for
+	//     genuinely new orgs, which fall back to a per-org read, so bulk-loading on every poll would just
+	//     build a map nothing reads. Falls back to per-org reads if the bulk load fails.
+	//  2. Skip MarkConfigurationAsApplied: a fresh Alertmanager makes every config look "changed", so each
+	//     org would issue a DB write for a config that didn't actually change — a per-org write storm.
+	//     Steady-state polls only mark genuine changes, so they're unaffected.
+	timings.warmUp = moa.warmedUp.CompareAndSwap(false, true)
+	if timings.warmUp {
+		preloadStart := time.Now()
+		if fileState, err := moa.kvStore.GetAll(ctx, kvstore.AllOrganizations, KVNamespace); err != nil {
+			moa.logger.Warn("Failed to bulk-load Alertmanager file state; falling back to per-org reads", "error", err)
+		} else {
+			ctx = WithPreloadedFileState(ctx, fileState)
+		}
+		timings.preloadStateSeconds = time.Since(preloadStart).Seconds()
+
+		ctx = WithSkipMarkConfigApplied(ctx)
+	}
+
 	// Snapshot the running Alertmanagers under a read lock so the per-org work below can run concurrently
 	// without holding the lock. This method is the only writer of moa.alertmanagers and runs serially.
 	moa.alertmanagersMtx.RLock()
@@ -326,6 +365,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 	timings.concurrency = concurrency
 	g.SetLimit(concurrency)
+	// Aggregate per-org time in the two heavy steps (summed across workers) to reveal which dominates.
+	var factoryNanos, applyConfigNanos atomic.Int64
 	loopStart := time.Now()
 	for i, orgID := range syncOrgs {
 		i, orgID := i, orgID
@@ -335,7 +376,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 				// These metrics are not exported by Grafana and are mostly a placeholder.
 				// To export them, we need to translate the metrics from each individual registry and,
 				// then aggregate them on the main registry.
+				factoryStart := time.Now()
 				am, err := moa.factory(ctx, orgID)
+				factoryNanos.Add(int64(time.Since(factoryStart)))
 				if err != nil {
 					moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
 					return nil // synced[i] stays nil: a failed factory means the org is not registered.
@@ -344,6 +387,9 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			}
 			// Register the AM before applying config: a failed apply must still leave it (not-ready) in the map.
 			synced[i] = alertmanager
+
+			applyStart := time.Now()
+			defer func() { applyConfigNanos.Add(int64(time.Since(applyStart))) }()
 
 			dbConfig, cfgFound := dbConfigs[orgID]
 			if !cfgFound {
@@ -365,6 +411,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	}
 	_ = g.Wait() // goroutines never return an error; failures are logged above and the org is skipped.
 	timings.syncLoopSeconds = time.Since(loopStart).Seconds()
+	timings.factorySeconds = float64(factoryNanos.Load()) / float64(time.Second)
+	timings.applyConfigSeconds = float64(applyConfigNanos.Load()) / float64(time.Second)
 
 	// Merge results and prune removed orgs under the write lock. This phase is fast and does no I/O.
 	moa.alertmanagersMtx.Lock()

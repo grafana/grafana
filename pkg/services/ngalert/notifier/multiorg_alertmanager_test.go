@@ -248,12 +248,22 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs_PhaseTimings(t *testing.T
 	}
 
 	t.Run("reports the configured concurrency and populates timings", func(t *testing.T) {
-		timings, err := newMam(7).SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2, 3})
+		mam := newMam(7)
+		timings, err := mam.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2, 3})
 		require.NoError(t, err)
 		require.Equal(t, 7, timings.concurrency)
+		require.True(t, timings.warmUp, "the first sync is the warm-up")
 		require.GreaterOrEqual(t, timings.loadConfigsSeconds, 0.0)
+		require.GreaterOrEqual(t, timings.preloadStateSeconds, 0.0)
 		require.GreaterOrEqual(t, timings.syncLoopSeconds, 0.0)
+		require.GreaterOrEqual(t, timings.factorySeconds, 0.0)
+		require.GreaterOrEqual(t, timings.applyConfigSeconds, 0.0)
 		require.GreaterOrEqual(t, timings.cleanupSeconds, 0.0)
+
+		// Only the first sync is the warm-up; subsequent syncs mark configs as applied normally.
+		timings2, err := mam.SyncAlertmanagersForOrgs(context.Background(), []int64{1, 2, 3})
+		require.NoError(t, err)
+		require.False(t, timings2.warmUp)
 	})
 
 	t.Run("floors non-positive concurrency to 1", func(t *testing.T) {
