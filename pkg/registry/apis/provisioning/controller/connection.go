@@ -26,8 +26,9 @@ const connectionLoggerName = "provisioning-connection-controller"
 const (
 	connectionMaxAttempts = 3
 
-	// tokenWriteRetryDelay is how long to wait before re-checking a connection whose
-	// token secret was written recently but is not yet readable from the secret store.
+	// tokenWriteRetryDelay is how long to wait before re-checking a connection or
+	// repository whose token secret was written recently but is not yet readable from
+	// the secret store. It is shared by the connection and repository controllers.
 	tokenWriteRetryDelay = 2 * time.Second
 )
 
@@ -308,13 +309,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
 			// Record when the token was written so a not-yet-readable secret on the next
-			// reconcile is not mistaken for a missing one and regenerated in a loop.
-			now := time.Now().UnixMilli()
-			conn.Status.Token.LastUpdated = now
+			// reconcile is not mistaken for a missing one and regenerated in a loop. Use
+			// "add": status.token is a newly introduced field that may be absent on
+			// Connections created before this change, and "add" both creates and replaces.
 			patchOperations = append(patchOperations, map[string]interface{}{
-				"op":    "replace",
+				"op":    "add",
 				"path":  "/status/token",
-				"value": provisioning.TokenStatus{LastUpdated: now},
+				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
 			})
 		}
 		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}

@@ -435,12 +435,22 @@ func TestSecureValues_NotFoundSentinel(t *testing.T) {
 		require.ErrorIs(t, err, connection.ErrTokenNotFound)
 	})
 
-	t.Run("per-item decrypt error wraps ErrTokenNotFound", func(t *testing.T) {
+	t.Run("per-item not-found error wraps ErrTokenNotFound", func(t *testing.T) {
 		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
-			"token-ref": newDecryptResultWithError(errors.New("boom")),
+			"token-ref": newDecryptResultWithError(errors.New("not found")),
 		}}, nil)
 		_, err := decrypter(conn).Token(context.Background())
 		require.ErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("per-item non-not-found error is surfaced, not treated as missing", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResultWithError(errors.New("not authorized")),
+		}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
 	})
 
 	t.Run("transient service error is not treated as not-found", func(t *testing.T) {
