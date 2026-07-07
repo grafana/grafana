@@ -26,9 +26,9 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { type DashboardEditPane } from './DashboardEditPane';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { dashboardEditActions } from './shared';
+import { type DashboardEditPaneLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -574,7 +574,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
 
 function setupEmptyDashboard(): {
   dashboard: DashboardScene;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
@@ -591,7 +591,7 @@ function setupWithTwoTabs(): {
   tab1: TabItem;
   tab2: TabItem;
   tab1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });
@@ -615,7 +615,7 @@ function setupWithTwoRows(): {
   row1: RowItem;
   row2: RowItem;
   row1Viz: VizPanel;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
 } {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
   const gridItem = new AutoGridItem({ body: panel });

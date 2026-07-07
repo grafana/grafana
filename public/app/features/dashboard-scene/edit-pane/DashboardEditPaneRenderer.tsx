@@ -19,22 +19,21 @@ import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
-import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { type DashboardSidebarPane } from './types';
+import { type DashboardEditPaneLike, type DashboardSidebarPane } from './types';
 
 export interface Props {
-  editPane: DashboardEditPane;
   dashboard: DashboardScene;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ dashboard }: Props) {
+  const editPane = dashboard.state.editPane;
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
@@ -140,11 +139,9 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts &&
-            (config.featureToggles.dashboardFiltersOverview ||
-              config.featureToggles.dashboardUnifiedDrilldownControls) && (
-              <FiltersOverviewButton editPane={editPane} openPane={openPane} />
-            )}
+          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
+            <FiltersOverviewButton editPane={editPane} openPane={openPane} />
+          )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           {viewPanel && viewPanelPane && (
@@ -182,7 +179,7 @@ function FiltersOverviewButton({
   editPane,
   openPane,
 }: {
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   openPane: DashboardSidebarPane | undefined;
 }) {
   const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];

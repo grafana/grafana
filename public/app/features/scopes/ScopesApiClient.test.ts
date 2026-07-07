@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { MOCK_NODES, MOCK_SCOPES } from '@grafana/test-utils/unstable';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 
@@ -43,7 +42,6 @@ describe('ScopesApiClient', () => {
 
   beforeEach(() => {
     apiClient = new ScopesApiClient();
-    config.featureToggles.useMultipleScopeNodesEndpoint = true;
     jest.clearAllMocks();
   });
 
@@ -181,17 +179,6 @@ describe('ScopesApiClient', () => {
       const result = await apiClient.fetchMultipleScopeNodes([]);
 
       expect(result).toEqual([]);
-    });
-
-    it('should return empty array when feature toggle is disabled', async () => {
-      config.featureToggles.useMultipleScopeNodesEndpoint = false;
-
-      const result = await apiClient.fetchMultipleScopeNodes(['applications-grafana']);
-
-      expect(result).toEqual([]);
-
-      // Restore feature toggle
-      config.featureToggles.useMultipleScopeNodesEndpoint = true;
     });
 
     it('should handle API errors gracefully', async () => {

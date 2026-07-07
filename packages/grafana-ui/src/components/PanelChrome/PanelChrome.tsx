@@ -22,6 +22,7 @@ import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
+import { type PanelStatusItem } from './types';
 
 /**
  * @internal
@@ -31,7 +32,10 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
+  /** Shown in info icon tooltip next to the title, supports simple html markup */
   description?: string | (() => string);
+  /** Shown in as text below the title, supports simple html markup */
+  subtitle?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -47,6 +51,10 @@ interface BaseProps {
    * Used to display status message (used for panel errors currently)
    */
   statusMessage?: string;
+  /**
+   * Structured list of errors and notices shown in the panel header status popover.
+   */
+  statusItems?: PanelStatusItem[];
   /**
    * Handle opening error details view (like inspect / error tab)
    */
@@ -142,6 +150,7 @@ export function PanelChrome({
   hoverHeaderOffset,
   loadingState,
   statusMessage,
+  statusItems,
   statusMessageOnClick,
   leftItems,
   actions,
@@ -157,6 +166,7 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
+  subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -181,12 +191,21 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
+  const descriptionTitleItem = description && (
+    <PanelDescription description={description} className={dragClassCancel} />
+  );
+
+  const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
+
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
+  const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
+  const headerHeight = getHeaderHeight(theme, hasHeader, subHeaderHeight);
+
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
@@ -313,9 +332,9 @@ export function PanelChrome({
         </div>
       )}
 
-      {(titleItems || description) && (
+      {(titleItems || descriptionTitleItem) && (
         <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          <PanelDescription description={description} className={dragClassCancel} />
+          {descriptionTitleItem}
           {titleItems}
         </div>
       )}
@@ -398,10 +417,11 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {statusMessage && (
+            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
+                  items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                 />
@@ -421,10 +441,11 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {statusMessage && (
+              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}
+                    items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                   />
@@ -444,8 +465,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && subHeaderContent && (
+            {!collapsed && (subHeaderContent || subtitleContent) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
+                {subtitleContent}
                 {subHeaderContent}
               </div>
             )}
@@ -475,9 +497,12 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+    // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
+    return (
+      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
+    );
   }
 
   return 0;
