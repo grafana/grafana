@@ -276,7 +276,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p v',
       onTrigger: () => {
         if (scene.state.isEditing) {
-          DashboardInteractions.trackPastePanelClick('canvas');
+          DashboardInteractions.trackPastePanelClick('keyboard');
           scene.pastePanel();
         }
       },
