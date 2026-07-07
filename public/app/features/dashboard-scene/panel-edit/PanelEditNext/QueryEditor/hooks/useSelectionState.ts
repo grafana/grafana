@@ -215,10 +215,10 @@ export function useSelectionState({
     }
 
     if (modifiers?.multi) {
+      // Unchecking the last card is allowed — multi-select stays active with an empty set so the
+      // user can keep building a fresh selection without leaving the mode.
       const next = currentSelection.includes(query.refId)
-        ? currentSelection.length === 1
-          ? currentSelection
-          : currentSelection.filter((id) => id !== query.refId)
+        ? currentSelection.filter((id) => id !== query.refId)
         : [...currentSelection, query.refId];
       setSelectedQueryRefIds(next);
       // Pin the anchor to the toggled card; everything else becomes the base a later Shift extends.
@@ -254,10 +254,10 @@ export function useSelectionState({
       }
 
       if (modifiers?.multi) {
+        // Unchecking the last card is allowed — multi-select stays active with an empty set so the
+        // user can keep building a fresh selection without leaving the mode.
         const next = currentSelection.includes(transformation.transformId)
-          ? currentSelection.length === 1
-            ? currentSelection
-            : currentSelection.filter((id) => id !== transformation.transformId)
+          ? currentSelection.filter((id) => id !== transformation.transformId)
           : [...currentSelection, transformation.transformId];
         setSelectedTransformationIds(next);
         transformationAnchorRef.current = transformation.transformId;

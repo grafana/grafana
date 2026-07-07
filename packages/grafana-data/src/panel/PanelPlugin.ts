@@ -124,10 +124,37 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
+/**
+ * Callback used to declare a panel's option editors via {@link PanelPlugin.setPanelOptions}.
+ * Receives a builder and an editor context, and should call builder methods to register editors.
+ *
+ * @typeParam TOptions - The panel options type.
+ */
 export type PanelOptionsSupplier<TOptions> = (
   builder: PanelOptionsEditorBuilder<TOptions>,
   context: StandardEditorContext<TOptions>
 ) => void;
+
+/**
+ * Controls the view panel side pane controls
+ */
+export interface PanelPluginViewOptions {
+  /**
+   * Enable fanout option. Enables splitting a single panel into multiple panels by series or label
+   */
+  fanout?: {
+    enabled: boolean;
+  };
+  /**
+   *  Make some option properties available as quick toggles in the view panel side pane
+   */
+  quickToggles?: PluginViewOptionsQuickToggles;
+}
+
+export interface PluginViewOptionsQuickToggles {
+  optionProperties: string[];
+  fieldConfigProperties: string[];
+}
 
 export class PanelPlugin<
   TOptions = any,
@@ -139,6 +166,7 @@ export class PanelPlugin<
     overrides: [],
   };
 
+  private _viewPanelOptions?: PanelPluginViewOptions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -200,6 +228,10 @@ export class PanelPlugin<
       },
       overrides: this._fieldConfigDefaults.overrides,
     };
+  }
+
+  get viewPanelOptions() {
+    return this._viewPanelOptions;
   }
 
   /**
@@ -552,6 +584,14 @@ export class PanelPlugin<
    */
   setScreenshotImage(handler: PanelScreenshotHandler) {
     this.onScreenshot = handler;
+    return this;
+  }
+
+  /**
+   * Set options for the view panel side pane, which can include enabling fanout and adding quick toggles for options and field config defaults.
+   */
+  setViewPanelOptions(options: PanelPluginViewOptions) {
+    this._viewPanelOptions = options;
     return this;
   }
 }

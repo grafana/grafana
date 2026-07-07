@@ -179,6 +179,14 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// ListStoredResources discovers which resource identities exist in storage,
+	// without returning counts. It is a cheaper alternative to GetResourceStats
+	// for callers that only need to know what is stored. The filter's Namespace
+	// is required; Group and Resource are optional (empty means no filter on that
+	// field). Results are discovery-only and may contain false positives: a
+	// returned identity may have no live objects by the time the caller queries it.
+	ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error)
+
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
 }
@@ -274,6 +282,13 @@ type SearchOptions struct {
 
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	SelectableFieldsForKinds map[string][]string
+
+	// Map "group/resource" -> hash of the SearchFieldDefinition slices
+	// registered for that (group, resource), across every version. The
+	// search server compares this against the value stored in each index's
+	// IndexBuildInfo and triggers a rebuild on mismatch. Keys must be
+	// lower-case. Entries with empty hash strings are ignored.
+	SearchFieldsHashesForKinds map[string]string
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
@@ -1443,6 +1458,42 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 }
 
+// ListStoredResources implements the ResourceStore gRPC service by delegating
+// to the storage backend. A namespace is required.
+func (s *server) ListStoredResources(ctx context.Context, req *resourcepb.ListStoredResourcesRequest) (*resourcepb.ListStoredResourcesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListStoredResources")
+	defer span.End()
+
+	if req.Namespace == "" {
+		return nil, status.Error(codes.InvalidArgument, "namespace is required")
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	stored, err := s.backend.ListStoredResources(ctx, NamespacedResource{
+		Namespace: req.Namespace,
+		Group:     req.Group,
+		Resource:  req.Resource,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	rsp := &resourcepb.ListStoredResourcesResponse{
+		Items: make([]*resourcepb.ListStoredResourcesResponse_StoredResource, 0, len(stored)),
+	}
+	for _, r := range stored {
+		rsp.Items = append(rsp.Items, &resourcepb.ListStoredResourcesResponse_StoredResource{
+			Namespace: r.Namespace,
+			Group:     r.Group,
+			Resource:  r.Resource,
+		})
+	}
+	return rsp, nil
+}
+
 // listBackendFunc is the signature shared by ListIterator and ListHistory.
 type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
@@ -1633,6 +1684,16 @@ func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, fol
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
 	}, folder)
+	if err != nil {
+		// The error is swallowed (user treated as non-admin), so without this
+		// the failure is invisible. Record it as a degraded operation, tagging
+		// whether authz was unavailable vs. a logical error.
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	}
 	isAdmin := err == nil && resp.Allowed
 	cache[folder] = isAdmin
 	return isAdmin
@@ -2271,7 +2332,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_quota_failed", nsr, err)
 		return nil
 	}
 
@@ -2280,11 +2341,11 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Kinds:     []string{nsr.GroupResource()},
 	})
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
+		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
 		return nil
 	}
 	if statsRsp.Error != nil {
-		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
 		return nil
 	}
 	stats := statsRsp.Stats
@@ -2307,6 +2368,54 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	}
 
 	return nil
+}
+
+// degraded records that an operation proceeded despite a failed external
+// dependency, skipping a guard/check. Use this anywhere the server swallows an
+// external-call error and continues, so the degradation is alertable instead of
+// log-only.
+func (s *server) degraded(ctx context.Context, operation, reason string, nsr NamespacedResource, err error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		s.log.FromContext(ctx).Debug("skipping degraded report: request context done",
+			"operation", operation, "reason", reason, "ctx_error", ctxErr, "error", err)
+		return
+	}
+	s.log.FromContext(ctx).Error("degraded operation: external dependency failed, guard skipped",
+		"operation", operation, "reason", reason,
+		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
+		"error", err)
+	if s.storageMetrics != nil {
+		s.storageMetrics.DegradedOperations.
+			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
+	}
+	if span := trace.SpanFromContext(ctx); span != nil {
+		span.AddEvent("degraded_operation", trace.WithAttributes(
+			attribute.String("operation", operation),
+			attribute.String("reason", reason),
+		))
+	}
+}
+
+// classifyAuthError maps an access-check error to a stable, low-cardinality
+// reason label so a downstream authz outage ("service unavailable") alerts
+// separately from a logical/decision error. Logical failures are returned
+// locally as typed sentinels before the remote call, while a down/slow service
+// surfaces as a gRPC transport status.
+func classifyAuthError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if errors.Is(err, claims.ErrNamespaceMismatch) {
+		return "auth_namespace_mismatch"
+	}
+	switch status.Code(err) {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.Canceled, codes.ResourceExhausted:
+		return "auth_unavailable"
+	case codes.Unauthenticated, codes.PermissionDenied, codes.InvalidArgument:
+		return "auth_rejected"
+	default:
+		return "auth_error"
+	}
 }
 
 // resourceVersionTime extracts the timestamp embedded in a resource version.

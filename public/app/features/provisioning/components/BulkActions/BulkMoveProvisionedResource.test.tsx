@@ -1,10 +1,14 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import * as currentUser from '../../utils/currentUser';
 
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -56,10 +60,6 @@ jest.mock('../Shared/ProvisioningAwareFolderPicker', () => ({
   )),
 }));
 
-jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getAppEvents: jest.fn(() => ({
@@ -73,6 +73,17 @@ const mockUseGetResourceRepositoryView = jest.mocked(
 const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 const mockUseGetFolderQuery = jest.mocked(require('app/api/clients/folder/v1beta1').useGetFolderQuery);
+const mockJobStatus = jest.mocked(JobStatus);
+
+// jest.clearAllMocks() clears call history but not a custom mockImplementation, so a per-test
+// override of JobStatus would leak; restore the default in beforeEach.
+function resetJobStatusMock() {
+  mockJobStatus.mockImplementation(({ watch, jobType }) => (
+    <div data-testid="job-status">
+      Job Status - {jobType} - {watch?.status?.state || 'pending'}
+    </div>
+  ));
+}
 
 function setup(
   repository: RepositoryView | null,
@@ -135,6 +146,7 @@ function setup(
 describe('BulkMoveProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetJobStatusMock();
 
     mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: 'test-folder',
@@ -466,5 +478,135 @@ describe('BulkMoveProvisionedResource', () => {
 
     expect(screen.getByTestId('job-status')).toBeInTheDocument();
     expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
+  });
+
+  it('shows the branch success message when the job completes on the branch workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    // Default repo has workflows ['branch', 'write'], so the default workflow is 'branch'.
+    const { user } = setup(null);
+
+    await user.click(screen.getByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(await screen.findByText('Requested changes were pushed to a branch')).toBeInTheDocument();
+  });
+
+  it('shows the configured-branch success message when the job completes on the write workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    const writeOnlyRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['write'],
+    };
+    const { user } = setup(writeOnlyRepository);
+
+    await user.click(screen.getByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(await screen.findByText('Resources moved successfully')).toBeInTheDocument();
+  });
+
+  describe('commit message template (provisioning.gitConventions)', () => {
+    // selectedItems in setup() has one folder + one dashboard => "2 resources".
+    const templateRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['branch', 'write'],
+      commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}' },
+    };
+
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+    });
+
+    afterEach(async () => {
+      // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('pre-fills the comment from the rendered template and POSTs it', async () => {
+      const { user, mockCreateBulkJob } = setup(templateRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        templateRepository,
+        expect.objectContaining({ action: 'move', message: 'chore: move 2 resources' })
+      );
+    });
+
+    it('renders the comment read-only when the template is enforced', async () => {
+      const enforcedRepository: RepositoryView = {
+        ...templateRepository,
+        commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}', enforceTemplate: true },
+      };
+      setup(enforcedRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+      expect(textarea).toHaveAttribute('readonly');
+    });
+
+    it('keeps a manual edit across re-renders and POSTs the edited message', async () => {
+      const { user, mockCreateBulkJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+
+      await user.type(textarea, ' edited');
+      expect(textarea).toHaveValue('chore: move 2 resources edited');
+
+      // A re-render must not clobber the user's edit with the template.
+      rerender(
+        <BulkMoveProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
+      );
+      expect(textarea).toHaveValue('chore: move 2 resources edited');
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        templateRepository,
+        expect.objectContaining({ message: 'chore: move 2 resources edited' })
+      );
+    });
+
+    it('appends the saved-by trailer exactly once', async () => {
+      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
+      const trailerRepository: RepositoryView = {
+        ...templateRepository,
+        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
+      };
+      const { user, mockCreateBulkJob } = setup(trailerRepository);
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
+      expect(jobSpec.message).toContain('chore: move');
+      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
+    });
   });
 });

@@ -1,5 +1,8 @@
+import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { getPortalContainer, PortalContainer } from '../Portal/Portal';
 
 import { Modal } from './Modal';
 
@@ -117,44 +120,6 @@ describe('Modal', () => {
     expect(onDismiss).not.toHaveBeenCalled();
   });
 
-  it('clicking inside a [data-dismiss-ignore] region does not call onDismiss', async () => {
-    const onDismiss = jest.fn();
-
-    render(
-      <>
-        {/* Stands in for globally-floating UI (e.g. a toast) that renders above the modal but outside
-            its DOM subtree. Clicking it should not be treated as a backdrop press. */}
-        <div data-dismiss-ignore>
-          <button data-testid="toast-close">Close toast</button>
-        </div>
-        <Modal title="Some Title" isOpen onDismiss={onDismiss}>
-          <div data-testid="modal-content">Content</div>
-        </Modal>
-      </>
-    );
-
-    await userEvent.click(screen.getByTestId('toast-close'));
-
-    expect(onDismiss).not.toHaveBeenCalled();
-  });
-
-  it('clicking an outside element without the attribute still calls onDismiss', async () => {
-    const onDismiss = jest.fn();
-
-    render(
-      <>
-        <button data-testid="outside-button">Outside</button>
-        <Modal title="Some Title" isOpen onDismiss={onDismiss}>
-          <div data-testid="modal-content">Content</div>
-        </Modal>
-      </>
-    );
-
-    await userEvent.click(screen.getByTestId('outside-button'));
-
-    expect(onDismiss).toHaveBeenCalled();
-  });
-
   it('closeOnEscape={false} prevents dismiss on escape key', async () => {
     const onDismiss = jest.fn();
 
@@ -167,5 +132,57 @@ describe('Modal', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  // Mirrors the app arrangement (see AppWrapper): UNSAFE_PortalProvider routes react-aria
+  // overlays — including the modal and its backdrop — into <PortalContainer />.
+  describe('with the app portal container', () => {
+    function setup(onDismiss: jest.Mock) {
+      const ui = (isOpen: boolean) => (
+        <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+          <PortalContainer />
+          <div data-testid="page-content">Page content</div>
+          <Modal title="Some Title" isOpen={isOpen} onDismiss={onDismiss}>
+            <div data-testid="modal-content">Content</div>
+          </Modal>
+        </UNSAFE_PortalProvider>
+      );
+      const { rerender } = render(ui(false));
+      return { openModal: () => rerender(ui(true)) };
+    }
+
+    it('pressing an overlay inside the portal container does not dismiss', async () => {
+      const onDismiss = jest.fn();
+      const { openModal } = setup(onDismiss);
+
+      const overlay = document.createElement('button');
+      getPortalContainer().appendChild(overlay);
+      openModal();
+      await userEvent.click(overlay);
+
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('clicking the backdrop still dismisses', async () => {
+      const onDismiss = jest.fn();
+      const { openModal } = setup(onDismiss);
+      openModal();
+
+      const backdrop = screen.getByRole('presentation');
+      expect(getPortalContainer().contains(backdrop)).toBe(true);
+      await userEvent.click(backdrop);
+
+      expect(onDismiss).toHaveBeenCalled();
+    });
+
+    it('pressing page content outside the portal container still dismisses', async () => {
+      const onDismiss = jest.fn();
+      const { openModal } = setup(onDismiss);
+      openModal();
+
+      await userEvent.click(screen.getByTestId('page-content'));
+
+      expect(onDismiss).toHaveBeenCalled();
+    });
   });
 });

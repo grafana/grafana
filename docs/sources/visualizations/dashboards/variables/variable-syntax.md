@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Variable syntax
-description: Learn about different types of variable syntax
+description: Use variable syntax and format options to control how Grafana interpolates dashboard variables in queries, panel titles, and expressions.
 weight: 400
 ---
 
@@ -25,16 +25,16 @@ weight: 400
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
 - `$varname`
-  This syntax is easy to read, but it does not allow you to use a variable in the middle of a word.
+  This syntax is easy to read, but it doesn't allow you to use a variable in the middle of a word.
   **Example:** apps.frontend.$server.requests.count
 - `${var_name}` Use this syntax when you want to interpolate a variable in the middle of an expression.
 - `${var_name:<format>}` This format gives you more control over how Grafana interpolates values. Refer to [Advanced variable format options](#advanced-variable-format-options) for more detail on all the formatting types.
-- `[[varname]]` Do not use. Deprecated old syntax, will be removed in a future release.
+- `[[varname]]` Do not use. Deprecated syntax, that will be removed in a future release.
 
-Before queries are sent to your data source the query is _interpolated_, meaning the variable is replaced with its current value. During
-interpolation, the variable value might be _escaped_ in order to conform to the syntax of the query language and where it is used.
-For example, a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
-documentation topic for details on value escaping during interpolation.
+Before queries are sent to your data source, the query is _interpolated_, meaning the variable is replaced with its current value.
+During interpolation, the variable value might be _escaped_ to conform to the syntax of the query language and where it's used.
+For example, variables in InfluxDB or Prometheus regular expression queries are automatically escaped.
+Read the data source specific documentation topic for details on value escaping during interpolation.
 
 For advanced syntax to override data source default formatting, refer to [Advanced variable format options](#advanced-variable-format-options).
 
@@ -42,7 +42,9 @@ For advanced syntax to override data source default formatting, refer to [Advanc
 
 The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting.
 
-For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases, you might want to have a comma-separated string without quotes: `server01,server02`. You can make that happen with advanced variable formatting options listed below.
+For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`.
+In some cases, you might want to have a comma-separated string without quotes: `server01,server02`.
+You can make that happen with advanced variable formatting options listed below.
 
 ### General syntax
 
@@ -74,7 +76,7 @@ String to interpolate: '${servers:distributed}'
 Interpolation result: 'test1,servers=test2'
 ```
 
-### Doublequote
+### `doublequote`
 
 Formats single- and multi-valued variables into a comma-separated string, escapes `"` in each value by `\"` and quotes each value with `"`.
 
@@ -96,7 +98,7 @@ Interpolation result: '{test1,test2}'
 
 ### Join
 
-Formats multi-valued variables with a custom delimiter. If no delimiter argument is supplied, they will be combined with `,`.
+Formats multi-valued variables with a custom delimiter. If no delimiter argument is supplied, they're combined with `,`.
 
 ```bash
 servers = ["test1", "test2"]
@@ -124,7 +126,7 @@ String to interpolate: '${servers:lucene}'
 Interpolation result: '("test1" OR "test2")'
 ```
 
-### Percentencode
+### `percentencode`
 
 Formats single and multi valued variables for use in URL parameters.
 
@@ -185,7 +187,7 @@ Interpolation result: 'test1,test2'
 
 ### Regex
 
-Formats variables with multiple values into a regex string.
+Formats variables with multiple values into a regular expression string.
 
 ```bash
 servers = ['test1.', 'test2']
@@ -193,7 +195,7 @@ String to interpolate: '${servers:regex}'
 Interpolation result: '(test1\.|test2)'
 ```
 
-### Singlequote
+### `singlequote`
 
 Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `\'` and quotes each value with `'`.
 
@@ -203,7 +205,7 @@ String to interpolate: '${servers:singlequote}'
 Interpolation result: "'test1','test2'"
 ```
 
-### Sqlstring
+### `sqlstring`
 
 Formats single- and multi-valued variables into a comma-separated string, escapes `'` in each value by `''` and quotes each value with `'`.
 
@@ -215,7 +217,7 @@ Interpolation result: "'test''1','test2'"
 
 ### Text
 
-Formats single- and multi-valued variables into their text representation. For a single variable it will just return the text representation. For multi-valued variables it will return the text representation combined with `+`.
+Formats single- and multi-valued variables into their text representation. For a single variable it just returns the text representation. For multi-valued variables it returns the text representation combined with `+`.
 
 ```bash
 servers = ["test1", "test2"]

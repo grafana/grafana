@@ -8,6 +8,7 @@ import (
 
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
 const (
@@ -46,14 +47,21 @@ type actionMapping struct {
 	group       string
 	resource    string
 	subresource string
+	// skipScope marks actions that are valid without a scope (e.g. create verbs).
+	// TranslateToResourceTuple treats these as wildcard when kind/name are empty.
+	skipScope bool
 }
 
 func newMapping(relation, subresource string) actionMapping {
 	return newScopedMapping(relation, "", "", subresource)
 }
 
+func newUnscopedMapping(relation string) actionMapping {
+	return actionMapping{relation: relation, skipScope: true}
+}
+
 func newScopedMapping(relation, group, resource, subresource string) actionMapping {
-	return actionMapping{relation, group, resource, subresource}
+	return actionMapping{relation: relation, group: group, resource: resource, subresource: subresource}
 }
 
 var (
@@ -62,6 +70,10 @@ var (
 
 	dashboardGroup    = dashboards.DashboardResourceInfo.GroupResource().Group
 	dashboardResource = dashboards.DashboardResourceInfo.GroupResource().Resource
+
+	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
+	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
+	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
@@ -108,6 +120,38 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
+	KindTeams: {
+		typ:      TypeTeam,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: teamsResource, // "teams"
+		mapping: map[string]actionMapping{
+			"teams:read":              newMapping(RelationGet, ""),
+			"teams:write":             newMapping(RelationUpdate, ""),
+			"teams:create":            newUnscopedMapping(RelationCreate),
+			"teams:delete":            newMapping(RelationDelete, ""),
+			"teams.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"teams.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
+	KindUsers: {
+		typ:      TypeUser,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: usersResource, // "users"
+		mapping: map[string]actionMapping{
+			"users:read":              newMapping(RelationGet, ""),
+			"users:write":             newMapping(RelationUpdate, ""),
+			"users:create":            newUnscopedMapping(RelationCreate),
+			"users:delete":            newMapping(RelationDelete, ""),
+			"users.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"users.permissions:write": newMapping(RelationSetPermissions, ""),
+			// The org.users:* family gates the same iam.grafana.app/users verbs as the
+			// global users:* family (see userManagementMappings in tuple_helpers.go).
+			// org.users:add is intentionally omitted, matching the write-side mapping.
+			"org.users:read":   newMapping(RelationGet, ""),
+			"org.users:write":  newMapping(RelationUpdate, ""),
+			"org.users:remove": newMapping(RelationDelete, ""),
 		},
 	},
 }

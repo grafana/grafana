@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent } from '../../edit-pane/events';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';

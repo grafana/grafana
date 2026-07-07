@@ -2848,7 +2848,9 @@
           "alerting": "Włącz, aby wstrzymać ocenę tej reguły alertu.",
           "recording": "Włącz, aby wstrzymać ocenę tej reguły rejestracji."
         },
-        "select-folder-before": "Przed ustawieniem grupy oceny i interwału wybierz folder"
+        "select-folder-before": "Przed ustawieniem grupy oceny i interwału wybierz folder",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4326,6 +4328,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Błąd podczas usuwania zasobów",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_few": "",
       "folder-empty_many": "",
@@ -4352,6 +4355,7 @@
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
       "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Dostępne foldery docelowe zależą od wybranych zasobów.",
       "move-warning-tooltip": "Zasoby aprowizowane możesz przenosić tylko w ramach ich aprowizowanego folderu, a zasoby lokalne – do folderów lokalnych.",
+      "success-title": "",
       "target-folder": "Folder docelowy",
       "folder-not-empty_one": "",
       "folder-not-empty_few": "",
@@ -6094,9 +6098,6 @@
       "placeholder-search-options": "Opcje wyszukiwania",
       "visualization-button-tooltip": "Opcje wyszukiwania"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Linki panelu"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Wróć do zapytań"
     },
@@ -6280,7 +6281,17 @@
       "snapshot": {
         "tooltip": "Otwórz oryginalny pulpit"
       },
-      "undo": "Cofnij"
+      "undo": "Cofnij",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Źródło ({{provider}})",
@@ -6539,6 +6550,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8795,7 +8807,9 @@
       "query-history-button": "Historia zapytań",
       "query-history-button-aria-label": "Historia zapytań",
       "query-inspector-button": "Inspektor zapytań",
-      "query-inspector-button-aria-label": "Inspektor zapytań"
+      "query-inspector-button-aria-label": "Inspektor zapytań",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Pokaż wszystkie zakresy",
     "span-bar": {
@@ -10006,10 +10020,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Tryb",
+        "name-overflow": "",
         "name-placement": "Położenie",
         "name-values": "Wartości",
         "name-visibility": "Widoczność",
         "name-width": "Szerokość",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Na dole",
           "label-right": "Po prawej"
@@ -10780,10 +10800,34 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_few": "",
+      "critical-count_many": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_few": "",
+      "high-count_many": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10798,6 +10842,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10805,15 +10854,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -11327,6 +11374,8 @@
         }
       },
       "fields-section": "Pola",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Ukryj wiersz logu",
       "inline-mode": "Wyświetl bezpośrednio",
       "inline-no-scrolls": "",
@@ -12072,9 +12121,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Zarządzaj mapowaniami grup dostawców tożsamości do ról w usłudze Grafana"
     },
     "help": {
       "title": "Pomoc"
@@ -13149,9 +13195,6 @@
       "description-clear-repository-connection": "Ta nazwa będzie używana do połączenia z repozytorium i dla folderu wyświetlanego w interfejsie użytkownika.",
       "empty": "Pusty",
       "error-field-required": "To pole jest wymagane.",
-      "error-quota-exceeded-message": "Liczba zasobów w tym folderze repozytorium ({{fileCount}}) przekracza limit dla Twojego konta wynoszący {{limit}}. Aby zsynchronizować to repozytorium, przejdź na wyższy poziom konta lub zmniejsz liczbę zasobów do synchronizacji.",
-      "error-quota-exceeded-message-onprem": "Liczba zasobów w tym folderze repozytorium ({{fileCount}}) przekracza limit dla Twojej instancji wynoszący {{limit}}. Aby zsynchronizować to repozytorium, zaktualizuj konfigurację Grafany lub zmniejsz liczbę zasobów do synchronizacji.",
-      "error-quota-exceeded-title": "Przekroczono limit zasobów",
       "error-repository-status-unhealthy-message": "Podczas łączenia się z repozytorium wystąpił problem. Sprawdź ustawienia repozytorium i spróbuj ponownie.",
       "error-repository-status-unhealthy-title": "Nieprawidłowy status repozytorium",
       "external-storage-label": "Zewnętrzna pamięć masowa",
@@ -13162,6 +13205,9 @@
       "unmanaged-resources-label": "Zasoby niezarządzane",
       "update-configuration-action": "Wyświetl dokumenty dotyczące konfiguracji",
       "upgrade-action": "Przejdź na wyższy poziom konta",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} pulpit",
       "dashboards-count_few": "{{count}} pulpitu",
       "dashboards-count_many": "{{count}} pulpitu",
@@ -13182,6 +13228,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Pomiń konfigurację i wybierz w pełni zarządzaną synchronizację z serwisem Git hostowanym przez Grafana Cloud w ramach <2>planu Grafana Cloud, który będzie zawsze bezpłatny</2>.",
@@ -13576,9 +13625,26 @@
       "truncated": "Wiadomość obcięta"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Nie udało się zweryfikować, czy ten folder zawiera plik metadanych. Spróbuj ponownie później.",
@@ -14238,9 +14304,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",
@@ -14391,6 +14458,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Nie udało się załadować źródła danych dla tego zapytania",
     "loading-datasource": "Ładowanie źródła danych",
     "no-query-editor-component": "Wtyczka źródła danych nie eksportuje żadnego komponentu edytora zapytań"
@@ -14412,6 +14480,58 @@
       "show-response": "Pokaż odpowiedź"
     },
     "query-editor-not-exported": "Wtyczka źródła danych nie eksportuje żadnego komponentu Edytora zapytań"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_few": "",
+    "description_many": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

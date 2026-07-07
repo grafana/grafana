@@ -174,10 +174,6 @@ export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackAlertRuleFormCancelled = (props: { formAction: 'create' | 'update' }) => {
-  reportInteraction('grafana_alerting_rule_aborted', props);
-};
-
 export const trackAlertRuleFormError = (
   props: AlertRuleTrackingProps & { error: string; formAction: 'create' | 'update' }
 ) => {
