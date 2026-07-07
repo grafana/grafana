@@ -92,27 +92,7 @@ func stripSQLComments(sql string) string {
 				}
 			}
 		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
-			// Block comment: skip to closing */.
-			start := i
-			i += 2
-			closed := false
-			for i+1 < n {
-				if sql[i] == '*' && sql[i+1] == '/' {
-					i += 2
-					closed = true
-					break
-				}
-				i++
-			}
-			// Preserve SQLCommenter attribution tags so query-tagging metadata
-			// reaches the database; strip every other block comment, and also strip
-			// a tag-shaped comment that embeds a macro so the macro is not interpolated.
-			if closed {
-				comment := sql[start:i]
-				if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
-					out.WriteString(comment)
-				}
-			}
+			i = scanBlockComment(sql, i, &out)
 		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
 			// Line comment: skip to end of line (newline is preserved).
 			for i < n && sql[i] != '\n' {
@@ -124,6 +104,28 @@ func stripSQLComments(sql string) string {
 		}
 	}
 	return out.String()
+}
+
+// scanBlockComment consumes the /* ... */ block comment beginning at i and
+// returns the index just past it. A SQLCommenter attribution tag is written to
+// out so query-tagging metadata reaches the database, unless it embeds a macro
+// (which must not be interpolated); every other block comment is dropped.
+func scanBlockComment(sql string, i int, out *strings.Builder) int {
+	n := len(sql)
+	start := i
+	i += 2
+	for i+1 < n {
+		if sql[i] == '*' && sql[i+1] == '/' {
+			i += 2
+			comment := sql[start:i]
+			if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
+				out.WriteString(comment)
+			}
+			return i
+		}
+		i++
+	}
+	return i
 }
 
 type msSQLMacroEngine struct {
