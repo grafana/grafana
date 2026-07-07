@@ -104,6 +104,22 @@ describe('navBarTree reducer', () => {
       const starred = next.find((n) => n.id === 'starred');
       expect(starred?.children?.map((c) => c.text)).toEqual(['BBB dash', 'ZZZ dash', 'AAA folder']);
     });
+
+    it('updates a starred folder row and preserves icon and sortWeight', () => {
+      const state = buildState([
+        { id: ID_PREFIX + 'd1', text: 'Dash', url: '/d/d1' },
+        { id: ID_PREFIX + 'f1', text: 'Old Folder', url: '/dashboards/f/f1/', icon: 'folder', sortWeight: 1 },
+      ]);
+      const next = navTreeReducer(
+        state,
+        updateDashboardName({ id: 'f1', title: 'New Folder', url: '/dashboards/f/f1/new' })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      const folder = starred?.children?.find((c) => c.id === ID_PREFIX + 'f1');
+      expect(folder).toMatchObject({ text: 'New Folder', url: '/dashboards/f/f1/new', icon: 'folder', sortWeight: 1 });
+      // Dashboards still sort before folders
+      expect(starred?.children?.map((c) => c.text)).toEqual(['Dash', 'New Folder']);
+    });
   });
 
   describe('setStarredItems', () => {

@@ -36,6 +36,7 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
+import { getFolderURL } from '../utils/dashboards';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
@@ -167,7 +168,7 @@ export const browseDashboardsAPI = createApi({
           version,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ uid, title, parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -176,6 +177,10 @@ export const browseDashboardsAPI = createApi({
             })
           );
           refreshTeamFolders();
+          // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+          if (title) {
+            dispatch(updateDashboardName({ id: uid, title, url: getFolderURL(uid) }));
+          }
         });
       },
     }),

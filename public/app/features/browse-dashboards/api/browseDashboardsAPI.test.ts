@@ -12,7 +12,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -25,6 +25,7 @@ import { type ThunkDispatch } from 'app/types/store';
 
 import { refetchChildren } from '../state/actions';
 import { browseDashboardsReducer } from '../state/slice';
+import { getFolderURL } from '../utils/dashboards';
 
 import { browseDashboardsAPI } from './browseDashboardsAPI';
 import { PAGE_SIZE } from './constants';
@@ -58,16 +59,8 @@ describe('browseDashboardsAPI', () => {
     return store;
   };
 
-  // Mirrors createTestStore but records setStarred dispatches so tests can assert on nav-star cleanup
-  const createStoreWithSetStarredRecorder = () => {
-    const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
-    const recorder: Middleware = () => (next) => (action) => {
-      if (isAnyOf(setStarred)(action)) {
-        setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
-      }
-      return next(action);
-    };
-
+  // Mirrors createTestStore but appends an action-recording middleware so tests can assert on dispatches
+  const makeRecorderStore = (recorder: Middleware) => {
     const store = configureStore({
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
@@ -85,7 +78,33 @@ describe('browseDashboardsAPI', () => {
         ),
     });
     setStore(store as unknown as Store);
-    return { store, setStarredPayloads };
+    return store;
+  };
+
+  // Records setStarred dispatches so tests can assert on nav-star cleanup
+  const createStoreWithSetStarredRecorder = () => {
+    const setStarredPayloads: Array<{ id: string; isStarred: boolean }> = [];
+    const recorder: Middleware = () => (next) => (action) => {
+      if (isAnyOf(setStarred)(action)) {
+        setStarredPayloads.push({ id: action.payload.id, isStarred: action.payload.isStarred });
+      }
+      return next(action);
+    };
+
+    return { store: makeRecorderStore(recorder), setStarredPayloads };
+  };
+
+  // Records updateDashboardName dispatches so tests can assert on starred-nav rename updates
+  const createStoreWithUpdateNameRecorder = () => {
+    const updateNamePayloads: Array<{ id: string; title: string; url: string }> = [];
+    const recorder: Middleware = () => (next) => (action) => {
+      if (isAnyOf(updateDashboardName)(action)) {
+        updateNamePayloads.push(action.payload);
+      }
+      return next(action);
+    };
+
+    return { store: makeRecorderStore(recorder), updateNamePayloads };
   };
 
   testWithFeatureToggles({ disable: ['provisioning'] });
@@ -559,6 +578,32 @@ describe('browseDashboardsAPI', () => {
         expect(deleteFolder1Spy).toHaveBeenCalledTimes(1);
         expect(deleteFolder2Spy).toHaveBeenCalledTimes(1);
         expect(setStarredPayloads).toEqual([{ id: 'folder-2', isStarred: false }]);
+      });
+    });
+  });
+
+  describe('saveFolder', () => {
+    it('updates the starred nav entry from the request title and folder URL, not the server response', async () => {
+      const { store, updateNamePayloads } = createStoreWithUpdateNameRecorder();
+
+      // Response title/url deliberately differ from the request to catch accidental use of response values
+      server.use(
+        http.put('/api/folders/folder-1', () =>
+          HttpResponse.json({
+            uid: 'folder-1',
+            title: 'ServerTitle',
+            url: '/dashboards/f/folder-1/server-slug',
+            version: 2,
+          })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.saveFolder.initiate({ uid: 'folder-1', title: 'Renamed', version: 1 })
+      );
+
+      await waitFor(() => {
+        expect(updateNamePayloads).toEqual([{ id: 'folder-1', title: 'Renamed', url: getFolderURL('folder-1') }]);
       });
     });
   });
