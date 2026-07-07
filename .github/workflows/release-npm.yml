@@ -95,6 +95,9 @@ jobs:
       # - stable:   all packages, dist-tag resolved from the version.
       # - nightly:  @grafana/e2e-selectors only, tagged 'nightly', and only if it
       #             changed since the last 'nightly' publish.
+      #
+      # Canary releases are set to hard fail to prevent accidental publishing. If we wish to start publishing them again
+      # we'll need to solve the problem of spamming the registry with too many versions.
       - name: Plan publish
         id: plan
         env:
@@ -103,7 +106,10 @@ jobs:
           GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
           REFERENCE_PKG: "@grafana/runtime"
         run: |
-          if [ "$VERSION_TYPE" = "stable" ]; then
+          if [ "$VERSION_TYPE" = "canary" ]; then
+            echo "canary publishes are not supported" >&2
+            exit 1
+          elif [ "$VERSION_TYPE" = "stable" ]; then
             TAG=$(./.github/workflows/scripts/determine-npm-tag.sh)
             {
               echo "should_publish=true"
