@@ -82,7 +82,6 @@ The following sections describe the different elements available.
 - [Parallelogram](#basic-shapes)
 - [Button](#button)
 
-
 {{< /column-list >}}
 
 #### Basic shapes
