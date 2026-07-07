@@ -1,3 +1,7 @@
+// Label used by profiling backends (e.g. Pyroscope) to represent stack traces that were truncated because they
+// fell outside of the requested maxNodes limit.
+export const OTHER_LABEL = 'other';
+
 export const PIXELS_PER_LEVEL = 22;
 export const MUTE_THRESHOLD = 10;
 export const HIDE_THRESHOLD = 0.5;
