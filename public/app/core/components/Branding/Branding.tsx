@@ -54,8 +54,8 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src={grafanaIconSvg} alt="Grafana" />;
 };
 
-export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
-  const styles = useStyles2(homeLinkStyles);
+export function HomeLogo({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
+  const styles = useStyles2(homeLogoStyles);
 
   const onHomeClicked = () => {
     reportInteraction('grafana_home_clicked');
@@ -67,7 +67,7 @@ export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick
       <a
         onClick={onHomeClicked}
         data-testid={selectors.components.Breadcrumbs.breadcrumb('Home')}
-        className={styles.homeLink}
+        className={styles.homeLogo}
         title={homeNav?.text || 'Home'}
         href={homeNav?.url}
       >
@@ -77,9 +77,9 @@ export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick
   );
 }
 
-function homeLinkStyles(theme: GrafanaTheme2) {
+function homeLogoStyles(theme: GrafanaTheme2) {
   return {
-    homeLink: css({
+    homeLogo: css({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
