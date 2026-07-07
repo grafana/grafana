@@ -11,6 +11,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
+import { legacyAPI } from 'app/api/clients/legacy';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
@@ -41,10 +42,16 @@ describe('browseDashboardsAPI', () => {
       reducer: {
         [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
+        // Needed because deleting a folder refreshes the team folders tree, which fetches the user's teams
+        [legacyAPI.reducerPath]: legacyAPI.reducer,
         browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(browseDashboardsAPI.middleware, folderAPIv1beta1.middleware),
+        getDefaultMiddleware().concat(
+          browseDashboardsAPI.middleware,
+          folderAPIv1beta1.middleware,
+          legacyAPI.middleware
+        ),
     });
     setStore(store as unknown as Store);
     return store;

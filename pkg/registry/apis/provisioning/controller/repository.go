@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,7 +47,7 @@ type finalizerProcessor interface {
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
 	client client.ProvisioningV0alpha1Interface
-	repos  RepositoryGetter
+	repos  informer.RepositoryGetter
 	logger logging.Logger
 
 	jobs interface {
@@ -81,7 +82,7 @@ type RepositoryController struct {
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	repos RepositoryGetter,
+	repos informer.RepositoryGetter,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
@@ -372,24 +373,24 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
-	hooks, _ := repo.(repository.Hooks)
-	if hooks == nil {
+	webhookRepo, ok := repo.(repository.WebhookRepository)
+	if !ok {
 		return nil, nil
 	}
 
 	if obj.Status.ObservedGeneration < 1 {
 		logger.Info("handle repository create")
-		patchOperations, err := hooks.OnCreate(ctx)
+		patchOperations, err := webhookOnCreate(ctx, webhookRepo)
 		if err != nil {
-			return nil, fmt.Errorf("error running OnCreate: %w", err)
+			return nil, fmt.Errorf("error running webhookOnCreate: %w", err)
 		}
 		return patchOperations, nil
 	}
 
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	patchOperations, err := hooks.OnUpdate(ctx)
+	patchOperations, err := webhookOnUpdate(ctx, webhookRepo)
 	if err != nil {
-		return nil, fmt.Errorf("error running OnUpdate: %w", err)
+		return nil, fmt.Errorf("error running webhookOnUpdate: %w", err)
 	}
 
 	return patchOperations, nil
@@ -577,8 +578,8 @@ func (rc *RepositoryController) process(key string) error {
 	}
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the RepositoryGetter's concern, not the controller's.
-	obj, err := rc.repos.Get(namespace, name)
+	// fresh is the informer.RepositoryGetter's concern, not the controller's.
+	obj, err := rc.repos.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
 		return errors.New("repository not found")
@@ -729,8 +730,8 @@ func (rc *RepositoryController) process(key string) error {
 	}
 
 	// Rotate webhook secret if due.
-	if rotator, ok := repo.(repository.WebhookSecretRotator); ok && shouldRotateWebhookSecret {
-		rotateOps, err := rotator.RotateWebhookSecret(ctx)
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateWebhookSecret {
+		rotateOps, err := rotateWebhookSecret(ctx, webhookRepo)
 		if err != nil {
 			logger.Warn("webhook secret rotation failed", "error", err)
 		}

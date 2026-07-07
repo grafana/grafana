@@ -344,30 +344,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
-  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
-  * @default false
-  */
-  drilldownRecommendations?: boolean;
-  /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
   */
   perPanelNonApplicableDrilldowns?: boolean;
-  /**
-  * Enables a group by action per panel
-  * @default false
-  */
-  panelGroupBy?: boolean;
-  /**
-  * Enables filtering by grouping labels on the panel level through legend or tooltip
-  * @default false
-  */
-  perPanelFiltering?: boolean;
-  /**
-  * Enables the dashboard filters overview pane
-  * @default false
-  */
-  dashboardFiltersOverview?: boolean;
   /**
   * Enables the feedback button in the dashboard edit sidebar
   * @default true
@@ -513,11 +493,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
-  /**
-  * Enables configuring default origin filters for ad-hoc filter variables
-  * @default false
-  */
-  adHocFilterDefaultValues?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -1134,11 +1109,6 @@ export interface FeatureToggles {
   * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
-  /**
-  * Enables team folders functionality
-  * @default true
-  */
-  teamFolders?: boolean;
   /**
   * Enables the interactive learning app
   * @default false

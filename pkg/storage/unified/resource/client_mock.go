@@ -690,6 +690,80 @@ func (_c *MockResourceClient_List_Call) RunAndReturn(run func(context.Context, *
 	return _c
 }
 
+// ListStoredResources provides a mock function with given fields: ctx, in, opts
+func (_m *MockResourceClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListStoredResources")
+	}
+
+	var r0 *resourcepb.ListStoredResourcesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.ListStoredResourcesRequest, ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *resourcepb.ListStoredResourcesRequest, ...grpc.CallOption) *resourcepb.ListStoredResourcesResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*resourcepb.ListStoredResourcesResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *resourcepb.ListStoredResourcesRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockResourceClient_ListStoredResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListStoredResources'
+type MockResourceClient_ListStoredResources_Call struct {
+	*mock.Call
+}
+
+// ListStoredResources is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *resourcepb.ListStoredResourcesRequest
+//   - opts ...grpc.CallOption
+func (_e *MockResourceClient_Expecter) ListStoredResources(ctx interface{}, in interface{}, opts ...interface{}) *MockResourceClient_ListStoredResources_Call {
+	return &MockResourceClient_ListStoredResources_Call{Call: _e.mock.On("ListStoredResources",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *MockResourceClient_ListStoredResources_Call) Run(run func(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption)) *MockResourceClient_ListStoredResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*resourcepb.ListStoredResourcesRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_ListStoredResources_Call) Return(_a0 *resourcepb.ListStoredResourcesResponse, _a1 error) *MockResourceClient_ListStoredResources_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockResourceClient_ListStoredResources_Call) RunAndReturn(run func(context.Context, *resourcepb.ListStoredResourcesRequest, ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error)) *MockResourceClient_ListStoredResources_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListManagedObjects provides a mock function with given fields: ctx, in, opts
 func (_m *MockResourceClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
 	_va := make([]interface{}, len(opts))

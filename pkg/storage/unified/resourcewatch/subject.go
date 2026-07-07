@@ -10,6 +10,11 @@ import (
 // position to watch every namespace's notifications for a resource.
 const allNamespaces = "*"
 
+// SubjectAll is the NATS multi-token wildcard (">"), matching every Subject(...)
+// value regardless of group, namespace, or resource. A consumer that needs the
+// full change stream (not one resource type) subscribes to this.
+const SubjectAll = ">"
+
 // Subject returns the NATS subject that carries change notifications for a
 // resource type within a namespace, as the dotted tokens
 //
