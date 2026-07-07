@@ -97,7 +97,9 @@ func NewSearchOptions(
 				return resource.SearchOptions{}, err
 			}
 			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
-			searchFieldsProviders = resource.SearchFieldProvidersForBuilders(builders)
+			// Search fields come from the app manifests: every in-tree kind that
+			// has custom search fields declares them in its CUE manifest.
+			searchFieldsProviders = resource.SearchFieldProviders(resource.AppManifests())
 		}
 
 		bleve, err := NewBleveBackend(BleveOptions{
@@ -114,6 +116,12 @@ func NewSearchOptions(
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
+			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
+			PostRankAuthz: PostRankAuthzConfig{
+				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
+				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
+				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+			},
 		}, indexMetrics)
 
 		if err != nil {

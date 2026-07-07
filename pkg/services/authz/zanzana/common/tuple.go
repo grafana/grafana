@@ -141,11 +141,11 @@ var RelationsSubresourceTyped = []string{
 	RelationSubresourceDelete,
 }
 
-// RelationsTeam are the relations valid on type "team". Teams keep a per-object `create`
-// (granted to admins), unlike user / service-account.
+// RelationsTeam are the relations valid on type "team". Like user / service-account, teams
+// have no per-object `create`: creation is governed by the group_resource (the team does not
+// exist yet, so a `create` tuple can't target a specific team object).
 var RelationsTeam = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
-	RelationCreate,
 	RelationUpdate,
 	RelationDelete,
 	RelationGetPermissions,
