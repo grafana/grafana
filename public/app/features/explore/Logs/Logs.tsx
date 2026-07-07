@@ -37,7 +37,6 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagLogsTablePanelNG } from '@grafana/runtime/internal';
 import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
@@ -49,7 +48,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
-import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
@@ -80,10 +78,15 @@ import { changeQueries, runQueries } from '../state/query';
 import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
-import { getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { type LogsVisualisationType } from './constants';
-import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import {
+  getLogsTableHeight,
+  LOGS_TABLE_SETTING_KEYS,
+  SETTING_KEY_ROOT,
+  SETTINGS_KEYS,
+  visualisationTypeKey,
+} from './utils/logs';
 import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
 import { getDefaultTableSortBy } from './utils/table/logsTable';
 import { getExploreBaseUrl } from './utils/url';
@@ -180,10 +183,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     eventBus,
     onPinLineCallback,
   } = props;
-  const showLabels = store.getBool(SETTINGS_KEYS.showLabels, false);
   const showTime = store.getBool(SETTINGS_KEYS.showTime, true);
   const wrapLogMessage = store.getBool(SETTINGS_KEYS.wrapLogMessage, true);
-  const prettifyLogMessage = store.getBool(SETTINGS_KEYS.prettifyLogMessage, false);
 
   const [dedupStrategy, setDedupStrategy] = useState<LogsDedupStrategy>(LogsDedupStrategy.none);
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
@@ -213,7 +214,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
-  const logsContainerRef = useRef<HTMLDivElement | null>(null);
   const [logListContainerElement, setLogListContainerElement] = useState<HTMLDivElement | null>(null);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
@@ -222,7 +222,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
-  const enableNewLogsTable = useFlagLogsTablePanelNG();
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -261,7 +260,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const [displayedFields, setDisplayedFields] = useState<string[]>(() =>
-    getDefaultDisplayedFieldsFromExploreState(panelState?.logs, updatePanelState, enableNewLogsTable)
+    getDefaultDisplayedFieldsFromExploreState(panelState?.logs, updatePanelState, true)
   );
 
   // Get pinned log lines
@@ -875,7 +874,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {enableNewLogsTable && visualisationType === 'table' && hasData && (
+          {visualisationType === 'table' && hasData && (
             <ExploreLogsTable
               eventBus={eventBus}
               data={panelData}
@@ -890,39 +889,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               onOptionsChange={onTableOptionsChange}
               onChangeTimeRange={onChangeTime}
             />
-          )}
-
-          {visualisationType === 'table' && !enableNewLogsTable && hasData && (
-            <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
-              <ControlledLogRows
-                ref={logsContainerRef}
-                absoluteRange={props.absoluteRange}
-                datasourceType={props.datasourceType}
-                dedupStrategy={dedupStrategy}
-                displayedFields={displayedFields}
-                exploreId={props.exploreId}
-                filterLevels={filterLevels}
-                logOptionsStorageKey={SETTING_KEY_ROOT}
-                logRows={logRows}
-                logsMeta={logsMeta}
-                logsSortOrder={logsSortOrder}
-                logsTableFrames={props.logsFrames}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onLogOptionsChange={onLogOptionsChange}
-                panelState={panelState?.logs}
-                prettifyLogMessage={prettifyLogMessage}
-                range={props.range}
-                showLabels={showLabels}
-                showTime={showTime}
-                splitOpen={splitOpen}
-                timeZone={timeZone}
-                updatePanelState={updatePanelState}
-                visualisationType={visualisationType}
-                width={width}
-                wrapLogMessage={wrapLogMessage}
-              />
-            </div>
           )}
           {visualisationType === 'logs' && (
             <div data-testid="logRows" ref={setLogListContainerElement} className={styles.logRowsWrapper}>
@@ -1064,10 +1030,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,
       overflowY: 'visible',
       width: '100%',
-    }),
-    controlledLogRowsWrapper: css({
-      width: '100%',
-      maxHeight: '80vh',
     }),
     logRowsWrapper: css({
       width: '100%',

@@ -41,7 +41,7 @@ describe('FlameGraphContainer', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
+    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} enableVirtualization={false} />;
   };
 
   it('should render without error', async () => {
@@ -243,7 +243,9 @@ describe('FlameGraphContainer (new UI)', () => {
     };
 
     const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
-    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} enableNewUI={true} />;
+    return (
+      <FlameGraphContainer data={flameGraphData} getTheme={getTheme} enableNewUI={true} enableVirtualization={false} />
+    );
   };
 
   it('should render without error', async () => {

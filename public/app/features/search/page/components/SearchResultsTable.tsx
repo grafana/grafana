@@ -11,15 +11,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { TableCellHeight } from '@grafana/schema';
-import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useTableStyles, TableCell } from '@grafana/ui/internal';
+import { useStyles2 } from '@grafana/ui';
 import { useCustomFlexLayout } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { type QueryResponse } from '../../service/types';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
+import { SearchTableCell } from './SearchTableCell';
 import { generateColumns } from './columns';
 
 export type SearchResultsProps = {
@@ -59,7 +58,6 @@ export const SearchResultsTable = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
-    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
@@ -195,22 +193,12 @@ export const SearchResultsTable = React.memo(
                 };
               }
 
-              return (
-                <TableCell
-                  key={index}
-                  tableStyles={tableStyles}
-                  cell={cell}
-                  columnIndex={index}
-                  columnCount={row.cells.length}
-                  userProps={userProps}
-                  frame={response.view.dataFrame}
-                />
-              );
+              return <SearchTableCell key={index} cell={cell} userProps={userProps} frame={response.view.dataFrame} />;
             })}
           </div>
         );
       },
-      [rows, prepareRow, highlightIndex, styles, tableStyles, onClickItem, response.view, trackingSource]
+      [rows, prepareRow, highlightIndex, styles, onClickItem, response.view, trackingSource]
     );
 
     if (!rows.length) {
@@ -263,7 +251,7 @@ export const SearchResultsTable = React.memo(
                 onItemsRendered={onItemsRendered}
                 height={height - ROW_HEIGHT}
                 itemCount={rows.length}
-                itemSize={tableStyles.rowHeight}
+                itemSize={ROW_HEIGHT}
                 width={width}
                 style={{ overflow: 'hidden auto' }}
               >

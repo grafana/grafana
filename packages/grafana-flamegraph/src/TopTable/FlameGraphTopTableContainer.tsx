@@ -40,6 +40,8 @@ type Props = {
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  // Escape hatch to disable table virtualization in tests (jsdom can't measure the grid).
+  enableVirtualization?: boolean;
 };
 
 const FlameGraphTopTableContainer = memo(
@@ -53,6 +55,7 @@ const FlameGraphTopTableContainer = memo(
     onSandwich,
     onTableSort,
     colorScheme,
+    enableVirtualization,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
@@ -83,7 +86,8 @@ const FlameGraphTopTableContainer = memo(
             );
             return (
               <Table
-                initialSortBy={sort}
+                sortBy={sort}
+                sortByBehavior="managed"
                 onSortByChange={(s) => {
                   if (s && s.length) {
                     onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
@@ -93,6 +97,7 @@ const FlameGraphTopTableContainer = memo(
                 data={frame}
                 width={width}
                 height={height}
+                enableVirtualization={enableVirtualization}
               />
             );
           }}

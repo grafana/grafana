@@ -1,27 +1,12 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
 
-function getTable(): HTMLElement {
-  return screen.getAllByRole('table')[0];
-}
-
 function getTableToggle(): HTMLElement {
   return screen.getAllByRole('radio')[0];
-}
-
-function getRowsData(rows: HTMLElement[]): Object[] {
-  let content = [];
-  for (let i = 1; i < rows.length; i++) {
-    content.push({
-      time: within(rows[i]).getByText(/2021*/).textContent,
-      text: within(rows[i]).getByText(/test_string_*/).textContent,
-    });
-  }
-  return content;
 }
 
 const dataFrame = toDataFrame({
@@ -67,7 +52,7 @@ describe('PrometheusQueryResultsContainer', () => {
   it('should render table with data and toggle when showRawPrometheus is true', async () => {
     render(<PrometheusQueryResultsContainer {...defaultProps} showRawPrometheus={true} />);
 
-    // Wait for lazy-loaded component to render
+    // showRawPrometheus defaults to the raw view, which renders its own <table>.
     await waitFor(() => {
       expect(screen.queryAllByRole('table').length).toBe(1);
     });
@@ -75,17 +60,11 @@ describe('PrometheusQueryResultsContainer', () => {
     // Toggle should be visible
     expect(screen.queryAllByRole('radio').length).toBeGreaterThan(0);
 
+    // Switching to the table view swaps the raw <table> for the TableNG data grid.
     fireEvent.click(getTableToggle());
 
-    expect(getTable()).toBeInTheDocument();
-    const rows = within(getTable()).getAllByRole('row');
-    expect(rows).toHaveLength(5);
-    expect(getRowsData(rows)).toEqual([
-      { time: '2021-01-01 00:00:00', text: 'test_string_1' },
-      { time: '2021-01-01 03:00:00', text: 'test_string_2' },
-      { time: '2021-01-01 01:00:00', text: 'test_string_3' },
-      { time: '2021-01-01 02:00:00', text: 'test_string_4' },
-    ]);
+    expect(await screen.findByRole('grid')).toBeInTheDocument();
+    expect(screen.queryAllByRole('table')).toHaveLength(0);
   });
 
   it('should render table without toggle when showRawPrometheus is false', async () => {
@@ -93,7 +72,7 @@ describe('PrometheusQueryResultsContainer', () => {
 
     // Wait for lazy-loaded component to render
     await waitFor(() => {
-      expect(screen.queryAllByRole('table').length).toBe(1);
+      expect(screen.queryAllByRole('grid').length).toBe(1);
     });
 
     // Toggle should NOT be visible
@@ -137,7 +116,7 @@ describe('PrometheusQueryResultsContainer', () => {
     render(<PrometheusQueryResultsContainer tableResult={defaultProps.tableResult} />);
 
     await waitFor(() => {
-      expect(screen.queryAllByRole('table').length).toBe(1);
+      expect(screen.queryAllByRole('grid').length).toBe(1);
     });
   });
 

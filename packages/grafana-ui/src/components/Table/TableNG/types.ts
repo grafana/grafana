@@ -19,21 +19,22 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type ApplyFilterResult, type TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
 type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
-type TableFilterActionCallback = (item: AdHocFilterItem) => void;
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
-type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -152,6 +153,14 @@ interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export type TableCellRenderer = FC<TableCellRendererProps>;
+
+/**
+ * Resolves the cell renderer for a field. Injected into the column builder so the rendering
+ * pipeline is decoupled from any specific set of cell types: the batteries-included table passes
+ * the full registry (gauge/sparkline/markdown/...), while a lean table can pass a minimal resolver
+ * that only handles Auto/text and the custom-cell seam.
+ */
+export type CellRendererResolver = (field: Field, cellOptions: TableCellOptions) => TableCellRenderer;
 
 export interface TableCellRendererProps {
   rowIdx: number;

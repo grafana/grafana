@@ -29,3 +29,4 @@ export type {
 } from './components/CodeMirror/types';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export { TableNG } from './components/Table/TableNG/TableNG';
+export { TableCore } from './components/Table/TableNG/refactored/TableCore';
