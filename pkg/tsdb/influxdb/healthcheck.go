@@ -23,7 +23,7 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := logger.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error getting datasource info", err)
@@ -35,21 +35,20 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return CheckFluxHealth(ctx, dsInfo, req)
+		return CheckFluxHealth(ctx, logger, dsInfo, req)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo, req)
+		return CheckInfluxQLHealth(ctx, logger, dsInfo, req)
 	case influxVersionSQL:
-		return CheckSQLHealth(ctx, dsInfo, req)
+		return CheckSQLHealth(ctx, logger, dsInfo, req)
 	default:
 		return getHealthCheckMessage(logger, "", errors.New("unknown influx version"))
 	}
 }
 
-func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
+func CheckFluxHealth(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo,
 	req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := logger.FromContext(ctx)
-	ds, err := flux.Query(ctx, dsInfo, backend.QueryDataRequest{
+	ds, err := flux.Query(ctx, logger, dsInfo, backend.QueryDataRequest{
 		PluginContext: req.PluginContext,
 		Queries: []backend.DataQuery{
 			{
@@ -80,10 +79,9 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 	return getHealthCheckMessage(logger, "", errors.New("error getting flux query buckets"))
 }
 
-func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	logger := logger.FromContext(ctx)
+func CheckInfluxQLHealth(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	tracer := tracing.DefaultTracer()
-	resp, err := influxql.Query(ctx, tracer, dsInfo, &backend.QueryDataRequest{
+	resp, err := influxql.Query(ctx, logger, tracer, dsInfo, &backend.QueryDataRequest{
 		PluginContext: req.PluginContext,
 		Headers:       req.Headers,
 		Queries: []backend.DataQuery{
@@ -115,8 +113,8 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req
 	return getHealthCheckMessage(logger, "", errors.New("error connecting influxDB influxQL"))
 }
 
-func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	ds, err := fsql.Query(ctx, dsInfo, backend.QueryDataRequest{
+func CheckSQLHealth(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ds, err := fsql.Query(ctx, logger, dsInfo, backend.QueryDataRequest{
 		PluginContext: req.PluginContext,
 		Queries: []backend.DataQuery{
 			{

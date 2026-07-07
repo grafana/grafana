@@ -115,5 +115,6 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
+		logger: backend.NewLoggerWith("logger", "tsdb.influxdb"),
 	}
 }

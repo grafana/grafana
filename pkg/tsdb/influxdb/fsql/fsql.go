@@ -7,15 +7,12 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-)
-
-var (
-	glog = backend.NewLoggerWith("logger", "tsdb.influx_flightsql")
 )
 
 type SQLOptions struct {
@@ -24,9 +21,9 @@ type SQLOptions struct {
 	Token    string              `json:"token"`
 }
 
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.QueryDataRequest) (
+func Query(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, req backend.QueryDataRequest) (
 	*backend.QueryDataResponse, error) {
-	logger := glog.FromContext(ctx)
+	logger = logger.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
 	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {

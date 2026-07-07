@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
+var testLogger = backend.NewLoggerWith("logger", "tsdb.influx_flightsql")
+
 type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
@@ -71,6 +73,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 	suite.Run("should run simple query data", func() {
 		resp, err := Query(
 			context.Background(),
+			testLogger,
 			&models.DatasourceInfo{
 				HTTPClient:   nil,
 				Token:        "secret",
@@ -141,6 +144,7 @@ func freeport(t *testing.T) (addr string, err error) {
 func TestInvalidSchema(t *testing.T) {
 	resp, _ := Query(
 		context.Background(),
+		testLogger,
 		&models.DatasourceInfo{
 			HTTPClient:   nil,
 			Token:        "secret",

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -11,7 +12,8 @@ import (
 )
 
 func main() {
-	if err := datasource.Manage("influxdb", influxdb.NewInstanceSettings(httpclient.NewProvider()), datasource.ManageOpts{}); err != nil {
+	logger := backend.NewLoggerWith("logger", "tsdb.influxdb")
+	if err := datasource.Manage("influxdb", influxdb.NewInstanceSettings(httpclient.NewProvider(), logger), datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

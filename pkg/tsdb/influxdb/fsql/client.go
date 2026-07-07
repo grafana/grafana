@@ -11,6 +11,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/flight/flightsql"
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"google.golang.org/grpc"
@@ -70,7 +71,10 @@ func grpcDialOptions(secure bool, tlsConfig *httpclient.TLSOptions, proxyClient 
 		}
 
 		dialOptions = append(dialOptions, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
-			logger := glog.FromContext(ctx)
+			// Constructed lazily here (not as a package-level var) so it resolves to
+			// the in-process logger override installed during coreplugin init and
+			// respects the configured log level. This closure runs at dial time.
+			logger := backend.NewLoggerWith("logger", "tsdb.influx_flightsql").FromContext(ctx)
 			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
