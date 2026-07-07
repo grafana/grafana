@@ -72,13 +72,14 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
   const canPushToConfiguredBranch = selectedRepoObj?.spec?.workflows?.includes('write') ?? false;
   const blockedByWorkflow = Boolean(selectedRepo) && !canPushToConfiguredBranch;
+  const syncTarget = selectedRepoObj?.spec?.sync?.target;
 
   const startMigration = async () => {
     if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
     await startJob(true, {
-      syncTarget: selectedRepoObj?.spec?.sync?.target,
+      syncTarget,
       ...(isSelective ? { resources } : {}),
     });
   };
@@ -167,7 +168,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Alert>
         )}
 
-        <GitSyncLimitationsAlert syncTarget={selectedRepoObj?.spec?.sync?.target} />
+        <GitSyncLimitationsAlert syncTarget={syncTarget} />
 
         <Stack direction="row" gap={2}>
           <Button variant="secondary" fill="outline" onClick={onDismiss}>
