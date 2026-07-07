@@ -308,14 +308,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "aiGeneratedDashboardChanges",
-			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,

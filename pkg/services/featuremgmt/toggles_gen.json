@@ -35,7 +35,8 @@
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T12:01:31Z"
+        "creationTimestamp": "2024-03-05T12:01:31Z",
+        "deletionTimestamp": "2026-07-07T09:06:03Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
