@@ -57,12 +57,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
-		UserID: userID,
-		OrgID:  c.GetOrgID(),
-		Teams:  c.TeamIDs, // nolint:staticcheck
+	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
+	var prefs *pref.Preference
+	if ofClient.Boolean(c.Req.Context(), featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(c.Req.Context())) {
+		prefs, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
+	} else {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+			UserID: userID,
+			OrgID:  c.GetOrgID(),
+			Teams:  c.TeamIDs, // nolint:staticcheck
+		}
+		prefs, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	}
-	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	prefsSpan.End()
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +107,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
-	ofClient := openfeature.NewDefaultClient()
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
