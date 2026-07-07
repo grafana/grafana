@@ -63,11 +63,14 @@ func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions,
 		OnFolder: func(folder resources.Folder, created bool, err error) error {
 			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
 
-			if err != nil {
+			// A folder that failed to write must keep a non-ignored action: the
+			// recorder discards errors on FileActionIgnored results, so labelling
+			// a failure as ignored would let a broken export (e.g. an invalid
+			// folder path) drop the error and report the job as a success.
+			switch {
+			case err != nil:
 				resultBuilder.WithError(fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err))
-			}
-
-			if !created {
+			case !created:
 				resultBuilder.WithAction(repository.FileActionIgnored)
 			}
 			progress.Record(ctx, resultBuilder.Build())

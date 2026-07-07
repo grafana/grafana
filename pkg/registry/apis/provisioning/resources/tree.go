@@ -107,7 +107,11 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	}
 
 	fid = t.folders[folder]
-	fid.Path = fid.Title
+	// Derive the path from titles, normalizing each title into a safe segment so
+	// a folder named with characters outside the allowed path set (e.g. "»") is
+	// exported under a sanitized path instead of failing the write. The UID is
+	// used as a fallback so the segment is always non-empty.
+	fid.Path = safepath.SanitizeSegment(fid.Title, folder)
 	ok = baseFolder == ""
 
 	parent := t.tree[folder]
@@ -117,7 +121,7 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			break
 		}
 		// FIXME: missing slash here
-		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
+		fid.Path = safepath.Join(safepath.SanitizeSegment(t.folders[parent].Title, parent), fid.Path)
 		parent = t.tree[parent]
 	}
 	return fid, ok
