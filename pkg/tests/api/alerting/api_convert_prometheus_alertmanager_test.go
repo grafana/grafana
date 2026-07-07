@@ -804,7 +804,7 @@ receivers:
 
 	// createUser creates a user with orgRole=None and grants the given permission sets.
 	// globalCmds are for unscoped actions; importsCmds grant actions scoped to all imports (uid:*).
-	createUser := func(t *testing.T, globalActions, importsActions []string) apiClient {
+	createUserFn := func(t *testing.T, globalActions, importsActions []string) apiClient {
 		t.Helper()
 		login := util.GenerateShortUID()
 		uid := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -853,7 +853,7 @@ receivers:
 	// a user with all required permissions promotes it via the dedicated endpoint.
 	t.Run("user with all required permissions can promote", func(t *testing.T) {
 		stageConfig(t)
-		client := createUser(t, allGlobal, allImports)
+		client := createUserFn(t, allGlobal, allImports)
 		_, status, body := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusAccepted, status, body)
 	})
@@ -861,31 +861,31 @@ receivers:
 	// The following tests verify RBAC middleware enforcement. The middleware rejects before any DB
 	// access, so no staged config is needed — 403 is returned regardless of whether the config exists.
 	t.Run("user with no permissions gets 403", func(t *testing.T) {
-		client := createUser(t, nil, nil)
+		client := createUserFn(t, nil, nil)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ImportsRead gets 403", func(t *testing.T) {
-		client := createUser(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsDelete})
+		client := createUserFn(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsDelete})
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ImportsDelete gets 403", func(t *testing.T) {
-		client := createUser(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsRead})
+		client := createUserFn(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsRead})
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ReceiversCreate gets 403", func(t *testing.T) {
-		client := createUser(t, []string{accesscontrol.ActionAlertingManagedRoutesCreate}, allImports)
+		client := createUserFn(t, []string{accesscontrol.ActionAlertingManagedRoutesCreate}, allImports)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 
 	t.Run("user missing ManagedRoutesCreate gets 403", func(t *testing.T) {
-		client := createUser(t, []string{accesscontrol.ActionAlertingReceiversCreate}, allImports)
+		client := createUserFn(t, []string{accesscontrol.ActionAlertingReceiversCreate}, allImports)
 		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
 		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
