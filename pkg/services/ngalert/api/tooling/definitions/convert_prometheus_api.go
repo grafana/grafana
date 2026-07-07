@@ -255,7 +255,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: ConvertPrometheusResponse
+//       202: ConvertAlertmanagerResponse
 //       403: ForbiddenError
 //       404: NotFound
 
