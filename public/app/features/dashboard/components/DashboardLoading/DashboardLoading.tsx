@@ -4,7 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { DashboardInitPhase } from 'app/types/dashboard';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { DashboardInitPhase, KioskMode } from 'app/types/dashboard';
 
 export interface Props {
   initPhase: DashboardInitPhase;
@@ -12,6 +13,9 @@ export interface Props {
 
 export const DashboardLoading = ({ initPhase }: Props) => {
   const styles = useStyles2(getStyles);
+  const kioskMode = getKioskMode(locationService.getSearchObject());
+  const isEmbedKiosk = kioskMode === KioskMode.Embed;
+
   const cancelVariables = () => {
     locationService.push('/');
   };
@@ -23,11 +27,13 @@ export const DashboardLoading = ({ initPhase }: Props) => {
           <Stack alignItems="center" justifyContent="center" gap={0.5}>
             <Spinner inline={true} /> {initPhase}
           </Stack>{' '}
-          <Stack alignItems="center" justifyContent="center">
-            <Button variant="secondary" size="md" icon="repeat" onClick={cancelVariables}>
-              <Trans i18nKey="dashboard.dashboard-loading.cancel-loading-dashboard">Cancel loading dashboard</Trans>
-            </Button>
-          </Stack>
+          {!isEmbedKiosk && (
+            <Stack alignItems="center" justifyContent="center">
+              <Button variant="secondary" size="md" icon="repeat" onClick={cancelVariables}>
+                <Trans i18nKey="dashboard.dashboard-loading.cancel-loading-dashboard">Cancel loading dashboard</Trans>
+              </Button>
+            </Stack>
+          )}
         </Stack>
       </div>
     </div>
