@@ -60,7 +60,7 @@ export interface ExplorePanelsState extends Partial<Record<PreferredVisualisatio
   graph?: ExploreGraphPanelState;
 }
 
-export interface ExploreGraphPanelState {
+interface ExploreGraphPanelState {
   unit?: string;
 }
 
