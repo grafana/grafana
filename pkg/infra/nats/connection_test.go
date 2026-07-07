@@ -227,36 +227,6 @@ func TestConnection(t *testing.T) {
 			require.Empty(t, o.Token)
 		})
 
-		t.Run("per-role audiences enable the token handler", func(t *testing.T) {
-			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
-				PublisherTokenExchangeAudiences: []string{"us-nats-publish"},
-				TokenExchangeURL:                "http://signer/sign",
-				TokenExchangeToken:              "boot-token",
-			}}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
-
-			opts, err := c.connectOptions()
-			require.NoError(t, err)
-			o := applyOptions(t, opts)
-			require.NotNil(t, o.TokenHandler)
-		})
-
-		t.Run("a role with no resolvable audiences does not register a handler", func(t *testing.T) {
-			// Only the publisher audience is set, so the subscriber connection has
-			// nothing to request and must not present a token.
-			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
-				PublisherTokenExchangeAudiences: []string{"us-nats-publish"},
-				TokenExchangeURL:                "http://signer/sign",
-				TokenExchangeToken:              "boot-token",
-			}}
-			c := newConnection(roleSubscriber, log.NewNopLogger(), newConnectionMetrics(roleSubscriber), newConfig(cfg, nil), func() string { return "" })
-
-			opts, err := c.connectOptions()
-			require.NoError(t, err)
-			o := applyOptions(t, opts)
-			require.Nil(t, o.TokenHandler)
-		})
-
 		t.Run("credentials file wins over token exchange", func(t *testing.T) {
 			credsFile := filepath.Join(t.TempDir(), "pub.creds")
 			require.NoError(t, os.WriteFile(credsFile, []byte("dummy"), 0o600))

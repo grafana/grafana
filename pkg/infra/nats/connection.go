@@ -237,7 +237,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	switch creds := c.credentials(); {
 	case creds != "":
 		options = append(options, natsclient.UserCredentials(creds))
-	case c.config.TokenExchangeConfiguredFor(c.role):
+	case c.config.TokenExchangeConfigured():
 		options = append(options, natsclient.TokenHandler(c.tokenHandler))
 	case c.config.Token() != "":
 		options = append(options, natsclient.Token(c.config.Token()))
@@ -253,7 +253,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 func (c *connection) tokenHandler() string {
 	ctx, cancel := context.WithTimeout(context.Background(), tokenExchangeTimeout)
 	defer cancel()
-	token, err := c.config.exchangeAccessToken(ctx, c.role)
+	token, err := c.config.exchangeAccessToken(ctx)
 	if err != nil {
 		c.log.Error("nats access-token exchange failed", "role", c.role, "err", err)
 		return ""

@@ -77,21 +77,16 @@ type NATSAuthSettings struct {
 	SubscriberCredentialsFile string
 
 	// TokenExchangeAudiences are the audiences requested for the minted access
-	// token; a non-empty value (here or in a per-role field) turns token-exchange
-	// auth on. TokenExchangeURL, TokenExchangeToken and TokenExchangeNamespace are
-	// read from [grpc_client_authentication] so a service that already talks to the
-	// cloud signer reuses the same wiring.
-	//
-	// Per-role audiences let each connection mint a token scoped to its role, so an
-	// auth-callout service can derive least-privilege permissions from the token's
-	// audience rather than trusting a client-supplied hint. An empty per-role value
-	// falls back to the shared TokenExchangeAudiences.
-	TokenExchangeAudiences           []string
-	PublisherTokenExchangeAudiences  []string
-	SubscriberTokenExchangeAudiences []string
-	TokenExchangeURL                 string
-	TokenExchangeToken               string
-	TokenExchangeNamespace           string
+	// token; a non-empty value turns token-exchange auth on. TokenExchangeURL,
+	// TokenExchangeToken and TokenExchangeNamespace are read from
+	// [grpc_client_authentication] so a service that already talks to the cloud
+	// signer reuses the same wiring. The publisher and subscriber connections
+	// request the same audience: the auth-callout service authorizes on the
+	// verified token, not on a per-role audience.
+	TokenExchangeAudiences []string
+	TokenExchangeURL       string
+	TokenExchangeToken     string
+	TokenExchangeNamespace string
 }
 
 func readNATSSettings(cfg *Cfg) error {
@@ -130,16 +125,14 @@ func readNATSSettings(cfg *Cfg) error {
 			InsecureSkipVerify: section.Key("tls_insecure_skip_verify").MustBool(false),
 		},
 		Auth: NATSAuthSettings{
-			Token:                            section.Key("token").MustString(""),
-			CredentialsFile:                  section.Key("credentials_file").MustString(""),
-			PublisherCredentialsFile:         section.Key("publisher_credentials_file").MustString(""),
-			SubscriberCredentialsFile:        section.Key("subscriber_credentials_file").MustString(""),
-			TokenExchangeAudiences:           util.SplitString(section.Key("token_exchange_audiences").MustString("")),
-			PublisherTokenExchangeAudiences:  util.SplitString(section.Key("publisher_token_exchange_audiences").MustString("")),
-			SubscriberTokenExchangeAudiences: util.SplitString(section.Key("subscriber_token_exchange_audiences").MustString("")),
-			TokenExchangeURL:                 grpcClient.Key("token_exchange_url").MustString(""),
-			TokenExchangeToken:               grpcClient.Key("token").MustString(""),
-			TokenExchangeNamespace:           grpcClient.Key("token_namespace").MustString("stacks-" + cfg.StackID),
+			Token:                     section.Key("token").MustString(""),
+			CredentialsFile:           section.Key("credentials_file").MustString(""),
+			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
+			SubscriberCredentialsFile: section.Key("subscriber_credentials_file").MustString(""),
+			TokenExchangeAudiences:    util.SplitString(section.Key("token_exchange_audiences").MustString("")),
+			TokenExchangeURL:          grpcClient.Key("token_exchange_url").MustString(""),
+			TokenExchangeToken:        grpcClient.Key("token").MustString(""),
+			TokenExchangeNamespace:    grpcClient.Key("token_namespace").MustString("stacks-" + cfg.StackID),
 		},
 	}
 	return nil
@@ -151,32 +144,10 @@ func (s NATSSettings) Embedded() bool {
 }
 
 // TokenExchangeEnabled reports whether the connection should mint short-lived
-// access tokens via authlib token exchange. It needs a target audience (shared or
-// per-role) plus the exchange endpoint and bootstrap token (shared with
-// [grpc_client_authentication]).
+// access tokens via authlib token exchange. It needs a target audience plus the
+// exchange endpoint and bootstrap token (shared with [grpc_client_authentication]).
 func (a NATSAuthSettings) TokenExchangeEnabled() bool {
-	hasAudience := len(a.TokenExchangeAudiences) > 0 ||
-		len(a.PublisherTokenExchangeAudiences) > 0 ||
-		len(a.SubscriberTokenExchangeAudiences) > 0
-	return hasAudience && a.TokenExchangeURL != "" && a.TokenExchangeToken != ""
-}
-
-// PublisherAudiences returns the audiences the publisher connection requests for
-// its access token, falling back to the shared audiences when no per-role value
-// is set.
-func (a NATSAuthSettings) PublisherAudiences() []string {
-	if len(a.PublisherTokenExchangeAudiences) > 0 {
-		return a.PublisherTokenExchangeAudiences
-	}
-	return a.TokenExchangeAudiences
-}
-
-// SubscriberAudiences returns the audiences the subscriber connection requests.
-func (a NATSAuthSettings) SubscriberAudiences() []string {
-	if len(a.SubscriberTokenExchangeAudiences) > 0 {
-		return a.SubscriberTokenExchangeAudiences
-	}
-	return a.TokenExchangeAudiences
+	return len(a.TokenExchangeAudiences) > 0 && a.TokenExchangeURL != "" && a.TokenExchangeToken != ""
 }
 
 func (a NATSAuthSettings) PublisherCredentials() string {

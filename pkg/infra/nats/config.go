@@ -52,35 +52,21 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
 
-// audiencesFor returns the token-exchange audiences a role's connection should
-// request. Per-role audiences let the auth-callout service derive least-privilege
-// permissions from the token itself rather than a client-supplied hint.
-func (c *Config) audiencesFor(role connRole) []string {
-	switch role {
-	case rolePublisher:
-		return c.cfg.Auth.PublisherAudiences()
-	case roleSubscriber:
-		return c.cfg.Auth.SubscriberAudiences()
-	default:
-		return c.cfg.Auth.TokenExchangeAudiences
-	}
+// TokenExchangeConfigured reports whether a connection should present a minted
+// access token: the exchanger was built successfully and at least one audience is
+// configured to request.
+func (c *Config) TokenExchangeConfigured() bool {
+	return c.tokenExchanger != nil && len(c.cfg.Auth.TokenExchangeAudiences) > 0
 }
 
-// TokenExchangeConfiguredFor reports whether the given role's connection should
-// present a minted access token: the exchanger was built successfully and the
-// role resolves to at least one audience to request.
-func (c *Config) TokenExchangeConfiguredFor(role connRole) bool {
-	return c.tokenExchanger != nil && len(c.audiencesFor(role)) > 0
-}
-
-// exchangeAccessToken mints a fresh access token scoped to the given role's
+// exchangeAccessToken mints a fresh access token scoped to the configured
 // audiences. Callers present the returned token as the NATS connect token; an
-// external auth-callout service verifies it and derives the connection's
-// permissions from the token's audience.
-func (c *Config) exchangeAccessToken(ctx context.Context, role connRole) (string, error) {
+// external auth-callout service verifies it and grants the connection's
+// permissions.
+func (c *Config) exchangeAccessToken(ctx context.Context) (string, error) {
 	resp, err := c.tokenExchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Namespace: c.cfg.Auth.TokenExchangeNamespace,
-		Audiences: c.audiencesFor(role),
+		Audiences: c.cfg.Auth.TokenExchangeAudiences,
 	})
 	if err != nil {
 		return "", err
