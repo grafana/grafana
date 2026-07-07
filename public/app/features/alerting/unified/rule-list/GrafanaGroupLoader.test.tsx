@@ -49,6 +49,7 @@ const ui = {
     delete: () => byRole('menuitem', { name: /delete/i }),
     pause: () => byRole('menuitem', { name: /pause/i }),
     analyzeRule: () => byRole('menuitem', { name: /analyze rule/i }),
+    startInvestigation: () => byRole('menuitem', { name: /start investigation/i }),
   },
 };
 
@@ -253,12 +254,13 @@ describe('GrafanaGroupLoader', () => {
     const moreButton = ui.moreButton().get(ruleListItem);
     await user.click(moreButton);
 
-    // Check that Analyze rule menu item is present
+    // Check that assistant menu items are present
+    expect(ui.menuItems.startInvestigation().get()).toBeInTheDocument();
     expect(ui.menuItems.analyzeRule().get()).toBeInTheDocument();
 
-    // With assistant enabled, there should be 7 menu items (6 + Analyze rule)
+    // With assistant enabled, there should be 8 menu items (6 + Start investigation + Analyze rule)
     const menuItems = byRole('menuitem').getAll();
-    expect(menuItems.length).toBe(7);
+    expect(menuItems.length).toBe(8);
   });
 
   it('should not render Analyze rule menu item when assistant is not available', async () => {
@@ -285,7 +287,8 @@ describe('GrafanaGroupLoader', () => {
     const moreButton = ui.moreButton().get(ruleListItem);
     await user.click(moreButton);
 
-    // Check that Analyze rule menu item is NOT present
+    // Check that assistant menu items are NOT present
+    expect(ui.menuItems.startInvestigation().query()).not.toBeInTheDocument();
     expect(ui.menuItems.analyzeRule().query()).not.toBeInTheDocument();
 
     // Without assistant, there should be 6 menu items
