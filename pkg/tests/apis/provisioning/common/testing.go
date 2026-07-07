@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -1366,6 +1367,36 @@ func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningMaxFileSize = &n
 	}
+}
+
+// WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
+// the provisioning controllers reconcile off NATS-delivered resource-change
+// notifications instead of the apiserver watch. The KV backend is what publishes
+// those notifications, so both must be on together. Two free TCP ports are
+// allocated for the embedded server's client and cluster listeners so parallel
+// test binaries don't collide on the conventional 4222/6222.
+func WithNATS() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.EnableSQLKVBackend = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+	}
+}
+
+// freePort asks the kernel for an available TCP port on the loopback interface
+// and returns it after closing the listener. There is an inherent (small) race
+// between closing and the embedded NATS server binding, but it is the same
+// approach used by the unified-storage NATS round-trip test and is adequate for
+// test isolation.
+func freePort() int {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(fmt.Sprintf("failed to allocate a free port for NATS: %v", err))
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port
 }
 
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.

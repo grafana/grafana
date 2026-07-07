@@ -804,6 +804,27 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	if opts.NATSEnabled {
+		listenAddress := opts.NATSListenAddress
+		if listenAddress == "" {
+			listenAddress = "127.0.0.1"
+		}
+		section, err := getOrCreateSection("nats")
+		require.NoError(t, err)
+		_, err = section.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("mode", "embedded")
+		require.NoError(t, err)
+		_, err = section.NewKey("listen_address", listenAddress)
+		require.NoError(t, err)
+		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
+		require.NoError(t, err)
+		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
+		require.NoError(t, err)
+		// Single-node test bus: skip KV-backed peer discovery/clustering.
+		_, err = section.NewKey("discovery_enabled", "false")
+		require.NoError(t, err)
+	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
@@ -1060,13 +1081,26 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer                               bool
 	MigrationChunkMaxBytes                               int64
 	EnableSQLKVBackend                                   bool
-	SecretsManagerEnableDBMigrations                     bool
-	OpenFeatureAPIEnabled                                bool
-	DisableAuthZClientCache                              bool
-	ZanzanaReconciliationInterval                        time.Duration
-	ZanzanaReconcilerMode                                setting.ZanzanaReconcilerMode
-	DisableZanzanaCache                                  bool
-	DisableZanzanaServerCheckQueryCache                  bool
+	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
+	// mode=embedded). Provisioning controllers then consume resource-change
+	// notifications through the NATS-backed informer instead of the apiserver
+	// watch. Publishing requires EnableSQLKVBackend=true.
+	NATSEnabled bool
+	// NATSListenAddress is the embedded server's bind address; defaults to
+	// 127.0.0.1 when empty.
+	NATSListenAddress string
+	// NATSClientPort / NATSClusterPort are the embedded server's ports. Callers
+	// should pass free ports so parallel test binaries don't collide on the
+	// conventional 4222/6222.
+	NATSClientPort                      int
+	NATSClusterPort                     int
+	SecretsManagerEnableDBMigrations    bool
+	OpenFeatureAPIEnabled               bool
+	DisableAuthZClientCache             bool
+	ZanzanaReconciliationInterval       time.Duration
+	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
+	DisableZanzanaCache                 bool
+	DisableZanzanaServerCheckQueryCache bool
 
 	// If set to 0, the default (2) is used.
 	DBMaxConns int
