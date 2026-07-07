@@ -12,7 +12,7 @@ import {
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
-import { AnnoKeyFolder } from '../../../../features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
 import {
   useGetFolderQueryFacade,
@@ -53,6 +53,13 @@ jest.mock('../../../../types/store', () => {
     useDispatch: () => dispatchMockFn,
   };
 });
+
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -96,6 +103,28 @@ const setupUpdateFolderHandler = (onPatch?: jest.Mock) => {
             body && typeof body === 'object' && 'spec' in body
               ? (body.spec?.title ?? 'Updated Folder')
               : 'Updated Folder',
+        },
+      });
+    })
+  );
+};
+
+const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
+  folderAPIVersionResolver.set('v1beta1');
+  server.use(
+    http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', async ({ request }) => {
+      const body = await request.json();
+      onCreate?.(body);
+
+      return HttpResponse.json({
+        apiVersion: 'folder.grafana.app/v1beta1',
+        kind: 'Folder',
+        metadata: {
+          name: 'new-folder-uid',
+          generation: 1,
+        },
+        spec: {
+          title: body && typeof body === 'object' && 'spec' in body ? (body.spec?.title ?? 'test') : 'test',
         },
       });
     })
@@ -311,6 +340,49 @@ describe.each([
 
       expect(await screen.findByText('Folder created')).toBeInTheDocument();
       expect(dispatchMockFn).toHaveBeenCalled();
+    });
+
+    it('sets grant-permissions annotation when creating a root folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder at root/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyGrantPermissions]: 'default' },
+          }),
+        })
+      );
+    });
+
+    it('sets folder annotation when creating a nested folder via the app platform API', async () => {
+      if (!toggle) {
+        return;
+      }
+
+      const createSpy = jest.fn();
+      setupCreateFolderHandler(createSpy);
+      const { user } = setupCreateFolder();
+
+      await user.click(screen.getByText(/Create Folder in nested folder/));
+
+      await waitFor(() => expect(createSpy).toHaveBeenCalled());
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            annotations: { [AnnoKeyFolder]: folderA.item.uid },
+          }),
+        })
+      );
+      expect(createSpy.mock.calls[0][0].metadata.annotations[AnnoKeyGrantPermissions]).toBeUndefined();
     });
   });
 

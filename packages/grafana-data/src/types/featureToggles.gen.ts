@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Query InfluxDB InfluxQL without the proxy
-  * @default true
-  */
-  influxdbBackendMigration?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
@@ -193,6 +188,16 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
+  * @default false
+  */
+  externalSnapshotsK8SAPIPush?: boolean;
+  /**
+  * On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
+  * @default false
+  */
+  externalSnapshotsSupportLegacyAPI?: boolean;
   /**
   * Routes library panel requests from /api to the /apis endpoint
   * @default false
@@ -339,30 +344,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
-  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
-  * @default false
-  */
-  drilldownRecommendations?: boolean;
-  /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
   */
   perPanelNonApplicableDrilldowns?: boolean;
-  /**
-  * Enables a group by action per panel
-  * @default false
-  */
-  panelGroupBy?: boolean;
-  /**
-  * Enables filtering by grouping labels on the panel level through legend or tooltip
-  * @default false
-  */
-  perPanelFiltering?: boolean;
-  /**
-  * Enables the dashboard filters overview pane
-  * @default false
-  */
-  dashboardFiltersOverview?: boolean;
   /**
   * Enables the feedback button in the dashboard edit sidebar
   * @default true
@@ -449,16 +434,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
-  /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
@@ -518,11 +493,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
-  /**
-  * Enables configuring default origin filters for ad-hoc filter variables
-  * @default false
-  */
-  adHocFilterDefaultValues?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -880,11 +850,6 @@ export interface FeatureToggles {
   */
   fetchRulesInCompactMode?: boolean;
   /**
-  * Enables the new logs panel
-  * @default true
-  */
-  newLogsPanel?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1140,20 +1105,10 @@ export interface FeatureToggles {
   */
   favoriteDatasources?: boolean;
   /**
-  * New Log Context component
-  * @default true
-  */
-  newLogContext?: boolean;
-  /**
   * Enables new design for the Clickhouse data source configuration page
   * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
-  /**
-  * Enables team folders functionality
-  * @default true
-  */
-  teamFolders?: boolean;
   /**
   * Enables the interactive learning app
   * @default false
@@ -1226,10 +1181,10 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
+  * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
+  * @default false
   */
-  heatmapRowsAxisOptions?: boolean;
+  heatmapNegativeLogBuckets?: boolean;
   /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
@@ -1305,12 +1260,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAlertingHistorian?: boolean;
-  /**
-  * Deprecated. Enables support for variables whose values can have multiple properties
-  * @deprecated
-  * @default true
-  */
-  multiPropsVariables?: boolean;
   /**
   * Enables support for section level variables (rows and tabs)
   * @default true
@@ -1442,11 +1391,6 @@ export interface FeatureToggles {
   */
   react19?: boolean;
   /**
-  * Enables the frontend service to fetch tenant-specific settings overrides from the settings service
-  * @default false
-  */
-  frontendServiceUseSettingsService?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1506,11 +1450,6 @@ export interface FeatureToggles {
   * @default false
   */
   logsTablePanelNG?: boolean;
-  /**
-  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
-  * @default false
-  */
-  frontendServiceSSOAutoLogin?: boolean;
   /**
   * Enables the splash screen modal for introducing new Grafana features on first session
   * @default false
@@ -1581,4 +1520,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }

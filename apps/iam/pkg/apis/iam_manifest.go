@@ -72,6 +72,45 @@ var appManifestData = app.ManifestData{
 						"spec.email",
 						"spec.login",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The email address of the user",
+						},
+						{
+							Name:         "login",
+							Path:         "spec.login",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The login of the user",
+						},
+						{
+							Name:             "lastSeenAt",
+							Path:             "status.lastSeenAt",
+							Type:             "int64",
+							Capabilities:     []string{"sort", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "The last seen timestamp of the user",
+						},
+						{
+							Name:         "role",
+							Path:         "spec.role",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The role of the user",
+						},
+						{
+							Name:             "disabled",
+							Path:             "spec.disabled",
+							Type:             "boolean",
+							Capabilities:     []string{"filter", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "Whether the user is disabled",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
 							Get: &spec3.Operation{
@@ -171,6 +210,45 @@ var appManifestData = app.ManifestData{
 					Plural:     "Teams",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Email of the team",
+						},
+						{
+							Name:         "provisioned",
+							Path:         "spec.provisioned",
+							Type:         "boolean",
+							Capabilities: []string{"retrieve"},
+							Description:  "Whether the team is provisioned",
+						},
+						{
+							Name:         "externalUID",
+							Path:         "spec.externalUID",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "External UID of the team",
+						},
+						{
+							Name:         "members",
+							Path:         "spec.members[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of users that are members of the team",
+						},
+						{
+							Name:         "externalGroups",
+							Path:         "spec.externalGroups",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "External group identifiers mapped to the team",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/addmember": {
 							Post: &spec3.Operation{
@@ -484,6 +562,33 @@ var appManifestData = app.ManifestData{
 						"spec.subject.name",
 						"spec.external",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "subject",
+							Path:         "spec.subject.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "permission",
+							Path:         "spec.permission",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+						},
+						{
+							Name:             "external",
+							Path:             "spec.external",
+							Type:             "boolean",
+							Capabilities:     []string{"retrieve"},
+							EmitZeroIfAbsent: true,
+						},
+					},
 				},
 
 				{
@@ -789,6 +894,22 @@ var appManifestData = app.ManifestData{
 					SelectableFields: []string{
 						"spec.teamRef.name",
 						"spec.externalGroupId",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The team name associated with the external group mapping",
+						},
+						{
+							Name:         "external_group",
+							Path:         "spec.externalGroupId",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The external group name/id associated with the external group mapping",
+						},
 					},
 				},
 			},

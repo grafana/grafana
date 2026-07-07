@@ -54,23 +54,13 @@ const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
   return <img className={className} src={grafanaIconSvg} alt="Grafana" />;
 };
 
-/**
- * inMegaMenuOverlay = true we just render the logo without link (used in mega menu)
- */
-export function HomeLink({ homeNav, inMegaMenuOverlay }: { homeNav?: NavModelItem; inMegaMenuOverlay?: boolean }) {
+export function HomeLink({ homeNav, onClick }: { homeNav?: NavModelItem; onClick?: () => void }) {
   const styles = useStyles2(homeLinkStyles);
 
   const onHomeClicked = () => {
     reportInteraction('grafana_home_clicked');
+    onClick?.();
   };
-
-  if (inMegaMenuOverlay) {
-    return (
-      <div className={styles.homeLink}>
-        <Branding.MenuLogo />
-      </div>
-    );
-  }
 
   return (
     <Tooltip placement="bottom" content={homeNav?.text || 'Home'}>

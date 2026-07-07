@@ -1854,6 +1854,10 @@
             "description": "The fixed color value for fixed or shades color modes.",
             "type": "string"
           },
+          "gradientColorTo": {
+            "description": "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+            "type": "string"
+          },
           "mode": {
             "description": "The main color scheme mode.",
             "type": "string",

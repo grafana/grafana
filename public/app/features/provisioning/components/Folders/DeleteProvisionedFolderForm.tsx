@@ -16,9 +16,11 @@ import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -70,6 +72,16 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
@@ -87,6 +99,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
         paramValue: prUrl,
         repoType: info.repoType,
         action: 'delete',
+        prTitle,
       });
       navigate(url);
     }
@@ -209,6 +222,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 repository={repository}
                 lockComment={locked}
                 commitMessage={message}
+                lockBranch={lockBranch}
               />
 
               {error && <ProvisioningAlert error={error} />}

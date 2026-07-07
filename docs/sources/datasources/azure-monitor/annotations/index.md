@@ -17,6 +17,7 @@ labels:
 menuTitle: Annotations
 title: Azure Monitor annotations
 weight: 450
+review_date: 2026-05-12
 ---
 
 # Azure Monitor annotations
@@ -192,7 +193,7 @@ Follow these recommendations when creating annotations:
 
 4. **Add relevant tags**: Include columns like `ResourceGroup`, `Severity`, or `Status` that become clickable tags for filtering.
 
-5. **Use descriptive names**: Name your annotations clearly (e.g., "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
+5. **Use descriptive names**: Name your annotations clearly (for example, "Production Deployments", "Critical Alerts") so dashboard users understand what they represent.
 
 ## Troubleshoot annotations
 

@@ -236,6 +236,35 @@ func (r *Repository) Branch() string {
 	return ""
 }
 
+// SetBranch writes branch to the provider-specific spec field for git-based repositories,
+// mirroring Branch(). It is a no-op for non-git types or when the provider config is absent.
+func (r *Repository) SetBranch(branch string) {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			r.Spec.GitHub.Branch = branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			r.Spec.GitHubEnterprise.Branch = branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			r.Spec.Git.Branch = branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			r.Spec.Bitbucket.Branch = branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			r.Spec.GitLab.Branch = branch
+		}
+	default:
+		// do nothing
+	}
+}
+
 // URL returns the URL for git-based repositories
 // or an empty string for local repositories
 func (r *Repository) URL() string {

@@ -18,7 +18,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
 	config *provisioning.Repository
@@ -108,7 +107,7 @@ func (r *githubRepository) GetCurrentBranch() string {
 }
 
 func (r *githubRepository) SetBranch(branch string) {
-	r.config.Spec.GitHub.Branch = branch
+	r.config.SetBranch(branch)
 	r.GitRepository.SetBranch(branch)
 }
 

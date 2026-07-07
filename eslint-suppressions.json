@@ -613,11 +613,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -673,11 +668,6 @@
   "packages/grafana-ui/src/components/Tags/Tag.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Typeahead/Typeahead.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 2
     }
   },
   "packages/grafana-ui/src/components/VizLegend/types.ts": {
@@ -1488,11 +1478,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/shared.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
@@ -1889,14 +1874,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/utils/panelMerge.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "public/app/features/datasources/components/ButtonRow.tsx": {
     "@grafana/no-gf-form": {
       "count": 1
@@ -2175,16 +2152,6 @@
       "count": 1
     }
   },
-  "public/app/features/logs/components/LogDetailsRow.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/logs/components/log-context/LogRowContextModal.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/migrate-to-cloud/cloud/MigrationTokenPane/CreateTokenModal.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2319,11 +2286,6 @@
   "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
     "react/no-unescaped-entities": {
       "count": 26
-    }
-  },
-  "public/app/features/provisioning/Shared/TokenPermissionsInfo.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
@@ -2608,14 +2570,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/query/QueryVariableEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/query/QueryVariableRefreshSelect.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2636,7 +2590,7 @@
   },
   "public/app/features/variables/query/actions.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/query/operators.ts": {
@@ -2697,10 +2651,10 @@
   },
   "public/app/features/variables/system/adapter.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/types.ts": {
@@ -2762,55 +2716,6 @@
     }
   },
   "public/app/plugins/datasource/azuremonitor/utils/messageFromError.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/CloudMonitoringMetricFindQuery.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/annotationSupport.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/components/Aggregation.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/components/Fields.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/components/VariableQueryEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 3
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/functions.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/cloud-monitoring/types/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -3053,10 +2958,10 @@
   },
   "public/app/plugins/datasource/influxdb/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 11
+      "count": 9
     }
   },
   "public/app/plugins/datasource/influxdb/influx_query_model.ts": {
@@ -3148,11 +3053,6 @@
   "public/app/plugins/datasource/mssql/configuration/Kerberos.tsx": {
     "@grafana/require-no-margin": {
       "count": 8
-    }
-  },
-  "public/app/plugins/datasource/parca/QueryEditor/QueryOptions.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
@@ -3377,34 +3277,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    }
-  },
-  "public/app/plugins/panel/timeseries/plugins/AnnotationsPlugin2.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/timeseries/plugins/annotations2-cluster/AnnotationEditor2.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationEditor2.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationMarker2.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/timeseries/plugins/annotations2/AnnotationTooltip2.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/xychart/SeriesEditor.tsx": {
