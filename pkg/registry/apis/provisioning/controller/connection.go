@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,6 +26,15 @@ const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
+
+	// tokenWriteGracePeriod is how long, after writing a connection token, to wait for
+	// its secret to become readable before regenerating it again. Regenerating deletes
+	// the previous secret, so without this grace a secret-store read-after-write lag can
+	// drive a regeneration loop that never converges (each write also bumps generation).
+	tokenWriteGracePeriod = 30 * time.Second
+	// tokenWriteRetryDelay is how long to wait before re-checking a connection whose
+	// token secret was written recently but is not yet readable.
+	tokenWriteRetryDelay = 2 * time.Second
 )
 
 type connectionQueueItem struct {
@@ -48,6 +58,12 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
+
+	// recentTokenWrites records, per connection key, when a token was last written so
+	// the token-not-found recovery does not regenerate a token that was just written but
+	// is not yet readable from the secret store.
+	tokenWriteMu      sync.Mutex
+	recentTokenWrites map[string]time.Time
 
 	// To allow injection for testing.
 	processFn func(ctx context.Context, item *connectionQueueItem) error
@@ -79,6 +95,7 @@ func NewConnectionController(
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		tokenMetrics:      registerConnectionTokenMetrics(registry),
+		recentTokenWrites: map[string]time.Time{},
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
 		drainTimeout:      drainTimeout,
@@ -98,6 +115,33 @@ func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
 			cc.enqueue(newObj)
 		},
 	}
+}
+
+// markTokenWritten records that a token was just written for the given connection key.
+func (cc *ConnectionController) markTokenWritten(key string) {
+	cc.tokenWriteMu.Lock()
+	defer cc.tokenWriteMu.Unlock()
+	if cc.recentTokenWrites == nil {
+		cc.recentTokenWrites = map[string]time.Time{}
+	}
+	cc.recentTokenWrites[key] = time.Now()
+}
+
+// tokenWrittenRecently reports whether a token was written for the given connection key
+// within the grace period, i.e. too recently to assume a decrypt failure means the
+// secret is truly gone rather than not yet readable.
+func (cc *ConnectionController) tokenWrittenRecently(key string) bool {
+	cc.tokenWriteMu.Lock()
+	defer cc.tokenWriteMu.Unlock()
+	at, ok := cc.recentTokenWrites[key]
+	if !ok {
+		return false
+	}
+	if time.Since(at) >= tokenWriteGracePeriod {
+		delete(cc.recentTokenWrites, key)
+		return false
+	}
+	return true
 }
 
 func (cc *ConnectionController) enqueue(obj interface{}) {
@@ -235,10 +279,19 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	c, err := cc.connectionFactory.Build(ctx, conn)
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
-		// orphaned reference whose secret was deleted). Clear the reference on a copy so
-		// the rebuild skips token decryption; shouldGenerateToken then re-mints it from
-		// the private key. Rebuild on a copy to avoid mutating the shared informer cache.
+		// orphaned reference whose secret was deleted). Regenerate it from the private
+		// key by clearing the reference on a copy (the rebuild then skips token
+		// decryption and shouldGenerateToken re-mints it). Rebuild on a copy to avoid
+		// mutating the shared informer cache.
 		if errors.Is(err, connection.ErrTokenNotFound) {
+			// If we wrote a token for this connection very recently, its secret may not
+			// be readable from the store yet. Wait for it rather than regenerating, which
+			// would delete it and can loop under secret-store read-after-write lag.
+			if cc.tokenWrittenRecently(item.key) {
+				logger.Info("connection token secret not yet readable after recent write; will retry", "error", err)
+				cc.queue.AddAfter(&connectionQueueItem{key: item.key}, tokenWriteRetryDelay)
+				return nil
+			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
 			conn = conn.DeepCopy()
 			conn.Secure.Token = common.InlineSecureValue{}
@@ -294,6 +347,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
+			cc.markTokenWritten(item.key)
 		}
 		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
