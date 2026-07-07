@@ -54,20 +54,12 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     () =>
       repos
         .filter((repo) => Boolean(repo.metadata?.name))
-        .map((repo) => {
-          const canPush = repo.spec?.workflows?.includes('write') ?? false;
-          return {
-            label: repo.spec?.title || repo.metadata?.name || '',
-            value: repo.metadata?.name ?? '',
-            description: canPush
-              ? repo.spec?.type
-              : t(
-                  'provisioning.migrate.repo-option-no-push-description',
-                  "Can't push to its configured branch — not available for migration"
-                ),
-            isDisabled: !canPush,
-          };
-        }),
+        .map((repo) => ({
+          label: repo.spec?.title || repo.metadata?.name || '',
+          value: repo.metadata?.name ?? '',
+          description: repo.spec?.type,
+          isDisabled: !repo.spec?.workflows.includes('write'),
+        })),
     [repos]
   );
 

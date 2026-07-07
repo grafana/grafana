@@ -243,6 +243,17 @@ describe('Migrate', () => {
       expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
     });
 
+    it('offers a connect action in the footer when no repository is connected', async () => {
+      respondWithRepositories([]);
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      render(<Migrate />);
+
+      expect(await screen.findByText('Team A')).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate (all|selected)/i })).not.toBeInTheDocument();
+    });
+
     it('still offers migrate-everything when the resource list fails to load', async () => {
       server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
@@ -258,17 +269,15 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('still offers migrate-everything on the resource-list-error fallback when the only repo cannot push', async () => {
-      // PR-only repo can't run a migration, but migrate-everything stays reachable
-      // so the drawer can explain how to enable pushing, rather than hiding it.
-      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+    it('offers a connect action on the resource-list-error fallback when no repository is connected', async () => {
+      respondWithRepositories([]);
       server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       render(<Migrate />);
 
       expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
-      expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
     });
 
     it('lists unmanaged folders in the Resources to migrate table', async () => {
@@ -470,20 +479,20 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('still offers migrate-everything in the partial-failure warning when the only repo cannot push', async () => {
+    it('offers a connect action in the partial-failure warning when no repository is connected', async () => {
       respondWithStats(withPlaylists);
       enablePlaylists();
       server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      respondWithRepositories([]);
       respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);
 
       expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
-      // The migrate-everything action stays available (the drawer explains the
-      // repo can't push yet); no Configure fallback replaces it.
-      expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
+      // A connect action replaces the migrate-everything button (the table footer
+      // also surfaces one, hence findAll).
+      expect((await screen.findAllByRole('button', { name: /configure/i })).length).toBeGreaterThan(0);
+      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
     });
 
     it('migrates a selected playlist via a selective job', async () => {

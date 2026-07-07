@@ -79,6 +79,57 @@ describe('MigrateDrawer', () => {
     expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
   });
 
+  it('pre-selects the only pushable repo and still flags the un-pushable ones', async () => {
+    // With one write-capable repo and one PR-only repo, the usable one is
+    // pre-selected (so migration is enabled) while the note still explains the
+    // disabled option.
+    render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('push', 'Pushable repo'), makeRepo('pr', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByText('Pushable repo')).toBeInTheDocument();
+    expect(screen.getByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /migrate everything/i })).toBeEnabled();
+  });
+
+  it('treats a repository with no spec as un-pushable without crashing', async () => {
+    // `spec` is optional on the API type; a repo missing it should be handled
+    // gracefully (disabled and never pre-selected) alongside a usable one.
+    render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('ok', 'Usable repo'), { metadata: { name: 'no-spec' } } as Repository]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    // The usable repo is pre-selected; the spec-less one counts as blocked.
+    expect(await screen.findByText('Usable repo')).toBeInTheDocument();
+    expect(screen.getByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
+  });
+
+  it('enables migration once a repository is picked from the dropdown', async () => {
+    // Two usable repos means none is pre-selected, so the user must choose one.
+    const { user } = render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('a', 'Repo A'), makeRepo('b', 'Repo B')]}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('Repo B'));
+
+    expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeEnabled();
+  });
+
   it('tailors the limitations alert to the repository sync target', async () => {
     const instanceRepo = createRepository({
       metadata: { name: 'inst' },
@@ -172,6 +223,21 @@ describe('MigrateDrawer', () => {
       // The "migrate everything" copy must not show in selective mode.
       expect(screen.queryByText(/all resources not yet managed by git will be migrated/i)).not.toBeInTheDocument();
       expect(screen.getByText(/2 selected resources/i)).toBeInTheDocument();
+    });
+
+    it('falls back to the resource count for the summary when no selection is provided', async () => {
+      // Without an explicit `selection`, the summary derives the count from
+      // `resources` instead.
+      render(
+        <MigrateDrawer
+          selective
+          repos={[makeRepo('repo-1', 'My only repo')]}
+          resources={resources}
+          onDismiss={jest.fn()}
+        />
+      );
+
+      expect(await screen.findByText(/2 selected resources/i)).toBeInTheDocument();
     });
 
     it('disables migration in selective mode when there are no resources to send', async () => {
