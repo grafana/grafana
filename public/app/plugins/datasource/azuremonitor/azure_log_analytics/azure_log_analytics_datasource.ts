@@ -17,7 +17,7 @@ import {
   type DatasourceValidationResult,
   type Subscription,
 } from '../types/types';
-import { interpolateVariable, routeNames } from '../utils/common';
+import { fetchAllArmPages, interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';
 
@@ -66,10 +66,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    const path = `${this.azureMonitorPath}?api-version=2019-03-01`;
-    return await this.getResource<AzureAPIResponse<Subscription>>(path).then((result) => {
-      return ResponseParser.parseSubscriptions(result);
-    });
+    const value = await fetchAllArmPages<Subscription>(
+      (path) => this.getResource<AzureAPIResponse<Subscription>>(path),
+      routeNames.azureMonitor,
+      `${this.azureMonitorPath}?api-version=2019-03-01`
+    );
+    return ResponseParser.parseSubscriptions({ value });
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {

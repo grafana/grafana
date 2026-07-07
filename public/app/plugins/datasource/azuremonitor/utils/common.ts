@@ -3,7 +3,7 @@ import { map } from 'lodash';
 import { type ScopedVars, type SelectableValue, type VariableWithMultiSupport } from '@grafana/data';
 import { type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
 
-import { type AzureMonitorOption, type VariableOptionGroup } from '../types/types';
+import { type AzureAPIResponse, type AzureMonitorOption, type VariableOptionGroup } from '../types/types';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
@@ -44,6 +44,39 @@ export const routeNames = {
   appInsights: 'appinsights',
   resourceGraph: 'resourcegraph',
 };
+
+// Upper bound on the number of ARM result pages followed when aggregating a paginated
+// list. Guards against a pathological nextLink loop; sits well above realistic counts
+// (e.g. an account with hundreds of subscriptions still fits within a handful of pages).
+export const MAX_ARM_PAGES = 50;
+
+// Follows Azure ARM `nextLink` pagination, concatenating the `value` array from every page
+// into a single list. `fetchPage` issues the resource request for a relative path (the
+// caller supplies the datasource's `getResource`/`fetch`). Each subsequent page's relative
+// path is rebuilt from the absolute `nextLink` so the request is routed back through the
+// backend resource proxy rather than hitting management.azure.com directly.
+export async function fetchAllArmPages<T>(
+  fetchPage: (path: string) => Promise<AzureAPIResponse<T>>,
+  resourcePath: string,
+  initialPath: string,
+  maxPages: number = MAX_ARM_PAGES
+): Promise<T[]> {
+  let results: T[] = [];
+  let path: string | undefined = initialPath;
+  let pages = 0;
+  while (path && pages < maxPages) {
+    const page = await fetchPage(path);
+    results = results.concat(page.value ?? []);
+    if (page.nextLink) {
+      const { pathname, search } = new URL(page.nextLink);
+      path = `${resourcePath}${pathname}${search}`;
+    } else {
+      path = undefined;
+    }
+    pages++;
+  }
+  return results;
+}
 
 export function interpolateVariable(
   value: string | number | Array<string | number>,

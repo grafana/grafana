@@ -27,7 +27,7 @@ import {
   type Subscription,
   TablePlan,
 } from '../types/types';
-import { replaceTemplateVariables, routeNames } from '../utils/common';
+import { fetchAllArmPages, replaceTemplateVariables, routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 
 import ResponseParser from './response_parser';
@@ -171,11 +171,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    return this.getResource<AzureAPIResponse<Subscription>>(
+    const value = await fetchAllArmPages<Subscription>(
+      (path) => this.getResource<AzureAPIResponse<Subscription>>(path),
+      this.resourcePath,
       `${this.resourcePath}/subscriptions?api-version=2019-03-01`
-    ).then((result) => {
-      return ResponseParser.parseSubscriptions(result);
-    });
+    );
+    return ResponseParser.parseSubscriptions({ value });
   }
 
   // Note globalRegion should be false when querying custom metric namespaces

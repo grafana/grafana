@@ -1,6 +1,6 @@
 import { initialCustomVariableModelState } from '../mocks/variables';
 
-import { hasOption, interpolateVariable } from './common';
+import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES } from './common';
 
 describe('AzureMonitor: hasOption', () => {
   it('can find an option in flat array', () => {
@@ -40,6 +40,45 @@ describe('AzureMonitor: hasOption', () => {
     ];
 
     expect(hasOption(options, 'c-b')).toBeTruthy();
+  });
+});
+
+describe('AzureMonitor: fetchAllArmPages', () => {
+  it('returns the single page when there is no nextLink', async () => {
+    const fetchPage = jest.fn().mockResolvedValue({ value: [{ id: 1 }, { id: 2 }] });
+
+    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+
+    expect(results).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(fetchPage).toHaveBeenCalledWith('azuremonitor/subscriptions?api-version=x');
+  });
+
+  it('follows nextLink across pages and rebuilds the path via the resource prefix', async () => {
+    const fetchPage = jest
+      .fn()
+      .mockResolvedValueOnce({
+        value: [{ id: 1 }],
+        nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
+      })
+      .mockResolvedValueOnce({ value: [{ id: 2 }] });
+
+    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+
+    expect(results).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(fetchPage).toHaveBeenNthCalledWith(2, 'azuremonitor/subscriptions?api-version=x&$skiptoken=abc');
+  });
+
+  it('stops after MAX_ARM_PAGES even if nextLink never clears', async () => {
+    const fetchPage = jest.fn().mockResolvedValue({
+      value: [{ id: 1 }],
+      nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=loop',
+    });
+
+    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+
+    expect(fetchPage).toHaveBeenCalledTimes(MAX_ARM_PAGES);
+    expect(results).toHaveLength(MAX_ARM_PAGES);
   });
 });
 

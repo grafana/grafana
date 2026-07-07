@@ -271,6 +271,9 @@ export interface AzureAPIResponse<T> {
   };
   status?: number;
   statusText?: string;
+  // Absolute ARM URL for the next page of results. Present when the result set spans
+  // multiple pages (e.g. subscriptions for accounts with more than one page).
+  nextLink?: string;
 }
 
 export interface Location {
