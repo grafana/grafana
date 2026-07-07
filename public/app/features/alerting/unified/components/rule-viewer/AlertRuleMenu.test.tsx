@@ -1402,10 +1402,13 @@ describe('AlertRuleMenu', () => {
             uid: 'test-recording-rule-uid',
             folderUid: 'test-folder-uid',
           }),
-          rulerRule: mockRulerGrafanaRecordingRule({
-            uid: 'test-recording-rule-uid',
-            folderUid: 'test-folder-uid',
-          }),
+          rulerRule: mockRulerGrafanaRecordingRule(
+            {},
+            {
+              uid: 'test-recording-rule-uid',
+              namespace_uid: 'test-folder-uid',
+            }
+          ),
         });
         const identifier = fromCombinedRule('grafana', mockRule);
         const groupIdentifier = {
