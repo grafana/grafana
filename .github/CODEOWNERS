@@ -570,6 +570,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/events/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/field/ @grafana/dashboards-squad
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
+/packages/grafana-data/src/hooks/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/monaco/ @grafana/data-sources-plugins
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
 /packages/grafana-data/src/panel/suggestions/ @grafana/dataviz-squad
