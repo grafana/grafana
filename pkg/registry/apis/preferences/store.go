@@ -39,34 +39,33 @@ func (s *preferencesStorage) List(ctx context.Context, options *internalversion.
 	return s.ListPreferences(ctx, options)
 }
 
-// Update with upsert: a PUT or PATCH for an
-// owner whose preferences don't exist yet creates them instead of returning
-// 404. The legacy storage upserts on its own (see legacy.preferenceStorage.Update)
+// Update with upsert: an Update for an owner whose preferences don't
+// exist yet creates them instead of returning 404. The update is attempted
+// first; only a NotFound failure takes the create path. The legacy storage
+// upserts on its own (see legacy.preferenceStorage.Update)
 func (s *preferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	_, err := s.Get(ctx, name, &metav1.GetOptions{})
+	updated, created, err := s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err == nil || !k8serrors.IsNotFound(err) {
+		return updated, created, err
+	}
+
+	// Nothing stored yet -- apply the update to an empty placeholder and create it
+	placeholder, err := s.newEmptyPreferences(ctx, name)
 	if err != nil {
-		if !k8serrors.IsNotFound(err) {
-			return nil, false, err
-		}
+		return nil, false, err
+	}
+	obj, err := objInfo.UpdatedObject(ctx, placeholder)
+	if err != nil {
+		return nil, false, err
+	}
 
-		placeholder, err := s.newEmptyPreferences(ctx, name)
-		if err != nil {
-			return nil, false, err
-		}
-		obj, err := objInfo.UpdatedObject(ctx, placeholder)
-		if err != nil {
-			return nil, false, err
-		}
-
-		created, err := s.Create(ctx, obj, createValidation, createOptionsFrom(options))
-		if err == nil {
-			return created, true, nil
-		}
-		// Lost a race with a concurrent create -- fall through and apply as a
-		// regular update
-		if !k8serrors.IsAlreadyExists(err) {
-			return nil, false, err
-		}
+	createdObj, err := s.Create(ctx, obj, createValidation, createOptionsFrom(options))
+	if err == nil {
+		return createdObj, true, nil
+	}
+	// Lost a race with a concurrent create -- apply as a regular update
+	if !k8serrors.IsAlreadyExists(err) {
+		return nil, false, err
 	}
 	return s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }

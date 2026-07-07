@@ -376,8 +376,9 @@ func TestPreferencesStorage_Update(t *testing.T) {
 	})
 
 	t.Run("falls back to update when losing a create race", func(t *testing.T) {
-		// Get reports NotFound but Create collides with AlreadyExists, as if
-		// another request created the preferences in between
+		// The first Update reports NotFound but Create collides with
+		// AlreadyExists, as if another request created the preferences in
+		// between; the retried Update must then succeed
 		existing := newPref("user-abc")
 		existing.UID = "existing-uid"
 		fake := &fakeStorage{
@@ -388,7 +389,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 			),
 		}
 		store := &preferencesStorage{
-			Storage: &notFoundGetStorage{fakeStorage: fake},
+			Storage: &failFirstUpdateStorage{fakeStorage: fake},
 			gvk:     preferences.PreferencesResourceInfo.GroupVersionKind(),
 		}
 
@@ -402,7 +403,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 		require.Equal(t, []string{"user-abc"}, fake.updated)
 	})
 
-	t.Run("non-NotFound errors from Get bubble up", func(t *testing.T) {
+	t.Run("non-NotFound errors from Update bubble up", func(t *testing.T) {
 		fake := &forbiddenStorage{}
 		store := &preferencesStorage{Storage: fake, gvk: preferences.PreferencesResourceInfo.GroupVersionKind()}
 
@@ -503,28 +504,33 @@ func (e *errorStorage) Get(_ context.Context, _ string, _ *metav1.GetOptions) (r
 	return &preferences.PreferencesList{}, nil
 }
 
-// notFoundGetStorage always misses on Get but otherwise behaves like the
-// wrapped fakeStorage, simulating a concurrent create between the upsert's
-// existence check and its Create call.
-type notFoundGetStorage struct {
+// failFirstUpdateStorage fails the first Update with NotFound but otherwise
+// behaves like the wrapped fakeStorage, simulating a concurrent create
+// between the failed optimistic update and the upsert's Create call.
+type failFirstUpdateStorage struct {
 	*fakeStorage
+	failed bool
 }
 
-func (n *notFoundGetStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	return nil, k8serrors.NewNotFound(
-		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
-		name,
-	)
+func (n *failFirstUpdateStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	if !n.failed {
+		n.failed = true
+		return nil, false, k8serrors.NewNotFound(
+			schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
+			name,
+		)
+	}
+	return n.fakeStorage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }
 
-// forbiddenStorage fails Get with a non-NotFound error to verify such errors
-// are not treated as "missing, create it".
+// forbiddenStorage fails Update with a non-NotFound error to verify such
+// errors are not treated as "missing, create it".
 type forbiddenStorage struct {
 	grafanarest.Storage
 }
 
-func (f *forbiddenStorage) Get(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	return nil, k8serrors.NewForbidden(
+func (f *forbiddenStorage) Update(_ context.Context, name string, _ rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, k8serrors.NewForbidden(
 		schema.GroupResource{Group: preferences.APIGroup, Resource: "preferences"},
 		name,
 		fmt.Errorf("nope"),
