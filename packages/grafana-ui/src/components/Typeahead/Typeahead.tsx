@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
-import { useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type CompletionItem, type CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { SelectionReference } from '../../utils/SelectionReference';
 import { getPositioningMiddleware } from '../../utils/floating';
@@ -31,27 +32,23 @@ export interface TypeaheadMenu {
   insertSuggestion: () => void;
 }
 
-function deriveListState(groupedItems: CompletionItemGroup[], theme: GrafanaTheme2) {
-  const allItems = flattenGroupItems(groupedItems);
-  const longestLabel = calculateLongestLabel(allItems);
-  const { listWidth, listHeight, itemHeight } = calculateListSizes(theme, allItems, longestLabel);
-  return { allItems, listWidth, listHeight, itemHeight };
+function useTypeaheadList(groupedItems: CompletionItemGroup[]) {
+  const theme = useTheme2();
+
+  return useMemo(() => {
+    const allItems = flattenGroupItems(groupedItems);
+    const longestLabel = calculateLongestLabel(allItems);
+    const { listWidth, listHeight, itemHeight } = calculateListSizes(theme, allItems, longestLabel);
+    return { allItems, listWidth, listHeight, itemHeight };
+  }, [groupedItems, theme]);
 }
 
 export function Typeahead({ prefix, isOpen = false, groupedItems, menuRef, onSelectSuggestion }: Props) {
-  const theme = useContext(ThemeContext);
   const listRef = useRef<FixedSizeList>(null);
 
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
   const [typeaheadIndex, setTypeaheadIndex] = useState<number | null>(null);
-
-  // The flattened items and list dimensions are purely derived from the grouped items, so memoize
-  // them. The reference dep is enough to skip recomputes on hover/selection re-renders (those don't
-  // change `groupedItems`), which is what the original isEqual guard was protecting against.
-  const { allItems, listWidth, listHeight, itemHeight } = useMemo(
-    () => deriveListState(groupedItems, theme),
-    [groupedItems, theme]
-  );
+  const { allItems, listWidth, listHeight, itemHeight } = useTypeaheadList(groupedItems);
 
   // Reset the highlighted suggestion whenever the items change. Assigning state during render is the
   // React-recommended way to adjust state in response to a changed prop: it re-renders immediately
@@ -110,7 +107,7 @@ export function Typeahead({ prefix, isOpen = false, groupedItems, menuRef, onSel
     listRef.current.scrollToItem(typeaheadIndex);
   }, [typeaheadIndex]);
 
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const showDocumentation = hoveredItem || typeaheadIndex;
   const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
