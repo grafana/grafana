@@ -77,7 +77,10 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
     if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
-    await startJob(true, isSelective ? { resources } : undefined);
+    await startJob(true, {
+      syncTarget: selectedRepoObj?.spec?.sync?.target,
+      ...(isSelective ? { resources } : {}),
+    });
   };
 
   // Start a fresh job and let it replace the current one once created. We avoid

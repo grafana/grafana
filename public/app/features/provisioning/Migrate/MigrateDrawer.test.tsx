@@ -120,6 +120,30 @@ describe('MigrateDrawer', () => {
     expect(screen.queryByText(/target repository/i)).not.toBeInTheDocument();
   });
 
+  it('does not regenerate folder UIDs when migrating into an instance-sync repository', async () => {
+    // Instance sync takes over the whole instance, so it must preserve the
+    // existing folder UIDs instead of recreating folders.
+    let postedBody = '';
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        postedBody = await request.text();
+        return HttpResponse.json(createJob());
+      })
+    );
+    mockJobList(createJob());
+
+    const instanceRepo = createRepository({
+      metadata: { name: 'inst' },
+      spec: { title: 'Instance repo', workflows: ['write'], sync: { target: 'instance', enabled: true } },
+    });
+    const { user } = render(<MigrateDrawer selective={false} repos={[instanceRepo]} onDismiss={jest.fn()} />);
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+    expect(postedBody).toContain('"action":"migrate"');
+    expect(postedBody).toContain('"generateNewFolderIDs":false');
+  });
+
   it('notifies onMigrated once the migration completes', async () => {
     const onMigrated = jest.fn();
     mockCreateJob(createJob());

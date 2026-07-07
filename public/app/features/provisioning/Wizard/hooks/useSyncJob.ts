@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { type Job, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type StepStatusInfo } from '../types';
+import { type StepStatusInfo, type Target } from '../types';
 
 import { useCreateSyncJob } from './useCreateSyncJob';
 
@@ -22,7 +22,7 @@ export function useSyncJob({ repoName, setStepStatusInfo }: UseSyncJobParams) {
   const [job, setJob] = useState<Job>();
 
   const startJob = useCallback(
-    async (requiresMigration: boolean, options?: { resources?: ResourceRef[] }) => {
+    async (requiresMigration: boolean, options?: { resources?: ResourceRef[]; syncTarget?: Target }) => {
       const response = await createSyncJob(requiresMigration, options);
       if (response) {
         setJob(response);
