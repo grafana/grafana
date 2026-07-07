@@ -16,6 +16,7 @@ import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEdit
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 
@@ -32,6 +33,7 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
 
   public onSetMode(value: string | undefined) {
     this.setState({ fanoutMode: value });
+    DashboardInteractions.viewPanelAction({ action: 'set_fanout_mode', value: value ?? '' });
   }
 }
 

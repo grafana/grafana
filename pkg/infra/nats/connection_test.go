@@ -3,11 +3,11 @@ package nats
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	natsclient "github.com/nats-io/nats.go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +19,7 @@ import (
 // that must short-circuit before any dial.
 func newDisabledConnection() *connection {
 	cfg := setting.NATSSettings{Enabled: false}
-	return newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+	return newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 }
 
 func TestConnection(t *testing.T) {
@@ -27,7 +27,7 @@ func TestConnection(t *testing.T) {
 		require.False(t, newDisabledConnection().Enabled())
 
 		cfg := setting.NATSSettings{Enabled: true}
-		enabled := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		enabled := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 		require.True(t, enabled.Enabled())
 	})
 
@@ -38,7 +38,7 @@ func TestConnection(t *testing.T) {
 
 	t.Run("get errors when no urls configured", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: true}
-		c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+		c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 		_, err := c.get(context.Background())
 		require.ErrorContains(t, err, "no nats client urls configured")
@@ -60,7 +60,7 @@ func TestConnection(t *testing.T) {
 	t.Run("get sets the connection status metric", func(t *testing.T) {
 		srv := startTestServer(t)
 		cfg := setting.NATSSettings{Enabled: true}
-		m := newClientMetrics(prometheus.NewRegistry())
+		m := newConnectionMetrics(rolePublisher)
 		c := newConnection(rolePublisher, log.NewNopLogger(), m, newTestConfig(srv, cfg), func() string { return "" })
 		t.Cleanup(c.close)
 
@@ -69,7 +69,7 @@ func TestConnection(t *testing.T) {
 
 		// The ConnectHandler fires asynchronously; wait for it to mark the role healthy.
 		require.Eventually(t, func() bool {
-			return testutil.ToFloat64(m.connectionStatus.WithLabelValues(string(rolePublisher))) == 1
+			return testutil.ToFloat64(m.connectionStatus) == 1
 		}, 5*time.Second, 10*time.Millisecond)
 	})
 
@@ -170,7 +170,7 @@ func TestConnection(t *testing.T) {
 	t.Run("connectOptions", func(t *testing.T) {
 		t.Run("builds base options without auth", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 			opts, err := c.connectOptions()
 			require.NoError(t, err)
@@ -179,10 +179,85 @@ func TestConnection(t *testing.T) {
 
 		t.Run("propagates invalid TLS config", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true, TLS: setting.NATSTLSSettings{Enabled: true, CACertPath: "/does/not/exist.pem"}}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newClientMetrics(prometheus.NewRegistry()), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 			_, err := c.connectOptions()
 			require.Error(t, err)
+		})
+	})
+
+	// The reconnect registry is pure bookkeeping — it never dials — so a disabled
+	// connection is enough to exercise it.
+	t.Run("reconnect callbacks", func(t *testing.T) {
+		registrySize := func(c *connection) int {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+			return len(c.reconnectCbs)
+		}
+
+		t.Run("fires every registered callback", func(t *testing.T) {
+			c := newDisabledConnection()
+
+			var first, second atomic.Int64
+			c.onReconnect(func() { first.Add(1) })
+			c.onReconnect(func() { second.Add(1) })
+			require.Equal(t, 2, registrySize(c), "both callbacks must be registered")
+
+			c.fireReconnect()
+			require.EqualValues(t, 1, first.Load())
+			require.EqualValues(t, 1, second.Load())
+
+			// A second reconnect fires them again — the callback is not one-shot.
+			c.fireReconnect()
+			require.EqualValues(t, 2, first.Load())
+			require.EqualValues(t, 2, second.Load())
+		})
+
+		t.Run("unregister drops only its own callback", func(t *testing.T) {
+			c := newDisabledConnection()
+
+			var first, second atomic.Int64
+			removeFirst := c.onReconnect(func() { first.Add(1) })
+			c.onReconnect(func() { second.Add(1) })
+
+			// Removing must shrink the registry (not just stop firing) so callbacks
+			// do not leak for the connection's lifetime.
+			removeFirst()
+			require.Equal(t, 1, registrySize(c), "unregistered callback must be dropped from the registry")
+
+			c.fireReconnect()
+			require.EqualValues(t, 0, first.Load(), "removed callback must not fire")
+			require.EqualValues(t, 1, second.Load(), "remaining callback must keep firing")
+		})
+
+		t.Run("unregister is idempotent", func(t *testing.T) {
+			c := newDisabledConnection()
+			remove := c.onReconnect(func() {})
+			require.NotPanics(t, func() {
+				remove()
+				remove()
+			})
+			require.Equal(t, 0, registrySize(c))
+		})
+
+		t.Run("fireReconnect with no callbacks is a no-op", func(t *testing.T) {
+			require.NotPanics(t, newDisabledConnection().fireReconnect)
+		})
+
+		t.Run("a callback may register another without deadlocking", func(t *testing.T) {
+			c := newDisabledConnection()
+
+			var added atomic.Int64
+			c.onReconnect(func() {
+				c.onReconnect(func() { added.Add(1) })
+			})
+
+			// Callbacks are snapshotted under the lock and invoked outside it, so
+			// registering during fireReconnect must not deadlock.
+			require.NotPanics(t, c.fireReconnect)
+			// The newly registered callback only fires on the next reconnect.
+			c.fireReconnect()
+			require.EqualValues(t, 1, added.Load())
 		})
 	})
 }

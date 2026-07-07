@@ -1612,6 +1612,22 @@
       "action-button": "Import",
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
+      "autosync-active-block": {
+        "description": "Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.",
+        "go-to-settings": "Go to Alerting settings",
+        "title": "Auto-sync is enabled"
+      },
+      "autosync-review": {
+        "back": "Add method",
+        "badge": "Will sync continuously",
+        "card-title": "Auto-sync",
+        "enable": "Enable auto-sync",
+        "heading": "Review & enable auto-sync",
+        "scope": "Scope",
+        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
+        "source": "Source",
+        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
+      },
       "confirm": {
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
@@ -1658,6 +1674,27 @@
       "import-source": "Import source",
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
+      "loading": "Loading…",
+      "method": {
+        "autosync": "Auto-sync",
+        "autosync-datasource-label": "Data source",
+        "autosync-datasource-placeholder": "Select a data source…",
+        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
+        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
+        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
+        "autosync-title": "Auto-sync",
+        "heading": "How do you want to add these resources?",
+        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
+        "promote": "Promote",
+        "promote-desc": "Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing merges into your live config and becomes a normal, editable Grafana resource.",
+        "promote-title": "Promote",
+        "promote-warning-desc": "The imported resources merge into your live notification config. To reverse it later you would have to delete each resulting resource by hand.",
+        "promote-warning-title": "Promoting can't be undone",
+        "stage": "Stage",
+        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
+        "stage-title": "Stage",
+        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
+      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1685,6 +1722,18 @@
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
+        "merge-inhibition-rules_one": "{{count}} inhibition rule",
+        "merge-inhibition-rules_other": "{{count}} inhibition rules",
+        "merge-receivers_one": "{{count}} contact point",
+        "merge-receivers_other": "{{count}} contact points",
+        "merge-route": "a notification route",
+        "merge-summary": "Will merge into your live config: {{summary}}",
+        "merge-templates_one": "{{count}} template",
+        "merge-templates_other": "{{count}} templates",
+        "merge-time-intervals_one": "{{count}} mute timing",
+        "merge-time-intervals_other": "{{count}} mute timings",
+        "method": "Method",
+        "method-promote": "Promote",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1811,10 +1860,14 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
+        "step-method": "Import method",
+        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
+        "step-review-enable": "Review & enable",
+        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -2631,6 +2684,10 @@
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
+    },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded.",
+      "no-query": "No data source query to run for this rule."
     },
     "queryAndExpressionsStep": {
       "custom": "Custom",
@@ -4923,6 +4980,11 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
+    "deep-search": {
+      "more-panels_one": "{{count}} more matched panel",
+      "more-panels_other": "{{count}} more matched panels",
+      "no-matches": "No matches"
+    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -4937,6 +4999,7 @@
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
+      "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
@@ -5431,11 +5494,6 @@
       "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
       }
     },
     "dashboard-srv": {
@@ -6444,9 +6502,17 @@
       "customize-with-assistant-button": "Customize with Assistant",
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
+      "delete-confirm-body": "This permanently deletes \"{{templateTitle}}\". This action cannot be undone.",
+      "delete-confirm-cancel": "Cancel",
+      "delete-confirm-confirm": "Delete",
+      "delete-confirm-prompt": "Delete",
+      "delete-confirm-title": "Delete this template?",
+      "delete-template-button-label": "Delete template: {{title}}",
+      "delete-template-menu-item": "Delete",
       "details-tooltip": "Details",
-      "edit-template-button": "Edit",
       "edit-template-button-label": "Edit template: {{title}}",
+      "edit-template-menu-item": "Edit",
+      "more-actions-label": "More actions for {{title}}",
       "no-preview": "No preview available ",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
@@ -6813,6 +6879,18 @@
     "dashboard-scene-page-state-manager-v2": {
       "message": {
         "dashboard-not-found": "Dashboard not found"
+      }
+    },
+    "dashboard-settings": {
+      "annotations": {
+        "button-moved": "Take me there",
+        "description-moved": "Annotation settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for annotations?"
+      },
+      "variables": {
+        "button-moved": "Take me there",
+        "description-moved": "Variable settings have moved to the dashboard's sidebar.",
+        "title-moved": "Looking for variable settings?"
       }
     },
     "dashboard-side-pane-new": {
@@ -8755,6 +8833,10 @@
       "url": "URL"
     },
     "trace-view": {
+      "adaptive-traces-restored": {
+        "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
+        "title": "Trace restored by Adaptive Traces"
+      },
       "aria-label-copy": "Copy to clipboard",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
@@ -9364,6 +9446,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Accessible",
+        "experimentalGroup": "Experimental",
         "otherGroup": "Others"
       }
     },
@@ -10703,6 +10786,19 @@
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
+    },
+    "recommendations": {
+      "existing": "Enabled solution",
+      "go-to": "Go to recommendation {{index}}",
+      "hide": "Hide",
+      "next": "Next",
+      "pause": "Pause",
+      "previous": "Previous",
+      "recommended": "Recommended",
+      "resume": "Resume",
+      "show": "Show",
+      "switch": "Switch to another app you run",
+      "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -13261,6 +13357,10 @@
       "url-description": "The GitHub repository URL",
       "url-required": "Repository URL is required"
     },
+    "github-enterprise": {
+      "server-url-description": "The custom server URL where your GitHub Enterprise is hosted",
+      "server-url-label": "Custom server URL"
+    },
     "gitlab": {
       "branch-required": "Branch is required",
       "permissions": {
@@ -13617,6 +13717,9 @@
       "bitbucket-tooltip": "Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
+      "github-enterprise": "GitHub Enterprise",
+      "github-enterprise-description": "Connect to GitHub Enterprise Server or GitHub Enterprise Cloud repositories",
+      "github-enterprise-tooltip": "Enhanced GitHub integration for self-hosted GitHub Enterprise Server or GitHub Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
@@ -13837,8 +13940,6 @@
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
       "github-app-select-connection": "Select a GitHub App connection",
-      "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
-      "github-enterprise-alert-title": "GitHub Enterprise Server",
       "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
@@ -14479,6 +14580,9 @@
       "new-dashboard": "New dashboard",
       "new-folder": "New folder",
       "new-template-dashboard": "Use template"
+    },
+    "description-tooltip": {
+      "label": "Description"
     },
     "generate-columns": {
       "score": "Score"
@@ -15353,7 +15457,7 @@
       },
       "failed-to-check-folders": "Failed to check if the team owns folders. Please try again.",
       "loading-teams": "Loading teams...",
-      "new-team": "New Team",
+      "new-team": "New team",
       "placeholder-search-teams": "Search teams"
     },
     "team-pages": {
@@ -16673,6 +16777,9 @@
     },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variables-dependencies-button": {
+      "show-dependencies": "Show dependencies"
     },
     "variables-unknown-button": {
       "usage-title": "Showing usages for: {{variableId}}",
