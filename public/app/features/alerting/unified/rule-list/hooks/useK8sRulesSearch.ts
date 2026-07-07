@@ -6,24 +6,40 @@ import {
   type GetSearchRulesApiArg,
   useLazyGetSearchRulesQuery,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { type RulesFilter } from '../../search/rulesSearchParser';
 
+/** The `type` discriminant used by the k8s `/search` endpoint's rule hits. */
+export enum GrafanaRuleType {
+  Alerting = 'alertrule',
+  Recording = 'recordingrule',
+}
+
 // The generated hit types both declare `type` as `'alertrule' | 'recordingrule'` instead of a
 // per-variant literal, so `RuleSearchHit` wouldn't otherwise discriminate on `type` — narrow it here.
-export type AlertRuleSearchHit = Omit<GetSearchAlertRulesAlertRuleHit, 'type'> & { type: 'alertrule' };
+export type AlertRuleSearchHit = Omit<GetSearchAlertRulesAlertRuleHit, 'type'> & { type: GrafanaRuleType.Alerting };
 export type RecordingRuleSearchHit = Omit<GetSearchRecordingRulesRecordingRuleHit, 'type'> & {
-  type: 'recordingrule';
+  type: GrafanaRuleType.Recording;
 };
 export type RuleSearchHit = AlertRuleSearchHit | RecordingRuleSearchHit;
 
 export const DEFAULT_RULES_SEARCH_PAGE_SIZE = 24;
 
-const RULE_TYPE_TO_SEARCH_TYPE: Record<PromRuleType, string> = {
-  [PromRuleType.Alerting]: 'alertrule',
-  [PromRuleType.Recording]: 'recordingrule',
-};
+/**
+ * `RulesFilter.ruleType` is a legacy Prometheus-domain field (shared with v1/v2) whose values are the
+ * strings `'alerting'`/`'recording'`; translate it to the k8s search API's own `GrafanaRuleType`
+ * vocabulary by value, without importing the legacy Prometheus enum into v3.
+ */
+function toGrafanaRuleType(ruleType: RulesFilter['ruleType']): GrafanaRuleType | undefined {
+  switch (ruleType) {
+    case 'alerting':
+      return GrafanaRuleType.Alerting;
+    case 'recording':
+      return GrafanaRuleType.Recording;
+    default:
+      return undefined;
+  }
+}
 
 /**
  * Maps the definition-compatible subset of `RulesFilter` to `/search` query args.
@@ -40,7 +56,7 @@ export function buildSearchArgs(
     q,
     labels: toApiArgArray(filterState.labels),
     groups: toApiArgArray(filterState.groupName ? [filterState.groupName] : []),
-    type: filterState.ruleType ? RULE_TYPE_TO_SEARCH_TYPE[filterState.ruleType] : undefined,
+    type: toGrafanaRuleType(filterState.ruleType),
     receiver: filterState.contactPoint ?? undefined,
     dashboardUid: filterState.dashboardUid,
     sort: 'title',
@@ -48,12 +64,17 @@ export function buildSearchArgs(
   };
 }
 
+/**
+ * The generated arg type declares `labels`/`groups` as a single `string`, but Grafana's `backendSrv`
+ * (see `serializeParams` in `public/app/core/utils/fetch.ts`) already serializes array-valued params
+ * as repeated query keys (`?labels=a&labels=b`) — which is what the backend expects (it binds them via
+ * `url.Values`, i.e. `[]string`). The cast below only appeases the generated type; it changes no
+ * runtime behavior.
+ */
 function toApiArgArray(values: string[]): GetSearchRulesApiArg['labels'] {
   if (values.length === 0) {
     return undefined;
   }
-  // The generated arg type declares this field as `string`, but the backend binds it from repeated
-  // query params (`?labels=a&labels=b`) into `[]string` — passing an array here is correct at runtime.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return values as unknown as GetSearchRulesApiArg['labels'];
 }
@@ -68,7 +89,11 @@ interface UseK8sRulesSearchResult {
 
 /**
  * Cursor-paginated search over the pure-k8s `rules.alerting.grafana.app` `/search` endpoint.
- * Returns raw hits — definition-only, no Prometheus DTO mapping.
+ * Returns raw hits — definition-only (no state/health/instances), no Prometheus DTO mapping.
+ *
+ * Fetches the first page on mount and whenever `filterState`/`pageSize` change, discarding any
+ * previously accumulated hits. Call `loadMore()` (e.g. from a scroll sentinel) to fetch and append
+ * subsequent pages using the `continueToken` returned by the previous request.
  */
 export function useK8sRulesSearch(
   filterState: RulesFilter,

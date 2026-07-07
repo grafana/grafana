@@ -2,19 +2,20 @@ import { Factory } from 'fishery';
 
 import {
   type AlertRuleSearchHit,
+  GrafanaRuleType,
   type RecordingRuleSearchHit,
   type RuleSearchHit,
 } from 'app/features/alerting/unified/rule-list/hooks/useK8sRulesSearch';
 
 export const alertRuleHitFactory = Factory.define<AlertRuleSearchHit>(({ sequence }) => ({
-  type: 'alertrule',
+  type: GrafanaRuleType.Alerting,
   name: `alert-rule-${sequence}`,
   title: `Alert rule ${sequence}`,
   folder: 'folder-uid',
 }));
 
 export const recordingRuleHitFactory = Factory.define<RecordingRuleSearchHit>(({ sequence }) => ({
-  type: 'recordingrule',
+  type: GrafanaRuleType.Recording,
   name: `recording-rule-${sequence}`,
   title: `Recording rule ${sequence}`,
   folder: 'folder-uid',
