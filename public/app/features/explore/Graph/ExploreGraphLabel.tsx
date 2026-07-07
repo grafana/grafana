@@ -20,7 +20,11 @@ export function ExploreGraphLabel(props: Props) {
   const { graphStyle, onChangeGraphStyle, unit, onChangeUnit } = props;
   return (
     <>
-      <UnitPicker value={unit} onChange={onChangeUnit} placeholder={t('explore.graph-label.unit-placeholder', 'Unit')} />
+      <UnitPicker
+        value={unit}
+        onChange={onChangeUnit}
+        placeholder={t('explore.graph-label.unit-placeholder', 'Unit')}
+      />
       <RadioButtonGroup size="sm" options={ALL_GRAPH_STYLE_OPTIONS} value={graphStyle} onChange={onChangeGraphStyle} />
     </>
   );
