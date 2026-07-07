@@ -91,7 +91,7 @@ var appManifestData = app.ManifestData{
 							Name:             "lastSeenAt",
 							Path:             "status.lastSeenAt",
 							Type:             "int64",
-							Capabilities:     []string{"filter", "sort", "retrieve"},
+							Capabilities:     []string{"sort", "retrieve"},
 							EmitZeroIfAbsent: true,
 							Description:      "The last seen timestamp of the user",
 						},
