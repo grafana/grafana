@@ -26,7 +26,7 @@ type PublisherService struct {
 }
 
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
-	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
+	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherAuth)
 	p := &PublisherService{connection: conn, metrics: m}
 	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
 	return p

@@ -60,7 +60,7 @@ func newTestConfig(srv *natsserver.Server, cfg setting.NATSSettings) *Config {
 func newTestConnection(t *testing.T, srv *natsserver.Server) *connection {
 	t.Helper()
 	cfg := setting.NATSSettings{Enabled: true}
-	c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newTestConfig(srv, cfg), func() string { return "" })
+	c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newTestConfig(srv, cfg), func() roleAuth { return roleAuth{} })
 	t.Cleanup(c.close)
 	return c
 }

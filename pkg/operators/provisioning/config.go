@@ -113,6 +113,8 @@ type ControllerConfig struct {
 // client_urls =
 // token =
 // subscriber_credentials_file =
+// subscriber_username =
+// subscriber_password =
 // tls_enabled =
 func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {

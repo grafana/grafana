@@ -61,14 +61,21 @@ type NATSTLSSettings struct {
 	InsecureSkipVerify bool
 }
 
-// NATSAuthSettings configures the connection identity. A per-role credentials
-// file lets each role present a least-privilege identity; an empty value falls
-// back to the shared CredentialsFile.
+// NATSAuthSettings configures the connection identity. A per-role value lets
+// each role present a least-privilege identity; an empty per-role value falls
+// back to the shared CredentialsFile or Username/Password.
 type NATSAuthSettings struct {
 	Token                     string
 	CredentialsFile           string
 	PublisherCredentialsFile  string
 	SubscriberCredentialsFile string
+
+	Username           string
+	Password           string
+	PublisherUsername  string
+	PublisherPassword  string
+	SubscriberUsername string
+	SubscriberPassword string
 }
 
 func readNATSSettings(cfg *Cfg) error {
@@ -107,6 +114,12 @@ func readNATSSettings(cfg *Cfg) error {
 			CredentialsFile:           section.Key("credentials_file").MustString(""),
 			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
 			SubscriberCredentialsFile: section.Key("subscriber_credentials_file").MustString(""),
+			Username:                  section.Key("username").MustString(""),
+			Password:                  section.Key("password").MustString(""),
+			PublisherUsername:         section.Key("publisher_username").MustString(""),
+			PublisherPassword:         section.Key("publisher_password").MustString(""),
+			SubscriberUsername:        section.Key("subscriber_username").MustString(""),
+			SubscriberPassword:        section.Key("subscriber_password").MustString(""),
 		},
 	}
 	return nil
@@ -129,4 +142,20 @@ func (a NATSAuthSettings) SubscriberCredentials() string {
 		return a.SubscriberCredentialsFile
 	}
 	return a.CredentialsFile
+}
+
+// PublisherUserInfo falls back to the shared user/password as a unit, so a
+// per-role username never pairs with the shared password.
+func (a NATSAuthSettings) PublisherUserInfo() (user, password string) {
+	if a.PublisherUsername != "" {
+		return a.PublisherUsername, a.PublisherPassword
+	}
+	return a.Username, a.Password
+}
+
+func (a NATSAuthSettings) SubscriberUserInfo() (user, password string) {
+	if a.SubscriberUsername != "" {
+		return a.SubscriberUsername, a.SubscriberPassword
+	}
+	return a.Username, a.Password
 }
