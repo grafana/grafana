@@ -60,17 +60,18 @@ type DocumentBuilderInfo struct {
 	SearchFieldsProvider SearchFieldsProvider
 }
 
-// SearchableFields returns the column-definition view of this kind's custom
-// search fields, derived from its provider. The provider is the single source
-// of truth; the search backend uses this view for result column metadata and
-// sort-field prefixing. Returns nil when the builder has no provider.
-func (b DocumentBuilderInfo) SearchableFields() (SearchableDocumentFields, error) {
-	if b.SearchFieldsProvider == nil {
+// SearchableFieldsFromProvider returns the column-definition view of a kind's
+// custom search fields for the given group and resource, derived from the
+// provider. The provider is the single source of truth; the search backend
+// uses this view for result column metadata and sort-field prefixing. Returns
+// nil when the provider is nil.
+func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string) (SearchableDocumentFields, error) {
+	if p == nil {
 		return nil, nil
 	}
-	sfds := b.SearchFieldsProvider.Fields(schema.GroupVersionResource{
-		Group:    b.GroupResource.Group,
-		Resource: b.GroupResource.Resource,
+	sfds := p.Fields(schema.GroupVersionResource{
+		Group:    group,
+		Resource: resource,
 	})
 	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
 }
