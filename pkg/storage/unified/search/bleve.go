@@ -2036,12 +2036,12 @@ func (b *bleveIndex) Search(
 	}
 
 	// postFilter is opt-in via the search_post_rank_authz config option. It
-	// covers normal paginated search and federated queries: bleve ranks, the
-	// runner authorizes app-side in rank order, and stops once the page is full.
-	// Count-only (Limit==0), facet, and SearchBefore requests stay on the
-	// in-searcher path (exact totals / exact facets).
-	postRank := b.postRankAuthzEnabled && access != nil &&
-		req.Limit > 0 && len(req.SearchBefore) == 0 && len(req.Facet) == 0
+	// covers normal paginated search, federated queries, facet queries, and
+	// SearchBefore: bleve ranks, the runner authorizes app-side in rank order,
+	// and stops once the page is full (page-fill) or the sample budget is hit
+	// (facets). Pure count-only (Limit==0, no facets) stays on the in-searcher
+	// path for an exact total.
+	postRank := b.postRankAuthzEnabled && access != nil && (req.Limit > 0 || len(req.Facet) > 0)
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
@@ -2055,16 +2055,20 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// A SearchAfter cursor carries one sort value per field in the sort order
-	// that produced it. The post-rank path appends a SortDocID tie-breaker, so
-	// its sort order is one longer than the in-searcher path's. A cursor
-	// created before the flag was enabled (or after it was turned off) has the
-	// wrong length for the current path. runPostFilterAuthz calls
+	// A SearchAfter/SearchBefore cursor carries one sort value per field in the
+	// sort order that produced it. The post-rank path appends a SortDocID
+	// tie-breaker, so its sort order is one longer than the in-searcher path's.
+	// A cursor created before the flag was enabled (or after it was turned off)
+	// has the wrong length for the current path. runPostFilterAuthz calls
 	// SearchInContext directly, so bleve doesn't validate the mismatch before
 	// the collector indexes into the shorter cursor. Guard it here: if the
 	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
 	// path; if it still doesn't match, reject the request.
-	if postRank && len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+	cursorLen := len(req.SearchAfter)
+	if cursorLen == 0 {
+		cursorLen = len(req.SearchBefore)
+	}
+	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank)
 		if e != nil {
@@ -2075,8 +2079,8 @@ func (b *bleveIndex) Search(
 			return nil, err
 		}
 	}
-	if len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
-		response.Error = resource.NewBadRequestError("search_after cursor does not match the current sort order")
+	if cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
+		response.Error = resource.NewBadRequestError("search cursor does not match the current sort order")
 		return response, nil
 	}
 
@@ -2089,6 +2093,7 @@ func (b *bleveIndex) Search(
 	selectFields := slices.Clone(searchrequest.Fields)
 	if postRank {
 		b.ensureAuthzFields(searchrequest)
+		b.ensureFacetFields(searchrequest, req)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
@@ -2230,13 +2235,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
-	// authorization (and offset handling) happen afterward in bleveIndex.Search.
-	// The first window over-fetches via windowSize and pages with SearchAfter.
-	// From/offset are applied app-side (over authorized hits), so bleve starts at 0.
+	// authorization (and offset/facet aggregation) happen afterward in
+	// bleveIndex.Search. The first window over-fetches via windowSize (page-fill)
+	// or facetWindowSize (facets, one large window covering the sample budget)
+	// and pages with SearchAfter. From/offset are applied app-side (over
+	// authorized hits), so bleve starts at 0.
 	reqSize := size
 	reqFrom := offset
 	if postRankAuthz {
-		reqSize = b.postRankAuthz.windowSize(size)
+		if len(req.Facet) > 0 {
+			reqSize = b.postRankAuthz.facetWindowSize()
+		} else {
+			reqSize = b.postRankAuthz.windowSize(size)
+		}
 		reqFrom = 0
 	}
 
@@ -2287,11 +2298,20 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		})
 	}
 
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
+	if postRankAuthz {
+		// postFilter aggregates facets app-side over authorized hits (see
+		// facetAggregator); bleve's native facets would run over the unfiltered
+		// searcher and count unauthorized docs, so drop them here. The facet
+		// fields are added to the bleve load list in Search (ensureFacetFields),
+		// separate from the response column list.
+		searchrequest.Facets = nil
+	} else {
+		for k, v := range req.Facet {
+			if searchrequest.Facets == nil {
+				searchrequest.Facets = make(bleve.FacetsRequest)
+			}
+			searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
 	// Add the sort fields
@@ -2319,16 +2339,17 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if postRankAuthz {
-		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
-		// {namespace}/{group}/{resource}/{name} is globally unique across a
-		// federated alias (dashboards + folders differ by the resource segment),
-		// so this guarantees no skips/dupes over the merged result set. (For
-		// non-federated queries the name tie-breaker above already gives a total
-		// order; the doc ID is still harmless and keeps the cursor shape uniform
-		// across federated and non-federated post-rank searches.)
+		// Total-order tie-breaker for stable SearchAfter/SearchBefore cursors.
+		// The doc ID {namespace}/{group}/{resource}/{name} is globally unique
+		// across a federated alias (dashboards + folders differ by the resource
+		// segment), so this guarantees no skips/dupes over the merged result set.
+		// (For non-federated queries the name tie-breaker above already gives a
+		// total order; the doc ID is still harmless and keeps the cursor shape
+		// uniform across federated and non-federated post-rank searches.)
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
-		// The folder stored field (needed to authorize) is added to the bleve
-		// load list in Search, separate from the response column list.
+		// The folder and facet stored fields (needed to authorize / aggregate
+		// app-side) are added to the bleve load list in Search, separate from
+		// the response column list.
 	}
 
 	return searchrequest, nil

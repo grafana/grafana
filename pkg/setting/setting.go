@@ -740,6 +740,10 @@ type Cfg struct {
 	SearchPostRankAuthzOverFetchFactor int
 	SearchPostRankAuthzMaxWindow       int
 	SearchPostRankAuthzMaxCandidates   int
+	// SearchPostRankAuthzFacetSampleSize bounds the candidate budget when
+	// aggregating facets on the post-filter path. Zero falls back to the
+	// default in search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzFacetSampleSize int
 
 	// Vector storage
 	EnableVectorBackend      bool
