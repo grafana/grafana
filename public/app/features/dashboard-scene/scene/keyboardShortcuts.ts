@@ -130,6 +130,15 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
   });
 
+  // Copy panel (available outside edit mode so it can be pasted into another dashboard)
+  keybindings.addBinding({
+    key: 'p c',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
+      scene.copyPanel(vizPanel);
+    }),
+  });
+
   // Refresh
   keybindings.addBinding({
     key: 'd r',
@@ -260,6 +269,17 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
           scene.duplicatePanel(vizPanel);
         }
       }),
+    });
+
+    // paste panel (not panel-scoped: adds the copied panel to the dashboard)
+    keybindings.addBinding({
+      key: 'p v',
+      onTrigger: () => {
+        if (scene.state.isEditing) {
+          DashboardInteractions.trackPastePanelClick('canvas');
+          scene.pastePanel();
+        }
+      },
     });
   }
 
