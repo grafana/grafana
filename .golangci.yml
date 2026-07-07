@@ -1,6 +1,6 @@
 # This file is best edited with some JSON-schema-aware editor.
-# VSCode/Cursor/... user? See: https://github.com/redhat-developer/vscode-yaml
-# Others can set up the YAML LSP manually, which supports schemas: https://github.com/redhat-developer/yaml-language-server
+# VSCode/Cursor/... user? See: https://github.com/redhat-developr/vscode-yaml
+# Others can set up the YAML LSP manually, which supports schemas: https://github.com/redhat-developr/yaml-language-server
 
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
 version: '2'

@@ -44,7 +44,7 @@ We welcome your technical contributions! You can contribute in several ways:
 
 **What you will need:**
 
-- Follow our [developer guide](contribute/developer-guide.md) to set up your environment.
+- Follow our [developr guide](contribute/developr-guide.md) to set up your environment.
 - Adhere to our [frontend](contribute/style-guides/frontend.md) and [backend](contribute/backend/style-guide.md) style guides.
 - Write or update tests ([testing guide](contribute/style-guides/testing.md)).
 
@@ -67,7 +67,7 @@ Grafana plugins let you extend the platform with new data sources, panels, and m
 
 **Step-by-step:**
 
-1. Read the [plugin development guide](https://grafana.com/developers/plugin-tools) to choose your plugin type and set up your environment.
+1. Read the [plugin development guide](https://grafana.com/developrs/plugin-tools) to choose your plugin type and set up your environment.
 2. Scaffold your plugin using the recommended tools.
 3. Develop and test your plugin locally.
 4. Follow best practices for code style, testing, and documentation.
@@ -126,11 +126,11 @@ To edit or write technical content, refer to [Contribute to our documentation](/
 
 #### Contributor License Agreement (CLA)
 
-Before we can accept your pull request, you need to [sign our CLA](https://grafana.com/docs/grafana/latest/developers/cla/). If you haven't, our CLA assistant prompts you to when you create your pull request.
+Before we can accept your pull request, you need to [sign our CLA](https://grafana.com/docs/grafana/latest/developrs/cla/). If you haven't, our CLA assistant prompts you to when you create your pull request.
 
 ## Where do I go from here?
 
-- Set up your [development environment](contribute/developer-guide.md).
+- Set up your [development environment](contribute/developr-guide.md).
 - Learn how to [contribute to our documentation](contribute/documentation/README.md).
-- Get started [developing plugins](https://grafana.com/developers/plugin-tools) for Grafana.
+- Get started [developing plugins](https://grafana.com/developrs/plugin-tools) for Grafana.
 - Look through the resources in the [contribute](contribute) folder.

@@ -575,7 +575,7 @@
 - **Log Line Details:** Use small font size when the option is enabled in the panel or controls [#119335](https://github.com/grafana/grafana/pull/119335), [@matyax](https://github.com/matyax)
 - **Logs CSV export:** Include log line body when selected as field [#120947](https://github.com/grafana/grafana/pull/120947), [@matyax](https://github.com/matyax)
 - **Logs Panel:** Added support to hide level in Dashboards and app plugins [#119318](https://github.com/grafana/grafana/pull/119318), [@matyax](https://github.com/matyax)
-- **Logs Panel:** Added support to pass custom grammar definition for plugin developers [#120402](https://github.com/grafana/grafana/pull/120402), [@matyax](https://github.com/matyax)
+- **Logs Panel:** Added support to pass custom grammar definition for plugin developrs [#120402](https://github.com/grafana/grafana/pull/120402), [@matyax](https://github.com/matyax)
 - **Logs Panel:** Added support to persist displayed fields as panel options in Dashboards [#118027](https://github.com/grafana/grafana/pull/118027), [@matyax](https://github.com/matyax)
 - **Logs Panel:** Added support to show the field selector in Dashboards [#118079](https://github.com/grafana/grafana/pull/118079), [@matyax](https://github.com/matyax)
 - **Logs Panel:** Added support to toggle Level visibility from the field selector [#120667](https://github.com/grafana/grafana/pull/120667), [@matyax](https://github.com/matyax)
@@ -5139,7 +5139,7 @@ If you had selected your language as "Português Brasileiro" previously, this wi
 
 ### Breaking changes
 
-The `@grafana/e2e` package is deprecated in Grafana 11.0.0. If your Grafana plugin has end-to-end tests that use `@grafana/e2e`, it's recommended to replace them with [`@grafana/plugin-e2e`](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) and Playwright. For information on how to migrate, please refer to the plugin-e2e [docs](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/migrate-from-grafana-e2e). Issue [#85778](https://github.com/grafana/grafana/issues/85778)
+The `@grafana/e2e` package is deprecated in Grafana 11.0.0. If your Grafana plugin has end-to-end tests that use `@grafana/e2e`, it's recommended to replace them with [`@grafana/plugin-e2e`](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) and Playwright. For information on how to migrate, please refer to the plugin-e2e [docs](https://grafana.com/developrs/plugin-tools/e2e-test-a-plugin/migrate-from-grafana-e2e). Issue [#85778](https://github.com/grafana/grafana/issues/85778)
 
 ### Plugin development fixes & changes
 
@@ -5353,7 +5353,7 @@ We recommend reviewing what annotation permissions you have revoked from the bas
 
 If you are not willing to grant the annotation permissions back to the basic roles, please disable `annotationPermissionUpdate` feature toggle (add `annotationPermissionUpdate = false` to `[feature_toggles]` in Grafana's configuration file) and reach out to Grafana's support team. When we can learn more about your use case, we will work with you to find a solution. Issue [#84787](https://github.com/grafana/grafana/issues/84787)
 
-Angular support is turned `off` by default starting Grafana 11, you can find all the details in a [dedicated documentation page.](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/)
+Angular support is turned `off` by default starting Grafana 11, you can find all the details in a [dedicated documentation page.](https://grafana.com/docs/grafana/latest/developrs/angular_deprecation/)
 
 Issue [#84738](https://github.com/grafana/grafana/issues/84738)
 
@@ -5363,7 +5363,7 @@ For data sources that extend `DataSourceWithBackend`, the `filterQuery` method i
 
 Users of data source plugins that did not previously remove hidden queries will see a change of behaviour: Before this change, clicking the `Disable query` button had no impact on the query result, but starting from Grafana 11 responses associated with hidden queries will no longer be returned to the panel. Issue [#84656](https://github.com/grafana/grafana/issues/84656)
 
-SystemJS is no longer exported from `@grafana/runtime`. Plugin developers should instead rely on importing modules / packages using standard TS import syntax and npm/yarn for package installation.
+SystemJS is no longer exported from `@grafana/runtime`. Plugin developrs should instead rely on importing modules / packages using standard TS import syntax and npm/yarn for package installation.
 
 Issue [#84561](https://github.com/grafana/grafana/issues/84561)
 
