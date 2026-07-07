@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -74,9 +73,17 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
 	require.NoError(t, err)
 
+	// Register the dashboard provider so the index is built from declared
+	// fields, as in production.
+	dashInfo, err := builders.DashboardBuilder(nil)
+	require.NoError(t, err)
+
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
+		SearchFieldsProvidersForKinds: map[string]resource.SearchFieldsProvider{
+			"dashboard.grafana.app/dashboards": dashInfo.SearchFieldsProvider,
+		},
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -87,16 +94,6 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 		Resource:  "dashboards",
 	}
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-
-	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-		return &builders.DashboardDocumentBuilder{
-			Namespace:        namespace,
-			Blob:             blob,
-			Stats:            make(map[string]map[string]int64),
-			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-		}, nil
-	})
-	require.NoError(t, err)
 
 	// Index three dashboards: one at the root using the legacy empty sentinel,
 	// one at the root using the canonical "general" sentinel, and one nested.
@@ -113,13 +110,11 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			},
 		}
 	}
-	fields, err := info.SearchableFields()
-	require.NoError(t, err)
 	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 3, fields, "test", func(index resource.ResourceIndex) (int64, error) {
+	}, 3, "test", func(index resource.ResourceIndex) (int64, error) {
 		if err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				doc("legacy-root", ""),
@@ -194,23 +189,12 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 	t.Run("build dashboards", func(t *testing.T) {
 		key := dashboardskey
-		info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
-			return &builders.DashboardDocumentBuilder{
-				Namespace:        namespace,
-				Blob:             blob,
-				Stats:            make(map[string]map[string]int64), // empty stats
-				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
-			}, nil
-		})
-		require.NoError(t, err)
 
-		fields, err := info.SearchableFields()
-		require.NoError(t, err)
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		}, 2, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
@@ -552,13 +536,12 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 	t.Run("build folders", func(t *testing.T) {
 		key := folderKey
-		var fields resource.SearchableDocumentFields
 
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		}, 2, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
@@ -838,7 +821,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 func TestGetSortFields(t *testing.T) {
 	dashboardInfo, err := builders.DashboardBuilder(nil)
 	require.NoError(t, err)
-	dashboardFields, err := dashboardInfo.SearchableFields()
+	dashboardFields, err := resource.SearchableFieldsFromProvider(dashboardInfo.SearchFieldsProvider, dashboardInfo.GroupResource.Group, dashboardInfo.GroupResource.Resource)
 	require.NoError(t, err)
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
@@ -895,7 +878,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil)
+		}, nil, false)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -915,7 +898,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil)
+		}, nil, false)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -1137,6 +1120,11 @@ func withSearchFieldsHashesForKinds(m map[string]string) setupOption {
 	}
 }
 
+func withSearchFieldsProvidersForKinds(m map[string]resource.SearchFieldsProvider) setupOption {
+	return func(options *BleveOptions) {
+		options.SearchFieldsProvidersForKinds = m
+	}
+}
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
@@ -1272,7 +1260,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 			if !tc.inMemory {
 				docs = defaultFileThreshold
 			}
-			builtIndex, err := backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
+			builtIndex, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			// Evict indexes.
@@ -1320,9 +1308,9 @@ func TestCloseAllIndexes(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	backend1, reg := setupBleveBackend(t, withRootDir(tmpDir))
-	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
-	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, nil, "test", indexTestDocs(ns2, 1, 100), nil, false, time.Time{}, 0)
+	_, err = backend1.BuildIndex(context.Background(), ns2, 1 /* memory based */, "test", indexTestDocs(ns2, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	// Verify two open indexes.
@@ -1360,7 +1348,7 @@ func TestBuildIndex(t *testing.T) {
 
 			{
 				backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
-				_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, nil, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, lastImportTime, 0)
+				_, err := backend.BuildIndex(context.Background(), ns, firstIndexDocsCount, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, lastImportTime, 0)
 				require.NoError(t, err)
 				backend.Stop()
 			}
@@ -1369,7 +1357,7 @@ func TestBuildIndex(t *testing.T) {
 			time.Sleep(1 * time.Millisecond)
 
 			newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
-			idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, nil, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, false, lastImportTime, 0)
+			idx, err := newBackend.BuildIndex(context.Background(), ns, secondIndexDocsCount, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, false, lastImportTime, 0)
 			require.NoError(t, err)
 
 			cnt, err := idx.DocCount(context.Background(), "", nil)
@@ -1393,7 +1381,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("small build stays in memory", func(t *testing.T) {
 		backend, reg := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", indexTestDocs(ns, 4, 100), nil, false, time.Time{}, 0)
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", indexTestDocs(ns, 4, 100), nil, false, time.Time{}, 0)
 		require.NoError(t, err)
 
 		bleveIdx := idx.(*bleveIndex)
@@ -1406,7 +1394,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("build crossing threshold promotes to filesystem", func(t *testing.T) {
 		backend, reg := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 1, nil, "test", indexTestDocs(ns, 5, 100), nil, false, time.Time{}, 0)
+		idx, err := backend.BuildIndex(t.Context(), ns, 1, "test", indexTestDocs(ns, 5, 100), nil, false, time.Time{}, 0)
 		require.NoError(t, err)
 
 		bleveIdx := idx.(*bleveIndex)
@@ -1440,7 +1428,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("incremental update does not promote memory index", func(t *testing.T) {
 		backend, reg := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 1, nil, "test", indexTestDocs(ns, 1, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+		idx, err := backend.BuildIndex(t.Context(), ns, 1, "test", indexTestDocs(ns, 1, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 		require.NoError(t, err)
 		bleveIdx := idx.(*bleveIndex)
 		require.Equal(t, indexStorageMemory, bleveIdx.indexStorage)
@@ -1460,7 +1448,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("build failure before promotion leaves no filesystem directory", func(t *testing.T) {
 		backend, _ := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", func(resource.ResourceIndex) (int64, error) {
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(resource.ResourceIndex) (int64, error) {
 			return 0, errors.New("fail before promotion")
 		}, nil, false, time.Time{}, 0)
 		require.Error(t, err)
@@ -1472,7 +1460,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("build failure after promotion removes filesystem directory", func(t *testing.T) {
 		backend, _ := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 100, nil, "test", func(index resource.ResourceIndex) (int64, error) {
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(index resource.ResourceIndex) (int64, error) {
 			_, buildErr := indexTestDocs(ns, 5, 100)(index)
 			require.NoError(t, buildErr)
 			return 0, errors.New("fail after promotion")
@@ -1507,7 +1495,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 			if testCase.firstInMemory {
 				firstDocs = 1
 			}
-			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstDocs), nil, "test", indexTestDocs(ns, firstDocs, 100), nil, false, time.Time{}, 0)
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstDocs), "test", indexTestDocs(ns, firstDocs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			if testCase.firstInMemory {
@@ -1523,7 +1511,7 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 				secondDocs = 1
 				openInMemoryIndexes = 1
 			}
-			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondDocs), nil, "test", indexTestDocs(ns, secondDocs, 100), nil, false, time.Time{}, 0)
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondDocs), "test", indexTestDocs(ns, secondDocs, 100), nil, false, time.Time{}, 0)
 			require.NoError(t, err)
 
 			if testCase.secondInMemory {
@@ -1745,7 +1733,7 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	// Seed the cache with a file-based index so the subsequent rebuilds skip
 	// the cold-start reuse path (which would otherwise collide on the bolt
 	// lock of the already-open initial index).
-	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
+	_, err := backend.BuildIndex(t.Context(), ns, 100, "init",
 		indexTestDocs(ns, 1, 1),
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -1759,7 +1747,7 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	aDone := make(chan struct{})
 	go func() {
 		defer close(aDone)
-		_, _ = backend.BuildIndex(t.Context(), ns, 100, nil, "build-a",
+		_, _ = backend.BuildIndex(t.Context(), ns, 100, "build-a",
 			func(index resource.ResourceIndex) (int64, error) {
 				if err := index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
 					Action: resource.ActionIndex,
@@ -1788,7 +1776,7 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	require.NotEmpty(t, aDir)
 
 	// Run B to completion. B's cleanOldIndexes runs while A is still in flight.
-	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "build-b",
+	_, err = backend.BuildIndex(t.Context(), ns, 100, "build-b",
 		indexTestDocs(ns, 1, 2),
 		nil, true, time.Time{}, 0)
 	require.NoError(t, err)
@@ -1815,7 +1803,7 @@ func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
 	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
 
 	// Build an initial file-based index so a directory exists on disk.
-	_, err := backend.BuildIndex(t.Context(), ns, 100, nil, "init",
+	_, err := backend.BuildIndex(t.Context(), ns, 100, "init",
 		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -1832,7 +1820,7 @@ func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
 	// Call BuildIndex with lastImportTime > the existing index's BuildTime.
 	// tryReuseFileIndex opens the on-disk dir, sees the build is stale, and
 	// closes + rejects it; createEmptyFileIndex then builds a fresh one.
-	_, err = backend.BuildIndex(t.Context(), ns, 100, nil, "rebuild-after-import",
+	_, err = backend.BuildIndex(t.Context(), ns, 100, "rebuild-after-import",
 		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
 		nil, false, time.Now().Add(time.Hour), 0)
 	require.NoError(t, err)
@@ -1863,7 +1851,7 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	if fileBased {
 		docs = defaultFileThreshold
 	}
-	_, err := backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", func(index resource.ResourceIndex) (int64, error) {
+	_, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", func(index resource.ResourceIndex) (int64, error) {
 		if fileBased {
 			_, buildErr := indexTestDocs(ns, docs, 100)(index)
 			require.NoError(t, buildErr)
@@ -1873,7 +1861,7 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	require.Error(t, err)
 
 	// Even though previous build of the index failed, new building of the index should work.
-	_, err = backend.BuildIndex(context.Background(), ns, int64(docs), nil, "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), ns, int64(docs), "test", indexTestDocs(ns, docs, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 }
 
@@ -1885,7 +1873,7 @@ func TestIndexUpdate(t *testing.T) {
 	}
 
 	be, _ := setupBleveBackend(t)
-	idx, err := be.BuildIndex(t.Context(), ns, defaultFileThreshold*2 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+	idx, err := be.BuildIndex(t.Context(), ns, defaultFileThreshold*2 /* file based */, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	resp := searchTitle(t, idx, "gen", 10, ns)
@@ -1939,7 +1927,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 		return sinceRV + int64(5), 5, err
 	}
 
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1947,7 +1935,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 
-	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
+	_, err = be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	_, err = idx.UpdateIndex(ctx)
@@ -1963,7 +1951,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 
 	be, _ := setupBleveBackend(t)
 
-	_, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+	_, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
@@ -2022,7 +2010,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for ctx.Err() == nil {
-			_, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+			_, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
 			rebuilds.Add(1)
 		}
@@ -2045,7 +2033,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 
 	be, _ := setupBleveBackend(t)
 
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
@@ -2105,7 +2093,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	be, _ := setupBleveBackend(t, withIndexMinUpdateInterval(minInterval))
 
 	updateFn, updateCalls := updateTestDocsReturningMillisTimestamp(ns, 5)
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updateFn, false, time.Time{}, 0)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updateFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
@@ -2173,7 +2161,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		return 0, 0, updateErr
 	}
-	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
+	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	t.Run("update fail", func(t *testing.T) {
@@ -2207,7 +2195,7 @@ func TestIndexBuildInfo(t *testing.T) {
 	}
 
 	be, _ := setupBleveBackend(t, withFileThreshold(100))
-	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	index, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	buildInfo, err := getBuildInfo(index.(*bleveIndex).index)
@@ -2229,7 +2217,7 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 	}
 
 	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFieldsHashesForKinds(hashes))
-	index, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	index, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	buildInfo, err := index.BuildInfo()
@@ -2238,7 +2226,7 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 
 	// Indexes built without a registered hash record an empty string.
 	nsOther := resource.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
-	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, nil, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0)
+	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	buildInfoOther, err := indexOther.BuildInfo()
@@ -2289,7 +2277,7 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 
 	// First, create a file-based index with one backend and keep it open
 	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
-	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, index1)
 
@@ -2307,7 +2295,7 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 	now := time.Now()
 	timeout, err := time.ParseDuration(boltTimeout)
 	require.NoError(t, err)
-	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.Error(t, err)
 	require.ErrorIs(t, err, bolterrors.ErrTimeout)
 	require.Nil(t, index2)

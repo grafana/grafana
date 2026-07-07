@@ -53,6 +53,7 @@ declare module "@openfeature/core" {
     | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
+    | "grafana.useDefaultScopesEndpoint"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
@@ -64,7 +65,8 @@ declare module "@openfeature/core" {
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
-    | "grafana.growthHomepage";
+    | "grafana.growthHomepage"
+    | "grafana.onDemandDiagnostics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

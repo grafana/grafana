@@ -35,7 +35,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
-| `annotationsClustering`                      | Enables annotation clustering and switches to refactored annotation code                                                                                      | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
 | `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
@@ -86,7 +85,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability |
 | `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list         |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                          |
-| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                    |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                      |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                              |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
@@ -102,7 +100,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
-| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                             |
