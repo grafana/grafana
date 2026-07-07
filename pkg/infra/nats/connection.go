@@ -24,13 +24,19 @@ const (
 // broker that has gone away cannot stall shutdown for the nats.go default of 30s.
 const drainTimeout = 10 * time.Second
 
+type roleAuth struct {
+	credentialsFile string
+	username        string
+	password        string
+}
+
 // connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
-	log         log.Logger
-	metrics     connectionMetrics
-	role        connRole
-	config      *Config
-	credentials func() string
+	log     log.Logger
+	metrics connectionMetrics
+	role    connRole
+	config  *Config
+	auth    func() roleAuth
 
 	// onAsyncError, when set, is invoked from the NATS async error handler after logging.
 	onAsyncError func(error)
@@ -50,13 +56,13 @@ type connection struct {
 	reconnectCbs map[int]func()
 }
 
-func newConnection(role connRole, logger log.Logger, m connectionMetrics, config *Config, credentials func() string) *connection {
+func newConnection(role connRole, logger log.Logger, m connectionMetrics, config *Config, auth func() roleAuth) *connection {
 	return &connection{
-		log:         logger,
-		metrics:     m,
-		role:        role,
-		config:      config,
-		credentials: credentials,
+		log:     logger,
+		metrics: m,
+		role:    role,
+		config:  config,
+		auth:    auth,
 	}
 }
 
@@ -227,10 +233,12 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		options = append(options, natsclient.Secure(tc))
 	}
 
-	// Precedence: per-role creds file > shared creds file > token.
-	switch creds := c.credentials(); {
-	case creds != "":
-		options = append(options, natsclient.UserCredentials(creds))
+	// Precedence: creds file (JWT) > user/password > shared token.
+	switch auth := c.auth(); {
+	case auth.credentialsFile != "":
+		options = append(options, natsclient.UserCredentials(auth.credentialsFile))
+	case auth.username != "":
+		options = append(options, natsclient.UserInfo(auth.username, auth.password))
 	case c.config.Token() != "":
 		options = append(options, natsclient.Token(c.config.Token()))
 	}

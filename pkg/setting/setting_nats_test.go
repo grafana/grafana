@@ -38,6 +38,10 @@ tls_ca_cert_path = /etc/ca.pem
 token = s3cret
 publisher_credentials_file = /etc/pub.creds
 subscriber_credentials_file = /etc/sub.creds
+publisher_username = pub
+publisher_password = pubpw
+subscriber_username = sub
+subscriber_password = subpw
 `))
 		require.NoError(t, err)
 		cfg.Raw = f
@@ -53,6 +57,10 @@ subscriber_credentials_file = /etc/sub.creds
 		require.Equal(t, "s3cret", cfg.NATS.Auth.Token)
 		require.Equal(t, "/etc/pub.creds", cfg.NATS.Auth.PublisherCredentialsFile)
 		require.Equal(t, "/etc/sub.creds", cfg.NATS.Auth.SubscriberCredentialsFile)
+		require.Equal(t, "pub", cfg.NATS.Auth.PublisherUsername)
+		require.Equal(t, "pubpw", cfg.NATS.Auth.PublisherPassword)
+		require.Equal(t, "sub", cfg.NATS.Auth.SubscriberUsername)
+		require.Equal(t, "subpw", cfg.NATS.Auth.SubscriberPassword)
 	})
 
 	t.Run("rejects invalid mode", func(t *testing.T) {
@@ -100,5 +108,43 @@ func TestNATSAuthCredentialsPrecedence(t *testing.T) {
 	t.Run("subscriber empty when nothing set", func(t *testing.T) {
 		a := NATSAuthSettings{}
 		require.Empty(t, a.SubscriberCredentials())
+	})
+}
+
+func TestNATSAuthUserInfoPrecedence(t *testing.T) {
+	t.Run("per-role overrides shared as a pair", func(t *testing.T) {
+		a := NATSAuthSettings{
+			Username:          "shared",
+			Password:          "sharedpw",
+			PublisherUsername: "pub",
+			PublisherPassword: "pubpw",
+		}
+		user, pass := a.PublisherUserInfo()
+		require.Equal(t, "pub", user)
+		require.Equal(t, "pubpw", pass)
+	})
+
+	t.Run("falls back to shared as a pair", func(t *testing.T) {
+		a := NATSAuthSettings{Username: "shared", Password: "sharedpw"}
+		user, pass := a.SubscriberUserInfo()
+		require.Equal(t, "shared", user)
+		require.Equal(t, "sharedpw", pass)
+	})
+
+	t.Run("per-role username uses its own password, never the shared one", func(t *testing.T) {
+		a := NATSAuthSettings{
+			Password:          "sharedpw",
+			PublisherUsername: "pub",
+		}
+		user, pass := a.PublisherUserInfo()
+		require.Equal(t, "pub", user)
+		require.Empty(t, pass)
+	})
+
+	t.Run("empty when nothing set", func(t *testing.T) {
+		a := NATSAuthSettings{}
+		user, pass := a.SubscriberUserInfo()
+		require.Empty(t, user)
+		require.Empty(t, pass)
 	})
 }

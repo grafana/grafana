@@ -19,7 +19,7 @@ import (
 // that must short-circuit before any dial.
 func newDisabledConnection() *connection {
 	cfg := setting.NATSSettings{Enabled: false}
-	return newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+	return newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return roleAuth{} })
 }
 
 func TestConnection(t *testing.T) {
@@ -27,7 +27,7 @@ func TestConnection(t *testing.T) {
 		require.False(t, newDisabledConnection().Enabled())
 
 		cfg := setting.NATSSettings{Enabled: true}
-		enabled := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+		enabled := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return roleAuth{} })
 		require.True(t, enabled.Enabled())
 	})
 
@@ -38,7 +38,7 @@ func TestConnection(t *testing.T) {
 
 	t.Run("get errors when no urls configured", func(t *testing.T) {
 		cfg := setting.NATSSettings{Enabled: true}
-		c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+		c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return roleAuth{} })
 
 		_, err := c.get(context.Background())
 		require.ErrorContains(t, err, "no nats client urls configured")
@@ -61,7 +61,7 @@ func TestConnection(t *testing.T) {
 		srv := startTestServer(t)
 		cfg := setting.NATSSettings{Enabled: true}
 		m := newConnectionMetrics(rolePublisher)
-		c := newConnection(rolePublisher, log.NewNopLogger(), m, newTestConfig(srv, cfg), func() string { return "" })
+		c := newConnection(rolePublisher, log.NewNopLogger(), m, newTestConfig(srv, cfg), func() roleAuth { return roleAuth{} })
 		t.Cleanup(c.close)
 
 		_, err := c.get(context.Background())
@@ -170,7 +170,7 @@ func TestConnection(t *testing.T) {
 	t.Run("connectOptions", func(t *testing.T) {
 		t.Run("builds base options without auth", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return roleAuth{} })
 
 			opts, err := c.connectOptions()
 			require.NoError(t, err)
@@ -179,10 +179,53 @@ func TestConnection(t *testing.T) {
 
 		t.Run("propagates invalid TLS config", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true, TLS: setting.NATSTLSSettings{Enabled: true, CACertPath: "/does/not/exist.pem"}}
-			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return roleAuth{} })
 
 			_, err := c.connectOptions()
 			require.Error(t, err)
+		})
+
+		resolveOptions := func(t *testing.T, auth roleAuth, token string) natsclient.Options {
+			t.Helper()
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{Token: token}}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return auth })
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			var resolved natsclient.Options
+			for _, opt := range opts {
+				require.NoError(t, opt(&resolved))
+			}
+			return resolved
+		}
+
+		t.Run("uses username/password when no creds file is set", func(t *testing.T) {
+			resolved := resolveOptions(t, roleAuth{username: "pub", password: "pubpw"}, "tok")
+			require.Equal(t, "pub", resolved.User)
+			require.Equal(t, "pubpw", resolved.Password)
+			require.Empty(t, resolved.Token)
+		})
+
+		t.Run("credentials file outranks username/password", func(t *testing.T) {
+			// An unreadable creds file only errors if the creds branch was chosen
+			// over user/password: UserCredentials reads the file, UserInfo doesn't.
+			cfg := setting.NATSSettings{Enabled: true}
+			auth := roleAuth{credentialsFile: "/does/not/exist.creds", username: "pub", password: "pubpw"}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() roleAuth { return auth })
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			var applyErr error
+			for _, opt := range opts {
+				if err := opt(&natsclient.Options{}); err != nil {
+					applyErr = err
+				}
+			}
+			require.ErrorContains(t, applyErr, "/does/not/exist.creds")
+		})
+
+		t.Run("falls back to token when no per-role identity is set", func(t *testing.T) {
+			resolved := resolveOptions(t, roleAuth{}, "tok")
+			require.Equal(t, "tok", resolved.Token)
+			require.Empty(t, resolved.User)
 		})
 	})
 

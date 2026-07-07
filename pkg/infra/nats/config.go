@@ -36,13 +36,23 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
 
-// PublisherCredentials returns the credentials file the publisher connection
-// should use, falling back to the shared credentials when none is set.
-func (c *Config) PublisherCredentials() string { return c.cfg.Auth.PublisherCredentials() }
+func (c *Config) PublisherAuth() roleAuth {
+	user, password := c.cfg.Auth.PublisherUserInfo()
+	return roleAuth{
+		credentialsFile: c.cfg.Auth.PublisherCredentials(),
+		username:        user,
+		password:        password,
+	}
+}
 
-// SubscriberCredentials returns the credentials file the subscriber connection
-// should use, falling back to the shared credentials when none is set.
-func (c *Config) SubscriberCredentials() string { return c.cfg.Auth.SubscriberCredentials() }
+func (c *Config) SubscriberAuth() roleAuth {
+	user, password := c.cfg.Auth.SubscriberUserInfo()
+	return roleAuth{
+		credentialsFile: c.cfg.Auth.SubscriberCredentials(),
+		username:        user,
+		password:        password,
+	}
+}
 
 // URLs returns the client URLs known so far. In embedded mode the running
 // server's local URL is prepended ahead of the configured peers. Safe for

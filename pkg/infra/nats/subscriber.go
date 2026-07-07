@@ -67,7 +67,7 @@ type SubscriberService struct {
 }
 
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
-	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
+	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberAuth)
 	// A slow consumer means the broker dropped messages the client could not drain in time.
 	conn.onAsyncError = func(err error) {
 		if errors.Is(err, natsclient.ErrSlowConsumer) {
