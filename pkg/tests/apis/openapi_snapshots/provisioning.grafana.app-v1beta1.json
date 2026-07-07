@@ -4080,6 +4080,14 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.CommitOptions": {
         "type": "object",
         "properties": {
+          "authorEmail": {
+            "description": "Email used as the commit author. When empty, defaults to \"noreply@grafana.com\". Ignored when signerIsAuthor is true.",
+            "type": "string"
+          },
+          "authorName": {
+            "description": "Name used as the commit author. When empty, defaults to \"Grafana\". Ignored when signerIsAuthor is true.",
+            "type": "string"
+          },
           "enforceTemplate": {
             "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"
@@ -4087,6 +4095,10 @@
           "signerEmail": {
             "description": "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
             "type": "string"
+          },
+          "signerIsAuthor": {
+            "description": "When true, commits are authored by the signer identity (signerName/signerEmail). Takes precedence over authorName/authorEmail.",
+            "type": "boolean"
           },
           "signerName": {
             "description": "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",

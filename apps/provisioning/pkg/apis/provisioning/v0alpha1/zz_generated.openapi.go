@@ -254,6 +254,27 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
+					"signerIsAuthor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail). Takes precedence over authorName/authorEmail.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"authorName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit author. When empty, defaults to \"Grafana\". Ignored when signerIsAuthor is true.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authorEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit author. When empty, defaults to \"noreply@grafana.com\". Ignored when signerIsAuthor is true.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",

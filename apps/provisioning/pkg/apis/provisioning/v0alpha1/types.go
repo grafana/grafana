@@ -376,6 +376,18 @@ type CommitOptions struct {
 	// When empty, commits are not signed.
 	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
 
+	// When true, commits are authored by the signer identity
+	// (signerName/signerEmail). Takes precedence over authorName/authorEmail.
+	SignerIsAuthor bool `json:"signerIsAuthor,omitempty"`
+
+	// Name used as the commit author. When empty, defaults to "Grafana".
+	// Ignored when signerIsAuthor is true.
+	AuthorName string `json:"authorName,omitempty"`
+
+	// Email used as the commit author. When empty, defaults to
+	// "noreply@grafana.com". Ignored when signerIsAuthor is true.
+	AuthorEmail string `json:"authorEmail,omitempty"`
+
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.

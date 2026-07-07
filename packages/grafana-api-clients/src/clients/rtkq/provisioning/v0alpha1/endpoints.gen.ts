@@ -1827,10 +1827,16 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
+  /** Email used as the commit author. When empty, defaults to "noreply@grafana.com". Ignored when signerIsAuthor is true. */
+  authorEmail?: string;
+  /** Name used as the commit author. When empty, defaults to "Grafana". Ignored when signerIsAuthor is true. */
+  authorName?: string;
   /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
   signerEmail?: string;
+  /** When true, commits are authored by the signer identity (signerName/signerEmail). Takes precedence over authorName/authorEmail. */
+  signerIsAuthor?: boolean;
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
   /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
