@@ -431,6 +431,26 @@ func TestPluginStorePluginToMeta(t *testing.T) {
 		assert.Equal(t, "module.js", meta.Module.Path)
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript, meta.Module.LoadingStrategy)
 	})
+
+	t.Run("inherits version from parent when child version is empty", func(t *testing.T) {
+		plugin := pluginstore.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource},
+			Class:    plugins.ClassExternal,
+			Parent:   &pluginstore.ParentPlugin{ID: "parent-app", Version: "1.2.3"},
+		}
+		meta := pluginStorePluginToMeta(plugin, "")
+		assert.Equal(t, "1.2.3", meta.PluginJson.Info.Version)
+	})
+
+	t.Run("keeps own version when child version is set", func(t *testing.T) {
+		plugin := pluginstore.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "9.9.9"}},
+			Class:    plugins.ClassExternal,
+			Parent:   &pluginstore.ParentPlugin{ID: "parent-app", Version: "1.2.3"},
+		}
+		meta := pluginStorePluginToMeta(plugin, "")
+		assert.Equal(t, "9.9.9", meta.PluginJson.Info.Version)
+	})
 }
 
 func TestConvertSignatureStatus(t *testing.T) {
@@ -521,6 +541,16 @@ func TestPluginToMetaSpec(t *testing.T) {
 		assert.Nil(t, meta.Signature.Org)
 		assert.Empty(t, meta.Children)
 		assert.Empty(t, meta.Translations)
+	})
+
+	t.Run("inherits version from parent when child version is empty", func(t *testing.T) {
+		plugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "child-plugin", Name: "Child Plugin", Type: plugins.TypeDataSource},
+			Class:    plugins.ClassExternal,
+			Parent:   &plugins.Plugin{JSONData: plugins.JSONData{ID: "parent-app", Info: plugins.Info{Version: "1.2.3"}}},
+		}
+		meta := pluginToMetaSpec(plugin)
+		assert.Equal(t, "1.2.3", meta.PluginJson.Info.Version)
 	})
 }
 
