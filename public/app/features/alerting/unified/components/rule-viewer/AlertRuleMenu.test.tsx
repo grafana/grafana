@@ -75,6 +75,7 @@ const ui = {
     manageEnrichments: byRole('menuitem', { name: /Manage enrichments/i }),
     declareIncident: byRole('menuitem', { name: /Declare incident/i }),
     analyzeRule: byRole('menuitem', { name: /Analyze rule/i }),
+    startInvestigation: byRole('menuitem', { name: /Start investigation/i }),
   },
 };
 
@@ -1325,6 +1326,7 @@ describe('AlertRuleMenu', () => {
 
         await openMenu();
         expect(await ui.menuItems.analyzeRule.find()).toBeInTheDocument();
+        expect(await ui.menuItems.startInvestigation.find()).toBeInTheDocument();
       });
 
       it('hides Analyze Rule when assistant is unavailable', async () => {
@@ -1351,6 +1353,7 @@ describe('AlertRuleMenu', () => {
 
         await openMenu();
         expect(ui.menuItems.analyzeRule.query()).not.toBeInTheDocument();
+        expect(ui.menuItems.startInvestigation.query()).not.toBeInTheDocument();
       });
 
       it('hides Analyze Rule for datasource-managed rules even when assistant is available', async () => {
@@ -1384,6 +1387,48 @@ describe('AlertRuleMenu', () => {
 
         await openMenu();
         expect(ui.menuItems.analyzeRule.query()).not.toBeInTheDocument();
+        expect(ui.menuItems.startInvestigation.query()).not.toBeInTheDocument();
+      });
+
+      it('hides Start investigation for Grafana-managed recording rules even when assistant is available', async () => {
+        mockUseAssistant.mockReturnValue({
+          isLoading: false,
+          isAvailable: true,
+          openAssistant: mockOpenAssistant,
+        } as unknown as ReturnType<typeof useAssistant>);
+
+        const mockRule = getGrafanaRule({
+          promRule: mockPromRecordingRule({
+            uid: 'test-recording-rule-uid',
+            folderUid: 'test-folder-uid',
+          }),
+          rulerRule: mockRulerGrafanaRecordingRule({
+            uid: 'test-recording-rule-uid',
+            folderUid: 'test-folder-uid',
+          }),
+        });
+        const identifier = fromCombinedRule('grafana', mockRule);
+        const groupIdentifier = {
+          groupOrigin: 'grafana' as const,
+          namespace: { uid: 'namespace-uid' },
+          groupName: 'group-name',
+        };
+
+        render(
+          <AlertRuleMenu
+            promRule={mockRule.promRule}
+            rulerRule={mockRule.rulerRule}
+            identifier={identifier}
+            groupIdentifier={groupIdentifier}
+            handleSilence={handleSilence}
+            handleDelete={handleDelete}
+            handleDuplicateRule={handleDuplicateRule}
+          />
+        );
+
+        await openMenu();
+        expect(await ui.menuItems.analyzeRule.find()).toBeInTheDocument();
+        expect(ui.menuItems.startInvestigation.query()).not.toBeInTheDocument();
       });
     });
   });

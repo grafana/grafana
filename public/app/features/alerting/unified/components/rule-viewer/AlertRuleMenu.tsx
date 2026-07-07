@@ -36,6 +36,7 @@ import {
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AnalyzeRuleButton } from '../assistant/AnalizeRuleButton';
+import { StartInvestigationButton } from '../assistant/StartInvestigationButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -135,6 +136,8 @@ const AlertRuleMenu = ({
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
+  const shouldShowStartInvestigationButton =
+    isAssistantAvailable && prometheusRuleType.grafana.alertingRule(promRule);
 
   const shareUrl = createShareLink(identifier);
 
@@ -182,6 +185,7 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
+      {shouldShowStartInvestigationButton && <StartInvestigationButton rule={promRule} />}
       {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton rule={promRule} />}
       {canDuplicate && (
         <Menu.Item
