@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -78,12 +77,6 @@ type RepositoryController struct {
 	tokenMetrics                  *repositoryTokenMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
-
-	// recentTokenWrites records, per repository key, when a token was last written so the
-	// token-not-found recovery does not regenerate a token that was just written but is
-	// not yet readable from the secret store.
-	tokenWriteMu      sync.Mutex
-	recentTokenWrites map[string]time.Time
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -147,7 +140,6 @@ func NewRepositoryController(
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
-		recentTokenWrites:             map[string]time.Time{},
 	}
 
 	rc.processFn = rc.process
@@ -224,33 +216,6 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 func (rc *RepositoryController) runWorker(ctx context.Context) {
 	for rc.processNextWorkItem(ctx) {
 	}
-}
-
-// markTokenWritten records that a token was just written for the given repository key.
-func (rc *RepositoryController) markTokenWritten(key string) {
-	rc.tokenWriteMu.Lock()
-	defer rc.tokenWriteMu.Unlock()
-	if rc.recentTokenWrites == nil {
-		rc.recentTokenWrites = map[string]time.Time{}
-	}
-	rc.recentTokenWrites[key] = time.Now()
-}
-
-// tokenWrittenRecently reports whether a token was written for the given repository key
-// within the grace period, i.e. too recently to assume a decrypt failure means the
-// secret is truly gone rather than not yet readable.
-func (rc *RepositoryController) tokenWrittenRecently(key string) bool {
-	rc.tokenWriteMu.Lock()
-	defer rc.tokenWriteMu.Unlock()
-	at, ok := rc.recentTokenWrites[key]
-	if !ok {
-		return false
-	}
-	if time.Since(at) >= tokenWriteGracePeriod {
-		delete(rc.recentTokenWrites, key)
-		return false
-	}
-	return true
 }
 
 func (rc *RepositoryController) enqueue(obj interface{}) {
@@ -742,7 +707,6 @@ func (rc *RepositoryController) process(key string) error {
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
-			rc.markTokenWritten(key)
 		}
 
 		obj.Secure.Token.Create = token
@@ -759,7 +723,7 @@ func (rc *RepositoryController) process(key string) error {
 			// If we wrote a token for this repository very recently, its secret may not be
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
-			if rc.tokenWrittenRecently(key) {
+			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
 				return nil
@@ -780,7 +744,6 @@ func (rc *RepositoryController) process(key string) error {
 
 			if len(tokenOps) > 0 {
 				patchOperations = append(patchOperations, tokenOps...)
-				rc.markTokenWritten(key)
 			}
 			obj.Secure.Token.Create = token
 

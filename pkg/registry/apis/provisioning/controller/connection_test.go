@@ -255,7 +255,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -556,7 +556,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -662,7 +662,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						// Verify token regeneration patch operation exists
@@ -930,7 +930,7 @@ func TestConnectionController_process(t *testing.T) {
 				)
 
 				mockPatcher := NewMockConnectionStatusPatcher(t)
-				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				return mockLister, mockHealthChecker, mockPatcher, mockFactory
 			},
@@ -1017,7 +1017,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Run(
 					func(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) {
 						found := false
@@ -1192,7 +1192,7 @@ func TestConnectionController_process(t *testing.T) {
 						},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
@@ -1281,7 +1281,7 @@ func TestConnectionController_process(t *testing.T) {
 						HealthStatus: provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
