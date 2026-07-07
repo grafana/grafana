@@ -27,7 +27,9 @@ const DIRECT_OPTION_VALUE = 'direct';
 export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: ConnectionPickerProps) => {
   const [supportedDataSources, setSupportedDataSources] = useState<DataSourceInstanceListItem[]>([]);
   useEffect(() => {
-    getDataSourceInstanceList({ type: INFINITY_DATASOURCE_TYPE }).then(setSupportedDataSources);
+    getDataSourceInstanceList({
+      filter: (item) => item.type === INFINITY_DATASOURCE_TYPE,
+    }).then(setSupportedDataSources);
   }, []);
 
   const connectionOptions = useMemo(() => {
