@@ -1,6 +1,6 @@
 # Create a pull request
 
-Every contribution to Grafana's software begins with a [pull request](https://help.github.com/en/articles/about-pull-requests/). This document guides you through the process of creating a PR.
+Every contribution to Grafana's software begins with a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests). This document guides you through the process of creating a PR.
 
 ## Before you begin
 
@@ -12,7 +12,7 @@ We know you're excited to create your first pull request. Before we get started,
 
 ## Your first pull request
 
-If this is your first time contributing to an open-source project on GitHub, make sure you read GitHub's article on [creating a pull request](https://help.github.com/en/articles/creating-a-pull-request).
+If this is your first time contributing to an open-source project on GitHub, make sure you read GitHub's article on [creating a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
 
 To increase the chance of having your pull request accepted, make sure your pull request follows these guidelines:
 
@@ -93,7 +93,7 @@ A well-written pull request minimizes the time to get your change accepted. The 
 Grafana uses the guidelines for commit messages outlined in the article [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/), with the following additions:
 
 - Subject line must begin with the _area_ of the commit.
-- Footer in the form of an optional [keyword and issue reference](https://help.github.com/en/articles/closing-issues-using-keywords).
+- Footer in the form of an optional [keyword and issue reference](https://docs.github.com/en/issues/managing-your-project-with-issues/using-issues/linking-a-pull-request-to-an-issue).
 
 #### Area
 

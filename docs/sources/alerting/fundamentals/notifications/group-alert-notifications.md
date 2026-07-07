@@ -81,7 +81,7 @@ In the notification policy, you can also configure how often notifications are s
 
 These timers reduce the number of notifications sent. By delaying the delivery of notifications, incoming alerts can be grouped into just one notification instead of many.
 
-{{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
+{{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
 
 <!--
 flowchart LR

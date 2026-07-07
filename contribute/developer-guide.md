@@ -317,7 +317,7 @@ make build-docker-full
 
 The resulting image will be tagged as `grafana/grafana:dev`.
 
-> **Note:** If you use Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
+> **Note:** If you use Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `make build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
 
 ## Troubleshooting
 
