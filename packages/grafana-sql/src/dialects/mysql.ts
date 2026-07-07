@@ -1,10 +1,8 @@
 /**
  * MySQL-flavored identifier quoting utilities.
  *
- * These helpers assume backtick (`) as the identifier delimiter and use the
- * MySQL 8.0.31 reserved word list. They are intentionally scoped to a
- * dialect-named namespace so additional dialects (e.g. ANSI SQL) can be added
- * alongside without disturbing existing consumers.
+ * These helpers assume backtick (`) as the identifier delimiter and use the MySQL 8.0.31 reserved word list.
+ * They are intentionally scoped to a dialect-named namespace so additional dialects (e.g. ANSI SQL) can be added alongside without disturbing existing consumers.
  */
 
 /**
@@ -292,14 +290,10 @@ function isValidIdentifier(identifier: string): boolean {
 }
 
 /**
- * Wraps the identifier in backticks if necessary.
- *
- * This function is idempotent: if the value is already backtick-wrapped, it is
- * returned unchanged. Embedded backticks are escaped by doubling them,
- * consistent with MySQL/ANSI escape rules.
+ * Wraps the identifier in backticks if necessary, escaping embedded backticks by doubling them.
+ * Idempotent: an already-wrapped value is trusted and returned unchanged.
  */
 function quoteIdentifierIfNecessary(value: string): string {
-  // Idempotent: already backtick-wrapped
   if (value.length >= 2 && value.startsWith('`') && value.endsWith('`')) {
     return value;
   }
@@ -308,17 +302,10 @@ function quoteIdentifierIfNecessary(value: string): string {
     return value;
   }
 
-  // Escape embedded backticks by doubling them
-  const escaped = value.replace(/`/g, '``');
-  return `\`${escaped}\``;
+  return `\`${value.replace(/`/g, '``')}\``;
 }
 
-/**
- * Removes identifier quoting from an identifier.
- *
- * Supports both double-quote (") and backtick (`) delimiters. Handles
- * doubled delimiter escape sequences.
- */
+// Strips backtick or double-quote wrapping, collapsing the doubled-delimiter escape.
 function unquoteIdentifier(value: string): string {
   if (value.length >= 2 && value[0] === '"' && value[value.length - 1] === '"') {
     return value.substring(1, value.length - 1).replace(/""/g, '"');

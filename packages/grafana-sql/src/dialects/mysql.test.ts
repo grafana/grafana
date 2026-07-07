@@ -67,6 +67,12 @@ describe('mysqlIdentifier', () => {
       expect(mysqlIdentifier.quoteIdentifierIfNecessary('a`b`c')).toBe('`a``b``c`');
     });
 
+    it('is idempotent when re-quoting a value with embedded backticks', () => {
+      const quoted = mysqlIdentifier.quoteIdentifierIfNecessary('foo`bar');
+      expect(quoted).toBe('`foo``bar`');
+      expect(mysqlIdentifier.quoteIdentifierIfNecessary(quoted)).toBe(quoted);
+    });
+
     it('should handle empty string', () => {
       expect(mysqlIdentifier.quoteIdentifierIfNecessary('')).toBe('``');
     });
