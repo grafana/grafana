@@ -12,6 +12,7 @@ import {
   type DataQueryKind,
   type AdhocVariableKind,
   type GroupByVariableKind,
+  type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -508,6 +509,74 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     return `${datasourceGroup}-${index}`;
   };
 
+  const processVariable = (variable: VariableKind) => {
+    if (variable.kind === 'QueryVariable') {
+      processDataQueryKind(variable.spec.query);
+      variable.spec.options = [];
+      variable.spec.current = {
+        text: '',
+        value: '',
+      };
+      return;
+    }
+
+    if (variable.kind === 'DatasourceVariable') {
+      variable.spec.current = {
+        text: '',
+        value: '',
+      };
+      return;
+    }
+
+    if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+      processAdHocAndGroupByVariables(variable);
+    }
+  };
+
+  const processSectionVariableList = (variables?: VariableKind[]) => {
+    for (const variable of variables ?? []) {
+      processVariable(variable);
+    }
+  };
+
+  const logMissingSectionLayout = (scope: 'row' | 'tab') => {
+    console.error(`Export skipped a ${scope} section variable layout because its nested layout was missing or invalid.`);
+  };
+
+  const processSectionVariables = (layout: DashboardV2Spec['layout']) => {
+    if (!layout || typeof layout !== 'object' || !('kind' in layout)) {
+      return;
+    }
+
+    if (layout.kind === 'RowsLayout') {
+      for (const row of layout.spec.rows) {
+        processSectionVariableList(row.spec.variables);
+
+        if (!row.spec.layout || typeof row.spec.layout !== 'object') {
+          logMissingSectionLayout('row');
+          continue;
+        }
+
+        processSectionVariables(row.spec.layout);
+      }
+
+      return;
+    }
+
+    if (layout.kind === 'TabsLayout') {
+      for (const tab of layout.spec.tabs) {
+        processSectionVariableList(tab.spec.variables);
+
+        if (!tab.spec.layout || typeof tab.spec.layout !== 'object') {
+          logMissingSectionLayout('tab');
+          continue;
+        }
+
+        processSectionVariables(tab.spec.layout);
+      }
+    }
+  };
+
   const processPanel = (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
@@ -538,22 +607,10 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     // process template variables
     for (const variable of dashboard.variables) {
-      if (variable.kind === 'QueryVariable') {
-        processDataQueryKind(variable.spec.query);
-        variable.spec.options = [];
-        variable.spec.current = {
-          text: '',
-          value: '',
-        };
-      } else if (variable.kind === 'DatasourceVariable') {
-        variable.spec.current = {
-          text: '',
-          value: '',
-        };
-      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
-        processAdHocAndGroupByVariables(variable);
-      }
+      processVariable(variable);
     }
+
+    processSectionVariables(dashboard.layout);
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
