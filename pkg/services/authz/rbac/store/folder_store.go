@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/authlib/types"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -179,17 +178,13 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 }
 
 // listFoldersViaSearch lists folder references (UID + parent) from the search
-// index in a single call. The search runs under a service identity so it
-// returns every folder in the namespace (the folder tree is built for inherited
-// authorization, not filtered to the calling user) and does not recurse into
-// per-item authorization.
+// index in a single call. The resource client authenticates to unified storage
+// as the Grafana service identity, so the search returns every folder in the
+// namespace (the folder tree is built for inherited authorization, not filtered
+// to the calling user) and does not recurse into per-item authorization.
 func (s *APIFolderStore) listFoldersViaSearch(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders.search")
 	defer span.End()
-
-	// The folder tree must contain all folders regardless of the caller; run the
-	// search as a service identity (matching the all-folders object-list path).
-	ctx, _ = identity.WithServiceIdentity(ctx, ns.OrgID)
 
 	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
 	req := &resourcepb.ResourceSearchRequest{
