@@ -408,6 +408,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               setValue={setValue}
               messageTemplateName="commit.singleResourceMessageTemplate"
               enforceTemplateName="commit.enforceTemplate"
+              userAttributionName="commit.userAttribution"
               type={type}
               signingMethodName="signingMethod"
               signingKeyName="commitSigningKey"

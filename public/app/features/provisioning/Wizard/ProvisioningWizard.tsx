@@ -49,7 +49,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const methods = useForm<WizardFormData>({
     reValidateMode: 'onBlur',
     defaultValues: {
-      repository: { ...values, type },
+      repository: { ...values, type, commit: { ...values.commit, userAttribution: true } },
       migrate: {
         history: true,
       },

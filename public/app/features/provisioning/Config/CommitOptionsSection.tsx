@@ -35,6 +35,7 @@ interface Props<T extends FieldValues> {
   setValue: UseFormSetValue<T>;
   messageTemplateName: Path<T>;
   enforceTemplateName: Path<T>;
+  userAttributionName: Path<T>;
   type: RepoType;
   signingMethodName: Path<T>;
   signingKeyName: Path<T>;
@@ -56,6 +57,7 @@ export function CommitOptionsSection<T extends FieldValues>({
   setValue,
   messageTemplateName,
   enforceTemplateName,
+  userAttributionName,
   type,
   signingMethodName,
   signingKeyName,
@@ -128,6 +130,17 @@ export function CommitOptionsSection<T extends FieldValues>({
             />
           </Field>
         )}
+
+        <Field noMargin>
+          <Checkbox
+            {...register(userAttributionName)}
+            label={t('provisioning.commit-options.label-user-attribution', 'Attribute commits to users')}
+            description={t(
+              'provisioning.commit-options.description-user-attribution',
+              'Author commits with the name and email of the user making the change.'
+            )}
+          />
+        </Field>
 
         {gitFields?.signingMethodConfig && (
           <Field

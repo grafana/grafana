@@ -246,6 +246,13 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"userAttribution": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits made through the UI are authored as the acting Grafana user (their name and email). When false, the default Grafana identity is used as the author.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"signingMethod": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",

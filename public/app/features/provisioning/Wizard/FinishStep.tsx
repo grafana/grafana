@@ -148,6 +148,7 @@ export const FinishStep = memo(function FinishStep() {
             setValue={setValue}
             messageTemplateName="repository.commit.singleResourceMessageTemplate"
             enforceTemplateName="repository.commit.enforceTemplate"
+            userAttributionName="repository.commit.userAttribution"
             type={type}
             signingMethodName="repository.signingMethod"
             signingKeyName="repository.commitSigningKey"

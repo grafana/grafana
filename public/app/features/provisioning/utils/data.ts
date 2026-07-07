@@ -24,12 +24,16 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   const signerName = data.commit?.signerName?.trim();
   const signerEmail = data.commit?.signerEmail?.trim();
   const signingMethod = data.signingMethod;
+  const userAttribution = data.commit?.userAttribution;
 
-  if (!base && !signerName && !signerEmail && !signingMethod) {
+  if (!base && !signerName && !signerEmail && !signingMethod && !userAttribution) {
     return undefined;
   }
 
   const commit: CommitOptions = { ...base };
+  if (userAttribution) {
+    commit.userAttribution = true;
+  }
   if (signerName) {
     commit.signerName = signerName;
   }

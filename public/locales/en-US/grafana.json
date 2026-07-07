@@ -13090,8 +13090,10 @@
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
+      "description-user-attribution": "Author commits with the name and email of the user making the change.",
       "label-commit-options": "Commit options",
       "label-enforce-template": "Enforce commit message template",
+      "label-user-attribution": "Attribute commits to users",
       "signer-required": "Required when commit signing is enabled.",
       "signing-key-required": "Signing key is required",
       "smime-certificate-configured": "Configured",
