@@ -435,7 +435,7 @@ describe('getDashboardChanges', () => {
   });
 });
 
-describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+describe('getDashboardChanges with dashboardUnifiedDrilldownControls', () => {
   const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
     return {
       id: 1,
@@ -451,12 +451,12 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
   };
 
   afterEach(() => {
-    config.featureToggles.adHocFilterDefaultValues = false;
+    config.featureToggles.dashboardUnifiedDrilldownControls = false;
   });
 
   describe('when feature flag is enabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {
@@ -532,7 +532,7 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
 
   describe('when feature flag is disabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = false;
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {

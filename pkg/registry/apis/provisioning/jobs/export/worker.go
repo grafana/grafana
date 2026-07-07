@@ -106,7 +106,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return fmt.Errorf("create clients: %w", err)
 	}
 
-	if err := checkExportQuota(ctx, cfg, r.resourceLister, clients); err != nil {
+	if err := checkExportQuota(ctx, cfg, *options, r.resourceLister, clients); err != nil {
 		progress.Complete(ctx, err)
 		return err
 	}
@@ -166,7 +166,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	return nil
 }
 
-func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister, clients resources.ResourceClients) error {
+func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options provisioning.ExportJobOptions, lister resources.ResourceLister, clients resources.ResourceClients) error {
 	quota := cfg.Status.Quota
 	if quota.MaxResourcesPerRepository == 0 {
 		return nil
@@ -174,14 +174,24 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 
 	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
 
-	stats, err := lister.Stats(ctx, cfg.Namespace, "")
-	if err != nil {
-		return fmt.Errorf("get resource stats for quota check: %w", err)
-	}
+	var netChange int64
+	if len(options.Resources) > 0 {
+		// A selective export only writes the explicitly listed resources, so the
+		// net change is bounded by that list — not every unmanaged resource in
+		// the namespace. Counting the whole namespace here would reject exports
+		// whose actual selection stays well within quota.
+		netChange = int64(len(options.Resources))
+	} else {
+		// A full export takes over every unmanaged resource in the namespace.
+		stats, err := lister.Stats(ctx, cfg.Namespace, "")
+		if err != nil {
+			return fmt.Errorf("get resource stats for quota check: %w", err)
+		}
 
-	netChange, err := countSupportedResources(ctx, stats.Unmanaged, clients)
-	if err != nil {
-		return err
+		netChange, err = countSupportedResources(ctx, stats.Unmanaged, clients)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {
