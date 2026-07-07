@@ -130,11 +130,11 @@ To add or modify folder permissions:
 
 ### The Git Sync folder JSON metadata file
 
-Each folder in a synced repository contains a `.folder.json` file at its root:
+Each folder in a synced repository contains a `_folder.json` file at its root:
 
 ```json
 {
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "<API_VERSION>",
   "kind": "Folder",
   "metadata": {
     "name": "<FOLDER_UID>"
@@ -147,5 +147,6 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 Where:
 
+- `<API_VERSION>` is the version of the API you want to use. For example, `folder.grafana.app/v1`.
 - `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
 - `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional. If not used, the folder name will be passed instead.

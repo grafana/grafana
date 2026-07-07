@@ -157,7 +157,6 @@ type SearchBackend interface {
 		ctx context.Context,
 		key NamespacedResource,
 		size int64,
-		nonStandardFields SearchableDocumentFields,
 		indexBuildReason string,
 		builder BuildFn,
 		updater UpdateFn,
@@ -1692,7 +1691,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	if err != nil {
 		return nil, err
 	}
-	fields := s.builders.GetFields(nsr)
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
@@ -1899,7 +1897,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// within ~10% of the per-resource rebuild interval.
 	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
+	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err
@@ -1926,9 +1924,6 @@ type builderCache struct {
 	// Possible blob support
 	blob BlobSupport
 
-	// searchable fields initialized once on startup
-	fields map[schema.GroupResource]SearchableDocumentFields
-
 	// lookup by group, then resource (namespace)
 	// This is only modified at startup, so we do not need mutex for access
 	lookup map[string]map[string]DocumentBuilderInfo
@@ -1940,7 +1935,6 @@ type builderCache struct {
 
 func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
-		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
 	}
@@ -1963,18 +1957,8 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 			cache.lookup[b.GroupResource.Group] = g
 		}
 		g[b.GroupResource.Resource] = b
-
-		f, err := b.SearchableFields()
-		if err != nil {
-			return cache, err
-		}
-		cache.fields[b.GroupResource] = f
 	}
 	return cache, nil
-}
-
-func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
-	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
 }
 
 // context is typically background.  Holds an LRU cache for a

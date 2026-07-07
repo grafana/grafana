@@ -11,23 +11,21 @@ import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { FanoutPanel } from './FanoutPanel';
 import { ViewPanelSidePane } from './ViewPanelSidePane';
 
-interface ViewPanelProps {
-  panel: VizPanel;
-}
-
-export function ViewPanelWrapper({ panel }: ViewPanelProps) {
+export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel; showControlsPane?: boolean }) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  if (!viewPanelPane || !panel.state.$data) {
+  const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
+
+  if (!viewPanelPane || !$data || !showControlsPane) {
     return <panel.Component model={panel} />;
   }
 
-  return <ViewPanelWithPane panel={panel} />;
+  return <ViewPanelWithPane panel={panel} dataProvider={$data} />;
 }
 
-function ViewPanelWithPane({ panel }: ViewPanelProps) {
+function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvider: SceneDataProvider }) {
   const dashboard = getDashboardSceneLike(panel);
   const { editPane } = dashboard.useState();
-  const { $data } = useSceneObjectState(panel, { shouldActivateOrKeepAlive: true });
+  const { data } = dataProvider.useState();
   const context = usePanelSceneContextObject(panel);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
@@ -54,32 +52,13 @@ function ViewPanelWithPane({ panel }: ViewPanelProps) {
     return () => sub.unsubscribe();
   }, [viewPanelPane, editPane]);
 
-  // $data might be undefined when skipDataQuery=true, e.g. in TextPanel
-  // see also: createPanelDataProvider.ts
-  if (!context || !$data || !fanoutMode) {
-    return <panel.Component model={panel} />;
-  }
-
-  return <FanoutPanelWrapper panel={panel} dataProvider={$data} context={context} fanoutMode={fanoutMode} />;
-}
-
-interface FanoutPanelWrapperProps {
-  panel: VizPanel;
-  dataProvider: SceneDataProvider;
-  context: SceneContextObject;
-  fanoutMode: string;
-}
-
-function FanoutPanelWrapper({ panel, dataProvider, context, fanoutMode }: FanoutPanelWrapperProps) {
-  const { data } = dataProvider.useState();
-
-  if (!data) {
+  if (!context || !data || !fanoutMode) {
     return <panel.Component model={panel} />;
   }
 
   return (
     <SceneContext.Provider value={context}>
-      <FanoutPanel panel={panel} panelDataIn={data} fanoutMode={fanoutMode} />
+      <FanoutPanel panel={panel} panelDataIn={data!} fanoutMode={fanoutMode} />
     </SceneContext.Provider>
   );
 }
