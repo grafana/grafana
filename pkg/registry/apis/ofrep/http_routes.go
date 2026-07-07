@@ -85,14 +85,6 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if !isAuthedReq && !isPublicFlag(flagKey) {
-		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
-		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
-		return
-	}
-
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
@@ -151,7 +143,7 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
+	b.evalAllFlagsStatic(ctx, w)
 }
 
 // validateNamespaceIfPresent checks if the namespace in the evaluation context matches the authenticated user's
