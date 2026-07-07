@@ -32,7 +32,7 @@ import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -267,17 +267,18 @@ export function SaveProvisionedDashboardForm({
       return;
     }
     setFolderError(undefined);
-    if (!newFolderName || !repository?.name) {
+    const folderName = newFolderName.trim();
+    if (!folderName || !repository?.name) {
       return;
     }
-    const validationResult = validateProvisionedFolderName(newFolderName);
+    const validationResult = validateProvisionedFolderName(folderName);
     if (validationResult !== true) {
       setFolderError(validationResult);
       return;
     }
     // Nest the new folder under the currently selected target folder
     const { directory, filename } = splitPath(getValues('path'));
-    const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, newFolderName));
+    const folderPath = ensureFolderPathTrailingSlash(joinPath(directory, folderName));
     reportInteraction('grafana_provisioning_folder_create_submitted', {
       workflow,
       repositoryName: repository.name,
@@ -290,8 +291,16 @@ export function SaveProvisionedDashboardForm({
       const data = await createFolder({
         name: repository.name,
         path: folderPath,
-        message: `Create folder: ${newFolderName}`,
-        body: { title: newFolderName, type: 'folder' },
+        message: getSingleResourceCommitMessage({
+          comment: '',
+          repository,
+          action: 'create',
+          resourceKind: 'folder',
+          resourceID: '',
+          title: folderName,
+          ...getCurrentCommitUser(),
+        }),
+        body: { title: folderName, type: 'folder' },
       }).unwrap();
       uid = data.resource?.upsert?.metadata?.name;
     } catch (err) {
@@ -307,7 +316,7 @@ export function SaveProvisionedDashboardForm({
     if (uid) {
       setValue('path', joinPath(folderPath, filename));
       try {
-        await selectFolder(uid, newFolderName);
+        await selectFolder(uid, folderName);
       } catch {
         // The folder was created; a failed selection sync must not surface as a creation error
       }
@@ -318,17 +327,7 @@ export function SaveProvisionedDashboardForm({
     setShowNewFolderForm(false);
     setNewFolderName('');
     setIsCreatingFolder(false);
-  }, [
-    isCreatingFolder,
-    newFolderName,
-    repository?.name,
-    repository?.type,
-    workflow,
-    createFolder,
-    setValue,
-    getValues,
-    selectFolder,
-  ]);
+  }, [isCreatingFolder, newFolderName, repository, workflow, createFolder, setValue, getValues, selectFolder]);
 
   const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
@@ -493,6 +492,7 @@ export function SaveProvisionedDashboardForm({
                         <Button
                           variant="primary"
                           size="sm"
+                          icon={isCreatingFolder ? 'spinner' : undefined}
                           onClick={handleCreateFolder}
                           disabled={!newFolderName || isCreatingFolder}
                         >

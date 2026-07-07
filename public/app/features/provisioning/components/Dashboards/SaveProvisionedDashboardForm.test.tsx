@@ -1299,6 +1299,53 @@ describe('SaveProvisionedDashboardForm', () => {
     );
   });
 
+  it('creates the folder once on Enter without submitting the dashboard form', async () => {
+    let folderPostCount = 0;
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const body = await request.json();
+        if ((body as Record<string, unknown>).type === 'folder') {
+          folderPostCount++;
+          // keep the request in flight long enough for a second Enter to hit the guard
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          return HttpResponse.json({
+            resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+          });
+        }
+        dashboardRequest = { url: new URL(request.url), body };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['write'],
+        target: 'folderless',
+      },
+      defaultValues: {
+        ref: 'main',
+        path: 'test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: '', title: '' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team{Enter}{Enter}');
+
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
+    expect(folderPostCount).toBe(1);
+    expect(dashboardRequest).toBeNull();
+  });
+
   it('nests the new folder under the selected target folder', async () => {
     let folderRequest: { url: URL; body: unknown } | null = null;
     let dashboardRequest: { url: URL; body: unknown } | null = null;
@@ -1560,7 +1607,7 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => expect(folderRequest).not.toBeNull());
     // a dedicated folder commit message is sent; ref is omitted for write workflow
-    expect(folderRequest!.url.searchParams.get('message')).toBe('Create folder: Team A');
+    expect(folderRequest!.url.searchParams.get('message')).toContain('Create folder: Team A');
     expect(folderRequest!.url.searchParams.get('ref')).toBeNull();
   });
 
