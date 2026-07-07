@@ -63,10 +63,10 @@
     "themes-schema": "tsx ./scripts/generateSchema.ts"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "7.0.1",
+    "@braintree/sanitize-url": "^7.0.1",
     "@grafana/i18n": "13.2.0-pre",
     "@grafana/schema": "13.2.0-pre",
-    "@leeoniya/ufuzzy": "1.0.19",
+    "@leeoniya/ufuzzy": "^1.0.19",
     "@react-hookz/web": "^25.2.0",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "^1.1.3",
