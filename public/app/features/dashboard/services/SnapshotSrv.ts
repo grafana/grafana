@@ -84,7 +84,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   async create(cmd: SnapshotCreateCommand): Promise<SnapshotCreateResponse> {
     // CreateSnapshotApiResponse is `any` in the generated types; the legacy backend
     // returns SnapshotCreateResponse and the k8s endpoint preserves the same shape.
-    return dispatch(dashboardAPIv0alpha1.endpoints.createSnapshot.initiate({ body: cmd })).unwrap();
+    return await dispatch(dashboardAPIv0alpha1.endpoints.createSnapshot.initiate({ body: cmd })).unwrap();
   }
 
   async getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
