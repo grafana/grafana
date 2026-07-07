@@ -3,13 +3,16 @@ import { get as lodashGet } from 'lodash';
 import {
   type EventBus,
   type InterpolateFunction,
+  isNestedPanelOptions,
+  type NestedValueAccess,
   type PanelData,
   type PanelPlugin,
+  type PanelOptionsSupplier,
   type StandardEditorContext,
   type VariableSuggestionsScope,
+  type FieldConfigSource,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
@@ -94,7 +97,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   };
 
   // Load the options into categories
-  fillOptionsPaneItems(plugin.meta.id, plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   /**
    * Field options
@@ -131,7 +134,8 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
+    const htmlId = fieldOption.path;
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -203,10 +207,12 @@ export interface OptionPaneRenderProps2 {
   plugin: PanelPlugin;
   data?: PanelData;
   instanceState: unknown;
+  currentOptions: Record<string, unknown>;
+  currentFieldConfig: FieldConfigSource;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState } = props;
+  const { plugin, panel, data, eventBus, instanceState, currentOptions, currentFieldConfig } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -224,7 +230,6 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }));
   };
 
-  const currentOptions = panel.state.options;
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
@@ -250,10 +255,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   });
 
   // Load the options into categories
-  fillOptionsPaneItems(plugin.meta.id, plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
 
   // Field options
-  const currentFieldConfig = panel.state.fieldConfig;
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
     const hideOption =
       fieldOption.showIf &&
@@ -266,8 +270,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
 
     const category = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
-
     const defaults = currentFieldConfig.defaults;
+
     const value = fieldOption.isCustom
       ? defaults.custom
         ? lodashGet(defaults.custom, fieldOption.path)
@@ -278,7 +282,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       category.props.itemsCount = fieldOption.getItemsCount(value);
     }
 
-    const htmlId = `${plugin.meta.id}-${fieldOption.path}`;
+    const htmlId = `${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`;
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
@@ -313,7 +318,7 @@ export function fillOptionsPaneItems(
   supplier: PanelOptionsSupplier<any>,
   access: NestedValueAccess,
   getOptionsPaneCategory: categoryGetter,
-  context: StandardEditorContext<any>,
+  context: StandardEditorContext<unknown, unknown>,
   parentCategory?: OptionsPaneCategoryDescriptor
 ) {
   const builder = new PanelOptionsEditorBuilder();
@@ -324,7 +329,7 @@ export function fillOptionsPaneItems(
       continue;
     }
 
-    const htmlId = `${idPrefix}-${pluginOption.id}`;
+    const htmlId = `${idPrefix ? `${idPrefix}-` : ''}${pluginOption.id}`;
 
     let category = parentCategory;
     if (!category) {

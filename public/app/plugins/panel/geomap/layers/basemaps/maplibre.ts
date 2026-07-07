@@ -15,7 +15,7 @@ interface MaplibreConfig {
 
 const sampleURL = 'https://tiles.stadiamaps.com/styles/alidade_smooth.json';
 
-export const defaultMaplibreConfig: MaplibreConfig = {
+const defaultMaplibreConfig: MaplibreConfig = {
   url: sampleURL,
 };
 
@@ -23,7 +23,7 @@ interface ExtendedMapLayerOptions<T> extends MapLayerOptions<T> {
   noRepeat?: boolean;
 }
 
-export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
+const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',

@@ -59,7 +59,11 @@ export function StackedEditorRenderer() {
         <Stack gap={1} alignItems="center">
           <Icon name="layer-group" size="md" />
           <Text variant="body" color="primary" weight="medium">
-            {t('query-editor-next.stacked.showing-items', 'Showing {{count}} items', { count: items.length })}
+            {t('query-editor-next.stacked.showing-items', '', {
+              count: items.length,
+              defaultValue_one: 'Showing {{count}} items',
+              defaultValue_other: 'Showing {{count}} items',
+            })}
           </Text>
         </Stack>
         <Button

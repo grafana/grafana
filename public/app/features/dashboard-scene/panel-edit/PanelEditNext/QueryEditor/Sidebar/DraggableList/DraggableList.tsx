@@ -16,6 +16,7 @@ interface DraggableListProps<T> {
   renderItem: (item: T) => ReactNode;
   onDragStart?: () => void;
   onDragEnd: (result: DropResult) => void;
+  isDragDisabled?: boolean;
 }
 
 export function DraggableList<T>({
@@ -25,6 +26,7 @@ export function DraggableList<T>({
   renderItem,
   onDragStart,
   onDragEnd,
+  isDragDisabled = false,
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -57,7 +59,7 @@ export function DraggableList<T>({
             {items.map((item, index) => {
               const key = keyExtractor(item);
               return (
-                <Draggable key={key} draggableId={key} index={index}>
+                <Draggable key={key} draggableId={key} index={index} isDragDisabled={isDragDisabled}>
                   {(dragProvided, dragSnapshot) => (
                     <div
                       ref={dragProvided.innerRef}

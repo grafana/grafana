@@ -2,6 +2,7 @@ package git
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,19 +35,24 @@ import (
 var ErrNoBranches = errors.New("no branches found in repository")
 
 type RepositoryConfig struct {
-	URL           string
-	Branch        string
-	TokenUser     string
-	Token         common.RawSecureValue
-	Path          string
-	SkipGitSuffix bool
+	URL              string
+	Branch           string
+	TokenUser        string
+	Token            common.RawSecureValue
+	CommitSigningKey common.RawSecureValue
+	SigningMethod    provisioning.SigningMethod
+	SMIMECertificate string
+	Path             string
+	SkipGitSuffix    bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
-	config    *provisioning.Repository
-	gitConfig RepositoryConfig
-	client    nanogit.Client
+	config        *provisioning.Repository
+	gitConfig     RepositoryConfig
+	client        nanogit.Client
+	writerOptions []nanogit.WriterOption
+	maxBytes      atomic.Int64
 }
 
 func NewRepository(
@@ -71,10 +78,23 @@ func NewRepository(
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
 
+	var writerOptions []nanogit.WriterOption
+	if gitConfig.SigningMethod != "" {
+		if gitConfig.CommitSigningKey.IsZero() {
+			return nil, fmt.Errorf("signing method %q requires secure.commitSigningKey", gitConfig.SigningMethod)
+		}
+		signer, err := signingOption(gitConfig)
+		if err != nil {
+			return nil, fmt.Errorf("configure commit signing: %w", err)
+		}
+		writerOptions = append(writerOptions, signer)
+	}
+
 	return &gitRepository{
-		config:    config,
-		gitConfig: gitConfig,
-		client:    client,
+		config:        config,
+		gitConfig:     gitConfig,
+		client:        client,
+		writerOptions: writerOptions,
 	}, nil
 }
 
@@ -387,12 +407,22 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 		return nil, fmt.Errorf("read blob: %w", mapNanogitError(err))
 	}
 
+	if max := r.maxBytes.Load(); max > 0 && int64(len(blob.Content)) > max {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, len(blob.Content), max),
+		)
+	}
+
 	return &repository.FileInfo{
 		Path: filePath,
 		Ref:  ref,
 		Data: blob.Content,
 		Hash: blob.Hash.String(),
 	}, nil
+}
+
+func (r *gitRepository) WithMaxFileSize(maxBytes int64) {
+	r.maxBytes.Store(maxBytes)
 }
 
 func (r *gitRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
@@ -452,7 +482,7 @@ func (r *gitRepository) Create(ctx context.Context, path, ref string, data []byt
 		return err
 	}
 
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -504,7 +534,7 @@ func (r *gitRepository) Update(ctx context.Context, path, ref string, data []byt
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -542,7 +572,7 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	ctx, logger := r.withGitContext(ctx, ref)
 	logger.Info("write repository path", "path", path)
 	info, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
@@ -568,7 +598,7 @@ func (r *gitRepository) Delete(ctx context.Context, path, ref, comment string) e
 		return err
 	}
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -593,7 +623,7 @@ func (r *gitRepository) Move(ctx context.Context, oldPath, newPath, ref, comment
 	}
 
 	// Create a staged writer
-	writer, err := r.client.NewStagedWriter(ctx, branchRef)
+	writer, err := r.client.NewStagedWriter(ctx, branchRef, r.writerOptions...)
 	if err != nil {
 		return fmt.Errorf("create staged writer: %w", mapNanogitError(err))
 	}
@@ -935,7 +965,9 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 }
 
 // createSignature creates author and committer signatures using the context signature if available,
-// falling back to default Grafana signature
+// falling back to default Grafana signature. The committer is overridden by
+// spec.commit.signerName/Email when set; that identity must match the signing
+// key for providers to mark commits as Verified.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
 		Name:  "Grafana",
@@ -960,8 +992,13 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 		author.Time = time.Now()
 	}
 
-	// Author and committer are always the same (for now)
-	return author, nanogit.Committer(author)
+	committer := nanogit.Committer(author)
+	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
+		committer.Name = cmp.Or(commit.SignerName, "Grafana")
+		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
+	}
+
+	return author, committer
 }
 
 func (r *gitRepository) commit(ctx context.Context, writer nanogit.StagedWriter, comment string) error {

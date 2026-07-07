@@ -9,18 +9,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
+	"github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -58,7 +57,10 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 		return nil, err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return nil, err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
 
@@ -212,11 +214,12 @@ func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
 	return permissionID
 }
 
-func (a *api) getAPIGroup() string {
-	if a.service.options.APIGroup != "" {
-		return a.service.options.APIGroup
+func (a *api) getAPIGroup() (string, error) {
+	if a.service.options.APIGroup == "" {
+		return "", fmt.Errorf("APIGroup is not configured for resource %q", a.service.options.Resource)
 	}
-	return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
+
+	return a.service.options.APIGroup, nil
 }
 
 func getMapKeys(m map[string][]string) []string {
@@ -252,6 +255,11 @@ func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, res
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
 // skipSelf: if true, skips the permissions of the folder itself (used for folders to avoid inheriting their own permissions)
 func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface, skipSelf bool) (getResourcePermissionsResponse, error) {
+	// Read inherited permissions with a service identity: the caller is authorized to read this
+	// resource's permissions but may lack permissions:read on ancestor folders, which would otherwise
+	// drop inherited assignments. Mirrors the subject lookup in convertK8sResourcePermissionToDTO.
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
 		Version:  folderv1.APIVersion,
@@ -391,8 +399,13 @@ func resourceNameFromRequest(r *http.Request, resourceID string) string {
 	return resourceID
 }
 
-func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) string {
-	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceNameFromRequest(r, resourceID))
+func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) (string, error) {
+	apiGroup, err := a.getAPIGroup()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s-%s-%s", apiGroup, a.service.options.Resource, resourceNameFromRequest(r, resourceID)), nil
 }
 
 // Write operations
@@ -404,7 +417,10 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	_, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
@@ -442,6 +458,11 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		return nil
 	}
 
+	apiGroup, err := a.getAPIGroup()
+	if err != nil {
+		return err
+	}
+
 	resourcePerm := &iamv0.ResourcePermission{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
@@ -454,7 +475,7 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		},
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
-				ApiGroup: a.getAPIGroup(),
+				ApiGroup: apiGroup,
 				Resource: a.service.options.Resource,
 				Name:     resourceNameFromRequest(c.Req, resourceID),
 			},
@@ -496,7 +517,10 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	existingResourcePerm, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
@@ -530,6 +554,11 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		return nil
 	}
 
+	apiGroup, err := a.getAPIGroup()
+	if err != nil {
+		return err
+	}
+
 	resourcePerm := &iamv0.ResourcePermission{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
@@ -542,7 +571,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		},
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
-				ApiGroup: a.getAPIGroup(),
+				ApiGroup: apiGroup,
 				Resource: a.service.options.Resource,
 				Name:     resourceNameFromRequest(c.Req, resourceID),
 			},

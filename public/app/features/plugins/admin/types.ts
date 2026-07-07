@@ -104,20 +104,6 @@ export const SCORE_LEVELS = {
 
 type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
 
-export const INSIGHT_CATEGORIES = {
-  SECURITY: 'security',
-  QUALITY: 'quality',
-  PERFORMANCE: 'performance',
-} as const;
-
-export const INSIGHT_LEVELS = {
-  GOOD: 'good',
-  OK: 'ok',
-  WARNING: 'warning',
-  DANGER: 'danger',
-  INFO: 'info',
-} as const;
-
 interface InsightItem {
   id: string;
   name: string;

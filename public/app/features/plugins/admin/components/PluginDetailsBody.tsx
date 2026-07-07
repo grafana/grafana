@@ -167,7 +167,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrap: css({
     width: '100%',
     height: '65vh',

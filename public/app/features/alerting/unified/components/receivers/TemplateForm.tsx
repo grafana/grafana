@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { addMinutes } from 'date-fns/addMinutes';
 import { subDays } from 'date-fns/subDays';
 import { subHours } from 'date-fns/subHours';
-import { type Location } from 'history';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
@@ -75,8 +74,6 @@ interface Props {
   prefill?: TemplateFormValues;
   alertmanager: string;
 }
-
-export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
 /**
  * We're going for this type of layout, but with the ability to resize the columns.
@@ -402,6 +399,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       className={cx(styles.templatePreview, styles.minEditorSize)}
                       aiGeneratedTemplate={aiGeneratedTemplate}
                       setAiGeneratedTemplate={setAiGeneratedTemplate}
+                      kind={originalTemplate?.kind ?? 'grafana'}
                     />
                   </div>
                 )}
@@ -476,7 +474,7 @@ function TemplatingCheatSheet() {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {

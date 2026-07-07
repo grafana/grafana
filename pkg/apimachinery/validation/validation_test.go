@@ -143,7 +143,7 @@ func TestValidation(t *testing.T) {
 			input: []string{
 				"hello",
 				strings.Repeat("a", 128), // long... alpha
-				"dashboards.grafana.app",
+				"dashboard.grafana.app",
 				"prometheus-datasource",
 				"1234", // just a numbers
 				"aaa",
@@ -151,7 +151,7 @@ func TestValidation(t *testing.T) {
 		}, {
 			name: "bad input",
 			expect: []string{
-				"group must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'dashboards.grafana.app',  or 'grafana-loki-datasource', regex used for validation is '^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$')",
+				"group must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'dashboard.grafana.app',  or 'grafana-loki-datasource', regex used for validation is '^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$')",
 			},
 			input: []string{
 				"_bad_input", // starts with non-alpha

@@ -8,7 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
-const callTimeout = 30 * time.Second
+// callTimeout bounds the whole per-batch InvokeModel attempt sequence (the
+// AWS SDK respects the context deadline across retries). Sized to give the
+// adaptive retryer room to back off and retry under throttling rather than
+// being cut short mid-sequence.
+const callTimeout = 60 * time.Second
 
 // DenseEmbedder embeds text via Bedrock InvokeModel and returns dense
 // float32 vectors.

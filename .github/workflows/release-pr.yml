@@ -47,6 +47,9 @@ permissions:
 jobs:
   capture-date:
     runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      actions: read # gh run view reads the run's createdAt via the Actions API
     outputs:
       release_date: ${{ steps.set_release_date.outputs.release_date }}
     steps:
@@ -156,7 +159,7 @@ jobs:
           go-version-file: .grafana-main/go.mod
           cache: false
 
-      # kminehart/ghcommit-action commits to an existing remote branch; it doesn't
+      # planetscale/ghcommit-action commits to an existing remote branch; it doesn't
       # create the branch itself. Pre-create the ref at the release branch's HEAD via
       # the Git Data API so subsequent commits have a target.
       - name: Pre-create branch on remote
@@ -189,12 +192,18 @@ jobs:
             cat changelog_items.md
           ) > CHANGELOG.part
 
+          # Escape BRE metacharacters so versions containing '.' (and the literal '+' in
+          # '+security' builds) match the delimiters literally instead of as a regex.
+          # '+' is left unescaped on purpose: in BRE it is already a literal, and '\+'
+          # would turn it into the one-or-more operator.
+          VERSION_RE=$(printf '%s' "$VERSION" | sed 's/[][\.^$*]/\\&/g')
+
           # Check if a version exists in the changelog
-          if grep -q "<!-- $VERSION START" CHANGELOG.md ; then
+          if grep -qF "<!-- $VERSION START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
             echo "Version $VERSION is found in the CHANGELOG.md, patching contents..."
-            sed -i -e "/$VERSION START/,/$VERSION END/{//!d;}" \
-                   -e "/$VERSION START/r CHANGELOG.part" CHANGELOG.md
+            sed -i -e "/$VERSION_RE START/,/$VERSION_RE END/{//!d;}" \
+                   -e "/$VERSION_RE START/r CHANGELOG.part" CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
             echo "Version $VERSION not found in the CHANGELOG.md"
@@ -245,7 +254,7 @@ jobs:
       # hits when multiple sequential API commits are made on the same branch (each
       # commit advances the remote ref while local HEAD doesn't).
       - name: Commit release-PR changes
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "Release: ${{ env.VERSION }}"
           repo: ${{ github.repository }}

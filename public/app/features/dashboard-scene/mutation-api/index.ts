@@ -11,4 +11,4 @@
 
 /* eslint-disable no-barrel-files/no-barrel-files */
 
-export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
+export { ALL_COMMANDS } from './commands/registry';

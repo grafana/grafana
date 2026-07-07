@@ -36,6 +36,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.ConnectionSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionStatus"):
 		return &provisioningv0alpha1.ConnectionStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionWebhookConfig"):
+		return &provisioningv0alpha1.ConnectionWebhookConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
 		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ErrorDetails"):

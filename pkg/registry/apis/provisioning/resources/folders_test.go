@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -663,6 +665,218 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.True(t, errors.As(err, &validationErr), "Update path should also return FolderValidationError")
 		require.Equal(t, "bad-folder/", validationErr.Path)
 		require.NotEmpty(t, client.updateCalls)
+	})
+}
+
+// TestEnsureFolderExists_TakeoverAllowlist covers the migration takeover path:
+// EnsureFolderExists is the ownership gate for folders, so it must honour the
+// same allowlist as CheckResourceOwnership does for other resources. Without
+// this, a selective migrate of a resource living under a pre-existing unmanaged
+// folder can never create its parent.
+func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
+	const repoName = "repo-a"
+	const folderID = "folder-id"
+
+	newRepo := func(t *testing.T) *repository.MockReaderWriter {
+		cfg := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      repoName,
+				Namespace: "default",
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		repo := repository.NewMockReaderWriter(t)
+		repo.On("Config").Return(cfg)
+		return repo
+	}
+
+	unmanagedFolder := func(name, title string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":        name,
+					"namespace":   "default",
+					"annotations": map[string]interface{}{},
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+	}
+
+	allowlistCtx := func(ids ...ResourceIdentifier) context.Context {
+		set := make(map[ResourceIdentifier]struct{}, len(ids))
+		for _, id := range ids {
+			set[id] = struct{}{}
+		}
+		return WithTakeoverAllowlist(context.Background(), NewTakeoverAllowlist(set))
+	}
+
+	folderIdentifier := func(name string) ResourceIdentifier {
+		return ResourceIdentifier{Name: name, Group: FolderResource.Group, Kind: FolderKind.Kind}
+	}
+
+	t.Run("claims unmanaged folder when it is in the allowlist", func(t *testing.T) {
+		repo := newRepo(t)
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(allowlistCtx(folderIdentifier(folderID)), Folder{
+			ID:    folderID,
+			Title: "New Title",
+			Path:  "Testing/",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{folderID}, client.updateCalls, "the unmanaged folder should be claimed via update")
+
+		require.NotNil(t, updatedObj)
+		manager := updatedObj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+		require.Equal(t, repoName, manager, "the claimed folder should be managed by this repository")
+		title, _, _ := unstructured.NestedString(updatedObj.Object, "spec", "title")
+		require.Equal(t, "New Title", title)
+	})
+
+	t.Run("rejects unmanaged folder when there is no allowlist", func(t *testing.T) {
+		repo := newRepo(t)
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "New Title"}, "")
+
+		var unmanagedErr *ResourceUnmanagedConflictError
+		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
+		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("rejects unmanaged folder when a different folder is allowlisted", func(t *testing.T) {
+		repo := newRepo(t)
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(allowlistCtx(folderIdentifier("some-other-folder")), Folder{ID: folderID, Title: "New Title"}, "")
+
+		var unmanagedErr *ResourceUnmanagedConflictError
+		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
+		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("claims unmanaged folder on the create-then-already-exists race path", func(t *testing.T) {
+		repo := newRepo(t)
+
+		var getCount int
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				getCount++
+				if getCount == 1 {
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				}
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, folderID)
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(allowlistCtx(folderIdentifier(folderID)), Folder{
+			ID:    folderID,
+			Title: "New Title",
+			Path:  "Testing/",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{folderID}, client.updateCalls, "the raced unmanaged folder should be claimed via update")
+		require.NotNil(t, updatedObj)
+		require.Equal(t, repoName, updatedObj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
+	t.Run("rejects unmanaged folder on the race path when not allowlisted", func(t *testing.T) {
+		repo := newRepo(t)
+
+		var getCount int
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				getCount++
+				if getCount == 1 {
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				}
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, folderID)
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(context.Background(), Folder{ID: folderID, Title: "New Title"}, "")
+
+		var unmanagedErr *ResourceUnmanagedConflictError
+		require.True(t, errors.As(err, &unmanagedErr), "should return ResourceUnmanagedConflictError")
+		require.Empty(t, client.updateCalls)
+	})
+
+	t.Run("classifies a permanent folder-API error from the race-path claim as a typed warning", func(t *testing.T) {
+		// A permanent 4xx during the takeover-claim Update on the race path must
+		// be surfaced as a typed warning (so the sync does not retry forever),
+		// not wrapped as a generic error.
+		repo := newRepo(t)
+
+		var getCount int
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				getCount++
+				if getCount == 1 {
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				}
+				return unmanagedFolder(name, "Existing Title"), nil
+			},
+			createFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, folderID)
+			},
+			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewBadRequest("folder max depth exceeded, max depth is 4")
+			},
+		}
+
+		fm := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind)
+		err := fm.EnsureFolderExists(allowlistCtx(folderIdentifier(folderID)), Folder{
+			ID:    folderID,
+			Title: "New Title",
+			Path:  "a/b/c/d/e/",
+		}, "")
+
+		var depthErr *FolderDepthExceededError
+		require.True(t, errors.As(err, &depthErr), "claim path should classify the depth error as FolderDepthExceededError")
+		require.NotEmpty(t, client.updateCalls, "the claim should have attempted an update")
 	})
 }
 
@@ -1974,7 +2188,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -1992,7 +2206,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2011,7 +2225,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2030,7 +2244,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2049,7 +2263,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2069,7 +2283,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, createErr)
@@ -2090,7 +2304,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, createErr)
@@ -2110,7 +2324,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "grafana", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, Path: "grafana", OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2136,7 +2350,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 2)
@@ -2151,6 +2365,50 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		}
 		require.False(t, callByTitle["alpha"].created)
 		require.True(t, callByTitle["beta"].created)
+	})
+
+	t.Run("with metadata and generateNewFolderIDs - manifest carries a freshly generated UID", func(t *testing.T) {
+		repo := makeRepo(t)
+		inputTree, folder := makeInputTree("my-folder")
+
+		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
+		// The written manifest must NOT carry the original folder UID; a new one is
+		// generated. The directory path (derived from the title) is unaffected.
+		repo.On("Create", mock.Anything, "my-folder/_folder.json", ref, mock.MatchedBy(func(data []byte) bool {
+			return !bytes.Contains(data, []byte(folder.ID))
+		}), "Add folder and folder metadata my-folder/").Return(nil)
+
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind,
+			WithFolderMetadataEnabled(true))
+
+		var calls []fnCall
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, GenerateNewFolderIDs: true, OnFolder: recordingFn(&calls)})
+
+		require.NoError(t, err)
+		require.Len(t, calls, 1)
+		require.True(t, calls[0].created)
+		// The tree/result identity keeps the original UID so resources still resolve
+		// to their folder path; only the manifest gets the new UID.
+		require.Equal(t, folder.ID, calls[0].folder.ID)
+	})
+
+	t.Run("without metadata and generateNewFolderIDs - no UID is materialized", func(t *testing.T) {
+		repo := makeRepo(t)
+		inputTree, _ := makeInputTree("my-folder")
+
+		repo.On("Read", mock.Anything, "my-folder/", ref).Return(nil, repository.ErrFileNotFound)
+		// Without folder metadata, the folder is written as an empty directory and
+		// generateNewFolderIDs has no effect (no _folder.json, no UID).
+		repo.On("Create", mock.Anything, "my-folder/", ref, mock.Anything, "Add folder my-folder/").Return(nil)
+
+		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
+
+		var calls []fnCall
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, GenerateNewFolderIDs: true, OnFolder: recordingFn(&calls)})
+
+		require.NoError(t, err)
+		require.Len(t, calls, 1)
+		require.True(t, calls[0].created)
 	})
 }
 

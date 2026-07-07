@@ -33,8 +33,8 @@ import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQuery
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-export const DEFAULT_MAX_DATA_POINTS = 43200;
-export const DEFAULT_MIN_INTERVAL = '1s';
+const DEFAULT_MAX_DATA_POINTS = 43200;
+const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;

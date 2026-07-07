@@ -7,7 +7,6 @@ import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks'
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
-  updateAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
@@ -372,12 +371,6 @@ export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
 export const getErrorResponse = (message: string, status = 500) => HttpResponse.json({ message }, { status });
 
 const defaultError = getErrorResponse('Unknown error');
-/** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = (
-  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
-) => {
-  server.use(updateAlertmanagerConfigHandler(responseOverride));
-};
 
 /** Make fetching alertmanager config fail */
 export const makeAllAlertmanagerConfigFetchFail = (

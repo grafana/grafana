@@ -23,25 +23,6 @@ export enum DisplayMode {
   Exact = 2,
 }
 
-enum PanelEditTableToggle {
-  Off = 0,
-  Table = 1,
-}
-
-export const displayModes = [
-  { value: DisplayMode.Fill, label: 'Fill', description: 'Use all available space' },
-  { value: DisplayMode.Exact, label: 'Actual', description: 'Make same size as on the dashboard' },
-];
-
-export const panelEditTableModes = [
-  {
-    value: PanelEditTableToggle.Off,
-    label: 'Visualization',
-    description: 'Show using selected visualization',
-  },
-  { value: PanelEditTableToggle.Table, label: 'Table', description: 'Show raw data in table form' },
-];
-
 export interface OptionPaneRenderProps {
   panel: PanelModel;
   plugin: PanelPlugin;

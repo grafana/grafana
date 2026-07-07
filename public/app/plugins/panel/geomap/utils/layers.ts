@@ -43,7 +43,7 @@ export const applyLayerFilter = (
   }
 };
 
-export async function updateLayer(panel: GeomapPanel, uid: string, newOptions: MapLayerOptions): Promise<boolean> {
+async function updateLayer(panel: GeomapPanel, uid: string, newOptions: MapLayerOptions): Promise<boolean> {
   if (!panel.map) {
     return false;
   }

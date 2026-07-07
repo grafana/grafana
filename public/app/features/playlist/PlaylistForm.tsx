@@ -3,10 +3,13 @@ import { useId, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
+import { getManagerIdentity, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, type PlaylistSpec } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
@@ -15,11 +18,31 @@ import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
 
 interface Props {
-  onSubmit: (playlist: Playlist) => void;
+  onSubmit: (playlist: Playlist) => void | Promise<void>;
   playlist: Playlist;
+  /** Renders a repository selector at the top of the form. */
+  showRepositorySelect?: boolean;
+  /** Repositories to choose from (may be empty). */
+  repositories?: RepositoryView[];
+  /** Selected repository name. Empty string = "no repository" (save to Grafana). */
+  selectedRepository?: string;
+  onRepositoryChange?: (repositoryName: string) => void;
+  /**
+   * Locks the repository selector (the repository can't be changed after creation). The displayed
+   * value is then derived from the playlist itself rather than `selectedRepository`.
+   */
+  disableRepositorySelect?: boolean;
 }
 
-export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
+export const PlaylistForm = ({
+  onSubmit,
+  playlist,
+  showRepositorySelect,
+  repositories = [],
+  selectedRepository,
+  onRepositoryChange,
+  disableRepositorySelect,
+}: Props) => {
   const [saving, setSaving] = useState(false);
   const playlistNameId = useId();
   const playlistIntervalId = useId();
@@ -30,19 +53,33 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
   const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
-  const doSubmit = (specUpdates: Playlist['spec']) => {
+  // When the selector is locked the repository can't be changed, so derive the value from the
+  // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
+  const repositoryFieldValue = disableRepositorySelect
+    ? isManagedByRepository(playlist)
+      ? (getManagerIdentity(playlist) ?? '')
+      : ''
+    : selectedRepository; // undefined leaves nothing selected (placeholder)
+
+  const doSubmit = async (specUpdates: Playlist['spec']) => {
     setSaving(true);
     // Strip UI-only properties (dashboards) from items before submission
     const apiItems = items.map(({ dashboards, ...item }) => item);
-    onSubmit({
-      ...playlist,
-      spec: {
-        ...specUpdates,
-        interval: specUpdates?.interval ?? '5m',
-        title: specUpdates?.title ?? '',
-        items: apiItems,
-      },
-    });
+    try {
+      // The direct-save path navigates away; the provisioned path returns after opening the drawer,
+      // so reset `saving` here or the Save button would keep spinning behind the drawer.
+      await onSubmit({
+        ...playlist,
+        spec: {
+          ...specUpdates,
+          interval: specUpdates?.interval ?? '5m',
+          title: specUpdates?.title ?? '',
+          items: apiItems,
+        },
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -81,6 +118,20 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 id={playlistIntervalId}
               />
             </Field>
+
+            {showRepositorySelect && (
+              // RepositorySelect uses noMargin (shared component); add bottom spacing to match the
+              // surrounding fields and keep it from butting against the "Add dashboards" section.
+              <Box marginBottom={2}>
+                <RepositorySelect
+                  repositories={repositories}
+                  value={repositoryFieldValue}
+                  // readOnly already disables the Combobox, so onChange can't fire when locked.
+                  onChange={onRepositoryChange ?? (() => {})}
+                  readOnly={disableRepositorySelect}
+                />
+              </Box>
+            )}
 
             <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 

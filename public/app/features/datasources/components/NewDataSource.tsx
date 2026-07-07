@@ -47,7 +47,7 @@ type ViewProps = {
   onSetSearchQuery: (q: string) => Action;
 };
 
-export function NewDataSourceView({
+function NewDataSourceView({
   dataSources,
   dataSourceCategories,
   searchQuery,
