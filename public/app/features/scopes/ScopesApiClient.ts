@@ -1,5 +1,5 @@
 import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import type { FindDefaultScope } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -284,7 +284,7 @@ export class ScopesApiClient {
    * flag is off, when the server returns no default, or on error.
    */
   public fetchDefaultScope = async (): Promise<string | undefined> => {
-    if (!getFeatureFlagClient().getBooleanValue('grafana.useDefaultScopesEndpoint', false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUseDefaultScopesEndpoint, false)) {
       return undefined;
     }
 

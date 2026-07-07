@@ -3,7 +3,7 @@ import { BehaviorSubject, type Observable, combineLatest, type Subscription } fr
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
@@ -257,16 +257,24 @@ export class ScopesService implements ScopesContextValue {
         // and returns undefined when off, so the call is safe here.
         if (
           appliedScopes.length === 0 &&
-          getFeatureFlagClient().getBooleanValue('grafana.enableScopesFirstMode', false)
+          getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaEnableScopesFirstMode, false)
         ) {
           this.apiClient.fetchDefaultScope().then((name) => {
-            // Only apply if scopes is still enabled AND no scope was applied
-            // in the meantime. If the user navigated to a non-scope page
-            // before the fetch resolved, state.enabled is now false and
-            // applying would leak `?scopes=…` into a page that doesn't use
-            // scopes (selectorService.subscribeToState writes the URL
-            // unconditionally when appliedScopes changes).
-            if (!name || !this.state.enabled || this.selectorService.state.appliedScopes.length > 0) {
+            // Only apply if scopes is still enabled AND the user has neither
+            // applied nor started picking a scope in the meantime. Checking
+            // selectedScopes as well as appliedScopes preserves any pending
+            // selection: the user may have opened the selector and ticked a
+            // scope before this slower fetch resolved — clobbering that with
+            // the default scope would silently discard their choice. If the
+            // user navigated to a non-scope page before the fetch resolved,
+            // state.enabled is now false and applying would leak `?scopes=…`
+            // into a page that doesn't use scopes.
+            if (
+              !name ||
+              !this.state.enabled ||
+              this.selectorService.state.appliedScopes.length > 0 ||
+              this.selectorService.state.selectedScopes.length > 0
+            ) {
               return;
             }
             // Bypass this.changeScopes (which hardcodes redirectOnApply=false

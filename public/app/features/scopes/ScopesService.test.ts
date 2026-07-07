@@ -1171,6 +1171,26 @@ describe('ScopesService', () => {
         expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 
+      it('does not apply if the user has picked a scope but not yet applied before the fetch resolves', async () => {
+        turnOnScopesFirstMode();
+        selectorService.state.appliedScopes = [];
+        selectorService.state.selectedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockImplementation(async () => {
+          // Simulate the user picking a scope in the selector (updates
+          // selectedScopes but not appliedScopes) while fetchDefaultScope
+          // is still in flight.
+          selectorService.state.selectedScopes = [{ scopeId: 'user-picked' }];
+          return 'gdev-shoe-org';
+        });
+
+        service.setEnabled(true);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        // The user's pending selection must not be clobbered by the default scope.
+        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
+      });
+
       it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {
         turnOnScopesFirstMode();
         selectorService.state.appliedScopes = [];
