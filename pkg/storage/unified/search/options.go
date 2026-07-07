@@ -119,6 +119,7 @@ func NewSearchOptions(
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
 			},
 		}, indexMetrics)
 
