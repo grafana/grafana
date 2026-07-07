@@ -1604,18 +1604,14 @@ func TestSetTeamMember(t *testing.T) {
 			}
 			fakeClient := &fakeDynamicClient{resourceInterface: fr}
 
-			testApi := &api{
-				cfg:    &setting.Cfg{},
-				logger: log.New("test"),
-				service: &Service{
-					store:       &mockResourcePermissionStore{},
-					teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
-					userService: tt.userSvc(),
-					options:     Options{Resource: "teams"},
-				},
+			svc := &Service{
+				store:       &mockResourcePermissionStore{},
+				teamService: teamtest.NewFakeServiceWithTeamDTO(testTeam),
+				userService: tt.userSvc(),
+				options:     Options{Resource: "teams"},
 			}
 
-			err := testApi.setTeamMember(makeReqCtx(), fakeClient, "stacks-123-org-1", "10", tt.userID, tt.permission)
+			err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.userID, tt.permission)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)

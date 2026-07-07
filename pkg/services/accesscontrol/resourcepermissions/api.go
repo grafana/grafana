@@ -91,7 +91,15 @@ func (a *api) getFallbackStatus(ctx context.Context) string {
 // unifiedStorageIsAuthoritative returns true when unified storage is the authoritative
 // backend (Mode4 or Mode5). In that case K8s redirect failures must not fall back to legacy.
 func (a *api) unifiedStorageIsAuthoritative(groupResource string) bool {
-	return a.cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
+	return unifiedStorageIsAuthoritative(a.cfg, groupResource)
+}
+
+// unifiedStorageIsAuthoritative reports whether unified storage is the authoritative
+// backend for the given group resource (Mode4 or Mode5). When true, K8s redirect
+// failures must not fall back to legacy. It's a package helper so the service methods
+// can apply the same rule without depending on the api layer.
+func unifiedStorageIsAuthoritative(cfg *setting.Cfg, groupResource string) bool {
+	return cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
 }
 
 func (a *api) registerEndpoints() {

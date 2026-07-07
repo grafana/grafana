@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -106,6 +108,7 @@ func New(cfg *setting.Cfg,
 	s := &Service{
 		ac:           ac,
 		features:     features,
+		cfg:          cfg,
 		store:        NewStore(cfg, sqlStore, features),
 		options:      options,
 		license:      license,
@@ -139,6 +142,7 @@ type Service struct {
 	api      *api
 	license  licensing.Licensing
 
+	cfg          *setting.Cfg
 	log          log.Logger
 	options      Options
 	permissions  []string
@@ -231,6 +235,28 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 
 	if err := s.validateUser(ctx, orgID, user.ID); err != nil {
 		return nil, err
+	}
+
+	// Teams-specific redirect: write the membership to Team.Spec.Members via the
+	// K8s API. The HTTP handler (api.setUserPermission) already does this, but
+	// callers that invoke the service directly (not through the handler) need the
+	// same redirect, so it lives here too. In unified-authoritative modes (Mode4/5)
+	// the legacy team_member table has no row to write, so we must not fall back to it.
+	if s.teamsMembershipRedirectEnabled(ctx) {
+		k8sErr := s.setTeamMemberViaK8s(ctx, orgID, resourceID, user.ID, permission)
+		if errors.Is(k8sErr, ErrExternalTeamMember) {
+			return nil, k8sErr
+		}
+		if s.unifiedTeamStorageIsAuthoritative() {
+			if k8sErr != nil {
+				return nil, k8sErr
+			}
+			s.clearUserPermissionCache(orgID, user.ID)
+			return &accesscontrol.ResourcePermission{Actions: actions, UserID: user.ID}, nil
+		}
+		if k8sErr != nil {
+			s.log.Warn("Failed to set team member via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		}
 	}
 
 	var datasourceType string
@@ -380,6 +406,38 @@ func (s *Service) SetPermissions(
 		})
 	}
 
+	// Teams-specific redirect: reconcile each membership through Team.Spec.Members
+	// via the K8s API (see SetUserPermission for the rationale). Team permissions
+	// only assign users, so any non-user command is left to the legacy store.
+	if s.teamsMembershipRedirectEnabled(ctx) {
+		var k8sErr error
+		for _, cmd := range commands {
+			if cmd.UserID == 0 {
+				continue
+			}
+			if err := s.setTeamMemberViaK8s(ctx, orgID, resourceID, cmd.UserID, cmd.Permission); err != nil {
+				if errors.Is(err, ErrExternalTeamMember) {
+					return nil, err
+				}
+				k8sErr = err
+			}
+		}
+		if s.unifiedTeamStorageIsAuthoritative() {
+			if k8sErr != nil {
+				return nil, k8sErr
+			}
+			for _, cmd := range commands {
+				if cmd.UserID != 0 {
+					s.clearUserPermissionCache(orgID, cmd.UserID)
+				}
+			}
+			return []accesscontrol.ResourcePermission{}, nil
+		}
+		if k8sErr != nil {
+			s.log.Warn("Failed to set team members via k8s API, falling back to legacy", "error", k8sErr, "resourceID", resourceID)
+		}
+	}
+
 	result, err := s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
 		User:        s.options.OnSetUser,
 		Team:        s.options.OnSetTeam,
@@ -398,6 +456,41 @@ func (s *Service) SetPermissions(
 	}
 
 	return result, nil
+}
+
+// teamsMembershipRedirectEnabled reports whether team membership writes for this
+// service should be routed to Team.Spec.Members via the K8s API instead of the
+// legacy team_member table. It mirrors the gate used by the HTTP handlers
+// (api.setUserPermission) so direct service callers behave identically.
+func (s *Service) teamsMembershipRedirectEnabled(ctx context.Context) bool {
+	return s.options.Resource == "teams" &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// unifiedTeamStorageIsAuthoritative reports whether unified storage is the
+// authoritative backend for teams (dualWriterMode > Mode3). When true, the legacy
+// team_member table is not written, so team membership must succeed against the
+// K8s API and callers must not fall back to legacy.
+func (s *Service) unifiedTeamStorageIsAuthoritative() bool {
+	return unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String())
+}
+
+// setTeamMemberViaK8s writes a single team membership to Team.Spec.Members via the
+// K8s API for callers that invoke the service directly (not through the HTTP
+// handler). It reuses the same read-modify-write helper as the HTTP teams redirect,
+// building the client from the ReqContext the contexthandler middleware stored on
+// ctx and deriving the namespace from orgID the same way the team K8s service does.
+func (s *Service) setTeamMemberViaK8s(ctx context.Context, orgID int64, resourceID string, userID int64, permission string) error {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return ErrRestConfigNotAvailable
+	}
+	dynamicClient, err := newDynamicClient(s.options.RestConfigProvider, reqCtx)
+	if err != nil {
+		return err
+	}
+	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
+	return s.setTeamMember(ctx, dynamicClient, orgID, namespace, resourceID, userID, permission)
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {
