@@ -1,4 +1,5 @@
 import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, UnitPicker } from '@grafana/ui';
 import { EXPLORE_GRAPH_STYLES, type ExploreGraphStyle } from 'app/types/explore';
 
@@ -19,7 +20,7 @@ export function ExploreGraphLabel(props: Props) {
   const { graphStyle, onChangeGraphStyle, unit, onChangeUnit } = props;
   return (
     <>
-      <UnitPicker value={unit} onChange={onChangeUnit} placeholder="Unit" />
+      <UnitPicker value={unit} onChange={onChangeUnit} placeholder={t('explore.graph-label.unit-placeholder', 'Unit')} />
       <RadioButtonGroup size="sm" options={ALL_GRAPH_STYLE_OPTIONS} value={graphStyle} onChange={onChangeGraphStyle} />
     </>
   );

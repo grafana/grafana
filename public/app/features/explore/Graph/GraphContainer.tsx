@@ -1,7 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-
-import { useDispatch } from 'app/types/store';
 import { useToggle } from 'react-use';
 
 import {
@@ -16,8 +13,8 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type GraphThresholdsStyleConfig, PanelChrome, type PanelChromeProps } from '@grafana/ui';
-import { type StoreState } from 'app/types/store';
 import { type ExploreGraphStyle } from 'app/types/explore';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { changePanelState } from '../state/explorePane';
