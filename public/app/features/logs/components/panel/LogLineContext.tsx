@@ -26,7 +26,8 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -338,13 +339,11 @@ export const LogLineContext = memo(
 
     useEffect(() => {
       if (log.datasourceUid) {
-        getDataSourceSrv()
-          .get({ uid: log.datasourceUid })
-          .then((ds) => {
-            if (hasLogsContextSupport(ds)) {
-              setDatasourceInstance(ds);
-            }
-          });
+        getDataSourceInstance({ uid: log.datasourceUid }).then((ds) => {
+          if (hasLogsContextSupport(ds)) {
+            setDatasourceInstance(ds);
+          }
+        });
       }
     }, [log.datasourceUid]);
 
