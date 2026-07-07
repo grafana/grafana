@@ -484,6 +484,7 @@
       "export": "Export",
       "manage-enrichments": "Manage enrichments",
       "silence-notifications": "Silence notifications",
+      "start-investigation": "Start investigation",
       "with-modifications": "With modifications"
     },
     "alert-missing-evaluations-to-stale": {

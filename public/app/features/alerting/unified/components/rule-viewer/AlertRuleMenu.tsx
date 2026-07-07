@@ -136,8 +136,7 @@ const AlertRuleMenu = ({
 
   const { isAvailable: isAssistantAvailable } = useAssistant();
   const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
-  const shouldShowStartInvestigationButton =
-    isAssistantAvailable && prometheusRuleType.grafana.alertingRule(promRule);
+  const shouldShowStartInvestigationButton = isAssistantAvailable && prometheusRuleType.grafana.alertingRule(promRule);
 
   const shareUrl = createShareLink(identifier);
 
