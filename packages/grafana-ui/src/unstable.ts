@@ -29,5 +29,7 @@ export type {
   SignatureInformation,
   SignatureParameter,
 } from './components/CodeMirror/types';
+export { getQueryFieldConfig } from './components/CodeMirror/queryField';
+export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/CodeMirror/queryField';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export { TableNG } from './components/Table/TableNG/TableNG';
