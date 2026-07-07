@@ -406,5 +406,3 @@ Enter regular expressions, globs, or Lucene syntax in the **Custom all value** f
 By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regular expression.
 
 In order to have custom regular expression, globs, or Lucene syntax in the **Custom all value** option, it's never escaped so you have to think about what's a valid value for your data source.
-
-
