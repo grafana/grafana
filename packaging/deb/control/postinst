@@ -92,7 +92,7 @@ if [ "$1" = configure ]; then
     echo " sudo /bin/systemctl start grafana-server"
   elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
     printf 'Restarting grafana-server service...'
-    systemctl daemon-reload
+    systemctl daemon-reload || true
     systemctl restart grafana-server || true
     echo " OK"
   fi
