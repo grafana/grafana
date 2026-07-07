@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { type AlertErrorPayload, type AlertPayload, AppEvents, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack } from '@grafana/ui';
+import { Portal, useStyles2, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { hideAppNotification, notifyApp, selectVisible } from 'app/core/reducers/appNotification';
@@ -87,22 +87,24 @@ export function AppNotificationList() {
   const liveRegionMessage = appNotifications.map((n) => [n.title, n.text].filter(Boolean).join('. ')).join('. ');
 
   return (
-    // data-dismiss-ignore: toasts float above modals; clicking one (e.g. its close button) must not be
-    // treated as an outside/backdrop press that dismisses an open modal (see ModalBase).
-    <div className={styles.wrapper} data-dismiss-ignore>
-      <div className="sr-only" role="log" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
-      <Stack direction="column">
-        {appNotifications.map((appNotification, index) => {
-          return (
-            <AppNotificationItem
-              key={`${appNotification.id}-${index}`}
-              appNotification={appNotification}
-              onClearNotification={onClearAppNotification}
-            />
-          );
-        })}
-      </Stack>
-    </div>
+    // Render into the portal container so toasts paint above an open modal and clicking them does not
+    // dismiss it — ModalBase treats presses inside the portal container as "inside" the modal.
+    <Portal>
+      <div className={styles.wrapper}>
+        <div className="sr-only" role="log" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
+        <Stack direction="column">
+          {appNotifications.map((appNotification, index) => {
+            return (
+              <AppNotificationItem
+                key={`${appNotification.id}-${index}`}
+                appNotification={appNotification}
+                onClearNotification={onClearAppNotification}
+              />
+            );
+          })}
+        </Stack>
+      </div>
+    </Portal>
   );
 }
 
@@ -110,9 +112,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
       label: 'app-notifications-list',
-      // One above the portal layer so toasts paint over modals/drawers, which render in the
-      // portal container at theme.zIndex.portal and would otherwise win the tie on DOM order.
-      zIndex: theme.zIndex.portal + 1,
+      zIndex: theme.zIndex.portal,
       minWidth: 400,
       maxWidth: 600,
       position: 'fixed',
