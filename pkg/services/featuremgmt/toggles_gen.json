@@ -3870,7 +3870,8 @@
       "metadata": {
         "name": "nestedFramesFieldOverrides",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-07T16:17:18Z"
       },
       "spec": {
         "description": "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
