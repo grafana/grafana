@@ -31,10 +31,10 @@ function mockRepositoryLookup(repository = createRepository()) {
 }
 
 describe('MigrateDrawer', () => {
-  it('pre-selects the repository when exactly one is connected', async () => {
+  it('pre-selects the repository when exactly one usable one is connected', async () => {
     render(<MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />);
 
-    expect(await screen.findByRole('combobox')).toHaveValue('My only repo');
+    expect(await screen.findByText('My only repo')).toBeInTheDocument();
   });
 
   it('keeps the migrate button disabled until a repository is selected', async () => {
@@ -62,8 +62,10 @@ describe('MigrateDrawer', () => {
     expect(onDismiss).toHaveBeenCalled();
   });
 
-  it('blocks migration and warns when the repository cannot push to its configured branch', async () => {
-    // A PR-only repository (no `write` workflow) can't run a migration.
+  it('disables a repository that cannot push and explains how to enable it', async () => {
+    // A PR-only repository (no `write` workflow) can't run a migration, so it
+    // stays in the picker but disabled, is never pre-selected, and a note
+    // explains how to make it usable.
     render(
       <MigrateDrawer
         selective={false}
@@ -72,7 +74,8 @@ describe('MigrateDrawer', () => {
       />
     );
 
-    expect(await screen.findByText(/be used for migration/i)).toBeInTheDocument();
+    expect(await screen.findByText(/enable pushing to the configured branch/i)).toBeInTheDocument();
+    // Nothing usable is pre-selected, so migration stays disabled.
     expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
   });
 

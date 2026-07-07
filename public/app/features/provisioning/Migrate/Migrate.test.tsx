@@ -230,16 +230,17 @@ describe('Migrate', () => {
       await waitFor(() => expect(screen.queryByText(drawerText)).not.toBeInTheDocument());
     });
 
-    it('offers a connect action instead of migrate when no write-capable repo is connected', async () => {
-      // A PR-only repo can't run a migration, matching the drawer's guard.
+    it('still offers the migrate action when the only connected repo cannot push', async () => {
+      // A PR-only repo can't run a migration, but the flow stays reachable so the
+      // drawer can explain how to enable it — rather than hiding it behind Configure.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
       respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);
 
       expect(await screen.findByText('Team A')).toBeInTheDocument();
-      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /migrate (all|selected)/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /migrate (all|selected)/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
     });
 
     it('still offers migrate-everything when the resource list fails to load', async () => {
@@ -257,17 +258,17 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('offers a connect action on the resource-list-error fallback when no write repo is connected', async () => {
-      // PR-only repo can't run a migration, so the error fallback surfaces the
-      // connect action instead of the migrate-everything button.
+    it('still offers migrate-everything on the resource-list-error fallback when the only repo cannot push', async () => {
+      // PR-only repo can't run a migration, but migrate-everything stays reachable
+      // so the drawer can explain how to enable pushing, rather than hiding it.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
       server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       render(<Migrate />);
 
       expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
-      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
     });
 
     it('lists unmanaged folders in the Resources to migrate table', async () => {
@@ -469,7 +470,7 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('shows a connect action in the partial-failure warning when no write repo is connected', async () => {
+    it('still offers migrate-everything in the partial-failure warning when the only repo cannot push', async () => {
       respondWithStats(withPlaylists);
       enablePlaylists();
       server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
@@ -479,10 +480,10 @@ describe('Migrate', () => {
       render(<Migrate />);
 
       expect(await screen.findByText(/some resource types could not be loaded/i)).toBeInTheDocument();
-      // A connect action replaces the migrate-everything button (the table footer
-      // also surfaces one, hence findAll).
-      expect((await screen.findAllByRole('button', { name: /configure/i })).length).toBeGreaterThan(0);
-      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
+      // The migrate-everything action stays available (the drawer explains the
+      // repo can't push yet); no Configure fallback replaces it.
+      expect(await screen.findByRole('button', { name: /migrate everything/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
     });
 
     it('migrates a selected playlist via a selective job', async () => {
