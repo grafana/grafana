@@ -3,18 +3,19 @@ import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
-import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
 import { partitionSceneObjects } from './helpers';
 import { createDragEndHandler } from './variablesDragEndHandler';
 
@@ -33,12 +34,14 @@ interface DashboardVariablesListProps {
   renderVariables?: SceneVariable[];
   topPlacementLabel?: string;
   includeAdHoc?: boolean;
+  hideControlsMenuList?: boolean;
 }
 
 export function DashboardVariablesList({
   sourceVariableSet,
   renderVariables,
   topPlacementLabel,
+  hideControlsMenuList = false,
   includeAdHoc = false,
 }: DashboardVariablesListProps) {
   const { variables: allVariables } = sourceVariableSet.useState();
@@ -56,6 +59,14 @@ export function DashboardVariablesList({
   const onClickVariable = useCallback((variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(variable).state;
     editPane.selectObject(variable);
+  }, []);
+
+  const onDuplicateVariable = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onDuplicate();
+  }, []);
+
+  const onDeleteVariable = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onConfirmDelete();
   }, []);
 
   const onDragEnd = useMemo(
@@ -80,35 +91,30 @@ export function DashboardVariablesList({
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.variables-list.title-top-placement', '', {
-          placement: resolvedTopPlacementLabel,
-          count: visible.length,
-          defaultValue_one: '{{placement}} ({{count}})',
-          defaultValue_other: '{{placement}} ({{count}})',
-        })}
-        onClickItem={onClickVariable}
+        title={resolvedTopPlacementLabel}
+        onEditItem={onClickVariable}
+        onDuplicateItem={onDuplicateVariable}
+        onDeleteItem={onDeleteVariable}
         renderItemLabel={renderItemLabel}
       />
-      <DraggableList
-        items={controlsMenu}
-        droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.variables-list.title-controls-menu', '', {
-          count: controlsMenu.length,
-          defaultValue_one: 'Controls menu ({{count}})',
-          defaultValue_other: 'Controls menu ({{count}})',
-        })}
-        onClickItem={onClickVariable}
-        renderItemLabel={renderItemLabel}
-      />
+      {!hideControlsMenuList && (
+        <DraggableList
+          items={controlsMenu}
+          droppableId={ID_CONTROLS_MENU_LIST}
+          title={t('dashboard-scene.variables-list.title-controls-menu', 'Controls menu')}
+          onEditItem={onClickVariable}
+          onDuplicateItem={onDuplicateVariable}
+          onDeleteItem={onDeleteVariable}
+          renderItemLabel={renderItemLabel}
+        />
+      )}
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
-        title={t('dashboard-scene.variables-list.title-hidden', '', {
-          count: hidden.length,
-          defaultValue_one: 'Hidden ({{count}})',
-          defaultValue_other: 'Hidden ({{count}})',
-        })}
-        onClickItem={onClickVariable}
+        title={t('dashboard-scene.variables-list.title-hidden', 'Hidden')}
+        onEditItem={onClickVariable}
+        onDuplicateItem={onDuplicateVariable}
+        onDeleteItem={onDeleteVariable}
         renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
@@ -124,18 +130,11 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
   }, [dashboard]);
 
   return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button
-        fullWidth
-        icon="plus"
-        size="sm"
-        variant="secondary"
-        onClick={onAddVariable}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
-      >
-        <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
-      </Button>
-    </Box>
+    <SidebarAddButton
+      data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+      onAdd={onAddVariable}
+      tooltip={t('dashboard-scene.variables-list.add-variable', 'Add variable')}
+    />
   );
 }
 

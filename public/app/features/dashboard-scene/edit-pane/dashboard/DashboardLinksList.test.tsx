@@ -1,7 +1,10 @@
 import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { createDefaultLink, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
@@ -73,6 +76,10 @@ function buildLinks() {
   };
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('<DashboardLinksList />', () => {
   test('renders 2 sections (one per link display type)', () => {
     const { visibleLink1, visibleLink2, controlsMenuLink1 } = buildLinks();
@@ -99,14 +106,39 @@ describe('<DashboardLinksList />', () => {
   });
 
   describe('User interactions', () => {
-    describe('when a link title is clicked', () => {
-      test('selects the link in the pane', async () => {
-        const { visibleLink1 } = buildLinks();
-        const { user, getByText, elements } = renderLinksList([visibleLink1]);
+    describe('link list interactions', () => {
+      const key = '0';
 
-        await user.click(getByText(visibleLink1.title));
+      test('clicking on edit button selects the link in the pane', async () => {
+        const { visibleLink1 } = buildLinks();
+        const { user, getByText, getByTestId, elements } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
         expect(openLinkEditPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
+      });
+      test('clicking on delete button triggers confirmation modal', async () => {
+        const { visibleLink1 } = buildLinks();
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { user, getByText, getByTestId } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
+
+        expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+      test('clicking on duplicate button creates a duplicate link', async () => {
+        const { visibleLink1 } = buildLinks();
+        const { user, getByText, getByTestId, elements } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
+
+        expect(elements.dashboardScene.state.links).toHaveLength(2);
+        expect(elements.dashboardScene.state.links?.[1].title).toBe(`${visibleLink1.title} - Copy`);
       });
     });
 
