@@ -1166,11 +1166,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
-  * @default false
-  */
-  nestedFramesFieldOverrides?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */

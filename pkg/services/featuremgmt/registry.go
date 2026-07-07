@@ -2147,14 +2147,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "nestedFramesFieldOverrides",
-			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
