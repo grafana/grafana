@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// The Knowledge Graph's version of the "Application" page.
+const assertsServicesPath = "/a/grafana-asserts-app/services"
+const appObservabilityAppID = "grafana-app-observability-app"
+
 func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) error {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	appLinks := []*navtree.NavLink{}
@@ -60,6 +64,22 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
 			adaptiveTelemetrySection.Url = s.cfg.AppSubURL + "/a/" + adaptiveTelemetryPlugin.ID
 			adaptiveTelemetrySection.PluginID = adaptiveTelemetryPlugin.ID
+		}
+	}
+
+	// When the App Observability plugin is present it owns the "Application" entry
+	// in the Observability section, so hide the equivalent asserts "Application" page.
+	if treeRoot.FindById("plugin-page-"+appObservabilityAppID) != nil {
+		if obsSection := treeRoot.FindById(navtree.NavIDObservability); obsSection != nil {
+			assertsApplicationsURL := s.cfg.AppSubURL + assertsServicesPath
+			children := make([]*navtree.NavLink, 0, len(obsSection.Children))
+			for _, child := range obsSection.Children {
+				if child.Url == assertsApplicationsURL {
+					continue
+				}
+				children = append(children, child)
+			}
+			obsSection.Children = children
 		}
 	}
 
@@ -286,13 +306,21 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 	sectionChildren := []*navtree.NavLink{appLink}
 	// asserts pages expand to root Observability section instead of it's own node
 	if plugin.ID == "grafana-asserts-app" {
-		sectionChildren = appLink.Children
+		servicesURL := s.cfg.AppSubURL + assertsServicesPath
 
-		// keep current sorting if the pages, but above all the other apps
-		for _, child := range sectionChildren {
-			child.SortWeight = -100 + child.SortWeight
+		for _, child := range appLink.Children {
+			if child.Url == servicesURL {
+				// Place the asserts Application page in the same slot as the App Observability
+				// "Application" page, so it lands right after Frontend. Only one of the two is
+				// ever shown.
+				child.SortWeight = s.navigationAppConfig[appObservabilityAppID].SortWeight
+			} else {
+				// keep current sorting of the pages, but above all the other apps
+				child.SortWeight = -100 + child.SortWeight
+			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
+		sectionChildren = appLink.Children
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -399,7 +427,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-sigil-app":                {SectionID: navtree.NavIDObservability, SortWeight: 1, Text: "AI", IsNew: true},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
-		"grafana-app-observability-app":    {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
+		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
 		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database", IsNew: true},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},

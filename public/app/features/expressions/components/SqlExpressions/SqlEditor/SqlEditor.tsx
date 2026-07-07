@@ -2,15 +2,17 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor, signatureHelp } from '@grafana/ui/unstable';
 
+import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
 export interface SqlEditorProps {
   value: string;
   onChange: (value: string) => void;
   completionProvider?: SqlCompletionProvider;
+  functionSignatures?: SqlFunctionSignature[];
   formatter?: (value: string) => string;
   height?: number | string;
   ariaLabel?: string;
@@ -21,12 +23,14 @@ export const SqlEditor = ({
   value,
   onChange,
   completionProvider,
+  functionSignatures,
   formatter,
   height = '200px',
   ariaLabel,
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const completionSources = useMemo(() => {
     if (!completionProvider) {
       return undefined;
@@ -34,6 +38,14 @@ export const SqlEditor = ({
 
     return [getSqlCompletionSource(completionProvider)];
   }, [completionProvider]);
+
+  const extensions = useMemo(() => {
+    if (!functionSignatures?.length) {
+      return undefined;
+    }
+
+    return [signatureHelp(getSqlSignatureHelpProvider(functionSignatures), { theme })];
+  }, [functionSignatures, theme]);
 
   const formatQuery = useCallback(() => {
     if (formatter) {
@@ -51,6 +63,7 @@ export const SqlEditor = ({
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
           completionSources={completionSources}
+          extensions={extensions}
         />
       </div>
       {children?.({ formatQuery })}

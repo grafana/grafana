@@ -65,6 +65,33 @@ func TestIntegrationDiscoveryEmbeddedCluster(t *testing.T) {
 	})
 }
 
+// TestIntegrationDiscoveryDisabled asserts that discovery_enabled=false leaves a
+// node standalone: no discovery loop is wired even with a KV present, so it never
+// solicits peer routes.
+func TestIntegrationDiscoveryDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	// Two nodes share a registry, but discovery is off, so neither should register
+	// or dial the other.
+	store := newSharedTestKV(t)
+	a, _ := newTestDiscoveryServer(t, store, false)
+	b, _ := newTestDiscoveryServer(t, store, false)
+	startService(t, ctx, a)
+	startService(t, ctx, b)
+
+	require.False(t, hasDiscovery(a), "discovery loop should not be wired when disabled")
+	require.False(t, hasDiscovery(b), "discovery loop should not be wired when disabled")
+
+	// No discovery means no route reconciliation; give a tick's worth of time to
+	// confirm the cluster stays empty rather than merely not-yet-formed.
+	require.Never(t, func() bool {
+		return numRoutes(a) > 0 || numRoutes(b) > 0
+	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
+}
+
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
 // wire a publisher/subscriber to that specific node.
 type nodeCfg struct {
@@ -81,8 +108,8 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 	t.Cleanup(cancel)
 
 	store := newSharedTestKV(t)
-	a, cfgA := newTestDiscoveryServer(t, store)
-	b, cfgB := newTestDiscoveryServer(t, store)
+	a, cfgA := newTestDiscoveryServer(t, store, true)
+	b, cfgB := newTestDiscoveryServer(t, store, true)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -91,7 +118,7 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 
 // newTestDiscoveryServer builds a Server running a real embedded NATS server on
 // OS-chosen ports, sharing the given KV-backed peer registry for auto-discovery.
-func newTestDiscoveryServer(t *testing.T, store kv.KV) (*Server, *setting.Cfg) {
+func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*Server, *setting.Cfg) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
@@ -102,6 +129,7 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV) (*Server, *setting.Cfg) {
 		// can run side by side; routeURLForServer reads the bound port back.
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
+		DiscoveryEnabled:  discoveryEnabled,
 		DiscoveryInterval: 50 * time.Millisecond,
 		DiscoveryTTL:      time.Minute,
 	}
@@ -121,6 +149,14 @@ func newSharedTestKV(t *testing.T) kv.KV {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 	return kv.NewBadgerKV(db)
+}
+
+// hasDiscovery reports whether the discovery loop was wired, read under the lock
+// startEmbeddedServer writes it with, keeping the -race build clean.
+func hasDiscovery(s *Server) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.discovery != nil
 }
 
 // numRoutes reads the server's active cluster route count under the lock the

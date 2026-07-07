@@ -5,9 +5,11 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
@@ -158,12 +160,22 @@ describe('NewActionsButton', () => {
   });
 
   describe('Dashboard from template button', () => {
+    let originalPermissions: typeof contextSrv.user.permissions;
+
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
       // Reset to defaults: a test datasource is available, custom templates are off.
       mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
       mockGetDashboardTemplatesTab.mockReturnValue(null);
       setTestFlags({ 'grafana.customDashboardTemplates': false });
+      // Custom templates require dashboardtemplates:read; grant it by default (grafana-provisioned
+      // templates don't depend on it).
+      originalPermissions = contextSrv.user.permissions;
+      contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesRead]: true };
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
     });
 
     it('should show a `Use template` button when the feature flag is enabled', async () => {

@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/folder
 go 1.26.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.56.3
+	github.com/grafana/grafana-app-sdk v0.56.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	k8s.io/apimachinery v0.36.1
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a

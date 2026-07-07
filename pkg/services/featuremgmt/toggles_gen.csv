@@ -241,7 +241,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,restrictedPluginApis,GA,@grafana/grafana-catalog,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
-2025-07-31,teamFolders,preview,@grafana/grafana-frontend-navigation,false,false,false
 2026-06-17,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
@@ -352,6 +351,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-07-03,grafana.useDefaultScopesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-22,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-05-26,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -366,3 +366,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-04-20,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-26,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
+2026-06-30,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
+2026-07-01,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false

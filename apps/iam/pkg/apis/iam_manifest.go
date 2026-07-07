@@ -91,7 +91,7 @@ var appManifestData = app.ManifestData{
 							Name:             "lastSeenAt",
 							Path:             "status.lastSeenAt",
 							Type:             "int64",
-							Capabilities:     []string{"filter", "retrieve"},
+							Capabilities:     []string{"sort", "retrieve"},
 							EmitZeroIfAbsent: true,
 							Description:      "The last seen timestamp of the user",
 						},
@@ -215,7 +215,7 @@ var appManifestData = app.ManifestData{
 							Name:         "email",
 							Path:         "spec.email",
 							Type:         "string",
-							Capabilities: []string{"retrieve"},
+							Capabilities: []string{"sort", "retrieve"},
 							Description:  "Email of the team",
 						},
 						{
