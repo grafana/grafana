@@ -640,7 +640,6 @@ func provideMigrationRegistry(
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
 	r.Register(snapshotmigration.SnapshotMigration(snapshotMigrator))
-	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	r.Register(dsmigration.DataSourceMigration(dataSourceMigrator))
 	r.Register(collectionsmigration.StarsMigration(starsMigrator))
 	r.Register(preferencesmigration.PreferencesMigration(preferencesMigrator))
