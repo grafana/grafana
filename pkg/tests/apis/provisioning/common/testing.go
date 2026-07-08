@@ -1392,6 +1392,27 @@ func WithNATS() GrafanaOption {
 	}
 }
 
+// WithNATSReListOnly enables the embedded NATS bus but deliberately leaves the
+// SQL KV backend off, so no component ever publishes a watch notification. The
+// provisioning informers still run on the NATS path (they subscribe and
+// re-list) but receive no live events, so reconciliation is driven purely by
+// the periodic re-list, whose interval is set to resync. This isolates the
+// re-list fallback that guarantees eventual reconciliation when live
+// notifications are missed (round-robined to another replica, a startup or
+// reconnect gap). Keep resync short so the re-list fires within a test budget.
+func WithNATSReListOnly(resync time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+		// EnableSQLKVBackend stays false: only the KV backend publishes watch
+		// notifications, so leaving it off means the informers never receive a
+		// live event and the re-list is the sole reconcile driver.
+		opts.ProvisioningControllerResyncInterval = resync
+	}
+}
+
 // freePort asks the kernel for an available TCP port on the loopback interface
 // and returns it after closing the listener. There is an inherent (small) race
 // between closing and the embedded NATS server binding, but it is the same
