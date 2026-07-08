@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -11,7 +10,7 @@ import (
 
 func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	repoName := "commit-author"
 	_, local := helper.CreateGitRepo(t, repoName, nil, "write")

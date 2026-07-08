@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 
 func TestIntegrationGit_ExportJob_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	const repoName = "export-commit-author"
 
