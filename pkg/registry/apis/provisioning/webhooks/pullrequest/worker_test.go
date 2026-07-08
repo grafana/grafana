@@ -389,7 +389,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 			commenter := NewMockCommenter(t)
 			repo := mockPullRequestRepo{
 				MockRepository:      repository.NewMockRepository(t),
-				MockPullRequestRepo: NewMockPullRequestRepo(t),
+				MockPullRequestRepo: repository.NewMockPullRequestRepo(t),
 			}
 			progress := jobs.NewMockJobProgressRecorder(t)
 			tt.setupMocks(evaluator, commenter, &repo, progress)
@@ -419,7 +419,7 @@ func TestPullRequestWorker_Process(t *testing.T) {
 
 type mockPullRequestRepo struct {
 	*repository.MockRepository
-	*MockPullRequestRepo
+	*repository.MockPullRequestRepo
 }
 
 // implemented by both mocks
