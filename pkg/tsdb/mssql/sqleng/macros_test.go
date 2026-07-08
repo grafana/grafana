@@ -224,6 +224,31 @@ func TestMacroEngine(t *testing.T) {
 	})
 }
 
+func TestInterpolateSQLCommenter(t *testing.T) {
+	engine := &msSQLMacroEngine{}
+	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+	timeRange := backend.TimeRange{From: from, To: from.Add(5 * time.Minute)}
+	query := &backend.DataQuery{Interval: 10 * time.Minute}
+
+	t.Run("preserves an inert trailing tag while interpolating the body", func(t *testing.T) {
+		sql, err := engine.Interpolate(query, timeRange, "SELECT $__interval /*app='grafana',source='bi'*/")
+		require.NoError(t, err)
+		require.Equal(t, "SELECT 10m /*app='grafana',source='bi'*/", sql)
+	})
+
+	t.Run("strips a tag that embeds the interval macro", func(t *testing.T) {
+		sql, err := engine.Interpolate(query, timeRange, "SELECT 1 /*i='$__interval'*/")
+		require.NoError(t, err)
+		require.Equal(t, "SELECT 1 ", sql)
+	})
+
+	t.Run("strips a tag whose macro completes across the comment boundary", func(t *testing.T) {
+		sql, err := engine.Interpolate(query, timeRange, "SELECT 1 /*k='$__timeFilter(t'*/ WHERE (x = 1)")
+		require.NoError(t, err)
+		require.Equal(t, "SELECT 1  WHERE (x = 1)", sql)
+	})
+}
+
 func TestMacroEngineConcurrency(t *testing.T) {
 	engine := newMssqlMacroEngine()
 	query1 := backend.DataQuery{

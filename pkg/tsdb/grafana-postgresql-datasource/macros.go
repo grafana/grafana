@@ -10,17 +10,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
-const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
-
-// sqlCommenterRegExp matches a SQLCommenter attribution block: a block comment
-// made up of one or more key='value' pairs, e.g. /*application='grafana',source='bi'*/.
-var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9_.-]+='[^']*'(\s*,\s*[a-zA-Z0-9_.-]+='[^']*')*\s*\*/$`)
-
-// macroRegExp matches a Grafana macro of the form $name(...).
-var macroRegExp = regexp.MustCompile(sExpr)
+// sqlCommenterRegExp matches a SQLCommenter attribution block: one or more
+// key='value' pairs in a block comment, e.g. /*application='grafana',source='bi'*/.
+// Keys allow '%' for URL-encoded serialization; values exclude '*' so the run
+// cannot contain '*/' and close the comment early.
+var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='[^'*]*'(\s*,\s*[a-zA-Z0-9%_.-]+='[^'*]*')*\s*\*/$`)
 
 // isDollarTagChar reports whether b is valid inside a PostgreSQL dollar-quote tag
 // (letters and digits only; underscore is also allowed per identifier rules).
@@ -130,7 +127,7 @@ func stripSQLComments(sql string) string {
 			// a tag-shaped comment that embeds a macro so the macro is not interpolated.
 			if closed {
 				comment := sql[start:i]
-				if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
+				if sqlCommenterRegExp.MatchString(comment) && !sqlmacro.ContainsMacro(comment) {
 					out.WriteString(comment)
 				}
 			}
@@ -160,15 +157,15 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 }
 
 func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
-	// Strip SQL comments before macro interpolation so that only macros present
-	// in executable SQL are evaluated.
+	// Strip comments before any interpolation so the SQLCommenter guard sees
+	// macro tokens before the interval substitutions below rewrite them; then
+	// apply the global interval substitutions, then expand the paren-form macros.
 	sql = stripSQLComments(sql)
+	sql = sqleng.Interpolate(*query, timeRange, "", sql)
 
-	// TODO: Handle error
-	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(sqlmacro.RegExp, sql, func(groups []string) string {
 		// detect if $__timeGroup is supposed to add AS time for pre 5.3 compatibility
 		// if there is a ',' directly after the macro call $__timeGroup is probably used
 		// in the old way. Inside window function ORDER BY $__timeGroup will be followed

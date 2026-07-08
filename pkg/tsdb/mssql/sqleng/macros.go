@@ -8,17 +8,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
-const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
-
-// sqlCommenterRegExp matches a SQLCommenter attribution block: a block comment
-// made up of one or more key='value' pairs, e.g. /*application='grafana',source='bi'*/.
-var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9_.-]+='[^']*'(\s*,\s*[a-zA-Z0-9_.-]+='[^']*')*\s*\*/$`)
-
-// macroRegExp matches a Grafana macro of the form $name(...).
-var macroRegExp = regexp.MustCompile(sExpr)
+// sqlCommenterRegExp matches a SQLCommenter attribution block: one or more
+// key='value' pairs in a block comment, e.g. /*application='grafana',source='bi'*/.
+// Keys allow '%' for URL-encoded serialization; values exclude '*' so the run
+// cannot contain '*/' and close the comment early.
+var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='[^'*]*'(\s*,\s*[a-zA-Z0-9%_.-]+='[^'*]*')*\s*\*/$`)
 
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
@@ -118,7 +116,7 @@ func scanBlockComment(sql string, i int, out *strings.Builder) int {
 		if sql[i] == '*' && sql[i+1] == '/' {
 			i += 2
 			comment := sql[start:i]
-			if sqlCommenterRegExp.MatchString(comment) && !macroRegExp.MatchString(comment) {
+			if sqlCommenterRegExp.MatchString(comment) && !sqlmacro.ContainsMacro(comment) {
 				out.WriteString(comment)
 			}
 			return i
@@ -138,15 +136,15 @@ func newMssqlMacroEngine() SQLMacroEngine {
 
 func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
-	// Strip SQL comments before macro interpolation so that only macros present
-	// in executable SQL are evaluated.
+	// Strip comments before any interpolation so the SQLCommenter guard sees
+	// macro tokens before the interval substitutions below rewrite them; then
+	// apply the global interval substitutions, then expand the paren-form macros.
 	sql = stripSQLComments(sql)
+	sql = Interpolate(*query, timeRange, "", sql)
 
-	// TODO: Return any error
-	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(sqlmacro.RegExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")

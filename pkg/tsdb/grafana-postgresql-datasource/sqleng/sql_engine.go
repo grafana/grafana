@@ -226,11 +226,9 @@ func (e *DataSourceHandler) executeQuery(queryContext context.Context, query bac
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
-	// global substitutions
-	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, queryJSON.RawSql)
-
-	// data source specific substitutions
-	interpolatedQuery, err := e.macroEngine.Interpolate(&query, query.TimeRange, interpolatedQuery)
+	// The macro engine strips comments, applies the global interval
+	// substitutions, and expands the datasource macros, in that order.
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, query.TimeRange, queryJSON.RawSql)
 	if err != nil {
 		e.handleQueryError("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 		return

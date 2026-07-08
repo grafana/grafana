@@ -240,11 +240,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		ch <- queryResult
 	}
 
-	// global substitutions
-	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-
-	// data source specific substitutions
-	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	// The macro engine strips comments, applies the global interval
+	// substitutions, and expands the datasource macros, in that order.
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, queryJson.RawSql)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
 		return
