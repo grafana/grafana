@@ -108,12 +108,18 @@ const titleUniqueSearchLimit = 2
 // for parity across modes. Matching is case-insensitive (DoubleEquals routes to
 // the pre-lowered title_phrase field).
 //
-// The search runs with the requester's permissions, so it only sees teams the
-// requester can read. A requester who cannot read a colliding team will not be
-// blocked here; unified-only has no write-path backstop, so such a duplicate can
-// slip through. The user email/login checks share this limitation — the fix
-// (running the lookup under a full-read identity) belongs across both.
+// The lookup runs under the service identity rather than the requester: team
+// read access is often scoped to membership, so a requester-scoped search would
+// miss colliding teams the requester cannot read and let the duplicate through.
+// Legacy's UNIQUE constraint rejects duplicates regardless of visibility, so the
+// elevated lookup (and the existence leak in its 409) is parity with legacy.
 func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, title string) error {
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("parse namespace: %w", err))
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
 	gr := iamv0alpha1.TeamResourceInfo.GroupResource()
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{

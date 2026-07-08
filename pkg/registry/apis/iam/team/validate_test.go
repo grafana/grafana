@@ -399,14 +399,16 @@ func (s *stubReconciler) Validate(groups []string) error {
 // count-only response) — mirroring FakeUserLegacySearchClient's SearchFunc hook.
 type fakeTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
-	rows       []*resourcepb.ResourceTableRow
-	err        error
-	searchFunc func(*resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
-	lastReq    *resourcepb.ResourceSearchRequest
+	rows          []*resourcepb.ResourceTableRow
+	err           error
+	searchFunc    func(*resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
+	lastReq       *resourcepb.ResourceSearchRequest
+	lastRequester identity.Requester
 }
 
-func (c *fakeTeamSearchClient) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (c *fakeTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	c.lastReq = req
+	c.lastRequester, _ = identity.GetRequester(ctx)
 	if c.searchFunc != nil {
 		return c.searchFunc(req)
 	}
@@ -483,6 +485,19 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		require.Len(t, client.lastReq.Options.Fields, 1)
 		assert.Equal(t, resource.SEARCH_FIELD_TITLE, client.lastReq.Options.Fields[0].Key)
 		assert.Equal(t, string(selection.DoubleEquals), client.lastReq.Options.Fields[0].Operator)
+	})
+
+	t.Run("lookup runs under the service identity, not the requester", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		client := &fakeTeamSearchClient{}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.NoError(t, err)
+
+		// Team read access is often scoped to membership; a requester-scoped
+		// search would miss colliding teams the requester cannot read.
+		require.NotNil(t, client.lastRequester)
+		assert.True(t, client.lastRequester.IsIdentityType(types.TypeAccessPolicy),
+			"expected the service identity, got %s", client.lastRequester.GetIdentityType())
 	})
 }
 
