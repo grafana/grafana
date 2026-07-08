@@ -362,7 +362,7 @@ Journey wiring only listens to interactions; it never adds DOM event listeners o
 
 ### Step 3: Register metadata
 
-Add an entry to `public/app/core/services/journeyRegistry.ts`:
+Add an entry to `public/app/core/services/journey/journeyRegistry.ts`:
 
 ```typescript
 export const JOURNEY_REGISTRY: JourneyMeta[] = [
