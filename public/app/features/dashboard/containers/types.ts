@@ -28,6 +28,8 @@ export type DashboardPageRouteSearchParams = {
   // Used by the org dashboard templates flow on DashboardRoutes.Template.
   dashboardTemplateUid?: string;
   editTemplate?: string | true;
+  // Used by the Generate Dashboard wizard to hand off a locally generated spec.
+  fromGenerator?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

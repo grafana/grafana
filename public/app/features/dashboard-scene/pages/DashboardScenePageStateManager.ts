@@ -55,6 +55,7 @@ import {
   isRedirectResponse,
 } from 'app/types/dashboard';
 
+import { takeGeneratedDashboard } from '../assistant/generate/generatedDashboardRegistry';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -113,6 +114,14 @@ export interface LoadDashboardOptions {
   editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
+  /**
+   * Registry key produced by the "Generate dashboard" wizard. When present on
+   * `DashboardRoutes.New`, the V2 state manager consumes the locally-generated
+   * V2 spec instead of building an empty one.
+   *
+   * See `assistant/generate/generatedDashboardRegistry.ts` for the store details.
+   */
+  fromGenerator?: string;
 }
 
 type HomeDashboardDTO = DashboardDTO & {
@@ -1060,6 +1069,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     urlFolderUid,
     dashboardTemplateUid,
     editTemplate,
+    fromGenerator,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -1071,9 +1081,34 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     let rsp: DashboardWithAccessInfo<DashboardV2Spec>;
     try {
       switch (route) {
-        case DashboardRoutes.New:
+        case DashboardRoutes.New: {
+          // The "Generate dashboard" wizard stashes a locally-built V2 spec in the
+          // in-memory registry and navigates to `/dashboard/new?fromGenerator=<key>`.
+          // If we find a spec under that key we wrap it in the standard
+          // `DashboardWithAccessInfo` envelope so the rest of the scene machinery
+          // treats it exactly like a saved dashboard (except it's unsaved: `metadata.name`
+          // stays empty and `access.canSave` is left unspecified so it defaults to true).
+          if (fromGenerator) {
+            const stashed = takeGeneratedDashboard(fromGenerator);
+            if (stashed) {
+              rsp = {
+                apiVersion: dashboardAPIVersionResolver.getV2(),
+                kind: 'DashboardWithAccessInfo',
+                spec: stashed,
+                access: { canStar: false, canShare: false, canDelete: false },
+                metadata: {
+                  name: '',
+                  resourceVersion: '0',
+                  creationTimestamp: new Date().toISOString(),
+                  annotations: { [AnnoKeyFolder]: urlFolderUid ?? '' },
+                },
+              };
+              break;
+            }
+          }
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
+        }
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
         }
@@ -1413,7 +1448,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
     if (options.route === DashboardRoutes.New) {
-      const newDashboardVersion = shouldForceV2API() ? 'v2' : 'v1';
+      // The "Generate dashboard" wizard produces a V2 spec and always needs the V2
+      // manager to consume it, regardless of the `dashboardNewLayouts` toggle. Falling
+      // back to V1 would require porting the recipe composer to the legacy schema for
+      // no user-visible benefit.
+      const newDashboardVersion = options.fromGenerator || shouldForceV2API() ? 'v2' : 'v1';
       this.setActiveManager(newDashboardVersion);
     }
 

@@ -53,6 +53,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
 
@@ -69,10 +70,12 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
             : uid) ?? '',
         type,
         slug,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
         dashboardTemplateUid: queryParams.dashboardTemplateUid,
         editTemplate: queryParams.editTemplate === true,
+        fromGenerator: queryParams.fromGenerator,
       });
     }
 
@@ -86,6 +89,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     // removing slug and path (which has slug in it) from dependencies to prevent unmount when data links reference
     //  the same dashboard with no slug in url
     // queryParams.path is used by template dashboards to identify the dashboard file; changing it means a new template was selected
+    // queryParams.fromGenerator triggers a reload when the "Generate dashboard" wizard hands off a new spec from
+    // an already-open `/dashboard/new` page (rare, but avoids a silent no-op on that navigation)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     stateManager,
@@ -98,6 +103,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     queryParams.gnetId,
     queryParams.dashboardTemplateUid,
     queryParams.editTemplate,
+    queryParams.fromGenerator,
   ]);
 
   useEffect(() => {

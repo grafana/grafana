@@ -1,0 +1,1055 @@
+import { css, cx } from '@emotion/css';
+import { Children, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useAssistant } from '@grafana/assistant';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import {
+  Alert,
+  Badge,
+  Button,
+  CollapsableSection,
+  Field,
+  Icon,
+  type IconName,
+  Modal,
+  MultiSelect,
+  Spinner,
+  Stack,
+  Text,
+  TextArea,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+
+import { analyzeDatasource } from './analysis';
+import { buildCapabilityChips, type CapabilityChip } from './capabilityChips';
+import { buildDomainGroups, type DomainGroup } from './domains';
+import { useDashboardGenerator } from './generateDashboard';
+import { useIntentSuggestions } from './generateIntents';
+import { putGeneratedDashboard } from './generatedDashboardRegistry';
+import { getIntentsForLabel } from './intents';
+import {
+  type AnalysisStatus,
+  type CustomizationOptions,
+  type DashboardIntent,
+  type DatasourceAnalysis,
+  type ExplorationOption,
+  type IntentSelection,
+} from './types';
+
+/** Composite key uniquely identifying a (dimension, intent) pick across all groups. */
+function selectionKey(option: ExplorationOption, intent: DashboardIntent): string {
+  return `${option.labelKey}::${intent.id}`;
+}
+
+/**
+ * Defaults applied when the user opens the modal — they can be overridden inline via
+ * the "Advanced" section. Kept alongside the modal so the mapping stays visible.
+ */
+const DEFAULT_CUSTOMIZATION: CustomizationOptions = {
+  additionalNotes: '',
+};
+
+export interface GenerateDashboardModalProps {
+  onDismiss: () => void;
+}
+
+/**
+ * "Generate a dashboard" modal, launched from the header Plus menu.
+ *
+ * Design goals:
+ * - Single scrollable screen — no wizard steps, no back button, no context loss.
+ * - Card-driven: intents are grouped by semantic DOMAIN (Apps, Databases,
+ *   Kubernetes, Cloud…) rather than raw label dimension, built on the fly from the
+ *   detected capabilities. Every domain is shown at once, so users can assemble a
+ *   dashboard from picks across DIFFERENT domains without switching a dropdown.
+ *   Each card carries its own pivot label; each pick becomes its own tab.
+ * - AI suggestions are a single datasource-wide pass pinned at the top; they stream
+ *   in without blocking the curated groups below.
+ * - Detected capabilities are visible up-front so the user can verify the wizard
+ *   understood their stack before committing.
+ * - "Advanced" (additional notes) stays always-available at
+ *   the bottom of the same screen instead of being buried behind a step.
+ *
+ * The entire generation flow is headless: no Assistant sidebar. When the user
+ * hits Generate (with one or more picks, or none for a default overview):
+ * 1. `useDashboardGenerator` runs an inline LLM call producing a compact recipe.
+ * 2. `composeRecipe` composes a strict `DashboardV2Spec` from that recipe locally.
+ * 3. The spec is stashed in an in-memory registry.
+ * 4. We route to `/dashboard/new?fromGenerator=<key>` and the dashboard scene
+ *    picks the spec up as an unsaved dashboard the user can review and save.
+ */
+export function GenerateDashboardModal({ onDismiss }: GenerateDashboardModalProps) {
+  const styles = useStyles2(getStyles);
+
+  const [datasources, setDatasources] = useState<DataSourceInstanceSettings[]>(() => {
+    const initial = getDataSourceSrv().getInstanceSettings();
+    return initial ? [initial] : [];
+  });
+  const [analysis, setAnalysis] = useState<DatasourceAnalysis | undefined>();
+  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('idle');
+  const [analysisError, setAnalysisError] = useState<string | undefined>();
+
+  const [customization, setCustomization] = useState<CustomizationOptions>(DEFAULT_CUSTOMIZATION);
+  const [generationErrorMessage, setGenerationErrorMessage] = useState<string | undefined>();
+  // Multi-select state. Keys are `${labelKey}::${intentId}` so a pick is unique
+  // across groups; we derive the ordered `selectedSelections` list from the union
+  // of everything currently on screen.
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
+
+  const { isAvailable: isAssistantAvailable, isLoading: isAssistantLoading } = useAssistant();
+  const { isAvailable: areTemplatesAvailable } = useTemplateDashboardsAvailability();
+  const analysisAbortRef = useRef<AbortController | null>(null);
+  const intentSuggestions = useIntentSuggestions();
+  const dashboardGenerator = useDashboardGenerator();
+
+  const primaryDatasource: DataSourceInstanceSettings | undefined = datasources[0];
+  const isGenerating = dashboardGenerator.isLoading;
+
+  useEffect(() => {
+    reportInteraction('grafana_generate_dashboard_modal_opened');
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      analysisAbortRef.current?.abort();
+    };
+  }, []);
+
+  const runAnalysis = useCallback(async (ds: DataSourceInstanceSettings) => {
+    analysisAbortRef.current?.abort();
+    const controller = new AbortController();
+    analysisAbortRef.current = controller;
+
+    setAnalysisStatus('loading');
+    setAnalysisError(undefined);
+    setAnalysis(undefined);
+    // A new datasource means a new set of dimensions/intents — drop any prior picks.
+    setSelectedKeys(new Set());
+
+    try {
+      const analysed = await analyzeDatasource(ds);
+      if (controller.signal.aborted) {
+        return;
+      }
+      setAnalysis(analysed);
+      setAnalysisStatus('ready');
+    } catch (err) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      setAnalysisError(
+        err instanceof Error
+          ? err.message
+          : t('dashboard-generate.errors.analysis-failed', 'Failed to analyse the selected data source.')
+      );
+      setAnalysisStatus('error');
+    }
+  }, []);
+
+  // Kick off analysis whenever the primary datasource changes (including the initial default).
+  const analysedForUid = useRef<string | undefined>();
+  useEffect(() => {
+    if (!primaryDatasource) {
+      setAnalysisStatus('idle');
+      setAnalysis(undefined);
+      return;
+    }
+    if (analysedForUid.current === primaryDatasource.uid) {
+      return;
+    }
+    analysedForUid.current = primaryDatasource.uid;
+    runAnalysis(primaryDatasource);
+  }, [primaryDatasource, runAnalysis]);
+
+  // Fire a single datasource-wide suggestions pass once analysis completes. Unlike
+  // the old per-dimension model, this runs exactly once per datasource — so the user
+  // never waits for a fresh LLM call each time they look at a different group.
+  useEffect(() => {
+    if (!primaryDatasource || !analysis || analysis.options.length === 0 || !isAssistantAvailable) {
+      return;
+    }
+    // Every curated title across every domain, so the LLM avoids duplicating the
+    // starting points we already show in the groups below.
+    const existingTitles = buildDomainGroups(analysis).flatMap((group) => group.selections.map((s) => s.intent.title));
+    intentSuggestions.request({ primaryDatasource, analysis, existingTitles });
+    // We intentionally exclude `intentSuggestions` from the dep array — its identity
+    // changes on every render but its stable methods are what we need. Including it
+    // would refire the request continuously.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryDatasource, analysis, isAssistantAvailable]);
+
+  // Watch the headless generator. When a spec arrives, stash it and route the
+  // user to `/dashboard/new`. On error, surface it inline (staying on the modal).
+  useEffect(() => {
+    if (dashboardGenerator.result) {
+      const key = putGeneratedDashboard(dashboardGenerator.result.spec);
+      const { recipe } = dashboardGenerator.result;
+      const flatPanelCount = recipe.panels?.length ?? 0;
+      // Sections can hold panels directly or nest them inside rows (tab → rows →
+      // panels), so count both to keep telemetry accurate.
+      const sectionPanelCount = (recipe.sections ?? []).reduce((sum, section) => {
+        const rowPanels = (section.rows ?? []).reduce((n, row) => n + (row.panels?.length ?? 0), 0);
+        return sum + (section.panels?.length ?? 0) + rowPanels;
+      }, 0);
+      reportInteraction('grafana_generate_dashboard_spec_produced', {
+        panelCount: sectionPanelCount + flatPanelCount,
+        sectionCount: recipe.sections?.length ?? 0,
+        variableCount: recipe.variables?.length ?? 0,
+      });
+      dashboardGenerator.reset();
+      onDismiss();
+      locationService.push({ pathname: '/dashboard/new', search: `?fromGenerator=${key}` });
+      return;
+    }
+    if (dashboardGenerator.error) {
+      setGenerationErrorMessage(
+        dashboardGenerator.error.message ||
+          t('dashboard-generate.errors.generation-failed', 'The Assistant could not generate a dashboard.')
+      );
+    }
+  }, [dashboardGenerator, onDismiss]);
+
+  const onDatasourcesChange = useCallback((selected: DataSourceInstanceSettings[]) => {
+    setDatasources(selected);
+    reportInteraction('grafana_generate_dashboard_datasources_changed', {
+      count: selected.length,
+      datasourceType: selected[0]?.type,
+    });
+  }, []);
+
+  const runGeneration = useCallback(
+    (selections: IntentSelection[], intentSource: 'overview' | 'single' | 'multi') => {
+      if (!primaryDatasource || !analysis || selections.length === 0) {
+        return;
+      }
+      setGenerationErrorMessage(undefined);
+
+      const primary = selections[0];
+      reportInteraction('grafana_generate_dashboard_generation_started', {
+        datasourceType: primaryDatasource.type,
+        // Legacy scalar fields kept for backwards-compat — driven by the primary
+        // (first-selected) pick so single-selection requests keep the old shape.
+        labelKey: primary.option.labelKey,
+        intentId: primary.intent.id,
+        intentSource,
+        intentCount: selections.length,
+        intentIds: selections.map((s) => s.intent.id).join(','),
+        dimensions: Array.from(new Set(selections.map((s) => s.option.labelKey))).join(','),
+        hasAdditionalNotes: customization.additionalNotes.trim().length > 0,
+        additionalDatasourceCount: Math.max(0, datasources.length - 1),
+      });
+
+      dashboardGenerator.generate({
+        selections,
+        primaryDatasource,
+        additionalDatasources: datasources.slice(1),
+        analysis,
+        customization,
+      });
+    },
+    [analysis, customization, dashboardGenerator, datasources, primaryDatasource]
+  );
+
+  const onToggleSelection = useCallback((selection: IntentSelection) => {
+    const key = selectionKey(selection.option, selection.intent);
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+    reportInteraction('grafana_generate_dashboard_intent_toggled', {
+      intentId: selection.intent.id,
+      labelKey: selection.option.labelKey,
+    });
+  }, []);
+
+  const onClearSelection = useCallback(() => {
+    setSelectedKeys(new Set());
+  }, []);
+
+  /**
+   * Fallback overview pick used when the primary CTA fires without any selection.
+   * We pick the top-ranked capability/category intent on the top-ranked dimension so
+   * the user always gets a sensible default. The "Additional notes" field under
+   * Advanced options is the intended place for freeform steering — the LLM prompt
+   * already layers notes on top of the intent's guidance.
+   */
+  const buildOverviewFallback = useCallback((): IntentSelection | undefined => {
+    if (!primaryDatasource || !analysis) {
+      return undefined;
+    }
+    const option: ExplorationOption = analysis.options[0] ?? {
+      id: analysis.labelKeys[0] ?? 'service',
+      labelKey: analysis.labelKeys[0] ?? 'service',
+      title: t('dashboard-generate.scratch.fallback-title', 'Overview'),
+      description: t('dashboard-generate.scratch.fallback-description', 'General-purpose overview'),
+    };
+
+    const intent: DashboardIntent = getIntentsForLabel(option.labelKey, analysis.capabilities)[0] ?? {
+      id: 'overview',
+      title: t('dashboard-generate.scratch.fallback-intent-title', 'Overview'),
+      description: t(
+        'dashboard-generate.scratch.fallback-intent-description',
+        'A general-purpose starting point for this data source.'
+      ),
+      // Prompt for the LLM — technical guidance string, never rendered.
+      guidance:
+        'Pick 6–10 signals from the datasource covering activity rates, error indicators, latencies, and resource usage. Add one template variable for the primary label. Do not invent metric names.',
+      icon: 'chart-line',
+    };
+
+    return { intent, option };
+  }, [analysis, primaryDatasource]);
+
+  const onUseTemplate = useCallback(() => {
+    reportInteraction('grafana_generate_dashboard_use_template');
+    locationService.push('/dashboards?templateDashboards=true&source=generateDashboardModal');
+    onDismiss();
+  }, [onDismiss]);
+
+  const onRetryGeneration = useCallback(() => {
+    setGenerationErrorMessage(undefined);
+    dashboardGenerator.reset();
+  }, [dashboardGenerator]);
+
+  const onRetryAnalysis = useCallback(() => {
+    if (primaryDatasource) {
+      runAnalysis(primaryDatasource);
+    }
+  }, [primaryDatasource, runAnalysis]);
+
+  const chips = useMemo<CapabilityChip[]>(
+    () => (analysis?.capabilities ? buildCapabilityChips(analysis.capabilities) : []),
+    [analysis?.capabilities]
+  );
+
+  // The AI's datasource-wide picks, each already paired with its pivot dimension.
+  const suggestions = intentSuggestions.selections;
+
+  // Semantic domain groups (Apps, Databases, Kubernetes…) built on the fly from the
+  // detected capabilities + available labels. We de-dupe each domain's picks against
+  // the AI suggestions above so a shape the Assistant already surfaced doesn't also
+  // appear in a domain below.
+  const domainGroups = useMemo<DomainGroup[]>(() => {
+    if (!analysis) {
+      return [];
+    }
+    const suggestedKeys = new Set(suggestions.map((s) => selectionKey(s.option, s.intent)));
+    return buildDomainGroups(analysis)
+      .map((group) => ({
+        ...group,
+        selections: group.selections.filter((s) => !suggestedKeys.has(selectionKey(s.option, s.intent))),
+      }))
+      .filter((group) => group.selections.length > 0);
+  }, [analysis, suggestions]);
+
+  // Flattened union of everything selectable, in display order (AI first, then each
+  // domain top-to-bottom). Used to derive the ordered selection and to prune stale keys.
+  const allSelections = useMemo<IntentSelection[]>(() => {
+    const flat: IntentSelection[] = [...suggestions];
+    for (const group of domainGroups) {
+      flat.push(...group.selections);
+    }
+    return flat;
+  }, [suggestions, domainGroups]);
+
+  // Drop any selected key that's no longer on screen (e.g. suggestions reloaded).
+  useEffect(() => {
+    const availableKeys = new Set(allSelections.map((s) => selectionKey(s.option, s.intent)));
+    setSelectedKeys((prev) => {
+      if (prev.size === 0) {
+        return prev;
+      }
+      let changed = false;
+      const next = new Set<string>();
+      for (const key of prev) {
+        if (availableKeys.has(key)) {
+          next.add(key);
+        } else {
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [allSelections]);
+
+  const selectedSelections = useMemo<IntentSelection[]>(
+    () => allSelections.filter((s) => selectedKeys.has(selectionKey(s.option, s.intent))),
+    [allSelections, selectedKeys]
+  );
+
+  const suggestionsFinished = intentSuggestions.status === 'ready' || intentSuggestions.status === 'error';
+  const hasAnyIntents = suggestions.length > 0 || domainGroups.length > 0;
+
+  const canGenerate = isAssistantAvailable && !isGenerating && !!primaryDatasource && analysisStatus === 'ready';
+
+  /**
+   * Primary CTA handler. If the user picked one or more intents we honour their
+   * selection; otherwise we fall back to a sensible overview so the button always
+   * "does something useful".
+   */
+  const onGenerate = useCallback(() => {
+    if (selectedSelections.length > 0) {
+      runGeneration(selectedSelections, selectedSelections.length > 1 ? 'multi' : 'single');
+      return;
+    }
+    const fallback = buildOverviewFallback();
+    if (fallback) {
+      runGeneration([fallback], 'overview');
+    }
+  }, [buildOverviewFallback, runGeneration, selectedSelections]);
+
+  return (
+    <Modal
+      isOpen
+      onDismiss={onDismiss}
+      ariaLabel={t('dashboard-generate.title', 'Generate a dashboard')}
+      title={
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Icon name="ai-sparkle" size="lg" />
+          <span>{t('dashboard-generate.title', 'Generate a dashboard')}</span>
+        </Stack>
+      }
+      className={styles.modal}
+    >
+      <div className={cx(styles.body, isGenerating && styles.bodyBusy)}>
+        <Field
+          noMargin
+          label={t('dashboard-generate.datasource-label', 'Data source')}
+          description={t(
+            'dashboard-generate.datasource-description',
+            'The Assistant will read labels and metric names from these to shape the dashboard.'
+          )}
+        >
+          <DatasourcesPicker selected={datasources} onChange={onDatasourcesChange} disabled={isGenerating} />
+        </Field>
+
+        {chips.length > 0 && (
+          <div className={styles.chipsRow} data-testid="generate-dashboard-detected-chips">
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="dashboard-generate.chips.detected-prefix">Detected in this data source</Trans>
+            </Text>
+            <div className={styles.chips}>
+              {chips.map((chip) => (
+                <Badge key={chip.id} icon={chip.icon} color="blue" text={chip.label} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isAssistantLoading && !isAssistantAvailable && (
+          <Alert severity="warning" title={t('dashboard-generate.no-assistant.title', 'Assistant is unavailable')}>
+            <Trans i18nKey="dashboard-generate.no-assistant.body">
+              The Grafana Assistant is not configured, so this wizard cannot generate dashboards. Ask an admin to enable
+              the Assistant plugin, then try again.
+            </Trans>
+          </Alert>
+        )}
+
+        {analysisStatus === 'loading' && (
+          <div className={styles.inlineLoader}>
+            <Spinner />
+            <Text color="secondary">
+              <Trans i18nKey="dashboard-generate.analyzing">Analysing labels on the selected data source…</Trans>
+            </Text>
+          </div>
+        )}
+
+        {analysisStatus === 'error' && (
+          <Alert
+            severity="warning"
+            title={t('dashboard-generate.errors.analysis-title', 'Could not analyse data source')}
+          >
+            <Stack direction="column" gap={1}>
+              <Text>
+                {analysisError ??
+                  t('dashboard-generate.errors.analysis-generic', 'The wizard could not read from this data source.')}
+              </Text>
+              <div>
+                <Button size="sm" variant="secondary" onClick={onRetryAnalysis}>
+                  <Trans i18nKey="dashboard-generate.retry">Try again</Trans>
+                </Button>
+              </div>
+            </Stack>
+          </Alert>
+        )}
+
+        {analysisStatus === 'ready' && analysis && (
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <Text element="h3" variant="h6">
+                <Trans i18nKey="dashboard-generate.intents.starting-points">Starting points</Trans>
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="dashboard-generate.intents.multi-hint">
+                  Pick one or more — each becomes its own tab
+                </Trans>
+              </Text>
+            </div>
+
+            {/*
+             * AI suggestions render first as their own group. They stream in from a
+             * single datasource-wide pass, so the curated groups below are always
+             * available immediately — the loader never blocks them.
+             */}
+            {(intentSuggestions.isLoading || suggestions.length > 0) && (
+              <IntentGroup
+                title={t('dashboard-generate.intents.suggested-group', 'Suggested for your data')}
+                icon="ai-sparkle"
+                loading={intentSuggestions.isLoading}
+                isOpen={true}
+                styles={styles}
+              >
+                {suggestions.map((selection) => (
+                  <IntentCard
+                    key={selectionKey(selection.option, selection.intent)}
+                    intent={selection.intent}
+                    isSuggested
+                    dimensionTitle={selection.option.title}
+                    selected={selectedKeys.has(selectionKey(selection.option, selection.intent))}
+                    onToggle={() => onToggleSelection(selection)}
+                    disabled={isGenerating || !isAssistantAvailable}
+                    styles={styles}
+                  />
+                ))}
+              </IntentGroup>
+            )}
+
+            {/* One group per detected domain (Apps, Databases, Kubernetes…) — every
+             * group is shown at once. Each card carries its own pivot dimension as a
+             * pill, since a domain can mix picks that pivot on different labels. */}
+            {domainGroups.map((group) => {
+              // Only label each card with its pivot when a domain actually mixes
+              // dimensions (e.g. Kubernetes spans clusters/pods/nodes); when every
+              // card shares one pivot the pill is just noise.
+              const mixedPivots = new Set(group.selections.map((s) => s.option.labelKey)).size > 1;
+              return (
+                <IntentGroup key={group.id} title={group.title} icon={group.icon} styles={styles}>
+                  {group.selections.map((selection) => {
+                    const key = selectionKey(selection.option, selection.intent);
+                    return (
+                      <IntentCard
+                        key={key}
+                        intent={selection.intent}
+                        isSuggested={false}
+                        dimensionTitle={mixedPivots ? selection.option.title : undefined}
+                        selected={selectedKeys.has(key)}
+                        onToggle={() => onToggleSelection(selection)}
+                        disabled={isGenerating || !isAssistantAvailable}
+                        styles={styles}
+                      />
+                    );
+                  })}
+                </IntentGroup>
+              );
+            })}
+
+            {/*
+             * Nothing-to-show state — reached only when suggestions completed but
+             * yielded nothing AND there are no curated groups. The primary
+             * "Generate an overview" button in the footer still works.
+             */}
+            {suggestionsFinished && !hasAnyIntents && (
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="dashboard-generate.intents.empty">
+                  No curated starting points for this data source yet — hit Generate to get a default overview.
+                </Trans>
+              </Text>
+            )}
+          </div>
+        )}
+
+        <AdvancedOptions value={customization} onChange={setCustomization} styles={styles} />
+
+        {generationErrorMessage && (
+          <Alert severity="error" title={t('dashboard-generate.errors.title', 'Something went wrong')}>
+            <Stack direction="column" gap={1}>
+              <Text>{generationErrorMessage}</Text>
+              <div>
+                <Button size="sm" variant="secondary" onClick={onRetryGeneration}>
+                  <Trans i18nKey="dashboard-generate.dismiss-error">Dismiss</Trans>
+                </Button>
+              </div>
+            </Stack>
+          </Alert>
+        )}
+
+        {isGenerating && (
+          <div className={styles.generatingBanner}>
+            <Spinner size="sm" />
+            <Stack direction="column" gap={0}>
+              <Text weight="medium">
+                <Trans i18nKey="dashboard-generate.generating.title">Generating your dashboard…</Trans>
+              </Text>
+              <Text color="secondary" variant="bodySmall">
+                <Trans i18nKey="dashboard-generate.generating.body">
+                  This usually takes a few seconds. You&apos;ll land on the new dashboard once it&apos;s ready.
+                </Trans>
+              </Text>
+            </Stack>
+          </div>
+        )}
+      </div>
+
+      <Modal.ButtonRow
+        leftItems={
+          <Stack direction="row" alignItems="center" gap={1}>
+            {areTemplatesAvailable && (
+              <Button variant="secondary" fill="text" icon="apps" onClick={onUseTemplate} disabled={isGenerating}>
+                <Trans i18nKey="dashboard-generate.footer.template">Start from a template</Trans>
+              </Button>
+            )}
+            {selectedSelections.length > 0 && (
+              <div className={styles.selectionSummary} data-testid="generate-dashboard-selection-summary">
+                <Text variant="bodySmall" color="secondary">
+                  {t('dashboard-generate.footer.selected-count', '', {
+                    count: selectedSelections.length,
+                    defaultValue_one: '{{count}} selected',
+                    defaultValue_other: '{{count}} selected',
+                  })}
+                </Text>
+                <Button variant="secondary" fill="text" size="sm" onClick={onClearSelection} disabled={isGenerating}>
+                  <Trans i18nKey="dashboard-generate.footer.clear-selection">Clear</Trans>
+                </Button>
+              </div>
+            )}
+          </Stack>
+        }
+      >
+        <Button variant="secondary" onClick={onDismiss}>
+          <Trans i18nKey="dashboard-generate.footer.cancel">Cancel</Trans>
+        </Button>
+        <Button
+          variant="primary"
+          icon={isGenerating ? undefined : 'ai-sparkle'}
+          onClick={onGenerate}
+          disabled={!canGenerate}
+        >
+          {isGenerating ? (
+            <Trans i18nKey="dashboard-generate.footer.generating">Generating…</Trans>
+          ) : selectedSelections.length > 1 ? (
+            t('dashboard-generate.footer.generate-selected', '', {
+              count: selectedSelections.length,
+              defaultValue_one: 'Generate dashboard ({{count}})',
+              defaultValue_other: 'Generate dashboard ({{count}})',
+            })
+          ) : selectedSelections.length === 1 ? (
+            <Trans i18nKey="dashboard-generate.footer.generate-single">Generate dashboard</Trans>
+          ) : (
+            <Trans i18nKey="dashboard-generate.footer.generate-overview">Generate an overview</Trans>
+          )}
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+}
+
+interface IntentGroupProps {
+  title: string;
+  /** Optional leading icon (e.g. the sparkle on the AI suggestions group). */
+  icon?: IconName;
+  /** Show a spinner in the header + a placeholder while the group is still loading. */
+  loading?: boolean;
+  isOpen?: boolean;
+  styles: ReturnType<typeof getStyles>;
+  children: ReactNode;
+}
+
+/**
+ * A titled group of intent cards — one per detected dimension, plus the AI
+ * "Suggested for your data" group. Groups are always visible at once so the user
+ * can pick across them without switching a dropdown.
+ */
+function IntentGroup({ title, icon, loading, isOpen = false, styles, children }: IntentGroupProps) {
+  const isEmpty = Children.count(children) === 0;
+
+  return (
+    <CollapsableSection
+      isOpen={false}
+      label={
+        <div className={styles.groupHeader}>
+          {icon && <Icon name={icon} size="sm" />}
+          <Text weight="medium" variant="body">
+            {title}
+          </Text>
+        </div>
+      }
+      loading={loading}
+    >
+      {isEmpty && loading ? (
+        <Text color="secondary" variant="bodySmall">
+          <Trans i18nKey="dashboard-generate.intents.tailoring">Finding starting points tailored to your data…</Trans>
+        </Text>
+      ) : (
+        <div className={styles.intentGrid}>{children}</div>
+      )}
+    </CollapsableSection>
+  );
+}
+
+interface IntentCardProps {
+  intent: DashboardIntent;
+  isSuggested: boolean;
+  /** For AI suggestions: the dimension this shape pivots on, shown as a pill. */
+  dimensionTitle?: string;
+  selected: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+  styles: ReturnType<typeof getStyles>;
+}
+
+/**
+ * Toggleable card representing a single dashboard intent.
+ *
+ * A click flips the card between selected / unselected states — the actual
+ * generation runs from the footer's primary button using the current
+ * selection. This keeps single-click generation snappy for one-intent picks
+ * (one card + button) while letting users assemble multiple intents into a
+ * single dashboard (each one becomes its own tab).
+ *
+ * Rendered as a `role="checkbox"` button so screen-readers announce the
+ * toggle semantics correctly and keyboard focus lands on the whole card.
+ */
+function IntentCard({ intent, isSuggested, dimensionTitle, selected, disabled, onToggle, styles }: IntentCardProps) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={selected}
+      className={cx(styles.intentCard, selected && styles.intentCardSelected)}
+      onClick={onToggle}
+      disabled={disabled}
+      // Show the LLM guidance on hover so users can preview roughly what will
+      // be built before committing.
+      title={intent.description}
+    >
+      <div className={cx(styles.selectionIndicator, selected && styles.selectionIndicatorActive)} aria-hidden>
+        <Icon name={selected ? 'check-square' : 'square-shape'} size="lg" />
+      </div>
+      <div className={styles.intentCardIcon}>
+        <Icon name={intent.icon} size="xl" />
+      </div>
+      <div className={styles.intentCardBody}>
+        <div className={styles.intentCardTitleRow}>
+          <Text weight="medium">{intent.title}</Text>
+          {isSuggested && (
+            <Tooltip
+              content={t(
+                'dashboard-generate.intents.suggested-tooltip',
+                'Suggested by the Assistant based on the metrics and labels in this data source.'
+              )}
+            >
+              <span className={styles.suggestedBadge}>
+                <Icon name="ai-sparkle" size="sm" />
+              </span>
+            </Tooltip>
+          )}
+          {dimensionTitle && <span className={styles.dimensionPill}>{dimensionTitle}</span>}
+        </div>
+        <Text color="secondary" variant="bodySmall">
+          {intent.description}
+        </Text>
+      </div>
+    </button>
+  );
+}
+
+interface DatasourcesPickerProps {
+  selected: DataSourceInstanceSettings[];
+  onChange: (datasources: DataSourceInstanceSettings[]) => void;
+  disabled?: boolean;
+}
+
+/**
+ * Multi-select picker so the modal can accept several data sources (metrics + logs,
+ * for example) without pulling in the alerting-specific `MultipleDataSourcePicker`,
+ * which has alerting-oriented grouping baked in.
+ */
+function DatasourcesPicker({ selected, onChange, disabled }: DatasourcesPickerProps) {
+  const options = useMemo<Array<SelectableValue<string>>>(() => {
+    return getDataSourceSrv()
+      .getList({ metrics: true, logs: true, tracing: true })
+      .map((ds) => ({
+        value: ds.uid,
+        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+        imgUrl: ds.meta?.info?.logos?.small,
+      }));
+  }, []);
+
+  const value = useMemo<Array<SelectableValue<string>>>(
+    () =>
+      selected.map((ds) => ({
+        value: ds.uid,
+        label: ds.name,
+        imgUrl: ds.meta?.info?.logos?.small,
+      })),
+    [selected]
+  );
+
+  return (
+    <MultiSelect
+      disabled={disabled}
+      options={options}
+      value={value}
+      placeholder={t('dashboard-generate.datasource-placeholder', 'Add data source…')}
+      onChange={(items) => {
+        const nextUids = (items ?? []).map((item) => item.value).filter((uid): uid is string => Boolean(uid));
+        const srv = getDataSourceSrv();
+        const nextDatasources = nextUids
+          .map((uid) => srv.getInstanceSettings(uid))
+          .filter((ds): ds is DataSourceInstanceSettings => Boolean(ds));
+        onChange(nextDatasources);
+      }}
+    />
+  );
+}
+
+interface AdvancedOptionsProps {
+  value: CustomizationOptions;
+  onChange: (next: CustomizationOptions) => void;
+  styles: ReturnType<typeof getStyles>;
+}
+
+/**
+ * "Advanced" collapsable shown at the bottom of the modal. Everything here is
+ * layered on top of the intent's baseline guidance — leave the defaults alone and
+ * the wizard behaves like it did before the panel existed.
+ */
+function AdvancedOptions({ value, onChange, styles }: AdvancedOptionsProps) {
+  return (
+    <div className={styles.advancedPanel}>
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('dashboard-generate.customize.notes-label', 'Additional notes for the Assistant')}
+          description={t(
+            'dashboard-generate.customize.notes-description',
+            'Free-form guidance layered on top of the starting point — focus areas, cardinality caveats, tone.'
+          )}
+        >
+          <TextArea
+            rows={3}
+            value={value.additionalNotes}
+            onChange={(e) => onChange({ ...value, additionalNotes: e.currentTarget.value })}
+            placeholder={t(
+              'dashboard-generate.customize.notes-placeholder',
+              'e.g. "Focus on the checkout services", "We have ~500 pods so use topk aggregations"'
+            )}
+          />
+        </Field>
+      </Stack>
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    modal: css({
+      width: '760px',
+      maxWidth: '95vw',
+    }),
+    body: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+    }),
+    bodyBusy: css({
+      // Fade non-primary controls while the generator is producing a spec so the
+      // user's focus lands on the "Generating…" banner + primary button.
+      opacity: 0.85,
+    }),
+    chipsRow: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.75),
+      padding: theme.spacing(1, 1.5),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    chips: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+    }),
+    section: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1.5),
+    }),
+    sectionHeader: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(2),
+      flexWrap: 'wrap',
+    }),
+    groupBlock: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
+    groupHeader: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      minWidth: 0,
+      color: theme.colors.text.primary,
+    }),
+    intentGrid: css({
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      gap: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: '1fr',
+      },
+    }),
+    intentCard: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(1.5),
+      minWidth: 0,
+      width: '100%',
+      padding: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.secondary,
+      textAlign: 'left',
+      cursor: 'pointer',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color', 'transform'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+      '&:hover:not(:disabled)': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.04),
+        borderColor: theme.colors.primary.border,
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: 2,
+      },
+      '&:disabled': {
+        cursor: 'not-allowed',
+        opacity: 0.5,
+      },
+    }),
+    intentCardSelected: css({
+      // Give selected cards a filled primary tint + primary border so it's obvious
+      // they'll ship in the next generation. The `!important`-free `&&` hover
+      // override keeps the tint stable when the pointer moves across the card.
+      background: theme.colors.action.selected,
+      borderColor: theme.colors.primary.border,
+      '&:hover:not(:disabled)': {
+        background: theme.colors.emphasize(theme.colors.action.selected, 0.04),
+        borderColor: theme.colors.primary.border,
+      },
+    }),
+    selectionIndicator: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      width: 20,
+      height: 20,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing(0.5),
+    }),
+    selectionIndicatorActive: css({
+      // The Icon inside inherits `currentColor`, so shifting the wrapper colour
+      // is enough to tint the tick with the brand primary.
+      color: theme.colors.primary.text,
+    }),
+    intentCardIcon: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      width: 40,
+      height: 40,
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.canvas,
+      color: theme.colors.text.secondary,
+    }),
+    intentCardBody: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
+      flex: 1,
+      minWidth: 0,
+    }),
+    intentCardTitleRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.75),
+    }),
+    suggestedBadge: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: theme.colors.primary.text,
+    }),
+    dimensionPill: css({
+      // Marks which dimension an AI suggestion pivots on, since suggestions from
+      // different dimensions share the one "Suggested for your data" group.
+      marginLeft: 'auto',
+      flex: '0 0 auto',
+      padding: theme.spacing(0, 0.75),
+      borderRadius: theme.shape.radius.pill,
+      background: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.border.weak}`,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: `${theme.spacing(2.5)}`,
+      whiteSpace: 'nowrap',
+    }),
+    inlineLoader: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      border: `1px dashed ${theme.colors.border.weak}`,
+    }),
+    generatingBanner: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1.5),
+      padding: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.primary.border}`,
+    }),
+    advancedPanel: css({
+      // A subtle separator so the accordion visually detaches from the card grid
+      // without pretending to be another selectable row.
+      marginTop: theme.spacing(0.5),
+      paddingTop: theme.spacing(0.5),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+    halfField: css({
+      flex: 1,
+      minWidth: 0,
+    }),
+    selectionSummary: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.25, 1),
+      borderRadius: theme.shape.radius.pill,
+      background: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+  };
+}
+
+export default GenerateDashboardModal;

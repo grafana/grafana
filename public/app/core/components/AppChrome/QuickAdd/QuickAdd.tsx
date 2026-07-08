@@ -1,15 +1,21 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useMemo, useState } from 'react';
 
+import { useAssistant } from '@grafana/assistant';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { GenerateDashboardModal } from 'app/features/dashboard-scene/assistant/generate/GenerateDashboardModal';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ShowModalReactEvent } from 'app/types/events';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -30,6 +36,11 @@ export const QuickAdd = ({}: Props) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { isAvailable: isAssistantAvailable } = useAssistant();
+  // Only show "Generate dashboard" when the user can actually create dashboards — no point
+  // launching the wizard if the final Save step would be blocked by permissions.
+  const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const isGenerateDashboardAvailable = isAssistantAvailable && canCreateDashboard;
 
   const theme = useTheme2();
 
@@ -67,8 +78,30 @@ export const QuickAdd = ({}: Props) => {
       }
     }
 
+    if (isGenerateDashboardAvailable) {
+      const generateItem: NavModelItem = {
+        id: 'generate-dashboard',
+        text: t('navigation.quick-add.generate-dashboard-button', 'Generate dashboard'),
+        // No `url` — this item opens a modal rather than navigating.
+        onClick: () => {
+          appEvents.publish(new ShowModalReactEvent({ component: GenerateDashboardModal }));
+        },
+      };
+
+      const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+      if (dashboardGroup) {
+        dashboardGroup.items.push(generateItem);
+      }
+    }
+
     return groups;
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    isGenerateDashboardAvailable,
+    navBarTree,
+  ]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 

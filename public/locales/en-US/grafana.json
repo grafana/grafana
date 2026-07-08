@@ -6476,6 +6476,102 @@
       }
     }
   },
+  "dashboard-generate": {
+    "analyzing": "Analysing labels on the selected data source…",
+    "chips": {
+      "db": {
+        "cassandra": "Cassandra",
+        "elasticsearch": "Elasticsearch",
+        "kafka": "Kafka",
+        "mongodb": "MongoDB",
+        "mysql": "MySQL",
+        "postgres": "Postgres",
+        "redis": "Redis"
+      },
+      "detected-prefix": "Detected in this data source",
+      "kubernetes": "Kubernetes",
+      "mesh": {
+        "envoy": "Envoy",
+        "istio": "Istio",
+        "linkerd": "Linkerd"
+      },
+      "opentelemetry": "OpenTelemetry",
+      "runtime": {
+        "dotnet": ".NET",
+        "go": "Go",
+        "jvm": "JVM",
+        "nodejs": "Node.js",
+        "python": "Python",
+        "ruby": "Ruby"
+      }
+    },
+    "compose": {
+      "default-title": "Generated dashboard",
+      "variable-all": "All"
+    },
+    "customize": {
+      "notes-description": "Free-form guidance layered on top of the starting point — focus areas, cardinality caveats, tone.",
+      "notes-label": "Additional notes for the Assistant",
+      "notes-placeholder": "e.g. \"Focus on the checkout services\", \"We have ~500 pods so use topk aggregations\""
+    },
+    "datasource-description": "The Assistant will read labels and metric names from these to shape the dashboard.",
+    "datasource-label": "Data source",
+    "datasource-placeholder": "Add data source…",
+    "dismiss-error": "Dismiss",
+    "domains": {
+      "apps": "Apps & services",
+      "cloud": "Cloud",
+      "databases": "Databases",
+      "general": "Explore by label",
+      "hosts": "Hosts & infrastructure",
+      "kubernetes": "Kubernetes",
+      "messaging": "Streaming & messaging",
+      "runtimes": "Language runtimes"
+    },
+    "errors": {
+      "analysis-failed": "Failed to analyse the selected data source.",
+      "analysis-generic": "The wizard could not read from this data source.",
+      "analysis-title": "Could not analyse data source",
+      "generation-failed": "The Assistant could not generate a dashboard.",
+      "title": "Something went wrong"
+    },
+    "footer": {
+      "cancel": "Cancel",
+      "clear-selection": "Clear",
+      "generate-overview": "Generate an overview",
+      "generate-selected_one": "Generate dashboard ({{count}})",
+      "generate-selected_other": "Generate dashboard ({{count}})",
+      "generate-single": "Generate dashboard",
+      "generating": "Generating…",
+      "selected-count_one": "{{count}} selected",
+      "selected-count_other": "{{count}} selected",
+      "template": "Start from a template"
+    },
+    "generating": {
+      "body": "This usually takes a few seconds. You'll land on the new dashboard once it's ready.",
+      "title": "Generating your dashboard…"
+    },
+    "intents": {
+      "empty": "No curated starting points for this data source yet — hit Generate to get a default overview.",
+      "multi-hint": "Pick one or more — each becomes its own tab",
+      "starting-points": "Starting points",
+      "suggested-group": "Suggested for your data",
+      "suggested-tooltip": "Suggested by the Assistant based on the metrics and labels in this data source.",
+      "tailoring": "Finding starting points tailored to your data…"
+    },
+    "no-assistant": {
+      "body": "The Grafana Assistant is not configured, so this wizard cannot generate dashboards. Ask an admin to enable the Assistant plugin, then try again.",
+      "title": "Assistant is unavailable"
+    },
+    "retry": "Try again",
+    "scratch": {
+      "fallback-description": "General-purpose overview",
+      "fallback-intent-description": "A general-purpose starting point for this data source.",
+      "fallback-intent-title": "Overview",
+      "fallback-title": "Overview"
+    },
+    "title": "Generate a dashboard"
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -12198,6 +12294,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"

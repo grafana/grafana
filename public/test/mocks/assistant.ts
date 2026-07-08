@@ -13,6 +13,17 @@ export const useAssistant = jest.fn().mockReturnValue({
 export const createAssistantContextItem = jest.fn();
 export const useProvidePageContext = jest.fn().mockReturnValue(jest.fn());
 
+// The generate-dashboard wizard uses `useInlineAssistant` for streaming intent suggestions.
+// Return an idle stub so tests never trigger a real LLM call.
+export const useInlineAssistant = jest.fn().mockReturnValue({
+  generate: jest.fn().mockResolvedValue(undefined),
+  isGenerating: false,
+  content: '',
+  error: null,
+  cancel: jest.fn(),
+  reset: jest.fn(),
+});
+
 export const OpenAssistantButton = jest.fn().mockReturnValue(null);
 
 // Additional exports that may be used
