@@ -92,11 +92,16 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if c.cfg.AuthProxy.SyncTTL != 0 && ok {
 		identity, errCache := c.retrieveIDFromCache(ctx, cacheKey, r)
 		if errCache == nil {
-			// Rehydrate from the Groups header when configured as ExternalGroups are not persisted.
-			// GAP: LDAP external groups cannot be rehydrated here which can be a problem with
-			// the id_use_external_groups_for_groups_claim config.
-			if v, ok := additional[proxyFieldGroups]; ok {
-				identity.ExternalGroups = util.SplitString(v)
+			// Rehydrate ExternalGroups from the live Groups header.
+			// Safe as the groups header value is part of the cache key.
+			// Only matters when IDUseExternalGroupsForGroupsClaim is true as
+			// we rely directly on ExternalGroups to determine team membership.
+			// Sync hooks that consume ExternalGroups (e.g. team sync) are not run on a cache hit.
+			// GAP: LDAP external groups cannot be rehydrated here.
+			if c.cfg.IDUseExternalGroupsForGroupsClaim {
+				if v, ok := additional[proxyFieldGroups]; ok {
+					identity.ExternalGroups = util.SplitString(v)
+				}
 			}
 			return identity, nil
 		}

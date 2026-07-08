@@ -146,6 +146,7 @@ func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
 			proxyHeaders: map[string]string{
 				proxyFieldGroups: "X-Group",
 			},
+			useExternalGroups: true,
 			expectCacheHit:    true,
 			expectedExtGroups: []string{"editors-viewers", "everyone"},
 		},
@@ -154,7 +155,20 @@ func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
 			reqHeaders: map[string][]string{
 				"X-Username": {"johndoe"},
 			},
-			expectCacheHit: true,
+			useExternalGroups: true,
+			expectCacheHit:    true,
+		},
+		{
+			desc: "cache hit does not rehydrate when id_use_external_groups_for_groups_claim is off",
+			reqHeaders: map[string][]string{
+				"X-Username": {"johndoe"},
+				"X-Group":    {"editors-viewers,everyone"},
+			},
+			proxyHeaders: map[string]string{
+				proxyFieldGroups: "X-Group",
+			},
+			useExternalGroups: false,
+			expectCacheHit:    true,
 		},
 	}
 
