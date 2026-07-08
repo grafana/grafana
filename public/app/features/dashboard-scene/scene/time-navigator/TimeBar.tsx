@@ -4,7 +4,7 @@ import { type default as uPlot, type AlignedData } from 'uplot';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import { GraphDrawStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { AxisPlacement, IconButton, Popover, UPlotChart, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ContextWindowSelector } from './ContextWindowSelector';
@@ -30,6 +30,10 @@ export interface TimeBarProps {
   values: number[];
   contextZoomFactor?: number;
   onChangeTimeRange: (range: TimeRangeMs) => void;
+  /** Called when the zoomed-out context window changes, so a host can fetch background data for it. */
+  onContextWindowChange?: (range: TimeRangeMs) => void;
+  /** Extra controls rendered in the control row (e.g. a sparkline-source picker from the hosting surface). */
+  extraControls?: React.ReactNode;
 }
 
 interface OverlayGeom {
@@ -105,6 +109,8 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   values,
   contextZoomFactor,
   onChangeTimeRange,
+  onContextWindowChange,
+  extraControls,
 }) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -167,6 +173,21 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       },
     });
     b.addAxis({ placement: AxisPlacement.Bottom, scaleKey: 'x', isTime: true, theme });
+
+    // Faint background sparkline (data supplied via the time/values props), drawn behind the axis + overlay.
+    b.addScale({ scaleKey: 'spark-y', orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up });
+    b.addAxis({ scaleKey: 'spark-y', theme, placement: AxisPlacement.Hidden, show: false });
+    b.addSeries({
+      scaleKey: 'spark-y',
+      theme,
+      pxAlign: false,
+      drawStyle: GraphDrawStyle.Line,
+      lineColor: theme.colors.text.secondary,
+      lineWidth: 1,
+      showPoints: VisibilityMode.Never,
+      pointSize: 0,
+      spanNulls: true,
+    });
 
     // uPlot native drag-select is used only to CREATE a new selection: read the range, commit it, then
     // clear uPlot's transient box (our overlay renders the persistent selection). We never call setSelect
@@ -269,6 +290,13 @@ export const TimeBar: React.FC<TimeBarProps> = ({
 
   // Remove any dangling window listeners if we unmount mid-drag (without committing).
   useEffect(() => () => dragCleanup.current?.(), []);
+
+  // Report context-window changes so a host can fetch background data for the visible range.
+  const onContextWindowChangeRef = useRef(onContextWindowChange);
+  onContextWindowChangeRef.current = onContextWindowChange;
+  useEffect(() => {
+    onContextWindowChangeRef.current?.({ from: state.contextWindow.from, to: state.contextWindow.to });
+  }, [state.contextWindow.from, state.contextWindow.to]);
 
   const startSelectionDrag = useCallback((e: React.MouseEvent, kind: 'move' | 'left' | 'right') => {
     const u = uplotRef.current;
@@ -386,6 +414,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
           name="crosshair"
           onClick={() => actions.reset()}
         />
+        {extraControls}
       </div>
 
       <div className={styles.plotArea} style={{ width: chartWidth, height: CHART_HEIGHT }}>
