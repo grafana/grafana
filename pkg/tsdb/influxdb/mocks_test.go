@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
@@ -115,5 +116,6 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
+		logger: log.NewNullLogger(),
 	}
 }
