@@ -1382,6 +1382,13 @@ func WithNATS() GrafanaOption {
 		opts.NATSListenAddress = "127.0.0.1"
 		opts.NATSClientPort = freePort()
 		opts.NATSClusterPort = freePort()
+		// Push the informer re-list and the job driver's fallback poll far out so
+		// any reconcile/job pickup observed within a test's wait budget can only
+		// have come from a live NATS notification, not the periodic LIST/poll.
+		// Tests that specifically exercise the re-list path (e.g. historic-job
+		// cleanup) override the relevant interval.
+		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
+		opts.ProvisioningJobPollInterval = 10 * time.Minute
 	}
 }
 
@@ -1397,6 +1404,15 @@ func freePort() int {
 	}
 	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
+}
+
+// WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
+// which is both the HistoricJob retention and the historic-job informer's
+// resync. A short value lets tests exercise the re-list-driven cleanup quickly.
+func WithProvisioningHistoryExpiration(d time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningHistoryExpiration = d
+	}
 }
 
 // WithoutExportFeatureFlag disables the provisioningExport feature flag.

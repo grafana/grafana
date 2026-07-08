@@ -3,7 +3,6 @@ package nats
 import (
 	"encoding/base64"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,12 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioningNATS_ConnectionControllerReconciles verifies the
-// connection controller reacts to a Connection create event delivered over the
-// NATS-backed informer: it runs the health check (against the mocked GitHub
-// client) and writes ObservedGeneration, health, and the Ready condition back to
-// status.
-func TestIntegrationProvisioningNATS_ConnectionControllerReconciles(t *testing.T) {
+// TestIntegrationProvisioningNATS_ConnectionReconciledOverNATS proves the
+// connection controller is driven by a live NATS notification: a created
+// Connection must be reconciled (health + Ready condition) within
+// liveDeliveryWait. Like the repository controller, its only event source is
+// the informer, whose re-list is 10 minutes out, so a reconcile this fast can
+// only be the live ADDED notification.
+func TestIntegrationProvisioningNATS_ConnectionReconciledOverNATS(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := t.Context()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -75,5 +75,5 @@ func TestIntegrationProvisioningNATS_ConnectionControllerReconciles(t *testing.T
 		if assert.NotNil(collect, readyCondition, "Ready condition should be set") {
 			assert.Equal(collect, metav1.ConditionTrue, readyCondition.Status)
 		}
-	}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled over NATS")
+	}, liveDeliveryWait, liveDeliveryTick, "connection should be reconciled over NATS within %s", liveDeliveryWait)
 }
