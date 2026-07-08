@@ -347,6 +347,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
 	_ "github.com/grafana/grafana/pkg/services/authn"
 	_ "github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	_ "github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	_ "github.com/grafana/grafana/pkg/services/authn/authnserver"
 	_ "github.com/grafana/grafana/pkg/services/authn/clients"
 	_ "github.com/grafana/grafana/pkg/services/authn/grpcutils"
