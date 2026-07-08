@@ -1,11 +1,10 @@
-import { css, cx } from '@emotion/css';
-import { languages as prismLanguages } from 'prismjs';
+import { css } from '@emotion/css';
+import Prism, { type Grammar } from 'prismjs';
 import { type FC, useMemo } from 'react';
-import { Editor } from 'slate-react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { promqlGrammar } from '@grafana/prometheus';
-import { SlatePrism, makeValue, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
 import { type RulesSource } from 'app/types/unified-alerting';
 
@@ -18,31 +17,30 @@ interface Props {
   rulesSource: RulesSource;
 }
 
+const GRAMMARS: Record<'promql' | 'logql', Grammar> = {
+  promql: promqlGrammar,
+  logql: LogqlSyntax,
+};
+
 const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
-  const plugins = useMemo(
-    () => [
-      SlatePrism(
-        {
-          onlyIn: (node) => 'type' in node && node.type === 'code_block',
-          getSyntax: () => language,
-        },
-        { ...prismLanguages, [language]: language === 'logql' ? LogqlSyntax : promqlGrammar }
-      ),
-    ],
-    [language]
+  // Prism.highlight HTML-escapes token content, so the query is safe to inject. We render a plain
+  // element rather than an editor so copied text contains no stray characters. See PR #57839.
+  const html = useMemo(() => Prism.highlight(expr, GRAMMARS[language], language), [expr, language]);
+
+  return (
+    <div
+      className="prism-syntax-highlight"
+      data-testid="expression-editor"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
-
-  const slateValue = useMemo(() => makeValue(expr), [expr]);
-
-  //We don't want to set readOnly={true} to the Editor to prevent unwanted charaters in the copied text. See https://github.com/grafana/grafana/pull/57839
-  return <Editor data-testid={'expression-editor'} plugins={plugins} value={slateValue} />;
 };
 
 export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Well className={cx(styles.well, 'slate-query-field')}>
+    <Well className={styles.well}>
       {isCloudRulesSource(rulesSource) ? (
         <HighlightedQuery expr={query} language={rulesSource.type === DataSourceType.Loki ? 'logql' : 'promql'} />
       ) : (
@@ -55,5 +53,8 @@ export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   well: css({
     fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.fontSize,
+    wordBreak: 'break-word',
+    overflow: 'auto',
   }),
 });
