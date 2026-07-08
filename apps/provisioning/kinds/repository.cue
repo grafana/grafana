@@ -133,15 +133,8 @@ repository: {
 					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
 					signingMethod?: "gpg" | "ssh" | "smime"
 					// When true, commits are authored by the signer identity
-					// (signerName/signerEmail). Takes precedence over
-					// authorName/authorEmail.
+					// (signerName/signerEmail).
 					signerIsAuthor?: bool
-					// Name used as the commit author. When empty, defaults to
-					// "Grafana". Ignored when signerIsAuthor is true.
-					authorName?: string
-					// Email used as the commit author. When empty, defaults to
-					// "noreply@grafana.com". Ignored when signerIsAuthor is true.
-					authorEmail?: string
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 					// signingMethod is "smime". This is public, not a secret.
 					smimeCertificate?: string

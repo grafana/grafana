@@ -256,22 +256,8 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 					},
 					"signerIsAuthor": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When true, commits are authored by the signer identity (signerName/signerEmail). Takes precedence over authorName/authorEmail.",
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
 							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"authorName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name used as the commit author. When empty, defaults to \"Grafana\". Ignored when signerIsAuthor is true.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"authorEmail": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Email used as the commit author. When empty, defaults to \"noreply@grafana.com\". Ignored when signerIsAuthor is true.",
-							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

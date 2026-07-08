@@ -3751,14 +3751,6 @@
       "CommitOptions": {
         "type": "object",
         "properties": {
-          "authorEmail": {
-            "description": "Email used as the commit author. When empty, defaults to \"noreply@grafana.com\". Ignored when signerIsAuthor is true.",
-            "type": "string"
-          },
-          "authorName": {
-            "description": "Name used as the commit author. When empty, defaults to \"Grafana\". Ignored when signerIsAuthor is true.",
-            "type": "string"
-          },
           "enforceTemplate": {
             "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"
@@ -3768,7 +3760,7 @@
             "type": "string"
           },
           "signerIsAuthor": {
-            "description": "When true, commits are authored by the signer identity (signerName/signerEmail). Takes precedence over authorName/authorEmail.",
+            "description": "When true, commits are authored by the signer identity (signerName/signerEmail).",
             "type": "boolean"
           },
           "signerName": {

@@ -33,14 +33,8 @@ type CommitOptionsApplyConfiguration struct {
 	// When empty, commits are not signed.
 	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
 	// When true, commits are authored by the signer identity
-	// (signerName/signerEmail). Takes precedence over authorName/authorEmail.
+	// (signerName/signerEmail).
 	SignerIsAuthor *bool `json:"signerIsAuthor,omitempty"`
-	// Name used as the commit author. When empty, defaults to "Grafana".
-	// Ignored when signerIsAuthor is true.
-	AuthorName *string `json:"authorName,omitempty"`
-	// Email used as the commit author. When empty, defaults to
-	// "noreply@grafana.com". Ignored when signerIsAuthor is true.
-	AuthorEmail *string `json:"authorEmail,omitempty"`
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
@@ -98,22 +92,6 @@ func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0
 // If called multiple times, the SignerIsAuthor field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithSignerIsAuthor(value bool) *CommitOptionsApplyConfiguration {
 	b.SignerIsAuthor = &value
-	return b
-}
-
-// WithAuthorName sets the AuthorName field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the AuthorName field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithAuthorName(value string) *CommitOptionsApplyConfiguration {
-	b.AuthorName = &value
-	return b
-}
-
-// WithAuthorEmail sets the AuthorEmail field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the AuthorEmail field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithAuthorEmail(value string) *CommitOptionsApplyConfiguration {
-	b.AuthorEmail = &value
 	return b
 }
 
