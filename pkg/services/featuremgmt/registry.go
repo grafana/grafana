@@ -2217,22 +2217,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "elasticsearchRawDSLQuery",
-			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "elasticsearchESQLQuery",
-			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
