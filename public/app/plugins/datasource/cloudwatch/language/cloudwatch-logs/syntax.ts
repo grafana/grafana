@@ -1,6 +1,13 @@
 import { type Grammar } from 'prismjs';
 
-import { type CompletionItem } from '@grafana/ui';
+// Minimal shape for the command/function metadata in this file. Kept local rather than
+// imported from @grafana/ui so the CheatSheet tokenizer no longer depends on the Slate-era
+// completion types.
+interface CompletionItem {
+  label: string;
+  detail?: string;
+  documentation?: string;
+}
 
 export const QUERY_COMMANDS: CompletionItem[] = [
   {
