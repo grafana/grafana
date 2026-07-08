@@ -142,6 +142,12 @@ exports[`RuleEditor grafana managed rules can create new grafana managed alert 1
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_notifications_section": true,
+                "simplified_query_and_expressions_section": true,
+              },
+            },
             "missing_series_evals_to_resolve": 0,
             "no_data_state": "NoData",
             "title": "my great new rule",
@@ -248,7 +254,7 @@ exports[`RuleEditor grafana managed rules can restore grafana managed alert when
             "metadata": {
               "editor_settings": {
                 "simplified_notifications_section": true,
-                "simplified_query_and_expressions_section": false,
+                "simplified_query_and_expressions_section": true,
               },
             },
             "missing_series_evals_to_resolve": 0,
