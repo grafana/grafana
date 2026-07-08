@@ -51,6 +51,9 @@ const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
   return {
     bar: css({
       width: BAR_WIDTH + '%',
+      // Intentionally 1px today (reduced from 2px in #62997), but this is hard to see on dense
+      // dashboards and high-DPI displays. Consider 2px again or a theme token if visibility
+      // feedback keeps coming in — see community reports of the bar feeling too thin/subtle.
       height: 1,
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.accent.main} 80.75%, transparent 100%)`,
       transform: 'translateX(-100%)',
