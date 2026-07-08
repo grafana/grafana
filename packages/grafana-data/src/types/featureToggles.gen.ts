@@ -780,6 +780,11 @@ export interface FeatureToggles {
   */
   alertingAIAnalyzeCentralStateHistory?: boolean;
   /**
+  * Enable assisted generation and review of alert rule annotations.
+  * @default false
+  */
+  alertingRuleQualityAssist?: boolean;
+  /**
   * Enables simplified step mode in the notifications section
   * @default true
   */

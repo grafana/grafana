@@ -1464,6 +1464,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alertingRuleQualityAssist",
+			Description:  "Enable assisted generation and review of alert rule annotations.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:        "alertingNotificationsStepMode",
 			Description: "Enables simplified step mode in the notifications section",
 			Stage:       FeatureStageGeneralAvailability,

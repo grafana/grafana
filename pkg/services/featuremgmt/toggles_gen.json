@@ -684,6 +684,20 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleQualityAssist",
+        "resourceVersion": "1783521061373",
+        "creationTimestamp": "2026-07-08T14:31:01Z"
+      },
+      "spec": {
+        "description": "Enable assisted generation and review of alert rule annotations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleRecoverDeleted",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-03-27T14:39:26Z"

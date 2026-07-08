@@ -487,6 +487,10 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
+	// FlagAlertingRuleQualityAssist
+	// Enable assisted generation and review of alert rule annotations.
+	FlagAlertingRuleQualityAssist = "alertingRuleQualityAssist"
+
 	// FlagElasticsearchCrossClusterSearch
 	// Enables cross cluster search in the Elasticsearch data source
 	FlagElasticsearchCrossClusterSearch = "elasticsearchCrossClusterSearch"
