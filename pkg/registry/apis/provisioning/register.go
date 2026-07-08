@@ -63,6 +63,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -117,6 +118,7 @@ type APIBuilder struct {
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
 	usageNamespaceLister usage.NamespaceLister
+	userSvc              user.Service
 
 	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
@@ -331,6 +333,7 @@ func RegisterAPIService(
 	storageStatus dualwrite.Service,
 	usageStats usagestats.Service,
 	orgSvc org.Service,
+	userSvc user.Service,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 	extraWorkers []jobs.Worker,
@@ -403,6 +406,7 @@ func RegisterAPIService(
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	builder.userSvc = userSvc
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
@@ -449,6 +453,7 @@ func RegisterAPIService(
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.userSvc = userSvc
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
@@ -1105,7 +1110,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
 			var authorResolver jobs.AuthorResolver
 			if b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningUserAttribution) {
-				authorResolver = jobs.NewUserAuthorResolver(b.clients)
+				authorResolver = jobs.NewLegacyUserAuthorResolver(b.userSvc)
 			}
 
 			// This is basically our own JobQueue system

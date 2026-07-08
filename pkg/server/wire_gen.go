@@ -1005,7 +1005,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, userimplService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
 	if err != nil {
 		return nil, err
 	}
@@ -1752,7 +1752,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	provisioningAPIBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, userimplService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
 	if err != nil {
 		return nil, err
 	}

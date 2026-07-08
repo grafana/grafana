@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -397,11 +396,9 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
 
-	fmt.Println("DEBUG driver: annos:", job.Annotations)
 	if d.authorResolver != nil {
 		if triggeredBy := job.Annotations[appjobs.AnnoTriggeredBy]; triggeredBy != "" {
 			sig, err := d.authorResolver.ResolveAuthor(ctx, namespace, triggeredBy)
-			fmt.Println("DEBUG driver: resolved:", sig, err)
 			if err != nil {
 				logger.Warn("failed to resolve job author", "triggeredBy", triggeredBy, "error", err)
 			} else if sig != nil {

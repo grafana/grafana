@@ -10,6 +10,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AuthorResolver interface {
@@ -18,6 +19,39 @@ type AuthorResolver interface {
 
 func NewUserAuthorResolver(clients resources.ClientFactory) AuthorResolver {
 	return &userAuthorResolver{clients: clients}
+}
+
+func NewLegacyUserAuthorResolver(users user.Service) AuthorResolver {
+	return &legacyUserAuthorResolver{users: users}
+}
+
+type legacyUserAuthorResolver struct {
+	users user.Service
+}
+
+func (r *legacyUserAuthorResolver) ResolveAuthor(ctx context.Context, _ string, id string) (*repository.CommitSignature, error) {
+	t, uid, err := authlib.ParseTypeID(id)
+	if err != nil {
+		return nil, err
+	}
+	if t != authlib.TypeUser {
+		return nil, nil
+	}
+
+	u, err := r.users.GetByUID(ctx, &user.GetUserByUIDQuery{UID: uid})
+	if err != nil {
+		return nil, err
+	}
+
+	name := u.Name
+	if name == "" {
+		name = u.Login
+	}
+	if name == "" && u.Email == "" {
+		return nil, nil
+	}
+
+	return &repository.CommitSignature{Name: name, Email: u.Email}, nil
 }
 
 type userAuthorResolver struct {

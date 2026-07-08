@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestIntegrationGit_ExportJob_CommitAuthorScratch(t *testing.T) {
+func TestIntegrationGit_ExportJob_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
