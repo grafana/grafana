@@ -41,7 +41,10 @@ const createMockRepository = (spec: Partial<RepositorySpec>): Repository => ({
 describe('RepositoryOverview', () => {
   describe('webhook link', () => {
     it('should link to GitHub webhook settings for github repositories', () => {
-      const repo = createMockRepository({ type: 'github', github: { url: 'https://github.com/org/repo', branch: 'main' } });
+      const repo = createMockRepository({
+        type: 'github',
+        github: { url: 'https://github.com/org/repo', branch: 'main' },
+      });
       render(<RepositoryOverview repo={repo} />);
 
       expect(screen.getByRole('link', { name: 'View Webhook' })).toHaveAttribute(
@@ -64,7 +67,10 @@ describe('RepositoryOverview', () => {
     });
 
     it('should link to GitLab webhook settings for gitlab repositories', () => {
-      const repo = createMockRepository({ type: 'gitlab', gitlab: { url: 'https://gitlab.com/org/repo', branch: 'main' } });
+      const repo = createMockRepository({
+        type: 'gitlab',
+        gitlab: { url: 'https://gitlab.com/org/repo', branch: 'main' },
+      });
       render(<RepositoryOverview repo={repo} />);
 
       expect(screen.getByRole('link', { name: 'View Webhook' })).toHaveAttribute(
