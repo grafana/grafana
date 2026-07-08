@@ -7,24 +7,22 @@ import { logError } from '../../../Analytics';
 
 export interface AIAnnotationsAssistantProps {}
 
-// Internal variable to store the actual component
-let InternalAIAnnotationsAssistantComponent: ComponentType<AIAnnotationsAssistantProps> | null = null;
+let RegisteredAIAnnotationsAssistantComponent: ComponentType<AIAnnotationsAssistantProps> | null = null;
 
 export const AIAnnotationsAssistantComponent: ComponentType<AIAnnotationsAssistantProps> = (props) => {
-  if (!InternalAIAnnotationsAssistantComponent) {
+  if (!RegisteredAIAnnotationsAssistantComponent) {
     return null;
   }
 
-  // Wrap the component with error boundary
-  const WrappedComponent = withErrorBoundary(InternalAIAnnotationsAssistantComponent, {
-    title: t('alerting.ai.error-boundary.annotations-assistant', 'AI Annotations Assistant failed to load'),
-    style: 'alertbox',
-    errorLogger: logError,
-  });
-
-  return createElement(WrappedComponent, props);
+  return createElement(RegisteredAIAnnotationsAssistantComponent, props);
 };
 
 export function addAIAnnotationsAssistant(component: ComponentType<AIAnnotationsAssistantProps> | null) {
-  InternalAIAnnotationsAssistantComponent = component;
+  RegisteredAIAnnotationsAssistantComponent = component
+    ? withErrorBoundary(component, {
+        title: t('alerting.ai.error-boundary.annotations-assistant', 'AI Annotations Assistant failed to load'),
+        style: 'alertbox',
+        errorLogger: logError,
+      })
+    : null;
 }

@@ -10,27 +10,25 @@ export interface RuleListItemIndicatorProps {
   rule: GrafanaPromRuleDTO;
 }
 
-// Internal variable to store the actual component
-let InternalRuleListItemIndicatorComponent: ComponentType<RuleListItemIndicatorProps> | null = null;
+let RegisteredRuleListItemIndicatorComponent: ComponentType<RuleListItemIndicatorProps> | null = null;
 
 export const RuleListItemIndicatorComponent: ComponentType<RuleListItemIndicatorProps> = (props) => {
-  if (!InternalRuleListItemIndicatorComponent) {
+  if (!RegisteredRuleListItemIndicatorComponent) {
     return null;
   }
 
-  // Wrap the component with error boundary
-  const WrappedComponent = withErrorBoundary(InternalRuleListItemIndicatorComponent, {
-    title: t(
-      'alerting.enterprise-components.error-boundary.rule-list-item-indicator',
-      'Rule list item indicator failed to load'
-    ),
-    style: 'alertbox',
-    errorLogger: logError,
-  });
-
-  return createElement(WrappedComponent, props);
+  return createElement(RegisteredRuleListItemIndicatorComponent, props);
 };
 
 export function addRuleListItemIndicator(component: ComponentType<RuleListItemIndicatorProps> | null) {
-  InternalRuleListItemIndicatorComponent = component;
+  RegisteredRuleListItemIndicatorComponent = component
+    ? withErrorBoundary(component, {
+        title: t(
+          'alerting.enterprise-components.error-boundary.rule-list-item-indicator',
+          'Rule list item indicator failed to load'
+        ),
+        style: 'alertbox',
+        errorLogger: logError,
+      })
+    : null;
 }
