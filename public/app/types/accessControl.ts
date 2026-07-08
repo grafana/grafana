@@ -199,6 +199,10 @@ export enum AccessControlAction {
 
   // Provisioning
   ProvisioningRepositoriesRead = 'provisioning.repositories:read',
+
+  // Feature management
+  FeatureManagementRead = 'featuremgmt.read',
+  FeatureManagementWrite = 'featuremgmt.write',
 }
 
 export interface Role extends RoleDto {

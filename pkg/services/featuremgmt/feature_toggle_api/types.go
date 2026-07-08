@@ -110,6 +110,15 @@ type ToggleStatus struct {
 	// Can this flag be updated
 	Writeable bool `json:"writeable"`
 
+	// The flag behavior only affects the frontend
+	FrontendOnly bool `json:"frontend,omitempty"`
+
+	// The flag is used at startup, so any change requires a restart
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
+
+	// Must be run in development mode
+	RequiresDevMode bool `json:"requiresDevMode,omitempty"`
+
 	// Where was the value configured
 	// eg: startup | tenant|org | user | browser
 	// missing means default

@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -195,5 +197,52 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.False(t, hasPlaylistLink(navLinks), "expected unauthenticated user to not see the Playlists nav link")
+	})
+}
+
+func TestBuildLabsNavLink(t *testing.T) {
+	newService := func() ServiceImpl {
+		return ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		}
+	}
+
+	newReqContext := func(permissions []accesscontrol.Permission) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{
+				UserID: 1,
+				OrgID:  1,
+				Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), permissions),
+				},
+			},
+			IsSignedIn: true,
+			Context:    &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("shows Labs for users with feature management read access", func(t *testing.T) {
+		service := newService()
+		link := service.buildLabsNavLink(newReqContext([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionFeatureManagementRead},
+		}))
+
+		require.NotNil(t, link)
+		require.Equal(t, navtree.NavIDLabs, link.Id)
+		require.Equal(t, "/labs", link.Url)
+		require.Len(t, link.Children, 1)
+		require.Equal(t, navtree.NavIDLabsFeatureFlags, link.Children[0].Id)
+		require.Equal(t, "/labs/feature-flags", link.Children[0].Url)
+	})
+
+	t.Run("hides Labs for users without feature management read access", func(t *testing.T) {
+		service := newService()
+		link := service.buildLabsNavLink(newReqContext([]accesscontrol.Permission{
+			{Action: "wrong"},
+		}))
+
+		require.Nil(t, link)
 	})
 }

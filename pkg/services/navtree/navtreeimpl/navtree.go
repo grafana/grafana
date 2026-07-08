@@ -159,6 +159,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	if labsSection := s.buildLabsNavLink(c); labsSection != nil {
+		treeRoot.AddSection(labsSection)
+	}
+
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
@@ -667,5 +671,30 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		Url:        baseUrl,
 		Children:   children,
 		SortWeight: navtree.WeightDataConnections,
+	}
+}
+
+func (s *ServiceImpl) buildLabsNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
+		return nil
+	}
+
+	baseURL := s.cfg.AppSubURL + "/labs"
+
+	return &navtree.NavLink{
+		Text:       "Labs",
+		Icon:       "flask",
+		Id:         navtree.NavIDLabs,
+		Url:        baseURL,
+		SortWeight: navtree.WeightLabs,
+		SubTitle:   "Discover and manage experimental Grafana capabilities",
+		Children: []*navtree.NavLink{
+			{
+				Text:     "Feature flags",
+				Id:       navtree.NavIDLabsFeatureFlags,
+				Url:      baseURL + "/feature-flags",
+				SubTitle: "View available feature toggles and their current state",
+			},
+		},
 	}
 }
