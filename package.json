@@ -338,7 +338,7 @@
     "file-saver": "2.0.5",
     "history": "4.10.1",
     "html-to-image": "1.11.13",
-    "i18next": "^25.0.0",
+    "i18next": "^25.10.9",
     "idb": "^8.0.3",
     "immer": "10.2.0",
     "immutable": "5.1.5",
