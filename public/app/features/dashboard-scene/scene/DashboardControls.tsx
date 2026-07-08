@@ -23,7 +23,7 @@ import {
   type SceneVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, IconButton, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -281,8 +281,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
               <timePicker.Component model={timePicker} />
               <refreshPicker.Component model={refreshPicker} />
               {config.featureToggles.timeNavigator && (
-                <IconButton
-                  name={showTimebar ? 'angle-up' : 'angle-down'}
+                <ToolbarButton
+                  icon="bars-clock"
+                  variant={showTimebar ? 'active' : 'default'}
                   tooltip={
                     showTimebar
                       ? t('time-navigator.hide', 'Hide time navigator')
