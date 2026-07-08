@@ -6601,11 +6601,9 @@
       "adhoc-options": "Filter options",
       "alert-not-supported": "This data source does not support filters",
       "description-enable-group-by": "Enables group by operator in the filter combobox",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
-      "name-allow-custom-values": "Allow custom values",
       "name-enable-group-by": "Enable group by"
     },
     "add-filters": {
@@ -7065,12 +7063,10 @@
     },
     "group-by-variable-form": {
       "alert-not-supported": "This data source does not support group by variables",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
       "label-data-source": "Data source",
-      "label-use-static-group-by-dimensions": "Use static group dimensions",
-      "name-allow-custom-values": "Allow custom values"
+      "label-use-static-group-by-dimensions": "Use static group dimensions"
     },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
@@ -7467,11 +7463,6 @@
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
-      "description-enables-option-include-variables": "Enables an option to include all values",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list",
-      "name-allow-custom-values": "Allow custom values",
-      "name-custom-all-value": "Custom all value",
-      "name-include-all-option": "Include All option",
       "name-multi-value": "Multi-value"
     },
     "share-button": {
