@@ -240,6 +240,8 @@ func NewStorageBackend(
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
 		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
