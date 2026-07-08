@@ -16,6 +16,10 @@ type AuthorizeFromName struct {
 	AccessClient authlib.AccessClient
 	OKNames      []string
 	Resource     map[string][]ResourceOwner // may include unknown
+
+	// OrgAdminCanManageUserOwned lets an org admin act on user-owned resources
+	// for any user in the org. Off by default so preferences stays owner-only.
+	OrgAdminCanManageUserOwned bool
 }
 
 func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -77,6 +81,9 @@ func (a *AuthorizeFromName) Authorize(ctx context.Context, attr authorizer.Attri
 
 	case UserResourceOwner:
 		if user.GetIdentifier() == info.Identifier {
+			return authorizer.DecisionAllow, "", nil
+		}
+		if a.OrgAdminCanManageUserOwned && user.GetOrgRole() == identity.RoleAdmin {
 			return authorizer.DecisionAllow, "", nil
 		}
 		return authorizer.DecisionDeny, "your are not the owner of the resource", nil

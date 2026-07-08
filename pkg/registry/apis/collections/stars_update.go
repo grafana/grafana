@@ -63,7 +63,9 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 	if !found || parsed.Owner != utils.UserResourceOwner {
 		return nil, fmt.Errorf("only works with user stars")
 	}
-	if user.GetIdentifier() != parsed.Identifier {
+	// Users manage their own stars; org admins may also manage stars for any
+	// user in the org. The authorizer enforces the same rule before we get here.
+	if user.GetIdentifier() != parsed.Identifier && user.GetOrgRole() != identity.RoleAdmin {
 		return nil, fmt.Errorf("must request as the given user")
 	}
 
