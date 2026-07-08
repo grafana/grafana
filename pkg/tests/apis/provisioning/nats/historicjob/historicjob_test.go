@@ -36,24 +36,7 @@ func TestIntegrationProvisioningNATSHistoricJob_CleanedViaListing(t *testing.T) 
 
 	// Create a Job directly against a non-existent repository so the driver
 	// fails it fast and archives it — producing a HistoricJob without a repo.
-	job := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Job",
-		"metadata": map[string]any{
-			"name":      "nats-historicjob-src",
-			"namespace": "default",
-			"labels": map[string]any{
-				"provisioning.grafana.app/repository": "ghost-repo",
-			},
-		},
-		"spec": map[string]any{
-			"action":     "pull",
-			"repository": "ghost-repo",
-			"pull":       map[string]any{},
-		},
-	}}
-	_, err := helper.Jobs.Resource.Create(ctx, job, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create a job directly")
+	helper.CreatePullJob(t, "nats-historicjob-src", "ghost-repo")
 
 	// The failed job must first be archived into a HistoricJob and then removed
 	// by the re-list-driven cleanup. A single loop tracks that we observed the

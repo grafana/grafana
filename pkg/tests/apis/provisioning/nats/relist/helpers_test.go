@@ -19,14 +19,6 @@ import (
 // far out).
 var env = common.NewSharedEnv(common.WithNATSReListOnly(2 * time.Second))
 
-const (
-	// reListWait bounds how long reconciliation via the periodic re-list may
-	// take. It is a comfortable multiple of the 2s resync so the assertion is
-	// not tight, while staying short enough to keep the test quick.
-	reListWait = 30 * time.Second
-	reListTick = 200 * time.Millisecond
-)
-
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
 	helper := env.GetCleanHelper(t)

@@ -337,6 +337,32 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	return h.AwaitJob(t, t.Context(), unstruct)
 }
 
+// CreatePullJob creates a pull Job resource directly, bypassing the
+// repositories/{name}/jobs subresource, and returns the created object. The
+// repository name need not refer to an existing repository — this lets tests
+// drive the job pipeline (pickup, processing, archival) without standing up a
+// repository. A job against a missing repository fails fast and is archived.
+func (h *ProvisioningTestHelper) CreatePullJob(t *testing.T, jobName, repository string) *unstructured.Unstructured {
+	t.Helper()
+	job := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Job",
+		"metadata": map[string]any{
+			"name":      jobName,
+			"namespace": h.Namespace,
+			"labels":    map[string]any{jobs.LabelRepository: repository},
+		},
+		"spec": map[string]any{
+			"action":     string(provisioning.JobActionPull),
+			"repository": repository,
+			"pull":       map[string]any{},
+		},
+	}}
+	created, err := h.Jobs.Resource.Create(t.Context(), job, metav1.CreateOptions{})
+	require.NoError(t, err, "should create job %s directly", jobName)
+	return created
+}
+
 // AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
 func (h *ProvisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo string) *unstructured.Unstructured {
 	t.Helper()
@@ -1192,6 +1218,56 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.False(collect, status, "repository %s should be unhealthy", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
+}
+
+// WaitForHealthyConnection polls until the connection controller has reconciled
+// the connection: its ObservedGeneration has caught up to the object
+// generation, a health check has run, it is healthy, and the Ready condition is
+// True. This is the connection analogue of WaitForHealthyRepository.
+func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get connection %s", name) {
+			return
+		}
+		conn := MustFromUnstructured[provisioning.Connection](t, obj)
+		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
+			"controller should reconcile the observed generation")
+		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+			"connection %s health check has not run yet", name)
+		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
+		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
+			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "connection %s should be reconciled and healthy", name)
+}
+
+// RequireRepositoryReReconciles ages the repository's health timestamp and
+// asserts the controller re-runs the health check (status.health.checked
+// advances), proving it reacts to update/resync events. Pairs with a create
+// that first brings the repository to healthy.
+func (h *ProvisioningTestHelper) RequireRepositoryReReconciles(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	obj, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get repository %s", name)
+	before, found := mustNestedInt64(obj.Object, "status", "health", "checked")
+	require.True(t, found, "repository %s should already have a health checked timestamp", name)
+
+	h.TriggerRepositoryReconciliation(t, name)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		cur, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		after, found := mustNestedInt64(cur.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s should have a health checked timestamp", name)
+		assert.Greater(collect, after, before, "controller should re-check health after the update")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s health should be re-checked", name)
 }
 
 // WaitForRepositoryDeleted polls until the named repository reports NotFound.

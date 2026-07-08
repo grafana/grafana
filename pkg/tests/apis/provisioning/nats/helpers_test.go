@@ -5,8 +5,6 @@ import (
 	"time"
 
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -37,23 +35,6 @@ func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	helper := env.GetCleanHelper(t)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 	return helper
-}
-
-// createLocalRepo creates a sync-disabled, folderless local repository and
-// returns immediately without waiting for it to become healthy — the caller
-// asserts the reconcile timing itself. Folderless + sync-disabled keeps the
-// repo side-effect free so it does not provision resources the shared cleanup
-// would have to remove.
-func createLocalRepo(t *testing.T, helper *common.ProvisioningTestHelper, name string) {
-	t.Helper()
-	repo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), common.TestRepo{
-		Name:          name,
-		SyncTarget:    "folderless",
-		Path:          helper.ProvisioningPath,
-		WorkflowsJSON: "[]",
-	})
-	_, err := helper.Repositories.Resource.Create(t.Context(), repo, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create local repository %q", name)
 }
 
 func TestMain(m *testing.M) {
