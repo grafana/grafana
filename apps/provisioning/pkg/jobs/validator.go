@@ -19,7 +19,7 @@ import (
 
 // AnnoTriggeredBy is the typed identity (e.g. "user:<uid>") that triggered the job.
 // It is set by the server at creation time and is immutable.
-const AnnoTriggeredBy = "provisioning.grafana.app/triggered-by"
+const AnnoTriggeredBy = "provisioning.grafana.app/triggeredBy"
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
 // supportedResources is the configured set of resource types provisioning can manage; export-style
