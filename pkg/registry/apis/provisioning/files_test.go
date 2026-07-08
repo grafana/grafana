@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -16,6 +17,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -661,6 +665,27 @@ func TestIsRawFileIntegration(t *testing.T) {
 	}
 }
 
+var openfeatureTestMutex sync.Mutex
+
+func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagProvisioningUserAttribution: {
+			Key:      featuremgmt.FlagProvisioningUserAttribution,
+			Variants: map[string]any{"": flagValue},
+		},
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
 type ctxCapturingRepoGetter struct {
 	ctx context.Context
 }
@@ -727,7 +752,8 @@ func TestHandleRequest_AuthorSignature(t *testing.T) {
 			}
 
 			getter := &ctxCapturingRepoGetter{}
-			connector := &filesConnector{getter: getter, userAttribution: tt.userAttribution}
+			setupOpenFeatureProvider(t, tt.userAttribution)
+			connector := &filesConnector{getter: getter}
 			req := httptest.NewRequest(http.MethodPost, "/files/test.json", nil)
 
 			connector.handleRequest(ctx, "repo", req, &fakeResponder{}, logging.DefaultLogger)

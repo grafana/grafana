@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type filesConnector struct {
@@ -31,13 +33,12 @@ type filesConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	folderAPIVersion      string
-	userAttribution       bool
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64, userAttribution bool) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -46,7 +47,6 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
-		userAttribution:       userAttribution,
 	}
 }
 
@@ -93,7 +93,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if c.userAttribution {
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
 		if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
 			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
 				Name:  id.GetName(),

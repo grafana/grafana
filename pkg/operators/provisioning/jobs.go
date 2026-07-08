@@ -64,19 +64,6 @@ func buildDriver(
 		provisioningClient.ProvisioningV0alpha1(),
 	)
 
-	var authorResolver jobs.AuthorResolver
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
-	}
-	if featuremgmt.ProvideToggles(featureManager).IsEnabledGlobally(featuremgmt.FlagProvisioningUserAttribution) {
-		clients, err := controllerCfg.Clients()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get clients: %w", err)
-		}
-		authorResolver = jobs.NewUserAuthorResolver(clients)
-	}
-
 	// This is basically our own JobQueue system
 	return jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
@@ -89,7 +76,7 @@ func buildDriver(
 		notifications,
 		registry,
 		metrics,
-		authorResolver,
+		nil,
 		workers...,
 	)
 }

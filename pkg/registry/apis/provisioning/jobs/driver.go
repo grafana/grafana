@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Store is an abstraction for the storage API.
@@ -397,8 +399,9 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	)
 
 	if d.authorResolver != nil {
-		if triggeredBy := job.Annotations[appjobs.AnnoTriggeredBy]; triggeredBy != "" {
-			sig, err := d.authorResolver.ResolveAuthor(ctx, namespace, triggeredBy)
+		if triggeredBy := job.Annotations[appjobs.AnnoTriggeredBy]; triggeredBy != "" &&
+			openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
+			sig, err := d.authorResolver.ResolveAuthor(ctx, triggeredBy)
 			if err != nil {
 				logger.Warn("failed to resolve job author", "triggeredBy", triggeredBy, "error", err)
 			} else if sig != nil {
