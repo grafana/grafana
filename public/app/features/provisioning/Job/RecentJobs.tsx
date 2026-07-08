@@ -19,6 +19,8 @@ interface Props {
   repo: Repository;
 }
 
+const AnnoAuthor = 'provisioning.grafana.app/author';
+
 type JobCell = {
   row: {
     original: Job;
@@ -61,6 +63,12 @@ const getJobColumns = () => [
     id: 'action',
     header: t('provisioning.recent-jobs.column-action', 'Action'),
     cell: ({ row: { original: job } }: JobCell) => job.spec?.action,
+  },
+  {
+    id: 'triggeredBy',
+    header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
+    cell: ({ row: { original: job } }: JobCell) =>
+      job.metadata?.annotations?.[AnnoAuthor] ?? t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook'),
   },
   {
     id: 'started',
