@@ -21,6 +21,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 type mockConnectionWithToken struct {
@@ -1225,7 +1226,7 @@ func TestConnectionController_process(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockLister, mockHealthChecker, mockStatusPatcher, mockFactory := tt.setupMocks()
 			cc := &ConnectionController{
-				conns:             NewCachedConnectionGetter(mockLister),
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockStatusPatcher,
 				connectionFactory: mockFactory,
@@ -1390,7 +1391,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 
 			// Create controller
 			cc := &ConnectionController{
-				conns:             NewCachedConnectionGetter(mockLister),
+				conns:             informer.NewCachedConnectionGetter(mockLister),
 				connectionFactory: mockFactory,
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockPatcher,

@@ -64,6 +64,10 @@ jest.mock('@grafana/runtime', () => {
     }),
   };
 });
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: () => Promise.resolve(tempoDS),
+}));
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),

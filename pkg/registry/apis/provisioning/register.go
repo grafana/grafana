@@ -33,8 +33,6 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/informer"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
@@ -45,9 +43,11 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
@@ -69,6 +69,14 @@ import (
 )
 
 const repoControllerWorkers = 1
+
+// jobClaimExpiry is how long a job claim is considered valid before it is
+// treated as abandoned. It governs both claim staleness in the job store and
+// the cleanup controller that reaps expired jobs, so the two must use the same
+// value. The lease renewal interval is derived as a fraction of this so a
+// worker renews several times before its claim goes stale; otherwise a single
+// delayed renewal can let a running job be reaped and re-run by another worker.
+const jobClaimExpiry = 60 * time.Second
 
 var (
 	_ builder.APIGroupBuilder               = (*APIBuilder)(nil)
@@ -145,28 +153,25 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
+	// controllerResyncInterval is the informer re-list interval for the
+	// repository, connection, and job controllers; historyExpiration is both the
+	// HistoricJob retention and the historic-job informer's resync;
+	// jobPollInterval is the job driver's fallback poll for new jobs. All fall
+	// back to their defaults when <=0 (see the controller post-start hook).
+	controllerResyncInterval time.Duration
+	historyExpiration        time.Duration
+	jobPollInterval          time.Duration
 
-	// natsWatchEnabled routes the provisioning informers' watch through the
-	// informer package's watch swap (currently a not-implemented placeholder)
-	// instead of the apiserver watch, while keeping the LIST-seeded cache.
-	// Internal switch, defaults to false.
-	//
-	// TODO: implement the NATS-based watch (informer.NewNATSInformerFactory) and
-	// enable this; until then it stays false and the apiserver watch is used.
-	natsWatchEnabled bool
-}
-
-// newInformerFactory builds the provisioning informer factory. When
-// natsWatchEnabled is set, the informers keep their LIST-seeded caches but their
-// watch is served by the informer package instead of the apiserver watch.
-func (b *APIBuilder) newInformerFactory(c clientset.Interface, resync time.Duration) informers.SharedInformerFactory {
-	if b.natsWatchEnabled {
-		return informer.NewNATSInformerFactory(c, resync)
-	}
-	return informer.NewInformerFactory(c, resync)
+	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
+	// Instead of an apiserver-backed informer, each controller's handler is driven
+	// by a NATS-backed informer (see pkg/storage/unified/informer) that signals the
+	// handler on each notification; the controllers re-fetch from the API in their
+	// reconcile. Otherwise the controllers use the apiserver informer.
+	natsSubscriber nats.Subscriber
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -332,6 +337,7 @@ func RegisterAPIService(
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
+	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -392,7 +398,12 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
+	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
+	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -433,7 +444,12 @@ func RegisterAPIService(
 		return nil, err
 	}
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
+	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
+	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
+	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
+	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -942,7 +958,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.client = c.ProvisioningV0alpha1()
 
 			// Initialize the API client-based job store
-			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
+			b.jobs, err = jobs.NewJobStore(b.client, jobClaimExpiry, b.registry)
 			if err != nil {
 				return fmt.Errorf("create API client job store: %w", err)
 			}
@@ -959,16 +975,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return nil
 			}
 
-			// Informer with resync interval used for health check and reconciliation
-			informerFactoryResyncInterval := 60 * time.Second
-			sharedInformerFactory := b.newInformerFactory(c, informerFactoryResyncInterval)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
-			go repoInformer.Informer().Run(postStartHookCtx.Done())
-			go jobInformer.Informer().Run(postStartHookCtx.Done())
-			go connInformer.Informer().Run(postStartHookCtx.Done())
-
+			// Informer resync interval used for health check and reconciliation of
+			// the repository, connection, and job controllers. Configurable via
+			// [provisioning] resync_interval; <=0 falls back to the default.
+			informerFactoryResyncInterval := b.controllerResyncInterval
+			if informerFactoryResyncInterval <= 0 {
+				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
+			}
+			if nats.Enabled(b.natsSubscriber) {
+				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
+			}
 			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
@@ -991,7 +1007,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.folderAPIVersion,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -1047,9 +1063,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
-			if _, err := jobInformer.Informer().AddEventHandler(jobController.EventHandler()); err != nil {
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("add job controller event handler: %w", err)
 			}
+			go jobSource.Run(postStartHookCtx.Done())
 
 			// Add any extra workers
 			workers = append(workers, b.extraWorkers...)
@@ -1064,19 +1082,35 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			repoGetter := resources.NewRepositoryGetter(b.repoFactory, b.client)
 
 			// Create job cleanup controller
-			jobExpiry := 30 * time.Second
 			jobCleanupController := jobs.NewJobCleanupController(
 				b.jobs,
 				jobHistoryWriter,
-				jobExpiry,
+				jobClaimExpiry,
 			)
+
+			// Renew the lease well before it expires. Using jobClaimExpiry as
+			// the renewal interval would schedule the single renewal at the
+			// exact moment the claim goes stale, so any delay (GC pause,
+			// apiserver blip) lets the cleanup controller reap a job that is
+			// still running and risks duplicate execution. A third of the
+			// expiry gives three renewal attempts before the claim is
+			// considered abandoned.
+			leaseRenewalInterval := jobClaimExpiry / 3
+
+			// Fallback poll for new jobs; the driver is also woken immediately by
+			// the job-create notification. Configurable via [provisioning]
+			// job_poll_interval; <=0 falls back to the default.
+			jobPollInterval := b.jobPollInterval
+			if jobPollInterval <= 0 {
+				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
+			}
 
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
-				3,              // 3 drivers for now
-				20*time.Minute, // Max time for each job
-				30*time.Second, // Periodically look for new jobs
-				jobExpiry,      // Lease renewal interval
+				3,                    // 3 drivers for now
+				20*time.Minute,       // Max time for each job
+				jobPollInterval,      // Periodically look for new jobs
+				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
@@ -1105,10 +1139,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			cachedRepoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+			// The repository delta source and the getter it backs.
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
-				cachedRepoGetter,
+				reconcileRepoGetter,
 				b.repoFactory,
 				b.connectionFactory,
 				b.resourceLister,
@@ -1123,15 +1158,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				controller.NewRepositoryQuotaChecker(cachedRepoGetter),
+				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				b.folderAPIVersion,
 				webhookSecretRotationInterval,
 			)
-			repoReg, err := repoInformer.Informer().AddEventHandler(repoController.EventHandler())
+			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {
 				return fmt.Errorf("add repository controller event handler: %w", err)
 			}
+			go repoSource.Run(postStartHookCtx.Done())
 
 			// Wait for the cache to sync off the hot path so we don't block
 			// apiserver startup; the controller only starts its workers once
@@ -1147,8 +1183,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			connController := controller.NewConnectionController(
-				controller.NewCachedConnectionGetter(connInformer.Lister()),
+				connGetter,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
@@ -1156,10 +1193,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.registry,
 			)
-			connReg, err := connInformer.Informer().AddEventHandler(connController.EventHandler())
+			connReg, err := connSource.AddEventHandler(connController.EventHandler())
 			if err != nil {
 				return fmt.Errorf("add connection controller event handler: %w", err)
 			}
+			go connSource.Run(postStartHookCtx.Done())
 
 			// Same as the repository controller above: wait for cache sync off
 			// the hot path so apiserver startup isn't blocked.
@@ -1172,19 +1210,23 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
-				// Create HistoryJobController for cleanup of old job history entries
-				// Separate informer factory for HistoryJob cleanup with resync interval
-				historyJobExpiration := 10 * time.Minute
-				historyJobInformerFactory := b.newInformerFactory(c, historyJobExpiration)
-				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
-				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
+				// Create HistoryJobController for cleanup of old job history entries.
+				// Its resync interval is the history expiration, and cleanup is
+				// resync-driven. Configurable via [provisioning] history_expiration;
+				// <=0 falls back to the default.
+				historyJobExpiration := b.historyExpiration
+				if historyJobExpiration <= 0 {
+					historyJobExpiration = setting.ProvisioningHistoryExpirationDefault
+				}
 				historyJobController := appcontroller.NewHistoryJobController(
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				if _, err := historyJobInformer.Informer().AddEventHandler(historyJobController.EventHandler()); err != nil {
+				historySource := informer.NewHistoricJobDeltaSource(b.natsSubscriber, c, historyJobExpiration)
+				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}
+				go historySource.Run(postStartHookCtx.Done())
 			}
 
 			return nil
