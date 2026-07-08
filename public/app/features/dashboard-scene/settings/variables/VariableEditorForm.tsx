@@ -198,7 +198,8 @@ export function VariableEditorForm({
           {isHasVariableOptions && (
             <Button
               disabled={runQueryState.loading}
-              variant="secondary"
+              variant="primary"
+              fill="outline"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
               onClick={onRunQuery}
             >
@@ -208,7 +209,7 @@ export function VariableEditorForm({
                   text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
                 />
               ) : (
-                t('dashboard-scene.variable-editor-form.run-query', 'Run query')
+                <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
               )}
             </Button>
           )}
