@@ -18,7 +18,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -48,12 +47,7 @@ func RegisterAPIService(
 ) *APIBuilder {
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
-		authorizer: &utils.AuthorizeFromName{
-			OrgAdminCanManageUserOwned: true,
-			Resource: map[string][]utils.ResourceOwner{
-				"stars": {utils.UserResourceOwner},
-			},
-		},
+		authorizer: newStarsAuthorizer(),
 	}
 
 	namespacer := request.GetNamespaceMapper(cfg)
