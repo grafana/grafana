@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-const queryServiceIdentity = "query.grafana.app"
-
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	group := b.GetGroupVersion().Group
 	return authorizer.AuthorizerFunc(
