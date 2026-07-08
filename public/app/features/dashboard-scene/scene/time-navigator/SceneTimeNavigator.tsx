@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type DataFrame, type DataSourceRef, dateTime, outerJoinDataFrames } from '@grafana/data';
+import { type DataFrame, type DataSourceRef, dateTime, outerJoinDataFrames, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -61,13 +61,25 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  /** Per-dashboard localStorage key for the saved sparkline source selection. */
+  private _storageKey(): string | undefined {
+    const uid = getDashboardSceneFor(this).state.uid;
+    return uid ? `grafana.dashboard.timeNavigator.sources.${uid}` : undefined;
+  }
+
   private _activationHandler() {
-    // Default to the first panel that has queries, if none is chosen yet.
     if (!this.state.sourcePanelKeys?.length) {
-      const dashboard = getDashboardSceneFor(this);
-      const first = dashboardSceneGraph.getVizPanels(dashboard).find((p) => getQueryRunnerFor(p));
-      if (first?.state.key) {
-        this.setState({ sourcePanelKeys: [first.state.key] });
+      // Restore this dashboard's saved selection, else default to the first panel with queries.
+      const key = this._storageKey();
+      const saved = key ? store.getObject<string[]>(key) : undefined;
+      if (saved?.length) {
+        this.setState({ sourcePanelKeys: saved });
+      } else {
+        const dashboard = getDashboardSceneFor(this);
+        const first = dashboardSceneGraph.getVizPanels(dashboard).find((p) => getQueryRunnerFor(p));
+        if (first?.state.key) {
+          this.setState({ sourcePanelKeys: [first.state.key] });
+        }
       }
     }
     this._applySources();
@@ -98,6 +110,10 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   /** Choose which panels' queries feed the sparklines. */
   public setSourcePanels(keys: string[]) {
     this.setState({ sourcePanelKeys: keys });
+    const key = this._storageKey();
+    if (key) {
+      store.setObject(key, keys);
+    }
     this._applySources();
   }
 
