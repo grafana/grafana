@@ -22,7 +22,9 @@ import (
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -537,12 +539,14 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	}
 
 	annotations := map[string]string{}
-	if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-		if name := id.GetName(); name != "" {
-			annotations[appjobs.AnnoTriggeredBy] = name
-		}
-		if email := id.GetEmail(); email != "" {
-			annotations[appjobs.AnnoTriggeredByEmail] = email
+	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
+		if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
+			if name := id.GetName(); name != "" {
+				annotations[appjobs.AnnoTriggeredBy] = name
+			}
+			if email := id.GetEmail(); email != "" {
+				annotations[appjobs.AnnoTriggeredByEmail] = email
+			}
 		}
 	}
 
