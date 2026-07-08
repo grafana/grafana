@@ -3,7 +3,7 @@ import { map } from 'lodash';
 import { ScopedVars, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 import { TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
-import { AzureMonitorOption, VariableOptionGroup } from '../types/types';
+import { AzureAPIResponse, AzureMonitorOption, VariableOptionGroup } from '../types/types';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
@@ -44,6 +44,39 @@ export const routeNames = {
   appInsights: 'appinsights',
   resourceGraph: 'resourcegraph',
 };
+
+export const MAX_ARM_PAGES = 50;
+
+export function nextLinkToPath(prefix: string, nextLink: string): string {
+  const { pathname, search } = new URL(nextLink);
+  return `${prefix}${pathname}${search}`;
+}
+
+export async function fetchAllArmPages<T>(
+  prefix: string,
+  initialPath: string,
+  fetchPage: (path: string) => Promise<AzureAPIResponse<T> | undefined>,
+  maxPages: number = MAX_ARM_PAGES
+): Promise<T[]> {
+  const results: T[] = [];
+  let path: string | undefined = initialPath;
+  let pages = 0;
+  for (; path && pages < maxPages; pages++) {
+    const page = await fetchPage(path);
+    if (!page) {
+      // eslint-disable-next-line no-console
+      console.warn('[azuremonitor] ARM page request returned no result; stopping pagination.');
+      break;
+    }
+    results.push(...(page.value ?? []));
+    path = page.nextLink ? nextLinkToPath(prefix, page.nextLink) : undefined;
+  }
+  if (path) {
+    // eslint-disable-next-line no-console
+    console.warn(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
+  }
+  return results;
+}
 
 export function interpolateVariable(
   value: string | number | Array<string | number>,
