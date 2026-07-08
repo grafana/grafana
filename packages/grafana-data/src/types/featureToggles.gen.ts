@@ -1466,11 +1466,6 @@ export interface FeatureToggles {
   */
   tracesDrilldownTimeSeeker?: boolean;
   /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
-  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */

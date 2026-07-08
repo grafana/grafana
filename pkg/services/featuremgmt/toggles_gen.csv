@@ -319,7 +319,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-05-22,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
-2026-04-01,clearPreviousFieldValues,GA,@grafana/dataviz-squad,false,false,true
 2026-05-22,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-05-22,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
