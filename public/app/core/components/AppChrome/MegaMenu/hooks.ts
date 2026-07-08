@@ -83,7 +83,7 @@ export const useNavCustomization = () => {
   const { pinnedItems, isLoading: pinnedLoading } = usePinnedItems();
   const notifyApp = useAppNotification();
   const { data: hiddenItemIds, isLoading: hiddenLoading, setHiddenItemIds } = useHiddenItems();
-  // Top-level section order — a local-only preference (not on the API yet).
+  // The user's custom order for the top-level sections (local-only, not on the API yet).
   const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
 
   // Persist the bookmark urls via the app-platform preferences API when the new-preferences flag is
@@ -133,7 +133,10 @@ export const useNavCustomization = () => {
   if (lastSyncedPinnedUrls.current !== pinnedItemsKey) {
     lastSyncedPinnedUrls.current = pinnedItemsKey;
     setPinnedUrls(pinnedItems);
-    setDraftPinnedUrls(pinnedItems);
+    // Don't clobber staged edits while editing — the draft is synced from applied state on enter/cancel.
+    if (!editMode) {
+      setDraftPinnedUrls(pinnedItems);
+    }
   }
 
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
@@ -143,9 +146,9 @@ export const useNavCustomization = () => {
   );
 
   // Pinned box (a mini tree). Pinning duplicates items here; the main nav below is never pruned.
-  const effectivePinnedUrls = editMode ? draftPinnedUrls : pinnedUrls;
-  const pinnedSet = new Set(effectivePinnedUrls);
-  const pinnedNavItems = (canCustomise ? buildPinnedTree(baseItems, pinnedSet, effectivePinnedUrls) : []).map((item) =>
+  const pinnedUrlsToDisplay = editMode ? draftPinnedUrls : pinnedUrls;
+  const pinnedSet = new Set(pinnedUrlsToDisplay);
+  const pinnedNavItems = (canCustomise ? buildPinnedTree(baseItems, pinnedSet, pinnedUrlsToDisplay) : []).map((item) =>
     enrichWithInteractionTracking(item, docked)
   );
 
@@ -181,8 +184,8 @@ export const useNavCustomization = () => {
   const activeItem = getActiveItem([...navItems, ...pinnedNavItems], state.sectionNav.node, location.pathname);
 
   const isPinned = useCallback(
-    (url?: string) => Boolean(url && effectivePinnedUrls.includes(url)),
-    [effectivePinnedUrls]
+    (url?: string) => Boolean(url && pinnedUrlsToDisplay.includes(url)),
+    [pinnedUrlsToDisplay]
   );
 
   const persistPinned = (newItems: string[]) => {
@@ -194,27 +197,29 @@ export const useNavCustomization = () => {
     if (!url) {
       return;
     }
-    if (canCustomise) {
-      // One url per pin (any non-top-level item). Pins stay in the nav; they're duplicated into the
-      // box. A plain toggle so a pinned item can be unpinned from either place.
-      const willPin = !effectivePinnedUrls.includes(url);
-      reportInteraction(willPin ? 'grafana_nav_item_pinned' : 'grafana_nav_item_unpinned', { path: url });
-      const update = (current: string[]) =>
-        current.includes(url) ? current.filter((u) => u !== url) : [...current, url];
-      if (editMode) {
-        setDraftPinnedUrls(update);
-      } else {
-        persistPinned(update(pinnedUrls));
-      }
-    } else {
-      // Legacy bookmarks behaviour (flag off): single-url toggle + redux Bookmarks section update.
+
+    // Legacy bookmarks behaviour (flag off): single-url toggle + redux Bookmarks section update.
+    if (!canCustomise) {
       const isSaved = isPinned(url);
-      const newItems = isSaved ? pinnedUrls.filter((i) => url !== i) : [...pinnedUrls, url];
+      const newItems = isSaved ? pinnedUrls.filter((u) => u !== url) : [...pinnedUrls, url];
       reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
       persistBookmarkUrls(newItems, () => {
         setPinnedUrls(newItems);
         dispatch(setBookmark({ item, isSaved: !isSaved }));
       });
+      return;
+    }
+
+    // Customisation on: a plain toggle of the single url (pins stay in the nav and are duplicated
+    // into the box). Staged as a draft while editing, otherwise persisted immediately.
+    const willPin = !pinnedUrlsToDisplay.includes(url);
+    reportInteraction(willPin ? 'grafana_nav_item_pinned' : 'grafana_nav_item_unpinned', { path: url });
+    const toggle = (current: string[]) =>
+      current.includes(url) ? current.filter((u) => u !== url) : [...current, url];
+    if (editMode) {
+      setDraftPinnedUrls(toggle);
+    } else {
+      persistPinned(toggle(pinnedUrls));
     }
   };
 
@@ -230,19 +235,22 @@ export const useNavCustomization = () => {
     );
   }, []);
 
-  const onEnterEditMode = useCallback(() => {
+  // Reset the drafts to the applied state — used both when opening edit mode and when cancelling.
+  const syncDraftsFromApplied = useCallback(() => {
     setDraftHiddenIds(hiddenItemIds);
     setDraftPinnedUrls(pinnedUrls);
     setDraftSectionOrder(sectionOrder ?? []);
-    setEditMode(true);
   }, [hiddenItemIds, pinnedUrls, sectionOrder]);
 
+  const onEnterEditMode = useCallback(() => {
+    syncDraftsFromApplied();
+    setEditMode(true);
+  }, [syncDraftsFromApplied]);
+
   const onCancelEdit = useCallback(() => {
-    setDraftHiddenIds(hiddenItemIds);
-    setDraftPinnedUrls(pinnedUrls);
-    setDraftSectionOrder(sectionOrder ?? []);
+    syncDraftsFromApplied();
     setEditMode(false);
-  }, [hiddenItemIds, pinnedUrls, sectionOrder]);
+  }, [syncDraftsFromApplied]);
 
   const onSaveEdit = useCallback(async () => {
     reportInteraction('grafana_nav_customise_saved', {

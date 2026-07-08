@@ -7,7 +7,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, IconButton, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -200,12 +200,6 @@ export const MegaMenu = memo(
           )}
           {editMode && (
             <div className={styles.editFooter}>
-              {/* Feedback placeholder — not wired up yet. */}
-              <IconButton
-                name="comment-alt-message"
-                tooltip={t('navigation.megamenu.feedback', 'Feedback')}
-                variant="secondary"
-              />
               <MegaMenuCustomiseControls
                 canReset={canReset}
                 onResetToDefault={onResetToDefault}
@@ -286,13 +280,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         outlineOffset: '-2px',
       },
     }),
-    // Edit-mode footer: feedback on the left, the Reset/Cancel/Done controls on the right.
+    // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
     editFooter: css({
       alignItems: 'center',
       borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexShrink: 0,
-      justifyContent: 'space-between',
+      justifyContent: 'flex-end',
       padding: theme.spacing(1.5, 2),
     }),
   };

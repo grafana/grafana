@@ -216,18 +216,18 @@ function hasPinnedItem(item: NavModelItem, pinned: Set<string>): boolean {
 }
 
 /**
- * Build the pinned subtree to render at the top of the menu. A directly-pinned item is kept whole
- * (with all its live children); an item that only has pinned descendants is kept as a structural
- * ancestor with just the branches that lead to a pinned item — so pinning "Playlists" surfaces
- * "Dashboards → Playlists".
+ * Build the pinned subtree to render at the top of the menu. A directly-pinned item is an endpoint
+ * shown without expanding its children — except Starred, which pins as a whole but still lists its
+ * starred dashboards. An item that only has pinned descendants is kept as a structural ancestor with
+ * just the branches that lead to a pinned item — so pinning "Playlists" surfaces "Dashboards → Playlists".
  */
 function buildPinnedBranch(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
   return items
     .filter((item) => hasPinnedItem(item, pinned))
     .map((item) => {
       if (isItemPinned(item, pinned)) {
-        // A directly-pinned node is the endpoint of its branch — shown without expanding its children.
-        return { ...item, children: undefined };
+        // Starred keeps its (non-pinnable) child dashboards; every other pinned node is an endpoint.
+        return item.id === 'starred' ? { ...item } : { ...item, children: undefined };
       }
       const children = pinnableChildren(item);
       return children.length > 0

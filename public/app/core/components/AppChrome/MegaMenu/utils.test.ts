@@ -246,7 +246,7 @@ describe('pinning helpers', () => {
       expect(pinned[0].children).toBeUndefined();
     });
 
-    it('renders a pinned top-level Starred section as a childless endpoint', () => {
+    it('keeps a pinned top-level Starred section together with its starred dashboards', () => {
       const withStarred: NavModelItem[] = [
         ...tree,
         {
@@ -258,7 +258,8 @@ describe('pinning helpers', () => {
       ];
       const pinned = buildPinnedTree(withStarred, new Set(['/dashboards?starred']));
       expect(pinned.map((i) => i.text)).toEqual(['Starred']);
-      expect(pinned[0].children).toBeUndefined();
+      // Starred is a special case: it pins as a whole but still lists its child dashboards in the box.
+      expect(pinned[0].children?.map((c) => c.text)).toEqual(['My dashboard']);
     });
 
     it('orders the top-level blocks by the supplied pin order', () => {

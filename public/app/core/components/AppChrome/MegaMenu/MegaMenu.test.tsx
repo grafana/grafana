@@ -146,7 +146,6 @@ describe('MegaMenu', () => {
 
       expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Customise menu' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Feedback' })).not.toBeInTheDocument();
     });
 
     it('shows a loading skeleton until preferences have loaded', async () => {
@@ -382,17 +381,15 @@ describe('MegaMenu', () => {
     });
 
     describe('edit-mode controls', () => {
-      it('offers pin/unpin outside edit mode but reveals the feedback control only while editing', async () => {
+      it('offers the unpin control whether or not editing', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
         await screen.findByRole('list', { name: 'Pinned' });
         // The unpin control is available (hover-revealed) even before entering edit mode.
         const before = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(before).toContain('Unpin Playlists');
-        expect(screen.queryByRole('button', { name: 'Feedback' })).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Customise menu' }));
-        expect(screen.getByRole('button', { name: 'Feedback' })).toBeInTheDocument();
         const after = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(after).toContain('Unpin Playlists');
       });
