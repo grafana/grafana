@@ -8,7 +8,7 @@ import { replaceCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { refetchPluginMeta } from '../pluginMeta/plugins';
 
-import { logPluginSettingsDebug } from './logging';
+import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { inlineSecureValuesMapper, settingsSpecMapper } from './mappers/v0alpha1SettingsMapper';
 import { refetchCachedAppSettings, refetchCachedLegacySettings } from './refetchPluginSettings';
@@ -17,7 +17,12 @@ import { getApiVersion, getCacheKey, getNamespace } from './utils';
 
 function updateLegacySettings(pluginId: string, data: Partial<PluginMeta>): Promise<void> {
   logPluginSettingsDebug('PluginSettings: updating legacy plugin settings', { pluginId });
-  return getBackendSrv().post<void>(`/api/plugins/${pluginId}/settings`, data, { validatePath: true });
+  return getBackendSrv()
+    .post<void>(`/api/plugins/${pluginId}/settings`, data, { validatePath: true })
+    .catch((err) => {
+      logPluginSettingsError('PluginSettings: updating legacy plugin settings failed', err, { pluginId });
+      return Promise.reject(err);
+    });
 }
 
 async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<v0alpha1Settings> {
@@ -35,16 +40,17 @@ async function internalUpdateAppPluginSettings(pluginId: string, data: Partial<P
   const patch = [test, ...compare(stored, update)];
   logPluginSettingsDebug('PluginSettings: updating plugin settings', { pluginId });
 
-  const updated = await getBackendSrv().patch<v0alpha1Settings>(
-    `/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`,
-    patch,
-    {
+  const updated = await getBackendSrv()
+    .patch<v0alpha1Settings>(`/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`, patch, {
       validatePath: true,
       headers: {
         'Content-Type': 'application/json-patch+json',
       },
-    }
-  );
+    })
+    .catch((err) => {
+      logPluginSettingsError('PluginSettings: updating plugin settings failed', err, { pluginId });
+      return Promise.reject(err);
+    });
 
   return updated;
 }
@@ -63,6 +69,7 @@ export async function updateAppPluginSettings(pluginId: string, data: Partial<Pl
 
   const meta = await refetchPluginMeta(pluginId);
   if (!meta) {
+    logPluginSettingsDebug('PluginSettings: falling back to updating legacy plugin settings', { pluginId });
     await updateLegacySettings(pluginId, data);
     return refetchCachedLegacySettings(pluginId, false);
   }

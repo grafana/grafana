@@ -2,17 +2,14 @@ import { useEffect } from 'react';
 
 import type { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
 import { type UserOrg } from 'app/types/user';
 
-import { Branding } from '../../Branding/Branding';
-
 import { OrganizationSelect } from './OrganizationSelect';
 
-export function OrganizationSwitcher() {
+export function OrganizationSwitcher({ children }: { children?: React.ReactNode }) {
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
   const onSelectChange = async (option: SelectableValue<UserOrg>) => {
@@ -26,7 +23,9 @@ export function OrganizationSwitcher() {
       // backendSrv shows the error toast; abort so we don't reload into the wrong org
       return;
     }
-    window.location.assign(`${config.appSubUrl}/?orgId=${option.value.orgId}`);
+    // Plain reload to root: the POST above persisted the switch server-side, so re-bootstrap lands in
+    // the new org without the ?orgId redirect path, which breaks under gateway/JWT auth
+    window.location.assign(`${config.appSubUrl}/`);
   };
   useEffect(() => {
     if (
@@ -38,7 +37,7 @@ export function OrganizationSwitcher() {
   }, [dispatch]);
 
   if (orgs?.length <= 1) {
-    return <Text truncate>{Branding.AppTitle}</Text>;
+    return children;
   }
 
   return <OrganizationSelect orgs={orgs} onSelectChange={onSelectChange} />;

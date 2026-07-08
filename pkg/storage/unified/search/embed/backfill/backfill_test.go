@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -509,8 +510,6 @@ func TestShouldSkipForZeroViews_EmptyName_DoesNotConsult(t *testing.T) {
 	assert.Equal(t, 0, stats.calls)
 }
 
-// fakeNonDashboardBuilder satisfies embed.Builder with a non-dashboard
-// identity. Only used to exercise the builder-identity guard.
 type fakeNonDashboardBuilder struct{}
 
 func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
@@ -518,4 +517,52 @@ func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
 func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
 func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
+}
+
+func labeledDashboardJSON(uid, title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"name":   uid,
+			"labels": map[string]any{controller.LabelPendingDelete: "true"},
+		},
+		"spec": map[string]any{"uid": uid, "title": title},
+	})
+	return body
+}
+
+func makeLabeledListItem(ns, name string, rv int64) listItem {
+	return listItem{Namespace: ns, Name: name, RV: rv, Value: labeledDashboardJSON(name, name+"-title")}
+}
+
+func TestRunBackfillJob_PendingDeleteLabel_SkipsLabeledResources(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeLabeledListItem("ns", "dash-a", 50),
+		makeListItem("ns", "dash-b", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the unlabeled resource should be embedded")
+	assert.Equal(t, "dash-b", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
+}
+
+func TestRunBackfillJob_PendingDeleteLabel_RunsBeforeStatsLookup(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeLabeledListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	stats := newFakeDashboardStats()
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, stats.calls, "pending-delete skip must come before stats lookup")
 }

@@ -407,7 +407,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(2, 0),
     padding: theme.spacing(1),
     border: `solid 1px ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
   }),
   topRow: css({
     display: 'flex',

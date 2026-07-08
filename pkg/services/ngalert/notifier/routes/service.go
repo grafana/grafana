@@ -109,7 +109,7 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	defer span.End()
 
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
+	if !nps.managedRoutesEnabled() && !models.IsDefaultRoutingTreeName(name) {
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
@@ -217,7 +217,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
+	if !nps.managedRoutesEnabled() && !models.IsDefaultRoutingTreeName(name) {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
@@ -299,7 +299,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	defer span.End()
 
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
-	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
+	if !nps.managedRoutesEnabled() && !models.IsDefaultRoutingTreeName(name) {
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 
@@ -342,7 +342,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	}
 
 	action := "Deleted"
-	if name == legacy_storage.UserDefinedRoutingTreeName {
+	if models.IsDefaultRoutingTreeName(name) {
 		defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 		if err != nil {
 			return fmt.Errorf("failed to parse default alertmanager config: %w", err)
@@ -361,7 +361,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		if name != legacy_storage.UserDefinedRoutingTreeName { // do not delete permissions on reset of default route
+		if !models.IsDefaultRoutingTreeName(name) { // do not delete permissions on reset of default route
 			if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
 				return err
 			}

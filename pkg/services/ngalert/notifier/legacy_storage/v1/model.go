@@ -32,16 +32,10 @@ type AMConfigV1 struct {
 }
 
 // SortedTemplates returns templates ordered by kind and title.
-func (c *AMConfigV1) SortedTemplates(includeImported bool) []TemplateGroup {
+func (c *AMConfigV1) SortedTemplates() []TemplateGroup {
 	res := make([]TemplateGroup, 0, len(c.Templates))
 	for _, t := range c.Templates {
 		res = append(res, t)
-	}
-
-	if includeImported && len(c.ExtraConfigs) > 0 {
-		for name, content := range c.ExtraConfigs[0].TemplateFiles {
-			res = append(res, NewTemplateGroup(name, content, TemplateKindMimir, models.ProvenanceConvertedPrometheus)) // Provenance shouldn't be used regardless.
-		}
 	}
 
 	return slices.SortedFunc(slices.Values(res), func(a TemplateGroup, b TemplateGroup) int {

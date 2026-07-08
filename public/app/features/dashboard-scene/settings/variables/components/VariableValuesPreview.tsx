@@ -4,7 +4,6 @@ import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'reac
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -66,7 +65,7 @@ export const VariableValuesPreview = ({ options, staticOptions }: VariableValues
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
+  const displayMultiPropsPreview = hasOptions && properties.length > 2;
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>

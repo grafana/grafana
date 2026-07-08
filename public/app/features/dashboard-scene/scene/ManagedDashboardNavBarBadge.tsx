@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config, isFetchError } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
@@ -24,5 +25,9 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   // Repository-managed dashboard where the repo no longer exists
   const isOrphaned = kind === ManagerKind.Repo && isError && isFetchError(error) && error.status === 404;
 
-  return <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />;
+  return (
+    <Stack direction="row" alignItems="stretch">
+      <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />
+    </Stack>
+  );
 };

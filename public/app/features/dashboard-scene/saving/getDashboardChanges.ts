@@ -132,23 +132,16 @@ function getHasTimeChanged(newRange: DefaultPersistedTimeValue = {}, previousRan
 }
 
 export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], filtersB?: AdHocFilterWithLabels[]) {
-  if (filtersA === undefined && filtersB === undefined) {
-    console.warn('Adhoc variable filter property is undefined');
-    return true;
-  }
+  const a = filtersA ?? [];
+  const b = filtersB ?? [];
 
-  if ((filtersA === undefined && filtersB !== undefined) || (filtersB === undefined && filtersA !== undefined)) {
-    console.warn('Adhoc variable filter property is undefined');
+  if (a.length !== b.length) {
     return false;
   }
 
-  if (filtersA?.length !== filtersB?.length) {
-    return false;
-  }
-
-  for (let i = 0; i < (filtersA?.length ?? 0); i++) {
-    const aFilter = filtersA?.[i];
-    const bFilter = filtersB?.[i];
+  for (let i = 0; i < a.length; i++) {
+    const aFilter = a[i];
+    const bFilter = b[i];
     if (aFilter?.key !== bFilter?.key || aFilter?.operator !== bFilter?.operator || aFilter?.value !== bFilter?.value) {
       return false;
     }
@@ -217,10 +210,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -230,7 +223,7 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -337,7 +330,7 @@ function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const changedFilters = (typed as AdHocVariableModel).filters ?? [];
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
