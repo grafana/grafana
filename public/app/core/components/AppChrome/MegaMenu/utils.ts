@@ -305,6 +305,27 @@ export function orderTopLevelSections(items: NavModelItem[], orderedIds: string[
     .map(({ item }) => item);
 }
 
+/**
+ * Move the top-level section at `fromIndex` to `toIndex`. Operates on the full ordered id list
+ * (via `orderTopLevelSections`) so newly-added sections keep their appended position, and returns
+ * the new stored order — or `currentOrder` unchanged for out-of-range indices.
+ */
+export function reorderSections(
+  items: NavModelItem[],
+  currentOrder: string[],
+  fromIndex: number,
+  toIndex: number
+): string[] {
+  const ordered = orderTopLevelSections(items, currentOrder).map((item) => item.id ?? '');
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= ordered.length || toIndex >= ordered.length) {
+    return currentOrder;
+  }
+  const next = [...ordered];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+}
+
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {
     if (item.url === url) {

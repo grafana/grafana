@@ -30,6 +30,7 @@ import {
   orderTopLevelSections,
   removeHiddenItems,
   reorderPinnedBlocks,
+  reorderSections,
 } from './utils';
 
 export const usePinnedItems = () => {
@@ -280,21 +281,11 @@ export const useNavCustomization = () => {
     [baseItems]
   );
 
-  // Reorder the top-level sections (staged; persisted to localStorage on save). Works on the full
-  // ordered id list so newly-added sections keep their appended position.
+  // Reorder the top-level sections (staged; persisted to localStorage on save).
   const onReorderSection = useCallback(
     (fromIndex: number, toIndex: number) => {
       reportInteraction('grafana_nav_section_reordered');
-      setDraftSectionOrder((current) => {
-        const ordered = orderTopLevelSections(baseItems, current).map((item) => item.id ?? '');
-        if (fromIndex < 0 || toIndex < 0 || fromIndex >= ordered.length || toIndex >= ordered.length) {
-          return current;
-        }
-        const next = [...ordered];
-        const [moved] = next.splice(fromIndex, 1);
-        next.splice(toIndex, 0, moved);
-        return next;
-      });
+      setDraftSectionOrder((current) => reorderSections(baseItems, current, fromIndex, toIndex));
     },
     [baseItems]
   );

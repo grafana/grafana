@@ -1,3 +1,4 @@
+import { HttpResponse } from 'msw';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
@@ -358,9 +359,10 @@ describe('MegaMenu', () => {
         await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
       });
 
-      it('keeps the collapsible Bookmarks section when the flag is off', async () => {
+      it('keeps the collapsible Bookmarks section when the flag is off, skipping orphaned urls', async () => {
         setTestFlags({ [CUSTOMISE_FLAG]: false });
-        renderMegaMenu({ bookmarkUrls: ['/explore'] });
+        // The second url matches no nav item, so it's safely skipped when building the section.
+        renderMegaMenu({ bookmarkUrls: ['/explore', '/orphaned-not-in-nav'] });
 
         expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
       });
@@ -377,6 +379,20 @@ describe('MegaMenu', () => {
           .map((button) => button.getAttribute('aria-label'));
         expect(labels).toContain('Bookmark Explore');
         expect(labels).toContain(`Bookmark ${STARRED_DASHBOARD.name}`);
+      });
+
+      it('toggles a bookmark from the legacy control when the flag is off', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: false });
+        const { user } = renderMegaMenu();
+
+        const bookmark = (await screen.findAllByRole('button', { hidden: true })).find(
+          (b) => b.getAttribute('aria-label') === 'Bookmark Explore'
+        );
+        await user.click(bookmark!);
+
+        // The legacy path persists via the bookmark urls and populates the Bookmarks section.
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/explore']));
+        expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
       });
     });
 
@@ -433,6 +449,25 @@ describe('MegaMenu', () => {
         const saving = await screen.findByRole('button', { name: 'Saving…' });
         expect(saving).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+      });
+
+      it('stays in edit mode and persists nothing when the save fails', async () => {
+        // Make the preferences PATCH fail so the save errors out.
+        server.use(customPatchUserPreferencesHandler(() => HttpResponse.json({ message: 'nope' }, { status: 500 })));
+
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        // The save failed: we stay in edit mode (Done/Cancel remain) and nothing is persisted.
+        expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+        expect(mockUserPreferences.navbar?.bookmarkUrls ?? []).toEqual([]);
       });
     });
   });

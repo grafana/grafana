@@ -10,6 +10,7 @@ import {
   findByUrl,
   buildPinnedTree,
   reorderPinnedBlocks,
+  reorderSections,
   getPinnableLeafUrls,
   orderTopLevelSections,
   isHideable,
@@ -306,6 +307,22 @@ describe('pinning helpers', () => {
         'explore',
         'cfg',
       ]);
+    });
+  });
+
+  describe('reorderSections', () => {
+    it('moves a section to a new index, returning the full id order', () => {
+      // From the default nav order [home, explore, dashboards, cfg], move dashboards (2) to the front.
+      expect(reorderSections(tree, [], 2, 0)).toEqual(['dashboards', 'home', 'explore', 'cfg']);
+    });
+
+    it('reorders relative to an existing stored order', () => {
+      // Stored order puts cfg first: [cfg, home, explore, dashboards]; move cfg (0) to the end.
+      expect(reorderSections(tree, ['cfg'], 0, 3)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
+    });
+
+    it('is a no-op for out-of-range indices, keeping the current order', () => {
+      expect(reorderSections(tree, ['cfg', 'explore'], 0, 9)).toEqual(['cfg', 'explore']);
     });
   });
 });
