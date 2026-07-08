@@ -68,18 +68,12 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   }
 
   private _activationHandler() {
+    // Restore this dashboard's saved selection if any. Default to no sparklines so we run no extra queries.
     if (!this.state.sourcePanelKeys?.length) {
-      // Restore this dashboard's saved selection, else default to the first panel with queries.
       const key = this._storageKey();
       const saved = key ? store.getObject<string[]>(key) : undefined;
       if (saved?.length) {
         this.setState({ sourcePanelKeys: saved });
-      } else {
-        const dashboard = getDashboardSceneFor(this);
-        const first = dashboardSceneGraph.getVizPanels(dashboard).find((p) => getQueryRunnerFor(p));
-        if (first?.state.key) {
-          this.setState({ sourcePanelKeys: [first.state.key] });
-        }
       }
     }
     this._applySources();
