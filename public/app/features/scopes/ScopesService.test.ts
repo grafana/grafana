@@ -1168,7 +1168,7 @@ describe('ScopesService', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
 
         expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
-        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
       });
 
       it('does not apply if the user has picked a scope but not yet applied before the fetch resolves', async () => {
@@ -1188,7 +1188,7 @@ describe('ScopesService', () => {
 
         expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
         // The user's pending selection must not be clobbered by the default scope.
-        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
       });
 
       it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {

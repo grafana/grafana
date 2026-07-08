@@ -296,6 +296,9 @@ export class ScopesApiClient {
       const data = this.extractDataOrHandleError<FindDefaultScope>(result, 'default scope');
       const scope = data?.scope;
       const name = scope?.metadata?.name;
+      // `!name` already implies `!scope` at runtime (name derives from scope);
+      // the extra `|| !scope` is a TypeScript narrowing guard so `scope` is
+      // typed as non-undefined for the upsertQueryData call below.
       if (!name || !scope) {
         return undefined;
       }

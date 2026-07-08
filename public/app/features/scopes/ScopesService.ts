@@ -259,34 +259,43 @@ export class ScopesService implements ScopesContextValue {
           appliedScopes.length === 0 &&
           getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaEnableScopesFirstMode, false)
         ) {
-          this.apiClient.fetchDefaultScope().then((name) => {
-            // Only apply if scopes is still enabled AND the user has neither
-            // applied nor started picking a scope in the meantime. Checking
-            // selectedScopes as well as appliedScopes preserves any pending
-            // selection: the user may have opened the selector and ticked a
-            // scope before this slower fetch resolved — clobbering that with
-            // the default scope would silently discard their choice. If the
-            // user navigated to a non-scope page before the fetch resolved,
-            // state.enabled is now false and applying would leak `?scopes=…`
-            // into a page that doesn't use scopes.
-            if (
-              !name ||
-              !this.state.enabled ||
-              this.selectorService.state.appliedScopes.length > 0 ||
-              this.selectorService.state.selectedScopes.length > 0
-            ) {
-              return;
-            }
-            // Bypass this.changeScopes (which hardcodes redirectOnApply=false
-            // for URL-driven init) and call the selector service directly
-            // with redirectOnApply=true. Applying the default scope on first
-            // mount should land the user on the scope's redirectPath or
-            // first scope navigation, matching the behavior of selecting
-            // the scope manually. The scope metadata is already in the
-            // getScope RTK Query cache (seeded by fetchDefaultScope), so
-            // applyScopes' downstream fetch is a cache hit.
-            this.selectorService.changeScopes([name], undefined, undefined, true);
-          });
+          this.apiClient
+            .fetchDefaultScope()
+            .then((name) => {
+              // Only apply if scopes is still enabled AND the user has neither
+              // applied nor started picking a scope in the meantime. Checking
+              // selectedScopes as well as appliedScopes preserves any pending
+              // selection: the user may have opened the selector and ticked a
+              // scope before this slower fetch resolved — clobbering that with
+              // the default scope would silently discard their choice. If the
+              // user navigated to a non-scope page before the fetch resolved,
+              // state.enabled is now false and applying would leak `?scopes=…`
+              // into a page that doesn't use scopes.
+              if (
+                !name ||
+                !this.state.enabled ||
+                this.selectorService.state.appliedScopes.length > 0 ||
+                this.selectorService.state.selectedScopes.length > 0
+              ) {
+                return;
+              }
+              // Bypass this.changeScopes (which hardcodes redirectOnApply=false
+              // for URL-driven init) and call the selector service directly
+              // with redirectOnApply=true. Applying the default scope on first
+              // mount should land the user on the scope's redirectPath or
+              // first scope navigation, matching the behavior of selecting
+              // the scope manually. The scope metadata is already in the
+              // getScope RTK Query cache (seeded by fetchDefaultScope), so
+              // applyScopes' downstream fetch is a cache hit.
+              this.selectorService.changeScopes([name], undefined, undefined, true);
+            })
+            .catch((err) => {
+              // fetchDefaultScope handles its own errors, but changeScopes above
+              // returns an un-awaited promise; a rejection there would otherwise
+              // surface as an unhandled rejection. Match the pattern used by the
+              // resolvePathToRoot(...).catch(...) calls elsewhere in this file.
+              console.error('Failed to apply default scope:', err);
+            });
         }
         // Defer the URL write when scope metadata has not loaded yet.
         // setEnabled is called from `@grafana/scenes` during dashboard mount,
