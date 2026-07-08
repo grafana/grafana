@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -35,13 +33,6 @@ var childFolderPageSize int64 = 1000
 
 var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 
-// FolderContentsDeleter deletes the non-dashboard resources in a folder (alert rules, library
-// elements) during cascade delete. Satisfied by *cleaner.ContentsCleaner; kept as an interface here
-// so the cascade can be faked in tests and the cleaner package need not import the apiserver.
-type FolderContentsDeleter interface {
-	DeleteInFolder(ctx context.Context, namespace, folderUID string) error
-}
-
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
 // folder's subtree; all other REST methods are promoted from the embedded storage.
 type cascadeDeleteStorage struct {
@@ -50,16 +41,13 @@ type cascadeDeleteStorage struct {
 	// dashboardClient resolves the dashboard apiserver client; nil when none is configured, in which
 	// case dashboard cleanup is skipped.
 	dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)
-	// contentsDeleter removes alert rules and library elements in each folder; nil when not wired
-	// (e.g. MT), in which case that cleanup is skipped.
-	contentsDeleter FolderContentsDeleter
 }
 
 // newCascadeDeleteStorage wraps store, re-exposing the watch/deletecollection interfaces the wrapper
 // would otherwise hide. The wrapped store implements both (MT generic store) or neither
 // (folderStorage), so one check keeps the advertised verbs unchanged.
-func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error), contentsDeleter FolderContentsDeleter) grafanarest.Storage {
-	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient, contentsDeleter: contentsDeleter}
+func newCascadeDeleteStorage(store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, dashboardClient func(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error)) grafanarest.Storage {
+	base := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: dashboardClient}
 	watcher, hasWatch := store.(rest.Watcher)
 	collectionDeleter, hasCollectionDelete := store.(rest.CollectionDeleter)
 	if hasWatch && hasCollectionDelete {
@@ -181,19 +169,6 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, namespace, nam
 	// Remove the dashboards contained directly in this folder before deleting the folder itself.
 	if err := s.deleteDashboardsInFolder(ctx, namespace, name, options); err != nil {
 		return nil, false, err
-	}
-
-	// Then the alert rules and library elements in this folder. Runs in the request path so a
-	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
-	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
-	if s.contentsDeleter != nil && len(options.DryRun) == 0 {
-		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name); err != nil {
-			// Surface a permission failure as 403 rather than a generic 500, so the client sees why.
-			if errors.Is(err, folder.ErrAccessDenied) {
-				return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name, err)
-			}
-			return nil, false, err
-		}
 	}
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
