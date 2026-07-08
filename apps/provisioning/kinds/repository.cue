@@ -132,6 +132,9 @@ repository: {
 					signerEmail?: string
 					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
 					signingMethod?: "gpg" | "ssh" | "smime"
+					// When true, commits are authored by the signer identity
+					// (signerName/signerEmail).
+					signerIsAuthor?: bool
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 					// signingMethod is "smime". This is public, not a secret.
 					smimeCertificate?: string
