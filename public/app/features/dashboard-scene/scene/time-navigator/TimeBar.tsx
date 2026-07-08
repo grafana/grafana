@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type default as uPlot, type AlignedData } from 'uplot';
 
-import { colorManipulator, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type DataFrame, dateTimeFormat, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import {
@@ -10,6 +10,7 @@ import {
   DEFAULT_ANNOTATION_COLOR,
   IconButton,
   Popover,
+  Tooltip,
   UPlotChart,
   UPlotConfigBuilder,
   useStyles2,
@@ -52,6 +53,9 @@ interface OverlayGeom {
   right: number;
   top: number;
   height: number;
+  /** Plot area left offset + width, so annotation markers can be positioned with the same mapping. */
+  overLeft: number;
+  overWidth: number;
 }
 
 // Coordinate helpers — a single, uPlot-timing-independent convention. The x scale is linear in time, so we
@@ -113,6 +117,38 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.primary.shade,
     },
   }),
+  // Small marker at the bottom (axis baseline) — the hover target. Sits below the selection box so
+  // annotations under the selection are still hoverable, and it doesn't block dragging the selection body.
+  annotationMarker: css({
+    position: 'absolute',
+    width: 12,
+    height: 10,
+    marginLeft: -6,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    cursor: 'pointer',
+    zIndex: 12,
+  }),
+  // Upward-pointing triangle (colour set inline per annotation).
+  annotationTriangle: css({
+    width: 0,
+    height: 0,
+    borderLeft: '4px solid transparent',
+    borderRight: '4px solid transparent',
+    borderBottomWidth: 6,
+    borderBottomStyle: 'solid',
+  }),
+  tooltipTime: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    marginBottom: theme.spacing(0.5),
+  }),
+  tooltipTags: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    marginTop: theme.spacing(0.5),
+  }),
 });
 
 export const TimeBar: React.FC<TimeBarProps> = ({
@@ -173,6 +209,8 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       right: clampPx(valToContainerPx(over, sel.to, ctx)),
       top: over.offsetTop,
       height: over.clientHeight,
+      overLeft: over.offsetLeft,
+      overWidth: over.clientWidth,
     });
   }, []);
 
@@ -447,6 +485,50 @@ export const TimeBar: React.FC<TimeBarProps> = ({
     actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
   }, []);
 
+  // Interactive hover targets for annotations: thin transparent strips over each canvas-drawn line, mapped
+  // with the same context->pixel convention as the selection overlay (so they line up with the lines).
+  const annotationMarkers = useMemo(() => {
+    if (!overlay || !annotations?.length) {
+      return [];
+    }
+    const ctx = state.contextWindow;
+    const span = ctx.to - ctx.from || 1;
+    const resolveColor = (name?: string) => {
+      try {
+        return theme.visualization.getColorByName(name ?? DEFAULT_ANNOTATION_COLOR);
+      } catch {
+        return theme.visualization.getColorByName(DEFAULT_ANNOTATION_COLOR);
+      }
+    };
+    const markers: Array<{ x: number; when: string; text: string; tags: string[]; color: string }> = [];
+    for (const frame of annotations) {
+      const times = fieldValues(frame, 'time');
+      if (!times) {
+        continue;
+      }
+      const texts = fieldValues(frame, 'text');
+      const tagsCol = fieldValues(frame, 'tags');
+      const colors = fieldValues(frame, 'color');
+      for (let i = 0; i < times.length; i++) {
+        const at = times[i];
+        if (typeof at !== 'number' || at < ctx.from || at > ctx.to) {
+          continue;
+        }
+        const rawText = texts?.[i];
+        const rawTags = tagsCol?.[i];
+        const rawColor = colors?.[i];
+        markers.push({
+          x: overlay.overLeft + ((at - ctx.from) / span) * overlay.overWidth,
+          when: dateTimeFormat(at),
+          text: typeof rawText === 'string' ? rawText.replace(/<[^>]*>/g, '').trim() : '',
+          tags: Array.isArray(rawTags) ? rawTags.filter((x): x is string => typeof x === 'string') : [],
+          color: resolveColor(typeof rawColor === 'string' ? rawColor : undefined),
+        });
+      }
+    }
+    return markers;
+  }, [annotations, overlay, state.contextWindow, theme]);
+
   const handleHeight = overlay ? overlay.height * 0.6 : 0;
   const handleTop = overlay ? overlay.top + (overlay.height - handleHeight) / 2 : 0;
 
@@ -504,6 +586,24 @@ export const TimeBar: React.FC<TimeBarProps> = ({
 
       <div className={styles.plotArea} style={{ width: chartWidth, height: CHART_HEIGHT }}>
         {chartWidth > 0 && <UPlotChart data={data} width={chartWidth} height={CHART_HEIGHT} config={builder} />}
+        {overlay &&
+          annotationMarkers.map((m, idx) => (
+            <Tooltip
+              key={idx}
+              placement="top"
+              content={
+                <div>
+                  {m.when && <div className={styles.tooltipTime}>{m.when}</div>}
+                  {m.text && <div>{m.text}</div>}
+                  {m.tags.length > 0 && <div className={styles.tooltipTags}>{m.tags.join(', ')}</div>}
+                </div>
+              }
+            >
+              <div className={styles.annotationMarker} style={{ left: m.x, top: overlay.top + overlay.height - 1 }}>
+                <span className={styles.annotationTriangle} style={{ borderBottomColor: m.color }} />
+              </div>
+            </Tooltip>
+          ))}
         {overlay && (
           <>
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- mouse-only supplementary control; the time picker is the accessible path */}
