@@ -1108,6 +1108,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
 				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
+			}
+
 			var authorResolver jobs.AuthorResolver
 			if b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningUserAttribution) {
 				authorResolver = jobs.NewLegacyUserAuthorResolver(b.userSvc)
