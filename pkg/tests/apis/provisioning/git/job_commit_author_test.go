@@ -5,33 +5,62 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func TestIntegrationGit_ExportJob_CommitAuthor(t *testing.T) {
+func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 	helper := sharedGitHelper(t)
 	ctx := t.Context()
 
-	const repoName = "export-commit-author"
+	const (
+		repoName = "job-commit-author"
+		dashUID  = "job-author-dash"
+		dashFn   = "dashboard.json"
+	)
 
-	dash := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-	_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_ = helper.DashboardsV1.Resource.Delete(ctx, dash.GetName(), metav1.DeleteOptions{})
+	_, local := helper.CreateExportGitRepo(t, repoName, map[string][]byte{
+		dashFn: common.DashboardJSON(dashUID, "Dashboard to delete", 1),
 	})
+	helper.SyncAndWait(t, repoName)
 
-	_, local := helper.CreateGitRepo(t, repoName, nil)
-
-	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action:  provisioning.JobActionPush,
-		Message: "Export dashboards via JobSpec",
-		Push:    &provisioning.ExportJobOptions{},
+	user := helper.CreateUser("job-author-user", "Org1", org.RoleEditor, nil)
+	helper.SetPermissions(user, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+			Resource:          "dashboards",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
 	})
+	userREST := user.RESTClient(t, &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"})
 
-	admin := helper.Org1.Admin
-	expected := fmt.Sprintf("%s <%s>", admin.Identity.GetName(), admin.Identity.GetEmail())
-	require.Equal(t, expected, common.LatestCommitAuthor(t, local, "main"))
+	result := userREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("jobs").
+		Body(common.AsJSON(provisioning.JobSpec{
+			Action:  provisioning.JobActionDelete,
+			Message: "Delete dashboard via JobSpec",
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{dashFn},
+			},
+		})).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	obj, err := result.Get()
+	require.NoError(t, err, "should trigger delete job")
+	unstruct, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok)
+	helper.AwaitJob(t, ctx, unstruct)
+
+	name, email := user.Identity.GetName(), user.Identity.GetEmail()
+	require.NotEmpty(t, name)
+	require.NotEmpty(t, email)
+	require.Equal(t, fmt.Sprintf("%s <%s>", name, email), common.LatestCommitAuthor(t, local, "main"))
 }

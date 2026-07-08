@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
@@ -15,7 +17,10 @@ func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 	repoName := "commit-author"
 	_, local := helper.CreateGitRepo(t, repoName, nil, "write")
 
-	result := helper.EditorREST.Post().
+	user := helper.CreateUser("commit-author-user", "Org1", org.RoleEditor, nil)
+	userREST := user.RESTClient(t, &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"})
+
+	result := userREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repoName).
@@ -26,8 +31,7 @@ func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error(), "should create file")
 
-	editor := helper.Org1.Editor
-	name, email := editor.Identity.GetName(), editor.Identity.GetEmail()
+	name, email := user.Identity.GetName(), user.Identity.GetEmail()
 	require.NotEmpty(t, name)
 	require.NotEmpty(t, email)
 	require.Equal(t, fmt.Sprintf("%s <%s>", name, email), common.LatestCommitAuthor(t, local, "main"))
