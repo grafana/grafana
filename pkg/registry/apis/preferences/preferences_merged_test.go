@@ -56,6 +56,62 @@ func TestMergePreferences(t *testing.T) {
 				WeekStart:        new("settings.ini"),
 			},
 		},
+		{
+			name: "home dashboard preference suppresses homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("my-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("my-dash"),
+			},
+		},
+		{
+			name: "empty home dashboard UID keeps homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(""),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new(""),
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "no items keeps both homeURL and custom home dashboard",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("default-home-dashboard"),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("default-home-dashboard"),
+			},
+		},
+		{
+			name: "user without home dashboard still gets homeURL default",
+			defaults: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					Theme: new("dark"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				Theme:   new("dark"),
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
