@@ -65,6 +65,7 @@ const (
 	TestDataQueryTypeManualEntry                  TestDataQueryType = "manual_entry"
 	TestDataQueryTypeNoDataPoints                 TestDataQueryType = "no_data_points"
 	TestDataQueryTypeNodeGraph                    TestDataQueryType = "node_graph"
+	TestDataQueryTypePredictableAnnotations       TestDataQueryType = "predictable_annotations"
 	TestDataQueryTypePredictableCsvWave           TestDataQueryType = "predictable_csv_wave"
 	TestDataQueryTypePredictablePulse             TestDataQueryType = "predictable_pulse"
 	TestDataQueryTypeQueryMeta                    TestDataQueryType = "query_meta"
@@ -117,11 +118,28 @@ type TestDataQuery struct {
 	SpanCount       int         `json:"spanCount,omitempty"`
 	ErrorSource     ErrorSource `json:"errorSource,omitempty"`
 
-	Nodes     *NodesQuery      `json:"nodes,omitempty"`
-	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`
-	Sim       *SimulationQuery `json:"sim,omitempty"`
-	Stream    *StreamingQuery  `json:"stream,omitempty"`
-	Usa       *USAQuery        `json:"usa,omitempty"`
+	Nodes                  *NodesQuery                  `json:"nodes,omitempty"`
+	PredictableAnnotations *PredictableAnnotationsQuery `json:"predictableAnnotations,omitempty"`
+	PulseWave              *PulseWaveQuery              `json:"pulseWave,omitempty"`
+	Sim                    *SimulationQuery             `json:"sim,omitempty"`
+	Stream                 *StreamingQuery              `json:"stream,omitempty"`
+	Usa                    *USAQuery                    `json:"usa,omitempty"`
+}
+
+// PredictableAnnotationsQuery defines model for PredictableAnnotationsQuery.
+type PredictableAnnotationsQuery struct {
+	// How often a point-in-time event annotation occurs, as a Go duration string (e.g. "1h", "10m").
+	EventFrequency string `json:"eventFrequency,omitempty"`
+
+	// How often an incident (region) annotation starts, as a Go duration string (e.g. "6h").
+	IncidentFrequency string `json:"incidentFrequency,omitempty"`
+
+	// How long each incident lasts, as a Go duration string (e.g. "20m").
+	IncidentDuration string `json:"incidentDuration,omitempty"`
+
+	// Seed used to deterministically pick each annotation's text and tags. The same
+	// seed always produces the same annotations, independent of the selected time range.
+	Seed int64 `json:"seed,omitempty"`
 }
 
 // CSVWave defines model for CSVWave.

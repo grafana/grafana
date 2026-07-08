@@ -188,7 +188,7 @@
       {
         "metadata": {
           "name": "default",
-          "resourceVersion": "1776878010416",
+          "resourceVersion": "1783529158521",
           "creationTimestamp": "2026-04-22T17:13:30Z"
         },
         "spec": {
@@ -253,6 +253,28 @@
               },
               "noise": { "type": "number" },
               "points": { "items": { "type": "array" }, "type": "array" },
+              "predictableAnnotations": {
+                "additionalProperties": false,
+                "properties": {
+                  "eventFrequency": {
+                    "description": "How often a point-in-time event annotation occurs, as a Go duration string (e.g. \"1h\", \"10m\").",
+                    "type": "string"
+                  },
+                  "incidentDuration": {
+                    "description": "How long each incident lasts, as a Go duration string (e.g. \"20m\").",
+                    "type": "string"
+                  },
+                  "incidentFrequency": {
+                    "description": "How often an incident (region) annotation starts, as a Go duration string (e.g. \"6h\").",
+                    "type": "string"
+                  },
+                  "seed": {
+                    "description": "Seed used to deterministically pick each annotation's text and tags. The same\nseed always produces the same annotations, independent of the selected time range.",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
               "pulseWave": {
                 "additionalProperties": false,
                 "properties": {
@@ -266,7 +288,7 @@
               },
               "rawFrameContent": { "type": "string" },
               "scenarioId": {
-                "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"query_meta\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+                "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"error_with_source\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_annotations\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"query_meta\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"steps\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
                 "enum": [
                   "annotations",
                   "arrow",
@@ -284,6 +306,7 @@
                   "manual_entry",
                   "no_data_points",
                   "node_graph",
+                  "predictable_annotations",
                   "predictable_csv_wave",
                   "predictable_pulse",
                   "query_meta",

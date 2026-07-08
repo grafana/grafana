@@ -9,6 +9,7 @@ import (
 	"hash/fnv"
 	"math"
 	"math/rand"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -65,6 +66,22 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      kinds.TestDataQueryTypePredictableCsvWave,
 		Name:    "Predictable CSV Wave",
 		handler: s.handlePredictableCSVWaveScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypePredictableAnnotations,
+		Name:    "Predictable Annotations",
+		handler: s.handlePredictableAnnotationsScenario,
+		Description: `Predictable Annotations returns annotations generated on the backend.
+Unlike the client-side "Annotations" scenario (which spreads a fixed count across whatever time range is selected),
+these are anchored to absolute time (from the epoch) so a given annotation always occurs at the same instant.
+Panning or zooming the time range only changes which annotations fall inside it, not the annotations themselves.
+
+Two kinds are produced:
+  - events:    point-in-time annotations, one every eventFrequency.
+  - incidents: region annotations lasting incidentDuration, one starting every incidentFrequency.
+
+Each annotation's text and tags are chosen deterministically from the seed, so the same seed always yields the same content.`,
 	})
 
 	s.registerScenario(&Scenario{
@@ -513,6 +530,28 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 		if err != nil {
 			continue
 		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (s *Service) handlePredictableAnnotationsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		frame, err := predictableAnnotations(q, model)
+		if err != nil {
+			return nil, err
+		}
+
+		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
@@ -1135,6 +1174,181 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 	setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 
 	return frame, nil
+}
+
+// Default annotation cadence, used when the query leaves a value unset.
+const (
+	defaultAnnotationEventFrequency    = time.Hour
+	defaultAnnotationIncidentFrequency = 6 * time.Hour
+	defaultAnnotationIncidentDuration  = 10 * time.Minute
+	// maxAnnotations caps the response so a huge range with a tiny frequency
+	// can't generate an unbounded number of rows.
+	maxAnnotations = 10000
+)
+
+var (
+	annotationEventTexts = []string{
+		"Deployment completed",
+		"Config reloaded",
+		"Cache flushed",
+		"Autoscaler scaled up",
+		"Feature flag toggled",
+		"Backup finished",
+		"Certificate rotated",
+	}
+	annotationIncidentTexts = []string{
+		"High request latency",
+		"Elevated error rate",
+		"Service degradation",
+		"Database saturation",
+		"Upstream provider outage",
+	}
+	annotationIncidentSeverities = []string{"critical", "warning", "minor"}
+	annotationTagPool            = []string{"server", "database", "network", "deploy", "cache", "cpu", "memory", "disk", "api"}
+)
+
+// annotationRow is one generated annotation before it is split into frame fields.
+type annotationRow struct {
+	time    time.Time
+	timeEnd *time.Time // nil for point-in-time events, set for incident regions
+	text    string
+	tags    string // comma-separated; the annotation mapper splits this into a tag list
+}
+
+// annotationHash deterministically maps (seed, kind, index) to a value so that a
+// given annotation always renders with the same text and tags regardless of the
+// selected time range.
+func annotationHash(seed int64, kind string, index int64) uint64 {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(fmt.Sprintf("%d|%s|%d", seed, kind, index)))
+	return h.Sum64()
+}
+
+// annotationDuration parses a Go duration string, falling back to def when empty.
+func annotationDuration(s string, def time.Duration) (time.Duration, error) {
+	if strings.TrimSpace(s) == "" {
+		return def, nil
+	}
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, err
+	}
+	return d, nil
+}
+
+// predictableAnnotations builds a single annotations data frame. Events and incidents
+// are anchored to absolute time (the epoch), so the same annotation always occurs at
+// the same instant; the time range only controls which ones are returned.
+func predictableAnnotations(query backend.DataQuery, model kinds.TestDataQuery) (*data.Frame, error) {
+	opts := model.PredictableAnnotations
+	if opts == nil {
+		opts = &kinds.PredictableAnnotationsQuery{}
+	}
+
+	eventFreq, err := annotationDuration(opts.EventFrequency, defaultAnnotationEventFrequency)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse eventFrequency '%s': %w", opts.EventFrequency, err)
+	}
+	incidentFreq, err := annotationDuration(opts.IncidentFrequency, defaultAnnotationIncidentFrequency)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse incidentFrequency '%s': %w", opts.IncidentFrequency, err)
+	}
+	incidentDur, err := annotationDuration(opts.IncidentDuration, defaultAnnotationIncidentDuration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse incidentDuration '%s': %w", opts.IncidentDuration, err)
+	}
+	if incidentDur < 0 {
+		return nil, fmt.Errorf("incidentDuration must not be negative")
+	}
+
+	from := query.TimeRange.From.UnixMilli()
+	to := query.TimeRange.To.UnixMilli()
+	seed := opts.Seed
+
+	rows := make([]annotationRow, 0)
+
+	// Events: a point annotation every eventFreq, aligned to the epoch.
+	if eventFreqMs := eventFreq.Milliseconds(); eventFreqMs > 0 {
+		for n := ceilDiv(from, eventFreqMs); ; n++ {
+			t := n * eventFreqMs
+			if t > to || len(rows) >= maxAnnotations {
+				break
+			}
+			h := annotationHash(seed, "event", n)
+			text := annotationEventTexts[h%uint64(len(annotationEventTexts))]
+			tag := annotationTagPool[(h>>8)%uint64(len(annotationTagPool))]
+			rows = append(rows, annotationRow{
+				time: time.UnixMilli(t),
+				text: text,
+				tags: "event," + tag,
+			})
+		}
+	}
+
+	// Incidents: a region annotation lasting incidentDur, starting every incidentFreq,
+	// aligned to the epoch. Included when the region overlaps the requested range.
+	if incidentFreqMs := incidentFreq.Milliseconds(); incidentFreqMs > 0 {
+		durMs := incidentDur.Milliseconds()
+		nStart := ceilDiv(from-durMs, incidentFreqMs)
+		if nStart < 0 {
+			nStart = 0
+		}
+		for n := nStart; ; n++ {
+			start := n * incidentFreqMs
+			if start > to || len(rows) >= maxAnnotations {
+				break
+			}
+			end := start + durMs
+			if end < from {
+				continue
+			}
+			h := annotationHash(seed, "incident", n)
+			text := annotationIncidentTexts[h%uint64(len(annotationIncidentTexts))]
+			severity := annotationIncidentSeverities[(h>>8)%uint64(len(annotationIncidentSeverities))]
+			tag := annotationTagPool[(h>>16)%uint64(len(annotationTagPool))]
+			endT := time.UnixMilli(end)
+			rows = append(rows, annotationRow{
+				time:    time.UnixMilli(start),
+				timeEnd: &endT,
+				text:    text,
+				tags:    "incident," + severity + "," + tag,
+			})
+		}
+	}
+
+	sort.SliceStable(rows, func(i, j int) bool {
+		return rows[i].time.Before(rows[j].time)
+	})
+
+	times := make([]time.Time, len(rows))
+	timeEnds := make([]*time.Time, len(rows))
+	texts := make([]string, len(rows))
+	tags := make([]string, len(rows))
+	for i, r := range rows {
+		times[i] = r.time
+		timeEnds[i] = r.timeEnd
+		texts[i] = r.text
+		tags[i] = r.tags
+	}
+
+	frame := data.NewFrame("annotations",
+		data.NewField("time", nil, times),
+		data.NewField("timeEnd", nil, timeEnds),
+		data.NewField("text", nil, texts),
+		data.NewField("tags", nil, tags),
+	)
+	frame.SetMeta(&data.FrameMeta{DataTopic: data.DataTopicAnnotations})
+
+	return frame, nil
+}
+
+// ceilDiv returns ceil(a/b) for b > 0, handling negative a correctly.
+func ceilDiv(a, b int64) int64 {
+	q := a / b
+	if a%b > 0 {
+		q++
+	}
+	return q
 }
 
 func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {

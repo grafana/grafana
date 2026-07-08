@@ -177,6 +177,154 @@ func TestTestdataScenarios(t *testing.T) {
 	})
 }
 
+func TestPredictableAnnotationsScenario(t *testing.T) {
+	// A UTC midnight is an exact multiple of 1h and 6h from the epoch, which makes
+	// the anchored event/incident counts easy to reason about.
+	base := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	annotationsFor := func(t *testing.T, from, to time.Time, model kinds.PredictableAnnotationsQuery) *data.Frame {
+		t.Helper()
+		frame, err := predictableAnnotations(backend.DataQuery{
+			RefID:     "Anno",
+			TimeRange: backend.TimeRange{From: from, To: to},
+		}, kinds.TestDataQuery{PredictableAnnotations: &model})
+		require.NoError(t, err)
+		require.NotNil(t, frame)
+		return frame
+	}
+
+	field := func(t *testing.T, frame *data.Frame, name string) *data.Field {
+		t.Helper()
+		for _, f := range frame.Fields {
+			if f.Name == name {
+				return f
+			}
+		}
+		t.Fatalf("field %q not found in frame", name)
+		return nil
+	}
+
+	t.Run("returns an annotations frame with the expected shape", func(t *testing.T) {
+		frame := annotationsFor(t, base, base.Add(5*time.Hour), kinds.PredictableAnnotationsQuery{
+			EventFrequency:    "1h",
+			IncidentFrequency: "6h",
+			IncidentDuration:  "30m",
+			Seed:              42,
+		})
+
+		require.NotNil(t, frame.Meta)
+		require.Equal(t, data.DataTopicAnnotations, frame.Meta.DataTopic)
+		for _, name := range []string{"time", "timeEnd", "text", "tags"} {
+			require.NotNil(t, field(t, frame, name))
+		}
+
+		timeField := field(t, frame, "time")
+		timeEndField := field(t, frame, "timeEnd")
+		var events, incidents int
+		for i := 0; i < timeField.Len(); i++ {
+			ts := timeField.At(i).(time.Time)
+			require.False(t, ts.Before(base), "annotation before range start")
+			require.False(t, ts.After(base.Add(5*time.Hour)), "annotation after range end")
+
+			end := timeEndField.At(i).(*time.Time)
+			if end == nil {
+				events++
+			} else {
+				incidents++
+				require.Equal(t, 30*time.Minute, end.Sub(ts), "incident duration should match incidentDuration")
+			}
+		}
+
+		// Events at +0h..+5h (6), one incident starting at the range start (aligned to 6h).
+		require.Equal(t, 6, events)
+		require.Equal(t, 1, incidents)
+	})
+
+	t.Run("is stable across time ranges - overlapping annotations are identical", func(t *testing.T) {
+		model := kinds.PredictableAnnotationsQuery{EventFrequency: "1h", IncidentFrequency: "6h", IncidentDuration: "30m", Seed: 7}
+
+		collect := func(frame *data.Frame) map[int64][2]string {
+			out := map[int64][2]string{}
+			timeField := field(t, frame, "time")
+			textField := field(t, frame, "text")
+			tagsField := field(t, frame, "tags")
+			for i := 0; i < timeField.Len(); i++ {
+				ts := timeField.At(i).(time.Time).UnixMilli()
+				out[ts] = [2]string{textField.At(i).(string), tagsField.At(i).(string)}
+			}
+			return out
+		}
+
+		rangeA := collect(annotationsFor(t, base, base.Add(5*time.Hour), model))
+		// A different, shifted range.
+		rangeB := collect(annotationsFor(t, base.Add(2*time.Hour), base.Add(10*time.Hour), model))
+
+		overlaps := 0
+		for ts, a := range rangeA {
+			if b, ok := rangeB[ts]; ok {
+				overlaps++
+				require.Equal(t, a, b, "annotation at %d changed between time ranges", ts)
+			}
+		}
+		require.Greater(t, overlaps, 0, "expected some annotations to appear in both ranges")
+	})
+
+	t.Run("same seed is deterministic, different seed changes content", func(t *testing.T) {
+		from, to := base, base.Add(6*time.Hour)
+		textsFor := func(seed int64) []string {
+			frame := annotationsFor(t, from, to, kinds.PredictableAnnotationsQuery{EventFrequency: "1h", Seed: seed})
+			textField := field(t, frame, "text")
+			tagsField := field(t, frame, "tags")
+			out := make([]string, textField.Len())
+			for i := range out {
+				out[i] = textField.At(i).(string) + "|" + tagsField.At(i).(string)
+			}
+			return out
+		}
+
+		require.Equal(t, textsFor(1), textsFor(1), "same seed should produce identical annotations")
+		require.NotEqual(t, textsFor(1), textsFor(2), "different seeds should produce different annotations")
+	})
+
+	t.Run("defaults are used when durations are omitted", func(t *testing.T) {
+		frame := annotationsFor(t, base, base.Add(24*time.Hour), kinds.PredictableAnnotationsQuery{Seed: 1})
+		// Default event frequency is 1h -> 25 events across a 24h range (inclusive of both ends).
+		timeEndField := field(t, frame, "timeEnd")
+		var events int
+		for i := 0; i < timeEndField.Len(); i++ {
+			if timeEndField.At(i).(*time.Time) == nil {
+				events++
+			}
+		}
+		require.Equal(t, 25, events)
+	})
+
+	t.Run("invalid duration returns an error", func(t *testing.T) {
+		_, err := predictableAnnotations(backend.DataQuery{
+			TimeRange: backend.TimeRange{From: base, To: base.Add(time.Hour)},
+		}, kinds.TestDataQuery{PredictableAnnotations: &kinds.PredictableAnnotationsQuery{EventFrequency: "not-a-duration"}})
+		require.Error(t, err)
+	})
+
+	t.Run("handler wires the scenario end to end", func(t *testing.T) {
+		s := &Service{}
+		query := backend.DataQuery{
+			RefID:     "Anno",
+			TimeRange: backend.TimeRange{From: base, To: base.Add(3 * time.Hour)},
+			JSON:      []byte(`{"scenarioId":"predictable_annotations","predictableAnnotations":{"eventFrequency":"1h","seed":3}}`),
+		}
+		resp, err := s.handlePredictableAnnotationsScenario(context.Background(), &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{query},
+		})
+		require.NoError(t, err)
+		dResp, ok := resp.Responses["Anno"]
+		require.True(t, ok)
+		require.NoError(t, dResp.Error)
+		require.Len(t, dResp.Frames, 1)
+		require.Equal(t, data.DataTopicAnnotations, dResp.Frames[0].Meta.DataTopic)
+	})
+}
+
 func TestParseLabels(t *testing.T) {
 	expectedTags := data.Labels{
 		"job":      "foo",
