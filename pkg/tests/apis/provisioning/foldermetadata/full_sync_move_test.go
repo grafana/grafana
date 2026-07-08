@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1058,7 +1057,7 @@ func findFolderUIDBySourcePath(t *testing.T, helper *common.ProvisioningTestHelp
 			}
 		}
 		c.Errorf("no folder managed by %q with sourcePath %q found", repoName, sourcePath)
-	}, 30*time.Second, 100*time.Millisecond,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"expected folder with sourcePath %q for repo %q", sourcePath, repoName)
 	return uid
 }
@@ -1088,7 +1087,7 @@ func requireDashboardParents(t *testing.T, helper *common.ProvisioningTestHelper
 			}
 			assert.Equal(c, expectedParent, actualParent, "dashboard %q parent folder", sourcePath)
 		}
-	}, 30*time.Second, 100*time.Millisecond,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"expected dashboards with correct parents for repo %q", repoName)
 }
 
@@ -1109,7 +1108,7 @@ func assertNoFolderAtPath(t *testing.T, helper *common.ProvisioningTestHelper, r
 				return
 			}
 		}
-	}, 30*time.Second, 100*time.Millisecond,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"folder at path %q should be absent for repo %q", sourcePath, repoName)
 }
 
@@ -1123,7 +1122,7 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 		}
 		assert.True(c, apierrors.IsNotFound(err),
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
-	}, 30*time.Second, 100*time.Millisecond,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"folder %q should be deleted", folderUID)
 }
 
@@ -1142,7 +1141,7 @@ func requireFolderSourcePathCount(t *testing.T, helper *common.ProvisioningTestH
 			}
 		}
 		assert.Equal(c, expected, count, "folder count for sourcePath %q", sourcePath)
-	}, 30*time.Second, 100*time.Millisecond,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"expected %d folders with sourcePath %q for repo %q", expected, sourcePath, repoName)
 }
 
