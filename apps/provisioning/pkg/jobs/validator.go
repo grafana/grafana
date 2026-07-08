@@ -353,6 +353,7 @@ func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provi
 		if old.Annotations[AnnoTriggeredBy] != name || old.Annotations[AnnoTriggeredByEmail] != email {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoTriggeredBy))
 		}
+	case admission.Delete, admission.Connect:
 	}
 
 	return nil
