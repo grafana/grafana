@@ -179,6 +179,7 @@ export interface HistogramFields {
   xMin: Field;
   xMax: Field;
   counts: Field[]; // frequency
+  bucketSize?: number; // we may calculate a bucketsize if the option is "Auto", pass the results forward
 }
 
 /**
@@ -550,6 +551,7 @@ export function buildHistogram(
     xMin,
     xMax,
     counts,
+    bucketSize,
   };
 }
 
