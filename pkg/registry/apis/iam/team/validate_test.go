@@ -476,9 +476,10 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, client.lastReq)
-		// Limit must be > 0: a count-only (Limit==0) request returns hits without
-		// rows on the unified path, which defeats the self-match exclusion.
-		assert.Greater(t, client.lastReq.Limit, int64(0))
+		// Pinned to the constant: the fake returns all rows regardless of limit,
+		// so a shrunken page (breaking the self-match exclusion against a real
+		// backend) would otherwise go unnoticed here.
+		assert.Equal(t, int64(titleUniqueSearchLimit), client.lastReq.Limit)
 		require.NotNil(t, client.lastReq.Options)
 		require.NotNil(t, client.lastReq.Options.Key)
 		assert.Equal(t, "stacks-1", client.lastReq.Options.Key.Namespace)
