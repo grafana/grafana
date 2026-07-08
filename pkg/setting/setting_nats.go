@@ -183,6 +183,7 @@ func (a NATSAuthSettings) validate(enabled bool) error {
 		return nil
 	}
 	switch a.Mode {
+	case NATSAuthModeNone:
 	case NATSAuthModeToken:
 		if a.Token == "" {
 			return fmt.Errorf("nats auth_mode %q requires token", NATSAuthModeToken)
