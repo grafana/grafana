@@ -24,7 +24,7 @@ import {
   panRange,
 } from './timeModel';
 
-export type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
+type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
 
 export interface TimebarState {
   interaction: Interaction;
@@ -68,7 +68,7 @@ function containSelection(context: TimeRangeMs, selection: TimeRangeMs): TimeRan
   return { from, to };
 }
 
-export function reducer(state: TimebarState, action: Action): TimebarState {
+function reducer(state: TimebarState, action: Action): TimebarState {
   switch (action.type) {
     case 'beginGesture':
       return { ...state, interaction: action.interaction };

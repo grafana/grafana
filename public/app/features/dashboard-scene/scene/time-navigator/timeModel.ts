@@ -15,15 +15,15 @@ export interface TimeRangeMs {
 /** Context window span = selection span * this factor (was the magic `* 8`). */
 export const CONTEXT_ZOOM_FACTOR = 8;
 /** Never allow a range narrower than this; prevents zero/negative spans and divide-by-zero. */
-export const MIN_SPAN_MS = 1000;
+const MIN_SPAN_MS = 1000;
 /** A wheel step scales the span by this (up) or its reciprocal (down). Was `zoomBase = 0.8`. */
 export const WHEEL_ZOOM_BASE = 0.8;
 /** Pan buttons move the window by this fraction of its span. */
-export const PAN_STEP_FRACTION = 0.25;
+const PAN_STEP_FRACTION = 0.25;
 /** Ranges within this many ms of each other are treated as equal (dashboard echo detection). */
-export const DASHBOARD_SYNC_TOLERANCE_MS = 1000;
+const DASHBOARD_SYNC_TOLERANCE_MS = 1000;
 
-export function spanOf(r: TimeRangeMs): number {
+function spanOf(r: TimeRangeMs): number {
   return r.to - r.from;
 }
 
@@ -87,37 +87,10 @@ export function computeContextWindow(selection: TimeRangeMs, now: number, factor
   return { from, to };
 }
 
-/** Zoom a range about its midpoint. `factor > 1` zooms out, `factor < 1` zooms in. */
-export function zoomRange(range: TimeRangeMs, factor: number): TimeRangeMs {
-  const mid = midOf(range);
-  const half = (spanOf(range) * factor) / 2;
-  return { from: mid - half, to: mid + half };
-}
-
 /** Shift a range left or right by `fraction` of its span. */
 export function panRange(range: TimeRangeMs, direction: 'left' | 'right', fraction = PAN_STEP_FRACTION): TimeRangeMs {
   const delta = spanOf(range) * fraction * (direction === 'left' ? -1 : 1);
   return { from: range.from + delta, to: range.to + delta };
-}
-
-/**
- * Zoom a range on a mouse wheel event while keeping the value under the cursor (`cursorVal`) fixed.
- * `deltaY < 0` (wheel up) zooms in.
- */
-export function wheelZoomRange(
-  range: TimeRangeMs,
-  cursorVal: number,
-  deltaY: number,
-  base = WHEEL_ZOOM_BASE
-): TimeRangeMs {
-  const span = spanOf(range);
-  if (span <= 0) {
-    return range;
-  }
-  const factor = deltaY < 0 ? base : 1 / base;
-  const newSpan = span * factor;
-  const from = cursorVal - ((cursorVal - range.from) / span) * newSpan;
-  return { from, to: from + newSpan };
 }
 
 /**
@@ -129,15 +102,4 @@ export function extendedContext(base: TimeRangeMs, extraMs: number, now: number)
     from: base.from - extraMs,
     to: Math.min(base.to + extraMs, now),
   };
-}
-
-const RELATIVE_TOKEN_RE = /^now-(\d+[smhdw])$/;
-
-/** Extract the duration token from a relative "now-<n><unit>" string, or null. e.g. "now-2d" -> "2d". */
-export function parseRelativeToken(rawFrom: unknown): string | null {
-  if (typeof rawFrom !== 'string') {
-    return null;
-  }
-  const m = rawFrom.match(RELATIVE_TOKEN_RE);
-  return m ? m[1] : null;
 }

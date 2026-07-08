@@ -4,8 +4,6 @@
  */
 import { parseDuration, durationToMilliseconds } from '@grafana/data';
 
-import { type TimeRangeMs } from './timeModel';
-
 /**
  * Parse a Grafana duration string (e.g. "12h", "2d", "1h 30m") to milliseconds, or null if invalid.
  * Zero (e.g. "0h") is a valid duration and returns 0 — used by the "Same as timepicker" preset.
@@ -28,16 +26,4 @@ export function durationToMs(duration: string): number | null {
   } catch {
     return null;
   }
-}
-
-/**
- * The absolute selection implied by a relative duration ending at `dashboardTo`
- * (e.g. duration "6h" -> [dashboardTo - 6h, dashboardTo]). Null if the duration is invalid or zero.
- */
-export function selectionFromRelativeDuration(dashboardTo: number, duration: string): TimeRangeMs | null {
-  const ms = durationToMs(duration);
-  if (ms == null || ms <= 0) {
-    return null;
-  }
-  return { from: dashboardTo - ms, to: dashboardTo };
 }
