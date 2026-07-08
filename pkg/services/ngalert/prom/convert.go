@@ -82,8 +82,13 @@ type RulesConfig struct {
 	IsPaused bool
 }
 
+// DefaultFromTimeRange is the default relative-time-range `from` distance
+// applied to the query node when the converter config does not specify one.
+// Shared between the legacy and k8s converters to keep them in sync.
+const DefaultFromTimeRange = 600 * time.Second
+
 var (
-	defaultTimeRange        = 600 * time.Second
+	defaultTimeRange        = DefaultFromTimeRange
 	defaultEvaluationOffset = 0 * time.Minute
 
 	defaultConfig = Config{

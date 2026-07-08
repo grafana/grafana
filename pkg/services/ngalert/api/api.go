@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -87,6 +88,7 @@ type API struct {
 	AppUrl                *url.URL
 	UserService           user.Service
 	SilenceLimitsProvider notifier.LimitsProvider
+	ClientGenerator       resource.ClientGenerator
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -110,6 +112,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.FeatureManager,
 		api.MultiOrgAlertmanager,
 		accesscontrol.NewAlertmanagerImportsAccess(api.AccessControl),
+		api.ClientGenerator,
 	)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.

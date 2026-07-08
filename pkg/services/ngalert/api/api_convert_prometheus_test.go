@@ -10,10 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1817,7 +1821,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, nil)
 
 	return srv, dsCache, ruleStore
 }
@@ -2509,4 +2513,184 @@ func TestRouteConvertPrometheusDeleteAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, response.Status())
 		mockAM.AssertExpectations(t)
 	})
+}
+
+// fakeK8sObject is a minimal k8sResource implementation for testing upsertResource.
+type fakeK8sObject struct {
+	name            string
+	namespace       string
+	resourceVersion string
+}
+
+func (f *fakeK8sObject) GetName() string              { return f.name }
+func (f *fakeK8sObject) GetNamespace() string         { return f.namespace }
+func (f *fakeK8sObject) GetResourceVersion() string   { return f.resourceVersion }
+func (f *fakeK8sObject) SetResourceVersion(rv string) { f.resourceVersion = rv }
+func (f *fakeK8sObject) GetObjectKind() schema.ObjectKind {
+	return schema.EmptyObjectKind
+}
+
+var fakeGR = schema.GroupResource{Group: "test", Resource: "fakes"}
+
+// fakeK8sClient is a test double for k8sClient[*fakeK8sObject] that stores
+// objects in memory and supports injecting errors via function fields.
+type fakeK8sClient struct {
+	store      map[string]*fakeK8sObject
+	getFunc    func(context.Context, resource.Identifier) (*fakeK8sObject, error)
+	createFunc func(context.Context, *fakeK8sObject, resource.CreateOptions) (*fakeK8sObject, error)
+	updateFunc func(context.Context, *fakeK8sObject, resource.UpdateOptions) (*fakeK8sObject, error)
+}
+
+func newFakeK8sClient() *fakeK8sClient {
+	c := &fakeK8sClient{store: make(map[string]*fakeK8sObject)}
+	// Default implementations.
+	c.getFunc = c.defaultGet
+	c.createFunc = c.defaultCreate
+	c.updateFunc = c.defaultUpdate
+	return c
+}
+
+func storeKey(ns, name string) string { return ns + "/" + name }
+
+func (f *fakeK8sClient) Get(ctx context.Context, id resource.Identifier) (*fakeK8sObject, error) {
+	return f.getFunc(ctx, id)
+}
+
+func (f *fakeK8sClient) Create(ctx context.Context, obj *fakeK8sObject, opts resource.CreateOptions) (*fakeK8sObject, error) {
+	return f.createFunc(ctx, obj, opts)
+}
+
+func (f *fakeK8sClient) Update(ctx context.Context, obj *fakeK8sObject, opts resource.UpdateOptions) (*fakeK8sObject, error) {
+	return f.updateFunc(ctx, obj, opts)
+}
+
+func (f *fakeK8sClient) defaultGet(_ context.Context, id resource.Identifier) (*fakeK8sObject, error) {
+	obj, ok := f.store[storeKey(id.Namespace, id.Name)]
+	if !ok {
+		return nil, apierrors.NewNotFound(fakeGR, id.Name)
+	}
+	cp := *obj
+	return &cp, nil
+}
+
+func (f *fakeK8sClient) defaultCreate(_ context.Context, obj *fakeK8sObject, _ resource.CreateOptions) (*fakeK8sObject, error) {
+	k := storeKey(obj.GetNamespace(), obj.GetName())
+	if _, exists := f.store[k]; exists {
+		return nil, apierrors.NewAlreadyExists(fakeGR, obj.GetName())
+	}
+	stored := *obj
+	stored.resourceVersion = "1"
+	f.store[k] = &stored
+	return &stored, nil
+}
+
+func (f *fakeK8sClient) defaultUpdate(_ context.Context, obj *fakeK8sObject, _ resource.UpdateOptions) (*fakeK8sObject, error) {
+	k := storeKey(obj.GetNamespace(), obj.GetName())
+	existing, ok := f.store[k]
+	if !ok {
+		return nil, apierrors.NewNotFound(fakeGR, obj.GetName())
+	}
+	if obj.GetResourceVersion() != existing.GetResourceVersion() {
+		return nil, apierrors.NewConflict(fakeGR, obj.GetName(), errors.New("resource version mismatch"))
+	}
+	stored := *obj
+	stored.resourceVersion = existing.resourceVersion + "u"
+	f.store[k] = &stored
+	return &stored, nil
+}
+
+func TestUpsertResource_CreatesWhenNotFound(t *testing.T) {
+	c := newFakeK8sClient()
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default"}
+
+	err := upsertResource(context.Background(), c, obj)
+	require.NoError(t, err)
+
+	stored, ok := c.store["default/rule-1"]
+	require.True(t, ok)
+	require.Equal(t, "1", stored.resourceVersion)
+}
+
+func TestUpsertResource_UpdatesWhenExists(t *testing.T) {
+	c := newFakeK8sClient()
+	c.store["default/rule-1"] = &fakeK8sObject{name: "rule-1", namespace: "default", resourceVersion: "42"}
+
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default"}
+	err := upsertResource(context.Background(), c, obj)
+	require.NoError(t, err)
+
+	stored := c.store["default/rule-1"]
+	require.Equal(t, "42u", stored.resourceVersion, "update should bump the version")
+}
+
+func TestUpsertResource_RetriesOnConflict(t *testing.T) {
+	c := newFakeK8sClient()
+	c.store["default/rule-1"] = &fakeK8sObject{name: "rule-1", namespace: "default", resourceVersion: "1"}
+	// First Update fails with conflict, second succeeds (default impl uses fresh RV).
+	calls := 0
+	c.updateFunc = func(ctx context.Context, obj *fakeK8sObject, opts resource.UpdateOptions) (*fakeK8sObject, error) {
+		calls++
+		if calls == 1 {
+			return nil, apierrors.NewConflict(fakeGR, obj.GetName(), errors.New("stale"))
+		}
+		return c.defaultUpdate(ctx, obj, opts)
+	}
+
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default"}
+	err := upsertResource(context.Background(), c, obj)
+	require.NoError(t, err)
+	require.Equal(t, 2, calls)
+}
+
+func TestUpsertResource_RetriesOnAlreadyExistsAfterNotFound(t *testing.T) {
+	c := newFakeK8sClient()
+	// Simulate race: Get returns NotFound, Create returns AlreadyExists,
+	// then retry's Get finds the object and Update succeeds.
+	createCalls := 0
+	c.createFunc = func(ctx context.Context, obj *fakeK8sObject, _ resource.CreateOptions) (*fakeK8sObject, error) {
+		createCalls++
+		if createCalls == 1 {
+			// Another writer created it between our Get and Create.
+			stored := *obj
+			stored.resourceVersion = "race-1"
+			c.store[storeKey(obj.GetNamespace(), obj.GetName())] = &stored
+			return nil, apierrors.NewAlreadyExists(fakeGR, obj.GetName())
+		}
+		return c.defaultCreate(ctx, obj, resource.CreateOptions{})
+	}
+
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default"}
+	err := upsertResource(context.Background(), c, obj)
+	require.NoError(t, err)
+	require.Equal(t, 1, createCalls, "Create should only be called once before falling through to Update on retry")
+}
+
+func TestUpsertResource_ExhaustsRetriesOnPersistentConflict(t *testing.T) {
+	c := newFakeK8sClient()
+	c.store["default/rule-1"] = &fakeK8sObject{name: "rule-1", namespace: "default", resourceVersion: "1"}
+	c.updateFunc = func(_ context.Context, obj *fakeK8sObject, _ resource.UpdateOptions) (*fakeK8sObject, error) {
+		return nil, apierrors.NewConflict(fakeGR, obj.GetName(), errors.New("always stale"))
+	}
+
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default"}
+	err := upsertResource(context.Background(), c, obj)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "updating")
+	require.True(t, apierrors.IsConflict(errors.Unwrap(err)), "underlying error should be a conflict")
+}
+
+func TestUpsertResource_ClearsResourceVersionBeforeCreate(t *testing.T) {
+	c := newFakeK8sClient()
+	// Object starts with a stale ResourceVersion from a hypothetical prior Update attempt.
+	obj := &fakeK8sObject{name: "rule-1", namespace: "default", resourceVersion: "stale-rv"}
+
+	var rvAtCreate string
+	c.createFunc = func(ctx context.Context, obj *fakeK8sObject, _ resource.CreateOptions) (*fakeK8sObject, error) {
+		rvAtCreate = obj.GetResourceVersion()
+		return c.defaultCreate(ctx, obj, resource.CreateOptions{})
+	}
+
+	err := upsertResource(context.Background(), c, obj)
+	require.NoError(t, err)
+	require.Equal(t, "", rvAtCreate, "ResourceVersion must be cleared before Create call")
 }
