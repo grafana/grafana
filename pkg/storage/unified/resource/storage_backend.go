@@ -130,7 +130,7 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors *prometheus.CounterVec
+	ConflictErrors    *prometheus.CounterVec
 	EventEmitFailures *prometheus.CounterVec
 }
 
