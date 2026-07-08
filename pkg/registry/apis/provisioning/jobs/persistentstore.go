@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -538,9 +538,8 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 
 	var annotations map[string]string
 	if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-		annotations = map[string]string{utils.AnnoKeyCreatedBy: id.GetUID()}
+		annotations = map[string]string{appjobs.AnnoTriggeredBy: id.GetUID()}
 	}
-	fmt.Println("DEBUG insert: annotations:", annotations)
 
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)

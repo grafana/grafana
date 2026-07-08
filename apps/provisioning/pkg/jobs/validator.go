@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// AnnoTriggeredBy is the typed identity (e.g. "user:<uid>") that triggered the job.
+// It is set by the server at creation time and is immutable.
+const AnnoTriggeredBy = "provisioning.grafana.app/triggered-by"
+
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
 // supportedResources is the configured set of resource types provisioning can manage; export-style
 // job options (push and migrate) are validated against it.
@@ -317,32 +321,32 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
-	if err := validateCreatedBy(ctx, a, job); err != nil {
+	if err := validateTriggeredBy(ctx, a, job); err != nil {
 		return err
 	}
 
 	return ValidateJob(job, v.supportedResources)
 }
 
-func validateCreatedBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
-	createdBy := job.Annotations[utils.AnnoKeyCreatedBy]
+func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	triggeredBy := job.Annotations[AnnoTriggeredBy]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if createdBy == "" || identity.IsServiceIdentity(ctx) {
+		if triggeredBy == "" || identity.IsServiceIdentity(ctx) {
 			return nil
 		}
 		id, err := identity.GetRequester(ctx)
-		if err != nil || id.GetUID() != createdBy {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", utils.AnnoKeyCreatedBy))
+		if err != nil || id.GetUID() != triggeredBy {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoTriggeredBy))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
 			return nil
 		}
-		if old.Annotations[utils.AnnoKeyCreatedBy] != createdBy {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", utils.AnnoKeyCreatedBy))
+		if old.Annotations[AnnoTriggeredBy] != triggeredBy {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoTriggeredBy))
 		}
 	}
 

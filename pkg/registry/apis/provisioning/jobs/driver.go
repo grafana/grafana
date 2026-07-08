@@ -2,8 +2,8 @@ package jobs
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -16,9 +16,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -397,12 +397,13 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
 
-	fmt.Println("DEBUG driver: resolver?", d.authorResolver != nil, "createdBy:", job.Annotations[utils.AnnoKeyCreatedBy])
+	fmt.Println("DEBUG driver: annos:", job.Annotations)
 	if d.authorResolver != nil {
-		if createdBy := job.Annotations[utils.AnnoKeyCreatedBy]; createdBy != "" {
-			sig, err := d.authorResolver.ResolveAuthor(ctx, namespace, createdBy)
+		if triggeredBy := job.Annotations[appjobs.AnnoTriggeredBy]; triggeredBy != "" {
+			sig, err := d.authorResolver.ResolveAuthor(ctx, namespace, triggeredBy)
+			fmt.Println("DEBUG driver: resolved:", sig, err)
 			if err != nil {
-				logger.Warn("failed to resolve job author", "createdBy", createdBy, "error", err)
+				logger.Warn("failed to resolve job author", "triggeredBy", triggeredBy, "error", err)
 			} else if sig != nil {
 				ctx = repository.WithAuthorSignature(ctx, *sig)
 			}
