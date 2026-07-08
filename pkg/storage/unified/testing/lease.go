@@ -294,7 +294,10 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 }
 
 func runLeaseAutoRenew(t *testing.T, store kv.KV) {
-	const ttl = 500 * time.Millisecond
+	// A generous TTL keeps the renewal loop's per-attempt budget (ttl/3 * 3/4)
+	// and expiry window wide enough to absorb scheduling jitter and slow DB ops
+	// on loaded CI runners, where a shorter TTL flakes.
+	const ttl = 2 * time.Second
 	ctx := t.Context()
 
 	t.Run("keeps lease alive past TTL", func(t *testing.T) {

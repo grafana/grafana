@@ -128,7 +128,7 @@ To add an annotation query to a dashboard, follow these steps:
 
 1. To add a query, do one of the following:
    - Click **Open query editor** to open the **Annotation Query** dialog box, select an option in the **Data source** drop-down list, and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic. Proceed to the next step.
-   - Click **Use saved query** to open a the **Saved queries** drawer. Choose a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) to reuse, click **Select query**, and proceed to step 13.
+   - Click **Use saved query** to open the **Saved queries** drawer. Choose a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) to reuse, click **Select query**, and proceed to step 13.
 
    {{< admonition type="note" >}}
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.

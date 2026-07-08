@@ -537,6 +537,12 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
 
+	// Nested (child) plugins often ship an empty version in their plugin.json and
+	// inherit it from their parent app. Mirror that so the frontend can cache assets.
+	if metaSpec.PluginJson.Info.Version == "" && plugin.Parent != nil {
+		metaSpec.PluginJson.Info.Version = plugin.Parent.Version
+	}
+
 	// Set Class - default to External if not specified
 	var c pluginsv0alpha1.MetaSpecClass
 	if plugin.Class == plugins.ClassCore {
@@ -642,6 +648,12 @@ func convertSignatureType(sigType plugins.SignatureType) pluginsv0alpha1.MetaV0a
 func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
+	}
+
+	// Nested (child) plugins often ship an empty version in their plugin.json and
+	// inherit it from their parent app. Mirror that so the frontend can cache assets.
+	if metaSpec.PluginJson.Info.Version == "" && plugin.Parent != nil {
+		metaSpec.PluginJson.Info.Version = plugin.Parent.Info.Version
 	}
 
 	// Set Class - default to External if not specified
@@ -780,6 +792,14 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON.MetaJSONData,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
+	}
+
+	// The plugin.json embedded in the grafana.com response often omits the version
+	// (especially for nested/child plugins, which inherit it from the parent). Fall
+	// back to the authoritative version from the grafana.com versions endpoint. For
+	// child plugins this is set to the parent's version in grafanaComChildPluginVersionToMetaSpec.
+	if metaSpec.PluginJson.Info.Version == "" {
+		metaSpec.PluginJson.Info.Version = gcomMeta.Version
 	}
 
 	// Extract aliasIDs from the JSON wrapper
