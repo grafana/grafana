@@ -13,11 +13,6 @@ import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../core/constants';
 import { type LibraryElementDTO } from '../../types';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 
-export enum LibraryPanelsSearchVariant {
-  Tight = 'tight',
-  Spacious = 'spacious',
-}
-
 export interface LibraryPanelsSearchProps {
   onClick: (panel: LibraryElementDTO) => void;
   showSort?: boolean;
