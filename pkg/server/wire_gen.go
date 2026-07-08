@@ -2053,9 +2053,9 @@ func provideMigrationRegistry(
 	r.Register(playlist2.PlaylistMigration(playlistMigrator))
 	r.Register(shorturl.ShortURLMigration(shortURLMigrator))
 	r.Register(snapshot.SnapshotMigration(snapshotMigrator))
-	r.Register(migrator5.DataSourceMigration(dataSourceMigrator))
-	r.Register(legacy2.StarsMigrationDefinition(starsMigrator))
-	r.Register(legacy3.PreferencesMigrationDefinition(preferencesMigrator))
+	r.Register(datasource.DataSourceMigration(dataSourceMigrator))
+	r.Register(collections.StarsMigration(starsMigrator))
+	r.Register(preferences.PreferencesMigration(preferencesMigrator))
 	r.Register(querycaching.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }
