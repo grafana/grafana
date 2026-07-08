@@ -354,6 +354,14 @@ export const DashboardInteractions = {
   takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
+
+  viewPanelAction: (properties: { action?: string; value: string }) => {
+    reportDashboardInteraction('view_panel_action', properties);
+  },
+
+  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+    reportDashboardInteraction('set_visualization_option', properties);
+  },
 };
 
 const reportDashboardInteraction = (
