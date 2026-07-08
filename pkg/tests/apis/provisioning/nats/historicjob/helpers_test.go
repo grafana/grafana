@@ -18,7 +18,11 @@ import (
 // expiration would race the other packages' historic-job reads.
 var env = common.NewSharedEnv(
 	common.WithNATS(),
-	common.WithProvisioningHistoryExpiration(10*time.Second),
+	// Short retention: it is both how long a HistoricJob lives and the
+	// historic-job informer's resync, so it bounds how quickly the
+	// listing-driven cleanup runs. Kept small to keep the test fast; the poll
+	// loop tolerates the correspondingly small observation window.
+	common.WithProvisioningHistoryExpiration(3*time.Second),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

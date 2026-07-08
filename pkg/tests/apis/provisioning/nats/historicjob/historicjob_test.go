@@ -55,16 +55,20 @@ func TestIntegrationProvisioningNATSHistoricJob_CleanedViaListing(t *testing.T) 
 	_, err := helper.Jobs.Resource.Create(ctx, job, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create a job directly")
 
-	// Phase 1: the failed job must be archived into a HistoricJob (confirms the
-	// resource actually exists before we assert it is cleaned up).
+	// The failed job must first be archived into a HistoricJob and then removed
+	// by the re-list-driven cleanup. A single loop tracks that we observed the
+	// archived job at least once (so an always-empty list can't pass trivially)
+	// and that the list has since drained. This tolerates the short retention
+	// window without racing a two-phase assertion.
+	var archived bool
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.NotEmpty(collect, listHistoricJobs(ctx, collect, historicJobs), "a historic job should be archived")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "the failed job should be archived into a historic job")
-
-	// Phase 2: the re-list-driven cleanup must then remove aged historic jobs.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.Empty(collect, listHistoricJobs(ctx, collect, historicJobs), "historic jobs should be removed by the re-list-driven cleanup")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "historic jobs should be swept by the listing-driven cleanup")
+		items := listHistoricJobs(ctx, collect, historicJobs)
+		if len(items) > 0 {
+			archived = true
+		}
+		assert.True(collect, archived, "the failed job should be archived into a historic job")
+		assert.Empty(collect, items, "historic jobs should be removed by the re-list-driven cleanup")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "historic job should be archived then swept by the listing-driven cleanup")
 }
 
 func listHistoricJobs(ctx context.Context, collect *assert.CollectT, client *apis.K8sResourceClient) []unstructured.Unstructured {
