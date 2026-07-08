@@ -2,18 +2,19 @@ import { debounce } from 'lodash';
 import { useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { type DataFrame, dateTime } from '@grafana/data';
+import { type DataFrame, type DataSourceRef, dateTime, outerJoinDataFrames } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   type SceneDataProvider,
+  type SceneDataQuery,
   SceneObjectBase,
   type SceneObjectState,
   SceneQueryRunner,
   SceneTimeRange,
   sceneGraph,
 } from '@grafana/scenes';
-import { Select } from '@grafana/ui';
+import { IconButton, MultiSelect, Toggletip } from '@grafana/ui';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../../utils/getDatasourceFromQueryRunner';
@@ -22,24 +23,27 @@ import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor } from '../.
 import { TimeBar } from './TimeBar';
 import { CONTEXT_ZOOM_FACTOR, type TimeRangeMs } from './timeModel';
 
-const EMPTY: number[] = [];
+const EMPTY_TIME: number[] = [];
+const EMPTY_SERIES: number[][] = [];
 /** Downsample target for the background sparkline query (resolution for the bar). */
 const SPARKLINE_MAX_DATA_POINTS = 100;
+/** The built-in "Mixed" datasource lets one runner combine queries across different datasources. */
+const MIXED_DATASOURCE: DataSourceRef = { uid: '-- Mixed --' };
 
 export interface SceneTimeNavigatorState extends SceneObjectState {
   height?: number;
   contextZoomFactor?: number;
-  /** Key of the dashboard panel whose queries feed the background sparkline (a live reference). */
-  sourcePanelKey?: string;
-  /** Our own query runner for the sparkline, scoped to the context window (see _contextRange). */
+  /** Keys of the dashboard panels whose queries feed the background sparklines (live references). */
+  sourcePanelKeys?: string[];
+  /** Our own query runner for the sparklines, scoped to the context window (see _contextRange). */
   $data?: SceneDataProvider;
 }
 
 /**
  * A dashboard control that renders the timebar (a zoomed-out context window with a brushed selection that
- * drives the dashboard time range) with an optional background sparkline. The sparkline reuses another
- * panel's queries (by key), but re-runs them against the *context window* — its own SceneTimeRange, wider
- * than the dashboard/selection range — with its own downsampling, so it can render across the whole bar.
+ * drives the dashboard time range) with optional background sparklines. The sparklines reuse other panels'
+ * queries (by key) but re-run them against the *context window* — its own SceneTimeRange, wider than the
+ * dashboard/selection range — with its own downsampling, so they render across the whole bar.
  */
 export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState> {
   public static Component = SceneTimeNavigatorRenderer;
@@ -58,39 +62,46 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   }
 
   private _activationHandler() {
-    // Default the sparkline source to the first panel that has queries, if none is chosen yet.
-    if (!this.state.sourcePanelKey) {
+    // Default to the first panel that has queries, if none is chosen yet.
+    if (!this.state.sourcePanelKeys?.length) {
       const dashboard = getDashboardSceneFor(this);
-      const firstWithQueries = dashboardSceneGraph.getVizPanels(dashboard).find((p) => getQueryRunnerFor(p));
-      if (firstWithQueries?.state.key) {
-        this.setState({ sourcePanelKey: firstWithQueries.state.key });
+      const first = dashboardSceneGraph.getVizPanels(dashboard).find((p) => getQueryRunnerFor(p));
+      if (first?.state.key) {
+        this.setState({ sourcePanelKeys: [first.state.key] });
       }
     }
-    this._applySourcePanel();
+    this._applySources();
   }
 
-  private _applySourcePanel() {
+  private _applySources() {
     const runner = this.state.$data;
     if (!(runner instanceof SceneQueryRunner)) {
       return;
     }
     const dashboard = getDashboardSceneFor(this);
-    const panel = this.state.sourcePanelKey ? findVizPanelByKey(dashboard, this.state.sourcePanelKey) : null;
-    const source = getQueryRunnerFor(panel ?? undefined);
-    runner.setState({
-      queries: source?.state.queries ?? [],
-      datasource: (source && getDatasourceFromQueryRunner(source)) || undefined,
-    });
+    const queries: SceneDataQuery[] = [];
+    for (const key of this.state.sourcePanelKeys ?? []) {
+      const source = getQueryRunnerFor(findVizPanelByKey(dashboard, key) ?? undefined);
+      if (!source) {
+        continue;
+      }
+      const ds = getDatasourceFromQueryRunner(source);
+      for (const q of source.state.queries) {
+        // Unique refIds across panels; carry each query's datasource so the Mixed runner routes it.
+        queries.push({ ...q, refId: `S${queries.length}`, datasource: q.datasource ?? ds ?? undefined });
+      }
+    }
+    runner.setState({ queries, datasource: MIXED_DATASOURCE });
     runner.runQueries();
   }
 
-  /** Choose which panel's queries feed the sparkline. */
-  public setSourcePanel(key: string | undefined) {
-    this.setState({ sourcePanelKey: key });
-    this._applySourcePanel();
+  /** Choose which panels' queries feed the sparklines. */
+  public setSourcePanels(keys: string[]) {
+    this.setState({ sourcePanelKeys: keys });
+    this._applySources();
   }
 
-  /** Update the range the sparkline is queried over (the context window). Caller debounces. */
+  /** Update the range the sparklines are queried over (the context window). Caller debounces. */
   public setContextRange({ from, to }: TimeRangeMs) {
     const f = dateTime(from);
     const to2 = dateTime(to);
@@ -98,25 +109,27 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   }
 }
 
-function extractSparkline(series: DataFrame[] | undefined): { time: number[]; values: number[] } {
-  const frame = series?.[0];
-  if (!frame) {
-    return { time: EMPTY, values: EMPTY };
+function extractSparklines(series: DataFrame[] | undefined): { time: number[]; values: number[][] } {
+  if (!series?.length) {
+    return { time: EMPTY_TIME, values: EMPTY_SERIES };
   }
-  const timeField = frame.fields.find((f) => f.type === 'time');
-  const valueField = frame.fields.find((f) => f.type === 'number');
-  return { time: timeField?.values ?? EMPTY, values: valueField?.values ?? EMPTY };
+  // Align all frames onto one time axis so uPlot can draw them as parallel series (gaps become nulls).
+  const joined = outerJoinDataFrames({ frames: series });
+  const timeField = joined?.fields.find((f) => f.type === 'time');
+  const valueFields = joined?.fields.filter((f) => f.type === 'number') ?? [];
+  if (!timeField || !valueFields.length) {
+    return { time: EMPTY_TIME, values: EMPTY_SERIES };
+  }
+  return { time: timeField.values, values: valueFields.map((f) => f.values) };
 }
 
 function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavigator>) {
-  const { height = 88, contextZoomFactor = CONTEXT_ZOOM_FACTOR, sourcePanelKey } = model.useState();
+  const { height = 88, contextZoomFactor = CONTEXT_ZOOM_FACTOR, sourcePanelKeys } = model.useState();
   const { value } = sceneGraph.getTimeRange(model).useState();
   const { data } = sceneGraph.getData(model).useState();
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
-  const spark = extractSparkline(data?.series);
-
-  // Debounce re-querying so a zoom/pan gesture doesn't fire a query per tick.
+  const spark = useMemo(() => extractSparklines(data?.series), [data]);
   const onContextWindowChange = useMemo(() => debounce((r: TimeRangeMs) => model.setContextRange(r), 350), [model]);
 
   const dashboard = getDashboardSceneFor(model);
@@ -143,13 +156,22 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
           }}
           onContextWindowChange={onContextWindowChange}
           extraControls={
-            <Select
-              width={24}
-              placeholder={t('time-navigator.sparkline-source', 'Sparkline source')}
-              value={sourcePanelKey}
-              options={panelOptions}
-              onChange={(v) => model.setSourcePanel(v?.value || undefined)}
-            />
+            <Toggletip
+              placement="bottom-start"
+              content={
+                <div style={{ width: 320 }}>
+                  <MultiSelect
+                    menuShouldPortal={false}
+                    placeholder={t('time-navigator.sparkline-sources', 'Sparkline source(s)')}
+                    value={sourcePanelKeys}
+                    options={panelOptions}
+                    onChange={(vs) => model.setSourcePanels(vs.map((v) => v.value || '').filter(Boolean))}
+                  />
+                </div>
+              }
+            >
+              <IconButton name="graph-bar" tooltip={t('time-navigator.sparkline-sources', 'Sparkline source(s)')} />
+            </Toggletip>
           }
         />
       )}

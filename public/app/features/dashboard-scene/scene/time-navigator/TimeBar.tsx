@@ -25,9 +25,9 @@ export interface TimeBarProps {
   now: number;
   width: number;
   height: number;
-  /** Background series (currently unused visually; reserved for a future context sparkline). */
+  /** Background sparkline(s): a shared time axis (epoch ms) plus one values array per series. */
   time: number[];
-  values: number[];
+  values: number[][];
   contextZoomFactor?: number;
   onChangeTimeRange: (range: TimeRangeMs) => void;
   /** Called when the zoomed-out context window changes, so a host can fetch background data for it. */
@@ -130,10 +130,11 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   const dragCleanup = useRef<(() => void) | null>(null);
 
   const chartWidth = Math.max(0, width);
+  const seriesCount = values.length;
 
-  // Stable data identity so @grafana/ui's UPlotChart only calls uPlot.setData on real data changes
-  // (its check is by reference); combined with the pinned scale below this stops per-render auto-ranging.
-  const data = useMemo<AlignedData>(() => [time, values], [time, values]);
+  // One aligned uPlot table: [time, ...series]. Stable identity so setData only fires on real data changes
+  // (UPlotChart's check is by reference); combined with the pinned scale below this stops auto-ranging.
+  const data = useMemo<AlignedData>(() => [time, ...values], [time, values]);
 
   const updateOverlay = useCallback(() => {
     const u = uplotRef.current;
@@ -174,20 +175,22 @@ export const TimeBar: React.FC<TimeBarProps> = ({
     });
     b.addAxis({ placement: AxisPlacement.Bottom, scaleKey: 'x', isTime: true, theme });
 
-    // Faint background sparkline (data supplied via the time/values props), drawn behind the axis + overlay.
+    // Faint background sparkline(s) — one per referenced series, drawn behind the axis + overlay.
     b.addScale({ scaleKey: 'spark-y', orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up });
     b.addAxis({ scaleKey: 'spark-y', theme, placement: AxisPlacement.Hidden, show: false });
-    b.addSeries({
-      scaleKey: 'spark-y',
-      theme,
-      pxAlign: false,
-      drawStyle: GraphDrawStyle.Line,
-      lineColor: theme.colors.text.secondary,
-      lineWidth: 1,
-      showPoints: VisibilityMode.Never,
-      pointSize: 0,
-      spanNulls: true,
-    });
+    for (let i = 0; i < seriesCount; i++) {
+      b.addSeries({
+        scaleKey: 'spark-y',
+        theme,
+        pxAlign: false,
+        drawStyle: GraphDrawStyle.Line,
+        lineColor: theme.colors.text.secondary,
+        lineWidth: 1,
+        showPoints: VisibilityMode.Never,
+        pointSize: 0,
+        spanNulls: true,
+      });
+    }
 
     // uPlot native drag-select is used only to CREATE a new selection: read the range, commit it, then
     // clear uPlot's transient box (our overlay renders the persistent selection). We never call setSelect
@@ -268,7 +271,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
     });
 
     return b;
-  }, [theme, updateOverlay]);
+  }, [theme, updateOverlay, seriesCount]);
 
   // Push the context window to the x-scale (triggers a redraw) and reposition the overlay when either
   // range or the size changes. updateOverlay uses context math, so it's independent of setScale's timing.
