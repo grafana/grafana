@@ -13,7 +13,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -64,13 +64,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   const onEditorModeChange = useCallback(
     (newEditorMode: QueryEditorMode) => {
-      reportInteraction('grafana_loki_editor_mode_clicked', {
-        newEditor: newEditorMode,
-        previousEditor: query.editorMode ?? '',
-        newQuery: !query.expr,
-        app: app ?? '',
-      });
-
       if (newEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
@@ -81,7 +74,7 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
       }
       changeEditorMode(query, newEditorMode, onChange);
     },
-    [onChange, query, app]
+    [onChange, query]
   );
 
   useEffect(() => {
@@ -96,10 +89,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   };
 
   const onClickLabelBrowserButton = () => {
-    reportInteraction('grafana_loki_label_browser_opened', {
-      app: app,
-    });
-
     setLabelBrowserVisible((visible) => !visible);
   };
 
@@ -171,15 +160,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
             size="sm"
             onClick={() => {
               setQueryPatternsModalOpen((prevValue) => !prevValue);
-
-              const visualQuery = buildVisualQueryFromString(query.expr || '');
-              reportInteraction('grafana_loki_query_patterns_opened', {
-                version: 'v2',
-                app: app ?? '',
-                editorMode: query.editorMode,
-                preSelectedOperationsCount: visualQuery.query.operations.length,
-                preSelectedLabelsCount: visualQuery.query.labels.length,
-              });
             }}
           >
             Kick start your query
