@@ -147,9 +147,8 @@ func ProvideService(
 		}
 	})
 
-	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, systemUsersService)
-
-	return s, nil
+	return newStandardStorageService(sql, globalRoots,
+		initializeOrgStorages, authService, cfg, systemUsersService), nil
 }
 
 func newStandardStorageService(
