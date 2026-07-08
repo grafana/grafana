@@ -26,3 +26,19 @@ export class DashboardStateChangedEvent extends BusEventWithPayload<{ source: Sc
 export class ToggleViewPanePaneEvent extends BusEventBase {
   static type = 'toggle-view-pane-pane';
 }
+
+export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'new-object-added-to-canvas';
+}
+export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'object-removed-from-canvas';
+}
+export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'objects-reordered-on-canvas';
+}
+export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'conditional-rendering-changed';
+}
+export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
+  static type = 'repeats-updated';
+}

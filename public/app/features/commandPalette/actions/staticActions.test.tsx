@@ -1,10 +1,14 @@
 import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { configureStore } from 'app/store/configureStore';
+import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 
 import { type CommandPaletteAction } from '../types';
 
@@ -19,16 +23,18 @@ jest.mock(
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
 
-let mockTestDataSources: Array<{ name: string; uid: string; type: string }> = [
-  { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-];
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: jest.fn(() => mockTestDataSources),
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 function renderStaticActions() {
   const store = configureStore({ navBarTree: [] });
@@ -41,14 +47,21 @@ const hasTemplateAction = (actions: CommandPaletteAction[]) =>
   actions.some((action) => action.id === 'browse-template-dashboard');
 
 describe('useStaticActions - dashboard from template action', () => {
+  let originalPermissions: UserPermission | undefined;
+
   beforeEach(() => {
     config.featureToggles.dashboardTemplates = true;
     // Reset to defaults: a test datasource is available, custom templates are off.
-    mockTestDataSources = [
-      { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-    ];
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
     setTestFlags({ 'grafana.customDashboardTemplates': false });
+    // The entry point requires dashboard-create permission, mirroring QuickAdd.
+    originalPermissions = contextSrv.user.permissions;
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+  });
+
+  afterEach(() => {
+    contextSrv.user.permissions = originalPermissions;
   });
 
   it('includes the action when the Grafana templates feature toggle is enabled', () => {
@@ -56,19 +69,43 @@ describe('useStaticActions - dashboard from template action', () => {
     expect(hasTemplateAction(result.current)).toBe(true);
   });
 
+  it('does not include the action when the user lacks dashboards:create permission', () => {
+    contextSrv.user.permissions = {};
+    const { result } = renderStaticActions();
+    expect(hasTemplateAction(result.current)).toBe(false);
+  });
+
   it('does not include the action when neither templates feature is enabled', () => {
     config.featureToggles.dashboardTemplates = false;
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     const { result } = renderStaticActions();
     expect(hasTemplateAction(result.current)).toBe(false);
   });
 
   it('includes the action when only custom templates are enabled, even without a test datasource', () => {
     config.featureToggles.dashboardTemplates = false;
-    mockTestDataSources = [];
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(() => null);
     setTestFlags({ 'grafana.customDashboardTemplates': true });
+    // Custom templates require the read permission in addition to dashboard-create.
+    contextSrv.user.permissions = {
+      [AccessControlAction.DashboardsCreate]: true,
+      [AccessControlAction.DashboardTemplatesRead]: true,
+    };
 
     const { result } = renderStaticActions();
     expect(hasTemplateAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action for custom-only templates without dashboardtemplates:read', () => {
+    config.featureToggles.dashboardTemplates = false;
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
+    mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+    setTestFlags({ 'grafana.customDashboardTemplates': true });
+    // Has dashboard-create but not the templates read permission.
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+
+    const { result } = renderStaticActions();
+    expect(hasTemplateAction(result.current)).toBe(false);
   });
 });

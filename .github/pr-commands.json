@@ -145,14 +145,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/parca/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Parca"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
       "pkg/tsdb/grafana-pyroscope-datasource/**/*"
     ],

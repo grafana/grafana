@@ -4,8 +4,6 @@ aliases:
   - ../../linking/data-links/ # /docs/grafana/next/linking/data-links/
   - ../../panels/configure-data-links/ # /docs/grafana/next/panels/configure-data-links/
   - ../../reference/datalinks/ # /docs/grafana/next/reference/datalinks/
-  - ../../variables/url-variables/ # /docs/grafana/next/variables/url-variables/
-  - ../../variables/variable-types/url-variables/ # /docs/grafana/next/variables/variable-types/url-variables/
   - ../../panels-visualizations/configure-data-links/ # /docs/grafana/next/panels-visualizations/configure-data-links/
 keywords:
   - grafana
@@ -342,6 +340,7 @@ To add a data link, follow these steps:
    | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
+   | Connection           | Specify how the action's HTTP request is sent. Choose from: **Direct from browser** or routed through a configured data source.                                                                                                             |
    | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
    | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                                                                   |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |

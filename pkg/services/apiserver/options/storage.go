@@ -44,6 +44,8 @@ const (
 	StorageTypeLegacy StorageType = "legacy"
 
 	BlobThresholdDefault int = 0
+
+	DefaultGrpcClientKeepaliveTime time.Duration = 0
 )
 
 type RestConfigProvider interface {
@@ -152,7 +154,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
-		GrpcClientKeepaliveTime:                0,
+		GrpcClientKeepaliveTime:                DefaultGrpcClientKeepaliveTime,
 		BlobThresholdBytes:                     BlobThresholdDefault,
 		UnifiedStorageConfig:                   make(map[string]setting.UnifiedStorageConfig),
 	}

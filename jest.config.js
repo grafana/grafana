@@ -35,10 +35,16 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  '@react-hookz/web',
+  '@ver0/deep-equal',
 ].join('|');
 
 module.exports = {
   verbose: false,
+  // Recycle a worker once it exceeds this cap so heap growth over a run (most acute during
+  // coverage) can't accumulate unbounded. Applies even at --maxWorkers=1, where Jest restarts
+  // the single worker between test files. Per-worker cap, not a reservation; tune via --logHeapUsage.
+  workerIdleMemoryLimit: '1GB',
   testEnvironment: 'jsdom',
   testEnvironmentOptions: {
     customExportConditions: ['@grafana-app/source', 'browser'],
@@ -93,6 +99,5 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/loki',
     '<rootDir>/public/app/plugins/datasource/mssql',
     '<rootDir>/public/app/plugins/datasource/mysql',
-    '<rootDir>/public/app/plugins/datasource/parca',
   ],
 };

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, keyframes } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
@@ -38,7 +38,7 @@ import { type ViewedBoundsFunctionType } from './utils';
 
 const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
 
-function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
+export function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
   const tag = tags.find((kv) => kv.key === GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY);
   if (!tag) {
     return false;
