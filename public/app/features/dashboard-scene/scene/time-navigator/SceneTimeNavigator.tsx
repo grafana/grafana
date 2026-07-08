@@ -161,7 +161,6 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
               content={
                 <div style={{ width: 320 }}>
                   <MultiSelect
-                    menuShouldPortal={false}
                     placeholder={t('time-navigator.sparkline-sources', 'Sparkline source(s)')}
                     value={sourcePanelKeys}
                     options={panelOptions}
