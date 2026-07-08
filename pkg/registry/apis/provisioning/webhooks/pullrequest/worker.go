@@ -88,7 +88,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
 ) (processErr error) {
-	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
 	outcome := utils.ErrorOutcome
@@ -121,12 +120,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
 
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	if cfg.GitHub == nil {
-		logger.Debug("expecting github configuration")
-		return apierrors.NewBadRequest("expecting github configuration")
-	}
-
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		logger.Debug("pull request job submitted targeting repository that is not a Reader")
@@ -143,9 +136,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	base := cfg.GitHub.Branch
-	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
+	files, err := prRepo.CompareFiles(ctx, prRepo.Config().Branch(), opts.Ref)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)

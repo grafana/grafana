@@ -727,6 +727,8 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
+require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
+
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
