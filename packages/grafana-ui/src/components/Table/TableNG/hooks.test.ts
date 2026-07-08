@@ -402,7 +402,6 @@ describe('TableNG hooks', () => {
           []
         )
       );
-
       expect(result.current[0].raw[0].name).toBe('Alice');
       expect(result.current[0].raw[0].age).toBe(30);
       expect(result.current[0].raw[0].active).toBe(true);

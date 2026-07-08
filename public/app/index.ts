@@ -3,6 +3,7 @@
 // we delay loading the rest of the app using import() until the boot data is ready.
 
 import { initPreferences } from './initPreferences';
+import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
 // Check if we are hosting files on cdn and set webpack public path
 if (window.public_cdn_path) {
@@ -26,6 +27,8 @@ async function bootstrapWindowData() {
   //
   // Must be first because initPreferences depends on bootdata
   await window.__grafana_boot_data_promise;
+
+  patchFetchForLegacyAPIMode();
 
   if (window.__grafanaNewPreferencesPage) {
     await initPreferences();

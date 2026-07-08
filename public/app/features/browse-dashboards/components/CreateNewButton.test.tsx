@@ -1,11 +1,15 @@
 import { screen, within } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
@@ -25,18 +29,18 @@ jest.mock(
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
 
-let mockTestDataSources: Array<{ name: string; uid: string; type: string }> = [
-  { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-];
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: () => ({
-      getList: jest.fn(() => mockTestDataSources),
-    }),
-  };
-});
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
@@ -156,14 +160,22 @@ describe('NewActionsButton', () => {
   });
 
   describe('Dashboard from template button', () => {
+    let originalPermissions: typeof contextSrv.user.permissions;
+
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
       // Reset to defaults: a test datasource is available, custom templates are off.
-      mockTestDataSources = [
-        { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-      ];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
       mockGetDashboardTemplatesTab.mockReturnValue(null);
       setTestFlags({ 'grafana.customDashboardTemplates': false });
+      // Custom templates require dashboardtemplates:read; grant it by default (grafana-provisioned
+      // templates don't depend on it).
+      originalPermissions = contextSrv.user.permissions;
+      contextSrv.user.permissions = { [AccessControlAction.DashboardTemplatesRead]: true };
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
     });
 
     it('should show a `Use template` button when the feature flag is enabled', async () => {
@@ -173,13 +185,14 @@ describe('NewActionsButton', () => {
 
     it('should not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       await renderAndOpen();
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
     });
 
     it('should show a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
       config.featureToggles.dashboardTemplates = false;
-      mockTestDataSources = [];
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       mockGetDashboardTemplatesTab.mockReturnValue(() => null);
       setTestFlags({ 'grafana.customDashboardTemplates': true });
 

@@ -20,21 +20,19 @@ type WebhookURLBuilder interface {
 }
 
 type extra struct {
-	factory           *Factory
-	decrypter         repository.Decrypter
-	webhookBuilder    WebhookURLBuilder
-	incrementalPolicy repository.IncrementalSyncPolicy
+	factory        *Factory
+	decrypter      repository.Decrypter
+	webhookBuilder WebhookURLBuilder
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy, allowInsecure bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, allowInsecure bool) repository.Extra {
 	return &extra{
-		decrypter:         decrypter,
-		factory:           factory,
-		webhookBuilder:    webhookBuilder,
-		incrementalPolicy: incrementalPolicy,
-		allowInsecure:     allowInsecure,
+		decrypter:      decrypter,
+		factory:        factory,
+		webhookBuilder: webhookBuilder,
+		allowInsecure:  allowInsecure,
 	}
 }
 
@@ -91,7 +89,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 			logger.Debug("Skipping webhook setup: webhook is disabled")
 			return ghRepo, nil
 		}
-		return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy, e.factory.replayCache), nil
+		return NewGithubWebhookRepository(ghRepo, "", ""), nil
 	}
 
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
@@ -105,7 +103,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.factory.replayCache), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {

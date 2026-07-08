@@ -157,10 +157,10 @@ Toggle the switch to reverse the color scheme. This option only applies the **Sc
 
 #### Start/end color scale from value
 
-By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
+By default, Grafana calculates cell colors based on minimum and maximum bucket values. With **Start color scale from value** and **End color scale at value**, you can overwrite those values. Consider a bucket value as a z-axis, with the start and end values as z-min and z-max.
 
-- **Start** - Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
-- **End** - Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
+- **Start color scale from value** - Minimum value used for cell color calculation. The placeholder **Auto (min)** uses the series minimum value. If the bucket value is less than this value, then it's mapped to the minimum color.
+- **End color scale at value** - Maximum value used for cell color calculation. The placeholder **Auto (max)** uses the series maximum value. If the bucket value is greater than this value, then it's mapped to the maximum color.
 
 ### Cell display options
 
@@ -170,6 +170,7 @@ Use these settings to control the display of heatmap cells.
 
 | Option | Description |
 | ------ | ----------- |
+| Value name | Sets the label for the cell value column when **Calculate from data** is **No**. |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
 | Cell gap | Set how much space there is between cells. |
@@ -182,13 +183,13 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                             |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
-| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Option                                | Description                                                                                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
+| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
+| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                                 |
+| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                       |
+| Max height                            | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
 
 #### Tooltip mode
 

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+// eslint-disable-next-line no-restricted-imports -- wildcard is used to spy on `useAsync`, not `useObservable`
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';

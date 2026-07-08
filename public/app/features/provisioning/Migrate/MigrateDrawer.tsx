@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
@@ -6,6 +6,7 @@ import { type Repository, type ResourceRef } from 'app/api/clients/provisioning/
 
 import { JobStatus } from '../Job/JobStatus';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { useSyncJob } from '../Wizard/hooks/useSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
 
@@ -65,6 +66,10 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
 
   const { job, startJob, isLoading } = useSyncJob({ repoName: selectedRepo ?? '' });
   const migratedRef = useRef(false);
+  // Track the job's reported status so the drawer can surface errors/warnings.
+  // Unlike the wizard, the drawer has no step-status chrome to render them, so
+  // it renders the alert itself from the latest status reported by JobStatus.
+  const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
 
   // Migration writes directly to the repository's configured branch (the
   // `write` workflow). A repository that only opens pull requests (`branch`
@@ -73,29 +78,37 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const canPushToConfiguredBranch = selectedRepoObj?.spec?.workflows?.includes('write') ?? false;
   const blockedByWorkflow = Boolean(selectedRepo) && !canPushToConfiguredBranch;
 
-  const startMigration = async () => {
+  const startMigration = useCallback(async () => {
     if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
     await startJob(true, isSelective ? { resources } : undefined);
-  };
+  }, [selectedRepo, hasResourcesToMigrate, startJob, isSelective, resources]);
 
   // Start a fresh job and let it replace the current one once created. We avoid
   // clearing `job` first so the drawer doesn't flash back to the setup form.
-  const retryMigration = () => {
+  const retryMigration = useCallback(() => {
     migratedRef.current = false;
+    setStepStatusInfo({ status: 'idle' });
     void startMigration();
-  };
+  }, [startMigration]);
 
-  // JobStatus reports status changes as it polls; notify the caller once the
+  // JobStatus reports status changes as it polls. Keep the latest status so the
+  // drawer can render error/warning alerts, and notify the caller once the
   // migration succeeds so it can refresh resource stats (the job invalidates
   // them server-side, but we trigger an explicit refetch to be safe).
-  const handleStatusChange = (info: StepStatusInfo) => {
-    if (info.status === 'success' && !migratedRef.current) {
-      migratedRef.current = true;
-      onMigrated?.();
-    }
-  };
+  // Memoized so its identity is stable — JobContent re-runs its status effect
+  // whenever this callback changes, so an unstable one would loop.
+  const handleStatusChange = useCallback(
+    (info: StepStatusInfo) => {
+      setStepStatusInfo(info);
+      if (info.status === 'success' && !migratedRef.current) {
+        migratedRef.current = true;
+        onMigrated?.();
+      }
+    },
+    [onMigrated]
+  );
 
   const title = t('provisioning.migrate.drawer-title', 'Migrate to GitOps');
 
@@ -103,7 +116,18 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   if (job) {
     return (
       <Drawer title={title} onClose={onDismiss}>
-        <JobStatus watch={job} jobType="sync" onStatusChange={handleStatusChange} onRetry={retryMigration} />
+        <Stack direction="column" gap={2}>
+          {stepStatusInfo.status === 'error' && (
+            <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
+          )}
+          {'warning' in stepStatusInfo && stepStatusInfo.warning && (
+            <ProvisioningAlert
+              warning={stepStatusInfo.warning}
+              action={stepStatusInfo.status === 'warning' ? stepStatusInfo.action : undefined}
+            />
+          )}
+          <JobStatus watch={job} jobType="sync" onStatusChange={handleStatusChange} onRetry={retryMigration} />
+        </Stack>
       </Drawer>
     );
   }

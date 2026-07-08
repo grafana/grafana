@@ -49,19 +49,18 @@ type IdentityAccessManagementAPIBuilder struct {
 	// Stores
 	store legacy.LegacyIdentityStore
 
-	userLegacyStore                  *user.LegacyStore
-	saLegacyStore                    *serviceaccount.LegacyStore
-	legacyTeamStore                  *team.LegacyStore
-	externalGroupReconciler          legacy.ExternalGroupReconciler
-	teamBindingLegacyStore           *teambinding.LegacyBindingStore
-	ssoLegacyStore                   *sso.LegacyStore
-	roleApiInstaller                 RoleApiInstaller
-	globalRoleApiInstaller           GlobalRoleApiInstaller
-	teamLBACApiInstaller             TeamLBACApiInstaller
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
-	resourcePermissionsStorage       resource.StorageBackend
-	mappers                          *resourcepermission.MappersRegistry
-	roleBindingsApiInstaller         RoleBindingApiInstaller
+	userLegacyStore            *user.LegacyStore
+	saLegacyStore              *serviceaccount.LegacyStore
+	legacyTeamStore            *team.LegacyStore
+	externalGroupReconciler    legacy.ExternalGroupReconciler
+	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	ssoLegacyStore             *sso.LegacyStore
+	roleApiInstaller           RoleApiInstaller
+	globalRoleApiInstaller     GlobalRoleApiInstaller
+	teamLBACApiInstaller       TeamLBACApiInstaller
+	resourcePermissionsStorage resource.StorageBackend
+	mappers                    *resourcepermission.MappersRegistry
+	roleBindingsApiInstaller   RoleBindingApiInstaller
 
 	// Required for resource permissions authorization
 	// fetches resources parent folders
