@@ -7,12 +7,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestValidateOnCreate(t *testing.T) {
@@ -113,7 +116,7 @@ func TestValidateOnCreate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := identity.WithRequester(context.Background(), test.requester)
-			err := ValidateOnCreate(ctx, test.obj, legacy.NoopExternalGroupReconciler{})
+			err := ValidateOnCreate(ctx, &fakeTeamSearchClient{}, test.obj, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})
 	}
@@ -323,7 +326,7 @@ func TestValidateOnUpdate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := identity.WithRequester(context.Background(), test.requester)
-			err := ValidateOnUpdate(ctx, test.obj, test.old, legacy.NoopExternalGroupReconciler{})
+			err := ValidateOnUpdate(ctx, &fakeTeamSearchClient{}, test.obj, test.old, legacy.NoopExternalGroupReconciler{})
 			assert.Equal(t, test.want, err)
 		})
 	}
@@ -385,4 +388,88 @@ type stubReconciler struct {
 func (s *stubReconciler) Validate(groups []string) error {
 	s.gotInput = groups
 	return s.err
+}
+
+// fakeTeamSearchClient returns a fixed set of rows (or an error) for every
+// search, regardless of the query, so uniqueness tests can control what the
+// title lookup "finds".
+type fakeTeamSearchClient struct {
+	resourcepb.ResourceIndexClient
+	rows []*resourcepb.ResourceTableRow
+	err  error
+}
+
+func (c *fakeTeamSearchClient) Search(_ context.Context, _ *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Results:   &resourcepb.ResourceTable{Rows: c.rows},
+		TotalHits: int64(len(c.rows)),
+	}, nil
+}
+
+func teamRow(name string) *resourcepb.ResourceTableRow {
+	return &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name}}
+}
+
+func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+	newTeam := &iamv0alpha1.Team{
+		ObjectMeta: metav1.ObjectMeta{Name: "new-uid"},
+		Spec:       iamv0alpha1.TeamSpec{Title: "Engineering"},
+	}
+
+	t.Run("no existing team with the title passes", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		err := ValidateOnCreate(ctx, &fakeTeamSearchClient{}, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.NoError(t, err)
+	})
+
+	t.Run("existing team with the title is rejected as conflict", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		client := &fakeTeamSearchClient{rows: []*resourcepb.ResourceTableRow{teamRow("other-uid")}}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
+	})
+
+	t.Run("only self-match is not a conflict", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		// Dual-write can index the same team from both stores under its own name.
+		client := &fakeTeamSearchClient{rows: []*resourcepb.ResourceTableRow{teamRow("new-uid")}}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.NoError(t, err)
+	})
+
+	t.Run("search error is propagated", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		client := &fakeTeamSearchClient{err: errors.New("index down")}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.ErrorContains(t, err, "index down")
+	})
+}
+
+func TestValidateOnUpdate_TitleUniqueness(t *testing.T) {
+	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
+
+	t.Run("renaming to a title taken by another team is rejected", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		old := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "Old"}}
+		obj := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "Taken"}}
+		client := &fakeTeamSearchClient{rows: []*resourcepb.ResourceTableRow{teamRow("uid-2")}}
+		err := ValidateOnUpdate(ctx, client, obj, old, legacy.NoopExternalGroupReconciler{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
+	})
+
+	t.Run("unchanged title does not trigger the uniqueness lookup", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		old := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "Same"}}
+		obj := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "Same"}}
+		// Even if the index would report a collision, an unchanged title must not fail.
+		client := &fakeTeamSearchClient{err: errors.New("must not be called")}
+		err := ValidateOnUpdate(ctx, client, obj, old, legacy.NoopExternalGroupReconciler{})
+		require.NoError(t, err)
+	})
 }

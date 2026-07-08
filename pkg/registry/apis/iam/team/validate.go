@@ -2,17 +2,21 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnCreate(ctx context.Context, teamSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -38,10 +42,14 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.Ext
 		return err
 	}
 
+	if err := validateTitleUnique(ctx, teamSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Title); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnUpdate(ctx context.Context, teamSearchClient resourcepb.ResourceIndexClient, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -72,6 +80,65 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legac
 
 	if err := validateExternalGroups(obj.Spec.ExternalGroups, egr); err != nil {
 		return err
+	}
+
+	// Only when the title changes: an update that leaves it alone (e.g. a
+	// members- or externalUID-only change) would otherwise collide with the
+	// team's own name.
+	if obj.Spec.Title != old.Spec.Title {
+		if err := validateTitleUnique(ctx, teamSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Title); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateTitleUnique rejects a team whose title collides with an existing team
+// in the same namespace. Legacy storage enforces this via UNIQUE(org_id, name),
+// but that constraint is absent in unified-only (Mode5), so it's enforced here
+// for parity across modes. Matching is case-insensitive (DoubleEquals routes to
+// the pre-lowered title_phrase field).
+func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, title string) error {
+	gr := iamv0alpha1.TeamResourceInfo.GroupResource()
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     gr.Group,
+				Resource:  gr.Resource,
+				Namespace: namespace,
+			},
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_TITLE,
+					Operator: string(selection.DoubleEquals), // exact (case-insensitive) match on title
+					Values:   []string{title},
+				},
+			},
+		},
+		Fields: []string{resource.SEARCH_FIELD_TITLE},
+	}
+
+	resp, err := searchClient.Search(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	if resp.TotalHits > 0 {
+		// A hit on the team itself isn't a conflict: under dual-write it's indexed
+		// from both stores, and on update it matches its own title. A count with no
+		// attributable rows (count-only response) is treated as a conflict.
+		rows := resp.Results.GetRows()
+		conflict := len(rows) == 0
+		for _, row := range rows {
+			if row.Key.GetName() != name {
+				conflict = true
+				break
+			}
+		}
+		if conflict {
+			return apierrors.NewConflict(gr, name, fmt.Errorf("team name '%s' is already taken", title))
+		}
 	}
 
 	return nil

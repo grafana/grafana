@@ -159,6 +159,8 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
+		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
+			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
 		teamSearchHandler:                team.NewSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
@@ -968,7 +970,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ServiceAccount:
 		return serviceaccount.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Team:
-		return team.ValidateOnCreate(ctx, typedObj, b.externalGroupReconciler)
+		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
 	case *iamv0.ResourcePermission:
@@ -1006,7 +1008,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Team, got %T", oldObj)
 		}
-		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj, b.externalGroupReconciler)
+		return team.ValidateOnUpdate(ctx, b.teamSearchClient, typedObj, oldTeamObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		oldTeamBindingObj, ok := oldObj.(*iamv0.TeamBinding)
 		if !ok {
