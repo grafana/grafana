@@ -12,13 +12,14 @@ import ErrorEditor from './components/ErrorEditor';
 import ErrorWithSourceQueryEditor from './components/ErrorWithSourceEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
+import { PredictableAnnotationsEditor } from './components/PredictableAnnotationsEditor';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { RandomWalkEditor } from './components/RandomWalkEditor';
 import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { StreamingClientEditor } from './components/StreamingClientEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
-import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
+import { defaultCSVWaveQuery, defaultPredictableAnnotationsQuery, defaultPulseQuery, defaultQuery } from './constants';
 import { type CSVWave, type NodesQuery, type TestDataDataQuery, TestDataQueryType, type USAQuery } from './dataquery';
 import { type TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
@@ -58,7 +59,11 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
+    const hideAlias = [
+      TestDataQueryType.Simulation,
+      TestDataQueryType.Annotations,
+      TestDataQueryType.PredictableAnnotations,
+    ];
     return vals.map((v) => ({
       ...v,
       hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
@@ -115,6 +120,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.PredictableCSVWave:
         update.csvWave = defaultCSVWaveQuery;
         break;
+      case TestDataQueryType.PredictableAnnotations:
+        update.predictableAnnotations = defaultPredictableAnnotationsQuery;
+        break;
       case TestDataQueryType.Annotations:
         update.lines = 10;
         break;
@@ -165,6 +173,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onStreamClientChange = onFieldChange('stream');
   const onPulseWaveChange = onFieldChange('pulseWave');
+  const onPredictableAnnotationsChange = onFieldChange('predictableAnnotations');
   const onUSAStatsChange = (usa?: USAQuery) => {
     onUpdate({ ...query, usa });
   };
@@ -366,6 +375,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
       {scenarioId === TestDataQueryType.PredictablePulse && (
         <PredictablePulseEditor onChange={onPulseWaveChange} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.PredictableAnnotations && (
+        <PredictableAnnotationsEditor onChange={onPredictableAnnotationsChange} query={query} ds={datasource} />
       )}
       {scenarioId === TestDataQueryType.PredictableCSVWave && (
         <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />

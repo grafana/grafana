@@ -63,6 +63,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: TestDataQueryType.PredictableAnnotations,
+    name: 'Predictable Annotations',
+    stringInput: '',
+  },
+  {
+    description: '',
     id: TestDataQueryType.PredictableCSVWave,
     name: 'Predictable CSV Wave',
     stringInput: '',

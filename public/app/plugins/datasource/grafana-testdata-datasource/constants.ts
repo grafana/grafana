@@ -1,4 +1,10 @@
-import { type CSVWave, type PulseWaveQuery, type TestDataDataQuery, TestDataQueryType } from './dataquery';
+import {
+  type CSVWave,
+  type PredictableAnnotationsQuery,
+  type PulseWaveQuery,
+  type TestDataDataQuery,
+  TestDataQueryType,
+} from './dataquery';
 
 export const defaultPulseQuery: PulseWaveQuery = {
   timeStep: 60,
@@ -6,6 +12,13 @@ export const defaultPulseQuery: PulseWaveQuery = {
   onValue: 2,
   offCount: 3,
   offValue: 1,
+};
+
+export const defaultPredictableAnnotationsQuery: PredictableAnnotationsQuery = {
+  eventFrequency: '1h',
+  incidentFrequency: '6h',
+  incidentDuration: '10m',
+  seed: 1,
 };
 
 export const defaultCSVWaveQuery: CSVWave[] = [

@@ -19,6 +19,7 @@ export enum TestDataQueryType {
   ManualEntry = 'manual_entry',
   NoDataPoints = 'no_data_points',
   NodeGraph = 'node_graph',
+  PredictableAnnotations = 'predictable_annotations',
   PredictableCSVWave = 'predictable_csv_wave',
   PredictablePulse = 'predictable_pulse',
   QueryMeta = 'query_meta',
@@ -45,6 +46,26 @@ export interface StreamingQuery {
   spread: number;
   type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
   url?: string;
+}
+
+export interface PredictableAnnotationsQuery {
+  /**
+   * How often a point-in-time event annotation occurs, as a Go duration string (e.g. "1h", "10m").
+   */
+  eventFrequency?: string;
+  /**
+   * How often an incident (region) annotation starts, as a Go duration string (e.g. "6h").
+   */
+  incidentFrequency?: string;
+  /**
+   * How long each incident lasts, as a Go duration string (e.g. "20m").
+   */
+  incidentDuration?: string;
+  /**
+   * Seed used to deterministically pick each annotation's text and tags. The same seed
+   * always produces the same annotations, independent of the selected time range.
+   */
+  seed?: number;
 }
 
 export interface PulseWaveQuery {
@@ -114,6 +135,7 @@ export interface TestDataDataQuery extends common.DataQuery {
   lines?: number;
   nodes?: NodesQuery;
   points?: Array<Array<string | number>>;
+  predictableAnnotations?: PredictableAnnotationsQuery;
   pulseWave?: PulseWaveQuery;
   rawFrameContent?: string;
   scenarioId?: TestDataQueryType;
