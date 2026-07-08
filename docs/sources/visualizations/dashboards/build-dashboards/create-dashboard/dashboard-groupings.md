@@ -118,7 +118,11 @@ You can switch between rows and tabs or update the panel layout by clicking the 
 
 ## Group panels
 
-To group panels already on a dashboard, follow these steps:
+You can group all the panels on a dashboard or select specific ones.
+
+### Group all panels
+
+To group all the panels on a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
@@ -143,7 +147,28 @@ To group panels already on a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-You can also start a grouping by adding a row or tab from the sidebar and then adding panels to that grouping.
+### Group select panels
+
+To group select panels on a dashboard:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Press the `Shift` key and select all the panels you want to group.
+   A dotted blue line surrounds the selected panels.
+   You can select panels that are already in other groupings.
+
+1. In the sidebar, select **Group into row** or **Group into tab**.
+   The panels you've selected are grouped and any remaining panels are added to another grouping of the same type.
+
+1. Set the [grouping configuration options](#grouping-configuration-options) in the sidebar.
+1. (Optional) Add one or both of the following:
+   - Other [groupings at the same level](#add-more-groupings-at-the-same-level).
+   - A [nested grouping](#add-nested-groupings)
+
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ### Add more groupings at the same level
 
