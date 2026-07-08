@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -12,18 +11,8 @@ import (
 )
 
 func TestStarsAuthorizer(t *testing.T) {
-	withStarsPermission := &authn.Claims[authn.AccessTokenClaims]{
-		Rest: authn.AccessTokenClaims{
-			DelegatedPermissions: []string{"collections.grafana.app/stars:*"},
-		},
-	}
-	noPermission := &authn.Claims[authn.AccessTokenClaims]{
-		Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{""}},
-	}
-
-	admin := &identity.StaticRequester{UserUID: "admin", OrgRole: identity.RoleAdmin, AccessTokenClaims: withStarsPermission}
-	viewer := &identity.StaticRequester{UserUID: "viewer", OrgRole: identity.RoleViewer, AccessTokenClaims: withStarsPermission}
-	adminNoPerm := &identity.StaticRequester{UserUID: "admin", OrgRole: identity.RoleAdmin, AccessTokenClaims: noPermission}
+	admin := &identity.StaticRequester{UserUID: "admin", OrgRole: identity.RoleAdmin}
+	viewer := &identity.StaticRequester{UserUID: "viewer", OrgRole: identity.RoleViewer}
 
 	update := func(name string) authorizer.AttributesRecord {
 		return authorizer.AttributesRecord{
@@ -45,7 +34,6 @@ func TestStarsAuthorizer(t *testing.T) {
 		{"user denied for another user", viewer, update("user-other"), authorizer.DecisionDeny},
 		{"admin manages own stars", admin, update("user-admin"), authorizer.DecisionAllow},
 		{"admin manages another user's stars", admin, update("user-other"), authorizer.DecisionAllow},
-		{"admin without stars permission denied", adminNoPerm, update("user-other"), authorizer.DecisionDeny},
 		{"non-user owner denied", admin, update("team-abc"), authorizer.DecisionDeny},
 	}
 

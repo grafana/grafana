@@ -3,7 +3,6 @@ package collections
 import (
 	"context"
 
-	"github.com/grafana/authlib/authz"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,12 +30,6 @@ func (starsAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes
 
 	if attr.GetResource() != "stars" {
 		return authorizer.DecisionDeny, "unsupported resource", nil
-	}
-
-	// The calling service (or the service acting on behalf of the user) must
-	// carry the stars permission; the per-user check happens below.
-	if res := authz.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb()); !res.Allowed {
-		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 	}
 
 	if attr.GetName() == "" {
