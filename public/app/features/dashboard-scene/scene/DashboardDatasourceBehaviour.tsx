@@ -152,6 +152,9 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
         if (hasNewRequest || isStreaming) {
           // Normal completion or streaming update: re-run immediately.
+          // Cancel any pending coalesced re-run so a prior chained forward cannot
+          // trigger a redundant second runQueries() after this one.
+          this.cancelCoalescedRerun();
           queryRunner.runQueries();
         } else if (forwardedNewData) {
           // Chained dashboard-DS forward under an unchanged requestId. Coalesce
@@ -190,10 +193,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     // Return cleanup function that unsubscribes from ALL subscriptions
     return () => {
       // Cancel any pending coalesced re-run so it can't fire after deactivation.
-      if (this.coalescedRerunTimeout !== undefined) {
-        clearTimeout(this.coalescedRerunTimeout);
-        this.coalescedRerunTimeout = undefined;
-      }
+      this.cancelCoalescedRerun();
 
       // Store all current requestIds before cleanup
       for (const dashboardQuery of dashboardQueries) {
@@ -222,10 +222,15 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     };
   }
 
-  private scheduleCoalescedRerun(queryRunner: SceneQueryRunner) {
+  private cancelCoalescedRerun() {
     if (this.coalescedRerunTimeout !== undefined) {
       clearTimeout(this.coalescedRerunTimeout);
+      this.coalescedRerunTimeout = undefined;
     }
+  }
+
+  private scheduleCoalescedRerun(queryRunner: SceneQueryRunner) {
+    this.cancelCoalescedRerun();
     this.coalescedRerunTimeout = setTimeout(() => {
       this.coalescedRerunTimeout = undefined;
       queryRunner.runQueries();

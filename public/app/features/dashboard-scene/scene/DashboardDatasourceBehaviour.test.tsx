@@ -1454,6 +1454,92 @@ describe('DashboardDatasourceBehaviour', () => {
       expect(spy).toHaveBeenCalledTimes(1);
     });
 
+    it('Should cancel a pending coalesced re-run when a normal completion arrives', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+
+      const sourcePanel = new VizPanel({
+        title: 'Intermediate dashboard-DS panel',
+        pluginId: 'table',
+        key: 'panel-1',
+        $data: new SceneDataTransformer({
+          transformations: [{ id: 'transformA', options: {} }],
+          $data: new SceneQueryRunner({
+            datasource: { uid: SHARED_DASHBOARD_QUERY },
+            queries: [{ refId: 'A', panelId: 44 }],
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+        }),
+      });
+
+      const dashboardDSPanel = new VizPanel({
+        title: 'Consumer panel',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: MIXED_DATASOURCE_NAME },
+            queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+      });
+
+      activateFullSceneTree(scene);
+      await new Promise((r) => setTimeout(r, 1));
+
+      const spy = jest
+        .spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries')
+        .mockImplementation();
+
+      const sameRequestId = 'SQR100';
+      const t = sourcePanel.state.$data as SceneDataTransformer;
+
+      t.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [{ fields: [], length: 10 }],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: sameRequestId } as DataQueryRequest,
+        },
+      });
+      spy.mockClear();
+
+      // Chained forward under the same requestId — schedules the coalesce timer.
+      t.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [{ fields: [], length: 20 }],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: sameRequestId } as DataQueryRequest,
+        },
+      });
+      expect(spy).not.toHaveBeenCalled();
+
+      // Genuine new completion within the coalesce window — must run immediately
+      // and cancel the pending coalesced re-run.
+      t.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [{ fields: [], length: 30 }],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: 'SQR101' } as DataQueryRequest,
+        },
+      });
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      // The stale coalesce timer must not fire a second re-run.
+      await new Promise((r) => setTimeout(r, 150));
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
     // With no transformations the intermediate runs through the #118629 branch that
     // subscribes to the source's SceneQueryRunner directly. The two tests below cover
     // re-running on a fresh Done under the same requestId, and the #116767 cancel guard.
