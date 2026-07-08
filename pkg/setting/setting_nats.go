@@ -16,6 +16,24 @@ const (
 	NATSModeExternal NATSMode = "external"
 )
 
+// NATSAuthMode names the connection auth mechanism explicitly, so the active
+// method is declared in configuration rather than inferred from which of several
+// credential fields happens to be populated.
+type NATSAuthMode string
+
+const (
+	// NATSAuthModeNone connects without credentials.
+	NATSAuthModeNone NATSAuthMode = "none"
+	// NATSAuthModeToken presents the static token.
+	NATSAuthModeToken NATSAuthMode = "token"
+	// NATSAuthModeCredentials presents a NATS .creds file (per-role, falling back
+	// to the shared file).
+	NATSAuthModeCredentials NATSAuthMode = "credentials"
+	// NATSAuthModeTokenExchange mints a short-lived authlib access token per
+	// (re)connect and presents it as the connect token.
+	NATSAuthModeTokenExchange NATSAuthMode = "token_exchange"
+)
+
 // NATSSettings configures the stateless Core NATS message bus that signals
 // unified-storage resource changes; a disabled or unavailable bus degrades
 // gracefully to DB polling. Keys are documented in defaults.ini.
@@ -61,16 +79,25 @@ type NATSTLSSettings struct {
 	InsecureSkipVerify bool
 }
 
-// NATSAuthSettings configures the connection identity. A per-role credentials
-// file lets each role present a least-privilege identity; an empty value falls
-// back to the shared CredentialsFile.
+// NATSAuthSettings configures the connection identity. Mode selects the auth
+// mechanism explicitly; the fields it consumes depend on that choice:
 //
-// When TokenExchangeAudiences is set, the connection instead mints a short-lived
-// authlib access token per (re)connect and presents it as the connect token, so
-// an external auth-callout service can verify it and grant least-privilege
-// permissions from its claims. The exchange endpoint and bootstrap token are
-// shared with the [grpc_client_authentication] section rather than duplicated.
+//   - "credentials": a NATS .creds file. A per-role file lets each role present a
+//     least-privilege identity; an empty value falls back to the shared
+//     CredentialsFile.
+//   - "token_exchange": mint a short-lived authlib access token per (re)connect
+//     and present it as the connect token, so an external auth-callout service can
+//     verify it and grant least-privilege permissions from its claims. The
+//     exchange endpoint and bootstrap token are shared with the
+//     [grpc_client_authentication] section rather than duplicated.
+//   - "token": the static Token.
+//   - "none": connect without credentials.
+//
+// The mode drives selection rather than a precedence over populated fields, so
+// the active mechanism is self-evident from configuration.
 type NATSAuthSettings struct {
+	Mode NATSAuthMode
+
 	Token                     string
 	CredentialsFile           string
 	PublisherCredentialsFile  string
@@ -125,6 +152,7 @@ func readNATSSettings(cfg *Cfg) error {
 			InsecureSkipVerify: section.Key("tls_insecure_skip_verify").MustBool(false),
 		},
 		Auth: NATSAuthSettings{
+			Mode:                      NATSAuthMode(section.Key("auth_mode").MustString(string(NATSAuthModeNone))),
 			Token:                     section.Key("token").MustString(""),
 			CredentialsFile:           section.Key("credentials_file").MustString(""),
 			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
@@ -134,6 +162,40 @@ func readNATSSettings(cfg *Cfg) error {
 			TokenExchangeToken:        grpcClient.Key("token").MustString(""),
 			TokenExchangeNamespace:    grpcClient.Key("token_namespace").MustString("stacks-" + cfg.StackID),
 		},
+	}
+	if err := cfg.NATS.Auth.validate(cfg.NATS.Enabled); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validate rejects an unknown auth_mode always, and (when the bus is enabled)
+// the mode being missing the fields it needs, so a misconfiguration fails at
+// startup rather than silently connecting unauthenticated.
+func (a NATSAuthSettings) validate(enabled bool) error {
+	switch a.Mode {
+	case NATSAuthModeNone, NATSAuthModeToken, NATSAuthModeCredentials, NATSAuthModeTokenExchange:
+	default:
+		return fmt.Errorf("invalid nats auth_mode %q, expected one of %q, %q, %q, %q",
+			a.Mode, NATSAuthModeNone, NATSAuthModeToken, NATSAuthModeCredentials, NATSAuthModeTokenExchange)
+	}
+	if !enabled {
+		return nil
+	}
+	switch a.Mode {
+	case NATSAuthModeNone:
+	case NATSAuthModeToken:
+		if a.Token == "" {
+			return fmt.Errorf("nats auth_mode %q requires token", NATSAuthModeToken)
+		}
+	case NATSAuthModeCredentials:
+		if a.PublisherCredentials() == "" || a.SubscriberCredentials() == "" {
+			return fmt.Errorf("nats auth_mode %q requires credentials_file (or both publisher_credentials_file and subscriber_credentials_file)", NATSAuthModeCredentials)
+		}
+	case NATSAuthModeTokenExchange:
+		if !a.TokenExchangeEnabled() {
+			return fmt.Errorf("nats auth_mode %q requires token_exchange_audiences plus token_exchange_url and token in [grpc_client_authentication]", NATSAuthModeTokenExchange)
+		}
 	}
 	return nil
 }
