@@ -702,12 +702,6 @@ spec:
                   type: string
                 type: array
             - in: query
-              name: groups
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: labels
               schema:
                 items:
@@ -751,6 +745,12 @@ spec:
               name: routingTree
               schema:
                 type: string
+            - in: query
+              name: sequences
+              schema:
+                items:
+                  type: string
+                type: array
             - in: query
               name: sort
               schema:
@@ -830,12 +830,6 @@ spec:
                   type: string
                 type: array
             - in: query
-              name: groups
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: labels
               schema:
                 items:
@@ -875,6 +869,12 @@ spec:
               name: routingTree
               schema:
                 type: string
+            - in: query
+              name: sequences
+              schema:
+                items:
+                  type: string
+                type: array
             - in: query
               name: sort
               schema:
@@ -942,12 +942,6 @@ spec:
                   type: string
                 type: array
             - in: query
-              name: groups
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: labels
               schema:
                 items:
@@ -975,6 +969,12 @@ spec:
               name: q
               schema:
                 type: string
+            - in: query
+              name: sequences
+              schema:
+                items:
+                  type: string
+                type: array
             - in: query
               name: sort
               schema:
@@ -1043,8 +1043,6 @@ spec:
               type: string
             for:
               type: string
-            group:
-              type: string
             interval:
               type: string
             keepFiringFor:
@@ -1064,6 +1062,8 @@ spec:
             receiver:
               type: string
             routingTree:
+              type: string
+            sequence:
               type: string
             title:
               type: string
@@ -1089,8 +1089,6 @@ spec:
               type: array
             folder:
               type: string
-            group:
-              type: string
             interval:
               type: string
             labels:
@@ -1103,6 +1101,8 @@ spec:
               type: string
             paused:
               type: boolean
+            sequence:
+              type: string
             targetDatasourceUID:
               type: string
             title:
@@ -1137,8 +1137,6 @@ spec:
               type: string
             for:
               type: string
-            group:
-              type: string
             interval:
               type: string
             keepFiringFor:
@@ -1159,6 +1157,8 @@ spec:
               type: string
             routingTree:
               type: string
+            sequence:
+              type: string
             title:
               type: string
             type:
@@ -1178,8 +1178,6 @@ spec:
               type: array
             folder:
               type: string
-            group:
-              type: string
             interval:
               type: string
             labels:
@@ -1192,6 +1190,8 @@ spec:
               type: string
             paused:
               type: boolean
+            sequence:
+              type: string
             targetDatasourceUID:
               type: string
             title:

@@ -704,7 +704,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref commo
 							Format:  "",
 						},
 					},
-					"group": {
+					"sequence": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -908,7 +908,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleHit(r
 							Format:  "",
 						},
 					},
-					"group": {
+					"sequence": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1101,7 +1101,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleHit(ref common.Ref
 							Format:  "",
 						},
 					},
-					"group": {
+					"sequence": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -1252,7 +1252,7 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRecordingRuleHit(ref common
 							Format:  "",
 						},
 					},
-					"group": {
+					"sequence": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

@@ -1,6 +1,6 @@
 package v0alpha1
 
-#RuleSearchSortField: "title" | "-title" | "group" | "-group" @cog(kind="enum",memberNames="TitleAsc|TitleDesc|GroupAsc|GroupDesc")
+#RuleSearchSortField: "title" | "-title" | "sequence" | "-sequence" @cog(kind="enum",memberNames="TitleAsc|TitleDesc|SequenceAsc|SequenceDesc")
 
 #RuleSearchType: "alertrule" | "recordingrule" @cog(kind="enum",memberNames="AlertRule|RecordingRule")
 
@@ -8,7 +8,7 @@ _ruleHitBase: {
 	name:      string
 	title:     string
 	folder:    string
-	group?:    string
+	sequence?: string
 	interval?: string
 	paused?:   bool
 	labels?: [string]: string

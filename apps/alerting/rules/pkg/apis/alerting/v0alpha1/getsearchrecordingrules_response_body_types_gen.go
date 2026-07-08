@@ -9,7 +9,7 @@ type GetSearchRecordingRulesRecordingRuleHit struct {
 	Name                string                                `json:"name"`
 	Title               string                                `json:"title"`
 	Folder              string                                `json:"folder"`
-	Group               *string                               `json:"group,omitempty"`
+	Sequence            *string                               `json:"sequence,omitempty"`
 	Interval            *string                               `json:"interval,omitempty"`
 	Paused              *bool                                 `json:"paused,omitempty"`
 	Labels              map[string]string                     `json:"labels,omitempty"`

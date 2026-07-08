@@ -5,10 +5,10 @@ package v0alpha1
 type GetSearchRecordingRulesRequestRuleSearchSortField string
 
 const (
-	GetSearchRecordingRulesRequestRuleSearchSortFieldTitleAsc  GetSearchRecordingRulesRequestRuleSearchSortField = "title"
-	GetSearchRecordingRulesRequestRuleSearchSortFieldTitleDesc GetSearchRecordingRulesRequestRuleSearchSortField = "-title"
-	GetSearchRecordingRulesRequestRuleSearchSortFieldGroupAsc  GetSearchRecordingRulesRequestRuleSearchSortField = "group"
-	GetSearchRecordingRulesRequestRuleSearchSortFieldGroupDesc GetSearchRecordingRulesRequestRuleSearchSortField = "-group"
+	GetSearchRecordingRulesRequestRuleSearchSortFieldTitleAsc     GetSearchRecordingRulesRequestRuleSearchSortField = "title"
+	GetSearchRecordingRulesRequestRuleSearchSortFieldTitleDesc    GetSearchRecordingRulesRequestRuleSearchSortField = "-title"
+	GetSearchRecordingRulesRequestRuleSearchSortFieldSequenceAsc  GetSearchRecordingRulesRequestRuleSearchSortField = "sequence"
+	GetSearchRecordingRulesRequestRuleSearchSortFieldSequenceDesc GetSearchRecordingRulesRequestRuleSearchSortField = "-sequence"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for GetSearchRecordingRulesRequestRuleSearchSortField.
@@ -21,7 +21,7 @@ type GetSearchRecordingRulesRequestParams struct {
 	Q                   *string                                            `json:"q,omitempty"`
 	Names               []string                                           `json:"names,omitempty"`
 	Folders             []string                                           `json:"folders,omitempty"`
-	Groups              []string                                           `json:"groups,omitempty"`
+	Sequences           []string                                           `json:"sequences,omitempty"`
 	Paused              *bool                                              `json:"paused,omitempty"`
 	DatasourceUIDs      []string                                           `json:"datasourceUIDs,omitempty"`
 	Labels              []string                                           `json:"labels,omitempty"`
