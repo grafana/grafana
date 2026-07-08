@@ -241,6 +241,41 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			unregisteredIDs:    []string{"child-plugin"},
 		},
 		{
+			name: "dependency plugins are ignored for any parent plugin type",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "parent-datasource",
+						Type: plugins.TypeDataSource,
+						Info: plugins.Info{Version: "1.0.0"},
+						Dependencies: plugins.Dependencies{
+							Plugins: []plugins.Dependency{{ID: "dependency-panel"}},
+						},
+					},
+					Class: plugins.ClassExternal,
+				},
+				{
+					JSONData: plugins.JSONData{ID: "dependency-panel", Info: plugins.Info{Version: "2.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "dependency-panel",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "dependency-panel"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 0,
+			registeredIDs:      []string{"parent-datasource"},
+		},
+		{
 			name:             "API plugins only",
 			installedPlugins: []pluginstore.Plugin{},
 			apiPlugins: []pluginsv0alpha1.Plugin{
