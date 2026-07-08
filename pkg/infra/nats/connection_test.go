@@ -198,8 +198,8 @@ func TestConnection(t *testing.T) {
 			require.Error(t, err)
 		})
 
-		t.Run("uses a static token when set", func(t *testing.T) {
-			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{Token: "s3cret"}}
+		t.Run("token mode uses the static token", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{Mode: setting.NATSAuthModeToken, Token: "s3cret"}}
 			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
 
 			opts, err := c.connectOptions()
@@ -209,8 +209,9 @@ func TestConnection(t *testing.T) {
 			require.Nil(t, o.TokenHandler)
 		})
 
-		t.Run("token exchange registers a token handler over a static token", func(t *testing.T) {
+		t.Run("token_exchange mode registers a token handler", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Mode:                   setting.NATSAuthModeTokenExchange,
 				Token:                  "s3cret",
 				TokenExchangeAudiences: []string{"us-nats"},
 				TokenExchangeURL:       "http://signer/sign",
@@ -221,17 +222,18 @@ func TestConnection(t *testing.T) {
 			opts, err := c.connectOptions()
 			require.NoError(t, err)
 			o := applyOptions(t, opts)
-			// The exchanged token takes precedence: a handler is installed and the
-			// static token is left unset.
+			// The mode selects token exchange: a handler is installed and the static
+			// token is left unset even though one is present.
 			require.NotNil(t, o.TokenHandler)
 			require.Empty(t, o.Token)
 		})
 
-		t.Run("credentials file wins over token exchange", func(t *testing.T) {
+		t.Run("credentials mode uses the creds file", func(t *testing.T) {
 			credsFile := filepath.Join(t.TempDir(), "pub.creds")
 			require.NoError(t, os.WriteFile(credsFile, []byte("dummy"), 0o600))
 
 			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Mode:                     setting.NATSAuthModeCredentials,
 				PublisherCredentialsFile: credsFile,
 				TokenExchangeAudiences:   []string{"us-nats"},
 				TokenExchangeURL:         "http://signer/sign",
@@ -243,9 +245,26 @@ func TestConnection(t *testing.T) {
 			opts, err := c.connectOptions()
 			require.NoError(t, err)
 			o := applyOptions(t, opts)
+			// The mode selects credentials: the .creds file is loaded and neither the
+			// token handler nor a static token is installed.
 			require.NotNil(t, o.UserJWT)
 			require.Nil(t, o.TokenHandler)
 			require.Empty(t, o.Token)
+		})
+
+		t.Run("none mode installs no auth", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Mode:  setting.NATSAuthModeNone,
+				Token: "s3cret",
+			}}
+			c := newConnection(rolePublisher, log.NewNopLogger(), newConnectionMetrics(rolePublisher), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			o := applyOptions(t, opts)
+			require.Empty(t, o.Token)
+			require.Nil(t, o.TokenHandler)
+			require.Nil(t, o.UserJWT)
 		})
 	})
 
