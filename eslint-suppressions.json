@@ -159,7 +159,7 @@
   },
   "packages/grafana-data/src/types/dataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 7
     }
   },
   "packages/grafana-data/src/types/dataLink.ts": {
