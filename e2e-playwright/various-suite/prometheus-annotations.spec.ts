@@ -5,6 +5,14 @@ import { test, expect, type Components, type E2ESelectorGroups } from '@grafana/
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
 
+test.use({
+  openFeature: {
+    flags: {
+      'grafana.dashboardSettingsRedesign': false,
+    },
+  },
+});
+
 test.describe(
   'Prometheus annotations',
   {
