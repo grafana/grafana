@@ -95,6 +95,10 @@ const (
 	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
 	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
+	// FlagProvisioningUserAttribution
+	// Author Git Sync commits as the acting Grafana user
+	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
