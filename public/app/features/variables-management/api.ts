@@ -15,7 +15,7 @@ import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariab
 
 const LIST_PAGE_SIZE = 500;
 
-export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+const variableListTag = { type: 'Variable' as const, id: 'LIST' };
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
@@ -23,7 +23,7 @@ export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
  * hook is the data-fetching seam for the variables tree: if fetch-all proves not to
  * scale, swap this for a per-folder labelSelector strategy without touching the UI.
  */
-export const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
+const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
     listAllVariables: build.query<Variable[], void>({
       queryFn: async (_arg, _api, _extraOptions, baseQuery) => {
