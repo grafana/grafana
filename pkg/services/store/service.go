@@ -3,15 +3,12 @@ package store
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -27,9 +24,7 @@ var ErrAccessDenied = errors.New("access denied")
 var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently supported")
 
 const RootPublicStatic = "public-static"
-const RootResources = "resources"
 const RootContent = "content"
-const RootDevenv = "devenv"
 const RootSystem = "system"
 
 type UploadRequest struct {
@@ -66,9 +61,10 @@ type StorageService interface {
 type standardStorageService struct {
 	sql         db.DB
 	tree        *nestedTree
-	cfg         *GlobalStorageConfig
 	authService storageAuthService
 	systemUsers SystemUsersFilterProvider
+
+	allowSvgUpload bool // always false
 }
 
 func ProvideService(
@@ -76,11 +72,6 @@ func ProvideService(
 	cfg *setting.Cfg,
 	systemUsersService SystemUsers,
 ) (StorageService, error) {
-	settings, err := LoadStorageConfig(cfg)
-	if err != nil {
-		grafanaStorageLogger.Warn("Error loading storage config", "error", err)
-	}
-
 	// always exists
 	globalRoots := []storageRuntime{
 		newDiskStorage(RootStorageMeta{
@@ -102,59 +93,8 @@ func ProvideService(
 		}),
 	}
 
-	// Development dashboards
-	if settings.AddDevEnv && cfg.Env != setting.Prod {
-		devenv := filepath.Join(cfg.StaticRootPath, "..", "devenv")
-		if _, err := os.Stat(devenv); !os.IsNotExist(err) {
-			s := newDiskStorage(RootStorageMeta{
-				ReadOnly: false,
-			}, RootStorageConfig{
-				Prefix:           RootDevenv,
-				UnderContentRoot: true,
-				Name:             "Development Environment",
-				Description:      "Explore files within the developer environment directly",
-				Disk: &StorageLocalDiskConfig{
-					Path: devenv,
-					Roots: []string{
-						"/dev-dashboards/",
-					},
-				}})
-			globalRoots = append(globalRoots, s)
-		}
-	}
-
-	for _, root := range settings.Roots {
-		if root.Prefix == "" {
-			grafanaStorageLogger.Warn("Invalid root configuration", "cfg", root)
-			continue
-		}
-
-		// all externally-defined storages lie under the "content" root
-		root.UnderContentRoot = true
-
-		// TODO: remove unused second argument
-		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
-		if err != nil {
-			grafanaStorageLogger.Warn("Error loading storage config", "error", err)
-		}
-		if s != nil {
-			globalRoots = append(globalRoots, s)
-		}
-	}
-
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0, 3)
-
-		storages = append(storages,
-			newSQLStorage(RootStorageMeta{
-				Builtin: true,
-			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId, false))
-
-		// Custom upload files
-		storages = append(storages,
-			newSQLStorage(RootStorageMeta{
-				Builtin: true,
-			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId, false))
 
 		// System settings
 		storages = append(storages,
@@ -195,30 +135,6 @@ func ProvideService(
 			return filter
 		}
 
-		if storageName == RootContent {
-			if user.OrgRole != org.RoleAdmin {
-				// read only
-				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   allowAllPathFilter,
-					ActionFilesWrite:  denyAllPathFilter,
-					ActionFilesDelete: denyAllPathFilter,
-				}
-			}
-
-			// read/write for all except for devenv
-			writeFilter := filestorage.NewPathFilter(
-				[]string{filestorage.Delimiter}, // access to everything
-				nil,
-				[]string{filestorage.Delimiter + RootDevenv + filestorage.Delimiter}, // except devenv
-				[]string{filestorage.Delimiter + RootDevenv})
-
-			return map[string]filestorage.PathFilter{
-				ActionFilesRead:   allowAllPathFilter,
-				ActionFilesWrite:  writeFilter,
-				ActionFilesDelete: writeFilter,
-			}
-		}
-
 		if !user.IsGrafanaAdmin {
 			return nil
 		}
@@ -232,7 +148,6 @@ func ProvideService(
 	})
 
 	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, systemUsersService)
-	s.cfg = settings
 
 	return s, nil
 }

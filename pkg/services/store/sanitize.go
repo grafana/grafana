@@ -13,7 +13,7 @@ import (
 func (s *standardStorageService) sanitizeUploadRequest(_ context.Context, _ *user.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error) {
 	if req.EntityType == EntityTypeImage {
 		ext := filepath.Ext(req.Path)
-		if ext == ".svg" && !s.cfg.AllowUnsanitizedSvgUpload {
+		if ext == ".svg" && !s.allowSvgUpload {
 			grafanaStorageLogger.Debug("Disallowing svg upload", "filename", req.Path)
 			return nil, errors.New("SVG uploads are not allowed")
 		}

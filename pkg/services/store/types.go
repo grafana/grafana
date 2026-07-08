@@ -5,27 +5,17 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type WriteValueWorkflow = string
-
-var (
-	WriteValueWorkflow_Save WriteValueWorkflow = "save" // or empty
-	WriteValueWorkflow_PR   WriteValueWorkflow = "pr"
-	WriteValueWorkflow_Push WriteValueWorkflow = "push"
-)
-
 type WriteValueRequest struct {
 	User       *user.SignedInUser
-	Path       string             // added from URL
-	EntityType EntityType         `json:"kind,omitempty"` // for now only dashboard
-	Body       json.RawMessage    `json:"body,omitempty"`
-	Message    string             `json:"message,omitempty"`
-	Title      string             `json:"title,omitempty"`    // For PRs
-	Workflow   WriteValueWorkflow `json:"workflow,omitempty"` // save | pr | push
+	Path       string          // added from URL
+	EntityType EntityType      `json:"kind,omitempty"` // for now only dashboard
+	Body       json.RawMessage `json:"body,omitempty"`
+	Message    string          `json:"message,omitempty"`
+	Title      string          `json:"title,omitempty"` // For PRs
 }
 
 type WriteValueResponse struct {

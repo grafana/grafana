@@ -82,6 +82,15 @@ func TestIntegrationListFiles(t *testing.T) {
 	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
 	require.NoError(t, err)
 
+	// Normalize the geojson media type -- so it does not depend on system configuration
+	mt := frame.Fields[1]
+	require.Equal(t, mediaTypeListFrameField, mt.Name)
+	for i := 0; i < mt.Len(); i++ {
+		if mt.At(i) == "application/geo+json" {
+			mt.Set(i, "application/octet-stream")
+		}
+	}
+
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
 }
 
@@ -113,9 +122,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
 	}, authService, cfg, nil)
-	store.cfg = &GlobalStorageConfig{
-		AllowUnsanitizedSvgUpload: true,
-	}
+	store.allowSvgUpload = true
 
 	return store, mockStorage, storageName
 }
@@ -276,9 +283,8 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
 		return []storageRuntime{nestedOrgedStorage, contentStorage}
 	}, allowAllAuthService, cfg, nil)
-	store.cfg = &GlobalStorageConfig{
-		AllowUnsanitizedSvgUpload: true,
-	}
+	store.allowSvgUpload = true
+
 	fileName := "file.jpg"
 
 	tests := []struct {
@@ -469,9 +475,7 @@ func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 
 	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg, nil)
-	store.cfg = &GlobalStorageConfig{
-		AllowUnsanitizedSvgUpload: true,
-	}
+	store.allowSvgUpload = true
 
 	resp, err := store.List(ctx, globalUser, "content/nested", 0)
 	require.NoError(t, err)
