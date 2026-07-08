@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -39,18 +37,6 @@ func (p *LocalProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, er
 	if !exists {
 		return nil, ErrMetaNotFound
 	}
-
-	parentID, parentVersion := "", ""
-	if plugin.Parent != nil {
-		parentID, parentVersion = plugin.Parent.ID, plugin.Parent.Version
-	}
-	logging.DefaultLogger.With("app", "plugins.app").Info("[version-debug] local provider plugin",
-		"pluginId", ref.ID,
-		"jsonVersion", plugin.Info.Version,
-		"hasParent", plugin.Parent != nil,
-		"parentId", parentID,
-		"parentVersion", parentVersion,
-		"includedInAppId", plugin.IncludedInAppID)
 
 	moduleHash := p.moduleHashCalc.ModuleHash(ctx, ref.ID, ref.Version)
 	spec := pluginStorePluginToMeta(plugin, moduleHash)

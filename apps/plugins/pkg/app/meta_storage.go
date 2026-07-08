@@ -217,15 +217,6 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
-	parentID := ""
-	if plugin.Spec.ParentId != nil {
-		parentID = *plugin.Spec.ParentId
-	}
-	logger.Info("[version-debug] resolved plugin ref",
-		"pluginId", plugin.Spec.Id,
-		"specVersion", plugin.Spec.Version,
-		"parentId", parentID)
-
 	result, err := s.metaManager.GetMeta(ctx, meta.PluginRef{
 		ID:       plugin.Spec.Id,
 		Version:  plugin.Spec.Version,
@@ -243,11 +234,6 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		logger.Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
-
-	logger.Info("[version-debug] meta result",
-		"pluginId", plugin.Spec.Id,
-		"resultVersion", result.Meta.PluginJson.Info.Version,
-		"resultClass", result.Meta.Class)
 
 	pluginMeta := &pluginsv0alpha1.Meta{
 		ObjectMeta: metav1.ObjectMeta{
