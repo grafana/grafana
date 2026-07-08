@@ -13,7 +13,10 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import {
+  getTraceToLogsOptions,
+  type TraceToProfilesOptions,
+} from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
@@ -165,19 +168,26 @@ const styles = {
   }),
 };
 
+/**
+ * Data source types that expose a trace-to-logs configuration and can therefore
+ * produce a span/trace specific logs CTA.
+ */
+const TRACE_TO_LOGS_DATASOURCE_TYPES = ['tempo', 'jaeger', 'zipkin'];
+
 function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
   const defaultCTA = 'Related logs';
-  if (!settings || settings.type !== 'tempo') {
+  if (!settings || !TRACE_TO_LOGS_DATASOURCE_TYPES.includes(settings.type)) {
     return defaultCTA;
   }
 
-  if ('tracesToLogsV2' in settings) {
-    if ('filterBySpanId' in settings && settings.filterBySpanId) {
-      return 'Logs for this span';
-    }
-    if ('filterByTraceID' in settings && settings.filterByTraceID) {
-      return 'Logs for this trace';
-    }
+  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
+  // migrates the legacy `tracesToLogs` shape to the v2 shape.
+  const options = getTraceToLogsOptions(settings.jsonData);
+  if (options?.filterBySpanID) {
+    return 'Logs for this span';
+  }
+  if (options?.filterByTraceID) {
+    return 'Logs for this trace';
   }
 
   return defaultCTA;

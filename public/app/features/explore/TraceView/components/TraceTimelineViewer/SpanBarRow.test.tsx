@@ -20,7 +20,7 @@ import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { type SpanLinkDef } from '../types/links';
 import { type TraceSpan } from '../types/trace';
 
-import SpanBarRow, { type SpanBarRowProps } from './SpanBarRow';
+import { type SpanBarRowProps, SpanBarRow } from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
