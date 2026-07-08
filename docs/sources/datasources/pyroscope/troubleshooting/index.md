@@ -15,12 +15,12 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Pyroscope data source issues
 weight: 500
-review_date: 2026-04-17
+review_date: 2026-07-08
 ---
 
 # Troubleshoot Pyroscope data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-pyroscope-data-source/).
+This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/).
 
 ## Connection and configuration errors
 
@@ -180,6 +180,39 @@ Example valid queries:
 {service_name="my-app", env="production"}
 {service_name=~"my-app.*"}
 ```
+
+## Template variable errors
+
+These errors occur when using template variables with the Pyroscope data source.
+
+### Variables return no values
+
+**Symptoms:**
+
+- The variable drop-down is empty
+- Dependent variables don't populate
+
+**Solutions:**
+
+1. Verify the data source connection is working by testing it in the settings.
+1. For **Label** and **Label value** variables, verify that a profile type is selected. Labels and label values are scoped to the selected profile type.
+1. Expand the dashboard time range to ensure the variable query covers a period when profiles were collected.
+1. Confirm the Pyroscope backend is receiving profiles from your applications.
+
+### Variables don't filter queries as expected
+
+**Symptoms:**
+
+- Query results don't change when the variable value changes
+- Queries return no data after selecting a variable value
+
+**Solutions:**
+
+1. Verify the variable is referenced correctly in the label selector, for example, `{service_name="$service"}`.
+1. When **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern. Use the `=~` operator instead of `=`, for example, `{service_name=~"$service"}`.
+1. Confirm the label used in the variable exists on the profiling data for the selected profile type.
+
+For more information, refer to [Grafana Pyroscope template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/).
 
 ## Flame graph issues
 

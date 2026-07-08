@@ -7,6 +7,12 @@ keywords:
   - pyroscope data source
   - continuous profiling
   - tracing
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+review_date: 2026-07-08
 ---
 
 # How profiling and tracing work together

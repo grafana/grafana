@@ -15,8 +15,10 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Pyroscope
+menuTitle: Pyroscope
+title: Pyroscope data source
 weight: 1350
+review_date: 2026-07-08
 ---
 
 # Grafana Pyroscope data source
@@ -24,13 +26,34 @@ weight: 1350
 Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system.
 Add a Pyroscope data source to query your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
+Grafana includes built-in support for Pyroscope, so you don't need to install a plugin. The Pyroscope data source requires Grafana v12.3 or later.
+
 Refer to [Introduction to Pyroscope](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/introduction/) to understand profiling and Pyroscope.
 
-To use profiling data, you should:
+## Supported features
 
-- [Configure your application to send profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/)
-- [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source/).
-- [View and query profiling data using Profiles Drilldown or the query editor ](./query-profile-data/)
+The Pyroscope data source supports the following features.
+
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Logs        | No        |
+| Traces      | No        |
+| Alerting    | No        |
+| Annotations | No        |
+
+The Pyroscope data source returns profiling data visualized as flame graphs and time-series metrics derived from profiles. It also integrates with tracing data through the Trace to profiles feature.
+
+## Get started
+
+The following documents help you get started with the Pyroscope data source:
+
+- [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/)
+- [Query profile data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/query-editor/)
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/)
+- [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/)
+
+Before you query profiles, [configure your application to send profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/) to Pyroscope.
 
 ## Continuous profiling
 
@@ -69,20 +92,20 @@ In this case, the screenshot shows memory profiles alongside panels for logs and
 ## Visualize traces and profiles data using Traces to profiles
 
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
-To learn more about how profiles and tracing can work together, refer to [Profiling and tracing synergies](./profiling-and-tracing/).
+To learn more about how profiles and tracing can work together, refer to [How profiling and tracing work together](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/profiling-and-tracing/).
 
 Combined traces and profiles let you see granular line-level detail when available for a trace span. This allows you pinpoint the exact function that's causing a bottleneck in your application as well as a specific request.
 
 ![trace-profiler-view](https://grafana.com/static/img/pyroscope/pyroscope-trace-profiler-view-2023-11-30.png)
 
-For more information, refer to the [Traces to profile section](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) and [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
+For more information, refer to [Configure Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/) and [Link tracing and profiling with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
 
 {{< youtube id="AG8VzfFMLxo" >}}
 
 ## Provision the Pyroscope data source
 
 You can modify the Grafana configuration files to provision the Pyroscope data source.
-To learn more, and to view the available provisioning settings, refer to [provisioning documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources).
+To learn more, and to view the available provisioning settings, refer to [provisioning documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 Here is an example configuration:
 
@@ -99,4 +122,4 @@ datasources:
 
 ## Troubleshoot
 
-If you encounter issues when configuring or using the Pyroscope data source, refer to the [Troubleshooting guide](./troubleshooting/) for solutions to common problems.
+If you encounter issues when configuring or using the Pyroscope data source, refer to [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/) for solutions to common problems.

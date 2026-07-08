@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../query-profile-data/ # /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/query-profile-data/
 description: Explore your profiling data using Profiles Drilldown or the Pyroscope query editor.
 keywords:
   - query
@@ -12,6 +14,7 @@ labels:
 title: Query profile data
 menuTitle: Query profile data
 weight: 400
+review_date: 2026-07-08
 ---
 
 # Query profile data
@@ -42,7 +45,7 @@ The main use cases are the following:
 - Proactive: Cutting costs, addressing latency issues, or optimizing memory usage for applications
 - Reactive: Resolving incidents with line-level accuracy or debugging active latency/memory issues
 
-Profiles Drilldown provides an intuitive interface to specifically support proactivee and reactive use cases.
+Profiles Drilldown provides an intuitive interface to specifically support proactive and reactive use cases.
 You get a holistic view of all of your services and how they're functioning, but also the ability to drill down for more targeted root cause analysis.
 
 Profiles Drilldown offers a convenient platform to analyze profiles and get insights that are impossible to get from using other traditional signals like logs, metrics, or tracing.
@@ -74,20 +77,60 @@ To access the query editor:
 
    While the label selector can be left empty to query all profiles without filtering by labels, you must select a profile type or app for the query to be valid.
 
-   Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
+   Grafana doesn't show any data if the profile type or app isn't selected when a query runs.
 
    ![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
 
-1. Expand the **Options** section to view **Query Type** and **Group by**.
+1. Expand the **Options** section to view the available query options.
    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
-1. Select a query type to return the profile data. Data is shown in the [Flame Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/), metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
+### Query options
+
+The **Options** section provides the following settings.
+
+| Option           | Description                                                                                                                                                                                                                                            |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Query Type**   | Sets the type of data the query returns: **Profile** for flame graph data, **Metrics** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.                                    |
+| **Group by**     | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** only affects metric data and doesn't change the profile data results.                             |
+| **Limit**        | Sets the maximum number of time series returned by the data source when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period.                                              |
+| **Max Nodes**    | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The default is `16384`.                                                                                  |
+| **Span ID**      | Filters profile data to one or more span IDs so you can view the profile associated with a specific trace span. This option supports the Trace to profiles integration.                                                                                  |
+| **Annotations**  | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                                                             |
+
+Select a query type to return the profile data. Data is shown in the [Flame Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/), metric data visualized in a graph, or both.
 
 Using **Group by**, you can group metric data by a specified label.
-Without any **Group by** label, metric data aggregates over all the labels into single time series.
-You can use multiple labels to group by. Group by only effects the metric data and doesn't change the profile data results.
+You can use multiple labels to group by.
 
-In conjunction with **Group by**, you can set a positive number in the **Limit** input to limit the maximum number of time series returned by the data source. The series returned are always ordered by descending value for the total aggregated data over the time period.
+In conjunction with **Group by**, you can set a positive number in the **Limit** input to limit the maximum number of time series returned by the data source.
+
+#### Exemplars
+
+When the `profilesExemplars` feature is enabled, an **Exemplars** toggle appears in the **Options** section.
+Exemplars link individual profile samples to points on a metrics graph, so you can jump from a spike in a time series to the specific profile that produced it.
+
+The `profilesExemplars` feature is generally available and enabled by default.
+
+#### Heatmap
+
+When the `profilesHeatmap` feature is enabled, a **Heatmap** toggle appears in the **Options** section.
+The heatmap visualizes the distribution of profile samples over time, which helps you spot patterns and outliers across many profiles.
+
+When you enable **Heatmap**, use the **Heatmap Type** option to choose how samples are aggregated:
+
+- **Individual**: Aggregates individual profile samples.
+- **Span**: Aggregates samples by span, for use with the Trace to profiles integration.
+
+{{< admonition type="note" >}}
+The `profilesHeatmap` feature is experimental. Experimental features are subject to change and may be removed in a future release. Enable it using the `profilesHeatmap` feature toggle.
+{{< /admonition >}}
+
+#### UTF-8 label names
+
+When the `pyroscopeUTF8LabelNames` feature is enabled, the label selector supports UTF-8 label names.
+Enclose label names that contain characters such as dots in double quotes, for example, `{"k8s.namespace"="production"}`.
+
+The `pyroscopeUTF8LabelNames` feature is in public preview and enabled by default.
 
 ### Profiles query results
 
@@ -107,3 +150,8 @@ Metrics results represent the aggregated sum value over time of the selected pro
 ![Metrics graph](/media/docs/pyroscope/query-editor/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
+
+## Next steps
+
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/)
+- [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/)

@@ -8,6 +8,12 @@ keywords:
   - tracing
   - span profiles
   - trace to profiles
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+review_date: 2026-07-08
 ---
 
 # Configure Trace to profiles
@@ -20,7 +26,7 @@ Your application must be instrumented for profiles and traces. For more informat
 
 [//]: # 'Shared content for Trace to profiles in the Tempo data source'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" version="<GRAFANA VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" version="<GRAFANA_VERSION>" >}}
 
 ## Verify the integration
 

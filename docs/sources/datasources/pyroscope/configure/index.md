@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../configure-pyroscope-data-source/ # /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-pyroscope-data-source/
 description: Configure your Pyroscope data source for Grafana.
 keywords:
   - configure
@@ -10,8 +12,9 @@ labels:
     - enterprise
     - oss
 title: Configure the Grafana Pyroscope data source
-menuTitle: Configure Pyroscope
+menuTitle: Configure
 weight: 200
+review_date: 2026-07-08
 ---
 
 # Configure the Grafana Pyroscope data source
@@ -24,7 +27,7 @@ This page explains how to set up and enable the data source capabilities using G
 If you make any changes, select **Save & test** to preserve those changes.
 
 If you're using your own installation of Grafana, you can provision the Pyroscope data source using a YAML configuration file.
-For more information about provisioning and available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ## Before you begin
 
@@ -59,7 +62,7 @@ To modify an existing Pyroscope data source:
 
 1. Select **Connections** in the main menu.
 1. Select **Data sources** to view a list of configured data sources.
-1. Select the Pyroscope data source you wish to modify.
+1. Select the Pyroscope data source you want to modify.
 1. Optional: Use **Additional settings** to configure or modify other options.
 1. After completing your updates, select **Save & test**.
 
@@ -107,6 +110,7 @@ The **Timeout** field sets the HTTP request timeout in seconds.
 ### Querying
 
 **Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
+Set this value in Grafana duration format, such as `15s`, `1m`, or `1h`, to match your Pyroscope scrape interval.
 
 Adjusting this option can help prevent gaps when you zoom in to profiling data.
 
