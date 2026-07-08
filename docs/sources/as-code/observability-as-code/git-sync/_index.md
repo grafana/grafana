@@ -37,7 +37,7 @@ Git Sync in Grafana lets you synchronize your resources so you can store your da
 
 {{< admonition type="note" >}}
 
-Git Sync is under continuous development. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
