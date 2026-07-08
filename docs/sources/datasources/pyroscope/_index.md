@@ -71,13 +71,9 @@ These dimensions, coupled with the detailed nature of performance profiles, make
 
 ### Flame graphs
 
-<!-- vale Grafana.We = NO -->
+Flame graphs help you visualize resource allocation and performance bottlenecks.
 
-Flame graphs help you visualize resource allocation and performance bottlenecks, and you even get suggested recommendations and performance fixes via AI-driven flame graph analysis, as well as line-level insights from our GitHub integration.
-
-<!-- vale Grafana.We = YES -->
-
-On views with a flame graph, you can use **Explain flame graph** to provide an AI flame graph analysis that explains the performance bottleneck, root cause, and recommended fix.
+In Grafana Cloud, views with a flame graph include **Explain flame graph**, which uses AI to analyze the profile and explain the performance bottleneck, its root cause, and a recommended fix. Grafana Cloud also provides line-level insights through the GitHub integration.
 For more information, refer to [Flame graph AI](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/flamegraph-ai/).
 
 ## Integrate profiles into dashboards
@@ -85,7 +81,7 @@ For more information, refer to [Flame graph AI](https://grafana.com/docs/grafana
 Using the Pyroscope data source, you can integrate profiles into your dashboards.
 For example, you can embed flame graphs using the [flame graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/).
 
-In this case, the screenshot shows memory profiles alongside panels for logs and metrics to be able to debug out of memory (OOM) errors alongside the associated logs and metrics.
+This example shows memory profiles alongside panels for logs and metrics, which helps you debug out of memory (OOM) errors together with the associated logs and metrics.
 
 ![dashboard](https://grafana.com/static/img/pyroscope/grafana-pyroscope-dashboard-2023-11-30.png)
 
@@ -94,7 +90,7 @@ In this case, the screenshot shows memory profiles alongside panels for logs and
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
 To learn more about how profiles and tracing can work together, refer to [How profiling and tracing work together](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/profiling-and-tracing/).
 
-Combined traces and profiles let you see granular line-level detail when available for a trace span. This allows you pinpoint the exact function that's causing a bottleneck in your application as well as a specific request.
+Combined traces and profiles let you see granular line-level detail when available for a trace span. This allows you to pinpoint the exact function that's causing a bottleneck in your application as well as a specific request.
 
 ![trace-profiler-view](https://grafana.com/static/img/pyroscope/pyroscope-trace-profiler-view-2023-11-30.png)
 
