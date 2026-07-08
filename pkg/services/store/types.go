@@ -42,8 +42,6 @@ type storageRuntime interface {
 
 	Store() filestorage.FileStorage
 
-	Sync() error
-
 	// Different storage knows how to handle comments and tracking
 	Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error)
 }

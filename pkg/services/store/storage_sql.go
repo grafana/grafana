@@ -87,7 +87,3 @@ func (s *rootStorageSQL) Meta() RootStorageMeta {
 func (s *rootStorageSQL) Store() filestorage.FileStorage {
 	return s.store
 }
-
-func (s *rootStorageSQL) Sync() error {
-	return nil // already in sync
-}
