@@ -67,7 +67,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
-| `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
@@ -95,12 +94,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
 | `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
-| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
 | `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
 | `interactiveLearning`             | Enables the interactive learning app                                                           |
-| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                             |

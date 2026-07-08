@@ -670,11 +670,6 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
-  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-  * @default false
-  */
-  groupToNestedTableV2?: boolean;
-  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
@@ -1166,16 +1161,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
-  * @default false
-  */
-  nestedFramesFieldOverrides?: boolean;
-  /**
-  * Enable faceted labels filter for series visibility in the legend
-  * @default true
-  */
-  vizLegendFacetedFilter?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */
@@ -1475,11 +1460,6 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
-  /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
