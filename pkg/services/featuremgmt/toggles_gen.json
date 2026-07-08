@@ -2556,6 +2556,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.frontendLegacyAPIHandling",
+        "resourceVersion": "1783501568190",
+        "creationTimestamp": "2026-07-08T09:06:08Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1782913620784",
         "creationTimestamp": "2026-07-01T13:47:00Z"
