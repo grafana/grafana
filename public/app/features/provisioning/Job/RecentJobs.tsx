@@ -1,11 +1,8 @@
 import { useMemo, useRef } from 'react';
 
-import { skipToken } from '@reduxjs/toolkit/query';
-
 import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
@@ -45,7 +42,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = (displayMap: Map<string, string>) => [
+const getJobColumns = () => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -70,13 +67,7 @@ const getJobColumns = (displayMap: Map<string, string>) => [
   {
     id: 'triggeredBy',
     header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
-    cell: ({ row: { original: job } }: JobCell) => {
-      const key = job.metadata?.annotations?.[AnnoTriggeredBy];
-      if (!key) {
-        return null;
-      }
-      return <span>{displayMap.get(key) ?? key.split(':').pop()}</span>;
-    },
+    cell: ({ row: { original: job } }: JobCell) => job.metadata?.annotations?.[AnnoTriggeredBy],
   },
   {
     id: 'started',
@@ -175,19 +166,7 @@ export function RecentJobs({ repo }: Props) {
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  const userKeys = useMemo(
-    () => [...new Set((jobs ?? []).map((job) => job.metadata?.annotations?.[AnnoTriggeredBy]).filter(Boolean))],
-    [jobs]
-  );
-  const { data: displayData } = useGetDisplayMappingQuery(userKeys.length > 0 ? { key: userKeys } : skipToken);
-  const displayMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const item of displayData?.display || []) {
-      map.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
-    }
-    return map;
-  }, [displayData]);
-  const jobColumns = useMemo(() => getJobColumns(displayMap), [displayMap]);
+  const jobColumns = useMemo(() => getJobColumns(), []);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {

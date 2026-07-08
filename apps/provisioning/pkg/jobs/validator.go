@@ -17,9 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoTriggeredBy is the typed identity (e.g. "user:<uid>") that triggered the job.
-// It is set by the server at creation time and is immutable.
-const AnnoTriggeredBy = "provisioning.grafana.app/triggeredBy"
+// AnnoTriggeredBy and AnnoTriggeredByEmail carry the display name and email of
+// the user that triggered the job. They are set by the server at creation time
+// and are immutable.
+const (
+	AnnoTriggeredBy      = "provisioning.grafana.app/triggeredBy"
+	AnnoTriggeredByEmail = "provisioning.grafana.app/triggeredByEmail"
+)
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
 // supportedResources is the configured set of resource types provisioning can manage; export-style
@@ -329,15 +333,16 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 }
 
 func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
-	triggeredBy := job.Annotations[AnnoTriggeredBy]
+	name := job.Annotations[AnnoTriggeredBy]
+	email := job.Annotations[AnnoTriggeredByEmail]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if triggeredBy == "" || identity.IsServiceIdentity(ctx) {
+		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
 			return nil
 		}
 		id, err := identity.GetRequester(ctx)
-		if err != nil || id.GetUID() != triggeredBy {
+		if err != nil || (name != "" && name != id.GetName()) || (email != "" && email != id.GetEmail()) {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoTriggeredBy))
 		}
 	case admission.Update:
@@ -345,7 +350,7 @@ func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provi
 		if !ok {
 			return nil
 		}
-		if old.Annotations[AnnoTriggeredBy] != triggeredBy {
+		if old.Annotations[AnnoTriggeredBy] != name || old.Annotations[AnnoTriggeredByEmail] != email {
 			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoTriggeredBy))
 		}
 	}

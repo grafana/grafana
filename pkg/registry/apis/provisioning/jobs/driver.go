@@ -86,9 +86,6 @@ type jobDriver struct {
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
-	// authorResolver resolves the job's creator to a commit signature. May be nil.
-	authorResolver AuthorResolver
-
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -102,7 +99,6 @@ func NewJobDriver(
 	historicJobs HistoryWriter,
 	notifications chan struct{},
 	metrics *JobMetrics,
-	authorResolver AuthorResolver,
 	workers ...Worker,
 ) (*jobDriver, error) {
 	return &jobDriver{
@@ -115,7 +111,6 @@ func NewJobDriver(
 		workers:              workers,
 		notifications:        notifications,
 		metrics:              metrics,
-		authorResolver:       authorResolver,
 	}, nil
 }
 
@@ -398,16 +393,10 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
 
-	if d.authorResolver != nil {
-		if triggeredBy := job.Annotations[appjobs.AnnoTriggeredBy]; triggeredBy != "" &&
-			openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
-			sig, err := d.authorResolver.ResolveAuthor(ctx, triggeredBy)
-			if err != nil {
-				logger.Warn("failed to resolve job author", "triggeredBy", triggeredBy, "error", err)
-			} else if sig != nil {
-				ctx = repository.WithAuthorSignature(ctx, *sig)
-			}
-		}
+	name, email := job.Annotations[appjobs.AnnoTriggeredBy], job.Annotations[appjobs.AnnoTriggeredByEmail]
+	if (name != "" || email != "") &&
+		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
+		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
 	}
 
 	for _, worker := range d.workers {

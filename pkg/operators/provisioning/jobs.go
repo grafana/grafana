@@ -76,7 +76,6 @@ func buildDriver(
 		notifications,
 		registry,
 		metrics,
-		nil,
 		workers...,
 	)
 }

@@ -536,9 +536,14 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	var annotations map[string]string
+	annotations := map[string]string{}
 	if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-		annotations = map[string]string{appjobs.AnnoTriggeredBy: id.GetUID()}
+		if name := id.GetName(); name != "" {
+			annotations[appjobs.AnnoTriggeredBy] = name
+		}
+		if email := id.GetEmail(); email != "" {
+			annotations[appjobs.AnnoTriggeredByEmail] = email
+		}
 	}
 
 	// Set up the provisioning identity for this namespace

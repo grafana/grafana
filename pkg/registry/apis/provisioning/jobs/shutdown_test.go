@@ -121,7 +121,6 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 		make(chan struct{}, 1),
 		prometheus.NewRegistry(),
 		nil,
-		nil,
 	)
 	require.NoError(t, err)
 
@@ -174,7 +173,6 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		make(chan struct{}, 1),
 		prometheus.NewRegistry(),
-		nil,
 		nil,
 	)
 	require.NoError(t, err)
