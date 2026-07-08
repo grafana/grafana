@@ -13,7 +13,16 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+// AnnoTriggeredBy and AnnoTriggeredByEmail carry the display name and email of
+// the user that triggered the job. They are set by the server at creation time
+// and are immutable.
+const (
+	AnnoTriggeredBy      = "provisioning.grafana.app/triggeredBy"
+	AnnoTriggeredByEmail = "provisioning.grafana.app/triggeredByEmail"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -316,7 +325,37 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
+	if err := validateTriggeredBy(ctx, a, job); err != nil {
+		return err
+	}
+
 	return ValidateJob(job, v.supportedResources)
+}
+
+func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	name := job.Annotations[AnnoTriggeredBy]
+	email := job.Annotations[AnnoTriggeredByEmail]
+
+	switch a.GetOperation() {
+	case admission.Create:
+		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+			return nil
+		}
+		id, err := identity.GetRequester(ctx)
+		if err != nil || (name != "" && name != id.GetName()) || (email != "" && email != id.GetEmail()) {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoTriggeredBy))
+		}
+	case admission.Update:
+		old, ok := a.GetOldObject().(*provisioning.Job)
+		if !ok {
+			return nil
+		}
+		if old.Annotations[AnnoTriggeredBy] != name || old.Annotations[AnnoTriggeredByEmail] != email {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoTriggeredBy))
+		}
+	}
+
+	return nil
 }
 
 // HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.

@@ -4570,6 +4570,22 @@
     },
     {
       "metadata": {
+        "name": "provisioning.userAttribution",
+        "resourceVersion": "1783531000298",
+        "creationTimestamp": "2026-07-08T13:32:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-08 17:16:40.298205 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Author Git Sync commits as the acting Grafana user",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioningExport",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
