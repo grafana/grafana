@@ -9,6 +9,7 @@ import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from 
 import { t } from '@grafana/i18n';
 import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -22,6 +23,10 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
+  /** This item is a pinned row rendered at the top of the menu */
+  pinned?: boolean;
+  /** Customisation is enabled — gates the new pin behaviour; off restores the legacy bookmarks UI */
+  canCustomise?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
   loadingChildren?: boolean;
   /** Section-level only: fetching children failed, show an error instead of the empty message */
@@ -37,6 +42,8 @@ export function MegaMenuItem({
   onClick,
   onPin,
   isPinned,
+  pinned,
+  canCustomise,
   loadingChildren,
   childrenLoadError,
 }: Props) {
@@ -46,12 +53,18 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  // Pinned sections use a separate expand-state key (and default to expanded) so a section shown
+  // both pinned and in the normal nav doesn't share — and fight over — the same collapse state.
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
-    `grafana.navigation.expanded[${link.text}]`,
-    Boolean(hasActiveChild)
+    `grafana.navigation.expanded[${pinned ? 'pinned/' : ''}${link.text}]`,
+    pinned ? true : Boolean(hasActiveChild)
   );
+  // Only count children that actually render (create actions are filtered out below), so a section
+  // whose visible children are all hidden doesn't keep an expand button that opens to nothing.
+  const hasRenderableChildren = (link.children ?? []).some((child) => !child.isCreateAction);
   const showExpandButton =
-    level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage || loadingChildren || childrenLoadError);
+    level < MAX_DEPTH && Boolean(hasRenderableChildren || link.emptyMessage || loadingChildren || childrenLoadError);
+  const childrenVisible = showExpandButton && sectionExpanded;
   const item = useRef<HTMLLIElement>(null);
 
   const styles = useStyles2(getStyles);
@@ -92,6 +105,15 @@ export function MegaMenuItem({
     return isExpanded ? 'angle-up' : 'angle-down';
   }
 
+  // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
+  // every item shows it (the signed-in / non-bookmarks gating lives in MegaMenuItemText). With it
+  // on: Home and individual starred dashboards (the `starred/` prefix) are never pinnable, and in
+  // the pinned area only the section row (level 0) and leaf rows are actionable — not the
+  // intermediate structural rows.
+  const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
+  const isPinnableRow = pinned ? level === 0 || !linkHasChildren(link) : true;
+  const showPin = !canCustomise || (isPinnableItem && isPinnableRow);
+
   return (
     <li ref={item} className={styles.listItem}>
       <div className={styles.menuItem}>
@@ -108,7 +130,9 @@ export function MegaMenuItem({
             url={link.url}
             onPin={() => onPin(link)}
             isPinned={isPinned(link.url)}
+            showPin={showPin}
             itemName={link.text}
+            canCustomise={canCustomise}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -146,7 +170,7 @@ export function MegaMenuItem({
           )}
         </div>
       </div>
-      {showExpandButton && sectionExpanded && (
+      {childrenVisible && (
         <ul className={styles.children}>
           {linkHasChildren(link) ? (
             link.children
@@ -160,6 +184,8 @@ export function MegaMenuItem({
                   level={level + 1}
                   onPin={onPin}
                   isPinned={isPinned}
+                  pinned={pinned}
+                  canCustomise={canCustomise}
                 />
               ))
           ) : loadingChildren ? (

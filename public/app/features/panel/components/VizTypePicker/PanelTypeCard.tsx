@@ -6,6 +6,7 @@ import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, Pl
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -153,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       cursor: 'pointer',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       boxShadow: theme.shadows.z1,
       border: `1px solid ${theme.colors.background.secondary}`,
       alignItems: 'center',
@@ -164,6 +165,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         transition: theme.transitions.create(['background'], {
           duration: theme.transitions.duration.short,
         }),
+      },
+
+      '&:focus-visible': {
+        ...getFocusStyles(theme),
       },
 
       '&:hover': {

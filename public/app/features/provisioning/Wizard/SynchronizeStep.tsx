@@ -1,18 +1,17 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
-import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
 
 import { useStepStatus } from './StepStatusContext';
-import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
+import { useSyncJob } from './hooks/useSyncJob';
 import { type WizardFormData, type WizardStep } from './types';
 import { getSyncStepStatus } from './utils/getSteps';
 
@@ -50,11 +49,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
     healthStatusNotReady,
   });
 
-  const { createSyncJob } = useCreateSyncJob({
-    repoName,
-    setStepStatusInfo,
-  });
-  const [job, setJob] = useState<Job>();
+  const { job, setJob, startJob } = useSyncJob({ repoName, setStepStatusInfo });
 
   useEffect(() => {
     // This useEffect is used to update the step status info based on the repository status and the form errors
@@ -83,16 +78,13 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   const isButtonDisabled = hasError || !isHealthy;
 
   const startSynchronization = useCallback(async () => {
-    const response = await createSyncJob(requiresMigration);
-    if (response) {
-      setJob(response);
-    }
-  }, [createSyncJob, requiresMigration]);
+    await startJob(requiresMigration);
+  }, [startJob, requiresMigration]);
 
   const retryJob = useCallback(() => {
     setJob(undefined);
     void startSynchronization();
-  }, [startSynchronization]);
+  }, [setJob, startSynchronization]);
 
   if (isLoading || healthStatusNotReady) {
     return (

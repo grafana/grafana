@@ -308,7 +308,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		require.NoError(t, err)
 		return client.GrafanaAlertmanagerConfig{
 			AlertmanagerConfig: postable.AlertmanagerConfig,
-			Templates:          postable.GetMergedTemplateDefinitions(),
+			Templates:          definition.TemplatesMapToPostableAPITemplates(postable.TemplateFiles, definition.GrafanaTemplateKind),
 		}
 	}
 
@@ -1259,7 +1259,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, err)
 		return client.GrafanaAlertmanagerConfig{
 			AlertmanagerConfig: postable.AlertmanagerConfig,
-			Templates:          postable.GetMergedTemplateDefinitions(),
+			Templates:          definition.TemplatesMapToPostableAPITemplates(postable.TemplateFiles, definition.GrafanaTemplateKind),
 		}
 	}
 

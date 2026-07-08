@@ -1,6 +1,5 @@
 import { type AnyAction, combineReducers, type Reducer } from 'redux';
 
-import { initialVariableEditorState, variableEditorReducer, type VariableEditorState } from '../editor/reducer';
 import { initialVariableInspectState, variableInspectReducer, type VariableInspectState } from '../inspect/reducer';
 import {
   initialOptionPickerState,
@@ -13,7 +12,6 @@ import { initialVariablesState, type VariablesState } from './types';
 import { variablesReducer } from './variablesReducer';
 
 export interface TemplatingState {
-  editor: VariableEditorState;
   variables: VariablesState;
   optionsPicker: OptionsPickerState;
   transaction: TransactionState;
@@ -25,7 +23,6 @@ let templatingReducers: Reducer<TemplatingState, AnyAction, Partial<TemplatingSt
 export function getTemplatingReducers() {
   if (!templatingReducers) {
     templatingReducers = combineReducers({
-      editor: variableEditorReducer,
       variables: variablesReducer,
       optionsPicker: optionsPickerReducer,
       transaction: transactionReducer,
@@ -38,7 +35,6 @@ export function getTemplatingReducers() {
 
 export function getInitialTemplatingState() {
   return {
-    editor: initialVariableEditorState,
     variables: initialVariablesState,
     optionsPicker: initialOptionPickerState,
     transaction: initialTransactionState,

@@ -148,7 +148,7 @@ export interface Props {
   app: CoreApp;
   allowDownload?: boolean;
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
