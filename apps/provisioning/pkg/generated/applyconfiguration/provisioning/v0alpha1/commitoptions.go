@@ -29,10 +29,6 @@ type CommitOptionsApplyConfiguration struct {
 	// and a verified email on the account where the matching public key is
 	// registered. When empty, defaults to "noreply@grafana.com".
 	SignerEmail *string `json:"signerEmail,omitempty"`
-	// When true, commits made through the UI are authored as the acting
-	// Grafana user (their name and email). When false, the default Grafana
-	// identity is used as the author.
-	UserAttribution *bool `json:"userAttribution,omitempty"`
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
@@ -77,14 +73,6 @@ func (b *CommitOptionsApplyConfiguration) WithSignerName(value string) *CommitOp
 // If called multiple times, the SignerEmail field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitOptionsApplyConfiguration {
 	b.SignerEmail = &value
-	return b
-}
-
-// WithUserAttribution sets the UserAttribution field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the UserAttribution field is set to the value of the last call.
-func (b *CommitOptionsApplyConfiguration) WithUserAttribution(value bool) *CommitOptionsApplyConfiguration {
-	b.UserAttribution = &value
 	return b
 }
 

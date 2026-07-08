@@ -677,9 +677,10 @@ func (g *ctxCapturingRepoGetter) GetHealthyRepository(ctx context.Context, _ str
 
 func TestHandleRequest_AuthorSignature(t *testing.T) {
 	tests := []struct {
-		name      string
-		requester identity.Requester
-		expected  *repository.CommitSignature
+		name            string
+		requester       identity.Requester
+		userAttribution bool
+		expected        *repository.CommitSignature
 	}{
 		{
 			name: "user identity sets author signature",
@@ -688,7 +689,18 @@ func TestHandleRequest_AuthorSignature(t *testing.T) {
 				Name:  "Test User",
 				Email: "test@example.com",
 			},
-			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
+			userAttribution: true,
+			expected:        &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
+		},
+		{
+			name: "user attribution disabled does not set author signature",
+			requester: &identity.StaticRequester{
+				Type:  authlib.TypeUser,
+				Name:  "Test User",
+				Email: "test@example.com",
+			},
+			userAttribution: false,
+			expected:        nil,
 		},
 		{
 			name: "service identity does not set author signature",
@@ -696,12 +708,14 @@ func TestHandleRequest_AuthorSignature(t *testing.T) {
 				Type: authlib.TypeAccessPolicy,
 				Name: "provisioning",
 			},
-			expected: nil,
+			userAttribution: true,
+			expected:        nil,
 		},
 		{
-			name:      "missing requester does not set author signature",
-			requester: nil,
-			expected:  nil,
+			name:            "missing requester does not set author signature",
+			requester:       nil,
+			userAttribution: true,
+			expected:        nil,
 		},
 	}
 
@@ -713,7 +727,7 @@ func TestHandleRequest_AuthorSignature(t *testing.T) {
 			}
 
 			getter := &ctxCapturingRepoGetter{}
-			connector := &filesConnector{getter: getter}
+			connector := &filesConnector{getter: getter, userAttribution: tt.userAttribution}
 			req := httptest.NewRequest(http.MethodPost, "/files/test.json", nil)
 
 			connector.handleRequest(ctx, "repo", req, &fakeResponder{}, logging.DefaultLogger)

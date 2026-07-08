@@ -31,12 +31,13 @@ type filesConnector struct {
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
 	folderAPIVersion      string
+	userAttribution       bool
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64, userAttribution bool) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
@@ -45,6 +46,7 @@ func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clien
 		folderMetadataEnabled: folderMetadataEnabled,
 		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
+		userAttribution:       userAttribution,
 	}
 }
 
@@ -91,11 +93,13 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
-			Name:  id.GetName(),
-			Email: id.GetEmail(),
-		})
+	if c.userAttribution {
+		if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
+			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
+				Name:  id.GetName(),
+				Email: id.GetEmail(),
+			})
+		}
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {

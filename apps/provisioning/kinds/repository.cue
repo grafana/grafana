@@ -130,10 +130,6 @@ repository: {
 					// public key is registered. When empty, defaults to
 					// "noreply@grafana.com".
 					signerEmail?: string
-					// When true, commits made through the UI are authored as the acting
-					// Grafana user (their name and email). When false, the default
-					// Grafana identity is used as the author.
-					userAttribution?: bool
 					// Method used to sign commits with the key in secure.commitSigningKey. When unset, commits are not signed.
 					signingMethod?: "gpg" | "ssh" | "smime"
 					// PEM-encoded X.509 certificate paired with secure.commitSigningKey when

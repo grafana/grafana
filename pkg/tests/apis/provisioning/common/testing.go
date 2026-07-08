@@ -3716,3 +3716,12 @@ func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) str
 	require.NoError(t, err, "git log should succeed")
 	return strings.TrimSpace(out)
 }
+
+func LatestCommitAuthor(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%an <%ae>", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
+}

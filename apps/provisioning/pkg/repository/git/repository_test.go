@@ -111,8 +111,7 @@ func TestCreateSignature(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				Commit: &provisioning.CommitOptions{UserAttribution: true},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -182,8 +181,7 @@ func TestEnsureBranchExists(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				Commit: &provisioning.CommitOptions{UserAttribution: true},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2109,8 +2107,7 @@ func TestGitRepository_createSignature(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				Commit: &provisioning.CommitOptions{UserAttribution: true},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2237,9 +2234,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					Commit: &provisioning.CommitOptions{
-						SignerName:      "Bot Signer",
-						SignerEmail:     "signer@example.com",
-						UserAttribution: true,
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
 					},
 				},
 			},
@@ -2513,8 +2509,7 @@ func TestGitRepository_commit(t *testing.T) {
 			gitRepo := &gitRepository{
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type:   provisioning.GitHubRepositoryType,
-						Commit: &provisioning.CommitOptions{UserAttribution: true},
+						Type: provisioning.GitHubRepositoryType,
 					},
 				},
 				gitConfig: RepositoryConfig{
@@ -2646,8 +2641,7 @@ func TestGitRepository_withGitContext(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				Commit: &provisioning.CommitOptions{UserAttribution: true},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		},
 		gitConfig: RepositoryConfig{
@@ -2700,8 +2694,7 @@ func TestGitRepository_Stage(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
-				Type:   provisioning.GitHubRepositoryType,
-				Commit: &provisioning.CommitOptions{UserAttribution: true},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		},
 		gitConfig: RepositoryConfig{

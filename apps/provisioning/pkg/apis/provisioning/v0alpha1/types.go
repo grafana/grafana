@@ -372,11 +372,6 @@ type CommitOptions struct {
 	// registered. When empty, defaults to "noreply@grafana.com".
 	SignerEmail string `json:"signerEmail,omitempty"`
 
-	// When true, commits made through the UI are authored as the acting
-	// Grafana user (their name and email). When false, the default Grafana
-	// identity is used as the author.
-	UserAttribution bool `json:"userAttribution,omitempty"`
-
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningMethod SigningMethod `json:"signingMethod,omitempty"`

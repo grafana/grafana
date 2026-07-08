@@ -280,6 +280,15 @@ var (
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
+			Name:            "provisioning.userAttribution",
+			Description:     "Author Git Sync commits as the acting Grafana user",
+			Stage:           FeatureStagePublicPreview,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "true",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
