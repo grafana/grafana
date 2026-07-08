@@ -2123,14 +2123,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "panelStyleActions",
-			Description: "Enable style actions (copy/paste) in the panel editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
 			Stage:       FeatureStageGeneralAvailability,
