@@ -135,19 +135,26 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       label: 'page-content',
       flexGrow: 1,
     }),
-    pageInner: css({
-      label: 'page-inner',
-      padding: theme.spacing(2),
-      borderBottom: 'none',
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 1,
-      margin: theme.spacing(0, 0, 0, 0),
+    pageInner: css(
+      {
+        label: 'page-inner',
+        padding: theme.spacing(2),
+        borderBottom: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        margin: theme.spacing(0, 0, 0, 0),
 
-      [theme.breakpoints.up('md')]: {
-        padding: theme.spacing(4),
+        [theme.breakpoints.up('md')]: {
+          padding: theme.spacing(4),
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        [theme.breakpoints.up('md')]: {
+          padding: theme.spacing(2, 4),
+        },
+      }
+    ),
     homeInner: css({
       label: 'home-inner',
       maxWidth: `${theme.breakpoints.values.xxl}px`,
