@@ -15,7 +15,7 @@ func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 	repoName := "commit-author"
 	_, local := helper.CreateGitRepo(t, repoName, nil, "write")
 
-	result := helper.AdminREST.Post().
+	result := helper.EditorREST.Post().
 		Namespace("default").
 		Resource("repositories").
 		Name(repoName).
@@ -26,7 +26,9 @@ func TestIntegrationGit_Files_CommitAuthor(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error(), "should create file")
 
-	admin := helper.Org1.Admin
-	expected := fmt.Sprintf("%s <%s>", admin.Identity.GetName(), admin.Identity.GetEmail())
-	require.Equal(t, expected, common.LatestCommitAuthor(t, local, "main"))
+	editor := helper.Org1.Editor
+	name, email := editor.Identity.GetName(), editor.Identity.GetEmail()
+	require.NotEmpty(t, name)
+	require.NotEmpty(t, email)
+	require.Equal(t, fmt.Sprintf("%s <%s>", name, email), common.LatestCommitAuthor(t, local, "main"))
 }
