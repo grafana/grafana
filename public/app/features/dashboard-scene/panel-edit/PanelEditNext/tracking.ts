@@ -28,7 +28,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline' | 'empty_state';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
 
 export function trackAddQuery(
   querySource: 'saved_query' | 'new_query',

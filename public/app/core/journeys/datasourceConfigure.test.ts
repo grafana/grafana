@@ -1,6 +1,6 @@
 import type { JourneyHandle, JourneyTracker } from '@grafana/runtime';
 
-import type { JourneyRegistryImpl } from '../services/JourneyRegistryImpl';
+import type { JourneyRegistryImpl } from '../services/journey/JourneyRegistryImpl';
 
 import {
   interactionCallbacks,

@@ -209,7 +209,7 @@ export class GrafanaApp {
         registry.warnUnregistered();
       }
 
-      setLocale(config.regionalFormat);
+      setLocale(contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
