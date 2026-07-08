@@ -45,12 +45,11 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // Watch subscribes to the entire stream (SubjectAll) and ignores the resource
 // selectors in WatchOptions, so it is not a drop-in per-watch notifier.
 //
-// Two wire-format properties make it a low-latency hint, not a source of truth:
-//   - Events carry PreviousRV == 0 (WatchNotification has no previous RV), so
-//     consumers relying on PreviousRV behave differently than with store-sourced
-//     notifiers.
-//   - Delivery is at-most-once (core NATS, no JetStream); a missed message is
-//     never redelivered. The polling notifier remains the correctness backstop.
+// Delivery is at-most-once (core NATS, no JetStream); a missed message is never
+// redelivered, so it is a low-latency hint rather than a source of truth. The
+// polling notifier remains the correctness backstop. PreviousRV is carried on
+// the wire, so consumers see the same previous-version semantics as the
+// store-sourced notifiers.
 type natsNotifier struct {
 	subscriber EventSubscriber
 	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
@@ -98,7 +97,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 			ResourceVersion: notification.ResourceVersion,
 			Action:          action,
 			Folder:          notification.Folder,
-			// PreviousRV is unknown: WatchNotification does not carry it.
+			PreviousRV:      notification.PreviousResourceVersion,
 		}
 		select {
 		case raw <- evt:
