@@ -20,11 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-var logger log.Logger = backend.NewLoggerWith("logger", "tsdb.influxdb")
-
 type Service struct {
-	im     instancemgmt.InstanceManager
-	logger log.Logger
+	im             instancemgmt.InstanceManager
+	logger         log.Logger
+	fluxLogger     log.Logger
+	influxqlLogger log.Logger
+	fsqlLogger     log.Logger
 }
 
 func ProvideService(httpClient *httpclient.Provider) *Service {
@@ -32,8 +33,11 @@ func ProvideService(httpClient *httpclient.Provider) *Service {
 	// in-process logger override installed during coreplugin init.
 	logger := backend.NewLoggerWith("logger", "tsdb.influxdb")
 	return &Service{
-		im:     datasource.NewInstanceManager(NewInstanceSettings(httpClient, logger)),
-		logger: logger,
+		im:             datasource.NewInstanceManager(NewInstanceSettings(httpClient, logger)),
+		logger:         logger,
+		fluxLogger:     backend.NewLoggerWith("logger", "tsdb.influx_flux"),
+		influxqlLogger: backend.NewLoggerWith("logger", "tsdb.influx_influxql"),
+		fsqlLogger:     backend.NewLoggerWith("logger", "tsdb.influx_flightsql"),
 	}
 }
 
@@ -116,11 +120,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return flux.Query(ctx, dsInfo, *req)
+		return flux.Query(ctx, dsInfo, *req, s.fluxLogger)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, tracer, dsInfo, req)
+		return influxql.Query(ctx, tracer, dsInfo, req, s.influxqlLogger)
 	case influxVersionSQL:
-		return fsql.Query(ctx, dsInfo, *req)
+		return fsql.Query(ctx, dsInfo, *req, s.fsqlLogger)
 	default:
 		return nil, fmt.Errorf("unknown influxdb version")
 	}

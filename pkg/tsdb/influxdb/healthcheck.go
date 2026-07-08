@@ -35,11 +35,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	switch dsInfo.Version {
 	case influxVersionFlux:
-		return CheckFluxHealth(ctx, dsInfo, req, s.logger)
+		return CheckFluxHealth(ctx, dsInfo, req, s.fluxLogger)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo, req, s.logger)
+		return CheckInfluxQLHealth(ctx, dsInfo, req, s.influxqlLogger)
 	case influxVersionSQL:
-		return CheckSQLHealth(ctx, dsInfo, req, s.logger)
+		return CheckSQLHealth(ctx, dsInfo, req, s.fsqlLogger)
 	default:
 		return getHealthCheckMessage(logger, "", errors.New("unknown influx version"))
 	}
@@ -63,7 +63,7 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 				},
 			},
 		},
-	})
+	}, logger)
 
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing flux query", err)
@@ -93,7 +93,7 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req
 				JSON:      []byte(`{"query": "SHOW measurements", "rawQuery": true}`),
 			},
 		},
-	})
+	}, logger)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing influxQL query", err)
 	}
@@ -131,7 +131,7 @@ func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *bac
 				},
 			},
 		},
-	})
+	}, logger)
 
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing sql query", err)

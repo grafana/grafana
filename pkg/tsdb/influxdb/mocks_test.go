@@ -116,6 +116,9 @@ func GetMockService(version string, rt RoundTripper) *Service {
 			version:          version,
 			fakeRoundTripper: rt,
 		},
-		logger: log.NewNullLogger(),
+		logger:         log.NewNullLogger(),
+		fluxLogger:     log.NewNullLogger(),
+		influxqlLogger: log.NewNullLogger(),
+		fsqlLogger:     log.NewNullLogger(),
 	}
 }
