@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -22,9 +21,7 @@ import (
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -539,14 +536,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	}
 
 	annotations := map[string]string{}
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
-		if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-			if name := id.GetName(); name != "" {
-				annotations[appjobs.AnnoTriggeredBy] = name
-			}
-			if email := id.GetEmail(); email != "" {
-				annotations[appjobs.AnnoTriggeredByEmail] = email
-			}
+	if sig, ok := UserAttribution(ctx); ok {
+		if sig.Name != "" {
+			annotations[appjobs.AnnoTriggeredBy] = sig.Name
+		}
+		if sig.Email != "" {
+			annotations[appjobs.AnnoTriggeredByEmail] = sig.Email
 		}
 	}
 

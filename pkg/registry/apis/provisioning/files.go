@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -20,10 +19,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type filesConnector struct {
@@ -93,13 +91,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
-		if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
-			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
-				Name:  id.GetName(),
-				Email: id.GetEmail(),
-			})
-		}
+	if sig, ok := jobs.UserAttribution(ctx); ok {
+		ctx = repository.WithAuthorSignature(ctx, sig)
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
