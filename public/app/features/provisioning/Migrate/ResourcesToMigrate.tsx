@@ -3,11 +3,14 @@ import { type ReactNode, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey, compareFolders } from './sorting';
+
+/** Folder rows shown per page before pagination kicks in. */
+const PAGE_SIZE = 10;
 
 interface Props {
   /**
@@ -65,6 +68,7 @@ export function ResourcesToMigrate({
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -79,6 +83,15 @@ export function ResourcesToMigrate({
     matched.sort((a, b) => compareFolders(a, b, sortKey));
     return matched;
   }, [folders, search, sortKey]);
+
+  // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
+  // a search) without needing an effect to reset it.
+  const numberOfPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, numberOfPages);
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  );
 
   // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
@@ -133,7 +146,10 @@ export function ResourcesToMigrate({
           <FilterInput
             placeholder={t('provisioning.migrate.resources-to-migrate-search', 'Search folders and resources')}
             value={search}
-            onChange={setSearch}
+            onChange={(value) => {
+              setSearch(value);
+              setPage(1);
+            }}
           />
         </div>
         <div className={styles.sortInput}>
@@ -157,6 +173,7 @@ export function ResourcesToMigrate({
             onChange={(opt) => {
               if (opt?.value) {
                 setSortKey(opt.value);
+                setPage(1);
               }
             }}
             aria-label={t('provisioning.migrate.resources-sort-aria', 'Sort folders')}
@@ -202,7 +219,7 @@ export function ResourcesToMigrate({
         />
       ) : (
         <div className={styles.list}>
-          {filtered.map((folder) => (
+          {paged.map((folder) => (
             <FolderEntry
               key={folder.uid}
               folder={folder}
@@ -216,6 +233,17 @@ export function ResourcesToMigrate({
             />
           ))}
         </div>
+      )}
+
+      {numberOfPages > 1 && (
+        <Stack justifyContent="flex-end">
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={setPage}
+            hideWhenSinglePage
+          />
+        </Stack>
       )}
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
