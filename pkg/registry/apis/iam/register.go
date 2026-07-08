@@ -161,7 +161,6 @@ func RegisterAPIService(
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
 		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
 			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
-		teamSearchHandler:                team.NewSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -174,6 +173,7 @@ func RegisterAPIService(
 		),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
+	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, features, accessClient)
 
 	apiregistration.RegisterAPI(builder)
 

@@ -94,11 +94,25 @@ func ValidateOnUpdate(ctx context.Context, teamSearchClient resourcepb.ResourceI
 	return nil
 }
 
+// titleUniqueSearchLimit bounds the uniqueness lookup. We only need to find one
+// team other than this one that already uses the title. A page of 2 is enough:
+// on update the team matches its own title, so we fetch one extra row to still
+// see a genuine collision sitting behind that self-match. It must stay > 0 — a
+// limit of 0 is a count-only request on the unified path (no rows come back),
+// which would defeat the self-match exclusion below.
+const titleUniqueSearchLimit = 2
+
 // validateTitleUnique rejects a team whose title collides with an existing team
 // in the same namespace. Legacy storage enforces this via UNIQUE(org_id, name),
 // but that constraint is absent in unified-only (Mode5), so it's enforced here
 // for parity across modes. Matching is case-insensitive (DoubleEquals routes to
 // the pre-lowered title_phrase field).
+//
+// The search runs with the requester's permissions, so it only sees teams the
+// requester can read. A requester who cannot read a colliding team will not be
+// blocked here; unified-only has no write-path backstop, so such a duplicate can
+// slip through. The user email/login checks share this limitation — the fix
+// (running the lookup under a full-read identity) belongs across both.
 func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, title string) error {
 	gr := iamv0alpha1.TeamResourceInfo.GroupResource()
 	req := &resourcepb.ResourceSearchRequest{
@@ -117,6 +131,7 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 			},
 		},
 		Fields: []string{resource.SEARCH_FIELD_TITLE},
+		Limit:  titleUniqueSearchLimit,
 	}
 
 	resp, err := searchClient.Search(ctx, req)
@@ -124,19 +139,11 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 		return err
 	}
 
-	if resp.TotalHits > 0 {
-		// A hit on the team itself isn't a conflict: under dual-write it's indexed
-		// from both stores, and on update it matches its own title. A count with no
-		// attributable rows (count-only response) is treated as a conflict.
-		rows := resp.Results.GetRows()
-		conflict := len(rows) == 0
-		for _, row := range rows {
-			if row.Key.GetName() != name {
-				conflict = true
-				break
-			}
-		}
-		if conflict {
+	// A hit on the team itself isn't a conflict: on update it matches its own
+	// title, and under dual-write it can be indexed from both stores. Any hit on a
+	// different team means the title is taken.
+	for _, row := range resp.GetResults().GetRows() {
+		if row.Key.GetName() != name {
 			return apierrors.NewConflict(gr, name, fmt.Errorf("team name '%s' is already taken", title))
 		}
 	}
