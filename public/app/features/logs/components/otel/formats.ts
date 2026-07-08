@@ -127,6 +127,7 @@ function getSuggestedFieldsForAnyLogs() {
     'scope_name',
     'service',
     'service_instance_id',
+    'service_name',
     'service_namespace',
     'service_version',
     'severity_text',
