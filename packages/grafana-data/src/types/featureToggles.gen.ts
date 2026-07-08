@@ -670,11 +670,6 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
-  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-  * @default false
-  */
-  groupToNestedTableV2?: boolean;
-  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
@@ -1156,11 +1151,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
-  * @default true
-  */
-  panelStyleActions?: boolean;
-  /**
   * Enable visualization presets
   * @default true
   */
@@ -1465,11 +1455,6 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
-  /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false

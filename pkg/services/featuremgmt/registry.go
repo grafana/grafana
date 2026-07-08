@@ -1279,14 +1279,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "groupToNestedTableV2",
-			Description: "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "alertingQueryAndExpressionsStepMode",
 			Description: "Enables step mode for alerting queries and expressions",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2131,14 +2123,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "panelStyleActions",
-			Description: "Enable style actions (copy/paste) in the panel editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2749,15 +2733,6 @@ var (
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "false",
-		},
-		{
-			Name:         "clearPreviousFieldValues",
-			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-			HideFromDocs: true,
 		},
 		{
 			Name:        "enableColorblindSafePanelOptions",
