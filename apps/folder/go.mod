@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/folder
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/grafana/grafana-app-sdk v0.52.1
