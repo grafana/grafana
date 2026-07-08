@@ -17,6 +17,7 @@ import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
 import { getSuggestedFieldsFromTable } from './getSuggestedFieldsFromTable';
 import { logsFieldSelectorWrapperStyles } from './styles';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from './logFields';
 
 /**
  * FieldSelector wrapper for the LogsTable visualization.
@@ -100,7 +101,9 @@ export const LogsTableFieldSelector = ({
   );
 
   const suggestedFields = useMemo(() => {
-    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns);
+    return getSuggestedFields(dataFrames[0], displayedColumns, defaultColumns).filter(
+      (field) => field.name !== LOG_LINE_BODY_FIELD_NAME && field.name !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME
+    );
   }, [dataFrames, defaultColumns, displayedColumns, getSuggestedFields]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
