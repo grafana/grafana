@@ -18,7 +18,7 @@ import (
 )
 
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
 	commenter := NewCommenter(false)
@@ -252,7 +252,7 @@ func TestGenerateComment(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			repo := NewMockPullRequestRepo(t)
+			repo := repository.NewMockPullRequestRepo(t)
 
 			// expectation on the comment
 			fpath := filepath.Join("testdata", strings.ReplaceAll(tc.Name, " ", "-")+".md")
@@ -270,7 +270,7 @@ func TestGenerateComment(t *testing.T) {
 }
 
 func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -310,7 +310,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 }
 
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -339,7 +339,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 }
 
 func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -383,7 +383,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 
 func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
-		repo := NewMockPullRequestRepo(t)
+		repo := repository.NewMockPullRequestRepo(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
@@ -419,7 +419,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	})
 
 	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
-		repo := NewMockPullRequestRepo(t)
+		repo := repository.NewMockPullRequestRepo(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",

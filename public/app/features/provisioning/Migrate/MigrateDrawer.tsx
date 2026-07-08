@@ -82,13 +82,17 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const [stepStatusInfo, setStepStatusInfo] = useState<StepStatusInfo>({ status: 'idle' });
 
   const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
+  const syncTarget = selectedRepoObj?.spec?.sync?.target;
 
   const startMigration = useCallback(async () => {
     if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
-    await startJob(true, isSelective ? { resources } : undefined);
-  }, [selectedRepo, hasResourcesToMigrate, startJob, isSelective, resources]);
+    await startJob(true, {
+      syncTarget,
+      ...(isSelective ? { resources } : {}),
+    });
+  }, [selectedRepo, hasResourcesToMigrate, startJob, isSelective, resources, syncTarget]);
 
   // Start a fresh job and let it replace the current one once created. We avoid
   // clearing `job` first so the drawer doesn't flash back to the setup form.
@@ -194,7 +198,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Alert>
         )}
 
-        <GitSyncLimitationsAlert syncTarget={selectedRepoObj?.spec?.sync?.target} />
+        <GitSyncLimitationsAlert syncTarget={syncTarget} />
 
         <Stack direction="row" gap={2}>
           <Button variant="secondary" fill="outline" onClick={onDismiss}>
