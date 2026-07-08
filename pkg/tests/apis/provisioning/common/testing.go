@@ -919,6 +919,25 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 	return createdName
 }
 
+// CreateRepositoryNoWait renders and creates a local repository from the spec
+// but does NOT wait for it to become healthy (unlike CreateLocalRepo). Use it
+// when the test needs to assert the controller's reconcile explicitly — e.g.
+// WaitForHealthyRepository — rather than have that wait hidden inside creation.
+func (h *ProvisioningTestHelper) CreateRepositoryNoWait(t *testing.T, repo TestRepo) {
+	t.Helper()
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	obj := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+	_, err := h.Repositories.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository %q", repo.Name)
+}
+
 func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	if repo.SyncTarget == "" {
 		repo.SyncTarget = "instance"
