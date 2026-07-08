@@ -74,9 +74,6 @@ interface LoadedRuleDetailsDrawerProps {
 function LoadedRuleDetailsDrawer({ rule, ruleUID, onClose }: LoadedRuleDetailsDrawerProps) {
   const [activeTab, setActiveTab] = useState<DrawerTab>(DrawerTab.Query);
   const [showSilenceDrawer, setShowSilenceDrawer] = useState(false);
-
-  // useAlertRuleAbility encapsulates both the rule-type support check (Grafana alerting rules only)
-  // and the permission check (global + folder-scoped AlertingSilenceCreate)
   const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
 
   const { rulerRule, promRule } = rule;
