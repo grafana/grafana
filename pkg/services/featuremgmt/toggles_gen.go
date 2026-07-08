@@ -965,4 +965,8 @@ const (
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
+
+	// FlagGrafanaFrontendLegacyAPIHandling
+	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 )

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
-import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import {
@@ -9,6 +8,7 @@ import {
   type GrafanaTheme2,
   type StandardEditorsRegistryItem,
 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';

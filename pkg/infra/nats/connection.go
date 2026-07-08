@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+// tokenExchangeTimeout bounds a single access-token mint so a slow or unreachable
+// signer cannot stall a (re)connect indefinitely.
+const tokenExchangeTimeout = 5 * time.Second
+
 type connRole string
 
 const (
@@ -227,15 +231,34 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		options = append(options, natsclient.Secure(tc))
 	}
 
-	// Precedence: per-role creds file > shared creds file > token.
+	// Precedence: per-role creds file > shared creds file > exchanged access
+	// token > static token. TokenHandler is invoked on every (re)connect, so the
+	// minted token is always fresh; the authlib client caches it under the hood.
 	switch creds := c.credentials(); {
 	case creds != "":
 		options = append(options, natsclient.UserCredentials(creds))
+	case c.config.TokenExchangeConfigured():
+		options = append(options, natsclient.TokenHandler(c.tokenHandler))
 	case c.config.Token() != "":
 		options = append(options, natsclient.Token(c.config.Token()))
 	}
 
 	return options, nil
+}
+
+// tokenHandler mints a fresh access token for this connection. It satisfies
+// nats.TokenHandler, which cannot return an error: on failure it logs and
+// returns an empty token, letting the server reject the connect so the client
+// retries rather than silently proceeding unauthenticated.
+func (c *connection) tokenHandler() string {
+	ctx, cancel := context.WithTimeout(context.Background(), tokenExchangeTimeout)
+	defer cancel()
+	token, err := c.config.exchangeAccessToken(ctx)
+	if err != nil {
+		c.log.Error("nats access-token exchange failed", "role", c.role, "err", err)
+		return ""
+	}
+	return token
 }
 
 // healthy reports whether the connection is usable. It tolerates the lazy state
