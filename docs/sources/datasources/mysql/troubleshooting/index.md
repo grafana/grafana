@@ -91,8 +91,6 @@ jsonData:
   tlsSkipVerify: true
 ```
 
-If you're using the MySQL _integration_ rather than the data source, TLS is configured through the Kubernetes Monitoring Helm chart. Refer to the [MySQL integration documentation](https://grafana.com/docs/grafana-cloud/monitor-infrastructure/integrations/integration-reference/integration-mysql/) for details.
-
 For all available TLS provisioning options, refer to the [TLS provisioning examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/#mysql-provisioning-examples).
 
 ### Connection reset by peer
