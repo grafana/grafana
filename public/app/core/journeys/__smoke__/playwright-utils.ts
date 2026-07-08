@@ -53,7 +53,7 @@ export async function spaNavigateHome(page: Page): Promise<void> {
   await spaNavigate(page, '/');
 }
 
-export function pickTypingPattern(): TypingPattern {
+function pickTypingPattern(): TypingPattern {
   const r = Math.random();
   if (r < 0.3) {
     return 'burst';
