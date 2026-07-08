@@ -2147,22 +2147,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "nestedFramesFieldOverrides",
-			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "vizLegendFacetedFilter",
-			Description: "Enable faceted labels filter for series visibility in the legend",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
@@ -3131,6 +3115,15 @@ var (
 			Owner:       grafanaDataSources,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:         "grafana.frontendLegacyAPIHandling",
+			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

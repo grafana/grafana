@@ -15,7 +15,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { HomeLink } from '../../Branding/Branding';
+import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
@@ -82,7 +82,7 @@ export const SingleTopBar = memo(function SingleTopBar({
               </Stack>
             </ToolbarButton>
           )}
-          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
+          {!menuDockedAndOpen && <HomeLogo homeNav={homeNav} />}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
