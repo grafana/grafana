@@ -11,6 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -322,6 +325,92 @@ func TestService_NoLegacyFallback(t *testing.T) {
 			require.ErrorIs(t, err, k8sErr)
 			require.Nil(t, got)
 		})
+	})
+}
+
+// ctxCapturingUserService records the context passed to GetProfile so tests can
+// assert which identity the k8s lookup runs as.
+type ctxCapturingUserService struct {
+	usertest.FakeUserService
+	gotCtx context.Context
+}
+
+func (f *ctxCapturingUserService) GetProfile(ctx context.Context, _ *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	f.gotCtx = ctx
+	return &user.UserProfileDTO{}, nil
+}
+
+func (f *ctxCapturingUserService) GetByID(ctx context.Context, _ *user.GetUserByIDQuery) (*user.User, error) {
+	f.gotCtx = ctx
+	return &user.User{}, nil
+}
+
+func TestService_GetProfile_SelfReadElevatesToServiceIdentity(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	const selfUID = "u-self"
+	const selfID int64 = 5
+
+	caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: selfUID, UserID: selfID, OrgID: 2}
+
+	t.Run("reading own profile runs as the service identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: selfID, UID: selfUID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx), "self-read should be elevated to the service identity")
+	})
+
+	t.Run("reading own profile by internal ID only is elevated", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: selfID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("reading another user's profile keeps the caller identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: 99, UID: "u-other"})
+		require.NoError(t, err)
+		require.False(t, identity.IsServiceIdentity(k8s.gotCtx), "reading another user must not be elevated")
+		got, err := identity.GetRequester(k8s.gotCtx)
+		require.NoError(t, err)
+		require.Equal(t, selfUID, got.GetRawIdentifier())
+	})
+}
+
+func TestService_GetByID_SelfReadElevatesToServiceIdentity(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	const selfID int64 = 5
+	caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "u-self", UserID: selfID, OrgID: 2}
+
+	t.Run("reading own user runs as the service identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetByID(ctx, &user.GetUserByIDQuery{ID: selfID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("reading another user keeps the caller identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetByID(ctx, &user.GetUserByIDQuery{ID: 99})
+		require.NoError(t, err)
+		require.False(t, identity.IsServiceIdentity(k8s.gotCtx))
 	})
 }
 

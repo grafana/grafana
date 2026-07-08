@@ -35,9 +35,13 @@ The PostgreSQL data source includes a dedicated variable query editor with the f
 
 To create a query variable:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Query** as the variable type.
+1. Enter a **Name** for your variable (for example, `host`).
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open variable editor** to open the **Query Variable** dialog box.
 1. Select your PostgreSQL data source.
 1. Write a SQL query in the editor. Macros like `$__timeFilter` are supported.
 1. Optionally set **Value Field** and **Text Field** to control which columns map to the variable value and display label.
@@ -81,6 +85,12 @@ You can create nested variables, where one variable depends on the value of anot
 ```sql
 SELECT hostname FROM host WHERE region IN($region)
 ```
+
+{{< admonition type="note" >}}
+When using a multi-value PostgreSQL query variable with **Include All option** enabled and **Display** set to **Hidden**, the variable defaults to the first returned value, not **All**.
+This is because Grafana persists the active selection at dashboard save time, and a hidden variable has no UI for users to change it.
+To default a hidden variable to **All**, temporarily show the variable, select **All** in the drop-down, save the dashboard, then hide the variable and save again.
+{{< /admonition >}}
 
 ### Filter results with `__searchFilter`
 

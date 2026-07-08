@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
+    | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
@@ -52,14 +53,20 @@ declare module "@openfeature/core" {
     | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
+    | "grafana.useDefaultScopesEndpoint"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "dashboard.vectorSearch"
+    | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
     | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
-    | "grafana.customizableMegaMenu";
+    | "grafana.customizableMegaMenu"
+    | "grafana.dashboardSettingsRedesign"
+    | "grafana.growthHomepage"
+    | "grafana.onDemandDiagnostics";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

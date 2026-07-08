@@ -1,5 +1,4 @@
 import { type Scope, type ScopeDashboardBinding, type ScopeNode } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { dispatch } from 'app/store/store';
@@ -93,7 +92,7 @@ export class ScopesApiClient {
   }
 
   async fetchMultipleScopeNodes(names: string[]): Promise<ScopeNode[]> {
-    if (!config.featureToggles.useMultipleScopeNodesEndpoint || names.length === 0) {
+    if (names.length === 0) {
       return Promise.resolve([]);
     }
 
