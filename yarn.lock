@@ -2378,7 +2378,7 @@ __metadata:
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-pseudo: "npm:^2.2.1"
     micro-memoize: "npm:^4.1.2"
-    react-i18next: "npm:^15.0.0"
+    react-i18next: "npm:^16.6.6"
     rollup: "npm:^4.60.1"
     typescript: "npm:6.0.2"
   peerDependencies:
@@ -18580,7 +18580,7 @@ __metadata:
     react-draggable: "npm:4.5.0"
     react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
-    react-i18next: "npm:^15.0.0"
+    react-i18next: "npm:^16.6.6"
     react-inlinesvg: "npm:4.3.0"
     react-loading-skeleton: "npm:3.5.0"
     react-moveable: "npm:0.56.0"
@@ -27508,16 +27508,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-i18next@npm:^15.0.0":
-  version: 15.6.1
-  resolution: "react-i18next@npm:15.6.1"
+"react-i18next@npm:^16.6.6":
+  version: 16.6.6
+  resolution: "react-i18next@npm:16.6.6"
   dependencies:
-    "@babel/runtime": "npm:^7.27.6"
+    "@babel/runtime": "npm:^7.29.2"
     html-parse-stringify: "npm:^3.0.1"
+    use-sync-external-store: "npm:^1.6.0"
   peerDependencies:
-    i18next: ">= 23.2.3"
+    i18next: ">= 25.10.9"
     react: ">= 16.8.0"
-    typescript: ^5
+    typescript: ^5 || ^6
   peerDependenciesMeta:
     react-dom:
       optional: true
@@ -27525,7 +27526,7 @@ __metadata:
       optional: true
     typescript:
       optional: true
-  checksum: 10/f8da83078eabbd4eadf848754881fb65a5c97de72f778b473a4a64add18d4b39794a1da9c95cce827ce30d5236328807228dfbe566dbc355cd0b46d3cbb110c3
+  checksum: 10/5916b8eb0bf2e8d6aef06077640c2ac81603b47aca82c1314c73be3604f0a64337964049d6efc07607f296209f02ffe2ba7a0fa6fbed570f3d5e1b83ee8a4059
   languageName: node
   linkType: hard
 
