@@ -18,7 +18,7 @@ export interface EmbeddedDashboardProps {
   /**
    * When set, drives the embedded dashboard's time range. Updating this prop syncs the
    * new range into the embedded dashboard without remounting it.
-   *
+   * Takes precedence over any `from`/`to` provided through `initialState`.
    * Static state such as variable values or hiding the time picker can instead be passed
    * via `initialState` (e.g. `var-name=value`, `_dash.hideTimePicker=true`).
    */
