@@ -77,7 +77,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let builder = new UPlotConfigBuilder();
 
   let isOrdinalX = frame.fields[0].type === FieldType.string;
-  let isOneValue = frame.fields[0].values.length === 1 && frame.fields[1].values.length === 1;
+  let isOneValue = frame.fields[0].values.length === 1;
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
