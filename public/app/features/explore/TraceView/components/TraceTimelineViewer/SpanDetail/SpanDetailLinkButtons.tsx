@@ -13,10 +13,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  getTraceToLogsOptions,
-  type TraceToProfilesOptions,
-} from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
