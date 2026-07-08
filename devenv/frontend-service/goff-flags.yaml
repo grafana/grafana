@@ -40,3 +40,11 @@ frontendService.reducedBootDataAPI:
     disabled: false
   defaultRule:
     variation: enabled
+
+grafana.frontendLegacyAPIHandling:
+  variations:
+    off: 'off'
+    alert: 'alert'
+    block: 'block'
+  defaultRule:
+    variation: block
