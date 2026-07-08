@@ -99,32 +99,41 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded(t *testing.T) {
 	// but the legal ancestors up to the depth limit are created normally.
 	// `grafana.app/sourcePath` stores folder paths without a trailing slash,
 	// e.g. "shallow", "level1/level2".
-	folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-	require.NoError(t, err)
-
-	managedSourcePaths := make(map[string]struct{})
-	for _, f := range folders.Items {
-		managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-		if managerID != repo {
-			continue
+	// Poll the folders list: the sync job completing does not guarantee the
+	// folders-list index has observed the newly-created folders (their
+	// grafana.app/managerId annotation lags independently of the dashboards
+	// index under SQLite write contention). A single List here races that lag.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err) {
+			return
 		}
-		sourcePath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		managedSourcePaths[sourcePath] = struct{}{}
-	}
 
-	// The shallow folder must be created normally despite the depth violation
-	// in another branch.
-	assert.Contains(t, managedSourcePaths, "shallow",
-		"the shallow folder must be created normally despite the depth violation in another branch; got managed paths: %v",
-		managedSourcePaths)
+		managedSourcePaths := make(map[string]struct{})
+		for _, f := range folders.Items {
+			managerID, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if managerID != repo {
+				continue
+			}
+			sourcePath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			managedSourcePaths[sourcePath] = struct{}{}
+		}
 
-	// The deepest folder in the test tree must not exist. The folder API's
-	// hard ceiling for max depth is 7, so the 8th nested folder is guaranteed
-	// to fail under any valid configuration. This keeps the test stable
-	// without coupling to the runtime value of MaxNestedFolderDepth.
-	assert.NotContains(t, managedSourcePaths,
-		"level1/level2/level3/level4/level5/level6/level7/level8",
-		"the deepest folder must not be created — it exceeds the maximum folder depth allowed by the folder API")
+		// The shallow folder must be created normally despite the depth violation
+		// in another branch.
+		assert.Contains(c, managedSourcePaths, "shallow",
+			"the shallow folder must be created normally despite the depth violation in another branch; got managed paths: %v",
+			managedSourcePaths)
+
+		// The deepest folder in the test tree must not exist. The folder API's
+		// hard ceiling for max depth is 7, so the 8th nested folder is guaranteed
+		// to fail under any valid configuration. This keeps the test stable
+		// without coupling to the runtime value of MaxNestedFolderDepth.
+		assert.NotContains(c, managedSourcePaths,
+			"level1/level2/level3/level4/level5/level6/level7/level8",
+			"the deepest folder must not be created — it exceeds the maximum folder depth allowed by the folder API")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"expected the shallow folder to be created and managed by repo %s", repo)
 
 	// Pull condition must be a warning state, not Failure. The condition
 	// reason currently buckets generic warnings under ReasonCompletedWithWarnings;
