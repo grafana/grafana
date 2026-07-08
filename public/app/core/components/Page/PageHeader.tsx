@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Text, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -19,8 +20,9 @@ export interface Props {
 }
 
 export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
-  const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (
     <div className={styles.pageHeader}>
@@ -33,7 +35,13 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
             ) : renderTitle ? (
               renderTitle(navItem.text)
             ) : (
-              <h1>{navItem.text}</h1>
+              <Text
+                element="h1"
+                variant={visualRefreshEnabled ? 'h4' : 'h1'}
+                weight={visualRefreshEnabled ? 'bold' : 'regular'}
+              >
+                {navItem.text}
+              </Text>
             )}
           </div>
           {info && <PageInfo info={info} />}
@@ -45,7 +53,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     topRow: css({
       alignItems: 'flex-start',
@@ -85,10 +93,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       marginBottom: theme.spacing(2),
     }),
-    subTitle: css({
-      position: 'relative',
-      color: theme.colors.text.secondary,
-    }),
+    subTitle: css(
+      {
+        position: 'relative',
+        color: theme.colors.text.secondary,
+      },
+      visualRefreshEnabled && {
+        ...theme.typography.bodySmall,
+      }
+    ),
     img: css({
       width: '32px',
       height: '32px',
