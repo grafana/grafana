@@ -1,7 +1,7 @@
 // Controlled by the ``
 export function patchFetchForLegacyAPIMode() {
   const mode = window.__grafanaLegacyAPIMode;
-  if (mode !== 'alert' && mode !== 'block') {
+  if (mode !== 'log' && mode !== 'block') {
     return;
   }
 

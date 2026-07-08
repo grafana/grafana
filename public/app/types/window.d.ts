@@ -9,9 +9,9 @@ export declare global {
     __grafanaPublicDashboardAccessToken?: string;
 
     /**
-     * Controls how same-origin `/api/` requests are handled by the frontend service.
+     * Controls legacy `/api/` requests are handled in the frontend, for development.
      * - `off`: requests are left untouched
-     * - `alert`: requests are allowed but logged with a warning
+     * - `log`: requests are allowed but logged with a warning
      * - `block`: requests are rejected before they are sent
      */
     __grafanaLegacyAPIMode?: string;
