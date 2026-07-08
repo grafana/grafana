@@ -1,5 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -23,6 +24,9 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
+      const controls = new Controls(page, dashboardPage, selectors);
+      const sidebar = new Sidebar(page, dashboardPage, selectors);
+
       const dsType = 'cloudwatch';
       const variable: Variable = {
         type: 'datasource',
@@ -33,20 +37,13 @@ test.describe(
 
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect)
-        .click();
-      await page.getByText(dsType).click();
+      await sidebar.variableOptions.selectDatasource(dsType);
 
       const regexFilter = 'cloud';
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
-        .fill(regexFilter);
+      await sidebar.variableOptions.setDatasourceNameFilter(regexFilter);
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!)
-      );
+      const variableLabel = controls.getVariableLabel(variable.label!);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label!);
 
