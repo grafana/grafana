@@ -2,10 +2,19 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type default as uPlot, type AlignedData } from 'uplot';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
-import { AxisPlacement, IconButton, Popover, UPlotChart, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  AxisPlacement,
+  DEFAULT_ANNOTATION_COLOR,
+  IconButton,
+  Popover,
+  UPlotChart,
+  UPlotConfigBuilder,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
 import { ContextWindowSelector } from './ContextWindowSelector';
 import { WHEEL_ZOOM_BASE, type TimeRangeMs } from './timeModel';
@@ -28,6 +37,8 @@ export interface TimeBarProps {
   /** Background sparkline(s): a shared time axis (epoch ms) plus one values array per series. */
   time: number[];
   values: number[][];
+  /** Dashboard annotations to mark on the bar (frames tagged with the annotations data topic). */
+  annotations?: DataFrame[];
   contextZoomFactor?: number;
   onChangeTimeRange: (range: TimeRangeMs) => void;
   /** Called when the zoomed-out context window changes, so a host can fetch background data for it. */
@@ -55,6 +66,10 @@ const overPxToVal = (over: HTMLElement, overPx: number, ctx: TimeRangeMs): numbe
 
 const containerPxToVal = (over: HTMLElement, containerPx: number, ctx: TimeRangeMs): number =>
   overPxToVal(over, containerPx - over.offsetLeft, ctx);
+
+/** Read a named annotation-frame column, or undefined if the frame lacks it. */
+const fieldValues = (frame: DataFrame, name: string): unknown[] | undefined =>
+  frame.fields.find((f) => f.name === name)?.values;
 
 // Per-instance teardown for the imperative listeners attached in the uPlot `ready` hook.
 const timebarCleanups = new WeakMap<uPlot, () => void>();
@@ -107,6 +122,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   height,
   time,
   values,
+  annotations,
   contextZoomFactor,
   onChangeTimeRange,
   onContextWindowChange,
@@ -123,6 +139,9 @@ export const TimeBar: React.FC<TimeBarProps> = ({
   stateRef.current = state;
   const actionsRef = useRef<TimebarActions>(actions);
   actionsRef.current = actions;
+  // Annotation frames read live inside the uPlot `draw` hook (built once); ref keeps it current.
+  const annotationsRef = useRef(annotations);
+  annotationsRef.current = annotations;
 
   const [overlay, setOverlay] = useState<OverlayGeom | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -191,6 +210,64 @@ export const TimeBar: React.FC<TimeBarProps> = ({
         spanNulls: true,
       });
     }
+
+    // Annotation markers, drawn on top of the sparklines: a vertical line per event, plus a faint filled
+    // rectangle for regions (timeEnd present). Frames are read live via a ref; a redraw is forced on change.
+    const resolveColor = (name?: string) => {
+      try {
+        return theme.visualization.getColorByName(name ?? DEFAULT_ANNOTATION_COLOR);
+      } catch {
+        return theme.visualization.getColorByName(DEFAULT_ANNOTATION_COLOR);
+      }
+    };
+    b.addHook('draw', (u: uPlot) => {
+      const frames = annotationsRef.current;
+      if (!frames?.length) {
+        return;
+      }
+      const ctx = u.ctx;
+      const top = u.bbox.top;
+      const h = u.bbox.height;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(u.bbox.left, top, u.bbox.width, h);
+      ctx.clip();
+      ctx.lineWidth = window.devicePixelRatio || 1;
+      for (const frame of frames) {
+        const times = fieldValues(frame, 'time');
+        if (!times) {
+          continue;
+        }
+        const ends = fieldValues(frame, 'timeEnd');
+        const colors = fieldValues(frame, 'color');
+        const regions = fieldValues(frame, 'isRegion');
+        for (let i = 0; i < times.length; i++) {
+          const at = times[i];
+          if (typeof at !== 'number') {
+            continue;
+          }
+          const rawColor = colors?.[i];
+          const color = resolveColor(typeof rawColor === 'string' ? rawColor : undefined);
+          const x0 = Math.round(u.valToPos(at, 'x', true));
+          const end = ends?.[i];
+          if (regions?.[i] && typeof end === 'number') {
+            const x1 = Math.round(u.valToPos(end, 'x', true));
+            try {
+              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+            } catch {
+              ctx.fillStyle = colorManipulator.alpha(DEFAULT_ANNOTATION_COLOR, 0.1);
+            }
+            ctx.fillRect(x0, top, x1 - x0, h);
+          }
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(x0, top);
+          ctx.lineTo(x0, top + h);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    });
 
     // uPlot native drag-select is used only to CREATE a new selection: read the range, commit it, then
     // clear uPlot's transient box (our overlay renders the persistent selection). We never call setSelect
@@ -293,6 +370,11 @@ export const TimeBar: React.FC<TimeBarProps> = ({
 
   // Remove any dangling window listeners if we unmount mid-drag (without committing).
   useEffect(() => () => dragCleanup.current?.(), []);
+
+  // uPlot won't re-run its draw hooks just because the annotations ref changed — force a redraw.
+  useEffect(() => {
+    uplotRef.current?.redraw();
+  }, [annotations]);
 
   // Report context-window changes so a host can fetch background data for the visible range.
   const onContextWindowChangeRef = useRef(onContextWindowChange);
