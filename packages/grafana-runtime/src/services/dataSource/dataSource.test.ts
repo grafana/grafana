@@ -298,6 +298,34 @@ describe('plugin', () => {
         expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
       });
 
+      it('constructs the concrete default instance when the variable interpolates to "default"', async () => {
+        const settings = ds();
+        initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setTemplateSrv({
+          getVariables: () => [],
+          replace: (v?: string) => (v === '${myds}' ? 'default' : (v ?? '')),
+        } as unknown as TemplateSrv);
+        setDataSourcePluginImporter(
+          jest.fn().mockResolvedValue({ DataSourceClass: CapturingDataSource, components: {} })
+        );
+
+        const result = await getDataSourceInstance('${myds}');
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('constructs the concrete instance when the variable arrives inside a ref object', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const result = await getDataSourceInstance({ uid: '${myds}', type: '' });
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
       it('does not poison the concrete-uid cache entry after a variable-ref call', async () => {
         const settings = seedAlphaWithVariable();
 
