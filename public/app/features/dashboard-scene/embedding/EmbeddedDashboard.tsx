@@ -121,12 +121,16 @@ function useControlledRefresh(refreshToken: string | number | undefined, model: 
   const lastToken = useRef(refreshToken);
 
   useEffect(() => {
-    if (!isActive || refreshToken === undefined || refreshToken === lastToken.current) {
+    if (refreshToken === undefined) {
       return;
     }
 
+    const changed = refreshToken !== lastToken.current;
     lastToken.current = refreshToken;
-    sceneGraph.getTimeRange(model).onRefresh();
+
+    if (isActive && changed) {
+      sceneGraph.getTimeRange(model).onRefresh();
+    }
   }, [refreshToken, model, isActive]);
 }
 
