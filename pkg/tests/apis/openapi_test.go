@@ -43,7 +43,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
-			featuremgmt.FlagKubernetesExternalGroupMappingsApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
 		},
 	})
@@ -123,6 +122,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
+	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1",
 	}, {
 		Group:   "collections.grafana.app",
 		Version: "v1alpha1",

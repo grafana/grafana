@@ -8,8 +8,11 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -41,161 +44,15 @@ const DASHBOARD_ERRORS_LAST_30_DAYS = "errors_last_30_days"
 const DASHBOARD_ERRORS_TOTAL = "errors_total"
 const DASHBOARD_ERRORS_TODAY = "errors_today"
 
+// DashboardSearchFields are read from the generated dashboard manifest, where
+// they are declared in apps/dashboard/kinds/manifest.cue. They are all computed
+// fields (no resource path); DashboardDocumentBuilder fills them in from the
+// parsed spec and the usage-insights stats.
+var DashboardSearchFields = resource.NewManifestBackedProvider(
+	[]app.Manifest{dashboardapp.LocalManifest()},
+).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
+
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
-		{
-			Name:        DASHBOARD_SCHEMA_VERSION,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
-			Description: "Numeric version saying when the schema was saved",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				NotNull: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_LINK_COUNT,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT32,
-			Description: "How many links appear on the page",
-		},
-		{
-			Name:        DASHBOARD_PANEL_TITLE,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			IsArray:     true,
-			Description: "The panel title text",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: false, // full text
-				FreeText:   true,
-			},
-		},
-		{
-			Name:        DASHBOARD_PANEL_TYPES,
-			Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-			IsArray:     true,
-			Description: "The panel types used in this dashboard",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of errors that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_ERRORS_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of errors",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of queries that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_QUERIES_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of queries",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_TODAY,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred today",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_1_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 1 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_7_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 7 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_LAST_30_DAYS,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Number of views that occurred in the last 30 days",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-		{
-			Name:        DASHBOARD_VIEWS_TOTAL,
-			Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-			Description: "Total number of views",
-			Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-				Filterable: true,
-			},
-		},
-	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
@@ -208,11 +65,23 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			}, nil
 		}
 	}
+	gvr := dashV1.DashboardResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: DashboardSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
+
+	gr := dashV1.DashboardResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: dashV1.DashboardResourceInfo.GroupResource(),
-		Fields:        fields,
-		Namespaced:    namespaced,
-	}, err
+		GroupResource:        gr,
+		Namespaced:           namespaced,
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }
 
 type DashboardDocumentBuilder struct {
@@ -276,7 +145,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
-	summary.ID = obj.GetDeprecatedInternalID() // nolint:staticcheck
 
 	doc := resource.NewIndexableDocument(key, rv, obj, summary.Title)
 	// TODO: add selectable fields
@@ -326,9 +194,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION:        summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:            summary.LinkCount,
-		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
+		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:     summary.LinkCount,
 	}
 
 	if len(panelTitles) > 0 {
@@ -354,18 +221,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	return doc, nil
 }
 
-func DashboardFields() []string {
-	baseFields := []string{ //nolint:prealloc
-		DASHBOARD_SCHEMA_VERSION,
-		DASHBOARD_LINK_COUNT,
-		DASHBOARD_PANEL_TYPES,
-		DASHBOARD_DS_TYPES,
-		DASHBOARD_TRANSFORMATIONS,
-	}
-
-	return append(baseFields, UsageInsightsFields()...)
-}
-
 // unmarshalMetadataOnly parses a K8s resource JSON and returns an
 // unstructured.Unstructured with only metadata populated (spec is omitted).
 // This avoids the cost of recursively parsing the (potentially huge) dashboard specs.
@@ -385,24 +240,4 @@ func unmarshalMetadataOnly(data []byte) (*unstructured.Unstructured, error) {
 			"metadata":   partial.Metadata,
 		},
 	}, nil
-}
-
-func UsageInsightsFields() []string {
-	return []string{
-		DASHBOARD_VIEWS_LAST_1_DAYS,
-		DASHBOARD_VIEWS_LAST_7_DAYS,
-		DASHBOARD_VIEWS_LAST_30_DAYS,
-		DASHBOARD_VIEWS_TODAY,
-		DASHBOARD_VIEWS_TOTAL,
-		DASHBOARD_QUERIES_LAST_1_DAYS,
-		DASHBOARD_QUERIES_LAST_7_DAYS,
-		DASHBOARD_QUERIES_LAST_30_DAYS,
-		DASHBOARD_QUERIES_TODAY,
-		DASHBOARD_QUERIES_TOTAL,
-		DASHBOARD_ERRORS_LAST_1_DAYS,
-		DASHBOARD_ERRORS_LAST_7_DAYS,
-		DASHBOARD_ERRORS_LAST_30_DAYS,
-		DASHBOARD_ERRORS_TODAY,
-		DASHBOARD_ERRORS_TOTAL,
-	}
 }

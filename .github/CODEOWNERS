@@ -144,6 +144,7 @@
 /pkg/infra/localcache/ @grafana/grafana-backend-group
 /pkg/infra/log/ @grafana/grafana-backend-group
 /pkg/infra/metrics/ @grafana/grafana-backend-group
+/pkg/infra/nats/ @grafana/grafana-search-and-storage
 /pkg/infra/network/ @grafana/grafana-backend-group
 /pkg/infra/process/ @grafana/grafana-backend-group
 /pkg/infra/remotecache/ @grafana/grafana-backend-group
@@ -367,7 +368,6 @@
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
 /pkg/tsdb/loki/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
-/pkg/tsdb/parca/ @grafana/data-sources-plugins
 
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
@@ -449,7 +449,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/V2DashWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashboardWithTabsForSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
-/e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-tabs-drag-drop.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-export-image.spec.ts @grafana/sharing-squad
@@ -570,6 +569,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/events/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/field/ @grafana/dashboards-squad
 /packages/grafana-data/src/geo/ @grafana/dataviz-squad
+/packages/grafana-data/src/hooks/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/monaco/ @grafana/data-sources-plugins
 /packages/grafana-data/src/panel/ @grafana/dashboards-squad
 /packages/grafana-data/src/panel/suggestions/ @grafana/dataviz-squad
@@ -695,6 +695,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/userStorage* @grafana/grafana-catalog @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/grafana-catalog
 /packages/grafana-runtime/src/utils/getCachedPromise* @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/utils/openfeature* @grafana/grafana-frontend-platform
 
 # @grafana/schema
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
@@ -720,7 +721,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/loki @grafana/data-sources-plugins @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
-/packages/grafana-schema/src/**/parca @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
@@ -764,6 +764,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/api-clients
 /packages/grafana-api-clients/ @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
+# Generated clients must be explicitly owned by the API's squad. The empty-owner line removes the
+# package catch-all so a new client dir with no matching line is left unowned (surfacing the gap in
+# review) rather than being silently assigned to frontend-platform/frontend-navigation.
+/packages/grafana-api-clients/src/clients/rtkq/
+# Shared client infrastructure stays with the platform owners.
+/packages/grafana-api-clients/src/clients/rtkq/createBaseQuery.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
+/packages/grafana-api-clients/src/clients/rtkq/index.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /packages/grafana-api-clients/src/clients/rtkq/*.alerting/ @grafana/alerting-frontend
 /packages/grafana-api-clients/src/clients/rtkq/advisor/ @grafana/grafana-catalog
 /packages/grafana-api-clients/src/clients/rtkq/correlations/ @grafana/datapro
@@ -777,6 +784,20 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/openapi
 /packages/grafana-openapi/ @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
+# Specs must be explicitly owned by the API's squad. The empty-owner line below removes the
+# package-level catch-all so a new spec with no matching line is left unowned (surfacing the gap
+# in review) rather than being silently assigned to frontend-navigation/frontend-platform.
+/packages/grafana-openapi/src/apis/
+/packages/grafana-openapi/src/apis/*.alerting.* @grafana/alerting-frontend
+/packages/grafana-openapi/src/apis/advisor.* @grafana/grafana-catalog
+/packages/grafana-openapi/src/apis/correlations.* @grafana/datapro
+/packages/grafana-openapi/src/apis/dashboard.* @grafana/dashboards-squad
+/packages/grafana-openapi/src/apis/folder.* @grafana/grafana-frontend-navigation
+/packages/grafana-openapi/src/apis/iam.* @grafana/access-squad @grafana/identity-squad
+/packages/grafana-openapi/src/apis/logsdrilldown.* @grafana/observability-logs
+/packages/grafana-openapi/src/apis/preferences.* @grafana/grafana-catalog
+/packages/grafana-openapi/src/apis/provisioning.* @grafana/grafana-frontend-navigation
+/packages/grafana-openapi/src/apis/shorturl.* @grafana/sharing-squad
 
 
 # root files, mostly frontend
@@ -882,10 +903,15 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useStoredBoolean.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
+/public/app/core/journeys/ @grafana/dashboards-squad
+/scripts/cuj-new.ts @grafana/dashboards-squad
+/scripts/cuj-smoke.ts @grafana/dashboards-squad
+/tsconfig.smoke.json @grafana/dashboards-squad
 /public/app/core/reducers/ @grafana/grafana-frontend-platform
 /public/app/core/selectors/ @grafana/grafana-frontend-platform
 /public/app/core/services/__mocks__/backend_srv.ts @grafana/grafana-frontend-platform
@@ -898,6 +924,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/meticulous.ts @grafana/dataviz-squad
+/public/app/core/services/journey/ @grafana/dashboards-squad
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
@@ -1075,6 +1102,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/frontend-ops
+/public/app/legacyAPIHandling.ts @grafana/grafana-frontend-platform
 /public/app/initApp.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 
@@ -1139,7 +1167,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad

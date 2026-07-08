@@ -10,11 +10,12 @@ import {
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardEditActionEvent } from '../../edit-pane/shared';
+import { DashboardEditActionEvent } from '../../edit-pane/events';
 import { getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
+import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from '../types/dashboard';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';

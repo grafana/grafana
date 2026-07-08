@@ -6,16 +6,21 @@ import (
 	"slices"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 // The maximum number of teams per user to use when listing preferences and for the merged endpoint. Teams beyond this limit
@@ -27,10 +32,68 @@ var PreferencesTeamLimit = 25
 // This converts the query into explicitly picking the preferences the caller should have access
 type preferencesStorage struct {
 	grafanarest.Storage
+	gvk schema.GroupVersionKind
 }
 
 func (s *preferencesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return s.ListPreferences(ctx, options)
+}
+
+// Update with upsert: an Update for an owner whose preferences don't
+// exist yet creates them instead of returning 404. The update is attempted
+// first; only a NotFound failure takes the create path. The legacy storage
+// upserts on its own (see legacy.preferenceStorage.Update)
+func (s *preferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	updated, created, err := s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err == nil || !k8serrors.IsNotFound(err) {
+		return updated, created, err
+	}
+
+	// Nothing stored yet -- apply the update to an empty placeholder and create it
+	placeholder, err := s.newEmptyPreferences(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := objInfo.UpdatedObject(ctx, placeholder)
+	if err != nil {
+		return nil, false, err
+	}
+
+	createdObj, err := s.Create(ctx, obj, createValidation, createOptionsFrom(options))
+	if err == nil {
+		return createdObj, true, nil
+	}
+	// Lost a race with a concurrent create -- apply as a regular update
+	if !k8serrors.IsAlreadyExists(err) {
+		return nil, false, err
+	}
+	return s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+// newEmptyPreferences builds the object a patch/update is applied against
+// when nothing is stored yet. It must carry a UID because the apiserver's
+// patch handler refuses to merge-patch an object without one
+func (s *preferencesStorage) newEmptyPreferences(ctx context.Context, name string) (runtime.Object, error) {
+	obj := s.New()
+	obj.GetObjectKind().SetGroupVersionKind(s.gvk)
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, err
+	}
+	accessor.SetName(name)
+	accessor.SetNamespace(requestK8s.NamespaceValue(ctx))
+	accessor.SetUID(gapiutil.CalculateClusterWideUID(obj))
+	return obj, nil
+}
+
+func createOptionsFrom(options *metav1.UpdateOptions) *metav1.CreateOptions {
+	opts := &metav1.CreateOptions{}
+	if options != nil {
+		opts.DryRun = options.DryRun
+		opts.FieldManager = options.FieldManager
+		opts.FieldValidation = options.FieldValidation
+	}
+	return opts
 }
 
 // ListPreferences wraps a regular storage object and populates the results with:

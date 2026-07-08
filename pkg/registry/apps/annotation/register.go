@@ -125,6 +125,7 @@ func NewAppInstaller(
 		installer:      installer,
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
+		retentionTTL:   cfg.RetentionTTL,
 		tracer:         installer.tracer,
 		metrics:        installer.metrics,
 		logger:         logger,
@@ -140,14 +141,18 @@ func NewAppInstaller(
 	// Create the search handler
 	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)
 
+	// Create the graphite handler
+	graphiteHandler := newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger)
+
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
 	appConfig := app.Config{
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: &annotationapp.AnnotationConfig{
-			TagHandler:    tagHandler,
-			SearchHandler: searchHandler,
+			TagHandler:      tagHandler,
+			SearchHandler:   searchHandler,
+			GraphiteHandler: graphiteHandler,
 		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())
@@ -232,7 +237,6 @@ func newPostgresStore(ctx context.Context, cfg Config, m *Metrics) (Store, error
 		MaxConnections:   cfg.PostgresMaxConnections,
 		MaxIdleConns:     cfg.PostgresMaxIdleConns,
 		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
-		RetentionTTL:     cfg.RetentionTTL,
 		TagCacheTTL:      cfg.PostgresTagCacheTTL,
 		TagCacheSize:     cfg.PostgresTagCacheSize,
 	}

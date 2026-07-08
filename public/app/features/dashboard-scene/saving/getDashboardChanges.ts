@@ -210,10 +210,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls
+        config.featureToggles.dashboardUnifiedDrilldownControls
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -223,7 +223,7 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -330,7 +330,7 @@ function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        if (config.featureToggles.adHocFilterDefaultValues || config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const changedFilters = (typed as AdHocVariableModel).filters ?? [];
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
