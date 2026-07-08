@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -30,25 +30,28 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            {onEditTitle ? (
-              <EditableTitle value={navItem.text} onEdit={onEditTitle} />
-            ) : renderTitle ? (
-              renderTitle(navItem.text)
-            ) : (
-              <Text
-                element="h1"
-                variant={visualRefreshEnabled ? 'h4' : 'h1'}
-                weight={visualRefreshEnabled ? 'bold' : 'regular'}
-              >
-                {navItem.text}
-              </Text>
-            )}
+            <Stack gap={0.5} direction="column">
+              {onEditTitle ? (
+                <EditableTitle value={navItem.text} onEdit={onEditTitle} />
+              ) : renderTitle ? (
+                renderTitle(navItem.text)
+              ) : (
+                <Text
+                  element="h1"
+                  variant={visualRefreshEnabled ? 'h4' : 'h1'}
+                  weight={visualRefreshEnabled ? 'bold' : 'regular'}
+                >
+                  {navItem.text}
+                </Text>
+              )}
+              {sub && visualRefreshEnabled && <div className={styles.subTitle}>{sub}</div>}
+            </Stack>
           </div>
           {info && <PageInfo info={info} />}
         </div>
         <div className={styles.actions}>{actions}</div>
       </div>
-      {sub && <div className={styles.subTitle}>{sub}</div>}
+      {sub && !visualRefreshEnabled && <div className={styles.subTitle}>{sub}</div>}
     </div>
   );
 }
@@ -60,16 +63,13 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: theme.spacing(1, 3),
+      gap: theme.spacing(visualRefreshEnabled ? 2 : 1, 3),
     }),
     title: css({
       display: 'flex',
       flexDirection: 'row',
       maxWidth: '100%',
       flex: 1,
-      h1: {
-        marginBottom: 0,
-      },
     }),
     actions: css({
       display: 'flex',

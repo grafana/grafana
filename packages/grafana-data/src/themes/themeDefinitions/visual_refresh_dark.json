@@ -69,6 +69,9 @@
     "borderRadius": 8,
     "borderRadiusLg": 12
   },
+  "typography": {
+    "fontWeightBold": 600
+  },
   "components": {
     "tag": {
       "colors": [
