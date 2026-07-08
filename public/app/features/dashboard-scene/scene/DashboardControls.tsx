@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { useLocalStorage } from 'react-use';
 
-import { type GrafanaTheme2, VariableHide } from '@grafana/data';
+import { type GrafanaTheme2, store, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -47,6 +47,9 @@ import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboard
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 import { SceneTimeNavigator } from './time-navigator/SceneTimeNavigator';
+
+/** Per-user, per-browser show/hide preference for the time navigator. */
+const TIME_NAVIGATOR_VISIBLE_KEY = 'grafana.dashboard.timeNavigator.visible';
 
 function getPanelEditVariables(
   dashboard: DashboardScene,
@@ -221,8 +224,16 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hidePlaylistNav,
   } = model.useState();
 
-  // Per-user, persisted show/hide preference for the time navigator (only relevant when its toggle is on).
-  const [showTimebar, setShowTimebar] = useLocalStorage('grafana.dashboard.timeNavigator.visible', true);
+  // Show/hide preference for the time navigator. Only read/write localStorage when the feature is on, so a
+  // disabled instance never touches it (react-use's useLocalStorage would persist the default on mount).
+  const [showTimebar, setShowTimebar] = useState(() =>
+    config.featureToggles.timeNavigator ? store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true) : true
+  );
+  const toggleTimebar = () => {
+    const next = !showTimebar;
+    setShowTimebar(next);
+    store.set(TIME_NAVIGATOR_VISIBLE_KEY, next);
+  };
 
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
@@ -289,7 +300,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                       ? t('time-navigator.hide', 'Hide time navigator')
                       : t('time-navigator.show', 'Show time navigator')
                   }
-                  onClick={() => setShowTimebar(!showTimebar)}
+                  onClick={toggleTimebar}
                 />
               )}
             </div>
