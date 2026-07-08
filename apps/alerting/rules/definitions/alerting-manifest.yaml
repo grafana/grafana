@@ -258,6 +258,95 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "alertrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - capabilities:
+        - retrieve
+        description: The rule's annotations, JSON-encoded for display
+        name: annotations
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the condition must be met before the rule fires
+        name: for
+        path: spec.for
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: How long the rule keeps firing after the condition clears
+        name: keepFiringFor
+        path: spec.keepFiringFor
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the dashboard the rule is associated with
+        name: dashboardUID
+        path: spec.panelRef.dashboardUID
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The ID of the panel the rule is associated with
+        name: panelID
+        path: spec.panelRef.panelID
+        type: int64
+      - capabilities:
+        - filter
+        - retrieve
+        description: The receiver for simplified-routing notification settings
+        name: receiver
+        path: spec.notificationSettings.receiver
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Which notification routing branch is configured
+        name: notificationType
+        path: spec.notificationSettings.type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The named routing tree for the rule's notifications
+        name: routingTree
+        path: spec.notificationSettings.routingTree
+        type: string
       selectableFields:
       - spec.title
       - spec.paused
@@ -422,6 +511,55 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      searchFields:
+      - capabilities:
+        - filter
+        - retrieve
+        description: The rule type discriminator (always "recordingrule")
+        name: type
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The evaluation interval of the rule
+        name: interval
+        path: spec.trigger.interval
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: Whether the rule is paused
+        name: paused
+        path: spec.paused
+        type: boolean
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The rule's labels, flattened to key and key=value terms
+        name: labels
+        type: string
+      - array: true
+        capabilities:
+        - filter
+        - retrieve
+        description: The query datasource UIDs referenced by the rule's expressions
+        name: datasourceUIDs
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The name of the recorded metric
+        name: metric
+        path: spec.metric
+        type: string
+      - capabilities:
+        - filter
+        - retrieve
+        description: The UID of the datasource the metric is written to
+        name: targetDatasourceUID
+        path: spec.targetDatasourceUID
+        type: string
       selectableFields:
       - spec.title
       - spec.paused

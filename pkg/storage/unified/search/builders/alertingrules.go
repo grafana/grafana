@@ -3,10 +3,12 @@ package builders
 import (
 	"context"
 	"encoding/json"
+	"sort"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/grafana/grafana-app-sdk/app"
 
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -14,77 +16,45 @@ import (
 
 // Rule search field/column names. These must match the keys the alerting rule
 // search handler uses when building ResourceSearchRequests so the legacy and
-// unified backends are interchangeable. Group is intentionally not a column: it
-// is a known label key matched via IndexableDocument.Labels.
+// unified backends are interchangeable, and the "name" values declared for the
+// rule kinds' searchFields in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
+// Group is intentionally not a column: it is a known label key matched via
+// IndexableDocument.Labels.
 const (
-	ruleSearchType                = "type"
-	ruleSearchInterval            = "interval"
-	ruleSearchPaused              = "paused"
-	ruleSearchLabels              = "labels"
-	ruleSearchAnnotations         = "annotations"
-	ruleSearchFor                 = "for"
-	ruleSearchKeepFiringFor       = "keepFiringFor"
-	ruleSearchDatasourceUIDs      = "datasourceUIDs"
-	ruleSearchDashboardUID        = "dashboardUID"
-	ruleSearchPanelID             = "panelID"
-	ruleSearchReceiver            = "receiver"
-	ruleSearchNotificationType    = "notificationType"
-	ruleSearchRoutingTree         = "routingTree"
-	ruleSearchMetric              = "metric"
-	ruleSearchTargetDatasourceUID = "targetDatasourceUID"
+	ruleSearchType           = "type"
+	ruleSearchLabels         = "labels"
+	ruleSearchAnnotations    = "annotations"
+	ruleSearchDatasourceUIDs = "datasourceUIDs"
 )
 
-func ruleSearchColumnDefinitions() []*resourcepb.ResourceTableColumnDefinition {
-	filterable := &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}
-	str := func(name string) *resourcepb.ResourceTableColumnDefinition {
-		return &resourcepb.ResourceTableColumnDefinition{Name: name, Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: filterable}
-	}
-	return []*resourcepb.ResourceTableColumnDefinition{
-		str(ruleSearchType),
-		str(ruleSearchInterval),
-		{Name: ruleSearchPaused, Type: resourcepb.ResourceTableColumnDefinition_BOOLEAN, Properties: filterable},
-		// The rule's own (spec) labels, indexed as "key" and "key=value" terms
-		// so label matchers (equals and existence) resolve against them.
-		{Name: ruleSearchLabels, Type: resourcepb.ResourceTableColumnDefinition_STRING, IsArray: true, Properties: filterable},
-		// annotations is display-only, carried as the JSON-encoded map.
-		str(ruleSearchAnnotations),
-		str(ruleSearchFor),
-		str(ruleSearchKeepFiringFor),
-		{Name: ruleSearchDatasourceUIDs, Type: resourcepb.ResourceTableColumnDefinition_STRING, IsArray: true, Properties: filterable},
-		str(ruleSearchDashboardUID),
-		{Name: ruleSearchPanelID, Type: resourcepb.ResourceTableColumnDefinition_INT64, Properties: filterable},
-		str(ruleSearchReceiver),
-		str(ruleSearchNotificationType),
-		str(ruleSearchRoutingTree),
-		str(ruleSearchMetric),
-		str(ruleSearchTargetDatasourceUID),
-	}
-}
+// rulesManifests carries the rule kinds' manifest, the source of truth for
+// their searchFields (declared in CUE) and their selectable-field declarations.
+var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
 
-// serverSideDatasourceUIDs are synthetic expression datasources, never a
-// user-facing query datasource.
-var serverSideDatasourceUIDs = map[string]struct{}{
-	expr.DatasourceUID:    {},
-	expr.OldDatasourceUID: {},
-	expr.MLDatasourceUID:  {},
-}
+// rulesSearchFieldsProvider is the single manifest-backed provider covering
+// every rule kind. It drives both the declared-path extraction (via the
+// standard document builder) and the bleve mapping / column metadata (via
+// DocumentBuilderInfo.SearchFieldsProvider).
+var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
 
 func GetAlertRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields(ruleSearchColumnDefinitions())
+	gr := rulesv0alpha1.AlertRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: schema.GroupResource{Group: rulesv0alpha1.AlertRuleKind().Group(), Resource: rulesv0alpha1.AlertRuleKind().Plural()},
-		Fields:        fields,
-		Builder:       new(alertRuleSearchBuilder),
-	}, err
+		GroupResource:        gr,
+		Builder:              &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
+		SearchFieldsHash:     rulesSearchFieldsProvider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: rulesSearchFieldsProvider,
+	}, nil
 }
 
 func GetRecordingRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
-	fields, err := resource.NewSearchableDocumentFields(ruleSearchColumnDefinitions())
+	gr := rulesv0alpha1.RecordingRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: schema.GroupResource{Group: rulesv0alpha1.RecordingRuleKind().Group(), Resource: rulesv0alpha1.RecordingRuleKind().Plural()},
-		Fields:        fields,
-		Builder:       new(recordingRuleSearchBuilder),
-	}, err
+		GroupResource:        gr,
+		Builder:              &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
+		SearchFieldsHash:     rulesSearchFieldsProvider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: rulesSearchFieldsProvider,
+	}, nil
 }
 
 var (
@@ -92,50 +62,76 @@ var (
 	_ resource.DocumentBuilder = new(recordingRuleSearchBuilder)
 )
 
-type alertRuleSearchBuilder struct{}
+// alertRuleSearchBuilder builds an AlertRule search document. It delegates the
+// path-declared fields (declared in the CUE manifest) to the standard document
+// builder, then decodes the typed spec to compute the fields that cannot be
+// expressed as a JSON path: type is a constant, labels and annotations are maps
+// (the path extractor has no map support), and datasourceUIDs must exclude
+// server-side expression datasources and deduplicate across the expression map.
+type alertRuleSearchBuilder struct {
+	declared resource.DocumentBuilder
+}
 
-func (alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	rule := &rulesv0alpha1.AlertRule{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, rule, rulesv0alpha1.AlertRuleKind())
+func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+	doc, err := b.declared.BuildDocument(ctx, key, rv, value)
 	if err != nil {
 		return nil, err
 	}
+	if doc.Fields == nil {
+		doc.Fields = make(map[string]any)
+	}
+
+	// The delegate already unmarshalled value into an unstructured object to
+	// extract the path-declared fields, but it does not expose it. We re-parse
+	// into the typed spec here to compute the map-shaped and derived fields
+	// (labels, annotations, datasourceUIDs) that cannot be expressed as a JSON
+	// path. The extra parse is the cost of keeping every path field declarative
+	// (in the manifest) instead of hand-populating it here.
+	rule := &rulesv0alpha1.AlertRule{}
+	if err := json.Unmarshal(value, rule); err != nil {
+		return nil, err
+	}
+
 	doc.Fields[ruleSearchType] = "alertrule"
-	doc.Fields[ruleSearchInterval] = string(rule.Spec.Trigger.Interval)
-	var uids []string
-	for _, e := range rule.Spec.Expressions {
-		if e.DatasourceUID != nil {
-			uids = appendSourceUID(uids, string(*e.DatasourceUID))
-		}
-	}
-	if len(uids) > 0 {
+
+	if uids := alertRuleDatasourceUIDs(rule.Spec.Expressions); len(uids) > 0 {
 		doc.Fields[ruleSearchDatasourceUIDs] = uids
-	}
-	if rule.Spec.Paused != nil {
-		doc.Fields[ruleSearchPaused] = *rule.Spec.Paused
-	}
-	if rule.Spec.For != nil {
-		doc.Fields[ruleSearchFor] = *rule.Spec.For
-	}
-	if rule.Spec.KeepFiringFor != nil {
-		doc.Fields[ruleSearchKeepFiringFor] = *rule.Spec.KeepFiringFor
 	}
 	if a := annotationsJSON(rule.Spec.Annotations); a != "" {
 		doc.Fields[ruleSearchAnnotations] = a
 	}
-	if rule.Spec.PanelRef != nil {
-		doc.Fields[ruleSearchDashboardUID] = rule.Spec.PanelRef.DashboardUID
-		doc.Fields[ruleSearchPanelID] = rule.Spec.PanelRef.PanelID
+	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
+		doc.Fields[ruleSearchLabels] = terms
 	}
-	if ns := rule.Spec.NotificationSettings; ns != nil {
-		switch {
-		case ns.SimplifiedRouting != nil:
-			doc.Fields[ruleSearchReceiver] = ns.SimplifiedRouting.Receiver
-			doc.Fields[ruleSearchNotificationType] = string(rulesv0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting)
-		case ns.NamedRoutingTree != nil:
-			doc.Fields[ruleSearchRoutingTree] = ns.NamedRoutingTree.RoutingTree
-			doc.Fields[ruleSearchNotificationType] = string(rulesv0alpha1.AlertRuleNotificationSettingsTypeNamedRoutingTree)
-		}
+	return doc, nil
+}
+
+// recordingRuleSearchBuilder builds a RecordingRule search document. See
+// alertRuleSearchBuilder for the delegate-then-compute pattern.
+type recordingRuleSearchBuilder struct {
+	declared resource.DocumentBuilder
+}
+
+func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+	doc, err := b.declared.BuildDocument(ctx, key, rv, value)
+	if err != nil {
+		return nil, err
+	}
+	if doc.Fields == nil {
+		doc.Fields = make(map[string]any)
+	}
+
+	// Re-parse into the typed spec to compute the map-shaped and derived fields;
+	// see alertRuleSearchBuilder.BuildDocument for why this second parse exists.
+	rule := &rulesv0alpha1.RecordingRule{}
+	if err := json.Unmarshal(value, rule); err != nil {
+		return nil, err
+	}
+
+	doc.Fields[ruleSearchType] = "recordingrule"
+
+	if uids := recordingRuleDatasourceUIDs(rule.Spec.Expressions); len(uids) > 0 {
+		doc.Fields[ruleSearchDatasourceUIDs] = uids
 	}
 	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
 		doc.Fields[ruleSearchLabels] = terms
@@ -143,45 +139,45 @@ func (alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	return doc, nil
 }
 
-type recordingRuleSearchBuilder struct{}
-
-func (recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	rule := &rulesv0alpha1.RecordingRule{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, rule, rulesv0alpha1.RecordingRuleKind())
-	if err != nil {
-		return nil, err
-	}
-	doc.Fields[ruleSearchType] = "recordingrule"
-	doc.Fields[ruleSearchInterval] = string(rule.Spec.Trigger.Interval)
+// alertRuleDatasourceUIDs collects the distinct user-facing query datasource
+// UIDs referenced by an alert rule's expressions. The expression map has
+// non-deterministic iteration order, so the result is sorted to keep indexed
+// documents stable across rebuilds.
+func alertRuleDatasourceUIDs(expressions map[string]rulesv0alpha1.AlertRuleExpression) []string {
 	var uids []string
-	for _, e := range rule.Spec.Expressions {
+	for _, e := range expressions {
 		if e.DatasourceUID != nil {
 			uids = appendSourceUID(uids, string(*e.DatasourceUID))
 		}
 	}
-	if len(uids) > 0 {
-		doc.Fields[ruleSearchDatasourceUIDs] = uids
-	}
-	if rule.Spec.Paused != nil {
-		doc.Fields[ruleSearchPaused] = *rule.Spec.Paused
-	}
-	if rule.Spec.Metric != "" {
-		doc.Fields[ruleSearchMetric] = string(rule.Spec.Metric)
-	}
-	if rule.Spec.TargetDatasourceUID != "" {
-		doc.Fields[ruleSearchTargetDatasourceUID] = string(rule.Spec.TargetDatasourceUID)
-	}
-	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
-		doc.Fields[ruleSearchLabels] = terms
-	}
-	return doc, nil
+	sort.Strings(uids)
+	return uids
 }
 
+// recordingRuleDatasourceUIDs is the recording-rule counterpart of
+// alertRuleDatasourceUIDs.
+func recordingRuleDatasourceUIDs(expressions map[string]rulesv0alpha1.RecordingRuleExpression) []string {
+	var uids []string
+	for _, e := range expressions {
+		if e.DatasourceUID != nil {
+			uids = appendSourceUID(uids, string(*e.DatasourceUID))
+		}
+	}
+	sort.Strings(uids)
+	return uids
+}
+
+// appendSourceUID adds uid to uids unless it is empty, a synthetic server-side
+// expression datasource, or already present. expr.NodeTypeFromDatasourceUID is
+// the single source of truth for what counts as a real (user-facing) query
+// datasource: only TypeDatasourceNode is one; the __expr__/-100 command nodes
+// and the __ml__ node are excluded, and any future synthetic UID added to
+// pkg/expr is excluded automatically.
 func appendSourceUID(uids []string, uid string) []string {
 	if uid == "" {
 		return uids
 	}
-	if _, server := serverSideDatasourceUIDs[uid]; server {
+	if expr.NodeTypeFromDatasourceUID(uid) != expr.TypeDatasourceNode {
 		return uids
 	}
 	for _, existing := range uids {
@@ -217,6 +213,11 @@ func annotationsJSON[T ~string](annotations map[string]T) string {
 	}
 	b, err := json.Marshal(m)
 	if err != nil {
+		// json.Marshal on a map[string]string cannot fail: string keys and
+		// values are always encodable, there are no cycles, and no custom
+		// MarshalJSON is involved. The branch is unreachable defensively;
+		// returning "" degrades to "no annotations indexed" rather than
+		// failing the whole document build.
 		return ""
 	}
 	return string(b)
