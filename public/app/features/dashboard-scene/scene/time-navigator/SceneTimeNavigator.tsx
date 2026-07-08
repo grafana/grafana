@@ -139,7 +139,7 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
   }));
 
   return (
-    <div ref={ref} style={{ width: '100%' }}>
+    <div ref={ref} style={{ width: '100%', minHeight: height }}>
       {width > 0 && (
         <TimeBar
           value={{ from: value.from.valueOf(), to: value.to.valueOf() }}
