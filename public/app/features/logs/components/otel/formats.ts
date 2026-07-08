@@ -90,8 +90,6 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
 
 function getSuggestedFieldsForAnyLogs() {
   return [
-    'account_id',
-    'action',
     'app',
     'app_environment',
     'app_kubernetes_io_name',
@@ -105,9 +103,7 @@ function getSuggestedFieldsForAnyLogs() {
     'cluster',
     'component',
     'container',
-    'container_id',
     'container_name',
-    'correlationid',
     'deployment_environment',
     'deployment_environment_name',
     'duration',
@@ -123,7 +119,6 @@ function getSuggestedFieldsForAnyLogs() {
     'exception_stacktrace',
     'exception_type',
     'filename',
-    'flags',
     'host',
     'host_name',
     'hostname',
@@ -153,8 +148,6 @@ function getSuggestedFieldsForAnyLogs() {
     'region',
     'req_url',
     'request',
-    'request_id',
-    'requestid',
     'requestpath',
     'response_code',
     'scope_name',
@@ -180,8 +173,6 @@ function getSuggestedFieldsForAnyLogs() {
     'url_path',
     'user',
     'user_agent',
-    'user_id',
-    'userid',
     'version',
   ];
 }
