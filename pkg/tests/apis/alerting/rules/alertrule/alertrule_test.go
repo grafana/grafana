@@ -806,6 +806,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -867,6 +870,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		})
 
 		created, err := unstructuredClient.Resource.Create(ctx, unstructuredRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 
 		require.NoError(t, err)
 		require.NotNil(t, created)
@@ -895,6 +901,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -919,6 +928,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -954,6 +966,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -989,6 +1004,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
