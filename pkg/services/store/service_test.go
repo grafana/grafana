@@ -82,15 +82,6 @@ func TestIntegrationListFiles(t *testing.T) {
 	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
 	require.NoError(t, err)
 
-	// Normalize the geojson media type -- so it does not depend on system configuration
-	mt := frame.Fields[1]
-	require.Equal(t, mediaTypeListFrameField, mt.Name)
-	for i := 0; i < mt.Len(); i++ {
-		if mt.At(i) == "application/geo+json" {
-			mt.Set(i, "application/octet-stream")
-		}
-	}
-
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
 }
 

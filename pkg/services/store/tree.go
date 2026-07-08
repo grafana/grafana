@@ -3,10 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -259,6 +259,10 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, m
 	}
 
 	for _, f := range listResponse.Files {
+		if f.MimeType == "application/octet-stream" && strings.HasSuffix(f.Name, ".geojson") {
+			f.MimeType = "application/geo+json" // normalize because this depends on system config
+		}
+
 		names.Set(idx, f.Name)
 		mtype.Set(idx, f.MimeType)
 		fsize.Set(idx, f.Size)
