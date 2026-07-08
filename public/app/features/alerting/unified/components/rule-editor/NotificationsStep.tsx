@@ -9,6 +9,7 @@ import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { NotificationMessagePreviewComponent } from '../../enterprise-components/rule-editor/addNotificationMessagePreview';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
@@ -141,6 +142,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <ManualAndAutomaticRouting alertUid={alertUid} />
       )}
       {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
+      {shouldRenderpreview && <NotificationMessagePreviewComponent />}
     </RuleEditorSection>
   );
 };

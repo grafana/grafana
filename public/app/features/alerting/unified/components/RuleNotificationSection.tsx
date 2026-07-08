@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
+import { NotificationMessagePreviewComponent } from '../enterprise-components/rule-editor/addNotificationMessagePreview';
 import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -324,6 +325,8 @@ export function RuleNotificationSection() {
               )}
             </>
           </Field>
+
+          <NotificationMessagePreviewComponent />
         </Stack>
       </div>
     </section>

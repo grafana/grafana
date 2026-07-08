@@ -1,6 +1,7 @@
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { RuleListItemIndicatorComponent } from '../enterprise-components/rule-list/addRuleListItemIndicator';
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 import { totalFromStats } from '../utils/ruleStats';
@@ -66,6 +67,7 @@ export function GrafanaRuleListItem({
     return (
       <AlertRuleListItem
         {...commonProps}
+        actionsPrefix={<RuleListItemIndicatorComponent rule={rule} />}
         summary={rule.annotations?.summary}
         state={promAlertingRule?.state}
         instancesCount={instancesCount}
