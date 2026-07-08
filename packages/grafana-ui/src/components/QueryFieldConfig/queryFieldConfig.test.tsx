@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import { CodeEditor } from './CodeEditor';
-import { getQueryFieldConfig, type QueryFieldConfigOptions } from './queryField';
+import { CodeEditor } from '../CodeMirror/CodeEditor';
+
+import { getQueryFieldConfig, type QueryFieldConfigOptions } from './queryFieldConfig';
 
 describe('getQueryFieldConfig', () => {
   const theme = createTheme();

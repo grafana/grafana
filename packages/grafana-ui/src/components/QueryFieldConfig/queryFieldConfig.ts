@@ -4,8 +4,7 @@ import { EditorView, keymap, placeholder as placeholderExtension } from '@codemi
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
-
-import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from './types';
+import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
 
 export interface QueryFieldConfigOptions {
   /**
