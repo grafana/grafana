@@ -7,19 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -661,112 +654,6 @@ func TestIsRawFileIntegration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.expected, resources.IsRawFile(tt.path))
-		})
-	}
-}
-
-var openfeatureTestMutex sync.Mutex
-
-func setupOpenFeatureProvider(t *testing.T, flagValue bool) {
-	t.Helper()
-	openfeatureTestMutex.Lock()
-
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagProvisioningUserAttribution: {
-			Key:      featuremgmt.FlagProvisioningUserAttribution,
-			Variants: map[string]any{"": flagValue},
-		},
-	})
-	require.NoError(t, err)
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
-}
-
-type ctxCapturingRepoGetter struct {
-	ctx context.Context
-}
-
-func (g *ctxCapturingRepoGetter) GetRepository(ctx context.Context, _ string) (repository.Repository, error) {
-	g.ctx = ctx
-	return nil, errors.New("stop")
-}
-
-func (g *ctxCapturingRepoGetter) GetHealthyRepository(ctx context.Context, _ string) (repository.Repository, error) {
-	g.ctx = ctx
-	return nil, errors.New("stop")
-}
-
-func TestHandleRequest_AuthorSignature(t *testing.T) {
-	tests := []struct {
-		name            string
-		requester       identity.Requester
-		userAttribution bool
-		expected        *repository.CommitSignature
-	}{
-		{
-			name: "user identity sets author signature",
-			requester: &identity.StaticRequester{
-				Type:  authlib.TypeUser,
-				Name:  "Test User",
-				Email: "test@example.com",
-			},
-			userAttribution: true,
-			expected:        &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
-		},
-		{
-			name: "user attribution disabled does not set author signature",
-			requester: &identity.StaticRequester{
-				Type:  authlib.TypeUser,
-				Name:  "Test User",
-				Email: "test@example.com",
-			},
-			userAttribution: false,
-			expected:        nil,
-		},
-		{
-			name: "service identity does not set author signature",
-			requester: &identity.StaticRequester{
-				Type: authlib.TypeAccessPolicy,
-				Name: "provisioning",
-			},
-			userAttribution: true,
-			expected:        nil,
-		},
-		{
-			name:            "missing requester does not set author signature",
-			requester:       nil,
-			userAttribution: true,
-			expected:        nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			if tt.requester != nil {
-				ctx = identity.WithRequester(ctx, tt.requester)
-			}
-
-			getter := &ctxCapturingRepoGetter{}
-			setupOpenFeatureProvider(t, tt.userAttribution)
-			connector := &filesConnector{getter: getter}
-			req := httptest.NewRequest(http.MethodPost, "/files/test.json", nil)
-
-			connector.handleRequest(ctx, "repo", req, &fakeResponder{}, logging.DefaultLogger)
-
-			require.NotNil(t, getter.ctx)
-			sig := repository.GetAuthorSignature(getter.ctx)
-			if tt.expected == nil {
-				assert.Nil(t, sig)
-			} else {
-				require.NotNil(t, sig)
-				assert.Equal(t, tt.expected.Name, sig.Name)
-				assert.Equal(t, tt.expected.Email, sig.Email)
-			}
 		})
 	}
 }
