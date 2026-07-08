@@ -99,7 +99,7 @@ For additional information on setting up TLS encryption with Pyroscope, refer to
 
 ## Additional settings
 
-Use the down arrow to expand the **Additional settings** section to view these options.
+**Additional settings** are optional settings that give you more control over your data source. Select the **Additional settings** section to expand it and configure these options.
 
 ### Advanced HTTP settings
 
@@ -107,15 +107,21 @@ The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field t
 
 The **Timeout** field sets the HTTP request timeout in seconds.
 
-### Querying
-
-**Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
-Set this value in Grafana duration format, such as `15s`, `1m`, or `1h`, to match your Pyroscope scrape interval.
-
-Adjusting this option can help prevent gaps when you zoom in to profiling data.
-
 ### Private data source connect
 
 [//]: # 'Shared content for authentication section procedure in data sources'
 
 {{< docs/shared source="grafana" lookup="datasources/datasouce-private-ds-connect.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
+
+### Querying
+
+Use the **Minimal step** field to set the minimum step used for metric queries that return time-series data. The default value is 15 seconds.
+Enter a value in Grafana duration format using a number and a time unit specifier, such as `15s`, `1m`, or `1h`. Set it to the same value as, or higher than, the scrape interval configured in your Pyroscope database.
+
+Adjusting this option can help prevent gaps when you zoom in to profiling data.
+
+## Verify the connection
+
+After you configure the data source, select **Save & test** to verify the connection.
+When the connection is successful, Grafana displays a **Data source is working** message.
+If the test fails, Grafana displays the error returned by the Pyroscope backend. For help resolving connection errors, refer to [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/).
