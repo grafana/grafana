@@ -18,7 +18,7 @@ import (
 // expiration would race the other packages' historic-job reads.
 var env = common.NewSharedEnv(
 	common.WithNATS(),
-	common.WithProvisioningHistoryExpiration(5*time.Second),
+	common.WithProvisioningHistoryExpiration(10*time.Second),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
