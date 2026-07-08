@@ -29,7 +29,7 @@ Before you begin to set up Git Sync, ensure you have the following:
 
 ## Network connectivity and IP allowlisting
 
-Git Sync requires network connectivity between your Grafana instance and Git server. Understanding the traffic patterns helps you configure firewalls and allowlists correctly.
+Git Sync requires network connectivity between your Grafana instance and Git server. Understanding the traffic patterns helps you configure firewall rules and allowlists correctly.
 
 ### Traffic types
 
@@ -48,7 +48,7 @@ Git Sync uses two types of network traffic:
 
 Git Sync does not route over AWS PrivateLink or Private Data Source Connect (PDC).
 
-AWS PrivateLink and PDC provide a separate tunnel for data-source query traffic (Grafana → your private databases or data sources). Git Sync uses the normal public path from the Hosted Grafana IPs and is independent of PrivateLink/PDC.
+AWS PrivateLink and PDC provide a separate tunnel for data source query traffic (Grafana → your private databases or data sources). Git Sync uses the normal public path from the Hosted Grafana IPs and is independent of PrivateLink/PDC.
 
 If you use AWS PrivateLink or PDC for data sources, you can still use Git Sync. The two features neither interfere with nor depend on each other.
 
