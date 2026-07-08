@@ -12,14 +12,19 @@ export interface UseCreateSyncJobParams {
   setStepStatusInfo?: (info: StepStatusInfo) => void;
 }
 
+/** Options shared by the sync/migrate job hooks. */
+export interface SyncJobOptions {
+  /** Dashboard refs to scope a selective migration to; empty means migrate every unmanaged resource. */
+  resources?: ResourceRef[];
+  /** The repository's sync target, used to decide whether folder UIDs are regenerated on migrate. */
+  syncTarget?: Target;
+}
+
 export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
   const createSyncJob = useCallback(
-    async (
-      requiresMigration: boolean,
-      options?: { skipStatusUpdates?: boolean; resources?: ResourceRef[]; syncTarget?: Target }
-    ) => {
+    async (requiresMigration: boolean, options?: SyncJobOptions & { skipStatusUpdates?: boolean }) => {
       const { skipStatusUpdates = false, resources, syncTarget } = options || {};
 
       if (!repoName) {
@@ -46,15 +51,15 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
                 t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
               ),
               migrate: {
-                // Generate fresh folder UIDs on export for folder and
-                // folderless targets so the migrated folders are created anew
-                // on the subsequent pull rather than taking over the existing
-                // folders (which would leave their alerts and library panels
-                // orphaned under a now-managed folder). Instance sync takes
-                // over the whole instance, so it must preserve the existing
-                // folder UIDs and take over the originals instead. Has no
-                // effect unless folder metadata is written.
-                generateNewFolderIDs: syncTarget === 'folder' || syncTarget === 'folderless',
+                // Generate fresh folder UIDs on export so the migrated folders
+                // are created anew on the subsequent pull rather than taking
+                // over the existing folders (which would leave their alerts and
+                // library panels orphaned under a now-managed folder). Instance
+                // sync is the exception: it takes over the whole instance and
+                // must preserve the existing folder UIDs. Every other (and any
+                // unknown) target defaults to regeneration, the safe side. Has
+                // no effect unless folder metadata is written.
+                generateNewFolderIDs: syncTarget !== 'instance',
                 // When resources are passed, only those (unmanaged) dashboards
                 // are migrated; otherwise the migrate object keeps the legacy
                 // "migrate everything unmanaged" behavior the wizard relies on.
