@@ -388,6 +388,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	_ "github.com/grafana/grafana/pkg/services/featuremgmt"
 	_ "github.com/grafana/grafana/pkg/services/folder"
+	_ "github.com/grafana/grafana/pkg/services/folder/cleaner"
 	_ "github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	_ "github.com/grafana/grafana/pkg/services/grpcserver"
 	_ "github.com/grafana/grafana/pkg/services/grpcserver/context"
