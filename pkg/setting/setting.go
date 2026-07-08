@@ -79,7 +79,7 @@ const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
 
 // ProvisioningControllerResyncIntervalDefault is the default value for the
-// [provisioning] controller_resync_interval key. It sets how often the
+// [provisioning] resync_interval key. It sets how often the
 // provisioning controllers' informers re-list (repository, connection, job) as
 // a fallback to the live watch/NATS notifications. A shorter value reconciles
 // stale state sooner at the cost of more full LISTs.
@@ -2626,7 +2626,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
-	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("controller_resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
 	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
 	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")

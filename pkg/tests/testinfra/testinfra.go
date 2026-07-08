@@ -898,7 +898,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	if opts.ProvisioningControllerResyncInterval > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("controller_resync_interval", opts.ProvisioningControllerResyncInterval.String())
+		_, err = provisioningSect.NewKey("resync_interval", opts.ProvisioningControllerResyncInterval.String())
 		require.NoError(t, err)
 	}
 	if opts.ProvisioningHistoryExpiration > 0 {
@@ -1088,7 +1088,7 @@ type GrafanaOpts struct {
 	ProvisioningMaxIncrementalChanges                    *int
 	ProvisioningMaxFileSize                              *int64
 	// ProvisioningControllerResyncInterval overrides [provisioning]
-	// controller_resync_interval (repo/connection/job informer re-list). Set it
+	// resync_interval (repo/connection/job informer re-list). Set it
 	// high in NATS tests so a fast reconcile can only be a live notification, not
 	// the periodic re-list. Zero leaves the ini default (60s).
 	ProvisioningControllerResyncInterval time.Duration

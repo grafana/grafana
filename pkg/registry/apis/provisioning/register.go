@@ -977,7 +977,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Informer resync interval used for health check and reconciliation of
 			// the repository, connection, and job controllers. Configurable via
-			// [provisioning] controller_resync_interval; <=0 falls back to the default.
+			// [provisioning] resync_interval; <=0 falls back to the default.
 			informerFactoryResyncInterval := b.controllerResyncInterval
 			if informerFactoryResyncInterval <= 0 {
 				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
