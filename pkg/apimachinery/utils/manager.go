@@ -33,18 +33,30 @@ const (
 	ManagerKindPlugin    ManagerKind = "plugin"
 	ManagerKindGrafana   ManagerKind = "grafana"
 
-	// Deprecated: this is used as a shim/migration path for legacy file provisioning
-	// Previously this was a "file:" prefix
+	// ManagerKindClassicFP marks resources that originate from the
+	// legacy on-disk file provisioning system (dashboards, folders, correlations,
+	// alerting with the "file" provenance). The manager identity, when present, is
+	// the provisioner/reader name from the provisioning config. Previously this was
+	// a "file:" prefix.
+	//
+	// Deprecated: shim/migration path only. New resources should use a real manager
+	// kind (repo, terraform, kubectl, ...).
 	ManagerKindClassicFP ManagerKind = "classic-file-provisioning"
 
-	// Deprecated: this is used as a shim/migration path for legacy API provisioning,
-	// where the resource was managed via the provisioning HTTP API but the specific
-	// tool (Terraform, script, etc.) was not recorded. Use ManagerKindTerraform,
+	// ManagerKindClassicAPI marks resources created through the legacy provisioning
+	// HTTP API (alerting "api" provenance) where the concrete tool that made the
+	// call was not recorded, so there is no meaningful manager identity.
+	//
+	// Deprecated: shim/migration path only. Prefer ManagerKindTerraform,
 	// ManagerKindKubectl, etc. for new resources.
 	ManagerKindClassicAPI ManagerKind = "classic-api-provisioning"
 
-	// Deprecated: this is used as a shim/migration path for resources that were
-	// converted from Prometheus definitions.
+	// ManagerKindClassicConvertedPrometheus marks resources imported by the Grafana
+	// Alerting "Convert Prometheus" API, which converts Prometheus/Mimir/Cortex rule
+	// groups into Grafana-managed rules (alerting "converted_prometheus" provenance).
+	// The import has no owning manager instance, so there is no manager identity.
+	//
+	// Deprecated: shim/migration path only.
 	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
@@ -74,8 +86,11 @@ func ParseManagerKindString(v string) ManagerKind {
 	}
 }
 
-// IsClassic returns true for shim kinds that represent legacy provisioning mechanisms.
-// Classic kinds do not require a manager Identity.
+// IsClassic returns true for shim kinds that represent legacy provisioning
+// mechanisms (file/API provisioning, converted Prometheus). These origins have no
+// stable per-instance manager, so unlike other kinds they are considered managed
+// even without a manager Identity. Because their identity is absent or unstable, it
+// must not be treated as immutable the way user-defined identities are.
 func (k ManagerKind) IsClassic() bool {
 	switch k { //nolint:staticcheck
 	case ManagerKindClassicFP, ManagerKindClassicAPI, ManagerKindClassicConvertedPrometheus:
