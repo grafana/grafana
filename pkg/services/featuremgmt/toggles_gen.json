@@ -911,7 +911,8 @@
       "metadata": {
         "name": "annotationsClustering",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-30T15:06:45Z"
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
@@ -2555,6 +2556,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.frontendLegacyAPIHandling",
+        "resourceVersion": "1783501568190",
+        "creationTimestamp": "2026-07-08T09:06:08Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1782913620784",
         "creationTimestamp": "2026-07-01T13:47:00Z"
@@ -3869,7 +3884,8 @@
       "metadata": {
         "name": "nestedFramesFieldOverrides",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-07T16:17:18Z"
       },
       "spec": {
         "description": "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
@@ -5703,6 +5719,7 @@
         "name": "vizLegendFacetedFilter",
         "resourceVersion": "1779387149240",
         "creationTimestamp": "2026-03-10T07:54:22Z",
+        "deletionTimestamp": "2026-07-07T16:17:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.240952 +0000 UTC"
         }
