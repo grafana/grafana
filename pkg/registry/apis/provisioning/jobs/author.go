@@ -19,9 +19,5 @@ func UserAttribution(ctx context.Context) (repository.CommitSignature, bool) {
 	if err != nil || !id.IsIdentityType(authlib.TypeUser) {
 		return repository.CommitSignature{}, false
 	}
-	sig := repository.CommitSignature{Name: id.GetName(), Email: id.GetEmail()}
-	if sig.Name == "" && sig.Email == "" {
-		return repository.CommitSignature{}, false
-	}
-	return sig, true
+	return repository.CommitSignature{Name: id.GetName(), Email: id.GetEmail()}, true
 }
