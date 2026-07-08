@@ -15519,6 +15519,24 @@
       "title": "Panel"
     }
   },
+  "time-navigator": {
+    "annotation-queries": "Annotation queries",
+    "apply-absolute-range": "Apply Absolute Range",
+    "custom-duration-placeholder": "Custom duration (e.g. 12h)",
+    "from-label": "From:",
+    "hide": "Hide time navigator",
+    "pan-left": "Pan left",
+    "pan-right": "Pan right",
+    "pick-from-date": "Pick a from date",
+    "pick-to-date": "Pick a to date",
+    "reset": "Reset context window",
+    "set-context-window": "Set context window",
+    "show": "Show time navigator",
+    "sparkline-sources": "Sparkline source(s)",
+    "to-label": "To:",
+    "zoom-in": "Zoom in context",
+    "zoom-out": "Zoom out context"
+  },
   "time-period": {
     "1_day": "1 day",
     "1_hour": "1 hour",
