@@ -9307,6 +9307,16 @@
       "complete": "complete"
     }
   },
+  "global-variables": {
+    "details": {
+      "create-error": "Failed to create global variable",
+      "create-success": "Global variable successfully created",
+      "delete-error": "Failed to delete global variable",
+      "delete-success": "Global variable successfully deleted",
+      "update-error": "Failed to update global variable",
+      "update-success": "Global variable successfully updated"
+    }
+  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Loading configuration...."
