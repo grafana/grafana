@@ -19,7 +19,7 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name:         SEARCH_FIELD_NAME,
 			Type:         SearchFieldTypeString,
-			Capabilities: []SearchCapability{SearchCapabilityFilter},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort},
 			Description:  "Kubernetes name. Unique identifier within a namespace+group+resource.",
 		},
 		{
@@ -82,32 +82,22 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are advertised in the proto column list but were
-		// never indexed before this declaration. Capabilities here are a
-		// compromise:
-		//
-		//   - retrieve: the actual intent — surface the timestamp in search
-		//     results so clients can display it.
-		//   - filter: required only because the bleve capability mapper does
-		//     not currently emit a mapping for retrieve-only fields. Filter
-		//     gives us a keyword mapping with Store: true. Exact-ms equality
-		//     filters are not a useful query and we expect no consumer to rely
-		//     on them.
-		//   - sort: omitted because the mapper emits a keyword mapping
-		//     regardless of Type, so int64 values would sort lexically.
-		//
-		// The end state is store-only with proper numeric semantics; both
-		// require a type-aware mapper, tracked as a follow-up.
+		// created and updated are unix-millis timestamps, mapped as numeric bleve
+		// fields and stored so retrieve returns the value in search results. They
+		// are retrieve-only: filtering would need range queries, which the search
+		// API does not support (and exact-millisecond equality is not a useful
+		// query), and sort would first require every index to carry the numeric
+		// mapping.
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
 			Description:  "Creation timestamp (unix millis).",
 		},
 		{
 			Name:         SEARCH_FIELD_UPDATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
 			Description:  "Update timestamp (unix millis).",
 		},
 	}

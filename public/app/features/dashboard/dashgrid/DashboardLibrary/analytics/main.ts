@@ -3,6 +3,7 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import { isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
 
 import {
+  type DropdownMenuClickedProperties,
   type CompatibilityCheckCompletedProperties,
   type CompatibilityCheckTriggeredProperties,
   type CreateFromScratchClickedProperties,
@@ -68,4 +69,6 @@ export const NewTemplateDashboardInteractions = {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
   },
+  /** Fired when the user clicks the dropdown menu on a custom template card. */
+  dropdownMenuClicked: newDashboardLibraryInteraction<DropdownMenuClickedProperties>('dropdown_menu_clicked'),
 };

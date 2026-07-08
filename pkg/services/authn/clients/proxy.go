@@ -85,6 +85,8 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	additional := getAdditionalProxyHeaders(r, c.cfg)
+	c.logProxyHeaders(ctx, additional)
+
 	cacheKey, ok := getProxyCacheKey(username, additional)
 
 	if c.cfg.AuthProxy.SyncTTL != 0 && ok {
@@ -275,6 +277,18 @@ func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]st
 		}
 	}
 	return additional
+}
+
+func (c *Proxy) logProxyHeaders(ctx context.Context, additional map[string]string) {
+	logCtx := make([]any, 0, len(c.cfg.AuthProxy.Headers)*2)
+	for _, field := range proxyFields {
+		headerName := c.cfg.AuthProxy.Headers[field]
+		if headerName == "" {
+			continue
+		}
+		logCtx = append(logCtx, headerName, additional[field] != "")
+	}
+	c.log.FromContext(ctx).Debug("Auth proxy headers", logCtx...)
 }
 
 func getProxyCacheKey(username string, additional map[string]string) (string, bool) {

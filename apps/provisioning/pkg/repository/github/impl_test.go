@@ -364,197 +364,16 @@ func TestGithubClient_GetCommits(t *testing.T) {
 	}
 }
 
-func TestGithubClient_ListWebhooks(t *testing.T) {
-	tests := []struct {
-		name         string
-		mockHandler  *http.Client
-		owner        string
-		repository   string
-		wantWebhooks []WebhookConfig
-		wantErr      error
-	}{
-		{
-			name: "successful webhooks listing",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.GetReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						hooks := []*github.Hook{
-							{
-								ID:     new(int64(1)),
-								Events: []string{"push", "pull_request"},
-								Active: new(true),
-								Config: &github.HookConfig{
-									URL:         new("https://example.com/webhook1"),
-									ContentType: new("json"),
-								},
-							},
-							{
-								ID:     new(int64(2)),
-								Events: []string{"issues"},
-								Active: new(false),
-								Config: &github.HookConfig{
-									URL:         new("https://example.com/webhook2"),
-									ContentType: new(""),
-								},
-							},
-						}
-						w.WriteHeader(http.StatusOK)
-						require.NoError(t, json.NewEncoder(w).Encode(hooks))
-					}),
-				),
-			),
-			owner:      "test-owner",
-			repository: "test-repo",
-			wantWebhooks: []WebhookConfig{
-				{
-					ID:          1,
-					Events:      []string{"push", "pull_request"},
-					Active:      true,
-					URL:         "https://example.com/webhook1",
-					ContentType: "json",
-				},
-				{
-					ID:          2,
-					Events:      []string{"issues"},
-					Active:      false,
-					URL:         "https://example.com/webhook2",
-					ContentType: "form", // Default value when empty
-				},
-			},
-			wantErr: nil,
-		},
-		{
-			name: "empty webhooks list",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.GetReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						hooks := []*github.Hook{}
-						w.WriteHeader(http.StatusOK)
-						require.NoError(t, json.NewEncoder(w).Encode(hooks))
-					}),
-				),
-			),
-			owner:        "test-owner",
-			repository:   "test-repo",
-			wantWebhooks: []WebhookConfig{},
-			wantErr:      nil,
-		},
-		{
-			name: "too many webhooks",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.GetReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						// Create more webhooks than the maxWebhooks limit
-						hooks := make([]*github.Hook, maxWebhooks+1)
-						for i := 0; i < maxWebhooks+1; i++ {
-							hooks[i] = &github.Hook{
-								ID:     new(int64(i + 1)),
-								Events: []string{"push"},
-								Active: new(true),
-								Config: &github.HookConfig{
-									URL:         new(fmt.Sprintf("https://example.com/webhook%d", i+1)),
-									ContentType: new("json"),
-								},
-							}
-						}
-						w.WriteHeader(http.StatusOK)
-						require.NoError(t, json.NewEncoder(w).Encode(hooks))
-					}),
-				),
-			),
-			owner:        "test-owner",
-			repository:   "test-repo",
-			wantWebhooks: nil,
-			wantErr:      fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks),
-		},
-		{
-			name: "service unavailable error",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.GetReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusServiceUnavailable)
-						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
-							Response: &http.Response{
-								StatusCode: http.StatusServiceUnavailable,
-							},
-							Message: "Service unavailable",
-						}))
-					}),
-				),
-			),
-			owner:        "test-owner",
-			repository:   "test-repo",
-			wantWebhooks: nil,
-			wantErr:      repo.ErrServerUnavailable,
-		},
-		{
-			name: "other error",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.GetReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						w.WriteHeader(http.StatusInternalServerError)
-						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
-							Response: &http.Response{
-								StatusCode: http.StatusInternalServerError,
-							},
-							Message: "Internal server error",
-						}))
-					}),
-				),
-			),
-			owner:        "test-owner",
-			repository:   "test-repo",
-			wantWebhooks: nil,
-			wantErr:      errors.New("GitHub API error (HTTP 500: Internal server error)"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock client
-			factory := ProvideFactory()
-			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
-			assert.NoError(t, err)
-
-			// Call the method being tested
-			webhooks, err := client.ListWebhooks(context.Background())
-
-			// Check the error
-			if tt.wantErr != nil {
-				assert.Error(t, err)
-				// Check if it's a wrapped/standard repository error or generic error
-				if errors.Is(err, tt.wantErr) {
-					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
-					// Verify errors.Is() works for error type checking (used by upper layers)
-					assert.ErrorIs(t, err, tt.wantErr)
-				} else {
-					// For generic errors not in the chain, verify message content
-					assert.Contains(t, err.Error(), tt.wantErr.Error())
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-
-			// Check the result
-			assert.Equal(t, tt.wantWebhooks, webhooks)
-		})
-	}
-}
-
 func TestGithubClient_CreateWebhook(t *testing.T) {
 	tests := []struct {
 		name        string
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		config      WebhookConfig
-		want        WebhookConfig
+		url         string
+		events      []string
+		secret      string
+		want        repo.WebhookConfig
 		wantErr     error
 	}{
 		{
@@ -595,68 +414,15 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
-				Events:      []string{"push", "pull_request"},
-				Active:      true,
-				URL:         "https://example.com/webhook",
-				ContentType: "json",
-				Secret:      "secret123",
-			},
-			want: WebhookConfig{
+			url:        "https://example.com/webhook",
+			events:     []string{"push", "pull_request"},
+			secret:     "secret123",
+			want: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push", "pull_request"},
 				Active:      true,
 				URL:         "https://example.com/webhook",
 				ContentType: "json",
-				Secret:      "secret123",
-			},
-			wantErr: nil,
-		},
-		{
-			name: "default content type to form",
-			mockHandler: mockhub.NewMockedHTTPClient(
-				mockhub.WithRequestMatchHandler(
-					mockhub.PostReposHooksByOwnerByRepo,
-					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						body, err := io.ReadAll(r.Body)
-						require.NoError(t, err)
-
-						hook := &github.Hook{}
-						require.NoError(t, json.Unmarshal(body, hook))
-
-						// Verify content type was defaulted to "form"
-						assert.Equal(t, "form", hook.Config.GetContentType())
-
-						createdHook := &github.Hook{
-							ID:     new(int64(123)),
-							Events: []string{"push"},
-							Active: new(true),
-							Config: &github.HookConfig{
-								URL:         new("https://example.com/webhook"),
-								ContentType: new("form"),
-							},
-						}
-
-						w.WriteHeader(http.StatusCreated)
-						require.NoError(t, json.NewEncoder(w).Encode(createdHook))
-					}),
-				),
-			),
-			owner:      "test-owner",
-			repository: "test-repo",
-			config: WebhookConfig{
-				Events: []string{"push"},
-				Active: true,
-				URL:    "https://example.com/webhook",
-				Secret: "secret123",
-				// ContentType intentionally omitted
-			},
-			want: WebhookConfig{
-				ID:          123,
-				Events:      []string{"push"},
-				Active:      true,
-				URL:         "https://example.com/webhook",
-				ContentType: "form",
 				Secret:      "secret123",
 			},
 			wantErr: nil,
@@ -679,15 +445,11 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
-				Events:      []string{"push"},
-				Active:      true,
-				URL:         "https://example.com/webhook",
-				ContentType: "json",
-				Secret:      "secret123",
-			},
-			want:    WebhookConfig{},
-			wantErr: repo.ErrServerUnavailable,
+			url:        "https://example.com/webhook",
+			events:     []string{"push"},
+			secret:     "secret123",
+			want:       nil,
+			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
 			name: "other error",
@@ -707,15 +469,11 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
-				Events:      []string{"push"},
-				Active:      true,
-				URL:         "https://example.com/webhook",
-				ContentType: "json",
-				Secret:      "secret123",
-			},
-			want:    WebhookConfig{},
-			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
+			url:        "https://example.com/webhook",
+			events:     []string{"push"},
+			secret:     "secret123",
+			want:       nil,
+			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
 
@@ -728,18 +486,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Call the method being tested
-			got, err := client.CreateWebhook(context.Background(), tt.config)
+			got, err := client.CreateWebhook(context.Background(), tt.url, tt.events, tt.secret)
 
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
-					// Verify errors.Is() works for error type checking (used by upper layers)
 					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
-					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -759,7 +513,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 		owner       string
 		repository  string
 		webhookID   int64
-		want        WebhookConfig
+		want        repo.WebhookConfig
 		wantErr     error
 	}{
 		{
@@ -786,7 +540,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want: WebhookConfig{
+			want: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push", "pull_request"},
 				Active:      true,
@@ -819,7 +573,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  456,
-			want: WebhookConfig{
+			want: &webhookConfig{
 				ID:          456,
 				Events:      []string{"push"},
 				Active:      true,
@@ -847,7 +601,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  999,
-			want:       WebhookConfig{},
+			want:       nil,
 			wantErr:    repo.ErrFileNotFound,
 		},
 		{
@@ -869,7 +623,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want:       WebhookConfig{},
+			want:       nil,
 			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
@@ -891,7 +645,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want:       WebhookConfig{},
+			want:       nil,
 			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
@@ -910,13 +664,9 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
-					// Verify errors.Is() works for error type checking (used by upper layers)
 					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
-					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1053,13 +803,9 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
-					// Verify errors.Is() works for error type checking (used by upper layers)
 					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
-					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {
@@ -1075,7 +821,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		config      WebhookConfig
+		config      *webhookConfig
 		wantErr     error
 	}{
 		{
@@ -1116,7 +862,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push", "pull_request", "issues"},
 				Active:      true,
@@ -1165,7 +911,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -1193,7 +939,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -1221,7 +967,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -1247,13 +993,9 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				// Check if it's a wrapped/standard repository error or generic error
 				if errors.Is(err, tt.wantErr) {
-					// Error is in the chain (for wrapped errors) or exact match (for standard errors)
-					// Verify errors.Is() works for error type checking (used by upper layers)
 					assert.ErrorIs(t, err, tt.wantErr)
 				} else {
-					// For generic errors not in the chain, verify message content
 					assert.Contains(t, err.Error(), tt.wantErr.Error())
 				}
 			} else {

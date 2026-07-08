@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables annotation clustering and switches to refactored annotation code
-  * @default true
-  */
-  annotationsClustering?: boolean;
-  /**
   * Enables new dashboard layouts
   * @default true
   */
@@ -344,30 +339,10 @@ export interface FeatureToggles {
   */
   unlimitedLayoutsNesting?: boolean;
   /**
-  * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
-  * @default false
-  */
-  drilldownRecommendations?: boolean;
-  /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
   */
   perPanelNonApplicableDrilldowns?: boolean;
-  /**
-  * Enables a group by action per panel
-  * @default false
-  */
-  panelGroupBy?: boolean;
-  /**
-  * Enables filtering by grouping labels on the panel level through legend or tooltip
-  * @default false
-  */
-  perPanelFiltering?: boolean;
-  /**
-  * Enables the dashboard filters overview pane
-  * @default false
-  */
-  dashboardFiltersOverview?: boolean;
   /**
   * Enables the feedback button in the dashboard edit sidebar
   * @default true
@@ -454,11 +429,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
@@ -518,11 +488,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
-  /**
-  * Enables configuring default origin filters for ad-hoc filter variables
-  * @default false
-  */
-  adHocFilterDefaultValues?: boolean;
   /**
   * Updates CloudWatch label parsing to be more accurate
   * @default true
@@ -1140,11 +1105,6 @@ export interface FeatureToggles {
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
-  * Enables team folders functionality
-  * @default true
-  */
-  teamFolders?: boolean;
-  /**
   * Enables the interactive learning app
   * @default false
   */
@@ -1205,16 +1165,6 @@ export interface FeatureToggles {
   * @default true
   */
   vizPresets?: boolean;
-  /**
-  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
-  * @default false
-  */
-  nestedFramesFieldOverrides?: boolean;
-  /**
-  * Enable faceted labels filter for series visibility in the legend
-  * @default true
-  */
-  vizLegendFacetedFilter?: boolean;
   /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
@@ -1516,11 +1466,6 @@ export interface FeatureToggles {
   */
   tracesDrilldownTimeSeeker?: boolean;
   /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
-  /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false
   */
@@ -1555,4 +1500,9 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
+  /**
+  * Enables Critical User Journey (CUJ) tracking
+  * @default false
+  */
+  cujTracking?: boolean;
 }
