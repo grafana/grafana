@@ -64,15 +64,37 @@ type NATSTLSSettings struct {
 // NATSAuthSettings configures the connection identity. A per-role credentials
 // file lets each role present a least-privilege identity; an empty value falls
 // back to the shared CredentialsFile.
+//
+// When TokenExchangeAudiences is set, the connection instead mints a short-lived
+// authlib access token per (re)connect and presents it as the connect token, so
+// an external auth-callout service can verify it and grant least-privilege
+// permissions from its claims. The exchange endpoint and bootstrap token are
+// shared with the [grpc_client_authentication] section rather than duplicated.
 type NATSAuthSettings struct {
 	Token                     string
 	CredentialsFile           string
 	PublisherCredentialsFile  string
 	SubscriberCredentialsFile string
+
+	// TokenExchangeAudiences are the audiences requested for the minted access
+	// token; a non-empty value turns token-exchange auth on. TokenExchangeURL,
+	// TokenExchangeToken and TokenExchangeNamespace are read from
+	// [grpc_client_authentication] so a service that already talks to the cloud
+	// signer reuses the same wiring. The publisher and subscriber connections
+	// request the same audience: the auth-callout service authorizes on the
+	// verified token, not on a per-role audience.
+	TokenExchangeAudiences []string
+	TokenExchangeURL       string
+	TokenExchangeToken     string
+	TokenExchangeNamespace string
 }
 
 func readNATSSettings(cfg *Cfg) error {
 	section := cfg.Raw.Section("nats")
+	// Token exchange reuses the cloud client wiring (signer URL + bootstrap token)
+	// that grafana-app services already configure, so the NATS client does not need
+	// its own secret plumbing. Env overrides (GF_GRPC_CLIENT_AUTHENTICATION_*) apply.
+	grpcClient := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 
 	mode := NATSMode(section.Key("mode").MustString(string(NATSModeEmbedded)))
 	switch mode {
@@ -107,6 +129,10 @@ func readNATSSettings(cfg *Cfg) error {
 			CredentialsFile:           section.Key("credentials_file").MustString(""),
 			PublisherCredentialsFile:  section.Key("publisher_credentials_file").MustString(""),
 			SubscriberCredentialsFile: section.Key("subscriber_credentials_file").MustString(""),
+			TokenExchangeAudiences:    util.SplitString(section.Key("token_exchange_audiences").MustString("")),
+			TokenExchangeURL:          grpcClient.Key("token_exchange_url").MustString(""),
+			TokenExchangeToken:        grpcClient.Key("token").MustString(""),
+			TokenExchangeNamespace:    grpcClient.Key("token_namespace").MustString("stacks-" + cfg.StackID),
 		},
 	}
 	return nil
@@ -115,6 +141,13 @@ func readNATSSettings(cfg *Cfg) error {
 // Embedded reports whether an in-process Core NATS server should run.
 func (s NATSSettings) Embedded() bool {
 	return s.Mode == NATSModeEmbedded
+}
+
+// TokenExchangeEnabled reports whether the connection should mint short-lived
+// access tokens via authlib token exchange. It needs a target audience plus the
+// exchange endpoint and bootstrap token (shared with [grpc_client_authentication]).
+func (a NATSAuthSettings) TokenExchangeEnabled() bool {
+	return len(a.TokenExchangeAudiences) > 0 && a.TokenExchangeURL != "" && a.TokenExchangeToken != ""
 }
 
 func (a NATSAuthSettings) PublisherCredentials() string {
