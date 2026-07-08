@@ -89,7 +89,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = false
 		cfg.IndexSnapshotBucketURL = "://not-a-valid-url"
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		assert.Nil(t, snapshot.Store)
 	})
@@ -99,7 +99,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = ""
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		assert.Nil(t, snapshot.Store)
 	})
@@ -109,7 +109,7 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, snapshot.Store)
 	})
@@ -119,11 +119,47 @@ func TestBuildSnapshotOptionsGating(t *testing.T) {
 		cfg.IndexSnapshotEnabled = true
 		cfg.IndexSnapshotBucketURL = "mem://snapshot-test"
 
-		snapshot, err := buildSnapshotOptions(cfg, nil)
+		snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 		require.Error(t, err)
 		assert.Nil(t, snapshot.Store)
 		assert.Contains(t, err.Error(), "unsupported blob provider")
 	})
+}
+
+func TestBuildSnapshotOptionsInjectedStore(t *testing.T) {
+	t.Run("injected store overrides bucket URL and is used as-is", func(t *testing.T) {
+		cfg := snapshotOptionsTestCfg(t)
+		cfg.IndexSnapshotEnabled = true
+		// Bucket URL is intentionally set to ensure the injected store takes precedence.
+		cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
+		cfg.IndexSnapshotThreshold = 12345
+		cfg.IndexSnapshotMaxAge = 7 * 24 * time.Hour
+
+		injected := &fakeRemoteIndexStore{}
+		snapshot, err := buildSnapshotOptions(cfg, nil, injected)
+		require.NoError(t, err)
+		assert.Same(t, injected, snapshot.Store)
+		// Non-Store fields still come from cfg.
+		assert.Equal(t, int64(12345), snapshot.MinDocCount)
+		assert.Equal(t, 7*24*time.Hour, snapshot.MaxIndexAge)
+	})
+
+	t.Run("injected store is ignored when snapshots are disabled", func(t *testing.T) {
+		cfg := snapshotOptionsTestCfg(t)
+		cfg.IndexSnapshotEnabled = false
+
+		injected := &fakeRemoteIndexStore{}
+		snapshot, err := buildSnapshotOptions(cfg, nil, injected)
+		require.NoError(t, err)
+		assert.Nil(t, snapshot.Store)
+	})
+}
+
+// fakeRemoteIndexStore is a stand-in RemoteIndexStore used to verify that
+// buildSnapshotOptions wires an injected store through as-is. Methods
+// are unimplemented because the test never exercises them.
+type fakeRemoteIndexStore struct {
+	RemoteIndexStore
 }
 
 func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
@@ -131,7 +167,7 @@ func TestBuildSnapshotOptionsFileBucketUsesProcessLocalLocks(t *testing.T) {
 	cfg.IndexSnapshotEnabled = true
 	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
-	snapshot, err := buildSnapshotOptions(cfg, nil)
+	snapshot, err := buildSnapshotOptions(cfg, nil, nil)
 	require.NoError(t, err)
 
 	ns := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -153,7 +189,7 @@ func TestNewSearchOptionsPassesFileSnapshotStoreToBleveBackend(t *testing.T) {
 	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 
 	backend, ok := opts.Backend.(*bleveBackend)

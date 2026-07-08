@@ -275,10 +275,7 @@ export function mockDashboardApi(server: SetupServer) {
         (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
       );
 
-      server.use(
-        http.get(`/api/search`, () => HttpResponse.json(results)),
-        getCustomSearchHandler([...folderHits, ...dashboards])
-      );
+      server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
     dashboard: (response: DashboardDTO) => {
       const k8sResponse = {

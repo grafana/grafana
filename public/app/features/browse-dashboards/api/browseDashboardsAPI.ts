@@ -16,7 +16,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource, type TableResponse } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -41,9 +41,6 @@ import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
 
 async function refreshTeamFolders() {
-  if (!config.featureToggles.teamFolders) {
-    return;
-  }
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 
@@ -77,10 +74,10 @@ interface RestoreDashboardArgs {
 // We need to do this as the API will return different responses depending on the type of storage used and existing
 // resource types, even when we are using the old api/ endpoint.
 const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
-  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
-  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
-  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
-  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+  folders: folderCounts.folders || folderCounts.folder || 0,
+  dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
+  librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
+  alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -93,10 +90,8 @@ export interface ListFolderQueryArgs {
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
 
-// TODO: Once backend returns alert rule counts, set this back to true
-// when this is merged https://github.com/grafana/grafana/pull/67259
 const deleteFolderParams = {
-  forceDeleteRules: false,
+  forceDeleteRules: true,
 } as const;
 
 export const browseDashboardsAPI = createApi({
@@ -241,7 +236,7 @@ export const browseDashboardsAPI = createApi({
           const totalCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -250,7 +245,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.folders += normalizedCounts.folders;
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
-            totalCounts.library_elements += normalizedCounts.library_elements;
+            totalCounts.librarypanels += normalizedCounts.librarypanels;
           }
 
           return { data: totalCounts };
@@ -521,7 +516,7 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // RTK wrapper for the dashboard API
-    listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+    listDeletedDashboards: builder.query<TableResponse, void>({
       providesTags: ['getFolder'],
       queryFn: async () => {
         try {
@@ -577,13 +572,12 @@ function getDashboardFolder(dashboardUid?: string) {
 }
 
 export const {
-  endpoints,
   useDeleteFolderMutation,
   useDeleteFoldersMutation,
   useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
-  useLazyGetFolderQuery,
+
   useMoveFolderMutation,
   useMoveDashboardsMutation,
   useMoveFoldersMutation,
@@ -591,5 +585,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;

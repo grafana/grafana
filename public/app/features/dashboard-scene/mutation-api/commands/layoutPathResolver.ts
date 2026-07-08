@@ -169,7 +169,7 @@ export function resolveLayoutPath(body: DashboardLayoutManager, path: string): R
  * Returns true if any direct child of a group layout has an inner layout
  * that is itself a group (RowsLayoutManager or TabsLayoutManager).
  */
-export function hasNestedGroups(layout: DashboardLayoutManager): boolean {
+function hasNestedGroups(layout: DashboardLayoutManager): boolean {
   if (layout instanceof RowsLayoutManager) {
     return layout.state.rows.some(
       (r) => r.state.layout instanceof RowsLayoutManager || r.state.layout instanceof TabsLayoutManager

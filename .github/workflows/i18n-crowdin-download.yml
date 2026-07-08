@@ -38,7 +38,7 @@ jobs:
       - name: Download from Crowdin
         uses: grafana/grafana-github-actions/crowdin-download@main
         with:
-          crowdin_token: ${{ env.CROWDIN_TOKEN }}
+          crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
           crowdin_project_id: 5
           pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
           github_board_id: 78 # Frontend Platform project

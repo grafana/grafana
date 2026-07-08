@@ -42,10 +42,6 @@ refs:
 
 {{< admonition type="note" >}}
 Available in Grafana 13 or higher.
-
-Inhibition rules require the `alertingMultiplePolicies` feature toggle, which is experimental. Without it, you can create, read, update, and delete rules through the API, but Alertmanager doesn't apply them during alert evaluation, so it doesn't inhibit any alerts.
-
-On Grafana Cloud, contact your account team or support to enable this feature toggle. On self-hosted Grafana, enable the toggle in the `[feature_toggles]` section of your Grafana configuration.
 {{< /admonition >}}
 
 An inhibition rule suppresses notifications for target alerts when source alerts with matching label values are already firing. This lets you reduce noise when a root-cause alert makes dependent alerts redundant.

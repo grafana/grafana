@@ -15,7 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -33,19 +33,27 @@ type merger struct {
 }
 
 func newMerger(cfg *setting.Cfg) *merger {
-	m := &merger{
-		defaults: preferences.PreferencesSpec{
-			Theme:     &cfg.DefaultTheme,
-			Timezone:  &cfg.DateFormats.DefaultTimezone,
-			WeekStart: &cfg.DateFormats.DefaultWeekStart,
-			Language:  &cfg.DefaultLanguage,
-			HomeURL:   &cfg.HomePage, // [users] home_page
-		},
+	return &merger{
+		defaults: DefaultSpec(cfg),
+	}
+}
+
+// DefaultSpec returns the configured default preferences — the values the
+// merged route falls back to for fields no user, team, or namespace
+// preference defines. It is also what merging resolves to for a requester
+// with no preferences at all (e.g. an unauthenticated request).
+func DefaultSpec(cfg *setting.Cfg) preferences.PreferencesSpec {
+	spec := preferences.PreferencesSpec{
+		Theme:     &cfg.DefaultTheme,
+		Timezone:  &cfg.DateFormats.DefaultTimezone,
+		WeekStart: &cfg.DateFormats.DefaultWeekStart,
+		Language:  &cfg.DefaultLanguage,
+		HomeURL:   &cfg.HomePage, // [users] home_page
 	}
 	if home.HasCustomHome(cfg) {
-		m.defaults.HomeDashboardUID = new(home.DASHBOARD_NAME)
+		spec.HomeDashboardUID = new(home.DASHBOARD_NAME)
 	}
-	return m
+	return spec
 }
 
 func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {

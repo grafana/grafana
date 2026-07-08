@@ -213,7 +213,7 @@ function generateMarkdown(mainCoverage, prCoverage) {
     failureDetails = generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo);
   }
 
-  return `## Test Coverage Checks ${overallStatus} for ${teamName}
+  return `## Test Coverage Checks ${overallStatus} for \`${teamName}\`
 
 | Metric | Main | PR | Change | Status |
 |--------|------|----|----|--------|

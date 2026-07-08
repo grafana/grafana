@@ -1,5 +1,4 @@
 {
-  "id": 2739313037512704,
   "title": "All Colapsed Rows",
   "tags": null,
   "datasource": [
@@ -10,28 +9,20 @@
   ],
   "panels": [
     {
-      "id": 2,
-      "title": "New row",
-      "type": "row",
-      "collapsed": [
+      "id": 0,
+      "title": "New panel",
+      "type": "timeseries",
+      "datasource": [
         {
-          "id": 1,
-          "title": "New panel",
-          "type": "timeseries",
-          "pluginVersion": "13.0.0-local",
-          "datasource": [
-            {
-              "uid": "default.uid",
-              "type": "default.type"
-            }
-          ]
+          "uid": "default.uid",
+          "type": "default.type"
         }
       ]
     }
   ],
-  "schemaVersion": 42,
+  "schemaVersion": 0,
   "linkCount": 0,
-  "timeFrom": "now-6h",
-  "timeTo": "now",
-  "timezone": "browser"
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
 }

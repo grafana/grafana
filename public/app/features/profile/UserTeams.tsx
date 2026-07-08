@@ -63,5 +63,3 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
 });
 
 UserTeams.displayName = 'UserTeams';
-
-export default UserTeams;

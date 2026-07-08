@@ -190,7 +190,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tableWrap: css({
     minHeight: '40px',
   }),

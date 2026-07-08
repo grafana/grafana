@@ -30,7 +30,7 @@ const DATASOURCE_TO_QUERYLESS_APP: Record<string, string[]> = {
   // 'tempo': ['grafana-exploretraces-app'],
 };
 
-export type PluginExtensionAlertingRuleContext = {
+type PluginExtensionAlertingRuleContext = {
   targets: DataQuery[];
   // TODO: add rule form values for creating alerting rule from drilldown apps
 };

@@ -574,7 +574,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return routes.filter(isTruthy);
 }
 
-export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
   if (!cfg.supportBundlesEnabled) {
     return [];
   }

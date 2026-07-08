@@ -67,7 +67,7 @@ jest.mock('../utils/getVizSuggestionForQuery', () => ({
 }));
 
 jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: { panelActionClicked: jest.fn() },
+  DashboardInteractions: { panelActionClicked: jest.fn(), editSessionStarted: jest.fn() },
 }));
 
 // Only mock the two functions this component imports from utils — avoid spreading
@@ -132,14 +132,12 @@ beforeEach(() => {
     subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
   });
 
-  config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
 });
 
 afterEach(() => {
   deactivateScene?.();
   deactivateScene = undefined;
-  config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
 });
 

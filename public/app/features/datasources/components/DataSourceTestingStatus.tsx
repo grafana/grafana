@@ -281,6 +281,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                         DashboardLibraryInteractions.entryPointClicked({
                           entryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_SUCCESS_BANNER,
                           contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                          contentKinds: [CONTENT_KINDS.SUGGESTED_DASHBOARDS],
                         });
                         openModal();
                       };

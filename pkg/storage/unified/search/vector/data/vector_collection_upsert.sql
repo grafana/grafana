@@ -24,9 +24,10 @@ VALUES (
 )
 ON CONFLICT ({{ .Ident "resource" }}, {{ .Ident "namespace" }}, {{ .Ident "model" }}, {{ .Ident "uid" }}, {{ .Ident "subresource" }})
 DO UPDATE SET
-    {{ .Ident "title" }}     = {{ .Arg .Vector.Title }},
-    {{ .Ident "folder" }}    = {{ .Arg .Vector.Folder }},
-    {{ .Ident "content" }}   = {{ .Arg .Vector.Content }},
-    {{ .Ident "metadata" }}  = {{ .Arg .Vector.Metadata }},
-    {{ .Ident "embedding" }} = {{ .Arg .Embedding }}
+    {{ .Ident "title" }}      = {{ .Arg .Vector.Title }},
+    {{ .Ident "folder" }}     = {{ .Arg .Vector.Folder }},
+    {{ .Ident "content" }}    = {{ .Arg .Vector.Content }},
+    {{ .Ident "metadata" }}   = {{ .Arg .Vector.Metadata }},
+    {{ .Ident "embedding" }}  = {{ .Arg .Embedding }},
+    {{ .Ident "updated_at" }} = CURRENT_TIMESTAMP
 ;

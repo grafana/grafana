@@ -183,6 +183,26 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 
+					// Exclude esoteric/unsupported k8s properties on the list request
+					if v.Get != nil {
+						action, ok := v.Get.Extensions.GetString("x-kubernetes-action")
+						if ok && (action == "list") {
+							params := make([]*spec3.Parameter, 0, len(v.Get.Parameters))
+							for _, p := range v.Get.Parameters {
+								switch p.Name {
+								case
+									"allowWatchBookmarks",
+									"resourceVersionMatch",
+									"sendInitialEvents",
+									"shardSelector": // we may support this, but not yet
+								default:
+									params = append(params, p)
+								}
+							}
+							v.Get.Parameters = params
+						}
+					}
+
 					// Replace any */* media types with json+yaml
 					ops := []*spec3.Operation{v.Delete, v.Put, v.Post}
 					for _, op := range ops {

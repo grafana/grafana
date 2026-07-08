@@ -269,7 +269,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
-      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0 }),
+      borderRadius: getInternalRadius(theme, menuPadding, { parentBorderWidth: 0, parentBorderRadius: 'lg' }),
       margin: 0,
       border: 'none',
       width: '100%',

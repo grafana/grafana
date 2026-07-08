@@ -57,6 +57,8 @@ interface SetupOptions {
   repository?: RepositoryView;
   canPushToConfiguredBranch?: boolean;
   allowPathEdit?: boolean;
+  lockComment?: boolean;
+  commitMessage?: string;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -68,6 +70,8 @@ function setup(options: SetupOptions = {}) {
     workflow,
     repository,
     allowPathEdit,
+    lockComment,
+    commitMessage,
   } = options;
 
   const defaultFormValues: Partial<ProvisionedDashboardFormData> = {
@@ -93,6 +97,8 @@ function setup(options: SetupOptions = {}) {
     workflow,
     repository,
     allowPathEdit,
+    lockComment,
+    commitMessage,
   };
 
   return render(
@@ -143,6 +149,16 @@ describe('ResourceEditFormSharedFields', () => {
       setup({ readOnly: true, repository: mockRepo.github });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
+    });
+
+    it('should make comment field readonly but not disabled when lockComment is true', () => {
+      const commitMessage = 'feat(dashboards): update My dashboard';
+      setup({ lockComment: true, commitMessage });
+
+      const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
+      expect(commentTextarea).toHaveValue(commitMessage);
+      expect(commentTextarea).toHaveAttribute('readonly');
+      expect(commentTextarea).toBeEnabled();
     });
   });
 

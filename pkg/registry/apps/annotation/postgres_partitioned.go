@@ -30,7 +30,6 @@ type PostgreSQLStoreConfig struct {
 	MaxConnections   int
 	MaxIdleConns     int
 	ConnMaxLifetime  time.Duration
-	RetentionTTL     time.Duration
 	TagCacheTTL      time.Duration
 	TagCacheSize     int
 }
@@ -127,7 +126,7 @@ func (s *PostgreSQLStore) Close() error {
 func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at
+		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
 		FROM annotations
 		WHERE namespace = $1 AND name = $2
 		LIMIT 1
@@ -136,17 +135,21 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 	row := s.pool.QueryRow(ctx, query, namespace, name)
 
 	var (
-		ns, n, text       string
-		timeMs, createdAt int64
-		timeEnd           *int64
-		dashboardUID      *string
-		panelID           *int64
-		tags, scopes      []string
-		createdBy         *string
+		ns, n, text  string
+		timeMs       int64
+		createdAt    time.Time
+		timeEnd      *int64
+		dashboardUID *string
+		panelID      *int64
+		tags, scopes []string
+		createdBy    *string
+		legacyID     *int64
+		legacyData   *string
+		deletedAt    *time.Time
 	)
 
 	err := row.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-		&text, &tags, &scopes, &createdBy, &createdAt)
+		&text, &tags, &scopes, &createdBy, &createdAt, &legacyID, &legacyData, &deletedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -154,15 +157,11 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		return nil, fmt.Errorf("failed to scan annotation: %w", err)
 	}
 
-	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt), nil
+	return rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID, legacyData, deletedAt), nil
 }
 
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
-	if err := s.validateAnnotation(anno); err != nil {
-		return nil, err
-	}
-
 	// Ensure partition exists for this timestamp
 	if err := ensurePartition(ctx, s.pool, s.logger, anno.Spec.Time); err != nil {
 		return nil, fmt.Errorf("failed to ensure partition: %w", err)
@@ -178,17 +177,27 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	tags := anno.Spec.Tags
 	scopes := anno.Spec.Scopes
 	createdBy := anno.GetCreatedBy()
-	createdAt := time.Now().UTC().UnixMilli()
+	createdAt := time.Now().UTC()
+
+	var legacyID *int64
+	if id := GetLegacyID(anno); id > 0 {
+		legacyID = &id
+	}
+
+	var legacyData *string
+	if d, ok := GetLegacyData(anno); ok {
+		legacyData = &d
+	}
 
 	query := `
 		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, legacy_id, legacy_data)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
 	_, err := s.pool.Exec(ctx, query,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
-		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt,
+		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID, legacyData,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -202,18 +211,24 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	return anno, nil
 }
 
-// Update updates an existing annotation (only mutable fields: text, tags, scopes)
+// Update updates an existing annotation (only mutable fields: text, tags, scopes, legacy_data)
 func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
+	var legacyData *string
+	if d, ok := GetLegacyData(anno); ok {
+		legacyData = &d
+	}
+
 	query := `
 		UPDATE annotations
-		SET text = $1, tags = $2, scopes = $3
-		WHERE namespace = $4 AND name = $5
+		SET text = $1, tags = $2, scopes = $3, legacy_data = $4
+		WHERE namespace = $5 AND name = $6 AND deleted_at IS NULL
 	`
 
 	result, err := s.pool.Exec(ctx, query,
 		anno.Spec.Text,
 		pq.Array(anno.Spec.Tags),
 		pq.Array(anno.Spec.Scopes),
+		legacyData,
 		anno.Namespace,
 		anno.Name,
 	)
@@ -228,11 +243,15 @@ func (s *PostgreSQLStore) Update(ctx context.Context, anno *annotationV0.Annotat
 	return anno, nil
 }
 
-// Delete deletes an annotation
+// Delete soft-deletes a live annotation by setting the deleted_at timestamp
 func (s *PostgreSQLStore) Delete(ctx context.Context, namespace, name string) error {
-	query := `DELETE FROM annotations WHERE namespace = $1 AND name = $2`
+	query := `
+		UPDATE annotations
+		SET deleted_at = $1
+		WHERE namespace = $2 AND name = $3 AND deleted_at IS NULL
+	`
 
-	result, err := s.pool.Exec(ctx, query, namespace, name)
+	result, err := s.pool.Exec(ctx, query, time.Now().UTC(), namespace, name)
 	if err != nil {
 		return fmt.Errorf("failed to delete annotation: %w", err)
 	}
@@ -276,22 +295,26 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 	var results []annotationV0.Annotation
 	for rows.Next() {
 		var (
-			ns, n, text       string
-			timeMs, createdAt int64
-			timeEnd           *int64
-			dashboardUID      *string
-			panelID           *int64
-			tags, scopes      []string
-			createdBy         *string
+			ns, n, text  string
+			timeMs       int64
+			createdAt    time.Time
+			timeEnd      *int64
+			dashboardUID *string
+			panelID      *int64
+			tags, scopes []string
+			createdBy    *string
+			legacyID     *int64
+			legacyData   *string
+			deletedAt    *time.Time
 		)
 
 		err := rows.Scan(&ns, &n, &timeMs, &timeEnd, &dashboardUID, &panelID,
-			&text, &tags, &scopes, &createdBy, &createdAt)
+			&text, &tags, &scopes, &createdBy, &createdAt, &legacyID, &legacyData, &deletedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan annotation row: %w", err)
 		}
 
-		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt))
+		results = append(results, *rowToAnnotation(ns, n, timeMs, timeEnd, dashboardUID, panelID, text, tags, scopes, createdBy, createdAt, legacyID, legacyData, deletedAt))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -322,6 +345,11 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	conditions = append(conditions, fmt.Sprintf("namespace = $%d", argNum))
 	args = append(args, namespace)
 	argNum++
+
+	// Exclude soft-deleted annotations unless the caller explicitly opts in.
+	if !opts.IncludeDeleted {
+		conditions = append(conditions, "deleted_at IS NULL")
+	}
 
 	// Time range filters
 	if opts.To > 0 {
@@ -382,10 +410,17 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		argNum++
 	}
 
+	// Deprecated internal ID filter
+	if opts.LegacyID > 0 {
+		conditions = append(conditions, fmt.Sprintf("legacy_id = $%d", argNum))
+		args = append(args, opts.LegacyID)
+		argNum++
+	}
+
 	// Construct query
 	query := `
 		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at
+		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
 		FROM annotations
 		WHERE ` + strings.Join(conditions, " AND ") + `
 		ORDER BY time DESC, name
@@ -401,7 +436,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 // rowToAnnotation converts database row values to an Annotation object
 func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
-	createdBy *string, createdAt int64) *annotationV0.Annotation {
+	createdBy *string, createdAt time.Time, legacyID *int64, legacyData *string, deletedAt *time.Time) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -424,34 +459,22 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 		anno.SetCreatedBy(*createdBy)
 	}
 
-	// Set creation timestamp
-	anno.CreationTimestamp = metav1.NewTime(time.UnixMilli(createdAt))
+	// Set creation timestamp and deletion timestamp if present
+	anno.CreationTimestamp = metav1.NewTime(createdAt)
+	if deletedAt != nil {
+		ts := metav1.NewTime(*deletedAt)
+		anno.DeletionTimestamp = &ts
+	}
+
+	// Populate the legacy ID label if the column has a value
+	if legacyID != nil && *legacyID != 0 {
+		SetLegacyID(anno, *legacyID)
+	}
+
+	// Populate the legacy data annotation if the column has a value
+	if legacyData != nil {
+		SetLegacyData(anno, *legacyData)
+	}
 
 	return anno
-}
-
-func (s *PostgreSQLStore) validateAnnotation(anno *annotationV0.Annotation) error {
-	now := time.Now().UTC()
-	// TODO: determine appropriate future bound and maybe make configurable
-	maxFuture := now.Add(7 * 24 * time.Hour).UnixMilli()
-	maxPast := now.Add(-s.config.RetentionTTL).UnixMilli()
-
-	if anno.Spec.Time > maxFuture {
-		return fmt.Errorf("%w: time cannot be more than 1 week in the future", ErrInvalidInput)
-	}
-	if anno.Spec.Time < maxPast {
-		return fmt.Errorf("%w: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.config.RetentionTTL)
-	}
-
-	// If timeEnd is set, validate it's after time and within future bounds
-	if anno.Spec.TimeEnd != nil {
-		if *anno.Spec.TimeEnd < anno.Spec.Time {
-			return fmt.Errorf("%w: timeEnd must be after time", ErrInvalidInput)
-		}
-		if *anno.Spec.TimeEnd > maxFuture {
-			return fmt.Errorf("%w: timeEnd cannot be more than 1 week in the future", ErrInvalidInput)
-		}
-	}
-
-	return nil
 }

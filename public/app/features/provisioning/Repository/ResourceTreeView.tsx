@@ -25,6 +25,7 @@ import {
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
+import { getKindInfoByItemType } from '../utils/resourceKinds';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -35,12 +36,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    if (item.type === 'Dashboard') {
-      return `/d/${item.resourceName}`;
-    }
-    if (item.type === 'Folder') {
-      return `/dashboards/f/${item.resourceName}`;
-    }
+    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -159,7 +155,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           let sourceLink: string | undefined = undefined;
           if (item.hasFile && repo.spec?.type) {
             const spec = repo.spec;
-            const config = spec.github || spec.gitlab || spec.bitbucket;
+            const config = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket;
             if (config) {
               const rawSourceLink = getRepoFileUrl({
                 repoType: spec.type,

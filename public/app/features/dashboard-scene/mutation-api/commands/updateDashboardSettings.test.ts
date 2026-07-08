@@ -1,15 +1,40 @@
-import { sceneGraph } from '@grafana/scenes';
+import { behaviors, sceneGraph } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import type { DashboardControls } from '../../scene/DashboardControls';
 import type { DashboardScene } from '../../scene/DashboardScene';
 
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 
-jest.mock('@grafana/scenes', () => ({
-  sceneGraph: {
-    getTimeRange: jest.fn(),
-  },
-}));
+jest.mock('@grafana/scenes', () => {
+  class CursorSync {
+    public state: { sync: number };
+    constructor(state: { sync: number }) {
+      this.state = state;
+    }
+    public setState = jest.fn((partial: Record<string, unknown>) => {
+      Object.assign(this.state, partial);
+    });
+  }
+  class LiveNowTimer {
+    public state: { enabled: boolean };
+    constructor(state: { enabled: boolean }) {
+      this.state = state;
+    }
+    public get isEnabled() {
+      return this.state.enabled;
+    }
+    public setState = jest.fn((partial: Record<string, unknown>) => {
+      Object.assign(this.state, partial);
+    });
+  }
+  return {
+    sceneGraph: {
+      getTimeRange: jest.fn(),
+    },
+    behaviors: { CursorSync, LiveNowTimer },
+  };
+});
 
 function buildTestScene(
   overrides: Partial<{
@@ -17,9 +42,14 @@ function buildTestScene(
     description: string;
     tags: string[];
     editable: boolean;
+    preload: boolean;
     isEditing: boolean;
+    links: unknown[];
+    withCursorSync: boolean;
+    withLiveNow: boolean;
   }> = {}
 ) {
+  const { withCursorSync = true, withLiveNow = true, links: linksOverride, ...stateOverrides } = overrides;
   const timeRangeState: Record<string, unknown> = {
     from: 'now-6h',
     to: 'now',
@@ -44,15 +74,21 @@ function buildTestScene(
   const controlsState = { refreshPicker };
   const controls = { state: controlsState } as unknown as DashboardControls;
 
+  const cursorSync = new behaviors.CursorSync({ sync: DashboardCursorSync.Off });
+  const liveNowTimer = new behaviors.LiveNowTimer({ enabled: false });
+
   const state: Record<string, unknown> = {
     title: 'Test Dashboard',
     description: '',
     tags: [],
     editable: true,
+    preload: false,
     isEditing: false,
     $timeRange: timeRange,
     controls,
-    ...overrides,
+    links: linksOverride ?? [],
+    $behaviors: [...(withCursorSync ? [cursorSync] : []), ...(withLiveNow ? [liveNowTimer] : [])],
+    ...stateOverrides,
   };
 
   const scene = {
@@ -69,7 +105,7 @@ function buildTestScene(
 
   (sceneGraph.getTimeRange as jest.Mock).mockReturnValue(timeRange);
 
-  return { scene: scene as unknown as DashboardScene, timeRange, refreshPicker };
+  return { scene: scene as unknown as DashboardScene, timeRange, refreshPicker, cursorSync, liveNowTimer };
 }
 
 describe('UPDATE_DASHBOARD_SETTINGS', () => {
@@ -115,54 +151,134 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
     expect(result.data).toMatchObject({ editable: false });
   });
 
-  it('updates refresh interval', async () => {
+  it('updates preload', async () => {
+    const { scene } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler({ preload: true }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(scene.setState).toHaveBeenCalledWith({ preload: true });
+    expect(result.data).toMatchObject({ preload: true });
+  });
+
+  it('updates the auto-refresh interval via timeSettings', async () => {
     const { scene, refreshPicker } = buildTestScene();
-    const result = await updateDashboardSettingsCommand.handler({ refresh: '5m' }, { scene });
+    const result = await updateDashboardSettingsCommand.handler({ timeSettings: { autoRefresh: '5m' } }, { scene });
 
     expect(result.success).toBe(true);
     expect(refreshPicker.setState).toHaveBeenCalledWith({ refresh: '5m' });
-    expect(result.data).toMatchObject({ refresh: '5m' });
+    expect(result.data).toMatchObject({ timeSettings: { autoRefresh: '5m' } });
   });
 
-  it('disables refresh with empty string', async () => {
+  it('disables auto-refresh with an empty string', async () => {
     const { scene, refreshPicker } = buildTestScene();
     refreshPicker.state.refresh = '1m';
 
-    const result = await updateDashboardSettingsCommand.handler({ refresh: '' }, { scene });
+    const result = await updateDashboardSettingsCommand.handler({ timeSettings: { autoRefresh: '' } }, { scene });
 
     expect(result.success).toBe(true);
     expect(refreshPicker.setState).toHaveBeenCalledWith({ refresh: '' });
-    expect(result.data).toMatchObject({ refresh: '' });
+    expect(result.data).toMatchObject({ timeSettings: { autoRefresh: '' } });
   });
 
-  it('updates time range', async () => {
+  it('updates the time range via timeSettings', async () => {
     const { scene, timeRange } = buildTestScene();
     const result = await updateDashboardSettingsCommand.handler(
-      { timeRange: { from: 'now-1h', to: 'now' } },
+      { timeSettings: { from: 'now-1h', to: 'now' } },
       { scene }
     );
 
     expect(result.success).toBe(true);
     expect(timeRange.setState).toHaveBeenCalledWith({ from: 'now-1h', to: 'now' });
-    expect(result.data).toMatchObject({ timeRange: { from: 'now-1h', to: 'now' } });
+    expect(result.data).toMatchObject({ timeSettings: { from: 'now-1h', to: 'now' } });
   });
 
-  it('updates timezone', async () => {
+  it('updates the timezone via timeSettings', async () => {
     const { scene, timeRange } = buildTestScene();
-    const result = await updateDashboardSettingsCommand.handler({ timezone: 'utc' }, { scene });
+    const result = await updateDashboardSettingsCommand.handler({ timeSettings: { timezone: 'utc' } }, { scene });
 
     expect(result.success).toBe(true);
     expect(timeRange.setState).toHaveBeenCalledWith({ timeZone: 'utc' });
-    expect(result.data).toMatchObject({ timezone: 'utc' });
+    expect(result.data).toMatchObject({ timeSettings: { timezone: 'utc' } });
   });
 
-  it('updates timezone with IANA string', async () => {
+  it('updates the timezone with an IANA string', async () => {
     const { scene, timeRange } = buildTestScene();
-    const result = await updateDashboardSettingsCommand.handler({ timezone: 'America/New_York' }, { scene });
+    const result = await updateDashboardSettingsCommand.handler(
+      { timeSettings: { timezone: 'America/New_York' } },
+      { scene }
+    );
 
     expect(result.success).toBe(true);
     expect(timeRange.setState).toHaveBeenCalledWith({ timeZone: 'America/New_York' });
-    expect(result.data).toMatchObject({ timezone: 'America/New_York' });
+    expect(result.data).toMatchObject({ timeSettings: { timezone: 'America/New_York' } });
+  });
+
+  it('updates cursorSync via the CursorSync behavior', async () => {
+    const { scene, cursorSync } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler({ cursorSync: 'Crosshair' }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(cursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
+    expect(result.data).toMatchObject({ cursorSync: 'Crosshair' });
+  });
+
+  it('warns when cursorSync is requested but the CursorSync behavior is missing', async () => {
+    const { scene } = buildTestScene({ withCursorSync: false });
+    const result = await updateDashboardSettingsCommand.handler({ cursorSync: 'Tooltip' }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toContain('cursorSync could not be set: CursorSync behavior not found in scene');
+  });
+
+  it('updates liveNow via the LiveNowTimer behavior', async () => {
+    const { scene, liveNowTimer } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler({ liveNow: true }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(liveNowTimer.setState).toHaveBeenCalledWith({ enabled: true });
+    expect(result.data).toMatchObject({ liveNow: true });
+  });
+
+  it('warns when liveNow is requested but the LiveNowTimer behavior is missing', async () => {
+    const { scene } = buildTestScene({ withLiveNow: false });
+    const result = await updateDashboardSettingsCommand.handler({ liveNow: true }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toContain('liveNow could not be set: LiveNowTimer behavior not found in scene');
+  });
+
+  it('replaces dashboard links and fills the full link shape', async () => {
+    const { scene } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler(
+      { links: [{ title: 'Runbook', url: 'https://runbooks.example.com', type: 'link', targetBlank: true }] },
+      { scene }
+    );
+
+    expect(result.success).toBe(true);
+    expect(scene.setState).toHaveBeenCalledWith({
+      links: [
+        {
+          title: 'Runbook',
+          url: 'https://runbooks.example.com',
+          type: 'link',
+          tooltip: '',
+          icon: '',
+          tags: [],
+          asDropdown: false,
+          targetBlank: true,
+          includeVars: false,
+          keepTime: false,
+        },
+      ],
+    });
+  });
+
+  it('clears links with an empty array', async () => {
+    const { scene } = buildTestScene({ links: [{ title: 'old', url: 'https://x' }] });
+    const result = await updateDashboardSettingsCommand.handler({ links: [] }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(scene.setState).toHaveBeenCalledWith({ links: [] });
   });
 
   it('applies multiple settings at once', async () => {
@@ -171,28 +287,27 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
       {
         title: 'Sales Overview',
         tags: ['sales'],
-        refresh: '5m',
-        timeRange: { from: 'now-24h', to: 'now' },
-        timezone: 'utc',
+        preload: true,
+        timeSettings: { from: 'now-24h', to: 'now', timezone: 'utc', autoRefresh: '5m' },
       },
       { scene }
     );
 
     expect(result.success).toBe(true);
-    expect(scene.setState).toHaveBeenCalledWith({ title: 'Sales Overview', tags: ['sales'] });
+    expect(scene.setState).toHaveBeenCalledWith({ title: 'Sales Overview', tags: ['sales'], preload: true });
     expect(timeRange.setState).toHaveBeenCalledWith({ from: 'now-24h', to: 'now', timeZone: 'utc' });
     expect(refreshPicker.setState).toHaveBeenCalledWith({ refresh: '5m' });
   });
 
-  it('warns when refresh is requested but refreshPicker is not present', async () => {
+  it('warns when auto-refresh is requested but refreshPicker is not present', async () => {
     const { scene } = buildTestScene();
     // Remove refreshPicker from scene controls
     (scene.state as unknown as Record<string, unknown>).controls = undefined;
 
-    const result = await updateDashboardSettingsCommand.handler({ refresh: '5m' }, { scene });
+    const result = await updateDashboardSettingsCommand.handler({ timeSettings: { autoRefresh: '5m' } }, { scene });
 
     expect(result.success).toBe(true);
-    expect(result.warnings).toContain('refresh interval could not be set: refresh picker not found in scene controls');
+    expect(result.warnings).toContain('autoRefresh could not be set: refresh picker not found in scene controls');
   });
 
   it('empty payload is a no-op', async () => {
