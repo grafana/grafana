@@ -1151,11 +1151,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
-  * @default true
-  */
-  panelStyleActions?: boolean;
-  /**
   * Enable visualization presets
   * @default true
   */
