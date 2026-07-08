@@ -148,6 +148,32 @@ describe('MigrateDrawer', () => {
     await waitFor(() => expect(onMigrated).toHaveBeenCalledTimes(1));
   });
 
+  it('surfaces the error message when the migration job fails', async () => {
+    mockCreateJob(createJob());
+    mockJobList(createJob());
+
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />
+    );
+    await user.click(screen.getByRole('button', { name: /migrate everything/i }));
+
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+
+    act(() => {
+      getMockLiveSrv().emitWatchEvent('jobs', {
+        type: 'MODIFIED',
+        object: createJob({
+          status: { state: 'error', message: 'export would exceed quota: 1371/1000 resources' },
+        }),
+      });
+    });
+
+    // The failure reason must be visible directly, not hidden behind "View details".
+    expect(await screen.findByText(/export would exceed quota: 1371\/1000 resources/i)).toBeInTheDocument();
+    // Retry is rendered via Alert's buttonContent/onRemove, not as a standard named button.
+    expect((await screen.findByText('Retry')).closest('button')).not.toBeNull();
+  });
+
   describe('selective migration', () => {
     const resources = [
       { name: 'dash-1', group: 'dashboard.grafana.app', kind: 'Dashboard' },
