@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -316,7 +317,36 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
+	if err := validateCreatedBy(ctx, a, job); err != nil {
+		return err
+	}
+
 	return ValidateJob(job, v.supportedResources)
+}
+
+func validateCreatedBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	createdBy := job.Annotations[utils.AnnoKeyCreatedBy]
+
+	switch a.GetOperation() {
+	case admission.Create:
+		if createdBy == "" || identity.IsServiceIdentity(ctx) {
+			return nil
+		}
+		id, err := identity.GetRequester(ctx)
+		if err != nil || id.GetUID() != createdBy {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", utils.AnnoKeyCreatedBy))
+		}
+	case admission.Update:
+		old, ok := a.GetOldObject().(*provisioning.Job)
+		if !ok {
+			return nil
+		}
+		if old.Annotations[utils.AnnoKeyCreatedBy] != createdBy {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", utils.AnnoKeyCreatedBy))
+		}
+	}
+
+	return nil
 }
 
 // HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.

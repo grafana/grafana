@@ -1103,6 +1103,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
 				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
+			var authorResolver jobs.AuthorResolver
+			if b.features.IsEnabledGlobally(featuremgmt.FlagProvisioningUserAttribution) {
+				authorResolver = jobs.NewUserAuthorResolver(b.clients)
 			}
 
 			// This is basically our own JobQueue system
@@ -1115,6 +1118,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				jobController.InsertNotifications(),
 				b.registry,
 				&metrics,
+				authorResolver,
 				workers...,
 			)
 			if err != nil {

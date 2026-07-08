@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"errors"
 	"strings"
 	"sync"
@@ -15,7 +16,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -82,6 +85,9 @@ type jobDriver struct {
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
+	// authorResolver resolves the job's creator to a commit signature. May be nil.
+	authorResolver AuthorResolver
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -95,6 +101,7 @@ func NewJobDriver(
 	historicJobs HistoryWriter,
 	notifications chan struct{},
 	metrics *JobMetrics,
+	authorResolver AuthorResolver,
 	workers ...Worker,
 ) (*jobDriver, error) {
 	return &jobDriver{
@@ -107,6 +114,7 @@ func NewJobDriver(
 		workers:              workers,
 		notifications:        notifications,
 		metrics:              metrics,
+		authorResolver:       authorResolver,
 	}, nil
 }
 
@@ -388,6 +396,18 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.repository", repoName),
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
+
+	fmt.Println("DEBUG driver: resolver?", d.authorResolver != nil, "createdBy:", job.Annotations[utils.AnnoKeyCreatedBy])
+	if d.authorResolver != nil {
+		if createdBy := job.Annotations[utils.AnnoKeyCreatedBy]; createdBy != "" {
+			sig, err := d.authorResolver.ResolveAuthor(ctx, namespace, createdBy)
+			if err != nil {
+				logger.Warn("failed to resolve job author", "createdBy", createdBy, "error", err)
+			} else if sig != nil {
+				ctx = repository.WithAuthorSignature(ctx, *sig)
+			}
+		}
+	}
 
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {

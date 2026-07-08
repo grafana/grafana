@@ -14,11 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -534,6 +536,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
+	var annotations map[string]string
+	if id, err := identity.GetRequester(ctx); err == nil && id.IsIdentityType(authlib.TypeUser) {
+		annotations = map[string]string{utils.AnnoKeyCreatedBy: id.GetUID()}
+	}
+	fmt.Println("DEBUG insert: annotations:", annotations)
+
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
@@ -547,6 +555,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
+			Annotations: annotations,
 		},
 		Spec: spec,
 	}
