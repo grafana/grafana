@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
+import { useLocalStorage } from 'react-use';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,7 +23,7 @@ import {
   type SceneVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, IconButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -220,6 +221,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hidePlaylistNav,
   } = model.useState();
 
+  // Per-user, persisted show/hide preference for the time navigator (only relevant when its toggle is on).
+  const [showTimebar, setShowTimebar] = useLocalStorage('grafana.dashboard.timeNavigator.visible', true);
+
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
@@ -276,6 +280,17 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <div className={styles.fixedControls}>
               <timePicker.Component model={timePicker} />
               <refreshPicker.Component model={refreshPicker} />
+              {config.featureToggles.timeNavigator && (
+                <IconButton
+                  name={showTimebar ? 'angle-up' : 'angle-down'}
+                  tooltip={
+                    showTimebar
+                      ? t('time-navigator.hide', 'Hide time navigator')
+                      : t('time-navigator.show', 'Show time navigator')
+                  }
+                  onClick={() => setShowTimebar(!showTimebar)}
+                />
+              )}
             </div>
           )}
           {config.featureToggles.dashboardNewLayouts && (
@@ -310,7 +325,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
-      {config.featureToggles.timeNavigator && !hideTimeControls && (
+      {config.featureToggles.timeNavigator && !hideTimeControls && showTimebar && (
         <div style={{ width: '100%', padding: '4px 8px' }}>
           <timebar.Component model={timebar} />
         </div>
