@@ -101,7 +101,10 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     }
     this._applySources();
     this._applyAnnotations();
-    return () => this._annoCleanup?.();
+    return () => {
+      this._annoCleanup?.();
+      this._annoCleanup = undefined;
+    };
   }
 
   /**
@@ -149,7 +152,14 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
     const sub = set.getResultsStream().subscribe((res) => {
       this.setState({ annotations: res.data.series ?? [] });
     });
+    // Idempotent: Scenes throws if a deactivate() handler runs twice, and this can be invoked from both
+    // _applyAnnotations and the activation-handler teardown across a deactivate/re-activate (panel edit).
+    let torn = false;
     this._annoCleanup = () => {
+      if (torn) {
+        return;
+      }
+      torn = true;
       sub.unsubscribe();
       deactivate();
     };
