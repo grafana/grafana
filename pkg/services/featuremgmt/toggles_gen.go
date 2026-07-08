@@ -415,10 +415,6 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
-	// FlagGroupToNestedTableV2
-	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
-
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
@@ -657,10 +653,6 @@ const (
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
-
-	// FlagTeamFolders
-	// Enables team folders functionality
-	FlagTeamFolders = "teamFolders"
 
 	// FlagInteractiveLearning
 	// Enables the interactive learning app
@@ -961,4 +953,16 @@ const (
 	// FlagAuthTokenRotationGracePeriod
 	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
 	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
+
+	// FlagKubernetesReporting
+	// Add support for Kubernetes reporting new APIs
+	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagGrafanaOnDemandDiagnostics
+	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
+
+	// FlagGrafanaFrontendLegacyAPIHandling
+	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 )

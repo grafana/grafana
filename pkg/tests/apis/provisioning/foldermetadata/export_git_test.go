@@ -1,6 +1,7 @@
 package foldermetadata
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
@@ -34,6 +35,12 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 	// a bare .keep placeholder.  Read the file directly from the git server to avoid the
 	// ownership-conflict check that the provisioning files API performs on unmanaged resources.
 	data := helper.GitReadFile(t, ctx, repoName, folderTitle+"/_folder.json")
+
+	// The committed _folder.json must be pretty-printed with two-space indentation,
+	// matching the formatting of other resource files written to the repository.
+	var indented bytes.Buffer
+	require.NoError(t, json.Indent(&indented, data, "", "  "))
+	require.Equal(t, indented.String(), string(data), "_folder.json must be pretty-printed with two-space indentation")
 
 	var manifest foldersV1.Folder
 	require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json must be valid JSON")

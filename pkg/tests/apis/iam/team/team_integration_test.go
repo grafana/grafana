@@ -13,8 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -44,6 +48,7 @@ func TestIntegrationTeams(t *testing.T) {
 			})
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
+			doTeamListFilteringTest(t, helper)
 			doTeamSpecMembersTests(t, helper)
 			doTeamSpecExternalGroupsOSSTests(t, helper)
 
@@ -286,6 +291,83 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid IN (?, ?)", "t000000001", "t000000002")
 		require.NoError(t, err)
 	})
+}
+
+// doTeamListFilteringTest verifies that a nameless collection list is allowed at
+// the API layer (allowListAuthorizer) and that the backend filters the result to
+// only the teams the caller can read. This guards the list-filtering behavior end
+// to end across both the legacy and unified storage backends.
+func doTeamListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list returns only the teams the user can read", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// Create the teams through the k8s API so they land in the store backing
+		// the current dual-writer mode.
+		visible := createNamedTeam(t, ctx, helper, adminClient, "list-filter-visible", "Visible Team", "list-filter-visible@example.com")
+		hidden := createNamedTeam(t, ctx, helper, adminClient, "list-filter-hidden", "Hidden Team", "list-filter-hidden@example.com")
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+			_ = adminClient.Resource.Delete(cleanupCtx, visible.GetName(), metav1.DeleteOptions{})
+			_ = adminClient.Resource.Delete(cleanupCtx, hidden.GetName(), metav1.DeleteOptions{})
+		})
+
+		visibleID := visible.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, visibleID, "team should expose its internal ID label")
+
+		// A user with no basic role and read access to only the "visible" team.
+		// The AuthZ server resolves an id scope (teams:id:N) to a uid scope
+		// (teams:uid:X) via the legacy identity store (see rbac.newTeamNameResolver).
+		// FIXME: In unified-only mode (Mode5) the team is never written to the legacy
+		// team table, so id resolution finds nothing; granting the uid scope too
+		// (already in resolved form) keeps the test valid across all modes.
+		lister := helper.CreateUser("team-list-filter-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "id",
+				ResourceID:        visibleID,
+			},
+			{
+				Actions:           []string{accesscontrol.ActionTeamsRead},
+				Resource:          "teams",
+				ResourceAttribute: "uid",
+				ResourceID:        visible.GetName(),
+			},
+		})
+
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		// The nameless list must succeed (200) rather than 403, even though the
+		// user cannot read every team in the group.
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.Contains(t, names, visible.GetName(), "user should see the team they can read")
+		require.NotContains(t, names, hidden.GetName(), "user must not see teams they cannot read")
+	})
+}
+
+func createNamedTeam(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, title, email string) *unstructured.Unstructured {
+	t.Helper()
+	obj := createTeamObject(helper, name, title, email)
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	return created
 }
 
 // doTeamDeleteCascadesLegacyMembersTest verifies that deleting a team cleans up
