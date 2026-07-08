@@ -8,6 +8,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
+
 type Column = {
   i18nKey: string;
   defaultText: string;
@@ -16,15 +18,16 @@ type Column = {
 type Props = {
   columns: Column[];
   children: ReactNode;
+  label?: ReactNode;
 };
 
-export function ProvisionedControlsSection({ columns, children }: Props) {
+export function ProvisionedControlsSection({ columns, children, label }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
-      <CollapsableSection label={<ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
+      <CollapsableSection label={label ?? <ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
         <table className={classNames('filter-table', 'filter-table--hover', styles.table)} role="grid">
           <thead>
             <tr>
@@ -40,6 +43,20 @@ export function ProvisionedControlsSection({ columns, children }: Props) {
         </table>
       </CollapsableSection>
     </div>
+  );
+}
+
+/** Section label for predefined (global and folder-scoped) variables. */
+export function PredefinedControlsSectionLabel() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      <Icon name="globe" className={styles.iconMuted} />
+      <Text variant="h5">
+        <Trans i18nKey="dashboard-scene.provisioned-controls-section.label-predefined">Predefined variables</Trans>
+      </Text>
+    </Stack>
   );
 }
 
@@ -59,6 +76,26 @@ function ProvisionedControlsSectionLabel() {
 export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined }) {
   const styles = useStyles2(getStyles);
   const pluginName = usePluginName(origin);
+
+  const predefinedOrigin = getPredefinedOrigin(origin);
+  if (predefinedOrigin) {
+    const isGlobal = predefinedOrigin.type === 'global';
+    const content = isGlobal
+      ? t(
+          'dashboard-scene.provisioned-controls-section.tooltip-global',
+          'Global variable, managed centrally under Dashboards > Variables'
+        )
+      : t(
+          'dashboard-scene.provisioned-controls-section.tooltip-folder',
+          "Folder variable, inherited from this dashboard's folder"
+        );
+
+    return (
+      <Tooltip content={content}>
+        <Icon name={isGlobal ? 'globe' : 'folder'} className={styles.iconMuted} aria-hidden />
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip content={getSourceTooltip(pluginName)}>

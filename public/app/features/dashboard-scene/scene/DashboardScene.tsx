@@ -270,7 +270,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
-    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    // Only replace datasource-provided defaults. Variables with other origins (e.g.
+    // predefined global/folder variables) are injected elsewhere and must survive.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    const keptNames = new Set(keptVars.map((v) => v.state.name));
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -280,9 +283,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           return null;
         }
       })
-      .filter((v): v is SceneVariable => Boolean(v));
+      .filter((v): v is SceneVariable => Boolean(v))
+      // Nearest scope wins: existing variables shadow incoming defaults of the same name.
+      .filter((v) => !keptNames.has(v.state.name));
 
-    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+    variableSet.setState({ variables: [...defaultVarObjects, ...keptVars] });
   }
 
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
@@ -292,8 +297,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
-    variableSet.setState({ variables: nonDefaultVars });
+    // Predefined (global/folder) variables are not datasource defaults — keep them.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    variableSet.setState({ variables: keptVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: nonDefaultLinks });

@@ -434,5 +434,5 @@ function findNameInDescendantSets(sceneObject: SceneObject, name: string, exclud
 }
 
 export function isVariableEditable(variable: SceneVariable) {
-  return variable.state.type !== 'system' && variable.state.origin === undefined;
+  return isEditableVariableType(variable.state.type) && variable.state.origin === undefined;
 }

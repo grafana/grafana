@@ -4,7 +4,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneVariable } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { ProvisionedControlsSection, SourceIcon } from '../ProvisionedControlsSection';
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
+import { PredefinedControlsSectionLabel, ProvisionedControlsSection, SourceIcon } from '../ProvisionedControlsSection';
 
 import { getDefinition } from './utils';
 
@@ -14,10 +15,30 @@ const VARIABLE_COLUMNS = [
 ];
 
 export function ProvisionedVariablesSection({ variables }: { variables: SceneVariable[] }) {
+  const predefinedVariables = variables.filter((v) => isPredefinedOrigin(v.state.origin));
+  const provisionedVariables = variables.filter((v) => !isPredefinedOrigin(v.state.origin));
+
+  return (
+    <>
+      {predefinedVariables.length > 0 && (
+        <ProvisionedControlsSection columns={VARIABLE_COLUMNS} label={<PredefinedControlsSectionLabel />}>
+          <VariableRows variables={predefinedVariables} />
+        </ProvisionedControlsSection>
+      )}
+      {provisionedVariables.length > 0 && (
+        <ProvisionedControlsSection columns={VARIABLE_COLUMNS}>
+          <VariableRows variables={provisionedVariables} />
+        </ProvisionedControlsSection>
+      )}
+    </>
+  );
+}
+
+function VariableRows({ variables }: { variables: SceneVariable[] }) {
   const styles = useStyles2(getStyles);
 
   return (
-    <ProvisionedControlsSection columns={VARIABLE_COLUMNS}>
+    <>
       {variables.map((variable, index) => {
         const variableState = variable.state;
 
@@ -35,7 +56,7 @@ export function ProvisionedVariablesSection({ variables }: { variables: SceneVar
           </tr>
         );
       })}
-    </ProvisionedControlsSection>
+    </>
   );
 }
 

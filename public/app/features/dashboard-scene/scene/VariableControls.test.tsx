@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import {
@@ -10,6 +11,8 @@ import {
   ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+
+import { toControlSourceRef } from '../utils/predefinedVariables';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls } from './VariableControls';
@@ -98,6 +101,26 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
+  });
+
+  it('should not show edit/delete hover actions for predefined variables in edit mode', async () => {
+    const user = userEvent.setup();
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    await user.hover(await screen.findByText('globalVar'));
+
+    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
   });
 
   it('should prefer variablesOverride over dashboard variables', async () => {

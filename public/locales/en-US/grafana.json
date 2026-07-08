@@ -7228,7 +7228,10 @@
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
+      "label-predefined": "Predefined variables",
       "tooltip": "Added by the {{pluginName}} plugin",
+      "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
+      "tooltip-global": "Global variable, managed centrally under Dashboards > Variables",
       "tooltip-unknown": "Added by a data source plugin"
     },
     "provisioned-delete-modal": {

@@ -108,6 +108,13 @@ jest.mock('@grafana/runtime/internal', () => ({
   UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
 }));
 
+const mockFetchPredefinedVariables = jest.fn();
+jest.mock('../utils/predefinedVariables', () => ({
+  ...jest.requireActual('../utils/predefinedVariables'),
+  // Default to no predefined variables so unrelated tests are unaffected.
+  fetchPredefinedVariables: (...args: unknown[]) => mockFetchPredefinedVariables(...args) ?? Promise.resolve([]),
+}));
+
 const createTestStore = () =>
   configureStore({
     reducer: {
@@ -244,6 +251,15 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    it('should not fetch predefined variables for v1 dashboards', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
     });
 
     it('should register report render readiness observer for render-authenticated normal route', async () => {
@@ -798,6 +814,78 @@ describe('DashboardScenePageStateManager v2', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    describe('predefined variables', () => {
+      const predefinedVariable = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'injectedGlobalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: { type: 'global' },
+        },
+      };
+
+      const v2Response = (annotations?: Record<string, string>): DashboardWithAccessInfo<DashboardV2Spec> => ({
+        access: {},
+        apiVersion: 'v2beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: 'fake-dash',
+          creationTimestamp: '',
+          resourceVersion: '1',
+          annotations,
+        },
+        spec: { ...defaultDashboardV2Spec() },
+      });
+
+      it('should inject predefined variables into the loaded scene', async () => {
+        mockFetchPredefinedVariables.mockResolvedValueOnce([predefinedVariable]);
+        setupDashboardAPI(v2Response(), jest.fn());
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(mockFetchPredefinedVariables).toHaveBeenCalledWith(undefined);
+        const names = loader.state.dashboard?.state.$variables?.state.variables.map((v) => v.state.name);
+        expect(names).toContain('injectedGlobalVar');
+      });
+
+      it('should resolve the folder uid from the folder annotation', async () => {
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        await loader.enrichLoadOptions(v2Response({ 'grafana.app/folder': 'folder-uid' }), {
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+        });
+
+        expect(mockFetchPredefinedVariables).toHaveBeenCalledWith('folder-uid');
+      });
+
+      it('should fall back to the url folder uid for new dashboards without a folder annotation', async () => {
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        await loader.enrichLoadOptions(v2Response(), {
+          uid: '',
+          route: DashboardRoutes.New,
+          urlFolderUid: 'url-folder-uid',
+        });
+
+        expect(mockFetchPredefinedVariables).toHaveBeenCalledWith('url-folder-uid');
+      });
+
+      it('should not fetch predefined variables for public dashboards', async () => {
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        const options = await loader.enrichLoadOptions(v2Response(), {
+          uid: 'access-token',
+          route: DashboardRoutes.Public,
+        });
+
+        expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
+        expect(options.defaultVariables).toBeUndefined();
+      });
     });
 
     it('public dashboard: should build scene from API and not reuse or keep stale scene cache', () => {

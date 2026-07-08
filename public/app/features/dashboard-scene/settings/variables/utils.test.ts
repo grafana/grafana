@@ -17,6 +17,8 @@ import {
 import { type DataQuery, type DataSourceJsonData, VariableHide, type VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 
+import { toControlSourceRef } from '../../utils/predefinedVariables';
+
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
@@ -40,6 +42,7 @@ import {
   getNextAvailableId,
   getVariableDefault,
   isSceneVariableInstance,
+  isVariableEditable,
   validateVariableName,
 } from './utils';
 
@@ -100,6 +103,27 @@ describe('isEditableVariableType', () => {
     nonEditableTypes.forEach((type) => {
       expect(isEditableVariableType(type)).toBe(false);
     });
+  });
+});
+
+describe('isVariableEditable', () => {
+  it('returns false when variable has an origin', () => {
+    const variable = new CustomVariable({
+      name: 'globalVar',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+
+    expect(isVariableEditable(variable)).toBe(false);
+  });
+
+  it('returns false for non-editable variable types', () => {
+    expect(isVariableEditable({ state: { type: 'system', origin: undefined } } as SceneVariable)).toBe(false);
+  });
+
+  it('returns true for dashboard-local variables', () => {
+    const variable = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    expect(isVariableEditable(variable)).toBe(true);
   });
 });
 

@@ -321,6 +321,9 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
     // Added temporarily to allow skipping non-compatible variables
     .filter(isDefined);
 
+  // Nearest scope wins: a dashboard-local variable shadows a default (e.g. predefined
+  // global/folder) variable of the same name.
+  const localNames = new Set(variableObjects.map((v) => v.state.name));
   const defaultVariableObjects = defaultVariables
     .map((v) => {
       try {
@@ -330,7 +333,8 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
         return null;
       }
     })
-    .filter(isDefined);
+    .filter(isDefined)
+    .filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {

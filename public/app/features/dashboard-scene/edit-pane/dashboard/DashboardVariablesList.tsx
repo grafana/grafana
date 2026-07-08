@@ -8,9 +8,14 @@ import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
+import { ReadOnlyVariablesSection } from '../../../dashboard-scene/settings/variables/ReadOnlyVariablesSection';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
+import {
+  getDefaultTopPlacementLabel,
+  isEditableVariableType,
+  isVariableEditable,
+} from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -44,12 +49,16 @@ export function DashboardVariablesList({
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
-  const editable = useMemo(() => {
-    const { editable } = partitionVariablesByEditability(listVariables);
+  const { editable, readOnly } = useMemo(() => {
+    const { editable, nonEditable } = partitionVariablesByEditability(listVariables);
+    const readOnly = nonEditable.filter((v) => isEditableVariableType(v.state.type));
+    let editableVariables = editable;
     if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
-      return editable;
+      editableVariables = editable;
+    } else {
+      editableVariables = editable.filter((v) => !sceneUtils.isAdHocVariable(v));
     }
-    return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
+    return { editable: editableVariables, readOnly };
   }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
@@ -111,6 +120,7 @@ export function DashboardVariablesList({
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}
       />
+      {readOnly.length > 0 && <ReadOnlyVariablesSection variables={readOnly} />}
     </DragDropContext>
   );
 }
@@ -141,7 +151,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
 
 export function partitionVariablesByEditability(variables: SceneVariable[]) {
   const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
-    isEditableVariableType(v.state.type) ? 'editable' : 'nonEditable'
+    isVariableEditable(v) ? 'editable' : 'nonEditable'
   );
   return { editable, nonEditable };
 }

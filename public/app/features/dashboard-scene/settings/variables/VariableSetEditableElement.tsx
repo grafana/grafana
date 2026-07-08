@@ -23,8 +23,9 @@ import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
+import { ReadOnlyVariablesSection } from './ReadOnlyVariablesSection';
 import { openAddVariablePane } from './VariableTypeSelectionPane';
-import { isEditableVariableType } from './utils';
+import { isEditableVariableType, isVariableEditable } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -58,7 +59,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getOutlineChildren() {
     let variables = filterSectionRepeatLocalVariables(this.set.state.variables, this.set).filter((variable) =>
-      isEditableVariableType(variable.state.type)
+      isVariableEditable(variable)
     );
 
     if (config.featureToggles.dashboardUnifiedDrilldownControls) {
@@ -103,7 +104,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const editableVariables = useMemo(() => {
     return filterSectionRepeatLocalVariables(variables, set).filter((variable) => {
-      if (!isEditableVariableType(variable.state.type)) {
+      if (!isVariableEditable(variable)) {
         return false;
       }
       if (config.featureToggles.dashboardUnifiedDrilldownControls && sceneUtils.isAdHocVariable(variable)) {
@@ -111,6 +112,12 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       }
       return true;
     });
+  }, [variables, set]);
+
+  const readOnlyVariables = useMemo(() => {
+    return filterSectionRepeatLocalVariables(variables, set).filter(
+      (variable) => !isVariableEditable(variable) && isEditableVariableType(variable.state.type)
+    );
   }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
@@ -233,6 +240,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       {hidden.length > 0 && (
         <DragDropContext onDragEnd={onHiddenDragEnd}>{renderList(hidden, 'variables-outline-hidden')}</DragDropContext>
       )}
+      {readOnlyVariables.length > 0 && <ReadOnlyVariablesSection variables={readOnlyVariables} />}
       {canAdd && (
         <Box paddingBottom={1} paddingTop={1} display={'flex'}>
           <Button
