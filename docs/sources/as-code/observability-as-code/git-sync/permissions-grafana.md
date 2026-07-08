@@ -36,9 +36,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#manage-dashboard-permissions
   manage-folder-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#folder-permissions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
 ---
 
 # Git Sync permissions and access control
@@ -46,7 +46,7 @@ refs:
 For Git Sync you need to configure permissions at two layers to function correctly:
 
 - At the Grafana level for repository management and resource access, as described in this document.
-- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-repo-protection) for more information.
+- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git) for more information.
 
 ## Grafana role-based permissions
 
