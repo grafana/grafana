@@ -1646,8 +1646,8 @@ github.com/grafana/loki/v3 v3.7.3 h1:oXJJtdGJ2zh3sJJvA3CfOzw4dV5gIHs0bgt1AgI0WQY
 github.com/grafana/loki/v3 v3.7.3/go.mod h1:dGAX6YG/eXRoEUWXcFmsLBJ95JV2wWMugelP7gnsFTE=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
-github.com/grafana/nanogit v1.2.0 h1:9JoLb1GNgJrNbOL/R7ww/ePySMFtDqjqMcnzyrZH5bU=
-github.com/grafana/nanogit v1.2.0/go.mod h1:Qgtv/BgRfVis/xhv6H35AY/aYLrzZFPn8rRwdVuR55E=
+github.com/grafana/nanogit v1.4.0 h1:cfjtLc0PA9L2ukDwWhq6tmqRp3Pfm4eEFzm8mu0/Qek=
+github.com/grafana/nanogit v1.4.0/go.mod h1:Qgtv/BgRfVis/xhv6H35AY/aYLrzZFPn8rRwdVuR55E=
 github.com/grafana/nanogit/gittest v1.2.0 h1:Ik5kt/dmygsJrEf4gVE9dwFVRMo+2UC9cawfufgDDrM=
 github.com/grafana/nanogit/gittest v1.2.0/go.mod h1:qwQYVjtgEWuQTNjZM1a2SgfbXf+mPL3Gprrm0TWFAk4=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
