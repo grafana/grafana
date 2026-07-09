@@ -265,7 +265,7 @@ type BranchHandler interface {
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
-	PullRequestBase(ctx context.Context, prNumber int, headRef string) (string, error)
+	MergeBase(ctx context.Context, headRef string) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
 }

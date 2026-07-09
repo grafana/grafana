@@ -646,64 +646,6 @@ func (_c *MockGithubRepository_Owner_Call) RunAndReturn(run func() string) *Mock
 	return _c
 }
 
-// PullRequestBase provides a mock function with given fields: ctx, prNumber, headRef
-func (_m *MockGithubRepository) PullRequestBase(ctx context.Context, prNumber int, headRef string) (string, error) {
-	ret := _m.Called(ctx, prNumber, headRef)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PullRequestBase")
-	}
-
-	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, string) (string, error)); ok {
-		return rf(ctx, prNumber, headRef)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, string) string); ok {
-		r0 = rf(ctx, prNumber, headRef)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int, string) error); ok {
-		r1 = rf(ctx, prNumber, headRef)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockGithubRepository_PullRequestBase_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PullRequestBase'
-type MockGithubRepository_PullRequestBase_Call struct {
-	*mock.Call
-}
-
-// PullRequestBase is a helper method to define mock.On call
-//   - ctx context.Context
-//   - prNumber int
-//   - headRef string
-func (_e *MockGithubRepository_Expecter) PullRequestBase(ctx interface{}, prNumber interface{}, headRef interface{}) *MockGithubRepository_PullRequestBase_Call {
-	return &MockGithubRepository_PullRequestBase_Call{Call: _e.mock.On("PullRequestBase", ctx, prNumber, headRef)}
-}
-
-func (_c *MockGithubRepository_PullRequestBase_Call) Run(run func(ctx context.Context, prNumber int, headRef string)) *MockGithubRepository_PullRequestBase_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockGithubRepository_PullRequestBase_Call) Return(_a0 string, _a1 error) *MockGithubRepository_PullRequestBase_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockGithubRepository_PullRequestBase_Call) RunAndReturn(run func(context.Context, int, string) (string, error)) *MockGithubRepository_PullRequestBase_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Read provides a mock function with given fields: ctx, path, ref
 func (_m *MockGithubRepository) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
 	ret := _m.Called(ctx, path, ref)
