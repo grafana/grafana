@@ -45,6 +45,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		ResourceVersion: 42,
 		Action:          DataActionUpdated,
 		Folder:          "folder-1",
+		PreviousRV:      41,
 	}
 
 	t.Run("publishes a metadata-only notification on the resource subject", func(t *testing.T) {
@@ -65,6 +66,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.Name, got.GetName())
 		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
 		assert.Equal(t, event.Folder, got.GetFolder())
+		assert.Equal(t, event.PreviousRV, got.GetPreviousResourceVersion())
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

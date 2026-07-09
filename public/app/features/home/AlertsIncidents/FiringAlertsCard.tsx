@@ -16,6 +16,8 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
+import { alertsCardClicked } from '../analytics/main';
+
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelColor, severityLevelRank } from './severity';
@@ -184,7 +186,12 @@ function FiringAlertsCardInner() {
         return (
           <>
             <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
-            <SummaryCardTitle href={detailHref}>{alert.labels.alertname}</SummaryCardTitle>
+            <SummaryCardTitle
+              href={detailHref}
+              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+            >
+              {alert.labels.alertname}
+            </SummaryCardTitle>
             {alert.labels.team && (
               <Text color="secondary" variant="bodySmall" truncate>
                 {alert.labels.team}
@@ -196,7 +203,12 @@ function FiringAlertsCardInner() {
       }}
       emptyAction={
         canCreate ? (
-          <LinkButton variant="primary" icon="plus" href={newRuleHref}>
+          <LinkButton
+            variant="primary"
+            icon="plus"
+            href={newRuleHref}
+            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+          >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>
         ) : undefined
@@ -204,11 +216,29 @@ function FiringAlertsCardInner() {
       footer={
         <>
           {hasAlerts && canCreate && (
-            <LinkButton variant="secondary" size="sm" fill="text" icon="plus" href={newRuleHref}>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              icon="plus"
+              href={newRuleHref}
+              onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'footer' })}
+            >
               <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
             </LinkButton>
           )}
-          <LinkButton variant="secondary" size="sm" fill="text" href={viewAllHref}>
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            fill="text"
+            href={viewAllHref}
+            onClick={() =>
+              alertsCardClicked({
+                action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
+                placement: 'footer',
+              })
+            }
+          >
             {hasAlerts ? (
               <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
             ) : (

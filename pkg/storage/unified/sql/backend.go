@@ -116,6 +116,16 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 	}
 }
 
+// WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
+// of polling. Delivery is at-most-once; the backend falls back to polling when
+// the subscriber is disabled. KV backend only.
+func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		o.EventSubscriber = s
+		o.UseNatsNotifier = true
+	}
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -240,6 +250,8 @@ func NewStorageBackend(
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
 		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)

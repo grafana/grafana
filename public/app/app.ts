@@ -8,6 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -142,10 +143,16 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
+export interface AppInitOptions {
+  // Preferences fetched during boot (see initPreferences). Passed through so we
+  // can seed the RTK Query cache and avoid a duplicate preferences/merged request.
+  mergedPreferences?: Preferences;
+}
+
 export class GrafanaApp {
   context!: GrafanaContextType;
 
-  async init() {
+  async init(options?: AppInitOptions) {
     try {
       await preInitTasks();
 
@@ -224,7 +231,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
       initExtensions();
 
       initAlerting();

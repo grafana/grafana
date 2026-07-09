@@ -65,12 +65,10 @@ export class GrafanaJavascriptAgentBackend
         new FetchTransport({
           url: options.customEndpoint,
           apiKey: options.apiKey,
-          // faro enables fetch keepalive per request whenever the body is under ~60KB, but the
-          // browser's ~64KB keepalive budget is shared across all in-flight requests, so faro's
-          // concurrent sends can collectively exceed it — leaving requests stuck "pending" and
-          // dropping session replay segments. When replay is enabled, force keepalive off for this
-          // transport; otherwise leave faro's default untouched.
-          ...(sessionReplayEnabled ? { requestOptions: { keepalive: false } } : {}),
+          // When session replay is enabled, gzip-compress request bodies via the browser's
+          // CompressionStream — session replay produces the large payloads that benefit most.
+          // Falls back to uncompressed when CompressionStream is unavailable.
+          ...(sessionReplayEnabled ? { requestCompression: true } : {}),
         })
       );
     }

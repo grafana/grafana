@@ -1546,6 +1546,10 @@ export type HealthStatus = {
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
@@ -1555,6 +1559,8 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable. */
+  token?: TokenStatus;
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1831,6 +1837,8 @@ export type CommitOptions = {
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
   signerEmail?: string;
+  /** When true, commits are authored by the signer identity (signerName/signerEmail). */
+  signerIsAuthor?: boolean;
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
   /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
@@ -1999,10 +2007,6 @@ export type SyncStatus = {
      - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
-};
-export type TokenStatus = {
-  expiration?: number;
-  lastUpdated?: number;
 };
 export type WebhookStatus = {
   id?: number;
