@@ -1075,13 +1075,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubEnterpriseRepositoryConfig(ref 
 							Format:      "",
 						},
 					},
-					"generateDashboardPreviews": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data inside the repository.",
@@ -1119,7 +1112,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					},
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). once all Github repositories have been backfilled.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -2084,6 +2077,13 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.Referen
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
