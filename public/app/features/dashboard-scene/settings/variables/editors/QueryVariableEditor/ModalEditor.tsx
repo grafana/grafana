@@ -252,13 +252,8 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
       source: variable,
       description: t('dashboard-scene.query-variable-editor.modal.apply-description', 'Change variable query'),
       perform: async () => {
-        const ok = await updateVariable(variable, draftVariable.state);
-        if (ok) {
-          onClose();
-        } else {
-          variable.setState(initialState);
-          await lastValueFrom(variable.validateAndUpdate());
-        }
+        updateVariable(variable, draftVariable.state);
+        onClose();
       },
       undo: async () => {
         variable.setState(initialState);
