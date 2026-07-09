@@ -134,10 +134,13 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn((uid: string) => ({
     isLoading: false,
     settings: {
-      id: uid,
+      id: 1,
       uid: uid,
       type: PluginType.datasource,
       name: uid,
+      access: 'proxy',
+      readOnly: false,
+      jsonData: {},
       meta: {
         id: uid,
         name: uid,
