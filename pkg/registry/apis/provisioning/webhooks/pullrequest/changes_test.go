@@ -1480,7 +1480,7 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
-	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
@@ -1543,7 +1543,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
-	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
@@ -1611,7 +1611,7 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 
 	renderer := NewMockScreenshotRenderer(t)
-	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+	renderer.On("IsAvailable", mock.Anything).Return(true)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "process playlist.json").Return()

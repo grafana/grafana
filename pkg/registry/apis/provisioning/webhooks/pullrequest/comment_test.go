@@ -351,7 +351,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "**2** resource change(s)")
+	require.Contains(t, capturedComment, "**2** resource changes")
 	require.Contains(t, capturedComment, "🗑️ Deleted")
 	require.Contains(t, capturedComment, "File")
 }
@@ -381,7 +381,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "**1** resource change(s)")
+	require.Contains(t, capturedComment, "**1** resource change")
 	require.Contains(t, capturedComment, "➕ Added")
 }
 
@@ -421,8 +421,8 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "**2** resource change(s)")
-	require.Contains(t, capturedComment, "1 need attention")
+	require.Contains(t, capturedComment, "**2** resource changes")
+	require.Contains(t, capturedComment, "1 needs attention")
 	require.Contains(t, capturedComment, "Validation Issues")
 	require.Contains(t, capturedComment, "broken.json")
 	require.Contains(t, capturedComment, "unable to parse resource")

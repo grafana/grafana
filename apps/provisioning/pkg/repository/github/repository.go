@@ -347,9 +347,11 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = branch
 	}
 
-	// file.Path is relative to the configured Spec.GitHub.Path (Read joins that
+	// file.Path is relative to the configured repository path (Read joins that
 	// prefix before fetching), so re-apply it here or scoped repos get 404 links.
-	repoPath := safepath.Join(r.config.Spec.GitHub.Path, file.Path)
+	// Use the provider-agnostic Path() so this is nil-safe for GitHub Enterprise
+	// (Spec.GitHub is nil there).
+	repoPath := safepath.Join(r.config.Path(), file.Path)
 
 	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: r.config.URL(),

@@ -1,4 +1,4 @@
-📋 Grafana detected **3** resource change(s) in this pull request.
+📋 Grafana detected **3** resource changes in this pull request.
 
 | Action | Kind | Resource | File | Preview | Status |
 |--------|------|----------|------|---------|--------|

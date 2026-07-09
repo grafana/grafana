@@ -123,12 +123,12 @@ const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{
 {{- end}}
 `
 
-const commentTemplateTable = `📋 Grafana detected **{{.TotalChanges}}** resource change(s) in this pull request{{- if .HasErrors}} — ⚠️ {{.ErrorCount}} need attention{{- end}}.
+const commentTemplateTable = `📋 Grafana detected **{{.TotalChanges}}** resource change{{if ne .TotalChanges 1}}s{{end}} in this pull request{{- if .HasErrors}} — ⚠️ {{.ErrorCount}} need{{if eq .ErrorCount 1}}s{{end}} attention{{- end}}.
 
 | Action | Kind | Resource | File | Preview | Status |
 |--------|------|----------|------|---------|--------|
 {{- range .Changes}}
-| {{.ActionLabel}} | {{.Kind}} | {{.ExistingLink}} | {{ if .SourceURL}}[source]({{.SourceURL}}){{ end }} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
+| {{.ActionLabel}} | {{.Kind}} | {{.ExistingLink}} | {{ if .SourceURL}}[source]({{.SourceURL}}){{ else }}{{.SafeFilePath}}{{ end }} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
 {{- if .SkippedFiles}}
 
@@ -218,6 +218,17 @@ func (f *fileChangeInfo) ExistingLink() string {
 // table cells.
 func (f *fileChangeInfo) SafeTitle() string {
 	return escapeMarkdown(f.Title)
+}
+
+// SafeFilePath returns the change's file path escaped for a Markdown table cell.
+// It is used as the File column fallback when no source URL is available (e.g.
+// non-GitHub backends) so reviewers can still identify the file.
+func (f *fileChangeInfo) SafeFilePath() string {
+	path := f.Change.Path
+	if path == "" && f.Parsed != nil && f.Parsed.Info != nil {
+		path = f.Parsed.Info.Path
+	}
+	return escapeMarkdown(path)
 }
 
 // escapeMarkdown neutralizes characters that would break a Markdown table cell
