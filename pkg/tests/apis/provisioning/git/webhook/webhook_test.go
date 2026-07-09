@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -23,6 +24,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/nanogit/gittest"
 )
 
 // webhookBaseURL is the public base URL the webhook tests configure (matching
@@ -158,9 +160,49 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	waitForWebhook(t, helper, repoName, 456)
 }
 
+// createGiteaPullRequest opens a real pull request on the gittest Gitea server
+// so the PR number in the webhook payload refers to an existing PR.
+func createGiteaPullRequest(t *testing.T, ctx context.Context, remote *gittest.RemoteRepository, base, head, title string) int {
+	t.Helper()
+
+	body, err := json.Marshal(map[string]string{
+		"base":  base,
+		"head":  head,
+		"title": title,
+	})
+	require.NoError(t, err, "failed to marshal pull request")
+
+	repoURL, err := url.Parse(remote.URL)
+	require.NoError(t, err, "failed to parse remote URL")
+	apiURL := fmt.Sprintf("%s://%s/api/v1/repos/%s/%s/pulls", repoURL.Scheme, repoURL.Host, remote.Owner, remote.Name)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
+	require.NoError(t, err, "failed to create pull request request")
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(remote.User.Username, remote.User.Password)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err, "failed to create pull request")
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+	require.Equal(t, http.StatusCreated, resp.StatusCode, "pull request should be created")
+
+	var created struct {
+		Number int `json:"number"`
+		Index  int `json:"index"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&created), "failed to decode pull request")
+	if created.Number != 0 {
+		return created.Number
+	}
+	require.NotZero(t, created.Index, "pull request response should include number or index")
+	return created.Index
+}
+
 // TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment verifies the
-// end-to-end PR webhook path without a real GitHub PR: a pushed gittest feature
-// branch supplies the diff, the webhook payload supplies PR metadata, and the
+// end-to-end PR webhook path: a pushed gittest feature branch supplies the diff,
+// Gitea creates a real PR without a refs/pull/<PR>/merge ref (see
+// go-gitea/gitea#13134) so the worker falls back to the head ref, and the
 // mocked GitHub comments endpoint captures the PR worker's generated comment.
 func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing.T) {
 	helper := sharedGitHelper(t)
@@ -198,7 +240,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	))
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
-	_, local := helper.CreateGithubRepo(t, repoName, map[string][]byte{
+	remote, local := helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		dashboardPath: common.DashboardJSON("gh-pr-comment-dash", "GitHub PR Comment Dashboard", 1),
 	}, webhookBaseURL, "write")
 	waitForWebhook(t, helper, repoName, 654)
@@ -225,14 +267,16 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	_, err = local.Git("push", "-u", "origin", branchName)
 	require.NoError(t, err, "failed to push feature branch")
 
-	prURL := fmt.Sprintf("https://github.example.com/git/%s/pull/123", repoName)
+	prNumber := createGiteaPullRequest(t, ctx, remote, "main", branchName, "Update dashboard")
+
+	prURL := fmt.Sprintf("https://github.example.com/git/%s/pull/%d", repoName, prNumber)
 	payload, err := json.Marshal(map[string]any{
 		"action": "opened",
 		"repository": map[string]any{
 			"full_name": fmt.Sprintf("git/%s", repoName),
 		},
 		"pull_request": map[string]any{
-			"number":   123,
+			"number":   prNumber,
 			"html_url": prURL,
 			"base": map[string]any{
 				"ref": "main",
