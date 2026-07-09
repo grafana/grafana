@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -21,18 +22,24 @@ describe('EditableTitle', () => {
 
   const mockEdit = jest.fn().mockImplementation((newValue: string) => Promise.resolve(newValue));
 
+  const editableTitleWithOpenFeatureProvider = (
+    <OpenFeatureTestProvider>
+      <EditableTitle value={value} onEdit={mockEdit} />
+    </OpenFeatureTestProvider>
+  );
+
   it('displays the provided text correctly', () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
     expect(screen.getByRole('heading', { name: value })).toBeInTheDocument();
   });
 
   it('displays an edit button', () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
     expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
   });
 
   it('clicking the edit button changes the text to an input and autofocuses', async () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
 
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 
@@ -45,7 +52,7 @@ describe('EditableTitle', () => {
   });
 
   it('blurring the input calls the onEdit callback and reverts back to text', async () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
 
     const editButton = screen.getByRole('button', { name: 'Edit title' });
     await user.click(editButton);
@@ -67,7 +74,7 @@ describe('EditableTitle', () => {
   });
 
   it('pressing enter calls the onEdit callback and reverts back to text', async () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
 
     const editButton = screen.getByRole('button', { name: 'Edit title' });
     await user.click(editButton);
@@ -89,7 +96,7 @@ describe('EditableTitle', () => {
   });
 
   it('clicking cancel does not call onEdit and restores the original title', async () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
 
     await user.click(screen.getByRole('button', { name: 'Edit title' }));
 
@@ -105,7 +112,7 @@ describe('EditableTitle', () => {
   });
 
   it('displays an error message when attempting to save an empty value', async () => {
-    render(<EditableTitle value={value} onEdit={mockEdit} />);
+    render(editableTitleWithOpenFeatureProvider);
 
     const editButton = screen.getByRole('button', { name: 'Edit title' });
     await user.click(editButton);
@@ -121,7 +128,11 @@ describe('EditableTitle', () => {
     const mockEditError = jest.fn().mockImplementation(() => {
       throw new Error('Uh oh spaghettios');
     });
-    render(<EditableTitle value={value} onEdit={mockEditError} />);
+    render(
+      <OpenFeatureTestProvider>
+        <EditableTitle value={value} onEdit={mockEditError} />
+      </OpenFeatureTestProvider>
+    );
 
     const editButton = screen.getByRole('button', { name: 'Edit title' });
     await user.click(editButton);
@@ -147,7 +158,11 @@ describe('EditableTitle', () => {
       };
       throw fetchError;
     });
-    render(<EditableTitle value={value} onEdit={mockEditError} />);
+    render(
+      <OpenFeatureTestProvider>
+        <EditableTitle value={value} onEdit={mockEditError} />
+      </OpenFeatureTestProvider>
+    );
 
     const editButton = screen.getByRole('button', { name: 'Edit title' });
     await user.click(editButton);
