@@ -2,7 +2,7 @@ jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
 
 jest.mock('../layers/registry', () => ({
-  DEFAULT_BASEMAP_CONFIG: { type: 'default-basemap', name: 'default' },
+  DEFAULT_BASEMAP_CONFIG: { type: 'default', name: '', config: {} },
   geomapLayerRegistry: { getIfExists: jest.fn() },
 }));
 jest.mock('../layers/data/markersLayer', () => ({ MARKERS_LAYER_ID: 'markers' }));
@@ -224,13 +224,13 @@ describe('initLayer', () => {
     config.geomapDisableCustomBaseLayer = true;
     const panel = createPanel();
     getIfExists.mockReturnValue({
-      id: 'default-basemap',
+      id: 'default',
       create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
     });
 
     await initLayer(panel, {} as never, { type: 'markers', name: 'x' }, true);
 
-    expect(getIfExists).toHaveBeenCalledWith('default-basemap');
+    expect(getIfExists).toHaveBeenCalledWith('default');
     config.geomapDisableCustomBaseLayer = original;
   });
 });
