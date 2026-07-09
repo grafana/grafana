@@ -1,4 +1,4 @@
-import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime } from '@grafana/data';
+import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime, store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -21,6 +21,7 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -275,9 +276,16 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p v',
       onTrigger: () => {
-        if (scene.state.isEditing) {
+        if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
+          // check if there's an active element in edit pane and if so, use that as the target for pasting the panel
+          const editPane = scene.state.editPane;         
+          const selectedObj = editPane.getSelectedObject();
+          if(selectedObj) {
+            editPane.pastePanel(selectedObj);
+          } else {
+            scene.pastePanel();
+          }
           DashboardInteractions.trackPastePanelClick('keyboard');
-          scene.pastePanel();
         }
       },
     });
