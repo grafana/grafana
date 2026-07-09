@@ -74,7 +74,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmVariant={!error ? 'destructive' : 'primary'}
+      confirmButtonVariant={!error ? 'destructive' : 'primary'}
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.restore-modal.body">

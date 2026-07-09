@@ -1,8 +1,6 @@
 import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { useAssistant } from '@grafana/assistant';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import {
@@ -13,7 +11,6 @@ import {
 
 import * as analytics from '../../Analytics';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { MERGED_UNGROUPED_GROUP_NAME } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { mockFolderApi, setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockCombinedRule, mockFolder, mockGrafanaRulerRule } from '../../mocks';
@@ -23,19 +20,10 @@ import { RulesGroup } from './RulesGroup';
 
 jest.mock('../../hooks/useHasRuler');
 
-jest.mock('@grafana/assistant', () => ({
-  useAssistant: jest.fn(),
-  createAssistantContextItem: jest.fn((type, data) => ({ type, ...data })),
-}));
-
-setPluginLinksHook(() => ({ links: [], isLoading: false }));
-setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-
 jest.spyOn(analytics, 'logInfo');
 
 const mocks = {
   useHasRuler: jest.mocked(useHasRuler),
-  useAssistant: jest.mocked(useAssistant),
 };
 
 function mockUseHasRuler(hasRuler: boolean, rulerConfig: RulerDataSourceConfig) {
@@ -47,13 +35,6 @@ function mockUseHasRuler(hasRuler: boolean, rulerConfig: RulerDataSourceConfig) 
 
 beforeEach(() => {
   mocks.useHasRuler.mockReset();
-  mocks.useAssistant.mockReturnValue({
-    isLoading: false,
-    isAvailable: false,
-    openAssistant: jest.fn(),
-    closeAssistant: jest.fn(),
-    toggleAssistant: jest.fn(),
-  });
   // FIXME: scope down
   grantUserPermissions(Object.values(AccessControlAction));
 });
@@ -70,8 +51,8 @@ afterEach(() => {
 });
 
 describe('Rules group tests', () => {
-  function renderRulesGroup(namespace: CombinedRuleNamespace, group: CombinedRuleGroup, expandAll = false) {
-    return render(<RulesGroup group={group} namespace={namespace} expandAll={expandAll} viewMode={'grouped'} />, {
+  function renderRulesGroup(namespace: CombinedRuleNamespace, group: CombinedRuleGroup) {
+    return render(<RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />, {
       historyOptions: { initialEntries: ['/alerting/list'] },
     });
   }
@@ -201,17 +182,13 @@ describe('Rules group tests', () => {
     });
   });
 
-  describe('Ungrouped virtual group', () => {
-    const virtualGroup: CombinedRuleGroup = {
-      name: MERGED_UNGROUPED_GROUP_NAME,
+  describe('Ungrouped rules', () => {
+    const ungroupedGroup: CombinedRuleGroup = {
+      name: 'no_group_for_rule_TestRule',
       rules: [
         mockCombinedRule({
-          name: 'FirstRule',
-          rulerRule: mockGrafanaRulerRule({ namespace_uid: 'folder-123', uid: 'first-uid' }),
-        }),
-        mockCombinedRule({
-          name: 'SecondRule',
-          rulerRule: mockGrafanaRulerRule({ namespace_uid: 'folder-123', uid: 'second-uid' }),
+          name: 'TestRule',
+          rulerRule: mockGrafanaRulerRule({ namespace_uid: 'folder-123' }),
         }),
       ],
       totals: {},
@@ -220,32 +197,16 @@ describe('Rules group tests', () => {
     const namespace: CombinedRuleNamespace = {
       name: 'TestNamespace',
       rulesSource: 'grafana',
-      groups: [virtualGroup],
+      groups: [ungroupedGroup],
     };
 
     beforeEach(() => {
       mockUseHasRuler(true, GRAFANA_RULER_CONFIG);
-      mockFolderApi(server).folder('folder-123', mockFolder({ uid: 'folder-123', canSave: true }));
     });
 
-    it('renders an "Ungrouped" header without a per-rule suffix', async () => {
-      renderRulesGroup(namespace, virtualGroup);
-      const header = await screen.findByTestId('rule-group-header');
-      expect(header).toHaveTextContent(/TestNamespace.*Ungrouped/);
-      expect(screen.queryByText(/\(Ungrouped\)/)).not.toBeInTheDocument();
-    });
-
-    it('hides group-level details and edit actions for the virtual group', async () => {
-      renderRulesGroup(namespace, virtualGroup);
-      expect(await screen.findByTestId('rule-group')).toBeInTheDocument();
-      expect(ui.detailsButton.query()).not.toBeInTheDocument();
-      expect(ui.editGroupButton.query()).not.toBeInTheDocument();
-    });
-
-    it('renders all merged rules inside the virtual group', async () => {
-      renderRulesGroup(namespace, virtualGroup, true);
-      expect(await screen.findByText('FirstRule')).toBeInTheDocument();
-      expect(await screen.findByText('SecondRule')).toBeInTheDocument();
+    it('Should display rule name with (Ungrouped) suffix in grouped view', async () => {
+      renderRulesGroup(namespace, ungroupedGroup);
+      expect(await screen.findByText(/TestRule \(Ungrouped\)/)).toBeInTheDocument();
     });
   });
 });
