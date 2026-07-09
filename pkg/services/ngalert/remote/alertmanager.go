@@ -115,8 +115,8 @@ type AlertmanagerConfig struct {
 	RuntimeConfig remoteClient.RuntimeConfig
 
 	// MaxLabelStringSize overrides the sender's byte cap on any single
-	// label/annotation name or value. Nil keeps the sender default
-	// (sender.DefaultMaxLabelStringSize); a non-positive value disables the clamp.
+	// label/annotation name or value. 0 keeps the sender default
+	// (sender.DefaultMaxLabelStringSize)
 	MaxLabelStringSize int
 }
 
