@@ -25,6 +25,7 @@ import {
   rulerRuleType,
 } from '../utils/rules';
 
+import { type FolderBulkAction } from './abilities/types';
 import { useIsRuleEditable } from './useIsRuleEditable';
 
 /**
@@ -96,12 +97,6 @@ export enum AlertRuleAction {
 export enum EnrichmentAction {
   Read = 'read-enrichment',
   Write = 'write-enrichment',
-}
-
-// this enum list all of the bulk actions we can perform on a folder
-export enum FolderBulkAction {
-  Pause = 'pause-folder', // unpause permissions are the same as pause
-  Delete = 'delete-folder',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
