@@ -52,10 +52,17 @@ export interface TraceToLogsData extends DataSourceJsonData {
 /**
  * Gets new version of the traceToLogs config from the json data either returning directly or transforming the old
  * version to new and returning that.
+ *
+ * Span and trace ID filtering default to on when unset so the trace-to-logs link scopes logs to the span/trace
+ * instead of returning every log for the service. An explicit `false` means the user opted out and is preserved.
  */
 export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOptionsV2 | undefined {
   if (data?.tracesToLogsV2) {
-    return data.tracesToLogsV2;
+    return {
+      ...data.tracesToLogsV2,
+      filterByTraceID: data.tracesToLogsV2.filterByTraceID ?? true,
+      filterBySpanID: data.tracesToLogsV2.filterBySpanID ?? true,
+    };
   }
   if (!data?.tracesToLogs) {
     return undefined;
@@ -67,8 +74,8 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
   traceToLogs.tags = data.tracesToLogs.mapTagNamesEnabled
     ? data.tracesToLogs.mappedTags
     : data.tracesToLogs.tags?.map((tag) => ({ key: tag }));
-  traceToLogs.filterByTraceID = data.tracesToLogs.filterByTraceID;
-  traceToLogs.filterBySpanID = data.tracesToLogs.filterBySpanID;
+  traceToLogs.filterByTraceID = data.tracesToLogs.filterByTraceID ?? true;
+  traceToLogs.filterBySpanID = data.tracesToLogs.filterBySpanID ?? true;
   traceToLogs.spanStartTimeShift = data.tracesToLogs.spanStartTimeShift;
   traceToLogs.spanEndTimeShift = data.tracesToLogs.spanEndTimeShift;
   return traceToLogs;

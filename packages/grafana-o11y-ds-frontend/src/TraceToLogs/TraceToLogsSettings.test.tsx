@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import { getTraceToLogsOptions, type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
@@ -118,5 +118,63 @@ describe('TraceToLogsSettings', () => {
         },
       },
     ]);
+  });
+
+  it('renders unset ID filters as enabled by default', () => {
+    const options = {
+      jsonData: {
+        tracesToLogsV2: {
+          datasourceUid: 'loki1_uid',
+          customQuery: false,
+        },
+      },
+    } as unknown as DataSourceSettings<TraceToLogsData>;
+    render(<TraceToLogsSettings options={options} onOptionsChange={() => {}} />);
+    expect((screen.getByLabelText('Filter by trace ID') as HTMLInputElement).checked).toBeTruthy();
+    expect((screen.getByLabelText('Filter by span ID') as HTMLInputElement).checked).toBeTruthy();
+  });
+});
+
+describe('getTraceToLogsOptions', () => {
+  it('defaults span and trace ID filtering to on when unset (v2)', () => {
+    const result = getTraceToLogsOptions({
+      tracesToLogsV2: { datasourceUid: 'loki1_uid', customQuery: false },
+    });
+    expect(result?.filterByTraceID).toBe(true);
+    expect(result?.filterBySpanID).toBe(true);
+  });
+
+  it('preserves an explicit false opt-out (v2)', () => {
+    const result = getTraceToLogsOptions({
+      tracesToLogsV2: {
+        datasourceUid: 'loki1_uid',
+        customQuery: false,
+        filterByTraceID: false,
+        filterBySpanID: false,
+      },
+    });
+    expect(result?.filterByTraceID).toBe(false);
+    expect(result?.filterBySpanID).toBe(false);
+  });
+
+  it('defaults span and trace ID filtering to on when unset (v1 -> v2 transform)', () => {
+    const result = getTraceToLogsOptions({
+      tracesToLogs: { datasourceUid: 'loki1_uid' },
+    });
+    expect(result?.filterByTraceID).toBe(true);
+    expect(result?.filterBySpanID).toBe(true);
+  });
+
+  it('preserves an explicit false opt-out through the v1 -> v2 transform', () => {
+    const result = getTraceToLogsOptions({
+      tracesToLogs: { datasourceUid: 'loki1_uid', filterByTraceID: false, filterBySpanID: false },
+    });
+    expect(result?.filterByTraceID).toBe(false);
+    expect(result?.filterBySpanID).toBe(false);
+  });
+
+  it('returns undefined when no trace-to-logs config is present', () => {
+    expect(getTraceToLogsOptions({})).toBeUndefined();
+    expect(getTraceToLogsOptions(undefined)).toBeUndefined();
   });
 });
