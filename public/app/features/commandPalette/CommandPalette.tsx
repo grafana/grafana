@@ -451,6 +451,28 @@ const RenderResults = ({
     showEmptyState && reportInteraction('grafana_empty_state_shown', { source: 'command_palette' });
   }, [showEmptyState]);
 
+  // Denominator for Deep Search Discovery/Adoption: fire once per settled deep
+  // search render. useDeepSearchResults already debounces the fetch, so keying
+  // off its fetching flag settling to false gives one event per result set
+  // rather than one per keystroke.
+  const deepSearchWasFetchingRef = useRef(false);
+  useEffect(() => {
+    const settled = deepSearchWasFetchingRef.current && !isFetchingDeepSearchResults;
+    deepSearchWasFetchingRef.current = isFetchingDeepSearchResults;
+    if (settled && showDeepSearch) {
+      reportInteraction(
+        'command_palette_deep_search_results_shown',
+        {
+          isDeepSearchEnabled: deepSearchEnabled,
+          isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
+          deepSearchItemsCount: deepSearchResults.length,
+          queryLength: bucketQueryLength(searchQuery.length),
+        },
+        { silent: true }
+      );
+    }
+  }, [isFetchingDeepSearchResults, showDeepSearch, deepSearchResults, deepSearchEnabled, searchQuery]);
+
   if (showEmptyState) {
     return (
       <div className={styles.resultsContainer}>
