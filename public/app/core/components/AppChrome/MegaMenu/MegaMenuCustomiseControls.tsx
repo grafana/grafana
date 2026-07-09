@@ -21,7 +21,10 @@ export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancel
       {canReset && (
         <IconButton
           name="history"
-          tooltip={t('navigation.megamenu.customise-reset', 'Reset to default')}
+          tooltip={t(
+            'navigation.megamenu.customise-reset',
+            'Reset navigation - show all items, unpin all and reset order'
+          )}
           onClick={onResetToDefault}
           variant="secondary"
           disabled={saving}

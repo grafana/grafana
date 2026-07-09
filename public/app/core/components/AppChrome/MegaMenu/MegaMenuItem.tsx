@@ -33,9 +33,7 @@ interface Props {
   onToggleHidden?: (item: NavModelItem, effectivelyHidden: boolean) => void;
   /** Whether an ancestor of this item is hidden (so this item is implicitly hidden too) */
   ancestorHidden?: boolean;
-  /** This item is a pinned row rendered at the top of the menu */
-  pinned?: boolean;
-  /** When set (top-level pinned rows in edit mode), makes the row draggable and shows a drag handle */
+  /** When set (top-level rows in edit mode), makes the row draggable and shows a drag handle */
   draggableProvided?: DraggableProvided;
   /** Customisation is enabled — gates the new pin/hide behaviour; off restores the legacy bookmarks UI */
   canCustomise?: boolean;
@@ -59,7 +57,6 @@ export function MegaMenuItem({
   isHidden,
   onToggleHidden,
   ancestorHidden,
-  pinned,
   draggableProvided,
   canCustomise,
   loadingChildren,
@@ -74,11 +71,9 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
-  // Pinned sections use a separate expand-state key (and default to expanded) so a section shown
-  // both pinned and in the normal nav doesn't share — and fight over — the same collapse state.
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
-    `grafana.navigation.expanded[${pinned ? 'pinned/' : ''}${link.text}]`,
-    pinned ? true : Boolean(hasActiveChild)
+    `grafana.navigation.expanded[${link.text}]`,
+    Boolean(hasActiveChild)
   );
   // Only count children that actually render (create actions are filtered out below), so a section
   // whose visible children are all hidden doesn't keep an expand button that opens to nothing.
@@ -134,28 +129,14 @@ export function MegaMenuItem({
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
   // every item shows it (gating lives in MegaMenuItemText). With it on: only **non-top-level** items
-  // are pinnable — top-level sections aren't, except Starred (a special case). In the pinned box the
-  // control is the unpin on each pinned row: a childless endpoint, or Starred (which keeps its
-  // children there) — structural-ancestor rows (e.g. Dashboards over Playlists) show nothing.
+  // are pinnable — top-level sections aren't, except Starred (a special case).
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
   const isPinnableTopLevel = level > 0 || link.id === 'starred';
-  const isPinnedBoxEndpoint = (!linkHasChildren(link) || link.id === 'starred') && isPinnableItem;
-  const showPin = !canCustomise || (pinned ? isPinnedBoxEndpoint : isPinnableTopLevel && isPinnableItem);
+  const showPin = !canCustomise || (isPinnableTopLevel && isPinnableItem);
 
   return (
     <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
       <div className={styles.menuItem}>
-        {draggableProvided && (
-          <div
-            className={styles.dragHandle}
-            {...draggableProvided.dragHandleProps}
-            aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
-              itemName: link.text,
-            })}
-          >
-            <Icon name="draggabledots" size="lg" />
-          </div>
-        )}
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -173,8 +154,8 @@ export function MegaMenuItem({
             itemName={link.text}
             canCustomise={canCustomise}
             editMode={editMode}
-            // Hiding is top-level-only: only offer the eye on top-level nav rows (never in the box).
-            isHideable={!pinned && level === 0 ? isHideable?.(link) : false}
+            // Hiding works at any depth — offer the eye on every hideable nav row.
+            isHideable={isHideable?.(link) ?? false}
             isHidden={effectivelyHidden}
             onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
           >
@@ -214,6 +195,23 @@ export function MegaMenuItem({
             />
           )}
         </div>
+        {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
+            the pin/hide/chevron columns line up between top-level sections and their children. */}
+        {editMode && (
+          <div className={styles.dragColumn}>
+            {draggableProvided && (
+              <div
+                className={styles.dragHandle}
+                {...draggableProvided.dragHandleProps}
+                aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
+                  itemName: link.text,
+                })}
+              >
+                <Icon name="draggabledots" size="lg" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {childrenVisible && (
         <ul className={styles.children}>
@@ -234,7 +232,6 @@ export function MegaMenuItem({
                   isHidden={isHidden}
                   onToggleHidden={onToggleHidden}
                   ancestorHidden={effectivelyHidden}
-                  pinned={pinned}
                   canCustomise={canCustomise}
                 />
               ))
@@ -279,6 +276,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({
     flex: 1,
     maxWidth: '100%',
+  }),
+  // Fixed-width column that reserves the drag-handle slot even on non-draggable rows, so control
+  // columns line up across top-level sections and children.
+  dragColumn: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'center',
+    width: theme.spacing(3),
   }),
   dragHandle: css({
     alignItems: 'center',

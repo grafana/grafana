@@ -55,9 +55,10 @@ export function MegaMenuItemText({
       : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', { itemName });
   }
 
-  // The pin control is always available (edit mode or not); outside edit mode it's revealed on
-  // hover/focus like the legacy bookmark control.
-  const showPinControl = showPin && contextSrv.isSignedIn && Boolean(url) && url !== '/bookmarks';
+  // Pinning is a customisation action, so with customisation on the pin control only appears while
+  // editing. The legacy (flag-off) bookmark control keeps its always-on-hover behaviour.
+  const showPinControl =
+    showPin && contextSrv.isSignedIn && Boolean(url) && url !== '/bookmarks' && (!canCustomise || Boolean(editMode));
   const showHideControl = Boolean(editMode && isHideable);
 
   const linkContent = (
@@ -69,6 +70,36 @@ export function MegaMenuItemText({
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
     </div>
+  );
+
+  const pinButton = (
+    <IconButton
+      // When customising, show a struck-through pin (gf-unpin) for pinned items so the unpin action
+      // reads clearly; unpinned items show gf-pin. iconType is a no-op for the custom gf- icons.
+      name={canCustomise ? (isPinned ? 'gf-unpin' : 'gf-pin') : 'bookmark'}
+      // Always-visible in edit mode; hover-only (the `pin-icon` treatment) for the legacy control.
+      className={canCustomise ? 'customise-icon' : 'pin-icon'}
+      // Highlight the unpin action in red so it clearly reads as "remove".
+      variant={canCustomise && isPinned ? 'destructive' : 'secondary'}
+      iconType={isPinned ? 'solid' : 'default'}
+      onClick={() => onPin(url)}
+      aria-pressed={isPinned}
+      tooltip={pinTooltip}
+    />
+  );
+
+  const hideButton = (
+    <IconButton
+      name={isHidden ? 'eye-slash' : 'eye'}
+      className={'visibility-icon'}
+      onClick={onToggleHidden}
+      aria-pressed={isHidden}
+      tooltip={
+        isHidden
+          ? t('navigation.item.show.tooltip', 'Show {{itemName}}', { itemName })
+          : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', { itemName })
+      }
+    />
   );
 
   return (
@@ -83,38 +114,20 @@ export function MegaMenuItemText({
       >
         {linkContent}
       </LinkComponent>
-      {(showPinControl || showHideControl) && (
-        <Stack alignItems="center" gap={0} shrink={0}>
-          {/* Hide sits to the left of pin so the pin control keeps the same rightmost column
-              whether or not a row also has a hide control (pinned rows have pin only). */}
-          {showHideControl && (
-            <IconButton
-              name={isHidden ? 'eye-slash' : 'eye'}
-              className={'visibility-icon'}
-              onClick={onToggleHidden}
-              aria-pressed={isHidden}
-              tooltip={
-                isHidden
-                  ? t('navigation.item.show.tooltip', 'Show {{itemName}}', { itemName })
-                  : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', { itemName })
-              }
-            />
+      {canCustomise
+        ? (showPinControl || showHideControl) && (
+            // Fixed-width slots so the pin and hide controls line up in columns across every row
+            // (a pin-only row keeps the pin in the pin column, leaving the hide column empty).
+            <div className={styles.controls}>
+              <span className={styles.controlSlot}>{showPinControl && pinButton}</span>
+              <span className={styles.controlSlot}>{showHideControl && hideButton}</span>
+            </div>
+          )
+        : showPinControl && (
+            <Stack alignItems="center" gap={0} shrink={0}>
+              {pinButton}
+            </Stack>
           )}
-          {showPinControl && (
-            <IconButton
-              // When customising, show a struck-through pin (gf-unpin) for pinned items so the unpin
-              // action reads clearly; unpinned items show gf-pin. iconType is a no-op for gf- icons.
-              name={canCustomise ? (isPinned ? 'gf-unpin' : 'gf-pin') : 'bookmark'}
-              // Always-visible in edit mode; hover-only (the `pin-icon` treatment) otherwise.
-              className={canCustomise && editMode ? 'customise-icon' : 'pin-icon'}
-              iconType={isPinned ? 'solid' : 'default'}
-              onClick={() => onPin(url)}
-              aria-pressed={isPinned}
-              tooltip={pinTooltip}
-            />
-          )}
-        </Stack>
-      )}
     </div>
   );
 }
@@ -140,6 +153,18 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
         visibility: 'visible',
       },
     },
+  }),
+  // Fixed control columns (pin, hide) so each control type lines up vertically across rows.
+  controls: css({
+    display: 'flex',
+    flexShrink: 0,
+  }),
+  controlSlot: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'center',
+    width: theme.spacing(3),
   }),
   hiddenInEdit: css({
     opacity: 0.5,

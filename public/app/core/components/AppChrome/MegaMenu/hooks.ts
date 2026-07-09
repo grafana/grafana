@@ -21,16 +21,19 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { contextSrv } from '../../../services/context_srv';
 
 import {
-  buildPinnedTree,
   enrichWithInteractionTracking,
   findByUrl,
   getActiveItem,
+  getPinnedEntries,
+  hiddenKey,
+  hideItem,
   isHideable,
+  moveItem,
   NON_MENU_NAV_IDS,
   orderTopLevelSections,
   removeHiddenItems,
-  reorderPinnedBlocks,
   reorderSections,
+  revealItem,
 } from './utils';
 
 export const usePinnedItems = () => {
@@ -146,14 +149,21 @@ export const useNavCustomization = () => {
     (item) => !NON_MENU_NAV_IDS[item.id ?? ''] && !(canCustomise && item.id === 'bookmarks')
   );
 
-  // Pinned box (a mini tree). Pinning duplicates items here; the main nav below is never pruned.
+  // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items
+  // here; the main nav below is never pruned. Leaf items are enriched so clicks are tracked.
   const pinnedUrlsToDisplay = editMode ? draftPinnedUrls : pinnedUrls;
-  const pinnedSet = new Set(pinnedUrlsToDisplay);
-  const pinnedNavItems = (canCustomise ? buildPinnedTree(baseItems, pinnedSet, pinnedUrlsToDisplay) : []).map((item) =>
-    enrichWithInteractionTracking(item, docked)
-  );
+  const pinnedEntries = (canCustomise ? getPinnedEntries(baseItems, pinnedUrlsToDisplay) : []).map((entry) => ({
+    ...entry,
+    section: entry.section ? enrichWithInteractionTracking(entry.section, docked) : undefined,
+    lines: entry.lines.map((line) => ({ ...line, item: enrichWithInteractionTracking(line.item, docked) })),
+  }));
+  // The pinned items (section headers + leaves), for active-item resolution alongside the nav.
+  const pinnedLeafItems = pinnedEntries.flatMap((entry) => [
+    ...(entry.section ? [entry.section] : []),
+    ...entry.lines.map((line) => line.item),
+  ]);
 
-  // Top-level nav in the user's order; hidden top-level sections are dropped outside edit mode and
+  // Top-level nav in the user's order; hidden items (any depth) are dropped outside edit mode and
   // shown (greyed) while editing so they can be toggled back. Children are untouched by pinning.
   const effectiveSectionOrder = editMode ? draftSectionOrder : (sectionOrder ?? []);
   const orderedTop = canCustomise ? orderTopLevelSections(baseItems, effectiveSectionOrder) : baseItems;
@@ -182,7 +192,7 @@ export const useNavCustomization = () => {
 
   // Resolve the active item from the rendered nav first (the canonical copy), falling back to the
   // pinned box. Reference equality then highlights whichever rendered row is the match.
-  const activeItem = getActiveItem([...navItems, ...pinnedNavItems], state.sectionNav.node, location.pathname);
+  const activeItem = getActiveItem([...navItems, ...pinnedLeafItems], state.sectionNav.node, location.pathname);
 
   const isPinned = useCallback(
     (url?: string) => Boolean(url && pinnedUrlsToDisplay.includes(url)),
@@ -224,17 +234,22 @@ export const useNavCustomization = () => {
     }
   };
 
-  // Hiding is top-level only (the level check lives in MegaMenuItem); toggle the section's id.
+  // Hiding works at any depth. Hide adds the item's id (no collapse to the parent); reveal "breaks
+  // apart" a hidden ancestor so only this item's path is shown and the rest of the subtree stays hidden.
   const isItemHideable = useCallback((item: NavModelItem) => isHideable(item), []);
-  const isHidden = useCallback((item: NavModelItem) => draftHiddenIds.includes(item.id ?? ''), [draftHiddenIds]);
-  const onToggleHidden = useCallback((item: NavModelItem, effectivelyHidden: boolean) => {
-    if (!item.id) {
-      return;
-    }
-    setDraftHiddenIds((current) =>
-      effectivelyHidden ? current.filter((id) => id !== item.id) : [...current, item.id!]
-    );
-  }, []);
+  const isHidden = useCallback((item: NavModelItem) => draftHiddenIds.includes(hiddenKey(item)), [draftHiddenIds]);
+  const onToggleHidden = useCallback(
+    (item: NavModelItem, effectivelyHidden: boolean) => {
+      const key = hiddenKey(item);
+      if (!key) {
+        return;
+      }
+      setDraftHiddenIds((current) =>
+        effectivelyHidden ? revealItem(current, baseItems, key) : hideItem(current, baseItems, key)
+      );
+    },
+    [baseItems]
+  );
 
   // Reset the drafts to the applied state — used both when opening edit mode and when cancelling.
   const syncDraftsFromApplied = useCallback(() => {
@@ -272,14 +287,12 @@ export const useNavCustomization = () => {
     setEditMode(false);
   }, [draftHiddenIds, draftPinnedUrls, draftSectionOrder, persistBookmarkUrls, setHiddenItemIds, setSectionOrder]);
 
-  // Reorder the pinned box's top-level blocks (staged; persisted on save).
-  const onReorderPinned = useCallback(
-    (fromIndex: number, toIndex: number) => {
-      reportInteraction('grafana_nav_pinned_reordered');
-      setDraftPinnedUrls((current) => reorderPinnedBlocks(current, baseItems, fromIndex, toIndex));
-    },
-    [baseItems]
-  );
+  // Reorder the pinned entries (staged; persisted on save). Each entry is one pinned url, so this is
+  // a plain move within the stored url list.
+  const onReorderPinned = useCallback((fromIndex: number, toIndex: number) => {
+    reportInteraction('grafana_nav_pinned_reordered');
+    setDraftPinnedUrls((current) => moveItem(current, fromIndex, toIndex));
+  }, []);
 
   // Reorder the top-level sections (staged; persisted to localStorage on save).
   const onReorderSection = useCallback(
@@ -305,7 +318,7 @@ export const useNavCustomization = () => {
     canCustomise,
     isLoading,
     navItems,
-    pinnedNavItems,
+    pinnedEntries,
     activeItem,
     isPinned,
     onPinItem,

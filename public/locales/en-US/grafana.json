@@ -12187,10 +12187,10 @@
     },
     "megamenu": {
       "close": "Close menu",
-      "customise": "Customise menu",
+      "customise": "Customise navigation",
       "customise-cancel": "Cancel",
       "customise-done": "Done",
-      "customise-reset": "Reset to default",
+      "customise-reset": "Reset navigation - show all items, unpin all and reset order",
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",

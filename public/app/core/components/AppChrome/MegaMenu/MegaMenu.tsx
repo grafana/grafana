@@ -15,6 +15,7 @@ import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
+import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
 
@@ -36,7 +37,7 @@ export const MegaMenu = memo(
       canCustomise,
       isLoading,
       navItems,
-      pinnedNavItems,
+      pinnedEntries,
       activeItem,
       isPinned,
       onPinItem,
@@ -61,16 +62,11 @@ export const MegaMenu = memo(
       }
     };
 
-    const renderNavItem = (
-      link: NavModelItem,
-      key: string = link.text,
-      pinned = false,
-      draggableProvided?: DraggableProvided
-    ) => (
+    const renderNavItem = (link: NavModelItem, key: string = link.text, draggableProvided?: DraggableProvided) => (
       <MegaMenuItem
         key={key}
         link={link}
-        isPinned={pinned ? () => true : isPinned}
+        isPinned={isPinned}
         onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
@@ -79,7 +75,6 @@ export const MegaMenu = memo(
         isHidden={isHidden}
         onToggleHidden={onToggleHidden}
         ancestorHidden={false}
-        pinned={pinned}
         canCustomise={canCustomise}
         draggableProvided={draggableProvided}
         loadingChildren={link.id === 'starred' && starredItemsLoading}
@@ -89,7 +84,6 @@ export const MegaMenu = memo(
 
     const navLabel = t('navigation.megamenu.list-label', 'Navigation');
     const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
-    const pinnedKey = (link: NavModelItem) => `pinned-${link.id ?? link.url}`;
     const sectionKey = (link: NavModelItem) => `section-${link.id ?? link.text}`;
 
     const onPinnedDragEnd = (result: DropResult) => {
@@ -103,12 +97,33 @@ export const MegaMenu = memo(
       }
     };
 
-    // Pinned box: a subtle grey box of pinned items as a mini tree, duplicated from the nav. The
-    // top-level blocks are drag-reorderable while editing.
+    // Unpin a pinned entry by toggling its url off (only the url is used when customisation is on).
+    const onUnpin = (url: string) => onPinItem({ text: '', url });
+
+    const renderPinnedEntry = (entry: (typeof pinnedEntries)[number], draggableProvided?: DraggableProvided) => (
+      <MegaMenuPinnedItem
+        key={entry.url}
+        entry={entry}
+        activeItem={activeItem}
+        editMode={editMode}
+        onUnpin={() => onUnpin(entry.url)}
+        onClick={state.megaMenuDocked ? undefined : onClose}
+        draggableProvided={draggableProvided}
+      />
+    );
+
+    // Pinned box: a subtle grey box, with a "Pinned" heading, listing each pinned item as a compact
+    // horizontal breadcrumb. Entries are drag-reorderable while editing.
     const renderPinnedBox = () =>
-      pinnedNavItems.length > 0 && (
+      pinnedEntries.length > 0 && (
         <>
           <div className={styles.pinnedBox}>
+            <div className={styles.pinnedHeading}>
+              <Icon className={styles.pinnedHeadingIcon} name="gf-pin" size="lg" />
+              <Text color="secondary" weight="medium">
+                {pinnedListLabel}
+              </Text>
+            </div>
             {editMode ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
                 <Droppable droppableId="megamenu-pinned">
@@ -119,9 +134,9 @@ export const MegaMenu = memo(
                       ref={dropProvided.innerRef}
                       {...dropProvided.droppableProps}
                     >
-                      {pinnedNavItems.map((link, index) => (
-                        <Draggable key={pinnedKey(link)} draggableId={pinnedKey(link)} index={index}>
-                          {(dragProvided) => renderNavItem(link, pinnedKey(link), true, dragProvided)}
+                      {pinnedEntries.map((entry, index) => (
+                        <Draggable key={entry.url} draggableId={`pinned-${entry.url}`} index={index}>
+                          {(dragProvided) => renderPinnedEntry(entry, dragProvided)}
                         </Draggable>
                       ))}
                       {dropProvided.placeholder}
@@ -131,7 +146,7 @@ export const MegaMenu = memo(
               </DragDropContext>
             ) : (
               <ul className={styles.list} aria-label={pinnedListLabel}>
-                {pinnedNavItems.map((link) => renderNavItem(link, pinnedKey(link), true))}
+                {pinnedEntries.map((entry) => renderPinnedEntry(entry))}
               </ul>
             )}
           </div>
@@ -153,7 +168,7 @@ export const MegaMenu = memo(
               >
                 {navItems.map((link, index) => (
                   <Draggable key={sectionKey(link)} draggableId={sectionKey(link)} index={index}>
-                    {(dragProvided) => renderNavItem(link, sectionKey(link), false, dragProvided)}
+                    {(dragProvided) => renderNavItem(link, sectionKey(link), dragProvided)}
                   </Draggable>
                 ))}
                 {dropProvided.placeholder}
@@ -195,7 +210,7 @@ export const MegaMenu = memo(
           {canCustomise && !editMode && (
             <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
               <Icon name="sliders-v-alt" size="lg" />
-              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise menu')}</Text>
+              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise navigation')}</Text>
             </button>
           )}
           {editMode && (
@@ -235,7 +250,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      padding: theme.spacing(1, 1, 2, 0.5),
+      // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
+      // inset by the box margin + its own padding).
+      padding: theme.spacing(1, 1, 2, 1.5),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
@@ -247,18 +264,35 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       margin: 0,
     }),
-    // Subtle grey box around the pinned items.
+    // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
+    // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
+    // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
     pinnedBox: css({
       backgroundColor: theme.colors.background.secondary,
+      border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(1.5, 1.5, 1, 1.5),
+      margin: theme.spacing(1, 1, 0, 1),
       padding: theme.spacing(1),
     }),
-    // Divider separating the pinned box from the rest of the nav.
+    // "Pinned" heading row (pin icon + label). The icon uses the same column/size as the item rows'
+    // leading icons so the heading lines up with the pinned items beneath it.
+    pinnedHeading: css({
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      height: theme.spacing(4),
+    }),
+    pinnedHeadingIcon: css({
+      flexShrink: 0,
+      width: theme.spacing(3),
+    }),
+    // Divider separating the pinned box from the rest of the nav. Its top margin matches the nav
+    // list's top padding so the line sits with equal spacing above and below.
     pinnedDivider: css({
       border: 'none',
       borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(0, 2, 1, 2),
+      margin: theme.spacing(1, 2, 0, 2),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({

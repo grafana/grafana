@@ -171,102 +171,74 @@ const isPinnable = (item: NavModelItem): boolean =>
 // Children that participate in pinning.
 const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
 
-/** Urls of the pinnable leaves under an item — or the item's own url if it has no pinnable children. */
-export function getPinnableLeafUrls(item: NavModelItem): string[] {
-  const children = pinnableChildren(item);
-  if (children.length > 0) {
-    return children.flatMap(getPinnableLeafUrls);
+/** The chain of nodes from a root item down to (and including) the first item matching `match`. */
+function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean): NavModelItem[] | null {
+  for (const item of items) {
+    if (match(item)) {
+      return [item];
+    }
+    const childPath = item.children ? findPath(item.children, match) : null;
+    if (childPath) {
+      return [item, ...childPath];
+    }
   }
-  return item.url ? [item.url] : [];
+  return null;
 }
 
-/** First index in `orderUrls` at which any of the item's (section or leaf) urls appears, else Infinity. */
-function firstPinnedIndex(item: NavModelItem, orderUrls: string[]): number {
-  const urls = new Set<string>(getPinnableLeafUrls(item));
-  if (item.url) {
-    urls.add(item.url);
+/** One breadcrumb line in the pinned box: the nav item it links to, its ancestor text labels, and
+ * the icon of its top-level parent section (shown as the row's leading icon). */
+export interface PinnedLine {
+  item: NavModelItem;
+  ancestors: string[];
+  icon?: string;
+}
+
+/** A pinned entry: one pinned url. A normal pin has a single breadcrumb line; a whole-section pin
+ * (Starred) additionally carries the `section` node and is rendered as a collapsible section. */
+export interface PinnedEntry {
+  url: string;
+  section?: NavModelItem;
+  lines: PinnedLine[];
+}
+
+/**
+ * Resolve the pinned urls (in their stored order) into entries for the pinned box. A normal url
+ * becomes one entry with a single breadcrumb line (its ancestor path + itself). A whole-section pin
+ * whose children aren't individually pinnable — i.e. Starred — is flagged with `section` (its node)
+ * so the box renders it as a collapsible section listing its children. Urls matching no nav item are
+ * skipped.
+ */
+export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): PinnedEntry[] {
+  const entries: PinnedEntry[] = [];
+  for (const url of pinnedUrls) {
+    const path = findPath(items, (item) => item.url === url);
+    if (!path) {
+      continue;
+    }
+    const node = path[path.length - 1];
+    const ancestors = path.slice(0, -1).map((item) => item.text);
+    // The leading icon comes from the top-level parent section (path[0]) — its own icon for a
+    // top-level pin, or the ancestor section's icon for a nested one.
+    const icon = path[0].icon;
+    const children = (node.children ?? []).filter((child) => !child.isCreateAction);
+    if (children.length > 0 && pinnableChildren(node).length === 0) {
+      entries.push({ url, section: node, lines: children.map((child) => ({ item: child, ancestors, icon })) });
+    } else {
+      entries.push({ url, lines: [{ item: node, ancestors, icon }] });
+    }
   }
-  const index = orderUrls.findIndex((url) => urls.has(url));
-  return index === -1 ? Infinity : index;
+  return entries;
 }
 
-/**
- * Order top-level items by the user-defined pin order (`orderUrls`, the stored bookmark list):
- * items appear in the order their urls first show up in `orderUrls`; anything not yet in that list
- * (e.g. a freshly-pinned item) keeps its nav-tree position and sorts after the known ones. Passing
- * an empty `orderUrls` therefore leaves the nav-tree order untouched.
- */
-function orderByPins(items: NavModelItem[], orderUrls: string[]): NavModelItem[] {
-  return items
-    .map((item, navIndex) => ({ item, navIndex }))
-    .sort(
-      (a, b) => firstPinnedIndex(a.item, orderUrls) - firstPinnedIndex(b.item, orderUrls) || a.navIndex - b.navIndex
-    )
-    .map(({ item }) => item);
-}
-
-/** Whether an item is pinned in its own right (its url is in the pinned set). */
-function isItemPinned(item: NavModelItem, pinned: Set<string>): boolean {
-  return Boolean(item.url && pinned.has(item.url));
-}
-
-/** Whether an item is pinned itself or has any pinned descendant (so it appears in the pinned area). */
-function hasPinnedItem(item: NavModelItem, pinned: Set<string>): boolean {
-  return isItemPinned(item, pinned) || pinnableChildren(item).some((child) => hasPinnedItem(child, pinned));
-}
-
-/**
- * Build the pinned subtree to render at the top of the menu. A directly-pinned item is an endpoint
- * shown without expanding its children — except Starred, which pins as a whole but still lists its
- * starred dashboards. An item that only has pinned descendants is kept as a structural ancestor with
- * just the branches that lead to a pinned item — so pinning "Playlists" surfaces "Dashboards → Playlists".
- */
-function buildPinnedBranch(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
-  return items
-    .filter((item) => hasPinnedItem(item, pinned))
-    .map((item) => {
-      if (isItemPinned(item, pinned)) {
-        // Starred keeps its (non-pinnable) child dashboards; every other pinned node is an endpoint.
-        return item.id === 'starred' ? { ...item } : { ...item, children: undefined };
-      }
-      const children = pinnableChildren(item);
-      return children.length > 0
-        ? { ...item, children: buildPinnedBranch(children, pinned) }
-        : { ...item, children: undefined };
-    });
-}
-
-/**
- * The pinned mini-tree for the box: each pinned item shown under its ancestor chain (structural
- * ancestors kept only for the branches that lead to a pin; pinned nodes are non-expanded endpoints).
- * Top-level blocks are ordered by the user's pin order (`orderUrls`). Pins are duplicates — the main
- * nav is never pruned, so there is no "rest"/partition step any more.
- */
-export function buildPinnedTree(items: NavModelItem[], pinned: Set<string>, orderUrls: string[] = []): NavModelItem[] {
-  return orderByPins(buildPinnedBranch(items, pinned), orderUrls);
-}
-
-/**
- * Move the top-level pinned block at `fromIndex` to `toIndex` and rebuild the canonical stored url
- * list so the block order reflects the new arrangement (each block's urls stay grouped together).
- */
-export function reorderPinnedBlocks(
-  orderUrls: string[],
-  items: NavModelItem[],
-  fromIndex: number,
-  toIndex: number
-): string[] {
-  const blocks = buildPinnedTree(items, new Set(orderUrls), orderUrls);
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= blocks.length || toIndex >= blocks.length) {
-    return orderUrls;
+/** Move the element at `from` to `to`, returning a new array (no-op for out-of-range indices). */
+export function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  if (from < 0 || to < 0 || from >= arr.length || to >= arr.length) {
+    return arr;
   }
-  const reordered = [...blocks];
-  const [moved] = reordered.splice(fromIndex, 1);
-  reordered.splice(toIndex, 0, moved);
-  return reordered.flatMap((block) => {
-    const leaves = new Set(getPinnableLeafUrls(block));
-    return orderUrls.filter((url) => url === block.url || leaves.has(url));
-  });
+  const next = [...arr];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
 }
 
 // ----- Hiding -----
@@ -280,12 +252,82 @@ const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
 // the logo, so it isn't repeated as a menu item.
 export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
 
-/** Whether a (top-level) section can be hidden. Excludes Home/Bookmarks/Starred. Hiding is top-level only. */
-export const isHideable = (item: NavModelItem): boolean => Boolean(item.id) && !PROTECTED_NAV_IDS.has(item.id ?? '');
+/**
+ * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav
+ * items often have only a url). Everything hiding-related keys on this so any linked row can be hidden.
+ */
+export const hiddenKey = (item: NavModelItem): string => item.id ?? item.url ?? '';
 
-/** Drop the hidden top-level sections (by id). Hiding is top-level only, so no recursion is needed. */
+/**
+ * Whether an item can be hidden (any depth). Needs an id or url; excludes Home/Bookmarks/Starred,
+ * create actions and the dynamic starred sub-items (the `starred/` id prefix).
+ */
+export const isHideable = (item: NavModelItem): boolean =>
+  Boolean(hiddenKey(item)) &&
+  !PROTECTED_NAV_IDS.has(item.id ?? '') &&
+  !item.isCreateAction &&
+  !item.id?.startsWith(ID_PREFIX);
+
+// Children that can be hidden — used when "breaking apart" a hidden parent.
+const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
+
+/**
+ * Build the normal nav with hidden items removed. A hidden node takes its subtree with it; a
+ * partially-hidden parent keeps its non-hidden children (so all-children-hidden still shows the parent).
+ */
 export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): NavModelItem[] {
-  return items.filter((item) => !hidden.has(item.id ?? ''));
+  return items
+    .filter((item) => !hidden.has(hiddenKey(item)))
+    .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/** All descendant keys of an item. */
+function getDescendantKeys(item: NavModelItem): string[] {
+  return (item.children ?? []).flatMap((child) => {
+    const key = hiddenKey(child);
+    return [...(key ? [key] : []), ...getDescendantKeys(child)];
+  });
+}
+
+/** Hide an item: add its key and drop any of its now-redundant descendant keys. Never adds the parent. */
+export function hideItem(hidden: string[], items: NavModelItem[], key: string): string[] {
+  const node = findPath(items, (item) => hiddenKey(item) === key)?.at(-1);
+  const descendants = new Set(node ? getDescendantKeys(node) : []);
+  return [...hidden.filter((h) => h !== key && !descendants.has(h)), key];
+}
+
+/**
+ * Reveal an item. If it's hidden via an ancestor, "break apart" that hide: remove the hidden
+ * ancestor and hide every off-path sibling down the path to the item, so only the item's path is
+ * revealed and the rest of the hidden subtree stays hidden. If it was only explicitly hidden,
+ * this just removes its key.
+ */
+export function revealItem(hidden: string[], items: NavModelItem[], key: string): string[] {
+  const path = findPath(items, (item) => hiddenKey(item) === key);
+  const next = new Set(hidden);
+  next.delete(key);
+  if (!path) {
+    return [...next];
+  }
+  let underHidden = false;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = path[i];
+    const onPathChildKey = hiddenKey(path[i + 1]);
+    const nodeKey = hiddenKey(node);
+    if (nodeKey && next.has(nodeKey)) {
+      next.delete(nodeKey);
+      underHidden = true;
+    }
+    if (underHidden) {
+      for (const child of hideableChildren(node)) {
+        const childKey = hiddenKey(child);
+        if (childKey && childKey !== onPathChildKey) {
+          next.add(childKey);
+        }
+      }
+    }
+  }
+  return [...next];
 }
 
 // ----- Top-level ordering -----

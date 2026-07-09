@@ -146,7 +146,7 @@ describe('MegaMenu', () => {
       renderMegaMenu();
 
       expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Customise menu' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
     });
 
     it('shows a loading skeleton until preferences have loaded', async () => {
@@ -174,7 +174,7 @@ describe('MegaMenu', () => {
       it('offers a drag handle on each top-level section while editing', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(screen.getByRole('button', { name: 'Reorder Explore' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Reorder Dashboards' })).toBeInTheDocument();
       });
@@ -187,27 +187,46 @@ describe('MegaMenu', () => {
         expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
         expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
         expect(await screen.findByRole('button', { name: 'Show Explore' })).toBeInTheDocument();
       });
 
-      it('offers the hide toggle only on top-level sections — not children or protected items', async () => {
+      it('offers the hide toggle on sections and children, but not protected/create items', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(await screen.findByRole('button', { name: 'Hide Explore' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Hide Home' })).not.toBeInTheDocument();
 
-        // Children are not hideable
+        // Children are hideable too, but create actions (New dashboard) are not.
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
-        expect(screen.queryByRole('button', { name: 'Hide Playlists' })).not.toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Hide Playlists' })).toBeInTheDocument();
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels).not.toContain('Hide New');
+      });
+
+      it('hides a child item — greyed while editing, removed from the nav after Done', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
+
+        // While editing it stays visible (greyed) and can be shown again.
+        expect(await screen.findByRole('button', { name: 'Show Playlists' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+        expect(getStoredHiddenItems()).toEqual(['dashboards/playlists']);
+        // Dashboards stays expanded: the hidden child is gone but its siblings remain.
+        expect(screen.queryByRole('link', { name: 'Playlists' })).not.toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'Snapshots' })).toBeInTheDocument();
       });
 
       it('persists hidden sections to localStorage on Done (pins untouched)', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Hide Explore' }));
         await user.click(await screen.findByRole('button', { name: 'Hide Alerting' }));
         await user.click(await screen.findByRole('button', { name: 'Done' }));
@@ -219,7 +238,7 @@ describe('MegaMenu', () => {
       it('discards changes on Cancel', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Hide Explore' }));
         await user.click(await screen.findByRole('button', { name: 'Cancel' }));
 
@@ -230,19 +249,19 @@ describe('MegaMenu', () => {
     describe('pinning', () => {
       const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned' }));
 
-      it('shows a pinned child under its ancestor in the grey box, and keeps it in the nav', async () => {
+      it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
         await screen.findByRole('list', { name: 'Pinned' });
-        // The box shows the mini tree "Dashboards → Playlists"
-        expect(pinnedRegion().getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
-        expect(pinnedRegion().getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
+        // The box shows the breadcrumb "Dashboards › Playlists" as a single link with an ancestor crumb.
+        expect(pinnedRegion().getByRole('link', { name: /Playlists/ })).toBeInTheDocument();
+        expect(pinnedRegion().getByText('Dashboards')).toBeInTheDocument();
         // No dedicated Bookmarks section
         expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
 
         // Pinning didn't remove it from the nav — expand Dashboards and it's still there (now 2 copies)
         await user.click(screen.getByRole('button', { name: 'Expand section: Dashboards' }));
-        expect(screen.getAllByRole('link', { name: 'Playlists' })).toHaveLength(2);
+        expect(screen.getAllByText('Playlists')).toHaveLength(2);
       });
 
       it('does not render the pinned box when nothing is pinned', async () => {
@@ -255,7 +274,7 @@ describe('MegaMenu', () => {
       it('pins a child from the nav into the box, staged and persisted on Done', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
         const pin = screen
           .getAllByRole('button', { hidden: true })
@@ -263,33 +282,26 @@ describe('MegaMenu', () => {
         await user.click(pin!);
 
         expect(
-          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Playlists' })
+          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: /Playlists/ })
         ).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
       });
 
-      it('pins a child from the nav in non-edit mode, persisting immediately', async () => {
-        const { user } = renderMegaMenu();
+      it('does not offer a pin control outside edit mode', async () => {
+        renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
-        const pin = screen
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
-        await user.click(pin!);
-
-        // No Done step — the pin is written straight to preferences and appears in the box.
-        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
-        expect(
-          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Playlists' })
-        ).toBeInTheDocument();
+        // The Dashboards children render, but no pin control is available until customising.
+        await screen.findByRole('link', { name: 'Explore' });
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels.some((l) => l?.startsWith('Pin '))).toBe(false);
       });
 
       it('does not offer a pin control on top-level sections', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await screen.findByRole('link', { name: 'Dashboards' });
         const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(labels).not.toContain('Pin Dashboards');
@@ -299,7 +311,7 @@ describe('MegaMenu', () => {
       it('offers a pin control on the Starred section (special case) but not its dashboards', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
         expect(await screen.findByRole('link', { name: STARRED_DASHBOARD.name })).toBeInTheDocument();
 
@@ -308,26 +320,27 @@ describe('MegaMenu', () => {
         expect(labels).not.toContain(`Pin ${STARRED_DASHBOARD.name}`); // but its sub-dashboards are not
       });
 
-      it('pins the top-level Starred section in non-edit mode, persisting immediately', async () => {
+      it('pins the top-level Starred section, listing its dashboards in the box', async () => {
         const { user } = renderMegaMenu();
 
-        await screen.findByRole('link', { name: 'Starred' });
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         const pin = screen
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Pin Starred');
         await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
-        // No Done step — the pin is written straight to preferences and appears in the box.
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards?starred']));
-        expect(
-          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Starred' })
-        ).toBeInTheDocument();
+        // The box expands the pin into one breadcrumb line per starred dashboard ("Starred › <name>").
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toBeInTheDocument();
+        expect(pinned.getByText('Starred')).toBeInTheDocument();
       });
 
       it('makes Starred pinnable rather than hideable', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await screen.findByRole('link', { name: 'Starred' });
         const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(labels).toContain('Pin Starred');
@@ -337,7 +350,7 @@ describe('MegaMenu', () => {
       it('offers an unpin control on the pinned endpoint, not the ancestor', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         const labels = pinnedRegion()
           .getAllByRole('button', { hidden: true })
           .map((b) => b.getAttribute('aria-label'));
@@ -348,7 +361,7 @@ describe('MegaMenu', () => {
       it('unpins from the box on Done', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         const unpin = pinnedRegion()
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
@@ -397,15 +410,15 @@ describe('MegaMenu', () => {
     });
 
     describe('edit-mode controls', () => {
-      it('offers the unpin control whether or not editing', async () => {
+      it('offers the unpin control only while editing', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
         await screen.findByRole('list', { name: 'Pinned' });
-        // The unpin control is available (hover-revealed) even before entering edit mode.
+        // Outside edit mode the box is read-only — no unpin control.
         const before = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
-        expect(before).toContain('Unpin Playlists');
+        expect(before).not.toContain('Unpin Playlists');
 
-        await user.click(screen.getByRole('button', { name: 'Customise menu' }));
+        await user.click(screen.getByRole('button', { name: 'Customise navigation' }));
         const after = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(after).toContain('Unpin Playlists');
       });
@@ -413,17 +426,21 @@ describe('MegaMenu', () => {
       it('does not show reset to default until something is customised', async () => {
         const { user } = renderMegaMenu();
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
-        expect(screen.queryByRole('button', { name: 'Reset to default' })).not.toBeInTheDocument();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(
+          screen.queryByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
+        ).not.toBeInTheDocument();
       });
 
       it('stages a reset and only persists it on Done', async () => {
         const { user } = renderMegaMenu({ hiddenItemIds: ['explore'], bookmarkUrls: ['/playlists'] });
 
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(screen.getByRole('list', { name: 'Pinned' })).toBeInTheDocument();
 
-        await user.click(await screen.findByRole('button', { name: 'Reset to default' }));
+        await user.click(
+          await screen.findByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
+        );
         // Staged, not saved — the box clears in the preview but the stored pins are untouched
         expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']);
         expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
@@ -438,7 +455,7 @@ describe('MegaMenu', () => {
         server.use(customPatchUserPreferencesHandler(() => new Promise(() => {})));
 
         const { user } = renderMegaMenu();
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
         const pin = screen
           .getAllByRole('button', { hidden: true })
@@ -456,7 +473,7 @@ describe('MegaMenu', () => {
         server.use(customPatchUserPreferencesHandler(() => HttpResponse.json({ message: 'nope' }, { status: 500 })));
 
         const { user } = renderMegaMenu();
-        await user.click(await screen.findByRole('button', { name: 'Customise menu' }));
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
         const pin = screen
           .getAllByRole('button', { hidden: true })
