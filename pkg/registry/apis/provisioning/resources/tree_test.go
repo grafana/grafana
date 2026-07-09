@@ -106,15 +106,15 @@ func TestFolderTree(t *testing.T) {
 		tree := &folderTree{
 			tree: map[string]string{"child": "parent", "parent": ""},
 			folders: map[string]Folder{
-				"parent": newFid("parent", "» Applications"),
-				"child":  newFid("child", "Cloud App Platform"),
+				"parent": newFid("parent", "» Reports"),
+				"child":  newFid("child", "My Group"),
 			},
 		}
 
 		id, ok := tree.DirPath("child", "")
 		if assert.True(t, ok, "child should have DirPath with empty base") {
-			assert.Equal(t, "Cloud App Platform", id.Title, "Title is preserved")
-			assert.Equal(t, "Applications/Cloud App Platform", id.Path, "Path is normalized")
+			assert.Equal(t, "My Group", id.Title, "Title is preserved")
+			assert.Equal(t, "Reports/My Group", id.Path, "Path is normalized")
 			require.NoError(t, safepath.IsSafe(id.Path), "normalized path must be safe")
 		}
 	})

@@ -25,17 +25,17 @@ func TestIsSafe(t *testing.T) {
 		},
 		{
 			name:    "directory with a space and trailing slash",
-			path:    "Grafana Backend/",
+			path:    "My Group/",
 			wantErr: nil,
 		},
 		{
 			name:    "nested directories with spaces",
-			path:    "Grafana Backend/Cloud App Platform/dashboard.json",
+			path:    "My Group/Sub Group/dashboard.json",
 			wantErr: nil,
 		},
 		{
 			name:    "nested directories with spaces and trailing slash",
-			path:    "Grafana Backend/Cloud App Platform/",
+			path:    "My Group/Sub Group/",
 			wantErr: nil,
 		},
 		{
@@ -326,13 +326,13 @@ func TestSanitizeSegment(t *testing.T) {
 	}{
 		{
 			name:  "plain title unchanged",
-			title: "Applications",
-			want:  "Applications",
+			title: "Reports",
+			want:  "Reports",
 		},
 		{
 			name:  "title with spaces preserved",
-			title: "Cloud App Platform",
-			want:  "Cloud App Platform",
+			title: "My Group Folder",
+			want:  "My Group Folder",
 		},
 		{
 			name:  "title with allowed punctuation preserved",
@@ -341,8 +341,8 @@ func TestSanitizeSegment(t *testing.T) {
 		},
 		{
 			name:  "invalid character dropped and leading space trimmed",
-			title: "» Applications",
-			want:  "Applications",
+			title: "» Reports",
+			want:  "Reports",
 		},
 		{
 			name:  "slash dropped so title stays a single segment",

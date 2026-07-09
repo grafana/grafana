@@ -39,22 +39,22 @@ import (
 // segment derived from the title — the raw title itself lives on inside that
 // directory's _folder.json (spec.title), so display names survive untouched.
 //
-//	Grafana (UID · "title")                    Repository layout
-//	──────────────────────────────            ─────────────────────────────────────
-//	norm-rd      · "» R&D"                      RD/
-//	└─ norm-backend  · "Grafana Backend"        └─ Grafana Backend/          (space kept)
-//	   └─ norm-internal · ".internal"              └─ internal/              (leading dot trimmed)
-//	      └─ norm-rocket · "🚀🎉"                    └─ norm-rocket/         (no safe chars → UID)
-//	         └─ dash "Deep Dashboard"                  ├─ _folder.json       (metadata.name+spec.title)
-//	                                                    └─ deep-dashboard.json
+//	Grafana (UID · "title")            Repository layout
+//	────────────────────────────      ─────────────────────────────────────
+//	folder-alpha · "» A&B"             AB/
+//	└─ folder-beta · "My Group"        └─ My Group/              (space kept)
+//	   └─ folder-gamma · ".hidden"        └─ hidden/             (leading dot trimmed)
+//	      └─ folder-delta · "🚀🎉"           └─ folder-delta/     (no safe chars → UID)
+//	         └─ dash "Sample Dashboard"       ├─ _folder.json     (metadata.name+spec.title)
+//	                                          └─ sample-dashboard.json
 //
-// Every folder title is normalized per SanitizeSegment: "» R&D" drops the "»" and
-// "&" (leading space trimmed) → "RD"; "Grafana Backend" keeps its space;
-// ".internal" loses its leading dot; and "🚀🎉" has no representable characters so
-// the segment falls back to the folder UID "norm-rocket". A resource file name is
-// the slug of its title, so "Deep Dashboard" → deep-dashboard.json.
+// Every folder title is normalized per SanitizeSegment: "» A&B" drops the "»" and
+// "&" (leading space trimmed) → "AB"; "My Group" keeps its space; ".hidden" loses
+// its leading dot; and "🚀🎉" has no representable characters so the segment falls
+// back to the folder UID "folder-delta". A resource file name is the slug of its
+// title, so "Sample Dashboard" → sample-dashboard.json.
 //
-// Before the title-normalization fix a folder titled "» R&D" produced an unsafe
+// Before the title-normalization fix a folder titled "» A&B" produced an unsafe
 // repository path; the write failed but was recorded as an ignored no-op, so the
 // migrate reported "no changes to sync" as a success while exporting nothing.
 func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
@@ -64,21 +64,21 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// Fixed UIDs keep every assertion deterministic — including the UID-fallback
 	// case, where the path segment is the UID itself.
 	const (
-		rdUID         = "norm-rd"
-		rdTitle       = "» R&D"
-		backendUID    = "norm-backend"
-		backendTitle  = "Grafana Backend"
-		internalUID   = "norm-internal"
-		internalTitle = ".internal"
-		rocketUID     = "norm-rocket"
-		rocketTitle   = "🚀🎉"
+		alphaUID   = "folder-alpha"
+		alphaTitle = "» A&B"
+		betaUID    = "folder-beta"
+		betaTitle  = "My Group"
+		gammaUID   = "folder-gamma"
+		gammaTitle = ".hidden"
+		deltaUID   = "folder-delta"
+		deltaTitle = "🚀🎉"
 	)
 
-	createUnmanagedFolder(t, helper, rdUID, rdTitle)
-	createUnmanagedFolderWithParent(t, helper, backendUID, backendTitle, rdUID)
-	createUnmanagedFolderWithParent(t, helper, internalUID, internalTitle, backendUID)
-	createUnmanagedFolderWithParent(t, helper, rocketUID, rocketTitle, internalUID)
-	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Deep Dashboard", rocketUID)
+	createUnmanagedFolder(t, helper, alphaUID, alphaTitle)
+	createUnmanagedFolderWithParent(t, helper, betaUID, betaTitle, alphaUID)
+	createUnmanagedFolderWithParent(t, helper, gammaUID, gammaTitle, betaUID)
+	createUnmanagedFolderWithParent(t, helper, deltaUID, deltaTitle, gammaUID)
+	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Sample Dashboard", deltaUID)
 
 	const repo = "folder-title-normalization-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -91,14 +91,14 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// Expected normalized path segments. Titles themselves are preserved in
 	// _folder.json and asserted separately below.
 	const (
-		rdSeg       = "RD"              // "» R&D": unicode + '&' dropped, leading space trimmed
-		backendSeg  = "Grafana Backend" // interior space preserved
-		internalSeg = "internal"        // leading dot trimmed (not a hidden path)
-		rocketSeg   = rocketUID         // emoji-only title falls back to the UID
+		alphaSeg = "AB"       // "» A&B": unicode + '&' dropped, leading space trimmed
+		betaSeg  = "My Group" // interior space preserved
+		gammaSeg = "hidden"   // leading dot trimmed (not a hidden path)
+		deltaSeg = deltaUID   // emoji-only title falls back to the UID
 	)
-	backendPath := filepath.Join(rdSeg, backendSeg)
-	internalPath := filepath.Join(backendPath, internalSeg)
-	rocketPath := filepath.Join(internalPath, rocketSeg)
+	betaPath := filepath.Join(alphaSeg, betaSeg)
+	gammaPath := filepath.Join(betaPath, gammaSeg)
+	deltaPath := filepath.Join(gammaPath, deltaSeg)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
@@ -124,10 +124,10 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		wantUID   string
 		wantTitle string
 	}{
-		{rdSeg, rdUID, rdTitle},
-		{backendPath, backendUID, backendTitle},
-		{internalPath, internalUID, internalTitle},
-		{rocketPath, rocketUID, rocketTitle},
+		{alphaSeg, alphaUID, alphaTitle},
+		{betaPath, betaUID, betaTitle},
+		{gammaPath, gammaUID, gammaTitle},
+		{deltaPath, deltaUID, deltaTitle},
 	} {
 		m := readManifest(t, tc.relPath)
 		assert.Equal(t, tc.wantUID, m.Name, "UID preserved for %s", tc.relPath)
@@ -136,21 +136,21 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 
 	// 2) The dashboard lands under the deepest path, which combines a preserved
 	// space segment and the UID-fallback segment.
-	dashFile := filepath.Join(helper.ProvisioningPath, rocketPath, "deep-dashboard.json")
+	dashFile := filepath.Join(helper.ProvisioningPath, deltaPath, "sample-dashboard.json")
 	_, err := os.Stat(dashFile)
 	require.NoError(t, err, "dashboard should be exported at its normalized nested path %s", dashFile)
 
 	// 3) The /files endpoint serves a space-containing path correctly (the path is
 	// URL-encoded on the wire and decoded server-side before IsSafe validation).
 	files := helper.NewFilesClient(repo)
-	require.Equal(t, backendTitle, files.ReadFolderTitle(t, ctx, backendPath+"/_folder.json"),
+	require.Equal(t, betaTitle, files.ReadFolderTitle(t, ctx, betaPath+"/_folder.json"),
 		"reading a _folder.json at a path with a space through the /files endpoint should work")
-	require.Equal(t, rocketUID, files.ReadFolderUID(t, ctx, rocketPath+"/_folder.json"))
+	require.Equal(t, deltaUID, files.ReadFolderUID(t, ctx, deltaPath+"/_folder.json"))
 
 	// 4) The pull half of the migrate consumed the normalized/space paths: the
 	// deepest folder and the dashboard end up managed by the repository.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		f, err := helper.Folders.Resource.Get(ctx, rocketUID, metav1.GetOptions{})
+		f, err := helper.Folders.Resource.Get(ctx, deltaUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err, "deepest folder should exist") {
 			return
 		}
@@ -168,9 +168,9 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// 5) Writing through the /files endpoint into a folder path that contains a
 	// space works, and a subsequent pull reconciles the new file into Grafana
 	// under the space-named folder.
-	const writtenUID = "space-written-dash"
-	writePath := backendPath + "/written-dashboard.json" // RD/Grafana Backend/written-dashboard.json
-	resp := files.Post(t, writePath, common.DashboardJSON(writtenUID, "Written In Space Folder", 1))
+	const writtenUID = "written-sample-dash"
+	writePath := betaPath + "/written-dashboard.json" // AB/My Group/written-dashboard.json
+	resp := files.Post(t, writePath, common.DashboardJSON(writtenUID, "Written Sample", 1))
 	require.Equal(t, http.StatusOK, resp.StatusCode,
 		"writing a dashboard under a folder path with a space should succeed: %s", resp.BodyString())
 
@@ -186,7 +186,7 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		}
 		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"written dashboard should be managed after pull")
-		assert.Equal(collect, backendUID, d.GetAnnotations()[utils.AnnoKeyFolder],
+		assert.Equal(collect, betaUID, d.GetAnnotations()[utils.AnnoKeyFolder],
 			"written dashboard should be parented under the space-named folder")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "written dashboard should sync under the space folder")
 }
@@ -199,23 +199,23 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 // directory names out of the repo tree and reconcile the whole hierarchy into
 // Grafana, preserving each folder's title and parent relationship.
 //
-//	Repository (seeded on disk)                 Grafana (after pull)
-//	─────────────────────────────────         ─────────────────────────────────────
-//	Space Parent/_folder.json                  folder "pull-space-parent" · "Space Parent"
-//	└─ Nested Child/_folder.json               └─ folder "pull-space-child" · "Nested Child"
-//	   └─ pulled-dashboard.json                   └─ dashboard "pull-space-dash"
+//	Repository (seeded on disk)          Grafana (after pull)
+//	────────────────────────────       ─────────────────────────────────────
+//	Team Space/_folder.json             folder "pull-alpha" · "Team Space"
+//	└─ Sub Group/_folder.json           └─ folder "pull-beta" · "Sub Group"
+//	   └─ pulled-dashboard.json            └─ dashboard "pull-dash"
 func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := t.Context()
 
 	const (
 		repo        = "pull-space-folders-repo"
-		parentUID   = "pull-space-parent"
-		parentTitle = "Space Parent"
-		childUID    = "pull-space-child"
-		childTitle  = "Nested Child"
-		dashUID     = "pull-space-dash"
-		dashTitle   = "Pulled Dashboard"
+		parentUID   = "pull-alpha"
+		parentTitle = "Team Space"
+		childUID    = "pull-beta"
+		childTitle  = "Sub Group"
+		dashUID     = "pull-dash"
+		dashTitle   = "Sample Dashboard"
 	)
 
 	// SkipSync so the repository exists before we seed it; the pull below is the
@@ -230,8 +230,8 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 
 	// Seed a repository whose directory names contain spaces, each carrying a
 	// _folder.json, with a dashboard in the deepest folder.
-	parentPath := parentTitle                          // "Space Parent"
-	childPath := filepath.Join(parentPath, childTitle) // "Space Parent/Nested Child"
+	parentPath := parentTitle                          // "Team Space"
+	childPath := filepath.Join(parentPath, childTitle) // "Team Space/Sub Group"
 	helper.WriteToProvisioningPath(t, filepath.Join(parentPath, "_folder.json"), common.FolderBody(t, parentUID, parentTitle))
 	helper.WriteToProvisioningPath(t, filepath.Join(childPath, "_folder.json"), common.FolderBody(t, childUID, childTitle))
 	helper.WriteToProvisioningPath(t, filepath.Join(childPath, "pulled-dashboard.json"), common.DashboardJSON(dashUID, dashTitle, 1))
