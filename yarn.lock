@@ -19539,7 +19539,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^25.10.9":
+"i18next@npm:^25.0.0, i18next@npm:^25.10.9":
   version: 25.10.10
   resolution: "i18next@npm:25.10.10"
   dependencies:
