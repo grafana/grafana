@@ -58,7 +58,7 @@ func (r *starsREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("only works with user stars")
+		return nil, fmt.Errorf("stars must belong to a namespace")
 	}
 	parsed, found := utils.ParseOwnerFromName(name)
 	if !found || parsed.Owner != utils.UserResourceOwner {
