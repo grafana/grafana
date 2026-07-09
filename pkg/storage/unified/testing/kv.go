@@ -39,9 +39,6 @@ const (
 	testSection = "unified/events"
 )
 
-// NewKVFunc is a function that creates a new KV instance for testing
-type NewKVFunc func(ctx context.Context) resource.KV
-
 // KVTestOptions configures which tests to run
 type KVTestOptions struct {
 	SkipTests map[string]bool
@@ -53,8 +50,15 @@ func GenerateRandomKVPrefix() string {
 	return fmt.Sprintf("kvtest-%d", time.Now().UnixNano())
 }
 
-// RunKVTest runs the KV test suite
-func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
+func nsRange(nsPrefix string) (start, end string) {
+	p := nsPrefix + "/"
+	return p, resource.PrefixRangeEnd(p)
+}
+
+// RunKVTest runs the KV test suite against a single shared KV instance. Cases
+// isolate themselves using key prefixes (see nsPrefix). The passed store is
+// expected to be empty.
+func RunKVTest(t *testing.T, kv resource.KV, opts *KVTestOptions) {
 	if opts == nil {
 		opts = &KVTestOptions{}
 	}
@@ -89,7 +93,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, newKV(context.Background()), opts.NSPrefix)
+			tc.fn(t, kv, opts.NSPrefix)
 		})
 	}
 }
@@ -305,8 +309,9 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -329,10 +334,13 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("invalid sort option, defaults to asc", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string
 		var errors []error
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
-			Sort: resource.SortOrder(100),
+			StartKey: start,
+			EndKey:   end,
+			Sort:     resource.SortOrder(100),
 		}) {
 			if err != nil {
 				errors = append(errors, err)
@@ -364,7 +372,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("list keys returns 0 keys", func(t *testing.T) {
 		// Use a key range with no keys.
-		startKey, endKey := "aaaaa", "aaaaz"
+		startKey, endKey := namespacedKey(nsPrefix, "aaaaa"), namespacedKey(nsPrefix, "aaaaz")
 
 		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
@@ -379,8 +387,9 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("interrupting the iterator", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 
@@ -404,8 +413,9 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Limit: 3}) {
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end, Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -461,8 +471,9 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderAsc}) {
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end, Sort: resource.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -470,8 +481,9 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderDesc}) {
+		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end, Sort: resource.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -505,10 +517,13 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
 		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
-			Sort:  resource.SortOrderDesc,
-			Limit: 3,
+			StartKey: start,
+			EndKey:   end,
+			Sort:     resource.SortOrderDesc,
+			Limit:    3,
 		}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
