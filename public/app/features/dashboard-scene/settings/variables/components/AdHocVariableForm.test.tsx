@@ -5,6 +5,7 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { useDatasource } from 'app/features/datasources/hooks';
 
 import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 
@@ -31,12 +32,13 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/datasources/hooks', () => ({
   ...jest.requireActual('app/features/datasources/hooks'),
-  // useDatasource() is now async (it wraps getDataSourceInstanceSettings). Delegate to the mocked
-  // getDataSourceSrv so the current data source resolves synchronously and no post-render state
-  // update escapes act() in these tests.
-  useDatasource: (ref: unknown) =>
-    jest.requireMock('@grafana/runtime').getDataSourceSrv().getInstanceSettings(ref),
+  // useDatasource() wraps the async getDataSourceInstanceSettings API. Stub it to resolve the
+  // fixture synchronously (wired below — jest.mock factories cannot reference file-scope
+  // variables) so no post-render state update escapes act() in these tests.
+  useDatasource: jest.fn(),
 }));
+
+jest.mocked(useDatasource).mockImplementation(() => ({ ...defaultDatasource }));
 
 describe('AdHocVariableForm', () => {
   beforeAll(() => {

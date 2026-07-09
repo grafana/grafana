@@ -134,11 +134,9 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/datasources/hooks', () => ({
   ...jest.requireActual('app/features/datasources/hooks'),
-  // useDatasource() is now async (it wraps getDataSourceInstanceSettings). Delegate to the mocked
-  // getDataSourceSrv so the current data source resolves synchronously and no post-render state
-  // update escapes act() in these tests.
-  useDatasource: (ref: unknown) =>
-    jest.requireMock('@grafana/runtime').getDataSourceSrv().getInstanceSettings(ref),
+  // useDatasource() wraps the async getDataSourceInstanceSettings API. Stub it so the tests
+  // below don't trigger a post-render state update for a datasource none of them assert on.
+  useDatasource: jest.fn(),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
