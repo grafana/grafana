@@ -39,6 +39,7 @@ type GithubRepository interface {
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler
+	PullRequestBase(ctx context.Context, prNumber int, headRef string) (string, error)
 	Owner() string
 	Repo() string
 	Client() Client
@@ -273,6 +274,10 @@ func (r *githubRepository) hasWriteWorkflow() bool {
 		}
 	}
 	return false
+}
+
+func (r *githubRepository) PullRequestBase(ctx context.Context, _ int, headRef string) (string, error) {
+	return r.gh.MergeBase(ctx, r.config.Branch(), headRef)
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
