@@ -110,7 +110,7 @@ export function ModalEditor(props: ModalEditorProps) {
                   </Button>
                 </div>
               ) : (
-                <VariableValuesPreview options={options} staticOptions={staticOptions} noPagination hideTitle />
+                <VariableValuesPreview options={options} staticOptions={staticOptions} pageSize={1000} hideTitle />
               )}
             </div>
           </div>

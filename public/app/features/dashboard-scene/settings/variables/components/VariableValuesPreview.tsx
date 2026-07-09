@@ -11,7 +11,7 @@ import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 export interface VariableValuesPreviewProps {
   options: VariableValueOption[];
   staticOptions: VariableValueOption[];
-  noPagination?: boolean;
+  pageSize?: number;
   hideTitle?: boolean;
 }
 
@@ -66,12 +66,7 @@ export const useGetPropertiesFromOptions = (
   staticOptions: VariableValueOption[] = []
 ) => useMemo(() => getPropertiesFromOptions(options, staticOptions), [options, staticOptions]);
 
-export const VariableValuesPreview = ({
-  options,
-  staticOptions,
-  noPagination,
-  hideTitle,
-}: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ options, staticOptions, pageSize, hideTitle }: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
@@ -94,10 +89,10 @@ export const VariableValuesPreview = ({
         </Text>
       )}
       {hasOptions && displayMultiPropsPreview && (
-        <VariableValuesWithPropsPreview options={options} properties={properties} noPagination={noPagination} />
+        <VariableValuesWithPropsPreview options={options} properties={properties} pageSize={pageSize} />
       )}
       {hasOptions && !displayMultiPropsPreview && (
-        <VariableValuesWithoutPropsPreview options={options} noPagination={noPagination} />
+        <VariableValuesWithoutPropsPreview options={options} pageSize={pageSize} />
       )}
     </div>
   );
@@ -106,11 +101,11 @@ export const VariableValuesPreview = ({
 function VariableValuesWithPropsPreview({
   options,
   properties,
-  noPagination,
+  pageSize,
 }: {
   options: VariableValueOption[];
   properties: string[];
-  noPagination?: boolean;
+  pageSize?: number;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -138,7 +133,7 @@ function VariableValuesWithPropsPreview({
         columns={columns}
         data={data}
         getRowId={(r) => JSON.stringify(r)}
-        pageSize={noPagination ? undefined : 8}
+        pageSize={Number(pageSize) > 0 ? Number(pageSize) : 8}
       />
     </div>
   );
@@ -146,20 +141,22 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
+const DEFAULT_PAGE_SIZE = 20;
+
 function VariableValuesWithoutPropsPreview({
   options,
-  noPagination,
+  pageSize,
 }: {
   options: VariableValueOption[];
-  noPagination?: boolean;
+  pageSize?: number;
 }) {
   const styles = useStyles2(getStyles);
-  const [previewLimit, setPreviewLimit] = useState(noPagination ? Number.MAX_SAFE_INTEGER : 20);
+  const [previewLimit, setPreviewLimit] = useState(Number(pageSize) > 0 ? Number(pageSize) : DEFAULT_PAGE_SIZE);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);
   const showMoreOptions = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();
-      setPreviewLimit(previewLimit + 20);
+      setPreviewLimit(previewLimit + DEFAULT_PAGE_SIZE);
     },
     [previewLimit, setPreviewLimit]
   );
@@ -176,7 +173,7 @@ function VariableValuesWithoutPropsPreview({
           </InlineFieldRow>
         ))}
       </InlineFieldRow>
-      {!noPagination && options.length > previewLimit && (
+      {options.length > previewLimit && (
         <InlineFieldRow className={styles.optionContainer}>
           <Button onClick={showMoreOptions} variant="secondary" size="sm">
             <Trans i18nKey="dashboard-scene.variable-values-preview.show-more">Show more</Trans>
