@@ -627,7 +627,8 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 
 						// List to verify it exists
 						found := false
-						for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+						start, end := nsRange(nsPrefix)
+						for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{StartKey: start, EndKey: end}) {
 							if err != nil {
 								return
 							}
