@@ -186,8 +186,9 @@ function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean)
 }
 
 /** One breadcrumb line in the pinned box: the nav item it links to, its ancestor text labels, and
- * the icon of its top-level parent section (shown as the row's leading icon). */
-export interface PinnedLine {
+ * the icon of its top-level parent section (shown as the row's leading icon). Reached via
+ * `PinnedEntry['lines'][number]`, so it doesn't need to be exported. */
+interface PinnedLine {
   item: NavModelItem;
   ancestors: string[];
   icon?: string;
