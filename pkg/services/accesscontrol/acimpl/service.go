@@ -170,7 +170,27 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	return s.zanzanaResolver.MergeCurrentUser(ctx, user, permissions, s.log), nil
+	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+}
+
+func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
+	if s.zanzanaResolver == nil {
+		return legacy
+	}
+	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
+	}
+
+	zPerms, err := s.getCachedPermissions(ctx, accesscontrol.GetZanzanaUserPermissionCacheKey(user),
+		func(ctx context.Context) ([]accesscontrol.Permission, error) {
+			return s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
+		}, options)
+	if err != nil {
+		s.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+
+	return MergeUserPermissions(legacy, zPerms)
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -416,11 +436,23 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 		return permissions, nil
 	}
 
-	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+	// ReloadCache forces a fresh computation, so bypass the read-coalescing
+	// re-check and always recompute under the lock.
+	if options.ReloadCache {
+		if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+			return nil, err
+		}
+		return permissions, nil
+	}
+
+	// Coalesce concurrent misses for the same key: callers that block on the lock
+	// reuse the value the winner computed instead of each re-running getPermissionsFn.
+	value, err := s.cache.GetOrExclusiveSet(key, getValue, cacheTTL)
+	if err != nil {
 		return nil, err
 	}
 
-	return permissions, nil
+	return value.([]accesscontrol.Permission), nil
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -474,6 +506,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {

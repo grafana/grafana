@@ -16,7 +16,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
-import { TEMPO_STREAMING_PROGRESS_REF_ID } from 'app/plugins/datasource/tempo/streaming';
+const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,

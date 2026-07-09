@@ -26,6 +26,12 @@ var (
 	)
 )
 
+type Authorizer interface {
+	Authorize(ctx context.Context, query annotations.ItemQuery) (*AccessResources, error)
+}
+
+var _ Authorizer = (*AuthService)(nil)
+
 type AuthService struct {
 	db                        db.DB
 	features                  featuremgmt.FeatureToggles

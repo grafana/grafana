@@ -289,6 +289,7 @@ func (s *testBulkProcessServer) RecvMsg(any) error {
 const errPanicBulkProcess = "panic from ProcessBulk"
 
 type panicBulkBackend struct {
+	UnimplementedStorageBackend
 	sendDone chan bool
 }
 

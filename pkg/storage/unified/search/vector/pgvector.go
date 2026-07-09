@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	pgvector "github.com/pgvector/pgvector-go"
 	"go.opentelemetry.io/otel"
@@ -80,6 +81,21 @@ func fitEmbedding(v []float32, dim int) ([]float32, error) {
 	default:
 		return nil, fmt.Errorf("embedding has %d dims, column accepts at most %d", len(v), dim)
 	}
+}
+
+// truncateRunes caps s at max runes, never splitting a multi-byte character
+// (Postgres VARCHAR(n) counts characters, not bytes). When it has to cut, the
+// result ends in "..." to signal truncation and still fits within max. No-op
+// when s already fits.
+func truncateRunes(s string, max int) string {
+	if utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	const ellipsis = "..."
+	if max <= len(ellipsis) {
+		return string([]rune(s)[:max])
+	}
+	return string([]rune(s)[:max-len(ellipsis)]) + ellipsis
 }
 
 // Just dashboards for now
@@ -206,6 +222,7 @@ func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vec
 		if err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
+		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
 		req := &sqlVectorCollectionUpsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Resource:    vectors[i].Resource,

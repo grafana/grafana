@@ -83,15 +83,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/GoogleCloudMonitoring"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/cloudwatch/**/*",
       "pkg/tsdb/cloudwatch/**/*"
     ],
@@ -154,14 +145,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/parca/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Parca"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*",
       "pkg/tsdb/grafana-pyroscope-datasource/**/*"
     ],
@@ -185,15 +168,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/tempo/**/*",
-      "pkg/tsdb/tempo/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Tempo"
   },
   {
     "type": "changedfiles",
@@ -405,17 +379,6 @@
     "matches": [
       "public/app/plugins/datasource/influxdb/**/*",
       "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

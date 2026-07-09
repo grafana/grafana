@@ -41,7 +41,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     <Trans
                       i18nKey="provisioning.repository-type-cards.configure-with-provider"
                       values={{ provider: config.label }}
@@ -84,7 +84,7 @@ export function RepositoryTypeCards({ disabled }: RepositoryTypeCardsProps) {
               >
                 <Card.Heading>
                   <Stack gap={2} alignItems="center">
-                    <RepoIcon type={config.type} />
+                    <RepoIcon type={config.type} autoHeight />
                     {config.type === 'local' ? (
                       <Trans i18nKey="provisioning.repository-type-cards.configure-file">
                         Configure file provisioning

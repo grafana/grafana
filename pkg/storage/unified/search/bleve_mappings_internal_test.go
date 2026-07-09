@@ -19,7 +19,9 @@ import (
 // SearchFieldDefinition, keyed by the resulting field name.
 func flatMappings(t *testing.T, def resource.SearchFieldDefinition) map[string]*mapping.FieldMapping {
 	t.Helper()
-	parent := bleve.NewDocumentMapping()
+	// Production uses a static parent for both the top-level and fields.*
+	// mappings, so mirror that here.
+	parent := bleve.NewDocumentStaticMapping()
 	addCapabilityFieldMappings(parent, def)
 
 	out := map[string]*mapping.FieldMapping{}
@@ -176,10 +178,13 @@ func TestAddCapabilityFieldMappings_NonTitleFullSet(t *testing.T) {
 }
 
 func TestAddCapabilityFieldMappings_SortWithoutFilter(t *testing.T) {
-	// sort on its own still needs a keyword variant to back DocValues.
+	// sort on its own still needs a keyword variant to back DocValues. Sort
+	// is validated as string-only at provider construction time (the bleve
+	// mapper emits keyword regardless of declared Type, so non-strings
+	// would sort lexically), so this test uses a string-typed field.
 	got := flatMappings(t, resource.SearchFieldDefinition{
 		Name: "lastSeenAt",
-		Type: resource.SearchFieldTypeInt64,
+		Type: resource.SearchFieldTypeString,
 		Capabilities: []resource.SearchCapability{
 			resource.SearchCapabilitySort,
 			resource.SearchCapabilityRetrieve,
@@ -206,15 +211,41 @@ func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
 	assert.False(t, m.Store)
 }
 
-func TestAddCapabilityFieldMappings_RetrieveOnly_NoMapping(t *testing.T) {
-	// A retrieve-only field gets no explicit mapping; Bleve's dynamic
-	// mapping handles it at index time, matching pre-refactor behaviour for
-	// non-filterable, non-string fields.
-	parent := bleve.NewDocumentMapping()
-	addCapabilityFieldMappings(parent, resource.SearchFieldDefinition{
-		Name:         "linkCount",
-		Type:         resource.SearchFieldTypeInt64,
-		Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
+	// With no dynamic fallback, a retrieve-only field must be stored explicitly.
+	t.Run("int64", func(t *testing.T) {
+		m := flatMappings(t, resource.SearchFieldDefinition{
+			Name:         "linkCount",
+			Type:         resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+		})["linkCount"]
+		require.NotNil(t, m)
+		assert.False(t, m.Index, "retrieve-only field is not indexed")
+		assert.True(t, m.Store, "retrieve-only field is stored")
 	})
-	assert.Empty(t, parent.Properties, "retrieve-only fields fall back to dynamic mapping")
+	t.Run("string", func(t *testing.T) {
+		m := flatMappings(t, resource.SearchFieldDefinition{
+			Name:         "permission",
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+		})["permission"]
+		require.NotNil(t, m)
+		assert.False(t, m.Index, "retrieve-only string is not indexed")
+		assert.True(t, m.Store, "retrieve-only string is stored")
+	})
+}
+
+func TestBleveIndex_isDeclaredField(t *testing.T) {
+	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+		[]resource.SearchFieldDefinition{
+			{Name: "email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+		},
+	))
+	require.NoError(t, err)
+	b := &bleveIndex{fields: fields, standard: resource.StandardSearchFields()}
+
+	assert.True(t, b.isDeclaredField("email"), "declared per-kind field")
+	assert.True(t, b.isDeclaredField(resource.SEARCH_FIELD_PREFIX+"email"), "declared per-kind field with fields. prefix")
+	assert.True(t, b.isDeclaredField(resource.SEARCH_FIELD_TITLE), "standard field")
+	assert.False(t, b.isDeclaredField("undeclaredCustomField"), "undeclared field is not reported as declared")
 }

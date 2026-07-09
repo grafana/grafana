@@ -1,31 +1,26 @@
-import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { escapeRegExp } from 'lodash';
 import { useMemo } from 'react';
-import Skeleton from 'react-loading-skeleton';
 import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
-import {
-  canonicalSeverity,
-  SEVERITY_DEFINITIONS,
-  type SeverityLevel,
-} from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { canonicalSeverity, type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
+import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
-import { HomeSection } from '../HomeSection';
+import { alertsCardClicked } from '../analytics/main';
 
-const MAX_ALERTS = 5;
+import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
+import { HOME_CARD_MAX_ITEMS } from './constants';
+import { severityLevelColor, severityLevelRank } from './severity';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -46,10 +41,6 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function severityRank(level?: SeverityLevel) {
-  return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
-}
-
 function severityLabel(level?: SeverityLevel): string {
   switch (level) {
     case 'critical':
@@ -61,7 +52,7 @@ function severityLabel(level?: SeverityLevel): string {
     case 'low':
       return t('home.firing-alerts-card.severity-low', 'Low');
     default:
-      return t('home.firing-alerts-card.severity-unknown', 'Unknown severity');
+      return t('home.firing-alerts-card.severity-unknown', 'Unknown');
   }
 }
 
@@ -72,8 +63,11 @@ function buildTeamMatchers(teamNames: string[]) {
   return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
 }
 
+// Exported so the homepage skeleton reserves the card slot using the same gate.
+export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+
 export function FiringAlertsCard() {
-  if (!contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead)) {
+  if (!canViewFiringAlerts()) {
     return null;
   }
 
@@ -85,8 +79,6 @@ export function FiringAlertsCard() {
  * the permission gate is in the parent wrapper.
  */
 function FiringAlertsCardInner() {
-  const styles = useStyles2(getStyles);
-
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
   const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
@@ -117,7 +109,7 @@ function FiringAlertsCardInner() {
 
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.
-  const { sorted, criticalCount, highCount } = useMemo(() => {
+  const { displayed, criticalCount, highCount } = useMemo(() => {
     let criticalCount = 0;
     let highCount = 0;
     const decorated = (alerts ?? []).map((alert) => {
@@ -127,172 +119,134 @@ function FiringAlertsCardInner() {
       } else if (level === 'major') {
         highCount++;
       }
-      return { alert, level, rank: severityRank(level), startedAt: new Date(alert.startsAt).getTime() };
+      return { alert, level, rank: severityLevelRank(level), startedAt: new Date(alert.startsAt).getTime() };
     });
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
-    return { sorted: decorated, criticalCount, highCount };
+    // Cap the rendered rows; counts above are over every alert so the badges stay accurate.
+    return { displayed: decorated.slice(0, HOME_CARD_MAX_ITEMS), criticalCount, highCount };
   }, [alerts]);
 
-  const displayed = sorted.slice(0, MAX_ALERTS);
+  const canCreate = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const hasAlerts = (alerts?.length ?? 0) > 0;
+
+  // Built at render time, not module scope: createRelativeUrl reads config.appSubUrl on call,
+  // and LinkButton emits a plain <a href> with no router to prepend the sub path for us.
+  const newRuleHref = createRelativeUrl('/alerting/new/alerting');
+  const viewAllHref = hasAlerts
+    ? createRelativeUrl(ALERTING_PATHS.ALERT_GROUPS, { [ALERTMANAGER_NAME_QUERY_KEY]: GRAFANA_RULES_SOURCE_NAME })
+    : alertListPageLink({ search: `source:${GRAFANA_RULES_SOURCE_NAME}` });
 
   return (
-    <HomeSection>
-      <Stack direction="column" gap={2}>
-        {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Text element="h2" variant="h5">
-              <Trans i18nKey="home.firing-alerts-card.title">Firing alerts</Trans>
-            </Text>
-            {!loading && !!alerts?.length && <Badge text={String(alerts.length)} color="red" />}
-          </Stack>
-          {!loading && (
-            <Stack direction="row" gap={1}>
-              {criticalCount > 0 && (
-                <Badge
-                  text={t('home.firing-alerts-card.critical-count', '', {
-                    count: criticalCount,
-                    defaultValue_one: '{{count}} critical',
-                    defaultValue_other: '{{count}} critical',
-                  })}
-                  color="red"
-                />
-              )}
-              {highCount > 0 && (
-                <Badge
-                  text={t('home.firing-alerts-card.high-count', '', {
-                    count: highCount,
-                    defaultValue_one: '{{count}} high',
-                    defaultValue_other: '{{count}} high',
-                  })}
-                  color="orange"
-                />
-              )}
-            </Stack>
+    <SummaryCard
+      title={t('home.firing-alerts-card.title', 'Firing alerts')}
+      count={alerts?.length ?? 0}
+      headerExtra={
+        <Stack>
+          {criticalCount > 0 && (
+            <Badge
+              text={t('home.firing-alerts-card.critical-count', '', {
+                count: criticalCount,
+                defaultValue_one: '{{count}} critical',
+                defaultValue_other: '{{count}} critical',
+              })}
+              color="red"
+            />
+          )}
+          {highCount > 0 && (
+            <Badge
+              text={t('home.firing-alerts-card.high-count', '', {
+                count: highCount,
+                defaultValue_one: '{{count}} high',
+                defaultValue_other: '{{count}} high',
+              })}
+              color="orange"
+            />
           )}
         </Stack>
-
-        {loading && (
-          <Stack direction="column" gap={1}>
-            {Array.from({ length: 3 }, (_, i) => (
-              <Skeleton key={i} height={20} />
-            ))}
-          </Stack>
-        )}
-
-        {!!alertsError && (
-          <Alert
-            severity="warning"
-            title={t('home.firing-alerts-card.error-title', 'Could not load firing alerts')}
-            action={
-              <Button onClick={() => refetch()} variant="secondary" size="sm">
-                <Trans i18nKey="home.firing-alerts-card.retry">Retry</Trans>
-              </Button>
+      }
+      loading={loading}
+      error={
+        alertsError
+          ? {
+              title: t('home.firing-alerts-card.error-title', 'Could not load firing alerts'),
+              onRetry: () => refetch(),
             }
-          />
-        )}
-
-        {!loading && !alertsError && displayed.length === 0 && (
-          <Stack direction="column" alignItems="center">
-            <Text color="secondary">
-              {hasTeams
-                ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-                : t('home.firing-alerts-card.empty', 'You have no firing alerts.')}
-            </Text>
-          </Stack>
-        )}
-
-        {!loading && !alertsError && displayed.length > 0 && (
-          <ul className={styles.list}>
-            {displayed.map(({ alert, level, startedAt }) => {
-              const detailHref = alertDetailHref(alert);
-              const severity = severityLabel(level);
-              return (
-                <li key={alert.fingerprint} className={styles.row}>
-                  <Tooltip content={severity}>
-                    <span role="img" aria-label={severity} className={styles.severityIndicator}>
-                      <SeverityBars level={level} />
-                    </span>
-                  </Tooltip>
-                  {detailHref ? (
-                    <TextLink href={detailHref} inline={false} className={styles.alertName}>
-                      {alert.labels.alertname}
-                    </TextLink>
-                  ) : (
-                    <Text truncate weight="medium">
-                      {alert.labels.alertname}
-                    </Text>
-                  )}
-                  {alert.labels.team && (
-                    <Text color="secondary" variant="bodySmall" truncate>
-                      {alert.labels.team}
-                    </Text>
-                  )}
-                  <span className={styles.age}>
-                    <Text color="secondary" variant="bodySmall">
-                      {formatDistanceToNowStrict(startedAt, { addSuffix: true })}
-                    </Text>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {/* Footer */}
-        {!loading && !alertsError && (
-          <Stack direction="row" justifyContent="flex-end">
+          : undefined
+      }
+      emptyMessage={
+        hasTeams
+          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
+          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
+      }
+      items={displayed}
+      getItemKey={({ alert }) => alert.fingerprint}
+      renderItem={({ alert, level, startedAt }) => {
+        const detailHref = alertDetailHref(alert);
+        return (
+          <>
+            <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+            <SummaryCardTitle
+              href={detailHref}
+              onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+            >
+              {alert.labels.alertname}
+            </SummaryCardTitle>
+            {alert.labels.team && (
+              <Text color="secondary" variant="bodySmall" truncate>
+                {alert.labels.team}
+              </Text>
+            )}
+            <SummaryCardAge date={startedAt} />
+          </>
+        );
+      }}
+      emptyAction={
+        canCreate ? (
+          <LinkButton
+            variant="primary"
+            icon="plus"
+            href={newRuleHref}
+            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+          >
+            <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
+          </LinkButton>
+        ) : undefined
+      }
+      footer={
+        <>
+          {hasAlerts && canCreate && (
             <LinkButton
               variant="secondary"
               size="sm"
               fill="text"
-              href={
-                alerts?.length
-                  ? `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`
-                  : `/alerting/list?search=source:${GRAFANA_RULES_SOURCE_NAME}`
-              }
+              icon="plus"
+              href={newRuleHref}
+              onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'footer' })}
             >
-              {alerts?.length ? (
-                <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
-              ) : (
-                <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
-              )}
+              <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
             </LinkButton>
-          </Stack>
-        )}
-      </Stack>
-    </HomeSection>
+          )}
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            fill="text"
+            href={viewAllHref}
+            onClick={() =>
+              alertsCardClicked({
+                action: hasAlerts ? 'view_all_alerts' : 'view_all_rules',
+                placement: 'footer',
+              })
+            }
+          >
+            {hasAlerts ? (
+              <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
+            ) : (
+              <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
+            )}
+          </LinkButton>
+        </>
+      }
+    />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  list: css({
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(0.5),
-  }),
-  row: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(0.5, 0),
-    minWidth: 0,
-  }),
-  severityIndicator: css({
-    display: 'inline-flex',
-    flexShrink: 0,
-  }),
-  alertName: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  }),
-  age: css({
-    marginLeft: 'auto',
-    flexShrink: 0,
-  }),
-});

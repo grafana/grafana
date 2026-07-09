@@ -370,23 +370,6 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		srv.deleteStaleKubernetesShortURLs(ctx)
-	} else {
-		cmd := shorturls.DeleteShortUrlCommand{
-			OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
-		}
-		if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
-			logger.Error("Problem deleting stale short urls", "error", err.Error())
-		} else {
-			logger.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
-		}
-	}
-}
-
-func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
-	logger := srv.log.FromContext(ctx)
 	logger.Debug("Starting deleting expired Kubernetes shortURLs")
 
 	// Create the dynamic client for Kubernetes API

@@ -68,10 +68,7 @@ const TeamPages = memo(() => {
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
     defaultPage = PageTypes.Settings;
   }
-  let currentPage = getPageType(page) ?? defaultPage;
-  if (currentPage === PageTypes.Folders && !config.featureToggles.teamFolders) {
-    currentPage = defaultPage;
-  }
+  const currentPage = getPageType(page) ?? defaultPage;
   const pageNav = useSelector((state) => pageNavSelector(state, currentPage, teamUid));
 
   const renderPage = () => {
