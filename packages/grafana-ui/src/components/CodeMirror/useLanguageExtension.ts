@@ -12,7 +12,8 @@ export interface LanguageExtensionState {
 
 export function useLanguageExtension(
   language?: CodeMirrorEditorLanguage,
-  sqlDialect?: CodeMirrorSqlDialect
+  sqlDialect?: CodeMirrorSqlDialect,
+  sqlUpperCaseKeywords?: boolean
 ): LanguageExtensionState {
   const [languageExtension, setLanguageExtension] = useState<CodeMirrorExtension | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -29,7 +30,7 @@ export function useLanguageExtension(
     setLanguageExtension(null);
     setError(null);
 
-    void loadLanguageExtension(language, { sqlDialect })
+    void loadLanguageExtension(language, { sqlDialect, sqlUpperCaseKeywords })
       .then((extension) => {
         if (!cancelled) {
           setLanguageExtension(extension);
@@ -59,7 +60,7 @@ export function useLanguageExtension(
     return () => {
       cancelled = true;
     };
-  }, [language, sqlDialect]);
+  }, [language, sqlDialect, sqlUpperCaseKeywords]);
 
   return { extension: languageExtension, error };
 }

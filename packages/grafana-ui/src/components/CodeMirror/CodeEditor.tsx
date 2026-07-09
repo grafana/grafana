@@ -86,6 +86,7 @@ export const CodeEditor = memo(function CodeEditor({
   value,
   language,
   sqlDialect,
+  sqlUpperCaseKeywords,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
@@ -98,7 +99,11 @@ export const CodeEditor = memo(function CodeEditor({
   indentWithTab = true,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(
+    language,
+    sqlDialect,
+    sqlUpperCaseKeywords
+  );
 
   const extensions = useMemo(
     () => [

@@ -110,6 +110,10 @@ export interface CodeMirrorEditorProps {
    */
   sqlDialect?: CodeMirrorSqlDialect;
   /**
+   * When true, SQL keyword completions are inserted as upper-case.
+   */
+  sqlUpperCaseKeywords?: boolean;
+  /**
    * Editor height, such as `'200px'` or `'100%'`.
    */
   height?: string;

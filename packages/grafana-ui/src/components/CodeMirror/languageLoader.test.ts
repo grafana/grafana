@@ -23,7 +23,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql');
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: false });
     });
   });
 
@@ -34,7 +34,7 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'standardSql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: false });
     });
   });
 
@@ -45,19 +45,32 @@ describe('loadLanguageExtension', () => {
 
       await loadLanguageExtension('sql', { sqlDialect: 'mySql' });
 
-      expect(sql).toHaveBeenCalledWith({ dialect: MySQL });
+      expect(sql).toHaveBeenCalledWith({ dialect: MySQL, upperCaseKeywords: false });
     });
   });
 
-  it('loads and memoizes each SQL dialect independently', async () => {
+  it('uses upper-case SQL keyword completions when requested', async () => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { sql, StandardSQL } = await import('@codemirror/lang-sql');
+
+      await loadLanguageExtension('sql', { sqlUpperCaseKeywords: true });
+
+      expect(sql).toHaveBeenCalledWith({ dialect: StandardSQL, upperCaseKeywords: true });
+    });
+  });
+
+  it('loads and memoizes each SQL configuration independently', async () => {
     await jest.isolateModulesAsync(async () => {
       const { loadLanguageExtension } = await import('./languageLoader');
 
       const standard = await loadLanguageExtension('sql', { sqlDialect: 'standardSql' });
       const mySql = await loadLanguageExtension('sql', { sqlDialect: 'mySql' });
+      const standardUpperCaseKeywords = await loadLanguageExtension('sql', { sqlUpperCaseKeywords: true });
       const standardAgain = await loadLanguageExtension('sql', { sqlDialect: 'standardSql' });
 
       expect(standard).not.toBe(mySql);
+      expect(standard).not.toBe(standardUpperCaseKeywords);
       expect(standardAgain).toBe(standard);
     });
   });

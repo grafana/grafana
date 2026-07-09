@@ -199,7 +199,12 @@ describe('CodeMirror CodeEditor', () => {
 
     render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
 
-    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: undefined }));
+    await waitFor(() =>
+      expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', {
+        sqlDialect: undefined,
+        sqlUpperCaseKeywords: undefined,
+      })
+    );
     await waitFor(() => expect(getExtensions()).toContain(languageExtension));
   });
 
@@ -209,7 +214,26 @@ describe('CodeMirror CodeEditor', () => {
 
     render(<CodeEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
 
-    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: 'mySql' }));
+    await waitFor(() =>
+      expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', {
+        sqlDialect: 'mySql',
+        sqlUpperCaseKeywords: undefined,
+      })
+    );
+  });
+
+  it('forwards SQL keyword casing to the language loader', async () => {
+    const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
+    loadLanguageExtensionMock.mockResolvedValue(languageExtension);
+
+    render(<CodeEditor value="" onChange={jest.fn()} language="sql" sqlUpperCaseKeywords />);
+
+    await waitFor(() =>
+      expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', {
+        sqlDialect: undefined,
+        sqlUpperCaseKeywords: true,
+      })
+    );
   });
 
   it('reports language extension load failures and shows a warning while keeping the editor rendered', async () => {

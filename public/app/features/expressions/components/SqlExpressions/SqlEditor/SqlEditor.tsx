@@ -65,6 +65,7 @@ export const SqlEditor = ({
         <CodeMirrorEditor
           language="sql"
           sqlDialect={dialect}
+          sqlUpperCaseKeywords
           value={value}
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
