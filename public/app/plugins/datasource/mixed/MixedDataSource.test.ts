@@ -281,6 +281,26 @@ describe('MixedDatasource', () => {
       });
     });
 
+    it('errors when a multi value datasource variable is mixed with other datasources in an expression', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'A', datasource: { uid: '$ds' }, hide: true },
+          { refId: 'C', datasource: { uid: 'A' }, hide: true },
+          { refId: 'B', datasource: ExpressionDatasourceRef, type: 'math', expression: '$C' },
+        ],
+        scopedVars: { __sceneObject: { value: multiScene } },
+      } as unknown as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(1);
+        expect(results[0].state).toBe(LoadingState.Error);
+        expect(results[0].error?.message).toContain('not supported');
+      });
+      // no requests should have been dispatched
+      expect(expressionDS.requests).toHaveLength(0);
+    });
+
     it('sends a single expression request when no multi value datasource variable is used', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
       const request = {

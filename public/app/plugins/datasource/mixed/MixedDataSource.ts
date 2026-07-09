@@ -50,7 +50,29 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     // replicate the entire target set once per selected value of a multi-value datasource variable and
     // route each replica through the expression datasource.
     if (queries.some((t) => isExpressionReference(t.datasource))) {
-      const batches = this.getExpressionBatches(queries, request);
+      const multiValue = this.findMultiValueDatasourceVariable(queries, request);
+
+      // We can only correctly fan an expression out when every data query uses the same multi-value
+      // datasource variable. If the variable is mixed with other datasources we would replicate the
+      // unrelated queries/expressions once per selected datasource and emit duplicate results, so fail
+      // with a clear message instead. See the getExpressionBatches doc comment for the limitation.
+      if (multiValue) {
+        const dataSourceUids = new Set(
+          queries.filter((t) => !isExpressionReference(t.datasource)).map((t) => t.datasource?.uid)
+        );
+        if (dataSourceUids.size > 1) {
+          return of({
+            data: [],
+            state: LoadingState.Error,
+            error: {
+              message:
+                'Combining a multi-value datasource variable with other datasources in a server-side expression is not supported. Use the same datasource variable for every query, or split the queries into separate panels.',
+            },
+          });
+        }
+      }
+
+      const batches = this.getExpressionBatches(queries, request, multiValue);
       if (!batches.length) {
         return of({ data: [] });
       }
@@ -140,10 +162,17 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
    * When a data query uses a multi-value datasource variable we produce one batch per selected value,
    * pinning that value in scopedVars so each replica queries a single datasource — matching the
    * fan-out behaviour of direct queries.
+   *
+   * Limitation: because the whole target set is replicated, this only supports a single multi-value
+   * datasource variable shared by every data query. Mixing that variable with other datasources in the
+   * same expression graph would duplicate the unrelated targets, so the caller rejects that shape.
    */
-  private getExpressionBatches(queries: DataQuery[], request: DataQueryRequest<DataQuery>): BatchedQueries[] {
+  private getExpressionBatches(
+    queries: DataQuery[],
+    request: DataQueryRequest<DataQuery>,
+    multiValue: { variableName: string; uids: string[] } | undefined
+  ): BatchedQueries[] {
     const expressionDatasource = getDataSourceSrv().get(ExpressionDatasourceRef);
-    const multiValue = this.findMultiValueDatasourceVariable(queries, request);
 
     if (!multiValue) {
       return [
