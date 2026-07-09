@@ -205,7 +205,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
     variable.setState({ staticOptionsOrder });
   };
 
-  const isHasVariableOptions = hasVariableOptions(variable);
+  const isVariableWithOptions = hasVariableOptions(variable);
 
   return (
     <Stack
@@ -263,7 +263,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
         />
       )}
 
-      {!hidePreview && isHasVariableOptions && (
+      {!hidePreview && isVariableWithOptions && (
         <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />
       )}
     </Stack>
