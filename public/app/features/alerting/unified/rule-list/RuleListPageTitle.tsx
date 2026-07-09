@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Button, type ButtonProps, Stack } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Button, type ButtonProps, Stack, Text } from '@grafana/ui';
 
 import {
   type ViewExperienceToggleEventPayload,
@@ -123,10 +124,18 @@ export function RuleListPageTitle({ title }: { title: string }) {
         'data-testid': 'alerting-list-view-toggle-v2',
       };
 
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+
   return (
     <>
       <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
-        <h1>{title}</h1>
+        <Text
+          element={'h1'}
+          variant={visualRefreshEnabled ? 'h4' : 'h1'}
+          weight={visualRefreshEnabled ? 'bold' : 'regular'}
+        >
+          {title}
+        </Text>
         {shouldShowV2Toggle && (
           <div>
             <Button size="sm" fill="outline" {...configToUse} onClick={handleToggleClick} className="fs-unmask" />
