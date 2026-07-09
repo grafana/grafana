@@ -902,11 +902,8 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		return refHash, nil
 	}
 
-	// Fully-qualified refs (e.g. GitHub's refs/pull/<PR>/merge) are passed through as-is;
-	// bare names are assumed to be branches.
-	if !strings.HasPrefix(ref, "refs/") {
-		ref = fmt.Sprintf("refs/heads/%s", ref)
-	}
+	// Prefix ref with refs/heads/
+	ref = fmt.Sprintf("refs/heads/%s", ref)
 
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
