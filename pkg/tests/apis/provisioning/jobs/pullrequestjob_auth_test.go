@@ -18,13 +18,17 @@ func TestIntegrationProvisioning_PullRequestJobRejected(t *testing.T) {
 
 	const repo = "pr-job-rejected-test"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{},
+		// The namespace-wide count assertion in CreateLocalRepo flakes when a
+		// prior test leaks resources into this shared server; scope the check
+		// to this repo's own managed resources instead.
+		SkipResourceAssertions: true,
 	}
 	helper.CreateLocalRepo(t, testRepo)
+	helper.RequireRepoFolderCount(t, repo, 1)
+	helper.RequireRepoDashboardCount(t, repo, 0)
 
 	body := common.AsJSON(provisioning.JobSpec{
 		Action: provisioning.JobActionPullRequest,

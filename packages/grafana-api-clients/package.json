@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.1.0-pre",
+  "version": "13.2.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -199,6 +199,6 @@
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@reduxjs/toolkit": "^2.10.0",
-    "rxjs": "7.8.2"
+    "rxjs": "^7.8.2"
   }
 }

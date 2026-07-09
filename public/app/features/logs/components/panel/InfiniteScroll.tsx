@@ -7,7 +7,13 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 
-import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
+import {
+  canScrollBottom,
+  canScrollTop,
+  getVisibleRange,
+  ScrollDirection,
+  shouldLoadMore,
+} from '../infiniteScrollUtils';
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';

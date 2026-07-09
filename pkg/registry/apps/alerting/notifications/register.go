@@ -2,8 +2,13 @@ package notifications
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"unsafe"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +25,7 @@ import (
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/inhibitionrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/integrationtypeschema"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
@@ -28,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -35,6 +42,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// syncableAMImplementations must stay in sync with the matching constant in
+// the legacy admin_config HTTP API (pkg/services/ngalert/api/api_configuration.go)
+// so both validation paths accept the same set.
+var syncableAMImplementations = []string{"mimir", "cortex"}
 
 var (
 	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
@@ -46,6 +58,54 @@ type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
+}
+
+// newExternalSyncDatasourceValidator builds the admission check for the Config
+// kind's spec.externalAlertmanagerSync.datasourceUid: requires the sync feature
+// flag (checked first — with it off the syncer is fully disabled), rejects writes
+// while the operator ini override is set, and verifies the datasource is a
+// syncable Alertmanager. A UID stored before the override was set stays dormant
+// and reactivates if the override is cleared; clearing the spec value is allowed
+// even while the override is set.
+func newExternalSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService) func(ctx context.Context, uid string) error {
+	return func(ctx context.Context, uid string) error {
+		ofClient := openfeature.NewDefaultClient()
+		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx)) {
+			return fmt.Errorf("external alertmanager UID sync is disabled on this instance")
+		}
+
+		if cfg == nil {
+			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
+		}
+		if cfg.UnifiedAlerting.ExternalAlertmanagerUID != "" {
+			return fmt.Errorf("external alertmanager UID is managed by the operator (unified_alerting.external_alertmanager_uid); cannot be changed via API")
+		}
+
+		ns, err := request.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return fmt.Errorf("resolve org from request namespace: %w", err)
+		}
+
+		got, err := ds.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			UID:   uid,
+			OrgID: ns.OrgID,
+		})
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return fmt.Errorf("datasource not found")
+			}
+			return fmt.Errorf("look up datasource: %w", err)
+		}
+		if got.Type != datasources.DS_ALERTMANAGER {
+			return fmt.Errorf("datasource must be of type alertmanager")
+		}
+		impl := strings.ToLower(got.JsonData.Get("implementation").MustString(""))
+		if !slices.Contains(syncableAMImplementations, impl) {
+			return fmt.Errorf("%q implementation is not supported for sync (must be one of: %s); use the convert API for manual config import",
+				impl, strings.Join(syncableAMImplementations, ", "))
+		}
+		return nil
+	}
 }
 
 func RegisterAppInstaller(
@@ -62,8 +122,9 @@ func RegisterAppInstaller(
 		ng:  ng,
 	}
 	customCfg := notificationsApp.Config{
-		ReceiverTestingHandler:       receiver.New(ng.Api.ReceiverTestService),
-		IntegrationTypeSchemaHandler: integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
+		ReceiverTestingHandler:         receiver.New(ng.Api.ReceiverTestService),
+		IntegrationTypeSchemaHandler:   integrationtypeschema.New(ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false), cfg.UnifiedAlerting.AllowedIntegrations),
+		ValidateExternalSyncDatasource: newExternalSyncDatasourceValidator(cfg, ng.DataSourceService),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -101,6 +162,8 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
 				return routingtree.Authorize(ctx, ac.NewRouteAccess[*legacy_storage.ManagedRoute](authz, routesPermissions, false), a)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
@@ -134,6 +197,10 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		return templategroup.NewStorage(srv, namespacer)
 	case routingtree.ResourceInfo.GroupResource().Resource:
 		return routingtree.NewStorage(api.RouteService, namespacer, api.RouteService)
+	case config.ResourceInfo.GroupResource().Resource:
+		// Config has no legacy backend — returning nil makes the apiserver
+		// serve it directly from unified storage (no dual writer).
+		return nil
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

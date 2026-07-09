@@ -14,10 +14,10 @@ const repoWithTemplate = (template: string | undefined): RepositoryView => ({
 const userVars = { userName: 'Ada Lovelace', userLogin: 'ada', userEmail: 'ada@example.com' };
 
 describe('renderCommitMessage', () => {
-  it('falls back to the legacy hardcoded default when template is empty', () => {
+  it('falls back to the built-in resource default for each action when template is empty', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'dashboard', resourceID: '', title: 'My DB' })
-    ).toBe('New dashboard: My DB');
+    ).toBe('Create dashboard: My DB');
     expect(
       renderCommitMessage('', { action: 'update', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
     ).toBe('Save dashboard: My DB');
@@ -32,7 +32,22 @@ describe('renderCommitMessage', () => {
     ).toBe('Rename dashboard: My DB');
   });
 
-  it('falls back to folder defaults for folder resources', () => {
+  it('uses a non-empty fallbackMessage verbatim when the template is empty', () => {
+    expect(
+      renderCommitMessage(undefined, { action: 'delete', resourceID: '', title: '2 resources' }, 'Delete resources')
+    ).toBe('Delete resources');
+  });
+
+  it('treats an empty/whitespace-only fallbackMessage as absent rather than committing a blank message', () => {
+    expect(renderCommitMessage(undefined, { action: 'delete', resourceID: '', title: '2 resources' }, '')).toBe(
+      '2 resources'
+    );
+    expect(renderCommitMessage(undefined, { action: 'move', resourceID: '', title: '3 resources' }, '   ')).toBe(
+      '3 resources'
+    );
+  });
+
+  it('interpolates the resource kind in the built-in defaults', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'folder', resourceID: '', title: 'ops' })
     ).toBe('Create folder: ops');
@@ -219,7 +234,7 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         action: 'create',
       })
-    ).toBe('New dashboard: Latency');
+    ).toBe('Create dashboard: Latency');
   });
 
   it('appends the Grafana-saved-by trailer to the default message', () => {

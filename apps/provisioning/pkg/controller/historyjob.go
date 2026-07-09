@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -30,29 +29,26 @@ type HistoryJobController struct {
 // NewHistoryJobController creates a new HistoryJobController.
 func NewHistoryJobController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
-	historyJobInformer informer.HistoricJobInformer,
 	expirationTime time.Duration,
-) (*HistoryJobController, error) {
-	c := &HistoryJobController{
+) *HistoryJobController {
+	return &HistoryJobController{
 		client:         provisioningClient,
 		logger:         logging.DefaultLogger.With("logger", historyJobControllerLoggerName),
 		expirationTime: expirationTime,
 	}
+}
 
-	// Use the resync events from the shared informer to trigger cleanup for each job
-	_, err := historyJobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+// EventHandler returns the informer event handlers for the controller. Register
+// it with the HistoricJobs informer so resync events trigger cleanup of expired jobs.
+func (c *HistoryJobController) EventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			c.cleanupJob(obj)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			c.cleanupJob(newObj)
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
-
-	return c, nil
 }
 
 func (c *HistoryJobController) cleanupJob(obj interface{}) {

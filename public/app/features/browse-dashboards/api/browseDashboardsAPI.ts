@@ -36,14 +36,12 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
+import { getFolderURL } from '../utils/dashboards';
 
 import { PAGE_SIZE } from './constants';
 import { isProvisionedDashboard } from './isProvisioned';
 
 async function refreshTeamFolders() {
-  if (!config.featureToggles.teamFolders) {
-    return;
-  }
   dispatch(refetchChildren({ parentUID: TEAM_FOLDERS_UID, pageSize: PAGE_SIZE }));
 }
 
@@ -77,10 +75,10 @@ interface RestoreDashboardArgs {
 // We need to do this as the API will return different responses depending on the type of storage used and existing
 // resource types, even when we are using the old api/ endpoint.
 const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): DescendantCount => ({
-  folders: folderCounts.folders ?? folderCounts.folder ?? 0,
-  dashboards: folderCounts.dashboards ?? folderCounts.dashboard ?? 0,
-  library_elements: folderCounts.library_elements ?? folderCounts.librarypanel ?? 0,
-  alertrules: folderCounts.alertrules ?? folderCounts.alertrule ?? 0,
+  folders: folderCounts.folders || folderCounts.folder || 0,
+  dashboards: folderCounts.dashboards || folderCounts.dashboard || 0,
+  librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
+  alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -170,7 +168,7 @@ export const browseDashboardsAPI = createApi({
           version,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ uid, title, parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -179,6 +177,10 @@ export const browseDashboardsAPI = createApi({
             })
           );
           refreshTeamFolders();
+          // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+          if (title) {
+            dispatch(updateDashboardName({ id: uid, title, url: getFolderURL(uid) }));
+          }
         });
       },
     }),
@@ -219,6 +221,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
         }
@@ -239,7 +242,7 @@ export const browseDashboardsAPI = createApi({
           const totalCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -248,7 +251,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.folders += normalizedCounts.folders;
             totalCounts.dashboards += normalizedCounts.dashboards;
             totalCounts.alertrules += normalizedCounts.alertrules;
-            totalCounts.library_elements += normalizedCounts.library_elements;
+            totalCounts.librarypanels += normalizedCounts.librarypanels;
           }
 
           return { data: totalCounts };
@@ -354,11 +357,15 @@ export const browseDashboardsAPI = createApi({
             continue;
           }
 
-          await baseQuery({
+          const response = await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
             params: deleteFolderParams,
           });
+          if (!response.error) {
+            // Only clear the nav starred entry for folders that were actually deleted
+            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+          }
         }
 
         return { data: undefined };

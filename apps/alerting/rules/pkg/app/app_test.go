@@ -133,6 +133,32 @@ func TestAlertRuleValidation_OpenAPISchemaValidation(t *testing.T) {
 	})
 }
 
+func TestAlertRuleMutation_DefaultsNotificationSettingsType(t *testing.T) {
+	r := baseAlertRule()
+	r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{
+		SimplifiedRouting: &v1.AlertRuleSimplifiedRouting{
+			Receiver: "notif-ok",
+			// omit type
+		},
+	}
+
+	validator, err := validation.NewBuilder[*v1.AlertRule]().
+		WithOpenAPIValidation(*manifestdata.LocalManifest().ManifestData, schema.GroupKind{Group: "rules.alerting.grafana.app", Kind: "AlertRule"}).
+		Build()
+	require.NoError(t, err)
+
+	err = validator.Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+	// this should fail because the mutator hasn't added the default type yet
+	require.Error(t, err, "empty notification settings type should fail schema validation before mutation")
+
+	resp, err := alertrule.NewMutator(makeDefaultRuntimeConfig()).Mutate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: r})
+	require.NoError(t, err)
+	mutated := resp.UpdatedObject.(*v1.AlertRule)
+	require.Equal(t, v1.AlertRuleNotificationSettingsTypeSimplifiedRouting, mutated.Spec.NotificationSettings.SimplifiedRouting.Type)
+
+	require.NoError(t, validator.Validate(context.Background(), &appsdk.AdmissionRequest{Action: resource.AdmissionActionCreate, Object: mutated}))
+}
+
 func TestAlertRuleValidation_SuccessWithNamedRoutingTree(t *testing.T) {
 	r := baseAlertRule()
 	r.Spec.NotificationSettings = &v1.AlertRuleNotificationSettings{

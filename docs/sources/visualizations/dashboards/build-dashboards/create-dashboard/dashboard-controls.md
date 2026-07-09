@@ -19,7 +19,7 @@ weight: 200
 
 In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, dashboard links, and controls to filter and group data, without leaving the dashboard.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.1.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
 ## Add filters and group by controls
 
@@ -44,24 +44,19 @@ To add a variable, follow these steps:
 
 {{< docs/list >}}
 
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
-1. Choose a variable type from the list.
-
 {{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="add-variable" >}}
 
 1. Complete the variable configuration. For more detailed configuration information, click the one of the following links to complete the steps for adding your selected variable type:
 
 {{< column-list >}}
 
-- [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-query-variable)
-- [Custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-custom-variable)
-- [Textbox](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-text-box-variable)
-- [Constant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-constant-variable)
-- [Data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-data-source-variable)
-- [Interval](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-an-interval-variable)
-- [Switch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/#add-a-switch-variable)
+- [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-query-variable)
+- [Custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-custom-variable)
+- [Textbox](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-text-box-variable)
+- [Constant](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-constant-variable)
+- [Data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-data-source-variable)
+- [Interval](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-an-interval-variable)
+- [Switch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-switch-variable)
 
 {{< /column-list >}}
 
@@ -78,34 +73,7 @@ For more detailed information on variables, refer to the full [Variables documen
 
 To add an annotation query, follow these steps:
 
-{{< docs/list >}}
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign).
-1. Click **Annotation query**.
-1. Enter a name for the annotation query.
-
-   This name is given to the toggle that allows you to enable/disable showing annotation events from this query.
-
 {{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/index.md" id="add-annotation-query" >}}
-
-1. To add a query, do one of the following:
-   - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
-   - Click **Use saved query** to open a the **Saved queries** drawer and select a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
-
-   {{< admonition type="note" >}}
-   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
-   {{< /admonition >}}
-
-1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
-1. Click **Close** when you've completed the query setup.
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
-
-{{< /docs/list >}}
 
 For more detailed information about annotations, refer to the full [Annotations documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/).
 
@@ -162,7 +130,7 @@ To add a URL link to your dashboard, follow these steps:
 After you add dashboard controls, you can manage them from the dashboard options.
 In this view, the sidebar includes collapsible sections for filters, variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.0.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-mgmt-v13.1.png" max-width="450px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
 To manage dashboard controls, follow these steps:
 

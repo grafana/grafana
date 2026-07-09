@@ -1,9 +1,18 @@
-import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import {
+  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type TestDataSourceResponse,
+} from '@grafana/data';
 
+import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
@@ -56,19 +65,23 @@ function ds(overrides: Partial<DataSourceInstanceSettings> = {}): DataSourceInst
 }
 
 const logError = jest.fn();
+const logWarning = jest.fn();
 
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
   logError.mockClear();
+  logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
     logDebug: jest.fn(),
     logError,
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logWarning,
   });
+  // No legacy srv by default — the fallback should be inert.
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
 
 describe('plugin', () => {
@@ -148,7 +161,7 @@ describe('plugin', () => {
       await expect(getDataSourceInstance(settings.uid)).rejects.toThrow(/module not found/);
     });
 
-    it('logs the failure with the raw error as cause and does not sanitize the rethrow', async () => {
+    it('logs a TracedError that preserves the original stack and does not sanitize the rethrow', async () => {
       const settings = ds();
       initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
       const importError = new Error('module not found');
@@ -158,8 +171,10 @@ describe('plugin', () => {
 
       expect(logError).toHaveBeenCalledTimes(1);
       const [loggedError] = logError.mock.calls[0];
-      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toContain('Failed to import datasource plugin');
       expect(loggedError.cause).toBe(importError);
+      expect(loggedError.stack).toBe(importError.stack);
     });
 
     it('returns the same instance for name-based and uid-based lookups', async () => {
@@ -246,6 +261,120 @@ describe('plugin', () => {
       // preloaded singleton instance. getDataSourceInstance has no such short-circuit yet.
       // Tracked in the async-vs-legacy divergences issue.
       it.todo('resolves expression refs to the preloaded singleton without importing');
+    });
+
+    describe('instance identity parity with DatasourceSrv.get (template-variable refs)', () => {
+      // Unlike the preset-instance mocks used elsewhere in this file, this class derives its
+      // identity from the settings the loader passes to the constructor — the identity a real
+      // plugin would have. Legacy get('$var') interpolates and returns the concrete instance,
+      // so instance.uid must be the real uid, never the variable string.
+      class CapturingDataSource extends DataSourceApi {
+        query(): Promise<DataQueryResponse> {
+          return Promise.resolve({ data: [] });
+        }
+        testDatasource(): Promise<TestDataSourceResponse> {
+          return Promise.resolve({ status: 'success', message: '' });
+        }
+      }
+
+      const seedAlphaWithVariable = (DataSourceClass: unknown = CapturingDataSource) => {
+        const settings = ds();
+        initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setTemplateSrv({
+          getVariables: () => [],
+          replace: (v?: string) => (v === '${myds}' ? settings.uid : (v ?? '')),
+        } as unknown as TemplateSrv);
+        setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass, components: {} }));
+        return settings;
+      };
+
+      it('constructs the instance with the concrete identity on a cold cache', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const result = await getDataSourceInstance('${myds}');
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('constructs the concrete default instance when the variable interpolates to "default"', async () => {
+        const settings = ds();
+        initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+        setTemplateSrv({
+          getVariables: () => [],
+          replace: (v?: string) => (v === '${myds}' ? 'default' : (v ?? '')),
+        } as unknown as TemplateSrv);
+        setDataSourcePluginImporter(
+          jest.fn().mockResolvedValue({ DataSourceClass: CapturingDataSource, components: {} })
+        );
+
+        const result = await getDataSourceInstance('${myds}');
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('constructs the concrete instance when the variable arrives inside a ref object', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const result = await getDataSourceInstance({ uid: '${myds}', type: '' });
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('does not poison the concrete-uid cache entry after a variable-ref call', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const viaVariable = await getDataSourceInstance('${myds}');
+        const viaUid = await getDataSourceInstance(settings.uid);
+
+        expect(viaUid.uid).toBe(settings.uid);
+        expect(viaUid.getRef()).toEqual({ type: settings.type, uid: settings.uid });
+        expect(viaUid).toBe(viaVariable);
+      });
+
+      it('returns the concrete instance for a variable ref on a warm cache', async () => {
+        const settings = seedAlphaWithVariable();
+
+        const viaUid = await getDataSourceInstance(settings.uid);
+        const viaVariable = await getDataSourceInstance('${myds}');
+
+        expect(viaVariable).toBe(viaUid);
+        expect(viaVariable.uid).toBe(settings.uid);
+      });
+
+      it('patches legacy plugins (not extending DataSourceApi) with the concrete identity', async () => {
+        const legacyInstance: Record<string, unknown> = {};
+        const settings = seedAlphaWithVariable(jest.fn().mockReturnValue(legacyInstance));
+
+        const result = (await getDataSourceInstance('${myds}')) as unknown as Record<string, unknown>;
+
+        expect(result.uid).toBe(settings.uid);
+        expect(result.name).toBe(settings.name);
+        expect((result.getRef as () => unknown)()).toEqual({ type: settings.type, uid: settings.uid });
+      });
+
+      it('warns when a plugin instance is cached under a key that does not match its uid', async () => {
+        class MangledUidDataSource extends CapturingDataSource {
+          constructor(instanceSettings: DataSourceInstanceSettings) {
+            super(instanceSettings);
+            // uid is readonly on DataSourceApi; a badly-behaved plugin can still overwrite it at runtime.
+            (this as { uid: string }).uid = 'not-the-cache-key';
+          }
+        }
+        const settings = seedAlphaWithVariable(MangledUidDataSource);
+
+        await getDataSourceInstance(settings.uid);
+
+        expect(logWarning).toHaveBeenCalledWith(PLUGIN_CACHE_UID_MISMATCH_WARNING, {
+          cacheUid: settings.uid,
+          instanceUid: 'not-the-cache-key',
+        });
+      });
     });
 
     it('passes settings.meta to the importer', async () => {
@@ -428,6 +557,88 @@ describe('plugin', () => {
     it('throws if the singleton has not been registered', async () => {
       initDataSourceInstanceSettings({}, '');
       await expect(getDataSourceInstance('__expr__')).rejects.toThrow('Expression datasource has not been initialised');
+    });
+  });
+
+  describe('legacy DataSourceSrv fallback', () => {
+    it('falls back to the legacy srv and logs a warning when the new path cannot resolve the instance', async () => {
+      // Empty cache so the new path throws "not found".
+      initDataSourceInstanceSettings({}, '');
+      setDataSourcePluginImporter(jest.fn());
+
+      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const get = jest.fn().mockResolvedValue(legacyInstance);
+      // getInstanceSettings also misses, so the settings-level fallback stays silent and the
+      // instance-level fallback is what resolves the instance.
+      const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+      setDataSourceSrv({ get, getInstanceSettings } as unknown as DataSourceSrv);
+
+      const result = await getDataSourceInstance('unknown-uid');
+
+      expect(result).toBe(legacyInstance);
+      expect(get).toHaveBeenCalledWith('unknown-uid', undefined);
+      expect(logWarning).toHaveBeenCalledTimes(1);
+      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: 'unknown-uid' });
+    });
+
+    it('rethrows the original error and does not log when the legacy srv also cannot resolve it', async () => {
+      initDataSourceInstanceSettings({}, '');
+      setDataSourcePluginImporter(jest.fn());
+
+      const get = jest.fn().mockRejectedValue(new Error('legacy not found'));
+      const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+      setDataSourceSrv({ get, getInstanceSettings } as unknown as DataSourceSrv);
+
+      await expect(getDataSourceInstance('unknown-uid')).rejects.toThrow(/was not found/);
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it('does not consult the legacy srv when the new path succeeds', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+      const get = jest.fn();
+      setDataSourceSrv({ get } as unknown as DataSourceSrv);
+
+      const result = await getDataSourceInstance(settings.uid);
+
+      expect(result).toBe(instance);
+      expect(get).not.toHaveBeenCalled();
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it('routes a concurrent in-flight caller through the fallback when the load rejects', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      // A deferred import so the first caller's load stays in-flight while the second arrives.
+      let rejectImport: (err: Error) => void = () => {};
+      const importPromise = new Promise((_, reject) => {
+        rejectImport = reject;
+      });
+      setDataSourcePluginImporter(jest.fn().mockReturnValue(importPromise));
+
+      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const get = jest.fn().mockResolvedValue(legacyInstance);
+      setDataSourceSrv({ get } as unknown as DataSourceSrv);
+
+      // First caller starts the load; the second reuses the in-flight promise.
+      const first = getDataSourceInstance(settings.uid);
+      const second = getDataSourceInstance(settings.uid);
+
+      // Let both reach their await points (first awaiting the load, second awaiting in-flight).
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      rejectImport(new Error('module not found'));
+
+      // Both callers — including the in-flight one — fall back to the legacy instance.
+      await expect(first).resolves.toBe(legacyInstance);
+      await expect(second).resolves.toBe(legacyInstance);
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(logWarning).toHaveBeenCalledTimes(2);
     });
   });
 });

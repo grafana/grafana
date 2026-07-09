@@ -12,7 +12,9 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type {
+  CodeMirrorBasicSetup,
   CodeMirrorCompletion,
   CodeMirrorCompletionContext,
   CodeMirrorCompletionMode,
@@ -20,6 +22,14 @@ export type {
   CodeMirrorCompletionSource,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
   CodeMirrorExtension,
+  SignatureHelp,
+  SignatureHelpProvider,
+  SignatureInformation,
+  SignatureParameter,
 } from './components/CodeMirror/types';
+export { getQueryFieldConfig } from './components/QueryFieldConfig/queryFieldConfig';
+export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/QueryFieldConfig/queryFieldConfig';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export { TableNG } from './components/Table/TableNG/TableNG';

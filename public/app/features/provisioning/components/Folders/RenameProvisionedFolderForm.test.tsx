@@ -1,8 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -15,10 +16,6 @@ import { setupProvisioningMswServer } from '../../mocks/server';
 import { RenameProvisionedFolderForm } from './RenameProvisionedFolderForm';
 
 setupProvisioningMswServer();
-
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
 
 jest.mock('../../hooks/usePRBranch', () => ({
   usePRBranch: jest.fn().mockReturnValue(undefined),
@@ -80,6 +77,19 @@ const mockFormData = {
   workflow: 'write' as const,
   comment: '',
   title: 'Test Folder',
+};
+
+// The real useProvisionedRequestHandler reads data.resource.upsert, so every
+// success response must include a resource wrapper.
+const successResponse = {
+  resource: {
+    upsert: {
+      apiVersion: 'v1',
+      kind: 'Folder',
+      metadata: { name: 'test-folder', uid: 'test-folder' },
+      spec: { title: 'Test Folder' },
+    },
+  },
 };
 
 const defaultHookData: ProvisionedFolderFormDataResult = {
@@ -161,7 +171,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -194,7 +204,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -224,7 +234,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -233,7 +243,7 @@ describe('RenameProvisionedFolderForm', () => {
         workflow: 'write' as const,
         ref: 'main',
       };
-      const { user } = setup({}, { ...defaultHookData, initialValues: writeFormData });
+      const { user, onDismiss } = setup({}, { ...defaultHookData, initialValues: writeFormData });
 
       const renameButton = await screen.findByRole('button', { name: /^rename$/i });
       await user.click(renameButton);
@@ -245,6 +255,11 @@ describe('RenameProvisionedFolderForm', () => {
       const request = requireCapturedRequest(capturedRequest);
       // Write workflow sends no ref query param
       expect(request.url.searchParams.get('ref')).toBeNull();
+
+      // The real request handler dismisses the form after a successful save
+      await waitFor(() => {
+        expect(onDismiss).toHaveBeenCalled();
+      });
     });
 
     it('should keep path unchanged (no path calculation)', async () => {
@@ -252,7 +267,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -289,7 +304,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -318,7 +333,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -344,7 +359,7 @@ describe('RenameProvisionedFolderForm', () => {
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           const url = new URL(request.url);
           capturedRequest = { url, body: await request.json() };
-          return HttpResponse.json({ resource: { upsert: {} } });
+          return HttpResponse.json(successResponse);
         })
       );
 
@@ -381,22 +396,52 @@ describe('RenameProvisionedFolderForm', () => {
   });
 
   describe('error handling', () => {
-    it('should handle request failure gracefully', async () => {
+    it('should show the API error in an alert when the request fails', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, () => {
           return HttpResponse.json({ message: 'API Error' }, { status: 500 });
         })
       );
 
-      const { user } = setup();
+      const { user, onDismiss } = setup();
 
       const renameButton = await screen.findByRole('button', { name: /^rename$/i });
       await user.click(renameButton);
 
-      // Component should handle error gracefully without crashing
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
-      });
+      // The form catches the error and surfaces it in an alert; it stays open
+      expect(await screen.findByText('API Error')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
+      expect(onDismiss).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('RenameProvisionedFolderForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup(
+      {},
+      {
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Test Folder'));
+    expect(comment).not.toHaveAttribute('readonly');
   });
 });

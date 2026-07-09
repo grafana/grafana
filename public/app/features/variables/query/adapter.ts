@@ -10,7 +10,6 @@ import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 
@@ -25,7 +24,6 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
     picker: optionPickerFactory<QueryVariableModel>(),
-    editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },
