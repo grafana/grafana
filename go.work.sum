@@ -1725,6 +1725,8 @@ github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d h1:VVW
 github.com/xitongsys/parquet-go-source v0.0.0-20230830030807-0dd610dbff1d/go.mod h1:HaLl1OAA7RAuQURU3Enxn7aRAI9yezsPPaxiGrbzxW4=
 github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 h1:FnBeRrxr7OU4VvAzt5X7s6266i6cSVkkFPS0TuXWbIg=
 github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342/go.mod h1:Ohn+xnUBiLI6FVj/9LpzZWtj1/D6lUovWYBkxHVV3aM=
+github.com/yalue/merged_fs v1.3.0 h1:qCeh9tMPNy/i8cwDsQTJ5bLr6IRxbs6meakNE5O+wyY=
+github.com/yalue/merged_fs v1.3.0/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20260128080146-c4ed16b24b37 h1:kUXMT/fM/DpDT66WQgRUf3I8VOAWjypkMf52W5PChwA=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20260128080146-c4ed16b24b37/go.mod h1:Er+FePu1dNUieD+XTMDduGpQuCPssK5Q4BjF+IIXJ3I=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20260311095541-ebbf792c1180 h1:avIdi8eGXjKbn1WLokNR1Ofnz1k8t7tJ88YQLD/iCi8=
