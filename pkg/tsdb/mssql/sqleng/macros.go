@@ -2,7 +2,6 @@ package sqleng
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -12,17 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
-// sqlCommenterRegExp matches a SQLCommenter attribution block: one or more
-// key='value' pairs in a block comment, e.g. /*application='grafana',source='bi'*/.
-// Keys allow '%' for URL-encoded serialization; values exclude '*' so the run
-// cannot contain '*/' and close the comment early.
-var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='[^'*]*'(\s*,\s*[a-zA-Z0-9%_.-]+='[^'*]*')*\s*\*/$`)
-
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
 // string literals, double-quoted identifiers, and T-SQL bracket-quoted identifiers
-// are preserved verbatim. SQLCommenter attribution blocks are also preserved so
-// query tagging metadata reaches the database, unless they embed a macro.
+// are preserved verbatim.
 func stripSQLComments(sql string) string {
 	var out strings.Builder
 	out.Grow(len(sql))
@@ -90,7 +82,15 @@ func stripSQLComments(sql string) string {
 				}
 			}
 		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
-			i = scanBlockComment(sql, i, &out)
+			// Block comment: skip to closing */.
+			i += 2
+			for i+1 < n {
+				if sql[i] == '*' && sql[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
 		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
 			// Line comment: skip to end of line (newline is preserved).
 			for i < n && sql[i] != '\n' {
@@ -104,28 +104,6 @@ func stripSQLComments(sql string) string {
 	return out.String()
 }
 
-// scanBlockComment consumes the /* ... */ block comment beginning at i and
-// returns the index just past it. A SQLCommenter attribution tag is written to
-// out so query-tagging metadata reaches the database, unless it embeds a macro
-// (which must not be interpolated); every other block comment is dropped.
-func scanBlockComment(sql string, i int, out *strings.Builder) int {
-	n := len(sql)
-	start := i
-	i += 2
-	for i+1 < n {
-		if sql[i] == '*' && sql[i+1] == '/' {
-			i += 2
-			comment := sql[start:i]
-			if sqlCommenterRegExp.MatchString(comment) && !sqlmacro.ContainsMacro(comment) {
-				out.WriteString(comment)
-			}
-			return i
-		}
-		i++
-	}
-	return i
-}
-
 type msSQLMacroEngine struct {
 	*SQLMacroEngineBase
 }
@@ -136,11 +114,9 @@ func newMssqlMacroEngine() SQLMacroEngine {
 
 func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
-	// Strip comments before any interpolation so the SQLCommenter guard sees
-	// macro tokens before the interval substitutions below rewrite them; then
-	// apply the global interval substitutions, then expand the paren-form macros.
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
-	sql = Interpolate(*query, timeRange, "", sql)
 
 	var macroError error
 

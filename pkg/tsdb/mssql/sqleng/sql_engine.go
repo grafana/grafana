@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -342,13 +343,22 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		ch <- queryResult
 	}
 
-	// The macro engine strips comments, applies the global interval
-	// substitutions, and expands the datasource macros, in that order.
-	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, queryJson.RawSql)
+	// A trailing SQLCommenter attribution tag must reach the database verbatim,
+	// so split it off before interpolation and re-append it afterwards. This
+	// keeps it out of comment stripping and macro substitution, and prevents a
+	// macro from completing across the comment boundary in either direction.
+	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJson.RawSql)
+
+	// global substitutions
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, rawSQL)
+
+	// data source specific substitutions
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
+	interpolatedQuery += sqlCommenterTag
 
 	db, err := e.getDB(queryContext)
 	if err != nil {

@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -12,12 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
-
-// sqlCommenterRegExp matches a SQLCommenter attribution block: one or more
-// key='value' pairs in a block comment, e.g. /*application='grafana',source='bi'*/.
-// Keys allow '%' for URL-encoded serialization; values exclude '*' so the run
-// cannot contain '*/' and close the comment early.
-var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='[^'*]*'(\s*,\s*[a-zA-Z0-9%_.-]+='[^'*]*')*\s*\*/$`)
 
 // isDollarTagChar reports whether b is valid inside a PostgreSQL dollar-quote tag
 // (letters and digits only; underscore is also allowed per identifier rules).
@@ -111,25 +104,13 @@ func stripSQLComments(sql string) string {
 			i = consumeQuoted(sql, i, n, '"', &out)
 		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
 			// Block comment: skip to closing */.
-			start := i
 			i += 2
-			closed := false
 			for i+1 < n {
 				if sql[i] == '*' && sql[i+1] == '/' {
 					i += 2
-					closed = true
 					break
 				}
 				i++
-			}
-			// Preserve SQLCommenter attribution tags so query-tagging metadata
-			// reaches the database; strip every other block comment, and also strip
-			// a tag-shaped comment that embeds a macro so the macro is not interpolated.
-			if closed {
-				comment := sql[start:i]
-				if sqlCommenterRegExp.MatchString(comment) && !sqlmacro.ContainsMacro(comment) {
-					out.WriteString(comment)
-				}
 			}
 		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
 			// Line comment: skip to end of line (newline is preserved).
@@ -157,11 +138,9 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 }
 
 func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
-	// Strip comments before any interpolation so the SQLCommenter guard sees
-	// macro tokens before the interval substitutions below rewrite them; then
-	// apply the global interval substitutions, then expand the paren-form macros.
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
-	sql = sqleng.Interpolate(*query, timeRange, "", sql)
 
 	var macroError error
 

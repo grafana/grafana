@@ -14,18 +14,11 @@ import (
 
 var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]session_user\([^\)]*\)|[\s,]current_user(\([^\)]*\))?|[\s,]system_user\([^\)]*\)|[\s,]user\([^\)]*\))([\s,;]|$)`)
 
-// sqlCommenterRegExp matches a SQLCommenter attribution block: one or more
-// key='value' pairs in a block comment, e.g. /*application='grafana',source='bi'*/.
-// Keys allow '%' for URL-encoded serialization; values exclude '*' so the run
-// cannot contain '*/' and close the comment early.
-var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='[^'*]*'(\s*,\s*[a-zA-Z0-9%_.-]+='[^'*]*')*\s*\*/$`)
-
 // stripSQLComments removes SQL line comments (--, #) and block comments (/* */)
 // from the query string while preserving comment-like characters that appear
 // inside quoted strings (single-quoted, double-quoted, and backtick-quoted).
 // MySQL supports # as a line comment delimiter in addition to the standard
-// -- and /* */ forms. SQLCommenter attribution blocks are preserved so query
-// tagging metadata reaches the database, unless they embed a macro.
+// -- and /* */ forms.
 func stripSQLComments(sql string) string {
 	var result strings.Builder
 	result.Grow(len(sql))
@@ -66,26 +59,16 @@ func stripSQLComments(sql string) string {
 
 		// Block comment: /* ... */
 		if i+1 < len(sql) && sql[i] == '/' && sql[i+1] == '*' {
-			start := i
 			i += 2
-			closed := false
 			for i+1 < len(sql) {
 				if sql[i] == '*' && sql[i+1] == '/' {
 					i += 2
-					closed = true
 					break
 				}
 				i++
 			}
-			if !closed {
-				// Unterminated block comment: drop the remainder.
+			if i >= len(sql) {
 				break
-			}
-			// Keep SQLCommenter tags so attribution reaches the database; strip
-			// every other block comment so macros inside them are not interpolated.
-			comment := sql[start:i]
-			if sqlCommenterRegExp.MatchString(comment) && !sqlmacro.ContainsMacro(comment) {
-				result.WriteString(comment)
 			}
 			continue
 		}
@@ -134,11 +117,9 @@ func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 		return "", fmt.Errorf("invalid query - %s", m.userError)
 	}
 
-	// Strip comments before any interpolation so the SQLCommenter guard sees
-	// macro tokens before the interval substitutions below rewrite them; then
-	// apply the global interval substitutions, then expand the paren-form macros.
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
-	sql = sqleng.Interpolate(*query, timeRange, "", sql)
 
 	var macroError error
 

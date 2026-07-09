@@ -1,41 +1,53 @@
-// Package sqlmacro holds the shared Grafana SQL macro definitions used by the
-// MySQL, PostgreSQL and Microsoft SQL Server datasources. Keeping the macro
-// expression and the "does this text contain a macro" guard in one place stops
-// the three datasources from drifting apart, and stops the guard that decides
-// which SQL comments are safe to forward to the database from drifting away from
-// the expression that actually expands macros.
+// Package sqlmacro holds the shared Grafana SQL macro pattern and the trailing
+// SQLCommenter tag handling used by the MySQL, PostgreSQL and Microsoft SQL
+// Server datasources, so the three engines do not drift apart on either.
 package sqlmacro
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 // Expr is the regular-expression source matching a complete Grafana macro call
 // of the form $name(...). It is exported so every datasource expands macros with
-// the exact same pattern the comment guard uses to detect them.
+// the exact same pattern.
 const Expr = `\$([_a-zA-Z0-9]+)\(([^\)]*)\)`
 
 // RegExp matches a complete Grafana macro call $name(...).
 var RegExp = regexp.MustCompile(Expr)
 
-// macroTokenRegExp matches any Grafana macro token, including forms that are not
-// (yet) a complete call:
-//   - the parenthesis-less $__interval / $__interval_ms / $__unixEpoch* family,
-//     which the datasource engines expand with a plain string replacement; and
-//   - a paren-form macro that may be complete ($__timeFilter(col)) or only
-//     partially present ($__timeFilter( ), e.g. when it sits inside a comment and
-//     would otherwise complete across the comment boundary once the surrounding
-//     SQL is interpolated.
-//
-// A bare $name with neither the $__ prefix nor a following '(' (for example a
-// PostgreSQL $1 positional parameter) is intentionally not treated as a token.
-var macroTokenRegExp = regexp.MustCompile(`\$(__[a-zA-Z0-9_]*|[_a-zA-Z0-9]+\s*\()`)
+// sqlCommenterRegExp validates a SQLCommenter attribution comment made of one or
+// more key='value' pairs, e.g. /*application='grafana',source='bi'*/. Keys allow
+// '%' for the URL-encoded serialization; values allow escaped quotes (\') and any
+// other byte. The tag is forwarded to the database verbatim and never
+// interpolated, so the value charset does not need to defend against macros -
+// the caller has already ensured the comment contains no internal */.
+var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='(?:\\.|[^'\\])*'(\s*,\s*[a-zA-Z0-9%_.-]+='(?:\\.|[^'\\])*')*\s*\*/$`)
 
-// ContainsMacro reports whether s contains a Grafana macro token. It is used to
-// decide whether a SQL comment must be stripped before interpolation: a comment
-// with no macro token is inert and safe to forward to the database (for example
-// a SQLCommenter attribution tag), whereas any macro token - complete, partial,
-// or the parenthesis-less $__interval family - must be removed so interpolation
-// cannot smuggle a live macro, or an expression that completes across the
-// comment boundary, into the executed query.
-func ContainsMacro(s string) bool {
-	return macroTokenRegExp.MatchString(s)
+// SplitTrailingSQLCommenter splits a trailing SQLCommenter attribution tag off
+// the end of sql. It returns the query without the tag and the tag itself
+// (including any trailing ';'), or the original query and an empty string when
+// there is none. Callers re-append the tag verbatim after interpolation, so it
+// reaches the database unchanged and no macro can complete across the comment
+// boundary in either direction.
+func SplitTrailingSQLCommenter(sql string) (string, string) {
+	trimmed := strings.TrimRight(sql, " \t\r\n")
+	trimmed = strings.TrimRight(strings.TrimSuffix(trimmed, ";"), " \t\r\n")
+	if !strings.HasSuffix(trimmed, "*/") {
+		return sql, ""
+	}
+	open := strings.LastIndex(trimmed, "/*")
+	if open < 0 {
+		return sql, ""
+	}
+	comment := trimmed[open:]
+	// The block comment must be self-contained: an internal */ means the database
+	// would close the comment early, leaving executable text we must not move.
+	if strings.Contains(comment[2:len(comment)-2], "*/") {
+		return sql, ""
+	}
+	if !sqlCommenterRegExp.MatchString(comment) {
+		return sql, ""
+	}
+	return sql[:open], sql[open:]
 }

@@ -222,34 +222,6 @@ func TestMacroEngineConcurrency(t *testing.T) {
 	wg.Wait()
 }
 
-func TestInterpolateSQLCommenter(t *testing.T) {
-	engine := &mySQLMacroEngine{
-		logger:    backend.NewLoggerWith("logger", "test"),
-		userError: "inspect Grafana server log for details",
-	}
-	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
-	timeRange := backend.TimeRange{From: from, To: from.Add(5 * time.Minute)}
-	query := &backend.DataQuery{Interval: 10 * time.Minute}
-
-	t.Run("preserves an inert trailing tag while interpolating the body", func(t *testing.T) {
-		sql, err := engine.Interpolate(query, timeRange, "SELECT $__interval /*app='grafana',source='bi'*/")
-		require.NoError(t, err)
-		require.Equal(t, "SELECT 10m /*app='grafana',source='bi'*/", sql)
-	})
-
-	t.Run("strips a tag that embeds the interval macro instead of interpolating it", func(t *testing.T) {
-		sql, err := engine.Interpolate(query, timeRange, "SELECT 1 /*i='$__interval'*/")
-		require.NoError(t, err)
-		require.Equal(t, "SELECT 1 ", sql)
-	})
-
-	t.Run("strips a tag whose macro would otherwise complete across the comment boundary", func(t *testing.T) {
-		sql, err := engine.Interpolate(query, timeRange, "SELECT 1 /*k='$__timeFilter(t'*/ WHERE (x = 1)")
-		require.NoError(t, err)
-		require.Equal(t, "SELECT 1  WHERE (x = 1)", sql)
-	})
-}
-
 func TestStripSQLComments(t *testing.T) {
 	t.Run("strips block comments", func(t *testing.T) {
 		result := stripSQLComments("SELECT /* comment */ 1")
@@ -327,25 +299,10 @@ func TestStripSQLComments(t *testing.T) {
 		require.Equal(t, sql, result)
 	})
 
-	t.Run("preserves trailing SQLCommenter tag before semicolon", func(t *testing.T) {
-		sql := "SELECT 1 AS value\n/*application='grafana',source='bi',route='test',feature='repro'*/;"
-		result := stripSQLComments(sql)
-		require.Equal(t, sql, result)
-	})
-
-	t.Run("preserves inline SQLCommenter tag", func(t *testing.T) {
-		sql := "SELECT 1 /*application='grafana',feature='panel'*/"
-		result := stripSQLComments(sql)
-		require.Equal(t, sql, result)
-	})
-
-	t.Run("still strips non-SQLCommenter block comments", func(t *testing.T) {
-		result := stripSQLComments("SELECT /* just a note */ 1")
-		require.Equal(t, "SELECT  1", result)
-	})
-
-	t.Run("strips block comment shaped like a tag but containing a macro", func(t *testing.T) {
-		result := stripSQLComments("SELECT 1 /*range='$__timeFilter(t)'*/")
+	t.Run("strips a block comment shaped like a SQLCommenter tag", func(t *testing.T) {
+		// stripSQLComments strips all comments; trailing SQLCommenter tags are
+		// preserved earlier in the pipeline by sqlmacro.SplitTrailingSQLCommenter.
+		result := stripSQLComments("SELECT 1 /*application='grafana',feature='panel'*/")
 		require.Equal(t, "SELECT 1 ", result)
 	})
 }
