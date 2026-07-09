@@ -16,6 +16,7 @@ import (
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -136,7 +137,49 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
 	}
 
+	if err := b.canonicalizeFolderRef(ctx, a, meta); err != nil {
+		return err
+	}
+
 	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
+}
+
+// canonicalizeFolderRef rewrites the dashboard's folder annotation to the
+// target folder's actual metadata.name. Clients (for example the Terraform
+// provider driven by Crossplane) may supply a folder UID whose casing differs
+// from the stored folder's name. k8s resource names are case-sensitive, so
+// persisting the raw casing produces a dangling reference: it resolves where
+// the database collation is case-insensitive but 404s ("folder not found") on
+// any case-sensitive read path, such as access control's folder-parents walk.
+// Rewriting to the resolved folder's real name keeps the reference valid for
+// every client and read path.
+//
+// It is best-effort: if the folder cannot be resolved the annotation is left
+// unchanged and Validate rejects the write with a NotFound, preserving existing
+// behaviour. This relies on the same folder existence lookup that already gates
+// the write resolving case-insensitively; if that lookup is ever made
+// case-sensitive, both the create and this canonicalization reject together.
+func (b *DashboardsAPIBuilder) canonicalizeFolderRef(ctx context.Context, a admission.Attributes, meta utils.GrafanaMetaAccessor) error {
+	if a.IsDryRun() {
+		return nil
+	}
+	folderUID := meta.GetFolder()
+	if folderUID == "" {
+		return nil
+	}
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting requester: %w", err)
+	}
+	folder, err := b.validateFolderExists(ctx, folderUID, id.GetOrgID())
+	if err != nil {
+		// Leave the reference as-is; Validate surfaces the NotFound.
+		return nil //nolint:nilerr
+	}
+	if canonical := folder.GetName(); canonical != "" && canonical != folderUID {
+		meta.SetFolder(canonical)
+	}
+	return nil
 }
 
 // validateDashboardIfStrict validates the dashboard spec if field validation mode is strict.
