@@ -7,6 +7,7 @@ import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
+import { GRAFANA_CORE_PLUGIN_ID } from '../constants';
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -26,13 +27,13 @@ function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
 function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
-    pluginId: 'grafana',
+    pluginId: GRAFANA_CORE_PLUGIN_ID,
     configs: getCoreExtensionConfigurations(),
   });
 
   // Registering core exposed components
   exposedComponentsRegistry.register({
-    pluginId: 'grafana',
+    pluginId: GRAFANA_CORE_PLUGIN_ID,
     configs: [
       {
         id: PluginExtensionExposedComponents.CentralAlertHistorySceneV1,
