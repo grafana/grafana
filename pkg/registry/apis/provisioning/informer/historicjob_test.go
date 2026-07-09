@@ -6,27 +6,52 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-// The historic-job informer takes no live notifications (its handler reads the
-// object directly), so it never subscribes — it is driven only by the re-list.
-func TestNewHistoricJobInformer_DoesNotSubscribe(t *testing.T) {
-	sub := newFakeSubscriber()
-	gvr := provisioningapis.HistoricJobResourceInfo.GroupVersionResource()
+// TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection:
+// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessCronSource
+// when NATS is on. The historic-job controller is unaffected either way — it only
+// registers its EventHandler on whichever DeltaSource this returns.
+func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
+	client := fake.NewClientset()
 
-	inf := NewHistoricJobInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore())
-	_, err := inf.AddEventHandler(&typeRecorder{})
+	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
+		// A nil subscriber is not enabled.
+		src := NewHistoricJobDeltaSource(nil, client, time.Minute)
+		_, isCron := src.(*CachelessCronSource)
+		assert.False(t, isCron, "expected the apiserver informer, not the cron source")
+		_, isInformer := src.(cache.SharedIndexInformer)
+		assert.True(t, isInformer, "expected an apiserver-backed SharedIndexInformer")
+	})
+
+	t.Run("NATS on uses cron source", func(t *testing.T) {
+		src := NewHistoricJobDeltaSource(newFakeSubscriber(), client, time.Minute)
+		_, isCron := src.(*CachelessCronSource)
+		assert.True(t, isCron, "expected the cron source when NATS is enabled")
+	})
+}
+
+// TestNewHistoricJobCronSource_ListsFromClient verifies the NATS-mode source reads
+// historic jobs through the provisioning client.
+func TestNewHistoricJobCronSource_ListsFromClient(t *testing.T) {
+	client := fake.NewClientset(
+		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
+	)
+
+	src := NewHistoricJobCronSource(client, "", time.Hour)
+	h := &recordingHandler{}
+	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
-	stopCh := make(chan struct{})
-	go inf.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
 
-	require.Eventually(t, inf.HasSynced, 5*time.Second, 5*time.Millisecond)
-	assert.False(t, sub.subscribed(resourcewatch.Subject(gvr, testNamespace)),
-		"historic-job informer must not subscribe to live notifications")
+	stop := make(chan struct{})
+	defer close(stop)
+	go src.Run(stop)
+
+	require.Eventually(t, func() bool { return len(h.names()) == 1 }, time.Second, 5*time.Millisecond)
+	assert.ElementsMatch(t, []string{"old"}, h.names())
 }

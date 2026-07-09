@@ -1183,9 +1183,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {
-				// Create HistoryJobController for cleanup of old job history entries.
-				// Its resync interval is the history expiration, and cleanup is
-				// resync-driven.
+				// Periodically clean up expired historic jobs. Cleanup is age-based and
+				// needs no live events: with NATS off the source is an apiserver
+				// informer (watch-fed cache replayed on resync), with NATS on it is a
+				// cron-style periodic re-list.
 				historyJobExpiration := 10 * time.Minute
 				historyJobController := appcontroller.NewHistoryJobController(
 					b.GetClient(),
