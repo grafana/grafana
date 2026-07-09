@@ -40,17 +40,7 @@ const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState: () => translateNav(config.bootData?.navTree ?? []),
   reducers: {
-    setStarred: (
-      state,
-      action: PayloadAction<{
-        id: string;
-        title: string;
-        url: string;
-        icon?: IconName;
-        sortWeight?: number;
-        isStarred: boolean;
-      }>
-    ) => {
+    setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       const { id, title, url, icon, sortWeight, isStarred } = action.payload;
       if (starredItems) {

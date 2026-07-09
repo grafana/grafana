@@ -6,6 +6,8 @@ import {
   useStarDashboardByUidMutation as useLegacyStarDashboardMutation,
   useUnstarDashboardByUidMutation as useLegacyUnstarDashboardMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy/user';
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type IconName, locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
@@ -34,14 +36,14 @@ function starredNavEntry(
   id: string
 ): { url: string; icon?: IconName; sortWeight?: number } | undefined {
   const foldersEnabled = starredFoldersEnabled();
-  if (group === 'dashboard.grafana.app' && kind === 'Dashboard') {
+  if (group === DASHBOARD_API_GROUP && kind === 'Dashboard') {
     // Icon only when folders can be starred too — that's when kinds need distinguishing
     return {
       url: locationUtil.assureBaseUrl(`/d/${id}`),
       icon: foldersEnabled ? getIconForKind('dashboard') : undefined,
     };
   }
-  if (group === 'folder.grafana.app' && kind === 'Folder' && foldersEnabled) {
+  if (group === FOLDER_API_GROUP && kind === 'Folder' && foldersEnabled) {
     return { url: getFolderURL(id), icon: getIconForKind('folder'), sortWeight: STARRED_FOLDER_SORT_WEIGHT };
   }
   return undefined;
@@ -160,12 +162,12 @@ export const useSyncStarredItemsInNav = () => {
     data: dashboardUids,
     isLoading: dashboardsLoading,
     isError: dashboardsError,
-  } = useStarredItems('dashboard.grafana.app', 'Dashboard');
+  } = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
   const {
     data: folderUids,
     isLoading: folderLoadingRaw,
     isError: folderError,
-  } = useStarredItems('folder.grafana.app', 'Folder', { skip: !foldersEnabled });
+  } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
 
   // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
   // the folder query's loading/error when the feature is actually on.
@@ -178,29 +180,37 @@ export const useSyncStarredItemsInNav = () => {
   const [hasSynced, setHasSynced] = useState(!isLoading);
   const [searchFailed, setSearchFailed] = useState(false);
 
-  // Stable identity so the effect doesn't re-fire when an array ref changes but content is identical
-  const uidKey = useMemo(() => {
-    if (!dashboardUids || (foldersEnabled && !folderUids)) {
-      return undefined;
-    }
-    const combined = [...dashboardUids, ...(foldersEnabled ? (folderUids ?? []) : [])];
-    return combined.sort().join(',');
-  }, [dashboardUids, folderUids, foldersEnabled]);
+  // Stable identities so the effect doesn't re-fire when an array ref changes but content is identical
+  const dashboardKey = useMemo(() => dashboardUids && [...dashboardUids].sort().join(','), [dashboardUids]);
+  const folderKey = useMemo(
+    () => (foldersEnabled ? folderUids && [...folderUids].sort().join(',') : ''),
+    [folderUids, foldersEnabled]
+  );
 
   useEffect(() => {
-    if (isLoading || uidKey === undefined) {
+    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
       return;
     }
 
-    if (uidKey === '') {
+    const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
+    const folderNames = folderKey === '' ? [] : folderKey.split(',');
+    // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
+    const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
+
+    if (names.length === 0) {
       dispatch(setStarredItems({ uids: [], items: [] }));
       setHasSynced(true);
       setSearchFailed(false);
       return;
     }
 
-    const names = uidKey.split(',').slice(0, STARRED_NAV_CAP);
     const kinds = foldersEnabled ? ['dashboard', 'folder'] : ['dashboard'];
+    // The search matches the uid union against both kinds, so a cross-kind uid collision can
+    // return an item that was never starred as that kind — keep only kind-matching hits.
+    const starredUidsByKind: Record<string, Set<string> | undefined> = {
+      dashboard: new Set(dashboardNames),
+      folder: new Set(folderNames),
+    };
     let cancelled = false;
 
     getGrafanaSearcher()
@@ -212,6 +222,9 @@ export const useSyncStarredItemsInNav = () => {
         const items: StarredNavItem[] = [];
         for (let i = 0; i < response.view.length; i++) {
           const row = response.view.get(i);
+          if (!starredUidsByKind[row.kind]?.has(row.uid)) {
+            continue;
+          }
           items.push({
             id: row.uid,
             title: row.name,
@@ -234,7 +247,7 @@ export const useSyncStarredItemsInNav = () => {
     return () => {
       cancelled = true;
     };
-  }, [uidKey, isLoading, foldersEnabled]);
+  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

@@ -277,6 +277,67 @@ describe('useSyncStarredItemsInNav', () => {
       );
       expect(rowIds).toEqual([`synced-starred/${dashUid}`, `synced-starred/${folderUid}`]);
     });
+
+    it('drops a search row whose uid was starred as a different kind', async () => {
+      const dashUid = dashbdD.item.uid;
+      const folderUid = folderA.item.uid;
+      // dashUid is starred as a dashboard ONLY; the folder star set holds a different uid,
+      // so the per-kind filter must be keyed by kind rather than by mere star existence.
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+
+      // The single search matches the uid union against BOTH kinds, so it can return an
+      // UNSTARRED folder that happens to share the starred dashboard's uid. That bogus row
+      // is deliberately last: setStarredItems keeps the last item per uid, so without the
+      // per-kind post-filter it would replace the legit dashboard row in the nav.
+      setupSearchMock([
+        { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'My Folder', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+        { uid: dashUid, name: 'Bogus Folder', url: `/dashboards/f/${dashUid}`, kind: 'folder' },
+      ]);
+
+      render(<TestHarness />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId(`synced-starred/${folderUid}`)).toBeInTheDocument();
+      });
+
+      // Exactly one row for the colliding uid, and it is the dashboard — not the unstarred folder
+      const collisionRows = screen.getAllByTestId(`synced-starred/${dashUid}`);
+      expect(collisionRows).toHaveLength(1);
+      expect(collisionRows[0]).toHaveAttribute('data-icon', 'apps');
+      expect(collisionRows[0]).toHaveTextContent('My Dashboard');
+      expect(screen.queryByText('Bogus Folder')).not.toBeInTheDocument();
+
+      // ...while the genuinely starred folder is untouched by the filter
+      expect(screen.getByTestId(`synced-starred/${folderUid}`)).toHaveAttribute('data-icon', 'folder');
+      expect(screen.getByTestId('starred-list').children).toHaveLength(2);
+    });
+
+    it('searches for and renders a uid starred as both kinds exactly once', async () => {
+      const uid = dashbdD.item.uid;
+      // The SAME uid sits in both per-kind star sets
+      setMockStarredDashboards([uid]);
+      setMockStarredFolders([uid]);
+
+      const mockSearcher = setupSearchMock([{ uid, name: 'My Dashboard', url: `/d/${uid}`, kind: 'dashboard' }]);
+
+      render(<TestHarness />);
+
+      // The union of the per-kind star sets is deduped: the uid lands in `name` exactly once
+      await waitFor(() => {
+        expect(mockSearcher.search).toHaveBeenCalledWith({
+          name: [uid],
+          kind: ['dashboard', 'folder'],
+        });
+      });
+
+      // ...and occupies exactly one nav row instead of one per star record
+      await waitFor(() => {
+        expect(screen.getAllByTestId(`synced-starred/${uid}`)).toHaveLength(1);
+      });
+      expect(screen.getByTestId('starred-list').children).toHaveLength(1);
+    });
   });
 });
 
