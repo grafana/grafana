@@ -241,7 +241,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			unregisteredIDs:    []string{"child-plugin"},
 		},
 		{
-			name: "dependency plugins are ignored for any parent plugin type",
+			name: "directly installed dependency plugin is registered",
 			installedPlugins: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -262,18 +262,18 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "dependency-panel",
+						Name: "parent-datasource",
 						Annotations: map[string]string{
 							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 						},
 					},
-					Spec: pluginsv0alpha1.PluginSpec{Id: "dependency-panel"},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "parent-datasource", Version: "1.0.0"},
 				},
 			},
 			expectedError:      nil,
 			expectedRegCalls:   1,
 			expectedUnregCalls: 0,
-			registeredIDs:      []string{"parent-datasource"},
+			registeredIDs:      []string{"dependency-panel"},
 		},
 		{
 			name:             "API plugins only",

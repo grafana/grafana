@@ -435,6 +435,51 @@ func TestPluginStorage_CreateUpdatesExistingDependency(t *testing.T) {
 	require.Equal(t, "2.1.1", dependency.Spec.Version)
 }
 
+func TestPluginStorage_CreateDependencyAlreadyExistsAddsParent(t *testing.T) {
+	ctx := request.WithNamespace(context.Background(), "default")
+	parentStorage := newFakePluginRESTStorage()
+	parentStorage.beforeCreate = func(ctx context.Context, plugin *pluginsv0alpha1.Plugin) error {
+		if plugin.Name != "dependency-panel" {
+			return nil
+		}
+		parentStorage.beforeCreate = nil
+		parentStorage.set(dependencyPlugin("default", "dependency-panel", "latest", install.SourceDependencyPlugin, "other-app"))
+		return nil
+	}
+	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{
+		dependencies: map[string][]string{
+			"parent-app:1.0.0": {"dependency-panel"},
+		},
+	})
+
+	_, err := storage.(rest.Creater).Create(ctx, plugin("default", "parent-app", "1.0.0", ""), nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	dependency := parentStorage.items[storageKey("default", "dependency-panel")]
+	require.NotNil(t, dependency)
+	requireDependency(t, dependency, "other-app", "parent-app")
+	require.Equal(t, 1, parentStorage.updateCalls[storageKey("default", "dependency-panel")])
+}
+
+func TestPluginStorage_UpdateDependencyAlreadyCurrentSkipsUpdate(t *testing.T) {
+	ctx := request.WithNamespace(context.Background(), "default")
+	parentStorage := newFakePluginRESTStorage()
+	parentStorage.set(dependencyPlugin("default", "dependency-panel", dependencyPluginVersion, install.SourceDependencyPlugin, "parent-app"))
+	parentStorage.set(parentPluginWithAppliedDependencies("default", "parent-app", "1.0.0", "dependency-panel"))
+	storage := newTestPluginStorageWithProvider(t, parentStorage, &fakeMetaProvider{
+		dependencies: map[string][]string{
+			"parent-app:1.0.0": {"dependency-panel"},
+		},
+	})
+
+	updatedParent := plugin("default", "parent-app", "1.0.0", "")
+	_, _, err := storage.(rest.Updater).Update(ctx, "parent-app", rest.DefaultUpdatedObjectInfo(updatedParent), nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	requireDependency(t, parentStorage.items[storageKey("default", "dependency-panel")], "parent-app")
+	require.Equal(t, 0, parentStorage.updateCalls[storageKey("default", "dependency-panel")])
+}
+
 func TestPluginStorage_CreateMarksIndependentlyInstalledDependency(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	parentStorage := newFakePluginRESTStorage()
@@ -954,9 +999,10 @@ func (t *testStampingObjInfo) UpdatedObject(ctx context.Context, oldObj runtime.
 }
 
 type fakePluginRESTStorage struct {
-	items       map[string]*pluginsv0alpha1.Plugin
-	updateCalls map[string]int
-	listCalls   int
+	items        map[string]*pluginsv0alpha1.Plugin
+	updateCalls  map[string]int
+	listCalls    int
+	beforeCreate func(context.Context, *pluginsv0alpha1.Plugin) error
 }
 
 func newFakePluginRESTStorage() *fakePluginRESTStorage {
@@ -1046,6 +1092,11 @@ func (s *fakePluginRESTStorage) Create(ctx context.Context, obj runtime.Object, 
 		plugin.Namespace, _ = request.NamespaceFrom(ctx)
 	}
 	key := storageKey(plugin.Namespace, plugin.Name)
+	if s.beforeCreate != nil {
+		if err := s.beforeCreate(ctx, plugin.DeepCopy()); err != nil {
+			return nil, err
+		}
+	}
 	if _, ok := s.items[key]; ok {
 		return nil, errorsK8s.NewAlreadyExists(schema.GroupResource{Group: pluginsv0alpha1.APIGroup, Resource: "plugins"}, plugin.Name)
 	}

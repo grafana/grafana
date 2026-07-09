@@ -2,7 +2,6 @@ package installsync
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -199,7 +198,10 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	primaryPlugins := filterPrimaryPlugins(installedPlugins)
-	installedMap := installedPluginIDSet(installedPlugins)
+	installedMap := make(map[string]struct{}, len(primaryPlugins))
+	for _, p := range primaryPlugins {
+		installedMap[p.ID] = struct{}{}
+	}
 
 	// unregister plugins that are not installed
 	for _, apiPlugin := range apiPlugins.Items {
@@ -227,40 +229,12 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 }
 
 func filterPrimaryPlugins(plugins []pluginstore.Plugin) []pluginstore.Plugin {
-	dependencyIDs := pluginDependencyIDs(plugins)
 	primaryPlugins := make([]pluginstore.Plugin, 0, len(plugins))
 	for _, p := range plugins {
 		if p.Parent != nil || p.IncludedInAppID != "" {
 			continue
 		}
-		if _, ok := dependencyIDs[p.ID]; ok {
-			continue
-		}
 		primaryPlugins = append(primaryPlugins, p)
 	}
 	return primaryPlugins
-}
-
-func installedPluginIDSet(plugins []pluginstore.Plugin) map[string]struct{} {
-	ids := make(map[string]struct{}, len(plugins))
-	for _, p := range plugins {
-		if p.Parent != nil || p.IncludedInAppID != "" {
-			continue
-		}
-		ids[p.ID] = struct{}{}
-	}
-	return ids
-}
-
-func pluginDependencyIDs(plugins []pluginstore.Plugin) map[string]struct{} {
-	ids := map[string]struct{}{}
-	for _, p := range plugins {
-		for _, dependency := range p.Dependencies.Plugins {
-			id := strings.TrimSpace(dependency.ID)
-			if id != "" && id != p.ID {
-				ids[id] = struct{}{}
-			}
-		}
-	}
-	return ids
 }

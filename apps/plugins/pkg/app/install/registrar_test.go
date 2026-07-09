@@ -95,6 +95,7 @@ func TestInstallRegistrar_Register(t *testing.T) {
 		expectedCreates int
 		expectedUpdates int
 		expectError     bool
+		validateUpdate  func(*testing.T, *pluginsv0alpha1.Plugin)
 	}{
 		{
 			name: "creates plugin when not found",
@@ -128,6 +129,40 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				},
 			},
 			expectedUpdates: 1,
+		},
+		{
+			name: "updates plugin while preserving existing metadata",
+			install: &PluginInstall{
+				ID:      "dependency-panel",
+				Version: "2.0.0",
+				Source:  SourcePluginStore,
+			},
+			existing: &pluginsv0alpha1.Plugin{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:       "org-1",
+					Name:            "dependency-panel",
+					ResourceVersion: "8",
+					Labels: map[string]string{
+						"plugins.grafana.app/dependency": "true",
+					},
+					Annotations: map[string]string{
+						PluginInstallSourceAnnotation:              SourceDependencyPlugin,
+						"plugins.grafana.app/dependency-parents":   "parent-app",
+						"plugins.grafana.app/applied-dependencies": "nested-panel",
+					},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{
+					Id:      "dependency-panel",
+					Version: "latest",
+				},
+			},
+			expectedUpdates: 1,
+			validateUpdate: func(t *testing.T, updated *pluginsv0alpha1.Plugin) {
+				require.Equal(t, "true", updated.Labels["plugins.grafana.app/dependency"])
+				require.Equal(t, "parent-app", updated.Annotations["plugins.grafana.app/dependency-parents"])
+				require.Equal(t, "nested-panel", updated.Annotations["plugins.grafana.app/applied-dependencies"])
+				require.Equal(t, SourcePluginStore, updated.Annotations[PluginInstallSourceAnnotation])
+			},
 		},
 		{
 			name: "skips create when plugin matches",
@@ -208,6 +243,9 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				require.Equal(t, []string{tt.existing.ResourceVersion}, receivedResourceVersions)
 				require.Len(t, updatedPlugins, 1)
 				require.Equal(t, tt.install.Version, updatedPlugins[0].Spec.Version)
+				if tt.validateUpdate != nil {
+					tt.validateUpdate(t, updatedPlugins[0])
+				}
 			}
 		})
 	}

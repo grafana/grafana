@@ -67,6 +67,28 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 	}
 }
 
+func (p *PluginInstall) applyTo(existing *pluginsv0alpha1.Plugin) *pluginsv0alpha1.Plugin {
+	updated := existing.DeepCopy()
+	updated.Name = p.ID
+	updated.Spec.Id = p.ID
+	updated.Spec.Version = p.Version
+	if p.URL != "" {
+		updated.Spec.Url = &p.URL
+	} else {
+		updated.Spec.Url = nil
+	}
+	if p.ParentID != "" {
+		updated.Spec.ParentId = &p.ParentID
+	} else {
+		updated.Spec.ParentId = nil
+	}
+	if updated.Annotations == nil {
+		updated.Annotations = map[string]string{}
+	}
+	updated.Annotations[PluginInstallSourceAnnotation] = p.Source
+	return updated
+}
+
 func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
 	update := p.ToPluginInstallV0Alpha1(existing.Namespace)
 	if source, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && source != p.Source {
@@ -153,7 +175,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 
 	if existing != nil {
 		if install.ShouldUpdate(existing) {
-			_, err = client.Update(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+			_, err = client.Update(ctx, install.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
 				logger.Error("Failed to update plugin", "error", err)
 				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()

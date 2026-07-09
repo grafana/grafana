@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -569,16 +570,26 @@ func (h *pluginStorageHookProvider) upsertDependencyPlugin(ctx context.Context, 
 	expected := dependencyPluginForParent(parent, namespace, dependencyID)
 	if existing == nil {
 		_, err = h.storage.Create(ctx, expected, nil, &metav1.CreateOptions{})
-		if errorsK8s.IsAlreadyExists(err) {
+		if err == nil {
 			return nil
 		}
-		return err
+		if !errorsK8s.IsAlreadyExists(err) {
+			return err
+		}
+		existing, err = h.getPlugin(ctx, dependencyID)
+		if err != nil {
+			return err
+		}
 	}
 
 	updated := existing.DeepCopy()
 	addDependencyParent(updated, parentID)
 	if existing.Annotations[install.PluginInstallSourceAnnotation] == install.SourceDependencyPlugin {
 		updated.Spec.Version = expected.Spec.Version
+	}
+
+	if apiequality.Semantic.DeepEqual(existing, updated) {
+		return nil
 	}
 
 	_, _, err = h.storage.Update(ctx, dependencyID, rest.DefaultUpdatedObjectInfo(updated), nil, nil, false, &metav1.UpdateOptions{})
