@@ -29,7 +29,7 @@ import { type MapLayerState } from '../types';
 
 import { applyLayerFilter, getMapLayerState, initLayer } from './layers';
 
-const getIfExists = geomapLayerRegistry.getIfExists as jest.Mock;
+const getIfExists = jest.mocked(geomapLayerRegistry.getIfExists);
 
 describe('applyLayerFilter', () => {
   const createDataFrame = (refId: string): DataFrame => ({
@@ -169,7 +169,7 @@ describe('initLayer', () => {
     const panel = createPanel();
     const layer = makeLayer();
     const create = jest.fn().mockResolvedValue(makeHandler(layer));
-    getIfExists.mockReturnValue({ id: 'markers', create });
+    getIfExists.mockReturnValue({ id: 'markers', name: 'Markers', create });
 
     const state = await initLayer(panel, {} as never, { type: 'markers', name: 'My layer', opacity: 0.5 }, false);
 
@@ -183,7 +183,11 @@ describe('initLayer', () => {
 
   it('names the layer via getNextLayerName when unnamed', async () => {
     const panel = createPanel();
-    getIfExists.mockReturnValue({ id: 'markers', create: jest.fn().mockResolvedValue(makeHandler(makeLayer())) });
+    getIfExists.mockReturnValue({
+      id: 'markers',
+      name: 'Markers',
+      create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
+    });
 
     const state = await initLayer(panel, {} as never, { type: 'markers' } as MapLayerOptions, false);
 
@@ -193,7 +197,11 @@ describe('initLayer', () => {
   it('sanitizes the attribution config', async () => {
     const spy = jest.spyOn(textUtil, 'sanitizeTextPanelContent').mockReturnValue('SANITIZED');
     const panel = createPanel();
-    getIfExists.mockReturnValue({ id: 'markers', create: jest.fn().mockResolvedValue(makeHandler(makeLayer())) });
+    getIfExists.mockReturnValue({
+      id: 'markers',
+      name: 'Markers',
+      create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
+    });
 
     const state = await initLayer(
       panel,
@@ -212,7 +220,11 @@ describe('initLayer', () => {
 
   it('falls back to the markers layer when no type is provided', async () => {
     const panel = createPanel();
-    getIfExists.mockReturnValue({ id: 'markers', create: jest.fn().mockResolvedValue(makeHandler(makeLayer())) });
+    getIfExists.mockReturnValue({
+      id: 'markers',
+      name: 'Markers',
+      create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
+    });
 
     await initLayer(panel, {} as never, {} as MapLayerOptions, false);
 
@@ -225,6 +237,7 @@ describe('initLayer', () => {
     const panel = createPanel();
     getIfExists.mockReturnValue({
       id: 'default',
+      name: 'Default base layer',
       create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
     });
 

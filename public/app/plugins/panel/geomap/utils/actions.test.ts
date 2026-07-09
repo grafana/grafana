@@ -22,8 +22,8 @@ jest.mock('./utils', () => ({
   getNextLayerName: jest.fn(() => 'Layer 1'),
 }));
 
-const getIfExists = geomapLayerRegistry.getIfExists as jest.Mock;
-const initLayerMock = initLayer as jest.Mock;
+const getIfExists = jest.mocked(geomapLayerRegistry.getIfExists);
+const initLayerMock = jest.mocked(initLayer);
 
 const flush = () => new Promise((resolve) => setTimeout(resolve));
 
@@ -118,6 +118,8 @@ describe('getActions', () => {
       const newLayer = layerState('Layer 1');
       getIfExists.mockReturnValue({
         id: 'markers',
+        name: 'Markers',
+        create: jest.fn(),
         defaultOptions: { foo: 'bar' },
         showLocation: true,
         hideOpacity: false,
@@ -151,6 +153,8 @@ describe('getActions', () => {
       const { panel } = createPanel();
       getIfExists.mockReturnValue({
         id: 'basemap',
+        name: 'Basemap',
+        create: jest.fn(),
         defaultOptions: {},
         showLocation: false,
         hideOpacity: true,
