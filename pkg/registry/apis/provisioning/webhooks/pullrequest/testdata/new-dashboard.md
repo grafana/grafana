@@ -1,4 +1,4 @@
-Grafana detected dashboard changes in this pull request.
+📊 Grafana detected dashboard changes in this pull request.
 
 ### Preview of file.json
 ![Preview](https://cdn2.thecatapi.com/images/99c.jpg)

@@ -1,4 +1,4 @@
-Grafana detected dashboard changes in this pull request.
+📊 Grafana detected dashboard changes in this pull request.
 
 ### Side by Side Comparison of file.json
 | Before | After |

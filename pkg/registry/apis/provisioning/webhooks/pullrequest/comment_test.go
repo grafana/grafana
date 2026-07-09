@@ -424,7 +424,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 		commenter := NewCommenter(true)
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
-		require.Contains(t, capturedComment, "NOTE: To enable dashboard previews")
+		require.Contains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 		require.Contains(t, capturedComment, "https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering")
 	})
 
@@ -460,6 +460,6 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 		commenter := NewCommenter(false)
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
-		require.NotContains(t, capturedComment, "NOTE: To enable dashboard previews")
+		require.NotContains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 	})
 }

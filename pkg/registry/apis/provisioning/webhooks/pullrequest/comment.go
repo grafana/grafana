@@ -93,7 +93,7 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 }
 
 const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.Title}}**]({{.SourceURL}}){{else}}**{{.Title}}**{{end}}{{end -}}
-Grafana detected dashboard changes in this pull request.
+📊 Grafana detected dashboard changes in this pull request.
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
 
 ### Side by Side Comparison of {{.Parsed.Info.Path}}
@@ -124,7 +124,7 @@ Grafana detected dashboard changes in this pull request.
 {{- end}}
 `
 
-const commentTemplateTable = `Grafana detected **{{.TotalChanges}}** resource change(s) in this pull request{{- if .HasErrors}} — {{.ErrorCount}} need attention{{- end}}.
+const commentTemplateTable = `📋 Grafana detected **{{.TotalChanges}}** resource change(s) in this pull request{{- if .HasErrors}} — ⚠️ {{.ErrorCount}} need attention{{- end}}.
 
 | Action | Kind | Resource | Preview | Status |
 |--------|------|----------|---------|--------|
@@ -154,11 +154,11 @@ const commentTemplateValidationErrors = `
 // TODO(ferruvich): let's discuss this text with the team
 const commentTemplateMetadataNotice = `
 
-> **Note:** Some metadata fields (such as ` + "`namespace`" + `, ` + "`labels`" + `, or ` + "`annotations`" + `) were removed from the resource files. Git Sync normalizes resources to a minimal format. This is expected behavior and does not affect your dashboards in Grafana.`
+> ℹ️ **Note:** Some metadata fields (such as ` + "`namespace`" + `, ` + "`labels`" + `, or ` + "`annotations`" + `) were removed from the resource files. Git Sync normalizes resources to a minimal format. This is expected behavior and does not affect your dashboards in Grafana.`
 
 const commentTemplateMissingImageRenderer = `
 
-NOTE: To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).`
+💡 **Tip:** To enable dashboard previews in pull requests, refer to the [image rendering setup documentation](https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering).`
 
 const commentTemplateFooter = `
 

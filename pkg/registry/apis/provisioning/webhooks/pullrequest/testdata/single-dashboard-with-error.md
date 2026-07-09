@@ -1,4 +1,4 @@
-Grafana detected dashboard changes in this pull request.
+📊 Grafana detected dashboard changes in this pull request.
 
 [**Broken Dashboard**](https://github.com/example/repo/blob/pr/broken.json) — [preview changes](http://grafana/admin/preview)
 
