@@ -12196,7 +12196,9 @@
       "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
-      "loading-aria-label": "Loading {{sectionName}}"
+      "loading-aria-label": "Loading {{sectionName}}",
+      "starred-dashboard-icon": "Dashboard",
+      "starred-folder-icon": "Folder"
     },
     "org-switcher": {
       "aria-label": "Change organization"

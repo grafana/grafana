@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import {
@@ -12,6 +12,7 @@ import {
   getPinnableLeafUrls,
   expandPinnedUrls,
   normalizePinnedUrls,
+  enrichWithInteractionTracking,
 } from './utils';
 
 const starredDashboardUid = 'foo';
@@ -77,6 +78,11 @@ jest.mock('../../../app_events', () => ({
   publish: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('enrichConfigItems', () => {
   let mockHelpNode: NavModelItem = {
     id: 'help',
@@ -133,6 +139,60 @@ describe('enrichConfigItems', () => {
     // The new node should have a different identity than the original
     expect(newHelpNode).not.toBe(mockHelpNode);
     expect(newHelpNode.children).not.toBe(mockHelpNode.children);
+  });
+});
+
+describe('enrichWithInteractionTracking', () => {
+  beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
+  });
+
+  it('reports a starred folder click with itemKind folder', () => {
+    const item: NavModelItem = {
+      text: 'Folder 1',
+      id: 'starred/f1',
+      url: '/dashboards/f/f1/',
+      parentItem: { text: 'Starred', id: 'starred' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
+    );
+  });
+
+  it('reports a starred dashboard click with itemKind dashboard', () => {
+    const item: NavModelItem = {
+      text: 'Dashboard 1',
+      id: 'starred/d1',
+      url: '/d/d1',
+      parentItem: { text: 'Starred', id: 'starred' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
+    );
+  });
+
+  it('reports non-starred items as not starred and without a kind', () => {
+    const item: NavModelItem = {
+      text: 'Playlists',
+      id: 'dashboards/playlists',
+      url: '/playlists',
+      parentItem: { text: 'Dashboards', id: 'dashboards' },
+    };
+
+    enrichWithInteractionTracking(item, false).onClick?.();
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_navigation_item_clicked',
+      expect.objectContaining({ itemIsStarred: false, itemKind: undefined })
+    );
   });
 });
 
