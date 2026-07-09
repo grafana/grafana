@@ -513,10 +513,10 @@ hooks := []*github.Hook{
 
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(&github.Hook{
-							ID:     new(int64(456)),
-							Events: []string{"push", "pull_request"},
-							Active: new(true),
-							Config: &github.HookConfig{URL: new("https://example.com/webhook"), ContentType: new("json")},
+ID:     github.Ptr(int64(456)),
+Events: []string{"push", "pull_request"},
+Active: github.Ptr(true),
+Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook"), ContentType: github.Ptr("json")}
 						}))
 					}),
 				),
