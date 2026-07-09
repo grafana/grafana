@@ -1,12 +1,7 @@
+// ol-mapbox-style and geotiff fail to parse under jest; stub them so the real
+// layer registry (and everything it transitively imports) can still load.
 jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
-
-jest.mock('../layers/registry', () => ({
-  DEFAULT_BASEMAP_CONFIG: { type: 'default', name: '', config: {} },
-  geomapLayerRegistry: { getIfExists: jest.fn() },
-}));
-jest.mock('../layers/data/markersLayer', () => ({ MARKERS_LAYER_ID: 'markers' }));
-jest.mock('./utils', () => ({ getNextLayerName: jest.fn(() => 'Layer 1') }));
 
 import type BaseLayer from 'ol/layer/Base';
 
@@ -24,12 +19,13 @@ import {
 import { config } from '@grafana/runtime';
 
 import { type GeomapPanel } from '../GeomapPanel';
-import { geomapLayerRegistry } from '../layers/registry';
+import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
 import { applyLayerFilter, getMapLayerState, initLayer } from './layers';
 
-const getIfExists = jest.mocked(geomapLayerRegistry.getIfExists);
+const getIfExists = jest.spyOn(geomapLayerRegistry, 'getIfExists');
 
 describe('applyLayerFilter', () => {
   const createDataFrame = (refId: string): DataFrame => ({
@@ -150,6 +146,7 @@ describe('initLayer', () => {
   const createPanel = () =>
     ({
       map: {},
+      layers: [],
       byName: new Map<string, MapLayerState>(),
       props: { eventBus: {}, data: {} },
     }) as unknown as GeomapPanel;
@@ -191,7 +188,8 @@ describe('initLayer', () => {
 
     const state = await initLayer(panel, {} as never, { type: 'markers' } as MapLayerOptions, false);
 
-    expect(state.options.name).toBe('Layer 1');
+    // Real getNextLayerName derives the name from the (empty) layer list.
+    expect(state.options.name).toMatch(/^Layer/);
   });
 
   it('sanitizes the attribution config', async () => {
@@ -221,14 +219,14 @@ describe('initLayer', () => {
   it('falls back to the markers layer when no type is provided', async () => {
     const panel = createPanel();
     getIfExists.mockReturnValue({
-      id: 'markers',
+      id: MARKERS_LAYER_ID,
       name: 'Markers',
       create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
     });
 
     await initLayer(panel, {} as never, {} as MapLayerOptions, false);
 
-    expect(getIfExists).toHaveBeenCalledWith('markers');
+    expect(getIfExists).toHaveBeenCalledWith(MARKERS_LAYER_ID);
   });
 
   it('forces the default basemap config when custom base layers are disabled', async () => {
@@ -236,14 +234,14 @@ describe('initLayer', () => {
     config.geomapDisableCustomBaseLayer = true;
     const panel = createPanel();
     getIfExists.mockReturnValue({
-      id: 'default',
+      id: DEFAULT_BASEMAP_CONFIG.type,
       name: 'Default base layer',
       create: jest.fn().mockResolvedValue(makeHandler(makeLayer())),
     });
 
     await initLayer(panel, {} as never, { type: 'markers', name: 'x' }, true);
 
-    expect(getIfExists).toHaveBeenCalledWith('default');
+    expect(getIfExists).toHaveBeenCalledWith(DEFAULT_BASEMAP_CONFIG.type);
     config.geomapDisableCustomBaseLayer = original;
   });
 });
