@@ -50,7 +50,7 @@ func (f fakeAnonResourceClients) ForKind(context.Context, schema.GroupVersionKin
 	return nil, schema.GroupVersionResource{}, nil
 }
 
-func (f fakeAnonResourceClients) Folder(context.Context, string) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+func (f fakeAnonResourceClients) Folder(context.Context) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	return nil, schema.GroupVersionKind{}, nil
 }
 
