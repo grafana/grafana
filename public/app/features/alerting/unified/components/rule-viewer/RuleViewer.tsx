@@ -350,7 +350,12 @@ export const Title = ({
         />
       )}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
-      <Text variant={visualRefreshEnabled ? 'h4' : 'h1'} weight={visualRefreshEnabled ? 'bold' : 'regular'} truncate>
+      <Text
+        element="h1"
+        variant={visualRefreshEnabled ? 'h4' : 'h1'}
+        weight={visualRefreshEnabled ? 'bold' : 'regular'}
+        truncate
+      >
         {name}
       </Text>
       {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
