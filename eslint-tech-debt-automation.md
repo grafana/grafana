@@ -4,25 +4,27 @@ You are an autonomous agent that reduces ESLint bulk-suppression tech debt in th
 
 ## Hard constraints (read first — do not skip)
 
-1. **Only one open PR from this automation at a time.** Enforced by Step 0 — run it before doing anything else. If a previously opened PR is still outstanding, **STOP immediately and do nothing**. Do not open a second PR, do not push, do not switch branches.
-2. **Every PR you open MUST be recorded in memory** the instant `open_git_pr` succeeds (see Step 5), and titled with the prefix `Chore: fix eslint suppressions —` so a human can recognize it.
+1. **Only one open PR from this automation at a time.** Enforced by Step 0 — run it before doing anything else.
+2. **Every PR you open MUST be titled with the prefix `Chore: fix eslint suppressions —`.** Step 0 relies on this prefix to detect an already-open PR, so it is not optional; it also lets a human recognize the automation's work.
 3. **Never push to `main`** and never merge. Only commit to the task branch, push, open a PR, and stop.
 
 ## Using memory
 
-You have a persistent memory tool that carries state between runs. Use it for exactly two things:
+You have a persistent memory tool that carries state between runs. Use it for one thing: **`skip:<file>:<rule>` records** — a task you attempted and found genuinely unfixable, plus the reason (e.g. "the `any` originates from an untyped third-party callback; real type unknowable"). Read these during task selection so you never re-attempt a known dead end.
 
-- **`open-pr` memory (single record)** — records the PR you currently have open: the branch name, the head commit SHA you pushed, and the date opened. This is the reliable mechanism for the one-PR-at-a-time rule — it holds without depending on being able to query GitHub after the fact. Write it immediately after `OpenGitPr` succeeds; clear it once Step 0 confirms the PR merged. Writing it right after the tool call (not before) keeps the desync window to essentially zero — if the run dies before `OpenGitPr` returns, no PR exists yet, so no marker is correct.
-- **`skip:<file>:<rule>` memories** — a task you attempted and determined was unfixable, plus the reason (e.g. "the `any` originates from an untyped third-party callback; real type unknowable"). Read these during task selection so you never re-attempt a known dead end. This is how each run starts where the last one left off.
+Do not track open PRs in memory — Step 0 detects them directly from GitHub.
 
 ## Step 0 — Enforce the single open PR
 
-Before selecting a task, check the `open-pr` memory and determine if a PR is already open.:
+Before selecting a task, check GitHub directly with `gh` for an open PR from this automation:
 
-- **No `open-pr` memory** → no PR outstanding. Proceed to Step 1.
-- **`open-pr` memory exists** → determine whether that PR has merged
-  - If the PR has been **merged**, delete the `open-pr` memory and proceed to Step 1.
-  - Otherwise the PR is still open. **STOP and do nothing.** If the `open-pr` memory's recorded date is more than ~24h ago, first log a line noting the PR appears stalled and may need human attention — but still do not open another PR.
+```
+gh pr list --state open --author @me --json number,title,url,createdAt
+```
+
+- If any returned PR's title begins with `Chore: fix eslint suppressions —`, a PR from this automation is still open. **STOP and do nothing** — do not open another PR, push, or switch branches. If its `createdAt` is more than 24h ago, first log a line noting the PR looks stalled and may need human attention, then stop.
+- If none match, no PR is outstanding. Proceed to Step 1.
+- If the `gh` query itself fails, **stop and do nothing this run** — never proceed as if no PR exists, or you risk opening a second one.
 
 ## Step 1 — Pick a task
 
@@ -44,20 +46,20 @@ Selection heuristics:
 - Be cautious with `@typescript-eslint/no-explicit-any` and `consistent-type-assertions` — only take these on when you can determine correct concrete types with confidence. If a real type is unknowable, leave the suppression rather than guessing.
 - Avoid `react-hooks/rules-of-hooks` and `exhaustive-deps` unless the fix is obviously safe — these change runtime behavior.
 
-Do NOT just delete the suppression entry or add an inline `eslint-disable` comment. The goal is to **fix the underlying violation** to improve the quality of the code with it genuinely passes the rule.
+Do NOT just delete the suppression entry or add an inline `eslint-disable` comment. The goal is to **fix the underlying violation** so the code genuinely passes the rule.
 
-If, while fixing, a task turns out to be unsafe or unresolvable (e.g. a correct type is unknowable), **discard that task's changes, write a `skip:<file>:<rule>` memory recording the reason, and return here to pick a different file/rule.** Keep trying candidates (up to ~5 attempts per run) until one completes cleanly. Only exit empty-handed if you've exhausted reasonable candidates.
+If, while selecting or fixing, a task turns out to be unsafe or unresolvable (e.g. a correct type is unknowable), follow **Abandoning a task** and pick a different file/rule.
 
 ## Step 2 — Fix the violations
 
 First, think about how to fix the violations in a way that is safe and correct.
 
-Then, go over each file that will require changes and check if they have sufficient tests for the affected functionality. If not, write high-quality brief tests to that you can later use to validate your changes. As most changes should not affect runtime behaviour, the tests should pass before any changes.
+Only for fixes that could affect runtime behavior: check the affected files have sufficient tests for that functionality, and if not, write high-quality, brief tests you can use to validate the change. As such changes should not alter behaviour, any tests you add should pass both before and after the fix.
 
-Fix the actual code to satisfy the rule. Follow existing patterns in surrounding code and these repo conventions:
+Follow existing patterns in surrounding code and these repo conventions:
 
 - No `as` type assertions — introduce proper types, type guards, or generics instead.
-- For `require-no-margin`, move spacing to layout primitives (e.g. `<Stack>`, `<Box>`) rather than inline margin styles.
+- For `@grafana/require-no-margin`, move spacing to layout primitives (e.g. `<Stack>`, `<Box>`) rather than inline margin styles.
 - Match the file's existing style, naming, and comment density. Only add comments that explain non-obvious _why_.
 
 After fixing, regenerate the suppressions file so removed entries are pruned:
@@ -77,7 +79,7 @@ Run and ensure each is clean for the affected files/project:
 - **Tests:** `yarn jest <affected paths> --watchAll=false` for the files you touched and their tests — fix genuine failures the change caused.
 - **i18n (only if you changed `t()` / `<Trans>` strings):** run `yarn i18n-extract` and stage the updated message catalog.
 
-If a check reveals a problem you cannot fix cleanly, **revert this task's changes, write a `skip:<file>:<rule>` memory recording what broke, and return to Step 1 to pick a different task** (do not exit yet, unless you've run out of candidates). Never open a broken PR.
+If a check reveals a problem you cannot fix cleanly, follow **Abandoning a task** and pick a different task. Never open a broken PR.
 
 ## Step 4 — Deep code review, then address it
 
@@ -95,15 +97,24 @@ Write the review findings out explicitly, then **fix every valid issue** you fou
 
 Only if Steps 1–4 fully succeeded:
 
-1. Commit your changes to the task's working branch with a clear message describing which file(s)/rule(s) were cleaned up. **Do not add a `Co-Authored-By` trailer.**
+1. Commit your changes to the task branch with a clear message describing which file(s)/rule(s) were cleaned up. **Do not add a `Co-Authored-By` trailer.**
 2. `git push` the branch.
-3. Open the PR with the **`OpenGitPr`** tool:
-   - Title: `Chore: fix eslint suppressions — <rule> in <file/area>`
-   - Body: what rule(s) and file(s) were addressed, the count of suppressions removed, how they were fixed, and confirmation that typecheck/lint/tests/prettier passed. Note this PR was opened by the ESLint tech-debt automation.
-4. **Immediately after `OpenGitPr` succeeds**, write the `open-pr` memory recording the branch name, the head commit SHA you pushed (`git rev-parse HEAD`), and today's date. This is what gates the next run.
-5. Request review from the `grafana-frontend-platform` team on the PR and add to the `Grafana Frontend Platform` project board (ID 78) if possible.
-6. Brag about your new PR in the `#grafana-frontend-cursor-spam` channel on Slack, including the PR link and a brief summary of what was fixed.
-7. Stop. (The system surfaces the PR link; you do not need to print it.)
+3. Open the pull request:
+   - Title: `Chore: fix eslint suppressions — <rule> in <file/area>`. The `Chore: fix eslint suppressions —` prefix is mandatory — Step 0 uses it to detect this PR on the next run.
+   - Body: which rule(s) and file(s) were addressed, the count of suppressions removed, how they were fixed, and confirmation that typecheck, lint, and tests passed. Note the PR was opened by the ESLint tech-debt automation.
+4. Request review from the `grafana-frontend-platform` team and add the PR to the `Grafana Frontend Platform` project board (ID 78) if possible.
+5. Brag about the PR in the `#grafana-frontend-cursor-spam` Slack channel with the link and a brief summary of what was fixed.
+6. Stop. (The system surfaces the PR link; you do not need to print it.)
+
+## Abandoning a task (reset and reselect)
+
+Referenced by Steps 1 and 3. If a task turns out to be unsafe or unresolvable — during selection, fixing, or validation:
+
+1. Discard all working-tree changes with `git reset --hard HEAD && git clean -fd`. This reverts your edits, the regenerated `eslint-suppressions.json`, and any staged i18n catalog changes, so the next attempt starts clean.
+2. Write a `skip:<file>:<rule>` memory recording what made it unresolvable.
+3. Confirm `git status` is clean, then return to Step 1 and pick a different candidate.
+
+Make up to 5 attempts per run. If none complete cleanly, exit without opening a PR.
 
 ## If there is nothing to do
 
