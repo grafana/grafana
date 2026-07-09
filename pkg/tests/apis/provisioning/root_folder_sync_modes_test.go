@@ -56,27 +56,14 @@ func TestIntegrationProvisioning_RootFolder_FolderMode(t *testing.T) {
 		ExpectedFolders:    2,
 	})
 
-	// The root folder's k8s name is the repository name.
-	root, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-	require.NoError(t, err, "folder mode should create a root folder named after the repository")
-
-	title, _, _ := unstructured.NestedString(root.Object, "spec", "title")
-	require.Equal(t, repoTitle, title, "root folder title should be the repository title")
-
-	annotations := root.GetAnnotations()
-	require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind],
-		"root folder should be managed by a repository")
-	require.Equal(t, repo, annotations[utils.AnnoKeyManagerIdentity],
-		"root folder should be managed by this repository")
-	require.Empty(t, annotations[utils.AnnoKeySourcePath],
-		"folder-mode root folder maps to the repository root, so sourcePath is empty")
-	require.Empty(t, annotations[utils.AnnoKeyFolder],
-		"folder-mode root folder has no parent folder")
-
-	// The transient grant-permissions annotation must not survive on the stored
-	// object — it is consumed by the storage layer to trigger the default grant.
-	require.Empty(t, annotations[utils.AnnoKeyGrantPermissions],
-		"grant-permissions annotation should be cleared after the default grant")
+	// The root folder's k8s name is the repository name. Wait for it to be
+	// created and settled (title, empty sourcePath, empty parent) before reading
+	// it, so the assertions do not race the asynchronous sync.
+	common.RequireFolderState(t, helper.Folders, repo, repoTitle, "", "")
+	root := findManagedFolder(t, helper, repo, func(f *unstructured.Unstructured) bool {
+		return f.GetName() == repo
+	}, "root folder named after the repository")
+	requireRootFolderManagerAnnotations(t, root, repo)
 
 	// The default permissions must be granted on the root folder.
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -115,6 +102,8 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 	})
 
 	// No wrapper folder named after the repository must exist in folderless mode.
+	// CreateLocalRepo already waited for exactly ExpectedFolders to settle, so a
+	// wrapper would have surfaced as an extra folder; this is a direct assertion.
 	_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.Error(t, err, "folderless mode must not create a repo-named wrapper folder")
 
@@ -128,16 +117,7 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 		require.Equal(t, sourcePath, title,
 			"folderless root folder title should default to the directory name")
 
-		annotations := folder.GetAnnotations()
-		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind],
-			"folder %q should be managed by a repository", sourcePath)
-		require.Equal(t, repo, annotations[utils.AnnoKeyManagerIdentity],
-			"folder %q should be managed by this repository", sourcePath)
-		require.Empty(t, annotations[utils.AnnoKeyFolder],
-			"folderless top-level folder %q must have no parent folder", sourcePath)
-		require.Empty(t, annotations[utils.AnnoKeyGrantPermissions],
-			"grant-permissions annotation should be cleared after the default grant for %q", sourcePath)
-
+		requireRootFolderManagerAnnotations(t, folder, repo)
 		requireDefaultRootFolderPermissions(t, addr, folder.GetName())
 	}
 
@@ -155,6 +135,17 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 // folder appears because sync populates the resource asynchronously.
 func findManagedFolderBySourcePath(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string) *unstructured.Unstructured {
 	t.Helper()
+	return findManagedFolder(t, helper, repoName, func(f *unstructured.Unstructured) bool {
+		return f.GetAnnotations()[utils.AnnoKeySourcePath] == sourcePath
+	}, fmt.Sprintf("sourcePath %q", sourcePath))
+}
+
+// findManagedFolder waits for and returns a folder managed by repoName that
+// satisfies match. It polls with EventuallyWithT because sync populates folders
+// asynchronously; the returned object is fully settled (annotations included),
+// so callers can assert on it without racing. desc labels the match in failures.
+func findManagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, repoName string, match func(*unstructured.Unstructured) bool, desc string) *unstructured.Unstructured {
+	t.Helper()
 	var found *unstructured.Unstructured
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -162,16 +153,32 @@ func findManagedFolderBySourcePath(t *testing.T, helper *common.ProvisioningTest
 			return
 		}
 		for i := range list.Items {
-			ann := list.Items[i].GetAnnotations()
-			if ann[utils.AnnoKeyManagerIdentity] == repoName && ann[utils.AnnoKeySourcePath] == sourcePath {
+			if list.Items[i].GetAnnotations()[utils.AnnoKeyManagerIdentity] == repoName && match(&list.Items[i]) {
 				found = &list.Items[i]
 				return
 			}
 		}
-		c.Errorf("no folder managed by %q with sourcePath %q found", repoName, sourcePath)
+		c.Errorf("no folder managed by %q matching %s found", repoName, desc)
 	}, 30*time.Second, 100*time.Millisecond,
-		"expected a folder managed by %q at sourcePath %q", repoName, sourcePath)
+		"expected a folder managed by %q matching %s", repoName, desc)
 	return found
+}
+
+// requireRootFolderManagerAnnotations asserts the default annotations a root
+// folder receives on creation: repo manager ownership, no parent folder, and a
+// cleared grant-permissions annotation (the storage layer consumes it to trigger
+// the default permission grant). The folder must already be settled.
+func requireRootFolderManagerAnnotations(t *testing.T, folder *unstructured.Unstructured, repo string) {
+	t.Helper()
+	ann := folder.GetAnnotations()
+	require.Equal(t, string(utils.ManagerKindRepo), ann[utils.AnnoKeyManagerKind],
+		"folder %q should be managed by a repository", folder.GetName())
+	require.Equal(t, repo, ann[utils.AnnoKeyManagerIdentity],
+		"folder %q should be managed by this repository", folder.GetName())
+	require.Empty(t, ann[utils.AnnoKeyFolder],
+		"root folder %q must have no parent folder", folder.GetName())
+	require.Empty(t, ann[utils.AnnoKeyGrantPermissions],
+		"grant-permissions annotation should be cleared after the default grant for %q", folder.GetName())
 }
 
 // requireDefaultRootFolderPermissions asserts that a root folder carries the
