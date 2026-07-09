@@ -889,12 +889,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningFolderAPIVersion != "" {
-		provisioningSect, err := getOrCreateSection("provisioning")
-		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("folders_api_version", opts.ProvisioningFolderAPIVersion)
-		require.NoError(t, err)
-	}
 	// nil means "use the ini default" (100). Non-nil writes the value, including
 	// 0 which disables the size check.
 	if opts.ProvisioningMaxIncrementalChanges != nil {
@@ -1100,7 +1094,6 @@ type GrafanaOpts struct {
 	ProvisioningResources                                []string
 	ProvisioningMaxResourcesPerRepository                int64
 	ProvisioningMaxRepositories                          int64
-	ProvisioningFolderAPIVersion                         string
 	ProvisioningMaxIncrementalChanges                    *int
 	ProvisioningMaxFileSize                              *int64
 	// ProvisioningControllerResyncInterval overrides [provisioning]
