@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
@@ -34,6 +35,7 @@ export const PlaylistEditPage = () => {
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   const onSubmit = async (playlist: Playlist) => {
     // Repository-managed playlists are committed to git via the save drawer instead of
@@ -60,7 +62,13 @@ export const PlaylistEditPage = () => {
 
   const renderTitle = (title: string) => (
     <Stack direction="row" gap={1} alignItems="center" wrap>
-      <h1>{title}</h1>
+      <Text
+        element={'h1'}
+        variant={visualRefreshEnabled ? 'h4' : 'h1'}
+        weight={visualRefreshEnabled ? 'bold' : 'regular'}
+      >
+        {title}
+      </Text>
       {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
       {data && isManagedByRepository(data) && (
         <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
