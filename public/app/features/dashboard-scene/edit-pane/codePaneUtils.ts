@@ -13,10 +13,6 @@ import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditActionEvent, DashboardStateChangedEvent } from './events';
 
-export function getDashboardJsonText(dashboard: DashboardScene): string {
-  return JSON.stringify(transformSceneToSaveModelSchemaV2(dashboard), null, 2);
-}
-
 const NEW_DASHBOARD_NAME_PLACEHOLDER = '<dashboard-uid>';
 
 export function getDashboardResourceText(dashboard: DashboardScene, format: SchemaEditorFormat = 'json'): string {
@@ -42,11 +38,32 @@ export function applyJsonToDashboard(
   jsonText: string
 ): { success: boolean; error?: string } {
   try {
-    const spec = JSON.parse(jsonText);
-    const { meta } = dashboard.state;
+    const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+    const resource = JSON.parse(jsonText);
+    const { spec, apiVersion, kind, metadata } = resource;
 
+    if (kind && kind !== 'Dashboard') {
+      return { success: false, error: `Invalid kind: ${kind}. Expected 'Dashboard'.` };
+    }
+    if (apiVersion && apiVersion !== expectedAPIVersion) {
+      return {
+        success: false,
+        error: `Invalid apiVersion: ${apiVersion}. Expected '${expectedAPIVersion}'.`,
+      };
+    }
+    if (metadata?.name && metadata.name !== dashboard.state.uid) {
+      return { success: false, error: `Unable to change identifier from JSON editor` };
+    }
+    if (metadata && Object.keys(metadata).length > 1) {
+      return {
+        success: false,
+        error: `Editing dashboard metadata is not yet supported (${Object.keys(metadata).join(', ')})`,
+      };
+    }
+
+    const { meta } = dashboard.state;
     const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: getK8sV2DashboardApiConfig().version,
+      apiVersion: expectedAPIVersion,
       kind: 'DashboardWithAccessInfo',
       metadata: {
         name: dashboard.state.uid ?? '',
