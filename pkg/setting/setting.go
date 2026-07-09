@@ -196,7 +196,6 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
@@ -2547,7 +2546,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)

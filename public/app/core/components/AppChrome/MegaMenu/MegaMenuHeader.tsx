@@ -5,8 +5,7 @@ import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types/store';
+import { useHomeNav } from 'app/core/hooks/useHomeNav';
 
 import { HomeLogo, HomeTitle } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -24,7 +23,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const homeNav = useHomeNav();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (

@@ -638,10 +638,10 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "dashboardNotebookLayout",
-			Description: "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+			Name:        "dashboard.notebooks",
+			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
 		},

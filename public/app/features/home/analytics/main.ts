@@ -1,6 +1,12 @@
 import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
-import { type ClearHistoryClicked, type EmptyCtaClicked, type TabChanged } from './types';
+import {
+  type AlertsCardClicked,
+  type ClearHistoryClicked,
+  type EmptyCtaClicked,
+  type IncidentsCardClicked,
+  type TabChanged,
+} from './types';
 
 const createHomepageEvent = defineFeatureEvents('grafana', 'homepage');
 
@@ -12,3 +18,9 @@ export const clearHistoryClicked = createHomepageEvent<ClearHistoryClicked>('cle
 
 /** Fired when the user clicks the empty-state call-to-action on the Recent tab. */
 export const emptyCtaClicked = createHomepageEvent<EmptyCtaClicked>('empty_cta_clicked');
+
+/** Fired when the user clicks any control on the homepage Firing alerts card. */
+export const alertsCardClicked = createHomepageEvent<AlertsCardClicked>('alerts_card_clicked');
+
+/** Fired when the user clicks any control on the homepage Active incidents card. */
+export const incidentsCardClicked = createHomepageEvent<IncidentsCardClicked>('incidents_card_clicked');
