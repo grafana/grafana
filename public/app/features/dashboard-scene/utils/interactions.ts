@@ -192,7 +192,7 @@ export const DashboardInteractions = {
   trackPastePanelClick(
     source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },

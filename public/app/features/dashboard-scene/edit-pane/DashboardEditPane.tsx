@@ -426,8 +426,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     } else {
       dashboard.pastePanel();
     }
-
-    DashboardInteractions.trackPastePanelClick(source, getLayoutType(target), 'click');
   }
 }
 

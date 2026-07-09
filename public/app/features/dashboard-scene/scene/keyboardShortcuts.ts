@@ -22,6 +22,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -278,14 +279,14 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: () => {
         if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
           // check if there's an active element in edit pane and if so, use that as the target for pasting the panel
-          const editPane = scene.state.editPane;         
+          const editPane = scene.state.editPane;
           const selectedObj = editPane.getSelectedObject();
-          if(selectedObj) {
+          if (selectedObj) {
             editPane.pastePanel(selectedObj);
           } else {
             scene.pastePanel();
           }
-          DashboardInteractions.trackPastePanelClick('keyboard');
+          DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
         }
       },
     });

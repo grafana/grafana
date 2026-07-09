@@ -21,6 +21,8 @@ import { AddNewSection } from './AddNewSection';
 import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
+import { DashboardInteractions } from '../../utils/interactions';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 export class AddNewEditPane extends SceneObjectBase {
   public static Component = AddNewEditPaneRenderer;
@@ -40,6 +42,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
     orchestrator.startDraggingNewPanel(mode);
+  };
+
+  const pastePanel = () => {
+    editPane.pastePanel(selectedObj);
+    DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(selectedObj), 'click');
   };
 
   return (
@@ -100,11 +107,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                             className={styles.pasteButton}
                             icon="clipboard-alt"
                             tabIndex={0}
-                            onClick={() => editPane.pastePanel(selectedObj)}
+                            onClick={() => pastePanel()}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                editPane.pastePanel(selectedObj);
+                                pastePanel();
                               }
                             }}
                             aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}

@@ -10,6 +10,7 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardEditPane } from './DashboardEditPane';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
@@ -74,7 +75,11 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
           icon="clipboard-alt"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.paste}
-          onClick={() => editPane.pastePanel(editPane.getSelectedObject(), 'editPaneHeader')}
+          onClick={() => {
+            const target = editPane.getSelectedObject();
+            editPane.pastePanel(target);
+            DashboardInteractions.trackPastePanelClick('editPaneHeader', getLayoutType(target), 'click');
+          }}
         >
           <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
         </Button>

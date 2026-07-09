@@ -9,6 +9,7 @@ import { findVizPanelByPathId } from '../utils/pathId';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -31,6 +32,12 @@ jest.mock('@grafana/scenes', () => ({
   },
 }));
 
+const localStorageMock = mockLocalStorage();
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+
 describe('setupKeyboardShortcuts', () => {
   let mockScene: DashboardScene;
   let mockKeybindingSet: jest.Mocked<KeybindingSet>;
@@ -39,6 +46,7 @@ describe('setupKeyboardShortcuts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnRefresh.mockClear();
+    localStorageMock.clear();
 
     // Mock KeybindingSet
     mockKeybindingSet = jest.mocked(new KeybindingSet());
@@ -485,11 +493,13 @@ describe('setupKeyboardShortcuts', () => {
 
       it('pastes a panel while editing', () => {
         mockScene.setState({ isEditing: true });
+        localStorageMock.setItem('panel-copy', JSON.stringify({ panelId: 'panel-1' }));
         setupKeyboardShortcuts(mockScene);
 
         getBinding('p v')!.onTrigger();
 
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
+        expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard');
       });
 
       it('does not paste when not editing', () => {
