@@ -30,7 +30,7 @@ export function RowItemRepeater({ row, variable }: Props) {
 
   // Subscribe to variable state changes and perform repeats when the variable changes.
   // Defer the initial performRowRepeats to the next macrotask so the parent SceneVariableSet
-  // can activate first under RENDER_BEFORE_ACTIVATION (same fix as TabItemRepeater / #118567).
+  // can activate first under RENDER_BEFORE_ACTIVATION).
   // A sync call here can early-return while the set is inactive; if the later options update
   // does not notify subscribeToState (URL value already set), repeatedRows stays undefined
   // and the row spinner never clears.
