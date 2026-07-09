@@ -232,16 +232,22 @@ export const TimeBar: React.FC<TimeBarProps> = ({
     });
     b.addAxis({ placement: AxisPlacement.Bottom, scaleKey: 'x', isTime: true, theme });
 
-    // Faint background sparkline(s) — one per referenced series, drawn behind the axis + overlay.
-    b.addScale({ scaleKey: 'spark-y', orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up });
-    b.addAxis({ scaleKey: 'spark-y', theme, placement: AxisPlacement.Hidden, show: false });
+    // Faint background sparkline(s) — one per referenced series. Each gets its OWN auto-ranging y-scale so
+    // series of different magnitudes each fill the height (normalized to their own min/max over the context
+    // window) rather than sharing one scale. Distinct theme-palette colors, kept faint, so overlapping
+    // series stay distinguishable without competing with the selection overlay.
+    const palette = theme.visualization.palette;
+    const seriesColor = (i: number) =>
+      colorManipulator.alpha(theme.visualization.getColorByName(palette[i % palette.length]), 0.5);
     for (let i = 0; i < seriesCount; i++) {
+      const scaleKey = `spark-y-${i}`;
+      b.addScale({ scaleKey, orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up });
       b.addSeries({
-        scaleKey: 'spark-y',
+        scaleKey,
         theme,
         pxAlign: false,
         drawStyle: GraphDrawStyle.Line,
-        lineColor: theme.colors.text.secondary,
+        lineColor: seriesColor(i),
         lineWidth: 1,
         showPoints: VisibilityMode.Never,
         pointSize: 0,
