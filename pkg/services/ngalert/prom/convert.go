@@ -36,17 +36,8 @@ var (
 	)
 )
 
-func isPrometheusCompatibleDatasourceType(datasourceType string) bool {
-	switch datasourceType {
-	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS:
-		return true
-	default:
-		return false
-	}
-}
-
 func isConvertibleDatasourceType(datasourceType string) bool {
-	return datasourceType == datasources.DS_LOKI || isPrometheusCompatibleDatasourceType(datasourceType)
+	return datasourceType == datasources.DS_LOKI || datasources.IsPrometheusCompatible(datasourceType)
 }
 
 // Config defines the configuration options for the Prometheus to Grafana rules converter.
@@ -231,7 +222,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	}
 
 	if isRecordingRule {
-		if !isPrometheusCompatibleDatasourceType(p.cfg.TargetDatasourceType) {
+		if !datasources.IsPrometheusCompatible(p.cfg.TargetDatasourceType) {
 			return models.AlertRule{}, ErrInvalidTargetDatasourceType.Errorf("invalid target datasource type: %s, must be prometheus-compatible", p.cfg.TargetDatasourceType)
 		}
 
