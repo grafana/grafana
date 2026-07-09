@@ -745,7 +745,10 @@ func (rc *RepositoryController) process(key string) error {
 			if len(tokenOps) > 0 {
 				patchOperations = append(patchOperations, tokenOps...)
 			}
-			obj.Secure.Token.Create = token
+			// Work on a copy so we don't mutate the shared informer-cache object, and
+			// overwrite the whole value so the stale reference name is cleared too.
+			obj = obj.DeepCopy()
+			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
