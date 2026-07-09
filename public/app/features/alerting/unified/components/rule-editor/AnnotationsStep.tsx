@@ -8,12 +8,12 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
-import { AIAnnotationsAssistantComponent } from '../../enterprise-components/AI/AIGenAnnotationsAssistant/addAIAnnotationsAssistant';
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
+import { AnnotationsAssistantExtensionPoint } from '../extensions/RuleExtensionPoints';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -139,7 +139,7 @@ const AnnotationsStep = () => {
     >
       <Stack direction="column" gap={1}>
         {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
-        {isGrafanaManagedRuleByType(type) && <AIAnnotationsAssistantComponent />}
+        {isGrafanaManagedRuleByType(type) && <AnnotationsAssistantExtensionPoint />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;

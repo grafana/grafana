@@ -8,6 +8,7 @@ import failOnConsole from 'jest-fail-on-console';
 import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 
+import { setPluginComponentsHook } from '@grafana/runtime';
 import { matchers } from '@grafana/test-utils';
 
 import { getEnvConfig } from '../../scripts/cli/env-util';
@@ -62,6 +63,10 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
   usePluginComponents: jest.fn().mockReturnValue({ components: [], isLoading: false }),
 }));
+
+// Default the @grafana/runtime plugin-components hook to empty results so components rendering
+// extension points don't need per-suite wiring. Tests can override via setPluginComponentsHook.
+setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

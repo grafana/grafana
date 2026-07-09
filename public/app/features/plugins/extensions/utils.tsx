@@ -109,6 +109,16 @@ export const wrapWithPluginContext = <T,>({
     return (props: T & React.JSX.IntrinsicAttributes) => renderWithContext(props, pluginMeta);
   }
 
+  // Extensions registered by core Grafana (or code bundled with it) have no app plugin to fetch
+  // meta for, so they render without a plugin context.
+  if (pluginId === 'grafana') {
+    return (props: T & React.JSX.IntrinsicAttributes) => (
+      <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+        <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+      </ExtensionErrorBoundary>
+    );
+  }
+
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const { error, loading, value: fetchedPluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 

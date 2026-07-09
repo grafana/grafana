@@ -358,7 +358,6 @@
     "ai": {
       "error-boundary": {
         "alert-rule-button": "AI Alert Rule Button failed to load",
-        "annotations-assistant": "AI Annotations Assistant failed to load",
         "feedback-button": "AI Feedback Button failed to load",
         "improve-annotations-button": "AI Improve Annotations Button failed to load",
         "improve-labels-button": "AI Improve Labels Button failed to load",
@@ -1149,12 +1148,6 @@
       "error-boundary": {
         "enrichment-drawer-extension": "Enrichment Drawer Extension failed to load",
         "rule-viewer-section-extension": "Rule Viewer Enrichment Section failed to load"
-      }
-    },
-    "enterprise-components": {
-      "error-boundary": {
-        "notification-message-preview": "Notification message preview failed to load",
-        "rule-list-item-indicator": "Rule list item indicator failed to load"
       }
     },
     "entities": {

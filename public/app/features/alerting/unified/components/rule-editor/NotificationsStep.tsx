@@ -9,12 +9,13 @@ import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { NotificationMessagePreviewComponent } from '../../enterprise-components/rule-editor/addNotificationMessagePreview';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+
+import { NotificationPreviewExtensionPoint } from '../extensions/RuleExtensionPoints';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -142,7 +143,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <ManualAndAutomaticRouting alertUid={alertUid} />
       )}
       {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
-      {shouldRenderpreview && <NotificationMessagePreviewComponent />}
+      {shouldRenderpreview && <NotificationPreviewExtensionPoint />}
     </RuleEditorSection>
   );
 };
