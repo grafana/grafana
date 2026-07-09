@@ -678,7 +678,14 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	return nil
 }
 
-// validateFolderExists checks if a folder exists
+// validateFolderExists checks that a folder with the exact folderUID exists.
+//
+// The folder lookup resolves case-insensitively (database collation), so a
+// mis-cased reference such as "grafanacom" would otherwise pass while the stored
+// folder is "GrafanaCom". Since k8s resource names are case-sensitive, persisting
+// that casing yields a dangling reference that 404s on case-sensitive read paths
+// (e.g. access control's folder-parents walk). We reject the write instead by
+// requiring the resolved folder's name to match the reference exactly.
 func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderUID string, orgID int64) (*unstructured.Unstructured, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
@@ -700,6 +707,10 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 		}
 
 		return nil, err
+	}
+
+	if folder.GetName() != folderUID {
+		return nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), folderUID)
 	}
 
 	return folder, nil
