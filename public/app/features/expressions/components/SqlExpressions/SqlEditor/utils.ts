@@ -1,3 +1,4 @@
+import { unquoteIdentifier } from '@grafana/sql';
 import type {
   CodeMirrorCompletion,
   CodeMirrorCompletionContext,
@@ -5,7 +6,7 @@ import type {
   CodeMirrorCompletionSource,
 } from '@grafana/ui/unstable';
 
-import { SQL_EXPRESSIONS_DIALECT, unquoteIdentifier } from '../../../utils/sqlIdentifier';
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 import { getSqlCompletionSituation } from './completionSituation';
 

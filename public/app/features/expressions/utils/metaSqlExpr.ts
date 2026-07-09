@@ -8,11 +8,12 @@ import {
 } from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { dataSource } from '../ExpressionDatasource';
 
 import { interpolateSourceQueries } from './interpolateSourceQueries';
-import { quoteIdentifierIfNecessary, SQL_EXPRESSIONS_DIALECT } from './sqlIdentifier';
+import { SQL_EXPRESSIONS_DIALECT } from './sqlIdentifier';
 
 export interface FetchSQLFieldsOptions {
   range?: TimeRange;

@@ -1,9 +1,10 @@
 import { syntaxTree } from '@codemirror/language';
 import { type SyntaxNode } from '@lezer/common';
 
+import { unquoteIdentifier } from '@grafana/sql';
 import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
 
-import { SQL_EXPRESSIONS_DIALECT, unquoteIdentifier } from '../../../utils/sqlIdentifier';
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 const SQL_STATEMENT_NODE_NAME = 'Statement';
 const SQL_COMPOSITE_IDENTIFIER_NODE_NAME = 'CompositeIdentifier';

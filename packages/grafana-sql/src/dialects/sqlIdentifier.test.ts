@@ -15,7 +15,6 @@ describe('quoteIdentifierIfNecessary', () => {
   });
 
   it('applies dialect-specific unquoted-identifier rules', () => {
-    // `$` is a valid unquoted character in MySQL but not in standard SQL.
     expect(quoteIdentifierIfNecessary('col$', 'mysql')).toBe('col$');
     expect(quoteIdentifierIfNecessary('col$', 'standard')).toBe('"col$"');
   });
@@ -46,7 +45,6 @@ describe('unquoteIdentifier', () => {
   });
 
   it('does not treat another dialect quote as an identifier delimiter', () => {
-    // In MySQL, double quotes delimit a string literal, not an identifier, so they are left intact.
     expect(unquoteIdentifier('"table A"', 'mysql')).toBe('"table A"');
     expect(unquoteIdentifier('`table A`', 'standard')).toBe('`table A`');
   });
