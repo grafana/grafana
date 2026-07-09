@@ -8,6 +8,7 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
+  getDataSourceUID,
   LoadingState,
 } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
@@ -226,9 +227,8 @@ describe('MixedDatasource', () => {
       expressionDS = new RecordingExpressionDatasource();
       setDataSourceSrv({
         ...datasourceSrv,
-        get: (ref?: DataSourceRef | string) => {
-          const uid = typeof ref === 'string' ? ref : ref?.uid;
-          if (uid === ExpressionDatasourceRef.uid) {
+        get: (ref: DataSourceRef) => {
+          if (getDataSourceUID(ref) === ExpressionDatasourceRef.uid) {
             return Promise.resolve(expressionDS);
           }
           return datasourceSrv.get(ref);
@@ -237,7 +237,7 @@ describe('MixedDatasource', () => {
         getList: jest.fn(),
         reload: jest.fn(),
         registerRuntimeDataSource: jest.fn(),
-      } as unknown as DataSourceSrv);
+      } as DataSourceSrv);
       setTemplateSrv(new TemplateSrv());
     });
 
