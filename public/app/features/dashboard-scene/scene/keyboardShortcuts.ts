@@ -2,8 +2,10 @@ import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateT
 import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { InspectTab } from 'app/features/inspector/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -21,8 +23,6 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();

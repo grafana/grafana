@@ -7,10 +7,12 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
+import { DashboardInteractions } from '../../utils/interactions';
 import { DashboardEditPane } from '../DashboardEditPane';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
@@ -21,8 +23,6 @@ import { AddNewSection } from './AddNewSection';
 import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
-import { DashboardInteractions } from '../../utils/interactions';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 export class AddNewEditPane extends SceneObjectBase {
   public static Component = AddNewEditPaneRenderer;

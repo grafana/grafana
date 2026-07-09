@@ -2,6 +2,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
 import { Button, Sidebar } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -10,7 +11,6 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardEditPane } from './DashboardEditPane';
-import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;

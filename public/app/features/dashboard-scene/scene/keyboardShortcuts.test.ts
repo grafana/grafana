@@ -3,13 +3,13 @@ import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -499,7 +499,7 @@ describe('setupKeyboardShortcuts', () => {
         getBinding('p v')!.onTrigger();
 
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
-        expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard');
+        expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
       });
 
       it('does not paste when not editing', () => {
