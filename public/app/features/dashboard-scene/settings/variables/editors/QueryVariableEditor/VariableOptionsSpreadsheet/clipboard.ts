@@ -139,13 +139,12 @@ export function useClipboardPaste() {
       const text = (await navigator.clipboard.readText()).trim();
       return text || null;
     } catch {
-      if (access === 'prompt') {
-        // The user dismissed or blocked the browser permission prompt
-        setAccess('denied');
-      }
+      // Don't infer 'denied' here: a dismissed prompt also rejects, but the permission
+      // stays in 'prompt' and the browser will re-prompt on the next click.
+      // Real blocks flip the state via the PermissionStatus 'change' listener.
       return null;
     }
-  }, [access]);
+  }, []);
 
   // Remembering what was imported (instead of erasing the user's clipboard) lets us
   // disable the paste button until the clipboard content changes

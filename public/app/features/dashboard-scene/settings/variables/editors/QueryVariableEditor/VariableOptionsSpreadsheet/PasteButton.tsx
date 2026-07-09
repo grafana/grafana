@@ -43,9 +43,11 @@ function getPasteButtonProps(
       : t('dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard', 'Paste from clipboard');
 
   switch (clipboardAccess) {
+    // Same "paste" label as everywhere else: clicking both grants the permission and pastes,
+    // so only the tooltip announces the upcoming browser prompt
     case 'prompt':
       return {
-        label: t('dashboard-scene.query-variable-editor.spreadsheet.enable-copy-paste', 'Enable copy-paste'),
+        label: pasteLabel,
         tooltip: t(
           'dashboard-scene.query-variable-editor.spreadsheet.enable-copy-paste-tooltip',
           'Your browser will ask for permission to read your clipboard'

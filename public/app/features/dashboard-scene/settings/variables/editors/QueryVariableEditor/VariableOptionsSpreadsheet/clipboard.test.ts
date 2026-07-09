@@ -227,8 +227,8 @@ describe('useClipboardPaste', () => {
       expect(readText).not.toHaveBeenCalled();
     });
 
-    describe('when the paste attempt is rejected (because the user blocked or dismissed the permission prompt)', () => {
-      test('switches to denied', async () => {
+    describe('when the user dismisses the permission prompt during a paste attempt', () => {
+      test('stays in prompt mode so the next click can re-prompt', async () => {
         mockClipboardReadError(new Error('Read permission denied.'));
         mockPermissionState('prompt');
 
@@ -236,6 +236,25 @@ describe('useClipboardPaste', () => {
         await waitFor(() => expect(result.current.access).toBe('prompt'));
         await act(async () => {
           expect(await result.current.readClipboard()).toBe(null);
+        });
+
+        expect(result.current.access).toBe('prompt');
+        expect(result.current.canPaste).toBe(true);
+      });
+    });
+
+    describe('when the user blocks the permission prompt', () => {
+      test('switches to denied via the permission change event', async () => {
+        mockClipboardReadError(new Error('Read permission denied.'));
+        const permissionStatus = mockPermissionState('prompt');
+
+        const { result } = renderHook(() => useClipboardPaste());
+        await waitFor(() => expect(result.current.access).toBe('prompt'));
+        act(() => {
+          // blocking fires the PermissionStatus 'change' event with the new state
+          permissionStatus.state = 'denied';
+          const onChange = permissionStatus.addEventListener.mock.calls[0][1];
+          onChange();
         });
 
         expect(result.current.access).toBe('denied');
