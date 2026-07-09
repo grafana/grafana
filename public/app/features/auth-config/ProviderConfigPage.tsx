@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -44,6 +45,7 @@ export const ProviderConfigPage = () => {
   const { isLoading, providers } = useSelector((store) => store.authConfig);
   const { provider = '' } = useParams();
   const config = providers.find((config) => config.provider === provider);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   useEffect(() => {
     dispatch(loadProviders(provider));
@@ -61,7 +63,13 @@ export const ProviderConfigPage = () => {
       pageNav={pageNav}
       renderTitle={(title) => (
         <Stack gap={2} alignItems="center">
-          <Text variant={'h1'}>{title}</Text>
+          <Text
+            element={'h1'}
+            variant={visualRefreshEnabled ? 'h4' : 'h1'}
+            weight={visualRefreshEnabled ? 'bold' : 'regular'}
+          >
+            {title}
+          </Text>
           <Badge
             text={
               config.settings.enabled
