@@ -42,6 +42,12 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
 
+	// The v2beta1 Notebook storage is registered unconditionally in
+	// UpdateAPIGroupInfo, so this case is always reachable. Notebooks need no
+	// mutation today; layout validation happens in Validate.
+	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		return nil
+
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
 	case dashboardV0.SNAPSHOT_RESOURCE:

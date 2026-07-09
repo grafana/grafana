@@ -385,6 +385,20 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Connect:
 			return nil
 		}
+	// The v2beta1 Notebook storage is registered unconditionally in
+	// UpdateAPIGroupInfo, so this case is always reachable. Create/Update
+	// enforce the notebook-only layout; delete/connect need no validation.
+	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create, admission.Update:
+			notebook, ok := a.GetObject().(*dashv2beta1.Notebook)
+			if !ok {
+				return fmt.Errorf("expected notebook")
+			}
+			return validateNotebook(notebook)
+		default:
+			return nil // delete/connect need no validation
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
@@ -947,6 +961,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
+
+	// TODO: gate this behind the dashboard.notebooks feature flag before merging.
+	// The notebook storage is registered unconditionally for now; the gate is a
+	// fast-follow once that toggle lands on main.
+	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: true,
+	})
+
+	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+
+	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
 	return nil
 }
