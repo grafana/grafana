@@ -87,8 +87,6 @@ describe('useAlertRulesNav', () => {
   });
 
   it('should ignore registrations with a duplicate url', () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-
     addAlertRulesTab({ id: 'first', text: 'First', url: '/alerting/list/custom' });
     addAlertRulesTab({ id: 'second', text: 'Second', url: '/alerting/list/custom' });
 
