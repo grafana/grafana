@@ -16,7 +16,7 @@ import (
 // NewHistoricJobDeltaSource returns the historic-job delta source. When NATS is
 // off it is an apiserver-backed SharedIndexInformer: the watch populates a cache
 // that each resync replays, so cleanup re-triggers without re-listing. When NATS
-// is on there is no watch to feed a cache, so it is a CachelessPeriodicListerInformer that
+// is on there is no watch to feed a cache, so it is a CachelessPeriodicInformer that
 // re-lists on a schedule instead. Historic cleanup is age-based and needs no live
 // events, so neither path subscribes to notifications.
 //
@@ -26,16 +26,16 @@ import (
 // reads no lister, so callers need only the DeltaSource.
 func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, resync time.Duration) DeltaSource {
 	if natsEnabled {
-		return NewHistoricJobPeriodicLister(client, "", resync)
+		return NewHistoricJobPeriodicInformer(client, "", resync)
 	}
 	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().HistoricJobs().Informer()
 }
 
-// NewHistoricJobPeriodicLister builds the NATS-mode historic-job source: a
+// NewHistoricJobPeriodicInformer builds the NATS-mode historic-job source: a
 // periodic lister that re-lists historic jobs every resync and delivers each one
 // so the handler can act on its age. namespace scopes the list (empty lists every
 // namespace).
-func NewHistoricJobPeriodicLister(client versioned.Interface, namespace string, resync time.Duration) *usinformer.CachelessPeriodicListerInformer {
+func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string, resync time.Duration) *usinformer.CachelessPeriodicInformer {
 	c := client.ProvisioningV0alpha1()
 	list := func(ctx context.Context) ([]runtime.Object, error) {
 		l, err := c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})
@@ -48,5 +48,5 @@ func NewHistoricJobPeriodicLister(client versioned.Interface, namespace string, 
 		}
 		return out, nil
 	}
-	return usinformer.NewCachelessPeriodicListerInformer(provisioningapis.HistoricJobResourceInfo.GroupVersionResource().Resource, resync, list)
+	return usinformer.NewCachelessPeriodicInformer(provisioningapis.HistoricJobResourceInfo.GroupVersionResource().Resource, resync, list)
 }

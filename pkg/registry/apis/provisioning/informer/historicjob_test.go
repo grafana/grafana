@@ -38,7 +38,7 @@ func (r *addRecorder) got() []string {
 }
 
 // TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection:
-// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessPeriodicListerInformer
+// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessPeriodicInformer
 // when NATS is on. The historic-job controller is unaffected either way — it only
 // registers its EventHandler on whichever DeltaSource this returns.
 func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
@@ -46,7 +46,7 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
 		src := NewHistoricJobDeltaSource(false, client, time.Minute)
-		_, isPeriodic := src.(*usinformer.CachelessPeriodicListerInformer)
+		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.False(t, isPeriodic, "expected the apiserver informer, not the periodic lister")
 		_, isInformer := src.(cache.SharedIndexInformer)
 		assert.True(t, isInformer, "expected an apiserver-backed SharedIndexInformer")
@@ -54,19 +54,19 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 
 	t.Run("NATS on uses periodic lister", func(t *testing.T) {
 		src := NewHistoricJobDeltaSource(true, client, time.Minute)
-		_, isPeriodic := src.(*usinformer.CachelessPeriodicListerInformer)
+		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.True(t, isPeriodic, "expected the periodic lister when NATS is enabled")
 	})
 }
 
-// TestNewHistoricJobPeriodicLister_ListsFromClient verifies the NATS-mode source reads
+// TestNewHistoricJobPeriodicInformer_ListsFromClient verifies the NATS-mode source reads
 // historic jobs through the provisioning client.
-func TestNewHistoricJobPeriodicLister_ListsFromClient(t *testing.T) {
+func TestNewHistoricJobPeriodicInformer_ListsFromClient(t *testing.T) {
 	client := fake.NewClientset(
 		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
 	)
 
-	src := NewHistoricJobPeriodicLister(client, "", time.Hour)
+	src := NewHistoricJobPeriodicInformer(client, "", time.Hour)
 	h := &addRecorder{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)

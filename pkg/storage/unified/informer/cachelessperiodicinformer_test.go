@@ -11,12 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func TestCachelessPeriodicListerInformer_DeliversListedObjects(t *testing.T) {
+func TestCachelessPeriodicInformer_DeliversListedObjects(t *testing.T) {
 	list := func(_ context.Context) ([]runtime.Object, error) {
 		return []runtime.Object{obj("a"), obj("b")}, nil
 	}
 
-	src := NewCachelessPeriodicListerInformer("things", time.Hour, list)
+	src := NewCachelessPeriodicInformer("things", time.Hour, list)
 	h := &recordingHandler{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestCachelessPeriodicListerInformer_DeliversListedObjects(t *testing.T) {
 	assert.ElementsMatch(t, []string{"a", "b"}, h.addedNames())
 }
 
-func TestCachelessPeriodicListerInformer_RetriesInitialListUntilItSucceeds(t *testing.T) {
+func TestCachelessPeriodicInformer_RetriesInitialListUntilItSucceeds(t *testing.T) {
 	var mu sync.Mutex
 	fail := true
 	list := func(_ context.Context) ([]runtime.Object, error) {
@@ -41,7 +41,7 @@ func TestCachelessPeriodicListerInformer_RetriesInitialListUntilItSucceeds(t *te
 		return []runtime.Object{obj("a")}, nil
 	}
 
-	src := NewCachelessPeriodicListerInformer("things", time.Hour, list)
+	src := NewCachelessPeriodicInformer("things", time.Hour, list)
 	// Shorten the retry so the test does not wait the default interval.
 	src.retryInterval = 10 * time.Millisecond
 	h := &recordingHandler{}

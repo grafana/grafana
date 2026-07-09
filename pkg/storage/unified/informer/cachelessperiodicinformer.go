@@ -13,7 +13,7 @@ import (
 )
 
 // PeriodicListFunc returns every object of one resource kind, read straight from
-// the API. CachelessPeriodicListerInformer calls it once on start and again on
+// the API. CachelessPeriodicInformer calls it once on start and again on
 // every resync.
 type PeriodicListFunc func(ctx context.Context) ([]runtime.Object, error)
 
@@ -24,7 +24,7 @@ const (
 	periodicRetryInterval = 5 * time.Second
 )
 
-// CachelessPeriodicListerInformer is the NATS-mode delta source for resources
+// CachelessPeriodicInformer is the NATS-mode delta source for resources
 // that gain nothing from live events. In NATS mode there is no apiserver watch to
 // populate and resync a cache, so instead of watching, this source re-lists the
 // resource from the API on a fixed schedule and delivers every listed object to
@@ -36,7 +36,7 @@ const (
 // cache and replays it on resync; this one simply re-lists. It suits idempotent,
 // resync-driven handlers such as age-based historic-job cleanup, which
 // re-evaluates every job's age on each pass regardless of whether it changed.
-type CachelessPeriodicListerInformer struct {
+type CachelessPeriodicInformer struct {
 	name   string
 	resync time.Duration
 	list   PeriodicListFunc
@@ -50,14 +50,14 @@ type CachelessPeriodicListerInformer struct {
 	handlers []cache.ResourceEventHandler
 }
 
-// NewCachelessPeriodicListerInformer builds a list-only source. name is used only
+// NewCachelessPeriodicInformer builds a list-only source. name is used only
 // for logging; resync is the re-list cadence (a non-positive value falls back to
 // defaultPeriodicResync); list reads the resource from the API.
-func NewCachelessPeriodicListerInformer(name string, resync time.Duration, list PeriodicListFunc) *CachelessPeriodicListerInformer {
+func NewCachelessPeriodicInformer(name string, resync time.Duration, list PeriodicListFunc) *CachelessPeriodicInformer {
 	if resync <= 0 {
 		resync = defaultPeriodicResync
 	}
-	return &CachelessPeriodicListerInformer{
+	return &CachelessPeriodicInformer{
 		name:          name,
 		resync:        resync,
 		list:          list,
@@ -68,7 +68,7 @@ func NewCachelessPeriodicListerInformer(name string, resync time.Duration, list 
 
 // AddEventHandler registers a handler to receive the listed objects, mirroring
 // cache.SharedIndexInformer.AddEventHandler. Register all handlers before Run.
-func (s *CachelessPeriodicListerInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+func (s *CachelessPeriodicInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("periodic lister %q: nil handler", s.name)
 	}
@@ -80,7 +80,7 @@ func (s *CachelessPeriodicListerInformer) AddEventHandler(handler cache.Resource
 
 // Run performs the initial list, then re-lists every resync until stopCh is
 // closed. It blocks, so start it with `go informer.Run(stopCh)`.
-func (s *CachelessPeriodicListerInformer) Run(stopCh <-chan struct{}) {
+func (s *CachelessPeriodicInformer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
@@ -121,7 +121,7 @@ func (s *CachelessPeriodicListerInformer) Run(stopCh <-chan struct{}) {
 // relist reads the full set from the API and delivers every object as an add. The
 // handlers are idempotent, so re-delivering unchanged objects each pass is
 // intended: it is what re-triggers resync-driven work such as age-based cleanup.
-func (s *CachelessPeriodicListerInformer) relist(ctx context.Context) error {
+func (s *CachelessPeriodicInformer) relist(ctx context.Context) error {
 	objs, err := s.list(ctx)
 	if err != nil {
 		s.log.Warn("periodic lister: list failed", "name", s.name, "error", err)
@@ -135,7 +135,7 @@ func (s *CachelessPeriodicListerInformer) relist(ctx context.Context) error {
 	return nil
 }
 
-func (s *CachelessPeriodicListerInformer) dispatch(fn func(cache.ResourceEventHandler)) {
+func (s *CachelessPeriodicInformer) dispatch(fn func(cache.ResourceEventHandler)) {
 	s.mu.Lock()
 	handlers := s.handlers
 	s.mu.Unlock()
