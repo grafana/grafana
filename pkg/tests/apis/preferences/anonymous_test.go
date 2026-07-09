@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
