@@ -1831,6 +1831,8 @@ export type CommitOptions = {
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
   signerEmail?: string;
+  /** When true, commits are authored by the signer identity (signerName/signerEmail). */
+  signerIsAuthor?: boolean;
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
   /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.

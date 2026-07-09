@@ -2822,7 +2822,8 @@
       "label-data-source": "Data source"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "View alert rule"
+      "go-to-detail-view": "View alert rule",
+      "silence-button": "Silence"
     },
     "rule-details-expression": {
       "label-expression": "Expression"
@@ -13810,6 +13811,8 @@
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signer-is-author-description": "Author commits as the signer.",
+      "signer-is-author-label": "Use signer as commit author",
       "signing-key-description": "Private key used to sign commits. No passphrase.",
       "signing-key-label": "Signing key",
       "signing-method-description": "Sign commits so their author can be cryptographically verified.",
