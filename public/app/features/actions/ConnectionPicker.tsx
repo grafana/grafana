@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ActionType, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { Select } from '@grafana/ui';
 
@@ -27,9 +28,11 @@ const DIRECT_OPTION_VALUE = 'direct';
 export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: ConnectionPickerProps) => {
   const [supportedDataSources, setSupportedDataSources] = useState<DataSourceInstanceListItem[]>([]);
   useEffect(() => {
-    getDataSourceInstanceList({
-      filter: (item) => item.type === INFINITY_DATASOURCE_TYPE,
-    }).then(setSupportedDataSources);
+    if (config.featureToggles.vizActionsAuth) {
+      getDataSourceInstanceList({
+        filter: (item) => item.type === INFINITY_DATASOURCE_TYPE,
+      }).then(setSupportedDataSources);
+    }
   }, []);
 
   const connectionOptions = useMemo(() => {
