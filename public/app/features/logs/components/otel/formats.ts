@@ -101,7 +101,6 @@ function getSuggestedFieldsForAnyLogs() {
     'environment',
     'err',
     'error',
-    'error',
     'error_message',
     'exception',
     'exception_message',
