@@ -11,7 +11,8 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, LoadingPlaceholder, TabContent, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Alert, LoadingPlaceholder, TabContent, Text, useStyles2 } from '@grafana/ui';
 import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -117,13 +118,22 @@ function NotificationDetailPage() {
   }
 
   const subTitle = headerData ? <NotificationHeader notification={headerData.notification} /> : undefined;
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   return (
     <AlertingPageWrapper
       navId="alerts-history"
       pageNav={pageNav}
       isLoading={false}
-      renderTitle={() => <h1>{displayTitle}</h1>}
+      renderTitle={() => (
+        <Text
+          element={'h1'}
+          variant={visualRefreshEnabled ? 'h4' : 'h1'}
+          weight={visualRefreshEnabled ? 'bold' : 'regular'}
+        >
+          {displayTitle}
+        </Text>
+      )}
       info={info.length > 0 ? info : undefined}
       actions={notification ? <NotificationActionsMenu notification={notification} /> : undefined}
       subTitle={subTitle}
