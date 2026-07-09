@@ -32,9 +32,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
 
-		manager, _ := meta.GetManagerProperties()
-		// Skip if already managed by any manager (repository, file provisioning, etc.)
-		if manager.Identity != "" {
+		_, managed := meta.GetManagerProperties()
+		// Skip if already managed by any manager (repository, file provisioning, etc.).
+		// Classic shim kinds are managed without an identity, so rely on the managed flag.
+		if managed {
 			return nil
 		}
 
@@ -135,7 +136,7 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 		}
 		seen[current] = struct{}{}
 
-		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
+		if _, managed := meta.GetManagerProperties(); managed {
 			return nil
 		}
 

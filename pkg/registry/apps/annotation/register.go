@@ -142,7 +142,7 @@ func NewAppInstaller(
 	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)
 
 	// Create the graphite handler
-	graphiteHandler := newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger)
+	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 

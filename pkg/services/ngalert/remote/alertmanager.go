@@ -113,6 +113,11 @@ type AlertmanagerConfig struct {
 
 	// RuntimeConfig specifies runtime behavior settings for the remote Alertmanager.
 	RuntimeConfig remoteClient.RuntimeConfig
+
+	// MaxLabelStringSize overrides the sender's byte cap on any single
+	// label/annotation name or value. Nil keeps the sender default
+	// (sender.DefaultMaxLabelStringSize); a non-positive value disables the clamp.
+	MaxLabelStringSize *int
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -179,11 +184,17 @@ func NewAlertmanager(
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	senderOpts := []sender.Option{
+		sender.WithDoFunc(doFunc),
+		sender.WithUTF8Labels(),
+	}
+	if cfg.MaxLabelStringSize != nil {
+		senderOpts = append(senderOpts, sender.WithMaxLabelStringSize(*cfg.MaxLabelStringSize))
+	}
 	s, err := sender.NewExternalAlertmanagerSender(
 		senderLogger,
 		prometheus.NewRegistry(),
-		sender.WithDoFunc(doFunc),
-		sender.WithUTF8Labels(),
+		senderOpts...,
 	)
 	if err != nil {
 		return nil, err
