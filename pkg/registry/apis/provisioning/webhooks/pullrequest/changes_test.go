@@ -1507,6 +1507,65 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
 }
 
+func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
+	// A GitHub Enterprise repo has Spec.GitHubEnterprise set and Spec.GitHub nil;
+	// reading GenerateDashboardPreviews off Spec.GitHub would panic. Renderer is
+	// available and there is a single change, so the preview branch is reached.
+	finfo := &repository.FileInfo{Path: "playlist.json", Ref: "ref", Data: []byte("xxxx")}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"spec":       map[string]interface{}{"title": "My Playlist"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:             provisioning.GitHubEnterpriseRepositoryType,
+			GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+		},
+	})
+	reader.On("Read", mock.Anything, "playlist.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: "Playlist"},
+		Obj:            obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process playlist.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	info, err := evaluator.Evaluate(context.Background(), reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionCreated,
+		Path:   "playlist.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Len(t, info.Changes, 1)
+}
+
 func TestDummyImageURL(t *testing.T) {
 	urls := make([]string, 0, 10)
 	for i := range 10 {

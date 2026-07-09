@@ -17,6 +17,38 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+func TestGenerateComment_EscapesTitle(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+
+	var captured string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		captured = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info:   &repository.FileInfo{Path: "dash.json"},
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					Action: v0alpha1.ResourceActionUpdate,
+				},
+				Title:      "Pipes | Brackets [x]\nnewline",
+				SourceURL:  "https://github.com/example/repo/blob/pr/dash.json",
+				GrafanaURL: "http://grafana/d/uid",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false)
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, info))
+	require.Contains(t, captured, "Pipes \\| Brackets \\[x\\] newline")
+	require.NotContains(t, captured, "Brackets [x]")
+}
+
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo := repository.NewMockPullRequestRepo(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))

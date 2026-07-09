@@ -91,7 +91,7 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	return result, nil
 }
 
-const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.Title}}**]({{.SourceURL}}){{else}}**{{.Title}}**{{end}}{{end -}}
+const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.SafeTitle}}**]({{.SourceURL}}){{else}}**{{.SafeTitle}}**{{end}}{{end -}}
 📊 Grafana detected dashboard changes in this pull request.
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
 
@@ -101,7 +101,7 @@ const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{
 | ![Before]({{.GrafanaScreenshotURL}}) | ![Preview]({{.PreviewScreenshotURL}}) |
 {{- else if .GrafanaScreenshotURL}}
 
-### Original of {{.Title}}
+### Original of {{.SafeTitle}}
 ![Original]({{.GrafanaScreenshotURL}})
 {{- else if .PreviewScreenshotURL}}
 
@@ -162,7 +162,7 @@ const commentTemplateMissingImageRenderer = `
 const commentTemplateFooter = `
 
 ---
-_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryURL}}[**{{.RepositoryTitle}}**]({{.RepositoryURL}}){{else}}**{{.RepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
+_{{if .RepositoryTitle}}🔄 Synced from {{if .RepositoryURL}}[**{{.SafeRepositoryTitle}}**]({{.RepositoryURL}}){{else}}**{{.SafeRepositoryTitle}}**{{end}} · {{end}}Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}})_`
 
 func (f *fileChangeInfo) Action() string {
 	if f.Parsed != nil {
@@ -207,11 +207,33 @@ func (f *fileChangeInfo) Kind() string {
 
 // TODO: does this have some value?
 func (f *fileChangeInfo) ExistingLink() string {
+	title := escapeMarkdown(f.Title)
 	if f.GrafanaURL != "" {
-		return fmt.Sprintf("[%s](%s)", f.Title, f.GrafanaURL)
+		return fmt.Sprintf("[%s](%s)", title, f.GrafanaURL)
 	}
-	return f.Title
+	return title
 }
+
+// SafeTitle returns the resource title escaped for use in Markdown link text and
+// table cells.
+func (f *fileChangeInfo) SafeTitle() string {
+	return escapeMarkdown(f.Title)
+}
+
+// escapeMarkdown neutralizes characters that would break a Markdown table cell
+// or link text (pipes and brackets) and flattens newlines, so titles coming
+// from resource files render verbatim in the PR comment.
+func escapeMarkdown(s string) string {
+	return markdownEscaper.Replace(s)
+}
+
+var markdownEscaper = strings.NewReplacer(
+	"\r", "",
+	"\n", " ",
+	"|", "\\|",
+	"[", "\\[",
+	"]", "\\]",
+)
 
 func (f *fileChangeInfo) StatusIcon() string {
 	if f.Error != "" {
@@ -230,6 +252,13 @@ func (f *fileChangeInfo) TruncatedError() string {
 		return msg[:maxErrorLength] + "…"
 	}
 	return msg
+}
+
+// SafeRepositoryTitle returns the repository title escaped for use in Markdown
+// link text. It uses a value receiver because the footer template is executed
+// with a changeInfo value (see GrafanaHost).
+func (c changeInfo) SafeRepositoryTitle() string {
+	return escapeMarkdown(c.RepositoryTitle)
 }
 
 func (c *changeInfo) HasErrors() bool {

@@ -120,7 +120,12 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	// GenerateDashboardPreviews lives on the type-specific config, which is nil
+	// for the other provider(s) — guard against a nil dereference (e.g. a GitHub
+	// Enterprise repo has Spec.GitHubEnterprise set, not Spec.GitHub).
+	generatePreviews := (cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews) ||
+		(cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews)
+	shouldRender := rendererAvailable && len(changes) == 1 && generatePreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
@@ -176,6 +181,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		return info
 	}
 
+	// Best-effort link back to the file in the git repository. Computed before
+	// parsing so that parse/validation failures still link reviewers to the
+	// source file. Repositories that don't expose web URLs (e.g. non-GitHub
+	// backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = urls.SourceURL
+		}
+	}
+
 	// Read the file as a resource
 	info.Parsed, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
@@ -199,14 +214,6 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	// Find a name within the file
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
-
-	// Best-effort link back to the file in the git repository. Repositories
-	// that don't expose web URLs (e.g. non-GitHub backends) leave this empty.
-	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
-		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
-			info.SourceURL = urls.SourceURL
-		}
-	}
 
 	// Check what happens when we apply changes
 	// NOTE: this will also invoke any server side validation
