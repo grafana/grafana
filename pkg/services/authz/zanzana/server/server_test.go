@@ -83,6 +83,13 @@ func setup(t *testing.T, srv *Server) *Server {
 		// These types have no per-object base `create`, but they do support subresource create.
 		common.NewTypedResourceTuple("user:22", common.RelationCreate, common.TypeUser, userGroup, userResource, statusSubresource, "1"),
 		common.NewTypedResourceTuple("user:23", common.RelationCreate, common.TypeServiceAccount, serviceAccountGroup, serviceAccountResource, statusSubresource, "1"),
+		// user:24 has an org-wide (group_resource) dashboard grant AND direct per-object grants:
+		// a directly shared dashboard plus dashboard access through folder 5. List must return
+		// the direct grants alongside All so consumers (e.g. the legacy permission resolver)
+		// don't lose per-object scopes like dashboards:uid:<uid> ("Shared with me" depends on them).
+		common.NewGroupResourceTuple("user:24", common.RelationGet, dashboardGroup, dashboardResource, ""),
+		common.NewResourceTuple("user:24", common.RelationGet, dashboardGroup, dashboardResource, "", "shared-dash"),
+		common.NewFolderResourceTuple("user:24", common.RelationGet, dashboardGroup, dashboardResource, "", "5"),
 		common.NewResourceTuple("team:ctx-check#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-check-dashboard"),
 		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
 		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),

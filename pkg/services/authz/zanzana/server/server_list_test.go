@@ -55,6 +55,15 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Len(t, res.GetFolders(), 0)
 	})
 
+	t.Run("user:24 with group-wide access should still list direct grants alongside All", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, ""))
+		require.NoError(t, err)
+
+		assert.True(t, res.GetAll())
+		assert.Contains(t, res.GetItems(), "shared-dash")
+		assert.Contains(t, res.GetFolders(), "5")
+	})
+
 	t.Run("user:3 should be able to list resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
 		res, err := server.List(newContextWithNamespace(), newList("user:3", dashboardGroup, dashboardResource, ""))
 		require.NoError(t, err)
@@ -313,6 +322,15 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.True(t, res.GetAll())
 		assert.Len(t, res.GetItems(), 0)
 		assert.Len(t, res.GetFolders(), 0)
+	})
+
+	t.Run("user:24 with group-wide access should still list direct grants alongside All", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newList("user:24", dashboardGroup, dashboardResource, ""))
+		require.NoError(t, err)
+
+		assert.True(t, res.GetAll())
+		assert.Contains(t, res.GetItems(), "shared-dash")
+		assert.Contains(t, res.GetFolders(), "5")
 	})
 
 	t.Run("user:3 should be able to list resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {

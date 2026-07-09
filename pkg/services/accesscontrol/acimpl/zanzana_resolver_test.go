@@ -249,6 +249,49 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 	})
 }
 
+func TestListPermissions_AllTrue_KeepsDirectGrants(t *testing.T) {
+	const (
+		action          = "dashboards:read"
+		namespace       = "org:1"
+		subject         = "user:1"
+		sharedDashboard = "shared-dash"
+		sharedFolder    = "shared-folder"
+		dashboardsKind  = "dashboards"
+		foldersKind     = "folders"
+	)
+
+	group, resource, verb := common.TranslateActionToListParams(action)
+	fake := &fakeZanzanaClient{
+		listResp: &authzv1.ListResponse{
+			All:     true,
+			Items:   []string{sharedDashboard},
+			Folders: []string{sharedFolder},
+		},
+	}
+	r := &ZanzanaPermissionResolver{client: fake}
+
+	perms, err := r.listPermissions(
+		context.Background(),
+		namespace,
+		subject,
+		nil,
+		group,
+		resource,
+		verb,
+		action,
+		"",
+	)
+	require.NoError(t, err)
+
+	scopes := permScopes(perms, action)
+	require.Contains(t, scopes, ac.Scope(dashboardsKind, "uid", sharedDashboard),
+		"direct dashboard grants must survive an org-wide (All=true) grant")
+	require.Contains(t, scopes, ac.Scope(foldersKind, "uid", sharedFolder),
+		"direct folder grants must survive an org-wide (All=true) grant")
+	require.Contains(t, scopes, ac.Scope(dashboardsKind, "*"))
+	require.Contains(t, scopes, ac.Scope(foldersKind, "*"))
+}
+
 func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 	group, resource, verb := common.TranslateActionToListParams("dashboards:read")
 

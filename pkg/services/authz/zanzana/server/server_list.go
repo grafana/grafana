@@ -80,15 +80,49 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to check group resource: %w", err)
 	}
 
-	if res.GetAllowed() {
-		return &authzv1.ListResponse{All: true}, nil
-	}
+	// TODO: restore the early return for subjects with org-wide access once authlib's
+	// ListRequestOptions grows an opt-in field for enumerating direct grants. Only
+	// ZanzanaPermissionResolver.listPermissions needs the per-object items; enforcement
+	// callers (e.g. authlib Compile) only read All, so for them the enumeration below
+	// is wasted work. Example, once the field exists:
+	//
+	//	if res.GetAllowed() && !r.GetOptions().GetIncludeItemsWithAll() {
+	//		return &authzv1.ListResponse{All: true}, nil
+	//	}
 
+	var listRes *authzv1.ListResponse
+	var listErr error
 	if resource.IsGeneric() {
-		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
+		listRes, listErr = s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	} else {
+		listRes, listErr = s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}
 
-	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
+	if res.GetAllowed() {
+		// The subject has an org-wide (group resource) grant, but the directly granted
+		// objects must still be enumerated and returned alongside All: consumers that
+		// translate this response into legacy RBAC permissions (ZanzanaPermissionResolver)
+		// would otherwise lose per-object grants such as dashboards:uid:<uid>, which
+		// features like "Shared with me" depend on. Enumeration failure must not break
+		// the org-wide answer: All alone is still sufficient for enforcement.
+		if listErr != nil {
+			s.logger.FromContext(ctx).Warn(
+				"failed to enumerate direct grants for subject with org-wide access, returning All only",
+				"subject", r.GetSubject(), "group", r.GetGroup(), "resource", r.GetResource(), "error", listErr,
+			)
+			return &authzv1.ListResponse{All: true}, nil
+		}
+
+		listRes.All = true
+
+		return listRes, nil
+	}
+
+	if listErr != nil {
+		return nil, fmt.Errorf("list resources: %w", listErr)
+	}
+
+	return listRes, nil
 }
 
 func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
