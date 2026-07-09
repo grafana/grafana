@@ -5,7 +5,6 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   Alert,
   Box,
@@ -39,6 +38,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const unifiedHomepageEnabled = useBooleanFlagValue('grafana.unifiedHomepage', false);
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -108,7 +108,7 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       homeDashboardChanged({
         preferenceType: props.preferenceType,
         action: nextHomeDashboardUID ? 'set' : 'cleared',
-        unifiedHomepageEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false),
+        unifiedHomepageEnabled,
       });
     }
 
