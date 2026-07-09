@@ -70,9 +70,16 @@ func (_c *MockPullRequestRepo_CommentPullRequest_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// CompareFiles provides a mock function with given fields: ctx, base, ref
-func (_m *MockPullRequestRepo) CompareFiles(ctx context.Context, base string, ref string) ([]VersionedFileChange, error) {
-	ret := _m.Called(ctx, base, ref)
+// CompareFiles provides a mock function with given fields: ctx, base, refs
+func (_m *MockPullRequestRepo) CompareFiles(ctx context.Context, base string, refs ...string) ([]VersionedFileChange, error) {
+	_va := make([]interface{}, len(refs))
+	for _i := range refs {
+		_va[_i] = refs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, base)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CompareFiles")
@@ -80,19 +87,19 @@ func (_m *MockPullRequestRepo) CompareFiles(ctx context.Context, base string, re
 
 	var r0 []VersionedFileChange
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]VersionedFileChange, error)); ok {
-		return rf(ctx, base, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) ([]VersionedFileChange, error)); ok {
+		return rf(ctx, base, refs...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []VersionedFileChange); ok {
-		r0 = rf(ctx, base, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) []VersionedFileChange); ok {
+		r0 = rf(ctx, base, refs...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]VersionedFileChange)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, base, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...string) error); ok {
+		r1 = rf(ctx, base, refs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -108,14 +115,21 @@ type MockPullRequestRepo_CompareFiles_Call struct {
 // CompareFiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - base string
-//   - ref string
-func (_e *MockPullRequestRepo_Expecter) CompareFiles(ctx interface{}, base interface{}, ref interface{}) *MockPullRequestRepo_CompareFiles_Call {
-	return &MockPullRequestRepo_CompareFiles_Call{Call: _e.mock.On("CompareFiles", ctx, base, ref)}
+//   - refs ...string
+func (_e *MockPullRequestRepo_Expecter) CompareFiles(ctx interface{}, base interface{}, refs ...interface{}) *MockPullRequestRepo_CompareFiles_Call {
+	return &MockPullRequestRepo_CompareFiles_Call{Call: _e.mock.On("CompareFiles",
+		append([]interface{}{ctx, base}, refs...)...)}
 }
 
-func (_c *MockPullRequestRepo_CompareFiles_Call) Run(run func(ctx context.Context, base string, ref string)) *MockPullRequestRepo_CompareFiles_Call {
+func (_c *MockPullRequestRepo_CompareFiles_Call) Run(run func(ctx context.Context, base string, refs ...string)) *MockPullRequestRepo_CompareFiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -125,7 +139,7 @@ func (_c *MockPullRequestRepo_CompareFiles_Call) Return(_a0 []VersionedFileChang
 	return _c
 }
 
-func (_c *MockPullRequestRepo_CompareFiles_Call) RunAndReturn(run func(context.Context, string, string) ([]VersionedFileChange, error)) *MockPullRequestRepo_CompareFiles_Call {
+func (_c *MockPullRequestRepo_CompareFiles_Call) RunAndReturn(run func(context.Context, string, ...string) ([]VersionedFileChange, error)) *MockPullRequestRepo_CompareFiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -173,6 +187,53 @@ func (_c *MockPullRequestRepo_Config_Call) Return(_a0 *v0alpha1.Repository) *Moc
 }
 
 func (_c *MockPullRequestRepo_Config_Call) RunAndReturn(run func() *v0alpha1.Repository) *MockPullRequestRepo_Config_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PullRequestRef provides a mock function with given fields: prNumber, headRef
+func (_m *MockPullRequestRepo) PullRequestRef(prNumber int, headRef string) string {
+	ret := _m.Called(prNumber, headRef)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PullRequestRef")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(int, string) string); ok {
+		r0 = rf(prNumber, headRef)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// MockPullRequestRepo_PullRequestRef_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PullRequestRef'
+type MockPullRequestRepo_PullRequestRef_Call struct {
+	*mock.Call
+}
+
+// PullRequestRef is a helper method to define mock.On call
+//   - prNumber int
+//   - headRef string
+func (_e *MockPullRequestRepo_Expecter) PullRequestRef(prNumber interface{}, headRef interface{}) *MockPullRequestRepo_PullRequestRef_Call {
+	return &MockPullRequestRepo_PullRequestRef_Call{Call: _e.mock.On("PullRequestRef", prNumber, headRef)}
+}
+
+func (_c *MockPullRequestRepo_PullRequestRef_Call) Run(run func(prNumber int, headRef string)) *MockPullRequestRepo_PullRequestRef_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockPullRequestRepo_PullRequestRef_Call) Return(_a0 string) *MockPullRequestRepo_PullRequestRef_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockPullRequestRepo_PullRequestRef_Call) RunAndReturn(run func(int, string) string) *MockPullRequestRepo_PullRequestRef_Call {
 	_c.Call.Return(run)
 	return _c
 }

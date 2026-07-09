@@ -22,9 +22,16 @@ func (_m *MockVersioned) EXPECT() *MockVersioned_Expecter {
 	return &MockVersioned_Expecter{mock: &_m.Mock}
 }
 
-// CompareFiles provides a mock function with given fields: ctx, base, ref
-func (_m *MockVersioned) CompareFiles(ctx context.Context, base string, ref string) ([]VersionedFileChange, error) {
-	ret := _m.Called(ctx, base, ref)
+// CompareFiles provides a mock function with given fields: ctx, base, refs
+func (_m *MockVersioned) CompareFiles(ctx context.Context, base string, refs ...string) ([]VersionedFileChange, error) {
+	_va := make([]interface{}, len(refs))
+	for _i := range refs {
+		_va[_i] = refs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, base)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CompareFiles")
@@ -32,19 +39,19 @@ func (_m *MockVersioned) CompareFiles(ctx context.Context, base string, ref stri
 
 	var r0 []VersionedFileChange
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]VersionedFileChange, error)); ok {
-		return rf(ctx, base, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) ([]VersionedFileChange, error)); ok {
+		return rf(ctx, base, refs...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []VersionedFileChange); ok {
-		r0 = rf(ctx, base, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...string) []VersionedFileChange); ok {
+		r0 = rf(ctx, base, refs...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]VersionedFileChange)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, base, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, string, ...string) error); ok {
+		r1 = rf(ctx, base, refs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,14 +67,21 @@ type MockVersioned_CompareFiles_Call struct {
 // CompareFiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - base string
-//   - ref string
-func (_e *MockVersioned_Expecter) CompareFiles(ctx interface{}, base interface{}, ref interface{}) *MockVersioned_CompareFiles_Call {
-	return &MockVersioned_CompareFiles_Call{Call: _e.mock.On("CompareFiles", ctx, base, ref)}
+//   - refs ...string
+func (_e *MockVersioned_Expecter) CompareFiles(ctx interface{}, base interface{}, refs ...interface{}) *MockVersioned_CompareFiles_Call {
+	return &MockVersioned_CompareFiles_Call{Call: _e.mock.On("CompareFiles",
+		append([]interface{}{ctx, base}, refs...)...)}
 }
 
-func (_c *MockVersioned_CompareFiles_Call) Run(run func(ctx context.Context, base string, ref string)) *MockVersioned_CompareFiles_Call {
+func (_c *MockVersioned_CompareFiles_Call) Run(run func(ctx context.Context, base string, refs ...string)) *MockVersioned_CompareFiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		variadicArgs := make([]string, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(string)
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
 	})
 	return _c
 }
@@ -77,7 +91,7 @@ func (_c *MockVersioned_CompareFiles_Call) Return(_a0 []VersionedFileChange, _a1
 	return _c
 }
 
-func (_c *MockVersioned_CompareFiles_Call) RunAndReturn(run func(context.Context, string, string) ([]VersionedFileChange, error)) *MockVersioned_CompareFiles_Call {
+func (_c *MockVersioned_CompareFiles_Call) RunAndReturn(run func(context.Context, string, ...string) ([]VersionedFileChange, error)) *MockVersioned_CompareFiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
