@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Alert, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
@@ -14,10 +15,13 @@ import { SilenceViewContent } from './SilenceViewContent';
 function Title({ title }: { title: string }) {
   const { silence } = useSilenceViewData();
   const silenceState = silence?.status.state;
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   return (
     <Stack direction="row" gap={1} alignItems="center">
-      <Text variant="h1">{title}</Text>
+      <Text variant={visualRefreshEnabled ? 'h4' : 'h1'} weight={visualRefreshEnabled ? 'bold' : 'regular'}>
+        {title}
+      </Text>
       {silenceState && <SilenceStateTag state={silenceState} />}
     </Stack>
   );
