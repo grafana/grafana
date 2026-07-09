@@ -95,7 +95,8 @@ export function ResourcesToMigrate({
 
   // 1-based range of matching folders visible on the current page, shown in the
   // footer so the count stays honest once only a page's worth of rows renders.
-  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  // Only read when there's at least one match (the footer is hidden otherwise).
+  const rangeStart = (currentPage - 1) * PAGE_SIZE + 1;
   const rangeEnd = (currentPage - 1) * PAGE_SIZE + paged.length;
 
   // Resources inside a selected folder appear ticked but can't be toggled
@@ -243,22 +244,25 @@ export function ResourcesToMigrate({
 
       {numberOfPages > 1 && (
         <Stack justifyContent="flex-end">
-          <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setPage} hideWhenSinglePage />
+          <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setPage} />
         </Stack>
       )}
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
-        <Text variant="bodySmall" color="secondary">
-          {t('provisioning.migrate.resources-to-migrate-footer', '', {
-            // Plural agrees with the total matching folder count (the noun), not
-            // the size of the visible page range.
-            from: rangeStart,
-            to: rangeEnd,
-            count: filtered.length,
-            defaultValue_one: 'Showing {{from}}–{{to}} of {{count}} folder',
-            defaultValue_other: 'Showing {{from}}–{{to}} of {{count}} folders',
-          })}
-        </Text>
+        {/* Skipped when nothing matches so it doesn't read "0–0 of 0" under the empty state. */}
+        {filtered.length > 0 && (
+          <Text variant="bodySmall" color="secondary">
+            {t('provisioning.migrate.resources-to-migrate-footer', '', {
+              // Plural agrees with the total matching folder count (the noun), not
+              // the size of the visible page range.
+              from: rangeStart,
+              to: rangeEnd,
+              count: filtered.length,
+              defaultValue_one: 'Showing {{from}}–{{to}} of {{count}} folder',
+              defaultValue_other: 'Showing {{from}}–{{to}} of {{count}} folders',
+            })}
+          </Text>
+        )}
         {folders.length > 0 &&
           (canMigrate ? (
             <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={submitDisabled}>

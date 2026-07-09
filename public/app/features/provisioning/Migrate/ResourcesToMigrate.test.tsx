@@ -117,6 +117,9 @@ describe('ResourcesToMigrate', () => {
     setup({ folders: [] });
 
     expect(screen.getByText('All supported resources are already managed by Git.')).toBeInTheDocument();
+    // The "Showing …" range footer is hidden when nothing matches, so it never
+    // reads "0–0 of 0" under the empty state.
+    expect(screen.queryByText(/showing/i)).not.toBeInTheDocument();
   });
 
   describe('folder-less kinds grouped under a synthetic folder', () => {
