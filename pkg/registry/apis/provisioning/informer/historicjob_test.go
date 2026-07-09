@@ -38,7 +38,7 @@ func (r *addRecorder) got() []string {
 }
 
 // TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection:
-// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessCronSource
+// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessPeriodicListerInformer
 // when NATS is on. The historic-job controller is unaffected either way — it only
 // registers its EventHandler on whichever DeltaSource this returns.
 func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
@@ -46,27 +46,27 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
 		src := NewHistoricJobDeltaSource(false, client, time.Minute)
-		_, isCron := src.(*usinformer.CachelessCronSource)
-		assert.False(t, isCron, "expected the apiserver informer, not the cron source")
+		_, isPeriodic := src.(*usinformer.CachelessPeriodicListerInformer)
+		assert.False(t, isPeriodic, "expected the apiserver informer, not the periodic lister")
 		_, isInformer := src.(cache.SharedIndexInformer)
 		assert.True(t, isInformer, "expected an apiserver-backed SharedIndexInformer")
 	})
 
-	t.Run("NATS on uses cron source", func(t *testing.T) {
+	t.Run("NATS on uses periodic lister", func(t *testing.T) {
 		src := NewHistoricJobDeltaSource(true, client, time.Minute)
-		_, isCron := src.(*usinformer.CachelessCronSource)
-		assert.True(t, isCron, "expected the cron source when NATS is enabled")
+		_, isPeriodic := src.(*usinformer.CachelessPeriodicListerInformer)
+		assert.True(t, isPeriodic, "expected the periodic lister when NATS is enabled")
 	})
 }
 
-// TestNewHistoricJobCronSource_ListsFromClient verifies the NATS-mode source reads
+// TestNewHistoricJobPeriodicLister_ListsFromClient verifies the NATS-mode source reads
 // historic jobs through the provisioning client.
-func TestNewHistoricJobCronSource_ListsFromClient(t *testing.T) {
+func TestNewHistoricJobPeriodicLister_ListsFromClient(t *testing.T) {
 	client := fake.NewClientset(
 		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
 	)
 
-	src := NewHistoricJobCronSource(client, "", time.Hour)
+	src := NewHistoricJobPeriodicLister(client, "", time.Hour)
 	h := &addRecorder{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
