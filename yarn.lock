@@ -2163,6 +2163,7 @@ __metadata:
     "@grafana/i18n": "npm:13.2.0-pre"
     "@grafana/schema": "npm:13.2.0-pre"
     "@leeoniya/ufuzzy": "npm:^1.0.19"
+    "@react-hookz/web": "npm:^25.2.0"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/react": "npm:16.3.0"
@@ -6914,6 +6915,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-hookz/web@npm:^25.2.0":
+  version: 25.2.0
+  resolution: "@react-hookz/web@npm:25.2.0"
+  dependencies:
+    "@ver0/deep-equal": "npm:^1.0.0"
+  peerDependencies:
+    js-cookie: ^3.0.5
+    react: ^16.8 || ^17 || ^18 || ^19
+    react-dom: ^16.8 || ^17 || ^18 || ^19
+  peerDependenciesMeta:
+    js-cookie:
+      optional: true
+  checksum: 10/c23a10a1028760951318df440d1c314b0a1d848fc4a80968f5c31a1c832b388cb300e4a7f9f4edf0b80e81274f53ca2adfe5fe0ea97cac92bd8fb1b94a15bae0
+  languageName: node
+  linkType: hard
+
 "@react-spectrum/button@npm:^3.18.0":
   version: 3.18.1
   resolution: "@react-spectrum/button@npm:3.18.1"
@@ -11119,6 +11136,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ver0/deep-equal@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "@ver0/deep-equal@npm:1.0.1"
+  checksum: 10/7ab3679eaecdee998335e7873ac06b1d2121b8587f75bb4b25a0ece7c525754146ee9d3ef490705b00858990c9e369909e73bdfc858d1095113de637e3d03526
+  languageName: node
+  linkType: hard
+
 "@visx/bounds@npm:3.12.0":
   version: 3.12.0
   resolution: "@visx/bounds@npm:3.12.0"
@@ -12598,11 +12622,11 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.9.0":
-  version: 2.9.19
-  resolution: "baseline-browser-mapping@npm:2.9.19"
+  version: 2.10.42
+  resolution: "baseline-browser-mapping@npm:2.10.42"
   bin:
-    baseline-browser-mapping: dist/cli.js
-  checksum: 10/8d7bbb7fe3d1ad50e04b127c819ba6d059c01ed0d2a7a5fc3327e23a8c42855fa3a8b510550c1fe1e37916147e6a390243566d3ef85bf6130c8ddfe5cc3db530
+    baseline-browser-mapping: dist/cli.cjs
+  checksum: 10/7ea956db54694e4386fd14de665d9582aaa53901c09f21925abfe0ee0d5751947947775b890daad73d21673ed51de5bbefd888076edb8f9aaf76e53da47b061f
   languageName: node
   linkType: hard
 
@@ -13013,9 +13037,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001702, caniuse-lite@npm:^1.0.30001759":
-  version: 1.0.30001769
-  resolution: "caniuse-lite@npm:1.0.30001769"
-  checksum: 10/4b7d087832d4330a8b1fa02cd9455bdb068ea67f1735f2aa6324d5b64b24f5079cf6349b13d209f268ffa59644b9f4f784266b780bafd877ceb83c9797ca80ba
+  version: 1.0.30001800
+  resolution: "caniuse-lite@npm:1.0.30001800"
+  checksum: 10/7fb170f87cf0cf3633b660371eeabf981b7c878a14efcdb17c86f7262432e036cd43d228cbe2d442f3795194f8f9e0d520877d93b6d265ca841bcd2a4c16500a
   languageName: node
   linkType: hard
 
@@ -18453,7 +18477,6 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    diff: "npm:^8.0.0"
     dompurify: "npm:3.4.0"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"

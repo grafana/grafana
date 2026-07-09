@@ -149,11 +149,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features for dashboards to auto-summary changes when saving
-  * @default false
-  */
-  aiGeneratedDashboardChanges?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -308,11 +303,6 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
-  /**
-  * Enables annotation clustering and switches to refactored annotation code
-  * @default true
-  */
-  annotationsClustering?: boolean;
   /**
   * Enables new dashboard layouts
   * @default true
@@ -674,11 +664,6 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
-  /**
-  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-  * @default false
-  */
-  groupToNestedTableV2?: boolean;
   /**
   * Enables step mode for alerting queries and expressions
   * @default true
@@ -1161,25 +1146,10 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
-  * @default true
-  */
-  panelStyleActions?: boolean;
-  /**
   * Enable visualization presets
   * @default true
   */
   vizPresets?: boolean;
-  /**
-  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
-  * @default false
-  */
-  nestedFramesFieldOverrides?: boolean;
-  /**
-  * Enable faceted labels filter for series visibility in the legend
-  * @default true
-  */
-  vizLegendFacetedFilter?: boolean;
   /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
@@ -1480,11 +1450,6 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
-  /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false

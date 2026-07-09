@@ -308,14 +308,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "aiGeneratedDashboardChanges",
-			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
 			Stage:       FeatureStageExperimental,
@@ -636,14 +628,6 @@ var (
 			Expression:      "true", // enabled by default
 			Owner:           identityAccessTeam,
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "annotationsClustering",
-			Description: "Enables annotation clustering and switches to refactored annotation code",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "dashboardNewLayouts",
@@ -1285,14 +1269,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "groupToNestedTableV2",
-			Description: "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "alertingQueryAndExpressionsStepMode",
@@ -2139,32 +2115,8 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "panelStyleActions",
-			Description: "Enable style actions (copy/paste) in the panel editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "vizPresets",
 			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
-			Name:        "nestedFramesFieldOverrides",
-			Description: "Enable field overrides for FieldType.nestedFrames fields (like in nested tables)",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "vizLegendFacetedFilter",
-			Description: "Enable faceted labels filter for series visibility in the legend",
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
@@ -2775,15 +2727,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "clearPreviousFieldValues",
-			Description:  "Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-			HideFromDocs: true,
-		},
-		{
 			Name:        "enableColorblindSafePanelOptions",
 			Description: "Enables new colorblind safe palette and line fill patterns for panels",
 			Stage:       FeatureStageExperimental,
@@ -3139,6 +3082,15 @@ var (
 			Owner:       grafanaDataSources,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:         "grafana.frontendLegacyAPIHandling",
+			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

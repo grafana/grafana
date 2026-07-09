@@ -98,13 +98,14 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			assert.Equal(t, resourcewatch.SubjectAll, sub.subject)
 
 			sub.handler("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
-				Type:            tc.typ,
-				Group:           "playlist.grafana.app",
-				Resource:        "playlists",
-				Namespace:       "default",
-				Name:            "abc",
-				ResourceVersion: 42,
-				Folder:          "folder1",
+				Type:                    tc.typ,
+				Group:                   "playlist.grafana.app",
+				Resource:                "playlists",
+				Namespace:               "default",
+				Name:                    "abc",
+				ResourceVersion:         42,
+				Folder:                  "folder1",
+				PreviousResourceVersion: 41,
 			}))
 
 			evt := recvEvent(t, out)
@@ -115,8 +116,8 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			assert.Equal(t, int64(42), evt.ResourceVersion)
 			assert.Equal(t, "folder1", evt.Folder)
 			assert.Equal(t, tc.action, evt.Action)
-			// WatchNotification carries no previous RV.
-			assert.Equal(t, int64(0), evt.PreviousRV)
+			// PreviousRV is carried on the wire.
+			assert.Equal(t, int64(41), evt.PreviousRV)
 		})
 	}
 }

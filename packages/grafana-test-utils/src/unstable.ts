@@ -8,6 +8,7 @@ export {
   MOCK_SCOPE_DASHBOARD_BINDINGS,
   MOCK_SUB_SCOPE_MIMIR_ITEMS,
   MOCK_SUB_SCOPE_LOKI_ITEMS,
+  MOCK_DEFAULT_SCOPE,
 } from './fixtures/scopes';
 export { default as allHandlers } from './handlers/all-handlers';
 export { default as scopeHandlers } from './handlers/apis/scope.grafana.app/v0alpha1/handlers';

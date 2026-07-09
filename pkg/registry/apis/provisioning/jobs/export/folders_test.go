@@ -521,6 +521,46 @@ func TestFolderMetaAccessor(t *testing.T) {
 		mockRepoResources.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
+	t.Run("should skip classic-managed folder that has no identity", func(t *testing.T) {
+		// Classic shim kinds are reported as managed without an identity.
+		// Such a folder must still be skipped, since it is owned elsewhere.
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-folder",
+					"annotations": map[string]interface{}{
+						"folder.grafana.app/uid": "test-folder-uid",
+					},
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind: utils.ManagerKindClassicAPI, //nolint:staticcheck
+		})
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, mock.MatchedBy(func(tree resources.FolderTree) bool {
+			return tree.Count() == 0 // Should be empty since folder was skipped
+		}), mock.MatchedBy(func(opts resources.EnsureFolderTreeExistsOptions) bool {
+			return opts.Ref == "feature/branch" && opts.Path == "grafana"
+		})).Return(nil)
+
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.NoError(t, err)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
 }
 
 // mockDynamicInterface implements a simplified version of the dynamic.ResourceInterface

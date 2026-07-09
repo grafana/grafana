@@ -3375,9 +3375,6 @@
       },
       "continue-in-alerting": "Continue in Alerting",
       "create": "Create",
-      "evaluation": {
-        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
-      },
       "notification": {
         "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
         "description": {
@@ -9310,6 +9307,16 @@
       "complete": "complete"
     }
   },
+  "global-variables": {
+    "details": {
+      "create-error": "Failed to create global variable",
+      "create-success": "Global variable successfully created",
+      "delete-error": "Failed to delete global variable",
+      "delete-success": "Global variable successfully deleted",
+      "update-error": "Failed to update global variable",
+      "update-success": "Global variable successfully updated"
+    }
+  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Loading configuration...."
@@ -13490,7 +13497,6 @@
       "loading": "Loading stats...",
       "loading-resources": "Loading resources...",
       "migrate-button": "Migrate everything",
-      "migrate-button-blocked-tooltip": "This repository can’t push to its configured branch",
       "migrate-button-disabled-tooltip": "Select a target repository first",
       "migrate-button-empty-tooltip": "Select at least one resource to migrate",
       "migrate-button-selected": "Migrate selected",
@@ -13500,8 +13506,8 @@
       "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
-      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
-      "repo-no-push-title": "This repository can’t be used for migration",
+      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch. Repositories that aren’t set up to allow that are disabled above. To migrate into one, enable pushing to the configured branch in the repository’s settings — you may also need to temporarily allow pushes to that branch in your Git provider.",
+      "repo-no-push-title": "Some repositories can’t be used for migration",
       "repo-placeholder": "Select a repository",
       "resources-collapse": "Collapse {{folder}}",
       "resources-expand": "Expand {{folder}}",
@@ -13806,6 +13812,8 @@
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signer-is-author-description": "Author commits as the signer.",
+      "signer-is-author-label": "Use signer as commit author",
       "signing-key-description": "Private key used to sign commits. No passphrase.",
       "signing-key-label": "Signing key",
       "signing-method-description": "Sign commits so their author can be cryptographically verified.",

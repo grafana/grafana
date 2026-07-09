@@ -446,11 +446,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -611,11 +606,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
