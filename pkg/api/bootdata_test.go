@@ -884,3 +884,19 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 
 	require.ElementsMatch(t, []string{"Prom", "Loki"}, names)
 }
+
+func TestPanelDTO_AliasIDsJSONKey(t *testing.T) {
+	dto := plugins.PanelDTO{
+		ID:       "grafana-canvas-panel",
+		AliasIDs: []string{"canvas"},
+	}
+
+	b, err := json.Marshal(dto)
+	require.NoError(t, err)
+
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(b, &m))
+
+	assert.Equal(t, []any{"canvas"}, m["aliasIDs"], "PanelDTO should serialize AliasIDs with uppercase D to match the TypeScript PanelPluginMeta type")
+	assert.Nil(t, m["aliasIds"], "PanelDTO should not serialize with lowercase aliasIds")
+}
