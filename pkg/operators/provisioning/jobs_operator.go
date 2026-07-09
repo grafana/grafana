@@ -38,14 +38,15 @@ func RunJobController(ctx context.Context, deps server.OperatorDependencies) err
 	// when NATS is on it is a cron-style periodic re-list. Either way each pass
 	// delivers every job to the handler, which deletes the expired ones. It only
 	// runs when a history expiration is configured; the expired-job reaper below
-	// runs regardless.
+	// runs regardless. The source choice reads the NATS config flag directly, not a
+	// subscriber: this operator has no NATS consumer role and holds no subscriber.
 	var historySource informer.DeltaSource
 	if controllerCfg.historyExpiration > 0 {
 		historyJobController := controller.NewHistoryJobController(
 			provisioningClient.ProvisioningV0alpha1(),
 			controllerCfg.historyExpiration,
 		)
-		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.historyExpiration)
+		historySource = informer.NewHistoricJobDeltaSource(controllerCfg.Settings.NATS.Enabled, provisioningClient, controllerCfg.historyExpiration)
 		if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 			return fmt.Errorf("add history job event handler: %w", err)
 		}

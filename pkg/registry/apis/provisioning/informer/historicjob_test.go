@@ -1,6 +1,7 @@
 package informer
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -11,7 +12,30 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
+
+// addRecorder records the names delivered to OnAdd.
+type addRecorder struct {
+	mu    sync.Mutex
+	names []string
+}
+
+func (r *addRecorder) OnAdd(obj interface{}, _ bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if m, ok := obj.(metav1.Object); ok {
+		r.names = append(r.names, m.GetName())
+	}
+}
+func (r *addRecorder) OnUpdate(_, _ interface{}) {}
+func (r *addRecorder) OnDelete(_ interface{})    {}
+
+func (r *addRecorder) got() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.names...)
+}
 
 // TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection:
 // an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessCronSource
@@ -21,17 +45,16 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	client := fake.NewClientset()
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
-		// A nil subscriber is not enabled.
-		src := NewHistoricJobDeltaSource(nil, client, time.Minute)
-		_, isCron := src.(*CachelessCronSource)
+		src := NewHistoricJobDeltaSource(false, client, time.Minute)
+		_, isCron := src.(*usinformer.CachelessCronSource)
 		assert.False(t, isCron, "expected the apiserver informer, not the cron source")
 		_, isInformer := src.(cache.SharedIndexInformer)
 		assert.True(t, isInformer, "expected an apiserver-backed SharedIndexInformer")
 	})
 
 	t.Run("NATS on uses cron source", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(newFakeSubscriber(), client, time.Minute)
-		_, isCron := src.(*CachelessCronSource)
+		src := NewHistoricJobDeltaSource(true, client, time.Minute)
+		_, isCron := src.(*usinformer.CachelessCronSource)
 		assert.True(t, isCron, "expected the cron source when NATS is enabled")
 	})
 }
@@ -44,7 +67,7 @@ func TestNewHistoricJobCronSource_ListsFromClient(t *testing.T) {
 	)
 
 	src := NewHistoricJobCronSource(client, "", time.Hour)
-	h := &recordingHandler{}
+	h := &addRecorder{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
 
@@ -52,6 +75,6 @@ func TestNewHistoricJobCronSource_ListsFromClient(t *testing.T) {
 	defer close(stop)
 	go src.Run(stop)
 
-	require.Eventually(t, func() bool { return len(h.names()) == 1 }, time.Second, 5*time.Millisecond)
-	assert.ElementsMatch(t, []string{"old"}, h.names())
+	require.Eventually(t, func() bool { return len(h.got()) == 1 }, time.Second, 5*time.Millisecond)
+	assert.ElementsMatch(t, []string{"old"}, h.got())
 }
