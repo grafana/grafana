@@ -10446,7 +10446,7 @@
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
       "remove": "Remove tag: {{name}}",
-      "tag-too-long": "Tag too long, max 50 characters"
+      "tag-too-long": "Tag too long, max {{maxLength}} characters"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",

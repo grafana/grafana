@@ -27,6 +27,8 @@ export interface Props {
   invalid?: boolean;
   /** Colours the tags 'randomly' based on the name. Defaults to true */
   autoColors?: boolean;
+  /** Maximum allowed length of a single tag. Defaults to 50 */
+  maxLength?: number;
 }
 
 /**
@@ -47,6 +49,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
       invalid,
       id,
       autoColors = true,
+      maxLength = 50,
     },
     ref
   ) => {
@@ -54,7 +57,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
     const [newTagName, setNewTagName] = useState('');
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
-    const isTagTooLong = newTagName.length > 50;
+    const isTagTooLong = newTagName.length > maxLength;
 
     const onNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
       setNewTagName(event.target.value);
@@ -66,7 +69,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
 
     const onAdd = (event?: React.MouseEvent | React.KeyboardEvent) => {
       event?.preventDefault();
-      if (newTagName.length > 50) {
+      if (isTagTooLong) {
         return;
       }
       if (!tags.includes(newTagName)) {
@@ -107,7 +110,9 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
               size="md"
               disabled={newTagName.length <= 0 || isTagTooLong}
               title={
-                isTagTooLong ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max 50 characters') : undefined
+                isTagTooLong
+                  ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max {{maxLength}} characters', { maxLength })
+                  : undefined
               }
             >
               <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
