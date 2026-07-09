@@ -335,6 +335,17 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
+// encodeGitPath percent-encodes each segment of a slash-separated repository
+// path so characters that are valid in git paths but reserved in URLs (#, ?, %,
+// spaces, …) don't corrupt the resulting blob link.
+func encodeGitPath(p string) string {
+	segments := strings.Split(p, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	return strings.Join(segments, "/")
+}
+
 func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	url := r.config.URL()
 	branch := r.config.Branch()
@@ -355,7 +366,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 
 	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: r.config.URL(),
-		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", url, ref, repoPath),
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", url, ref, encodeGitPath(repoPath)),
 	}
 
 	if ref != branch {
