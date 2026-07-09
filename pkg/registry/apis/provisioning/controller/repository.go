@@ -102,7 +102,6 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -123,11 +122,10 @@ func NewRepositoryController(
 		quotaChecker:      quotaChecker,
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:           resourceLister,
-			clientFactory:    clients,
-			metrics:          &finalizerMetrics,
-			maxWorkers:       parallelOperations,
-			folderAPIVersion: folderAPIVersion,
+			lister:        resourceLister,
+			clientFactory: clients,
+			metrics:       &finalizerMetrics,
+			maxWorkers:    parallelOperations,
 		},
 		jobs:                          jobs,
 		logger:                        logging.DefaultLogger.With("logger", loggerName),
