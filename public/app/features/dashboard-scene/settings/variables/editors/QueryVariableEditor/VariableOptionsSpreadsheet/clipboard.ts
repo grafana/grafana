@@ -65,32 +65,101 @@ function parseTsv(text: string, properties: string[]): VariableValueOption[] {
   });
 }
 
-export function useClipboardProbe() {
+/**
+ * - 'prompt': permission not requested yet, the first read will trigger the browser permission prompt
+ * - 'granted': reads are prompt-free, so we can probe the clipboard to reflect its content in the UI
+ * - 'denied': the user blocked clipboard access, it can only be re-enabled via the browser site settings
+ * - 'gesture-only': the Permissions API does not expose clipboard-read (Firefox, Safari), every read
+ *   must happen in a user gesture and may show a native per-use paste prompt
+ */
+export type ClipboardAccess = 'prompt' | 'granted' | 'denied' | 'gesture-only';
+
+export function useClipboardPaste() {
+  const [access, setAccess] = useState<ClipboardAccess>('gesture-only');
   const [clipboardText, setClipboardText] = useState<string | null>(null);
+  const [lastImported, setLastImported] = useState<string | null>(null);
+
+  useEffect(() => {
+    let status: PermissionStatus | undefined;
+    let disposed = false;
+
+    const sync = () => {
+      if (!disposed && status) {
+        setAccess(status.state);
+      }
+    };
+
+    try {
+      // 'clipboard-read' is Chromium-specific and missing from the TypeScript PermissionName union,
+      // hence this widened view of the Permissions API
+      const permissions: { query(descriptor: { name: string }): Promise<PermissionStatus> } = navigator.permissions;
+
+      // Detects the permission state without triggering a prompt. Firefox and Safari
+      // reject 'clipboard-read' queries, in which case we stay in 'gesture-only' mode.
+      permissions
+        .query({ name: 'clipboard-read' })
+        .then((result) => {
+          status = result;
+          sync();
+          result.addEventListener('change', sync);
+        })
+        .catch(() => {});
+    } catch {
+      // Permissions API not available at all
+    }
+
+    return () => {
+      disposed = true;
+      status?.removeEventListener('change', sync);
+    };
+  }, []);
 
   const probe = useCallback(async () => {
     try {
       const text = (await navigator.clipboard.readText()).trim();
       setClipboardText(text && detectClipboardTextFormat(text) ? text : null);
     } catch {
-      // Permission denied or not supported
+      // Permission revoked mid-session
     }
   }, []);
 
+  // Probing outside a user gesture is acceptable only once permission has been
+  // granted: reads are then prompt-free
   useEffect(() => {
+    if (access !== 'granted') {
+      return;
+    }
     probe();
     window.addEventListener('focus', probe);
     return () => window.removeEventListener('focus', probe);
-  }, [probe]);
+  }, [access, probe]);
 
-  const clearClipboard = useCallback(async () => {
+  const readClipboard = useCallback(async (): Promise<string | null> => {
     try {
-      await navigator.clipboard.writeText('');
-    } catch {}
-    setClipboardText(null);
+      const text = (await navigator.clipboard.readText()).trim();
+      return text || null;
+    } catch {
+      if (access === 'prompt') {
+        // The user dismissed or blocked the browser permission prompt
+        setAccess('denied');
+      }
+      return null;
+    }
+  }, [access]);
+
+  // Remembering what was imported (instead of erasing the user's clipboard) lets us
+  // disable the paste button until the clipboard content changes
+  const markImported = useCallback((text: string) => {
+    setLastImported(text);
+    setClipboardText(text);
   }, []);
 
   const clipboardFormat = clipboardText ? detectClipboardTextFormat(clipboardText) : undefined;
 
-  return { clipboardText, clipboardFormat, clearClipboard };
+  const canPaste =
+    access === 'prompt' ||
+    access === 'gesture-only' ||
+    (access === 'granted' && clipboardText !== null && clipboardText !== lastImported);
+
+  return { access, canPaste, clipboardFormat, readClipboard, markImported };
 }

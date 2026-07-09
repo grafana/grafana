@@ -21,8 +21,9 @@ import {
 
 import { useGetPropertiesFromOptions } from '../../../components/VariableValuesPreview';
 
+import { PasteButton } from './PasteButton';
 import { SortSelector } from './SortSelector';
-import { detectClipboardTextFormat, parseClipboardText, useClipboardProbe } from './clipboard';
+import { detectClipboardTextFormat, parseClipboardText, useClipboardPaste } from './clipboard';
 
 type SpreadsheetOption = VariableValueOption & {
   id: string;
@@ -202,23 +203,17 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     [properties, emitChange, internalOptions]
   );
 
-  const { clipboardText, clipboardFormat, clearClipboard } = useClipboardProbe();
+  const { access: clipboardAccess, canPaste, clipboardFormat, readClipboard, markImported } = useClipboardPaste();
 
   const handlePasteFromClipboard = useCallback(async () => {
-    let text: string;
-    try {
-      text = (await navigator.clipboard.readText()).trim();
-    } catch {
-      return;
-    }
-
-    if (!detectClipboardTextFormat(text)) {
+    const text = await readClipboard();
+    if (!text || !detectClipboardTextFormat(text)) {
       return;
     }
 
     await paste(text);
-    await clearClipboard();
-  }, [paste, clearClipboard]);
+    markImported(text);
+  }, [readClipboard, paste, markImported]);
 
   return {
     properties,
@@ -233,7 +228,8 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     handleValueChange,
     handleCellKeyDown,
     handlePasteFromClipboard,
-    canPasteFromClipboard: clipboardText !== null,
+    canPasteFromClipboard: canPaste,
+    clipboardAccess,
     clipboardFormat,
   };
 }
@@ -254,6 +250,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
     handleCellKeyDown,
     handlePasteFromClipboard,
     canPasteFromClipboard,
+    clipboardAccess,
     clipboardFormat,
   } = useVariableOptionsSpreadsheet(props);
 
@@ -330,25 +327,12 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
             >
               <Trans i18nKey="dashboard-scene.query-variable-editor.spreadsheet.add-option">Add new option</Trans>
             </Button>
-            <Button
-              icon="clipboard-alt"
-              variant="primary"
-              fill="text"
-              disabled={!canPasteFromClipboard}
+            <PasteButton
+              canPaste={canPasteFromClipboard}
               onClick={handlePasteFromClipboard}
-              aria-label={t(
-                'dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard',
-                'Paste from clipboard'
-              )}
-            >
-              {clipboardFormat
-                ? t(
-                    'dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard-with-format',
-                    'Paste from clipboard ({{format}})',
-                    { format: clipboardFormat.toUpperCase() }
-                  )
-                : t('dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard', 'Paste from clipboard')}
-            </Button>
+              clipboardAccess={clipboardAccess}
+              textFormat={clipboardFormat}
+            />
           </Stack>
         </div>
       </div>

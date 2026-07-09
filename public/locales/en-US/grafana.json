@@ -7336,7 +7336,10 @@
       },
       "spreadsheet": {
         "add-option": "Add new option",
+        "clipboard-access-blocked": "Clipboard access is blocked. Enable it in your browser's site settings.",
         "drag-to-reorder": "Drag and drop to reorder",
+        "enable-copy-paste": "Enable copy-paste",
+        "enable-copy-paste-tooltip": "Your browser will ask for permission to read your clipboard",
         "paste-from-clipboard": "Paste from clipboard",
         "paste-from-clipboard-with-format": "Paste from clipboard ({{format}})",
         "paste-parse-error": "Could not parse clipboard content",

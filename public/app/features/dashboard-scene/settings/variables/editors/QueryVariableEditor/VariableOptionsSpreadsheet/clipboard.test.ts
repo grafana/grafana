@@ -1,4 +1,6 @@
-import { parseClipboardText } from './clipboard';
+import { act, renderHook, waitFor } from '@testing-library/react';
+
+import { parseClipboardText, useClipboardPaste } from './clipboard';
 
 describe('parseClipboardText', () => {
   describe('unrecognized format', () => {
@@ -23,7 +25,7 @@ describe('parseClipboardText', () => {
       ]);
     });
 
-    test('detects header row when all first-line columns match properties exactly', async () => {
+    test('detects header row when every first-line column is a known property name', async () => {
       const text = 'value\ttext\nval1\tLabel 1';
 
       const result = await parseClipboardText(text, ['value', 'text']);
@@ -103,7 +105,7 @@ describe('parseClipboardText', () => {
   });
 
   describe('CSV format', () => {
-    test('parses comma-separated label:value pairs via CustomVariable', async () => {
+    test('parses comma-separated label:value pairs', async () => {
       const text = 'Label 1 : val1, Label 2 : val2';
 
       const result = await parseClipboardText(text, ['value', 'text']);
@@ -139,12 +141,23 @@ describe('parseClipboardText', () => {
       ]);
     });
 
-    test('returns empty array when text starts with [ but is invalid JSON', async () => {
+    test('returns empty array when text starts with [ but is invalid JSON and contains no commas', async () => {
       const text = '[{broken';
 
       const result = await parseClipboardText(text, ['value', 'text']);
 
       expect(result).toEqual([]);
+    });
+
+    test('falls back to CSV parsing when text starts with [ but is invalid JSON and contains commas', async () => {
+      const text = '[{"a":1},{"b"';
+
+      const result = await parseClipboardText(text, ['value', 'text']);
+
+      expect(result).toStrictEqual([
+        { label: '[{"a":1}', value: '[{"a":1}' },
+        { label: '{"b"', value: '{"b"' },
+      ]);
     });
   });
 
@@ -158,3 +171,194 @@ describe('parseClipboardText', () => {
     });
   });
 });
+
+describe('useClipboardPaste', () => {
+  describe('when the Permissions API does not support clipboard-read (Firefox, Safari)', () => {
+    test('stays in gesture-only mode with the paste button enabled and never probes the clipboard', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionsWithoutClipboardRead();
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await act(async () => {}); // wait for the permission check to finish, otherwise we would assert before the hook had a chance to react
+
+      expect(result.current.access).toBe('gesture-only');
+      expect(result.current.canPaste).toBe(true);
+      expect(result.current.clipboardFormat).toBeUndefined();
+      expect(readText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when the Permissions API is not available at all', () => {
+    test('stays in gesture-only mode with the paste button enabled', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockMissingPermissionsApi();
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await act(async () => {}); // wait for the permission check to finish, otherwise we would assert before the hook had a chance to react
+
+      expect(result.current.access).toBe('gesture-only');
+      expect(result.current.canPaste).toBe(true);
+      expect(readText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when permission was already denied', () => {
+    test('disables the paste button without reading the clipboard', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionState('denied');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.access).toBe('denied'));
+
+      expect(result.current.canPaste).toBe(false);
+      expect(readText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when permission is not granted yet (prompt)', () => {
+    test('enables the paste button without reading the clipboard', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionState('prompt');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.access).toBe('prompt'));
+
+      expect(result.current.canPaste).toBe(true);
+      expect(readText).not.toHaveBeenCalled();
+    });
+
+    describe('when the paste attempt is rejected (because the user blocked or dismissed the permission prompt)', () => {
+      test('switches to denied', async () => {
+        mockClipboardReadError(new Error('Read permission denied.'));
+        mockPermissionState('prompt');
+
+        const { result } = renderHook(() => useClipboardPaste());
+        await waitFor(() => expect(result.current.access).toBe('prompt'));
+        await act(async () => {
+          expect(await result.current.readClipboard()).toBe(null);
+        });
+
+        expect(result.current.access).toBe('denied');
+        expect(result.current.canPaste).toBe(false);
+      });
+    });
+  });
+
+  describe('when permission is granted', () => {
+    test('probes the clipboard on mount and reports the detected format', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.canPaste).toBe(true));
+
+      expect(result.current.access).toBe('granted');
+      expect(result.current.clipboardFormat).toBe('csv');
+      expect(readText).toHaveBeenCalledTimes(1);
+    });
+
+    test('disables the paste button when the clipboard content is not parseable', async () => {
+      mockClipboardContent('plain text without any delimiter');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.access).toBe('granted'));
+
+      expect(result.current.canPaste).toBe(false);
+    });
+
+    test('disables the paste button after the clipboard content has been imported', async () => {
+      mockClipboardContent('a,b,c');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      act(() => {
+        result.current.markImported('a,b,c');
+      });
+
+      expect(result.current.canPaste).toBe(false);
+    });
+
+    test('probes the clipboard again when the window regains focus', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.clipboardFormat).toBe('csv'));
+      readText.mockResolvedValue('val1\tLabel 1');
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      expect(readText).toHaveBeenCalledTimes(2);
+      expect(result.current.clipboardFormat).toBe('tsv');
+    });
+
+    test('re-enables the paste button when the clipboard content changes after an import', async () => {
+      const { readText } = mockClipboardContent('a,b,c');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      act(() => {
+        result.current.markImported('a,b,c');
+      });
+      expect(result.current.canPaste).toBe(false);
+      readText.mockResolvedValue('x,y,z');
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      expect(result.current.canPaste).toBe(true);
+    });
+  });
+
+  describe('clipboard preservation', () => {
+    test('never writes to the clipboard, even after an import', async () => {
+      const { writeText } = mockClipboardContent('a,b,c');
+      mockPermissionState('granted');
+
+      const { result } = renderHook(() => useClipboardPaste());
+      await waitFor(() => expect(result.current.canPaste).toBe(true));
+      act(() => {
+        result.current.markImported('a,b,c');
+      });
+
+      expect(writeText).not.toHaveBeenCalled();
+    });
+  });
+});
+
+function installClipboardMock(readText: jest.Mock) {
+  const writeText = jest.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', { value: { readText, writeText }, configurable: true });
+  return { readText, writeText };
+}
+
+const mockClipboardContent = (content: string) => installClipboardMock(jest.fn().mockResolvedValue(content));
+
+const mockClipboardReadError = (error: Error) => installClipboardMock(jest.fn().mockRejectedValue(error));
+
+function mockPermissionState(state: PermissionState) {
+  const permissionStatus = { state, addEventListener: jest.fn(), removeEventListener: jest.fn() };
+  Object.defineProperty(navigator, 'permissions', {
+    value: { query: jest.fn().mockResolvedValue(permissionStatus) },
+    configurable: true,
+  });
+  return permissionStatus;
+}
+
+function mockMissingPermissionsApi() {
+  Object.defineProperty(navigator, 'permissions', { value: undefined, configurable: true });
+}
+
+// Firefox and Safari: the Permissions API exists but rejects 'clipboard-read' queries
+function mockPermissionsWithoutClipboardRead() {
+  Object.defineProperty(navigator, 'permissions', {
+    value: {
+      query: jest.fn().mockRejectedValue(new TypeError("'clipboard-read' is not a valid value for PermissionName")),
+    },
+    configurable: true,
+  });
+}
