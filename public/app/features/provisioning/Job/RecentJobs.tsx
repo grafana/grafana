@@ -1,8 +1,10 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
+import { type DisplayList, useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
@@ -19,13 +21,27 @@ interface Props {
   repo: Repository;
 }
 
-const AnnoTriggeredBy = 'provisioning.grafana.app/triggeredBy';
+const AnnoAuthor = 'provisioning.grafana.app/author';
+const AnnoAuthorID = 'provisioning.grafana.app/authorID';
 
 type JobCell = {
   row: {
     original: Job;
   };
 };
+
+function getJobAuthor(job: Job, userDisplay?: DisplayList): string {
+  const annotations = job.metadata?.annotations;
+  const key = annotations?.[AnnoAuthorID];
+  if (key) {
+    const idx = userDisplay?.keys?.indexOf(key) ?? -1;
+    const displayName = idx >= 0 ? userDisplay?.display?.[idx]?.displayName : undefined;
+    if (displayName) {
+      return displayName;
+    }
+  }
+  return annotations?.[AnnoAuthor] ?? t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook');
+}
 
 function formatJobDuration(job: Job): string | null {
   const interval = {
@@ -42,7 +58,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = () => [
+const getJobColumns = (userDisplay?: DisplayList) => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -67,8 +83,7 @@ const getJobColumns = () => [
   {
     id: 'triggeredBy',
     header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
-    cell: ({ row: { original: job } }: JobCell) =>
-      job.metadata?.annotations?.[AnnoTriggeredBy] ?? t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook'),
+    cell: ({ row: { original: job } }: JobCell) => getJobAuthor(job, userDisplay),
   },
   {
     id: 'started',
@@ -167,7 +182,15 @@ export function RecentJobs({ repo }: Props) {
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  const jobColumns = useMemo(() => getJobColumns(), []);
+  const authorKeys = useMemo(
+    () =>
+      [
+        ...new Set((jobs ?? []).map((job) => job.metadata?.annotations?.[AnnoAuthorID])),
+      ].filter((key): key is string => Boolean(key)),
+    [jobs]
+  );
+  const { data: userDisplay } = useGetDisplayMappingQuery(authorKeys.length > 0 ? { key: authorKeys } : skipToken);
+  const jobColumns = useMemo(() => getJobColumns(userDisplay), [userDisplay]);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {

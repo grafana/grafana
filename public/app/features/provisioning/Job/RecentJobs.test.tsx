@@ -27,13 +27,30 @@ function setup(jobs: Job[]) {
 }
 
 describe('RecentJobs', () => {
-  it('shows the triggering user', async () => {
+  it('shows the Grafana user resolved from the author ID', async () => {
     setup([
       createJob({
         metadata: {
           name: 'job-1',
           uid: 'uid-1',
-          annotations: { 'provisioning.grafana.app/triggeredBy': 'Ada Lovelace' },
+          annotations: {
+            'provisioning.grafana.app/author': 'Ada Lovelace',
+            'provisioning.grafana.app/authorID': 'user:1',
+          },
+        },
+      }),
+    ]);
+
+    expect(await screen.findByText('User 1')).toBeInTheDocument();
+  });
+
+  it('falls back to the author name when the ID cannot be resolved', async () => {
+    setup([
+      createJob({
+        metadata: {
+          name: 'job-1',
+          uid: 'uid-1',
+          annotations: { 'provisioning.grafana.app/author': 'Ada Lovelace' },
         },
       }),
     ]);
