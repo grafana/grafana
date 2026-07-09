@@ -402,6 +402,70 @@ describe('SqlExpr', () => {
         { label: 'cpu', insertText: 'cpu', kind: 'column', boost: 50 },
       ]);
     });
+
+    it('maps fetched fields to column completions for table names with spaces', async () => {
+      setTestFlags({ sqlExpressionsCodeMirror: true });
+
+      const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+        fields: [
+          { name: 'time', type: 'time', config: {}, values: [] },
+          { name: '__value__', type: 'number', config: {}, values: [] },
+        ],
+        length: 1,
+      } as unknown as DataFrame);
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'table A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT t. FROM `table A` as t' } as ExpressionQuery}
+          queries={[{ refId: 'table A' }]}
+        />
+      );
+
+      const completionProvider = SqlEditorMock.mock.calls[0][0].completionProvider;
+      if (!completionProvider?.columns) {
+        throw new Error('Expected columns completion provider');
+      }
+
+      await expect(completionProvider.columns({ table: 'table A' })).resolves.toEqual([
+        { label: 'time', insertText: 'time', kind: 'column', boost: 50 },
+        { label: '__value__', insertText: '__value__', kind: 'column', boost: 50 },
+      ]);
+      expect(runMetaSQLExprQuery.mock.calls[0][0].rawSql).toBe('SELECT * FROM `table A` LIMIT 1');
+      expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([{ refId: 'table A' }]);
+    });
+
+    it('maps fetched fields to legacy editor column completions', async () => {
+      const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+        fields: [{ name: 'metric value', type: 'number', config: {}, values: [] }],
+        length: 1,
+      } as unknown as DataFrame);
+
+      render(
+        <SqlExpr
+          onChange={jest.fn()}
+          refIds={[{ value: 'A' }]}
+          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          queries={[{ refId: 'A' }]}
+        />
+      );
+
+      const language = SQLEditorMock.mock.calls[0][0].language;
+      if (!language.completionProvider) {
+        throw new Error('Expected legacy completion provider');
+      }
+
+      const completionProvider = language.completionProvider({}, {});
+      if (!completionProvider.columns?.resolve) {
+        throw new Error('Expected legacy column completion resolver');
+      }
+
+      await expect(completionProvider.columns.resolve({ table: 'A' })).resolves.toEqual([
+        { name: 'metric value', completion: '`metric value`', kind: 'Field' },
+      ]);
+      expect(runMetaSQLExprQuery).toHaveBeenCalled();
+    });
   });
 
   it('provides allowed functions for completion', () => {
@@ -717,5 +781,44 @@ describe('fetchSQLFields', () => {
 
     expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
     expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
+  });
+
+  it('returns no fields without a table and skips metadata queries', async () => {
+    const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery');
+
+    await expect(fetchSQLFields({}, [{ refId: 'A' }])).resolves.toEqual([]);
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+  });
+
+  it('maps SQL field types, icons, and quoted completion values', async () => {
+    jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+      fields: [
+        { name: 'enabled', type: 'BOOLEAN', config: {}, values: [] },
+        { name: 'cpu', type: 'FLOAT', config: {}, values: [] },
+        { name: 'business_date', type: 'DATE', config: {}, values: [] },
+        { name: 'event_time', type: 'TIMESTAMP', config: {}, values: [] },
+        { name: 'duration', type: 'TIME', config: {}, values: [] },
+        { name: 'message text', type: 'STRING', config: {}, values: [] },
+        { name: 'location', type: 'GEOGRAPHY', config: {}, values: [] },
+        { name: 'raw', type: 'OTHER', config: {}, values: [] },
+      ],
+      length: 1,
+    } as unknown as DataFrame);
+
+    await expect(fetchSQLFields({ table: 'A' }, [{ refId: 'A' }])).resolves.toEqual([
+      expect.objectContaining({ name: 'enabled', value: 'enabled', raqbFieldType: 'boolean', icon: 'toggle-off' }),
+      expect.objectContaining({ name: 'cpu', value: 'cpu', raqbFieldType: 'number', icon: 'calculator-alt' }),
+      expect.objectContaining({ name: 'business_date', value: 'business_date', raqbFieldType: 'date' }),
+      expect.objectContaining({
+        name: 'event_time',
+        value: 'event_time',
+        raqbFieldType: 'datetime',
+        icon: 'clock-nine',
+      }),
+      expect.objectContaining({ name: 'duration', value: 'duration', raqbFieldType: 'time', icon: 'clock-nine' }),
+      expect.objectContaining({ name: 'message text', value: '`message text`', raqbFieldType: 'text', icon: 'text' }),
+      expect.objectContaining({ name: 'location', value: 'location', raqbFieldType: 'text', icon: 'map' }),
+      expect.objectContaining({ name: 'raw', value: 'raw', raqbFieldType: 'text', icon: undefined }),
+    ]);
   });
 });

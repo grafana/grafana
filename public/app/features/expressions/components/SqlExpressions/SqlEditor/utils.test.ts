@@ -396,6 +396,23 @@ LIMIT
       );
     });
 
+    it('opens implicit column completions immediately after alias dot', async () => {
+      const columns = jest.fn().mockReturnValue([{ label: '__value__', insertText: '__value__' }]);
+      const sql = `SELECT
+  t.time,
+  t.
+FROM
+  \`table A\` as t`;
+      const result = await getCompletionResult({ columns }, sql, sql.indexOf('t.\nFROM') + 't.'.length, false);
+
+      expect(columns).toHaveBeenCalledWith({ table: 'table A' });
+      expect(result).toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: '__value__' })]),
+        })
+      );
+    });
+
     it('resolves global table completions for quoted insert text in qualified column completions', async () => {
       const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
       const result = await getCompletionResult(
