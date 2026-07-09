@@ -1,36 +1,60 @@
+import { type SQLDialect } from '@codemirror/lang-sql';
+
 import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
-type LanguageLoader = (sqlDialect: CodeMirrorSqlDialect) => Promise<CodeMirrorExtension>;
+const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
 
-const loadJson: LanguageLoader = async () =>
+const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
-const loadSql: LanguageLoader = async (sqlDialect) => {
-  const { sql, MySQL } = await import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql');
-  return sql(sqlDialect === 'mysql' ? { dialect: MySQL } : undefined);
+
+const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
+  const { sql, StandardSQL, MySQL } = await import(
+    /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
+  );
+  const dialects: Record<CodeMirrorSqlDialect, SQLDialect> = {
+    standardSql: StandardSQL,
+    mySql: MySQL,
+  };
+  return sql({ dialect: dialects[dialect] });
 };
 
-const languageLoaders: Record<CodeMirrorEditorLanguage, LanguageLoader> = {
-  json: loadJson,
-  sql: loadSql,
+interface LoadLanguageOptions {
+  /** SQL dialect to load. Only used when `language` is `'sql'`. */
+  sqlDialect?: CodeMirrorSqlDialect;
+}
+
+// Each language resolves to a cache key and a parameterless loader. The cache
+// key differentiates SQL dialects so each dialect's extension is loaded and
+// memoized independently.
+const resolveLoad = (
+  language: CodeMirrorEditorLanguage,
+  options: LoadLanguageOptions
+): { cacheKey: string; load: () => Promise<CodeMirrorExtension> } => {
+  switch (language) {
+    case 'json':
+      return { cacheKey: 'json', load: loadJson };
+    case 'sql': {
+      const dialect = options.sqlDialect ?? DEFAULT_SQL_DIALECT;
+      return { cacheKey: `sql:${dialect}`, load: () => loadSql(dialect) };
+    }
+  }
 };
 
-const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standard';
-
-// Cache per language + dialect so switching dialects loads the matching parser.
 const languagePromises = new Map<string, Promise<CodeMirrorExtension>>();
 
 export async function loadLanguageExtension(
   language?: CodeMirrorEditorLanguage,
-  sqlDialect: CodeMirrorSqlDialect = DEFAULT_SQL_DIALECT
+  options: LoadLanguageOptions = {}
 ): Promise<CodeMirrorExtension | null> {
   if (!language) {
     return null;
   }
 
-  const cacheKey = `${language}:${sqlDialect}`;
+  const { cacheKey, load } = resolveLoad(language, options);
+
   const promise =
     languagePromises.get(cacheKey) ??
-    languageLoaders[language](sqlDialect).catch((error) => {
+    load().catch((error) => {
       languagePromises.delete(cacheKey);
       throw error;
     });

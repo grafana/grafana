@@ -33,7 +33,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
-2024-03-05,aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 2026-05-22,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-22,reportingFooterSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
@@ -72,11 +71,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,true
-2026-06-10,dashboardNotebookLayout,experimental,@grafana/sharing-squad,false,false,true
+2026-07-08,dashboard.notebooks,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,dashboardDefaultLayoutSelector,GA,@grafana/dashboards-squad,false,false,true
 2026-05-22,dashboardAssistantPopover,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
-2025-10-10,unlimitedLayoutsNesting,experimental,@grafana/dashboards-squad,false,false,true
 2025-11-21,perPanelNonApplicableDrilldowns,experimental,@grafana/dashboards-squad,false,false,true
 2024-12-02,feedbackButton,preview,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
@@ -246,7 +244,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
-2026-02-18,panelStyleActions,GA,@grafana/dataviz-squad,false,false,true
 2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-06-03,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true

@@ -21,11 +21,11 @@ export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 export type CodeMirrorEditorLanguage = 'json' | 'sql';
 
 /**
- * SQL dialect used for parsing and syntax highlighting when `language` is `'sql'`.
- * - `'standard'` (default) — ANSI SQL, where identifiers are quoted with double quotes.
- * - `'mysql'` — MySQL, where identifiers are quoted with backticks.
+ * SQL dialect used for syntax highlighting and keyword completion when
+ * `language` is `'sql'`. Maps to the corresponding dialect from
+ * `@codemirror/lang-sql`. Defaults to `'standardSql'`.
  */
-export type CodeMirrorSqlDialect = 'standard' | 'mysql';
+export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
 /**
  * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
@@ -105,8 +105,8 @@ export interface CodeMirrorEditorProps {
    */
   language?: CodeMirrorEditorLanguage;
   /**
-   * SQL dialect to parse with when `language` is `'sql'`. Defaults to `'standard'`.
-   * Ignored for non-SQL languages.
+   * SQL dialect to use when `language` is `'sql'`. Controls dialect-specific
+   * syntax highlighting and keyword completion. Defaults to `'standardSql'`.
    */
   sqlDialect?: CodeMirrorSqlDialect;
   /**

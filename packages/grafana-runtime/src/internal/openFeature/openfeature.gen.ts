@@ -19,6 +19,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
+  DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables support for section level variables (rows and tabs) */
@@ -160,6 +162,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+ *
+ * **Details:**
+ * - flag key: `dashboard.notebooks`
+ * - default value: `false`
+ */
+export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.notebooks", false, options).value;
 };
 
 /**

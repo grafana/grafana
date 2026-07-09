@@ -29,7 +29,7 @@ export function useLanguageExtension(
     setLanguageExtension(null);
     setError(null);
 
-    void loadLanguageExtension(language, sqlDialect)
+    void loadLanguageExtension(language, { sqlDialect })
       .then((extension) => {
         if (!cancelled) {
           setLanguageExtension(extension);

@@ -3,12 +3,18 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, signatureHelp } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, signatureHelp, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
 import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
+
+// SQL Expressions run against a MySQL backend, where identifiers are quoted with backticks.
+// Maps the identifier-quoting dialect (single source of truth) to the CodeMirror SQL dialect so
+// parsing and writing can't drift, while still letting callers override it via the `dialect` prop.
+const DEFAULT_CODE_MIRROR_SQL_DIALECT: CodeMirrorSqlDialect =
+  SQL_EXPRESSIONS_DIALECT === 'mysql' ? 'mySql' : 'standardSql';
 
 export interface SqlEditorProps {
   value: string;
@@ -18,6 +24,11 @@ export interface SqlEditorProps {
   formatter?: (value: string) => string;
   height?: number | string;
   ariaLabel?: string;
+  /**
+   * SQL dialect used for syntax highlighting and keyword completion.
+   * Defaults to the dialect SQL Expressions run against (MySQL).
+   */
+  dialect?: CodeMirrorSqlDialect;
   children?: (props: { formatQuery: () => void }) => ReactNode;
 }
 
@@ -29,6 +40,7 @@ export const SqlEditor = ({
   formatter,
   height = '200px',
   ariaLabel,
+  dialect = DEFAULT_CODE_MIRROR_SQL_DIALECT,
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -60,9 +72,7 @@ export const SqlEditor = ({
       <div className={styles.editorBorder}>
         <CodeMirrorEditor
           language="sql"
-          // SQL Expressions run against a MySQL backend, where identifiers are quoted with backticks.
-          // Same source of truth as identifier quoting so parsing and writing can't drift.
-          sqlDialect={SQL_EXPRESSIONS_DIALECT}
+          sqlDialect={dialect}
           value={value}
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}

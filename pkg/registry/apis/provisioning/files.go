@@ -29,20 +29,18 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
-	folderAPIVersion      string
 	// maxFileSize caps the size in bytes of files read from or written to the
 	// repository through this connector. <=0 disables the check.
 	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string, maxFileSize int64) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
-		folderAPIVersion:      folderAPIVersion,
 		maxFileSize:           maxFileSize,
 	}
 }
@@ -175,7 +173,7 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
+	folderClient, folderGVK, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
