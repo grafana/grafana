@@ -29,6 +29,7 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
         smimeCertificateName="smimeCertificate"
         signerNameName="commit.signerName"
         signerEmailName="commit.signerEmail"
+        signerIsAuthorName="commit.signerIsAuthor"
         defaultSigningKeyConfigured={defaultSigningKeyConfigured}
       />
       <button type="submit">Submit</button>
@@ -81,7 +82,7 @@ describe('CommitOptionsSection', () => {
 
     expect(
       screen.getByText(
-        /\{\{action\}\} \(create\/update\/delete\/move\/rename\), \{\{resourceKind\}\} \(dashboard\/folder\), \{\{resourceID\}\}, \{\{title\}\}/
+        /\{\{action\}\}.*\{\{resourceKind\}\}.*\{\{resourceID\}\}.*\{\{title\}\}.*\{\{userName\}\}.*\{\{userLogin\}\}.*\{\{userEmail\}\}/
       )
     ).toBeInTheDocument();
   });

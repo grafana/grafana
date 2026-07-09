@@ -425,7 +425,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       let newNodesState = { ...this.state.nodes };
       let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
+      if (!scopeNode && scopes[0]?.scopeNodeId) {
         scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
         if (scopeNode) {
           newNodesState[scopeNode.metadata.name] = scopeNode;
@@ -547,11 +547,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
-    if (
-      config.featureToggles.useScopeSingleNodeEndpoint &&
-      this.state.selectedScopes[0]?.scopeNodeId &&
-      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
-    ) {
+    if (this.state.selectedScopes[0]?.scopeNodeId && !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]) {
       const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
       if (scopeNode) {
         this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });

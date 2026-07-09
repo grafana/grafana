@@ -21,14 +21,6 @@ aliases:
 
 # Set up Git Sync as code
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 You can also configure Git Sync using `gcx`, the Grafana CLI. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create your required resources in YAML files and push them to Grafana using `gcx`. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
 For more information, refer to the following documents:
@@ -109,12 +101,12 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
     path: grafana/
-# GitHub App connection only:
+  # GitHub App connection only:
   connection:
     name: '<GITHUB_CONNECTION_NAME>'
 # GitHub Personal Access Token only:
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # GitLab Personal Access Token only:
 spec:
@@ -123,7 +115,7 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # Bitbucket Personal Access Token only:
 spec:
@@ -133,7 +125,7 @@ spec:
     branch: '<BRANCH>'
     tokenUser: tokenuser
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 
 # Pure Git only:
 spec:
@@ -141,10 +133,10 @@ spec:
   git:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
-    path: "grafana/"
+    path: 'grafana/'
     tokenUser: tokenuser
 secure:
-  token: { create: "GIT_PAT" }
+  token: { create: 'GIT_PAT' }
 ```
 
 Replace the placeholders with your values:

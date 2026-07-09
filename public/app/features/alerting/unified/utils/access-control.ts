@@ -18,6 +18,7 @@ import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { isGranted } from '../hooks/abilities/abilityUtils';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 
@@ -183,14 +184,20 @@ export function evaluateAccess(actions: AccessControlAction[]) {
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasPermission(AccessControlAction.FoldersRead) && getGlobalRuleAbility(RuleAction.Create).granted,
+      contextSrv.hasPermission(AccessControlAction.FoldersRead) && isGranted(getGlobalRuleAbility(RuleAction.Create)),
     canCreateCloudRules:
       contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
-      getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule).granted,
+      isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.CreateAlertRule)),
     canEditRules: (rulesSourceName: string) => {
+      // The backend requires alert.rules:read alongside alert.rules:write for all rule mutations.
+      // Check both here so RuleEditor shows "no access" immediately rather than after Save.
+      const canViewGrafanaRules = isGranted(getGlobalRuleAbility(RuleAction.View));
+      const canUpdateGrafanaRules = isGranted(getGlobalRuleAbility(RuleAction.Update));
+      const canUpdateCloudRules = isGranted(getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule));
+
       return rulesSourceName === GRAFANA_SOURCE_NAME
-        ? getGlobalRuleAbility(RuleAction.Update).granted
-        : getExternalGlobalRuleAbility(ExternalRuleAction.UpdateAlertRule).granted;
+        ? contextSrv.hasPermission(AccessControlAction.FoldersRead) && canViewGrafanaRules && canUpdateGrafanaRules
+        : canUpdateCloudRules;
     },
   };
 }
@@ -201,8 +208,8 @@ export function getRulesAccess() {
  */
 export function getCreateAlertInMenuAvailability() {
   const { unifiedAlertingEnabled } = getConfig();
-  const canRead = getGlobalRuleAbility(RuleAction.View).granted;
-  const canUpdate = getGlobalRuleAbility(RuleAction.Update).granted;
+  const canRead = isGranted(getGlobalRuleAbility(RuleAction.View));
+  const canUpdate = isGranted(getGlobalRuleAbility(RuleAction.Update));
 
   return unifiedAlertingEnabled && canRead && canUpdate;
 }

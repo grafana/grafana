@@ -2,19 +2,14 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DashboardLink } from '@grafana/schema';
 import { provisioningAPIv0alpha1, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import {
-  AnnoKeyManagerIdentity,
-  AnnoKeyManagerKind,
-  AnnoKeySourcePath,
-  ManagerKind,
-  type ObjectMeta,
-} from 'app/features/apiserver/types';
+import { AnnoKeyManagerIdentity, AnnoKeySourcePath, type ObjectMeta } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { RepoTypeDisplay } from '../Wizard/types';
 import { isValidRepoType } from '../guards';
 
 import { getHasTokenInstructions, getRepoFileUrl } from './git';
+import { isManagedByRepository } from './managedResource';
 
 /**
  * Find and remove existing source links from the links array.
@@ -35,7 +30,7 @@ export function removeExistingSourceLinks(links: DashboardLink[] | undefined): D
  * Returns undefined if the dashboard is not repo-managed or if the repository is not a git provider.
  */
 export async function buildSourceLink(annotations: ObjectMeta['annotations']): Promise<DashboardLink | undefined> {
-  if (!annotations || !config.featureToggles.provisioning || annotations[AnnoKeyManagerKind] !== ManagerKind.Repo) {
+  if (!annotations || !config.featureToggles.provisioning || !isManagedByRepository({ metadata: { annotations } })) {
     return undefined;
   }
 

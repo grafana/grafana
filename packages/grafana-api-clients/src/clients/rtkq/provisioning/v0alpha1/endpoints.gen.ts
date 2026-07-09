@@ -1463,8 +1463,6 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
-  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
-  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
@@ -1477,6 +1475,10 @@ export type GitHubEnterpriseConnectionConfig = {
 export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
+};
+export type ConnectionWebhookConfig = {
+  /** Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
 };
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
@@ -1501,6 +1503,8 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
+  /** Webhook configuration for this connection */
+  webhook?: ConnectionWebhookConfig;
 };
 export type Condition = {
   /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
@@ -1542,6 +1546,10 @@ export type HealthStatus = {
   /** Summary messages (can be shown to users) Will only be populated when not healthy */
   message?: string[];
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type ConnectionStatus = {
   /** Conditions represent the latest available observations of the connection's state. */
   conditions?: Condition[];
@@ -1551,6 +1559,8 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable. */
+  token?: TokenStatus;
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1646,6 +1656,8 @@ export type FixFolderMetadataJobOptions = {
   ref?: string;
 };
 export type MigrateJobOptions = {
+  /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written. */
+  generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
@@ -1680,6 +1692,8 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
+  /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written. */
+  generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
@@ -1823,6 +1837,8 @@ export type CommitOptions = {
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
   signerEmail?: string;
+  /** When true, commits are authored by the signer identity (signerName/signerEmail). */
+  signerIsAuthor?: boolean;
   /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
   signerName?: string;
   /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
@@ -1857,8 +1873,6 @@ export type GitHubRepositoryConfig = {
   branch: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
-  /** WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
-  webhookDisabled?: boolean;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
@@ -1913,6 +1927,8 @@ export type SyncOptions = {
 export type WebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
   baseUrl?: string;
+  /** Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
 };
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
@@ -1991,10 +2007,6 @@ export type SyncStatus = {
      - `"warning"` Finished with some non-critical errors
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
-};
-export type TokenStatus = {
-  expiration?: number;
-  lastUpdated?: number;
 };
 export type WebhookStatus = {
   id?: number;
@@ -2174,12 +2186,16 @@ export type SupportedResource = {
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
+  /** Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name. */
+  branchOptions?: BranchOptions;
   /** Commit message options. Mirrors the same-named field on the repository spec. */
   commit?: CommitOptions;
   /** The k8s name for this repository */
   name: string;
   /** For git, this is the target path */
   path?: string;
+  /** Pull request options. Mirrors the same-named field on the repository spec. */
+  pullRequest?: PullRequestOptions;
   /** When syncing, where values are saved
     
     Possible enum values:

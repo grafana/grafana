@@ -23,6 +23,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
+import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
@@ -42,9 +43,9 @@ import {
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
-  IS_SAFARI_26,
   applyFilter,
-  compileFrameToRecords,
+  compileFrameToRecordsV1,
+  compileFrameToRecordsV2,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
@@ -57,7 +58,7 @@ export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFram
 }
 
 export interface SortedRowsOptions {
-  hasNestedFrames: boolean;
+  hasNestedFrames?: boolean;
   initialSortBy?: TableSortByFieldState[];
 }
 
@@ -280,14 +281,17 @@ export const useNestedRows = (
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
   filter: FilterType,
-  sortColumns: SortColumn[]
+  sortColumns: SortColumn[],
+  protoParserEnabled = false
 ): NestedRowEntry[] => {
   const frameToRecords = useMemo(() => {
     if (!hasNestedFrames || !nestedFramesFieldName || !nestedData?.[0]) {
       return;
     }
-    return compileFrameToRecords(nestedData[0]);
-  }, [hasNestedFrames, nestedFramesFieldName, nestedData]);
+    return protoParserEnabled
+      ? compileFrameToRecordsV2(nestedData[0])
+      : compileFrameToRecordsV1(nestedData[0], nestedFramesFieldName);
+  }, [hasNestedFrames, nestedFramesFieldName, nestedData, protoParserEnabled]);
 
   return useMemo(() => {
     const result: NestedRowEntry[] = [];
@@ -544,6 +548,48 @@ export function useRowHeight({
   ]);
 
   return rowHeight;
+}
+
+interface UseFlatRowHeightOptions {
+  columnWidths: number[];
+  fields: Field[];
+  defaultHeight: NonNullable<CSSProperties['height']>;
+  typographyCtx: TypographyCtx;
+  maxHeight?: number;
+}
+
+/**
+ * Simplified row height hook for flat (non-nested) tables.
+ * Unlike `useRowHeight`, this does not handle nested frame rows.
+ */
+export function useFlatRowHeight({
+  columnWidths,
+  fields,
+  defaultHeight,
+  typographyCtx,
+  maxHeight,
+}: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const measurers = useMemo(
+    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
+    [fields, typographyCtx, maxHeight]
+  );
+  const hasWrappedCols = (measurers?.length ?? 0) > 0;
+
+  return useMemo(() => {
+    if (typeof defaultHeight === 'string' || !hasWrappedCols) {
+      return defaultHeight;
+    }
+
+    const trueColWidths = getTrueColWidths(columnWidths);
+    const cache: Array<number | undefined> = Array(fields[0]?.values.length ?? 0);
+    return (row: TableRow) => {
+      let result = cache[row.__index];
+      if (result == null) {
+        result = cache[row.__index] = getRowHeight(fields, row, trueColWidths, defaultHeight, measurers);
+      }
+      return result;
+    };
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
 }
 
 /**

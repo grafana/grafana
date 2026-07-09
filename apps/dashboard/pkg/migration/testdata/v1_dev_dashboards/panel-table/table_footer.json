@@ -1,0 +1,1533 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1841,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Multiple global reducers, uniform",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "h": 6,
+        "w": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "footer": {
+              "reducers": ["countAll", "lastNotNull", "sum"]
+            },
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "fieldMinMax": true,
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Multiple reducers - numeric, non-numeric, field, global",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "h": 6,
+        "w": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "footer": {
+              "reducers": ["min", "lastNotNull", "median", "firstNotNull"]
+            },
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true,
+            "wrapText": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "fieldMinMax": true,
+          "links": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              },
+              {
+                "id": "custom.footer.reducers",
+                "value": ["sum"]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducers",
+                "value": ["countAll"]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducers",
+                "value": ["mean", "diffperc"]
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": []
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false,
+              "Max A": false,
+              "Min A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      }
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": ["sum"]
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Global footer, sum",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": ["lastNotNull"]
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Global footer, last not null",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false,
+              "Max A": false,
+              "Min A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "include",
+                "names": ["Max", "A"]
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducers",
+                "value": ["mean"]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Scoped footer, average",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "custom.footer.reducers",
+                "value": ["sum"]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Single sum reducer",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": ["countAll"]
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Count rows",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "Some really long title that requires wrapping",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": ["countAll"]
+            },
+            "inspect": false,
+            "wrapText": false
+          },
+          "fieldMinMax": true,
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.inspect",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Boolean"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Long Text"
+          }
+        ]
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Boolean\ndown,FALSE\nup,TRUE\nup fast,TRUE\ndown fast,FALSE",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Count rows, hide initial columns",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "A": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "A": 3,
+              "Boolean": 6,
+              "Info": 4,
+              "Max A": 2,
+              "Min A": 1,
+              "State A": 5,
+              "Time A": 0
+            },
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "A": "Gauge",
+              "Info": "",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time": "",
+              "Time A": "Time",
+              "img_url": "Cat"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": ["lastNotNull", "countAll"]
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0-pre",
+      "targets": [
+        {
+          "csvContent": "a,b\nfoo,bar\nbaz,bim\nbop,boop",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "No numeric fields",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "grafana-testdata-datasource"
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Table - Footer variants",
+  "uid": "8100236d-603c-421e-a21b-2a0b0ea4eaa3",
+  "version": 1
+}

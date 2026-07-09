@@ -3,20 +3,22 @@ import { get as lodashGet } from 'lodash';
 import {
   type EventBus,
   type InterpolateFunction,
+  isNestedPanelOptions,
+  type NestedValueAccess,
   type PanelData,
   type PanelPlugin,
+  type PanelOptionsSupplier,
   type StandardEditorContext,
   type VariableSuggestionsScope,
   type FieldConfigSource,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -207,6 +209,7 @@ export interface OptionPaneRenderProps2 {
   instanceState: unknown;
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
+  reportInteractionUI: 'panel-edit' | 'view-panel';
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -231,16 +234,14 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
-      if (path === 'timeCompare') {
-        reportInteraction('panel_setting_interaction', {
-          viz_type: plugin.meta.id,
-          feature_type: 'time_comparison',
-          option_type: value ? 'toggle_enabled' : 'toggle_disabled',
-        });
-      }
-
       const newOptions = setOptionImmutably(currentOptions, path, value);
       panel.onOptionsChange(newOptions);
+      // Record interaction for analytics
+      DashboardInteractions.setVisualOption({
+        ui: props.reportInteractionUI,
+        option: path,
+        value: JSON.stringify(value),
+      });
     },
   };
 
@@ -295,6 +296,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
               true
             );
+
+            // Record interaction for analytics
+            DashboardInteractions.setVisualOption({
+              ui: props.reportInteractionUI,
+              option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
+              value: JSON.stringify(value),
+            });
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;

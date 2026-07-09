@@ -42,9 +42,9 @@ inhibit_rules:
       - instance
 `
 	configJSON := fmt.Sprintf(`{
-		"template_files": {
-			"template1.tmpl": "{{ define \"test\" }}Hello {{ .CommonLabels.alertname }}{{ end }}",
-			"template2.tmpl": "{{ define \"test2\" }}Alert: {{ .Status }}{{ end }}"
+		"managed_templates": {
+			"template1.tmpl": {"name":"template1.tmpl","content":"{{ define \"test\" }}Hello {{ .CommonLabels.alertname }}{{ end }}","kind":"grafana"},
+			"template2.tmpl": {"name":"template2.tmpl","content":"{{ define \"test2\" }}Alert: {{ .Status }}{{ end }}","kind":"grafana"}
 		},
 		"alertmanager_config": {
 			"route": {
@@ -246,6 +246,70 @@ inhibit_rules:
 
 	require.JSONEq(t, configJSON, string(convertedJSON),
 		"Round-trip conversion should be lossless")
+}
+
+func TestMigrationFromTemplateFiles(t *testing.T) {
+	// Old configs stored templates in template_files. Verify they load correctly
+	// and are converted to managed_templates on save.
+	input := &AMConfigDB{}
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"template_files": {
+			"tmpl.tmpl": "{{ define \"alert\" }}hello{{ end }}"
+		},
+		"alertmanager_config": {
+			"route": {"receiver": "recv"},
+			"receivers": [{"name": "recv"}]
+		}
+	}`), input))
+
+	model := ToModel(input)
+	require.NotNil(t, model)
+	require.Len(t, model.Templates, 1)
+
+	output, err := ToDBModel(model)
+	require.NoError(t, err)
+	require.Nil(t, output.TemplateFiles, "TemplateFiles must be wiped on write")
+	require.Len(t, output.ManagedTemplates, 1)
+
+	expectedUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
+	mt, ok := output.ManagedTemplates[expectedUID]
+	require.True(t, ok)
+	assert.Equal(t, "tmpl.tmpl", mt.Name)
+	assert.Equal(t, definition.GrafanaTemplateKind, mt.Kind)
+}
+
+func TestToModel_TemplateConflicts(t *testing.T) {
+	minimalAMConfig := `{"route":{"receiver":"recv"},"receivers":[{"name":"recv"}]}`
+
+	t.Run("managed_templates_wins_on_uid_conflict", func(t *testing.T) {
+		// A template present in both fields with the same UID: ManagedTemplates must win.
+		conflictUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
+		input := &AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": {"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"},
+			"managed_templates": {"`+conflictUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}},
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+
+		model := ToModel(input)
+		require.Len(t, model.Templates, 1)
+		assert.Equal(t, `{{ define "alert" }}new{{ end }}`, model.Templates[ResourceUID(conflictUID)].Content)
+	})
+
+	t.Run("no_conflict_both_templates_present", func(t *testing.T) {
+		// Different UIDs: both templates should be in the merged result.
+		input := &AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": {"a.tmpl": "{{ define \"a\" }}A{{ end }}"},
+			"managed_templates": {"`+string(TemplateUID(TemplateKindGrafana, "b.tmpl"))+`": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}},
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+
+		model := ToModel(input)
+		require.Len(t, model.Templates, 2)
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "b.tmpl"))
+	})
 }
 
 func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
