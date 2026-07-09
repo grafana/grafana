@@ -376,6 +376,10 @@ type CommitOptions struct {
 	// When empty, commits are not signed.
 	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
 
+	// When true, commits are authored by the signer identity
+	// (signerName/signerEmail).
+	SignerIsAuthor bool `json:"signerIsAuthor,omitempty"`
+
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.

@@ -254,6 +254,13 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Enum:        []interface{}{"gpg", "smime", "ssh"},
 						},
 					},
+					"signerIsAuthor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, commits are authored by the signer identity (signerName/signerEmail).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"smimeCertificate": {
 						SchemaProps: spec.SchemaProps{
 							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 const maxErrorLength = 256
@@ -33,7 +35,7 @@ func NewCommenter(showImageRendererNote bool) Commenter {
 	}
 }
 
-func (c *commenter) Comment(ctx context.Context, prRepo PullRequestRepo, pr int, info changeInfo) error {
+func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRepo, pr int, info changeInfo) error {
 	comment, err := c.generateComment(ctx, info)
 	if err != nil {
 		return fmt.Errorf("unable to generate comment text: %w", err)

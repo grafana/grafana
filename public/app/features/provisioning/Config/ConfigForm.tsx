@@ -36,7 +36,7 @@ import { type RepositoryFormData } from '../types';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitHubBased, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -414,6 +414,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
               smimeCertificateName="smimeCertificate"
               signerNameName="commit.signerName"
               signerEmailName="commit.signerEmail"
+              signerIsAuthorName="commit.signerIsAuthor"
               defaultSigningKeyConfigured={Boolean(data?.secure?.commitSigningKey?.name)}
             />
             {/* Pull requests are not supported by the pure git type. */}
@@ -428,7 +429,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             )}
           </>
         )}
-        {isGitHubBased(type) && (
+        {supportsWebhooks(type) && (
           <WebhookSection<RepositoryFormData>
             register={register}
             control={control}

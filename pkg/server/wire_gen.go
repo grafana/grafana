@@ -159,6 +159,7 @@ import (
 	registry2 "github.com/grafana/grafana/pkg/services/extsvcauth/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/context"
@@ -962,7 +963,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider)
+	contentsCleaner := cleaner.ProvideFolderContentsDeleter(dBstore, libraryPanelService)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
@@ -1708,7 +1710,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider)
+	contentsCleaner := cleaner.ProvideFolderContentsDeleter(dBstore, libraryPanelService)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
 	teamLBACApiInstaller := iam.ProvideNoopTeamLBACApiInstaller()
@@ -2053,9 +2056,9 @@ func provideMigrationRegistry(
 	r.Register(playlist2.PlaylistMigration(playlistMigrator))
 	r.Register(shorturl.ShortURLMigration(shortURLMigrator))
 	r.Register(snapshot.SnapshotMigration(snapshotMigrator))
-	r.Register(migrator5.DataSourceMigration(dataSourceMigrator))
-	r.Register(legacy2.StarsMigrationDefinition(starsMigrator))
-	r.Register(legacy3.PreferencesMigrationDefinition(preferencesMigrator))
+	r.Register(datasource.DataSourceMigration(dataSourceMigrator))
+	r.Register(collections.StarsMigration(starsMigrator))
+	r.Register(preferences.PreferencesMigration(preferencesMigrator))
 	r.Register(querycaching.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }

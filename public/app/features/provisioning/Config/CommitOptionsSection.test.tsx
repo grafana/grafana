@@ -29,6 +29,7 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
         smimeCertificateName="smimeCertificate"
         signerNameName="commit.signerName"
         signerEmailName="commit.signerEmail"
+        signerIsAuthorName="commit.signerIsAuthor"
         defaultSigningKeyConfigured={defaultSigningKeyConfigured}
       />
       <button type="submit">Submit</button>
