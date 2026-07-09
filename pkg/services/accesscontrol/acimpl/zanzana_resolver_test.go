@@ -270,11 +270,12 @@ func TestListPermissions_AllTrue_KeepsDirectGrants(t *testing.T) {
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
+	teams := []string{}
 	perms, err := r.listPermissions(
 		context.Background(),
 		namespace,
 		subject,
-		nil,
+		teams,
 		group,
 		resource,
 		verb,
