@@ -4,6 +4,7 @@ import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
+import { SETUP_GUIDE_HOME_URL } from 'app/core/hooks/useHomeNav';
 import { GrafanaRouteLoading } from 'app/core/navigation/GrafanaRouteLoading';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
@@ -22,17 +23,18 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
   const homeDashboardUID = data?.spec?.homeDashboardUID;
+  // homeDashboardUID takes precedence over homeURL; the setup guide redirect is superseded by the new homepage
+  const willRedirect = Boolean(redirectUri) && !homeDashboardUID && redirectUri !== SETUP_GUIDE_HOME_URL;
 
   useEffect(() => {
-    // homeDashboardUID takes precedence over homeURL, also skip the setup guide redirect if new homepage toggle is on
-    if (homeDashboardUID || !redirectUri || redirectUri === '/a/grafana-setupguide-app/home') {
+    if (!willRedirect || !redirectUri) {
       return;
     }
     const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
     locationService.replace(newUrl);
-  }, [redirectUri, homeDashboardUID]);
+  }, [willRedirect, redirectUri]);
 
-  if (isLoading || redirectUri) {
+  if (isLoading || willRedirect) {
     return <GrafanaRouteLoading />;
   }
 
