@@ -12206,7 +12206,9 @@
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
       "loading-aria-label": "Loading {{sectionName}}",
-      "reorder-aria-label": "Reorder {{itemName}}"
+      "reorder-aria-label": "Reorder {{itemName}}",
+      "starred-dashboard-icon": "Dashboard",
+      "starred-folder-icon": "Folder"
     },
     "org-switcher": {
       "aria-label": "Change organization"

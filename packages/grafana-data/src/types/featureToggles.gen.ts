@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
-  * @default false
-  */
-  dashboardNotebookLayout?: boolean;
-  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -328,11 +323,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardUndoRedo?: boolean;
-  /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false

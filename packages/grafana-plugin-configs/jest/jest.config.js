@@ -11,6 +11,8 @@ export default {
     '\\.(svg|png|jpg)': path.resolve(import.meta.dirname, 'mocks', 'images.ts'),
     '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
     '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
+    // uwrap has no "main"/"exports" entry Jest can load; see the mock for details.
+    '^uwrap$': path.resolve(import.meta.dirname, 'mocks', 'uwrap.ts'),
   },
   modulePaths: ['<rootDir>'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
