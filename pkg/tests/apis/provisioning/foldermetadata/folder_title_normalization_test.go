@@ -2,6 +2,7 @@ package foldermetadata
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -138,4 +139,29 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
 			"dashboard should be managed by the repo after migrate")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "resources should become managed after migrate")
+
+	// 5) Writing through the /files endpoint into a folder path that contains a
+	// space works, and a subsequent pull reconciles the new file into Grafana
+	// under the space-named folder.
+	const writtenUID = "space-written-dash"
+	writePath := backendPath + "/written-dashboard.json" // RD/Grafana Backend/written-dashboard.json
+	resp := files.Post(t, writePath, common.DashboardJSON(writtenUID, "Written In Space Folder", 1))
+	require.Equal(t, http.StatusOK, resp.StatusCode,
+		"writing a dashboard under a folder path with a space should succeed: %s", resp.BodyString())
+
+	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, writePath))
+	require.NoError(t, err, "written dashboard should exist on disk at the space path %s", writePath)
+
+	// A pull must read the space path back out of the repo tree and reconcile it.
+	helper.SyncAndWait(t, repo, nil)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		d, err := helper.DashboardsV1.Resource.Get(ctx, writtenUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "written dashboard should exist after pull") {
+			return
+		}
+		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"written dashboard should be managed after pull")
+		assert.Equal(collect, backendUID, d.GetAnnotations()[utils.AnnoKeyFolder],
+			"written dashboard should be parented under the space-named folder")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "written dashboard should sync under the space folder")
 }
