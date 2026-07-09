@@ -52,7 +52,7 @@ func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.Signature
 
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, ap),
-		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg, cdn), disableAlertingForTempoDecorateFunc),
+		DecorateFuncs: append(bootstrap.DefaultDecorateFuncs(cfg, cdn), disableAlertingForTempoDecorateFunc, ExternalPluginOverridesDecorateFunc(cfg.ActiveExternalOverrides)),
 	})
 }
 

@@ -302,6 +302,21 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 	return bundles, nil
 }
 
+// ExternalPluginOverridesDecorateFunc returns a DecorateFunc that injects core plugin IDs as aliases
+// into their external replacement plugins, based on the active external overrides. This ensures that
+// existing dashboards and data sources continue to work without migration when a core plugin is
+// replaced by an external one.
+func ExternalPluginOverridesDecorateFunc(activeOverrides []config.ExternalOverride) func(context.Context, *plugins.Plugin) (*plugins.Plugin, error) {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		for _, o := range activeOverrides {
+			if p.ID == o.ExternalPluginID {
+				p.AliasIDs = append(p.AliasIDs, o.CorePluginID)
+			}
+		}
+		return p, nil
+	}
+}
+
 // DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
 // plugin ID. This includes both the primary plugin and child plugins, which are matched using the plugin.json plugin
 // ID field.

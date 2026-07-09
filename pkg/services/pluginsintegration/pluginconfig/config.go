@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/externaloverrides"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,12 +23,25 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 	}
 
 	pluginSettings := extractPluginSettings(settingProvider)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagCanvasExternalPlugin) {
-		if pluginSettings["canvas"] == nil {
-			pluginSettings["canvas"] = make(map[string]string)
+	var activeOverrides []config.ExternalOverride
+	for _, o := range externaloverrides.Overrides {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		active := o.Stage == externaloverrides.OverrideStagePermanent ||
+			features.IsEnabledGlobally(string(o.FeatureFlag))
+		if active {
+			if o.Stage == externaloverrides.OverrideStageFlagged {
+				if pluginSettings[o.CorePluginID] == nil {
+					pluginSettings[o.CorePluginID] = make(map[string]string)
+				}
+				pluginSettings[o.CorePluginID]["as_external"] = "true"
+			}
+			activeOverrides = append(activeOverrides, config.ExternalOverride{
+				CorePluginID:     o.CorePluginID,
+				ExternalPluginID: o.ExternalPluginID,
+			})
+		} else {
+			cfg.DisablePlugins = append(cfg.DisablePlugins, o.ExternalPluginID)
 		}
-		pluginSettings["canvas"]["as_external"] = "true"
 	}
 
 	return config.NewPluginManagementCfg(
@@ -46,6 +60,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.DisablePlugins,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComProxyAPIToken,
+		activeOverrides,
 	), nil
 }
 

@@ -281,8 +281,8 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 }
 
-func TestCanvasExternalPluginPreinstall(t *testing.T) {
-	t.Run("adds canvas to preinstall when canvasExternalPlugin flag is enabled", func(t *testing.T) {
+func TestExternalOverridePreinstall(t *testing.T) {
+	t.Run("adds external plugin to preinstall when its feature flag is enabled", func(t *testing.T) {
 		cfg := NewCfgWithFeatures(func(key string) bool { return key == "canvasExternalPlugin" })
 		_, err := cfg.Raw.NewSection("plugins")
 		require.NoError(t, err)
@@ -290,10 +290,10 @@ func TestCanvasExternalPluginPreinstall(t *testing.T) {
 		err = cfg.readPluginSettings(cfg.Raw)
 		require.NoError(t, err)
 
-		assert.Contains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"canvas", "", ""})
+		assert.Contains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"grafana-canvas-panel", "", ""})
 	})
 
-	t.Run("does not add canvas to preinstall when canvasExternalPlugin flag is disabled", func(t *testing.T) {
+	t.Run("does not add external plugin to preinstall when its feature flag is disabled", func(t *testing.T) {
 		cfg := NewCfgWithFeatures(func(key string) bool { return false })
 		_, err := cfg.Raw.NewSection("plugins")
 		require.NoError(t, err)
@@ -301,7 +301,7 @@ func TestCanvasExternalPluginPreinstall(t *testing.T) {
 		err = cfg.readPluginSettings(cfg.Raw)
 		require.NoError(t, err)
 
-		assert.NotContains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"canvas", "", ""})
+		assert.NotContains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"grafana-canvas-panel", "", ""})
 	})
 }
 

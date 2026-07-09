@@ -17,16 +17,22 @@ func TestProvidePluginManagementConfig_canvasExternalPlugin(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw = raw
 
-	t.Run("sets canvas as_external when canvasExternalPlugin flag is enabled", func(t *testing.T) {
+	t.Run("sets canvas as_external and populates ActiveExternalOverrides when flag is enabled", func(t *testing.T) {
 		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(featuremgmt.FlagCanvasExternalPlugin))
 		require.NoError(t, err)
 		require.Equal(t, "true", pCfg.PluginSettings["canvas"]["as_external"])
+		require.Len(t, pCfg.ActiveExternalOverrides, 1)
+		require.Equal(t, "canvas", pCfg.ActiveExternalOverrides[0].CorePluginID)
+		require.Equal(t, "grafana-canvas-panel", pCfg.ActiveExternalOverrides[0].ExternalPluginID)
+		require.NotContains(t, pCfg.DisablePlugins, "grafana-canvas-panel")
 	})
 
-	t.Run("does not set canvas as_external when canvasExternalPlugin flag is disabled", func(t *testing.T) {
+	t.Run("disables external plugin and has no active overrides when flag is disabled", func(t *testing.T) {
 		pCfg, err := ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		require.NotEqual(t, "true", pCfg.PluginSettings["canvas"]["as_external"])
+		require.Empty(t, pCfg.ActiveExternalOverrides)
+		require.Contains(t, pCfg.DisablePlugins, "grafana-canvas-panel")
 	})
 }
 

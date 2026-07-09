@@ -8,6 +8,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/externaloverrides"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -160,8 +161,10 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
 		}
-		if cfg.IsFeatureToggleEnabled("canvasExternalPlugin") { // Use literal string to avoid circular dependency
-			preinstallPluginsAsync["canvas"] = InstallPlugin{"canvas", "", ""}
+		for _, o := range externaloverrides.Overrides {
+			if cfg.IsFeatureToggleEnabled(string(o.FeatureFlag)) { // Use literal string to avoid circular dependency
+				preinstallPluginsAsync[o.ExternalPluginID] = InstallPlugin{o.ExternalPluginID, "", ""}
+			}
 		}
 		if cfg.IsEnterprise {
 			preinstallPluginsAsync["grafana-assistant-app"] = InstallPlugin{"grafana-assistant-app", "", ""}
