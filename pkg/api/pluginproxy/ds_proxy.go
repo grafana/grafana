@@ -399,6 +399,10 @@ func (proxy *DataSourceProxy) validateRequest() error {
 
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	if route.ReqAuthBy != "" && !proxy.requester.IsAuthenticatedBy(route.ReqAuthBy) {
+		ctxLogger.Debug("plugin route auth module mismatch", "route", proxy.ctx.Req.URL.Path, "requiredAuthBy", route.ReqAuthBy, "authenticatedBy", proxy.requester.GetAuthenticatedBy())
+		return false
+	}
 	if route.ReqAction != "" {
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())

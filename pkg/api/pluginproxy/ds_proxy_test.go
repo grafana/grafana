@@ -125,6 +125,16 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 				Path: "encodedPath",
 				URL:  "http://encoded.com",
 			},
+			{
+				Path:      "api/sso-admin",
+				ReqRole:   org.RoleAdmin,
+				ReqAuthBy: "oauth_azuread",
+			},
+			{
+				Path:      "api/rbac-sso",
+				ReqAction: "test-app.settings:read",
+				ReqAuthBy: "oauth_azuread",
+			},
 		}
 
 		ds := &datasources.DataSource{
@@ -284,6 +294,26 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 				err = proxy.validateRequest()
 				require.Error(t, err)
 			})
+
+			t.Run("plugin route with required auth provider and matching user auth", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.OrgRole = org.RoleAdmin
+				ctx.AuthenticatedBy = "oauth_azuread"
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/sso-admin")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.NoError(t, err)
+			})
+
+			t.Run("plugin route with required auth provider and non-matching user auth", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.OrgRole = org.RoleAdmin
+				ctx.AuthenticatedBy = "saml"
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/sso-admin")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.Error(t, err)
+			})
 		})
 
 		t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
@@ -326,6 +356,30 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 			// Has access but to another app
 			ctx.Permissions = map[int64]map[string][]string{1: {"datasources:read": {"datasources:uid:notTheDsUID"}}}
 			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+			require.NoError(t, err)
+			err = proxy.validateRequest()
+			require.Error(t, err)
+		})
+
+		t.Run("plugin route with RBAC and required auth provider user is allowed", func(t *testing.T) {
+			ctx, _ := setUp()
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
+			ctx.AuthenticatedBy = "oauth_azuread"
+			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-sso")
+			require.NoError(t, err)
+			err = proxy.validateRequest()
+			require.NoError(t, err)
+		})
+
+		t.Run("plugin route with RBAC and required auth provider user is not allowed", func(t *testing.T) {
+			ctx, _ := setUp()
+			ctx.OrgID = int64(1)
+			ctx.OrgRole = identity.RoleNone
+			ctx.AuthenticatedBy = "saml"
+			ctx.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-sso")
 			require.NoError(t, err)
 			err = proxy.validateRequest()
 			require.Error(t, err)
