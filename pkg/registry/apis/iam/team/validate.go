@@ -94,14 +94,6 @@ func ValidateOnUpdate(ctx context.Context, teamSearchClient resourcepb.ResourceI
 	return nil
 }
 
-// titleUniqueSearchLimit bounds the uniqueness lookup. We only need to find one
-// team other than this one that already uses the title. A page of 2 is enough:
-// on update the team matches its own title, so we fetch one extra row to still
-// see a genuine collision sitting behind that self-match. It must stay > 0 — a
-// limit of 0 is a count-only request on the unified path (no rows come back),
-// which would defeat the self-match exclusion below.
-const titleUniqueSearchLimit = 2
-
 // validateTitleUnique rejects a team whose title collides with an existing team
 // in the same namespace. Legacy storage enforces this via UNIQUE(org_id, name),
 // but that constraint is absent in unified-only (Mode5), so it's enforced here
@@ -137,7 +129,7 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 			},
 		},
 		Fields: []string{resource.SEARCH_FIELD_TITLE},
-		Limit:  titleUniqueSearchLimit,
+		Limit:  2,
 		Page:   1,
 	}
 
