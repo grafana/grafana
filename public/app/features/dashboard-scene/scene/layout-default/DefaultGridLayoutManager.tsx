@@ -47,10 +47,11 @@ import {
 } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -487,6 +488,20 @@ export class DefaultGridLayoutManager
     }
 
     return children;
+  }
+
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const edit = buildGroupEdit(items, target);
+
+    if (!edit) {
+      return;
+    }
+
+    dashboardEditActions.edit({ ...edit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

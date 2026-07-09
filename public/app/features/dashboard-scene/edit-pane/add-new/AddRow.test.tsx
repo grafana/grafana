@@ -5,8 +5,8 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
+import { useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
 
 import { AddRow } from './AddRow';
 
@@ -15,8 +15,8 @@ jest.mock('../../scene/layouts-shared/addNew', () => ({
   addNewRowTo: jest.fn(),
 }));
 
-jest.mock('../../scene/layouts-shared/CanvasGridAddActions', () => ({
-  ...jest.requireActual('../../scene/layouts-shared/CanvasGridAddActions'),
+jest.mock('../../scene/layouts-shared/nestingRestrictions', () => ({
+  ...jest.requireActual('../../scene/layouts-shared/nestingRestrictions'),
   useNestingRestrictions: jest.fn(),
 }));
 

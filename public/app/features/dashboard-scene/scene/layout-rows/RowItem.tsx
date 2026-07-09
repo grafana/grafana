@@ -148,16 +148,23 @@ export class RowItem
     return getSlugForRowOrTab(this, siblings);
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
+
+    const perform = () => {
+      this.setState({ layout });
+      this.publishEvent(new NewSceneObjectAddedEvent(this), true);
+    };
+
+    if (skipUndo) {
+      perform();
+      return;
+    }
 
     dashboardEditActions.edit({
       description: t('dashboard.edit-actions.switch-layout-row', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ layout });
-        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
-      },
+      perform,
       undo: () => {
         this.setState({ layout: currentLayout });
         this.publishEvent(new NewSceneObjectAddedEvent(this), true);
