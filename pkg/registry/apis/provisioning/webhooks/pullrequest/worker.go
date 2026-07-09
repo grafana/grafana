@@ -136,7 +136,8 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	files, err := prRepo.CompareFiles(ctx, prRepo.Config().Branch(), opts.Ref)
+	base := prRepo.Config().Branch()
+	files, err := comparePullRequestFiles(ctx, prRepo, base, *opts, logger)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
 		return fmt.Errorf("failed to list pull request files: %w", err)
@@ -163,6 +164,45 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	logger.Info("preview comment added")
 
 	return nil
+}
+
+// comparePullRequestFiles prefers the provider's synthetic PR merge ref (the head branch
+// already merged onto the current base) so unrelated commits that landed on the base after
+// the branch forked don't bleed into the preview. It falls back to the PR head ref when the
+// merge ref is unavailable (unsupported provider, merge conflicts, or not yet computed).
+func comparePullRequestFiles(ctx context.Context, repo repository.PullRequestRepo, base string, opts provisioning.PullRequestJobOptions, logger logging.Logger) ([]repository.VersionedFileChange, error) {
+	mergeRef := pullRequestMergeRef(repo.Config().Spec.Type, opts.PR)
+	if mergeRef == "" {
+		return repo.CompareFiles(ctx, base, opts.Ref)
+	}
+
+	files, err := repo.CompareFiles(ctx, base, mergeRef)
+	if err == nil || !errors.Is(err, repository.ErrRefNotFound) {
+		return files, err
+	}
+
+	logger.Info("pull request merge ref not found, falling back to head ref", "merge_ref", mergeRef, "head_ref", opts.Ref)
+	return repo.CompareFiles(ctx, base, opts.Ref)
+}
+
+// pullRequestMergeRef returns the provider-specific synthetic merge ref for a PR, or "" when
+// the provider does not publish one. NOTE (hacky): only GitHub reaches PR previews today, so
+// the GitLab/Bitbucket mappings are untested; Bitbucket Server 7.0+ and Cloud publish no
+// merge ref at all, so they always fall back to the (two-dot) head-ref comparison.
+func pullRequestMergeRef(repoType provisioning.RepositoryType, pr int) string {
+	if pr <= 0 {
+		return ""
+	}
+	switch repoType {
+	case provisioning.GitHubRepositoryType, provisioning.GitHubEnterpriseRepositoryType:
+		return fmt.Sprintf("refs/pull/%d/merge", pr)
+	case provisioning.GitLabRepositoryType:
+		return fmt.Sprintf("refs/merge-requests/%d/merge", pr)
+	case provisioning.BitbucketRepositoryType:
+		return fmt.Sprintf("refs/pull-requests/%d/merge", pr)
+	default:
+		return ""
+	}
 }
 
 // Remove files we should not try to process
