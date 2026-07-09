@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 
 import { type DataQuery } from '@grafana/schema';
+import { useDatasource } from 'app/features/datasources/hooks';
 
 import { dashboardDsSettingsMock, ds1SettingsMock, renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
@@ -16,12 +17,13 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/datasources/hooks', () => ({
   ...jest.requireActual('app/features/datasources/hooks'),
-  // useDatasource() is now async (it wraps getDataSourceInstanceSettings). Delegate to the mocked
-  // getDataSourceSrv so the current data source resolves synchronously and no post-render state
-  // update escapes act() in these tests.
-  useDatasource: (ref: unknown) =>
-    jest.requireMock('@grafana/runtime').getDataSourceSrv().getInstanceSettings(ref),
+  // useDatasource() wraps the async getDataSourceInstanceSettings API. Stub it to resolve the
+  // fixture synchronously (wired below — jest.mock factories cannot reference file-scope
+  // variables) so no post-render state update escapes act() in these tests.
+  useDatasource: jest.fn(),
 }));
+
+jest.mocked(useDatasource).mockImplementation(() => ds1SettingsMock);
 
 describe('QueryEditorSidebar', () => {
   afterAll(() => {

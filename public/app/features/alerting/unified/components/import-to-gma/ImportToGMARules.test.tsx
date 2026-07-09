@@ -11,15 +11,6 @@ import { alertingFactory } from '../../mocks/server/db';
 
 import ImportToGMARules from './ImportToGMARules';
 
-jest.mock('app/features/datasources/hooks', () => ({
-  ...jest.requireActual('app/features/datasources/hooks'),
-  // useDatasource() is now async (it wraps getDataSourceInstanceSettings). Delegate to the real
-  // getDataSourceSrv (configured via the alerting test factories) so the current data source
-  // resolves synchronously and no post-render state update escapes act() in these tests.
-  useDatasource: (ref: unknown) =>
-    jest.requireActual('@grafana/runtime').getDataSourceSrv().getInstanceSettings(ref),
-}));
-
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
@@ -64,11 +55,15 @@ describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
   testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
-  it('should render the import source options', () => {
+  it('should render the import source options', async () => {
     render(<ImportToGMARules />);
 
     expect(ui.importSource.existingDatasource.get()).toBeInTheDocument();
     expect(ui.importSource.yaml.get()).toBeInTheDocument();
+
+    // The data source picker resolves its current data source asynchronously; wait for it to
+    // settle so the state update doesn't escape act().
+    await waitFor(() => expect(ui.dsImport.dsPicker.get()).toBeEnabled());
   });
 
   describe('existing datasource', () => {
