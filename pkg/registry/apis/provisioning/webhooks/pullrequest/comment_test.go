@@ -40,6 +40,7 @@ func TestGenerateComment(t *testing.T) {
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
 			RepositoryTitle: "My Repo",
+			RepositoryURL:   "https://github.com/example/repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -50,6 +51,7 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionCreate,
 					},
 					Title:                "New Dashboard",
+					SourceURL:            "https://github.com/example/repo/blob/pr/file.json",
 					PreviewURL:           "http://grafana/admin/preview",
 					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
 				},
@@ -59,6 +61,7 @@ func TestGenerateComment(t *testing.T) {
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
 			RepositoryTitle: "My Repo",
+			RepositoryURL:   "https://github.com/example/repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -69,6 +72,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/file.json",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
 
@@ -81,6 +85,7 @@ func TestGenerateComment(t *testing.T) {
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
 			RepositoryTitle: "My Repo",
+			RepositoryURL:   "https://github.com/example/repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -91,6 +96,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/file.json",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
 				},
@@ -101,6 +107,7 @@ func TestGenerateComment(t *testing.T) {
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
 			RepositoryTitle: "My Repo",
+			RepositoryURL:   "https://github.com/example/repo",
 			SkippedFiles:    5,
 			Changes: []fileChangeInfo{
 				{
@@ -150,6 +157,7 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionCreate,
 					},
 					Title:      "Broken Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/broken.json",
 					PreviewURL: "http://grafana/admin/preview",
 					Error:      "strict decoding error: unknown field \"spec.invalidField\"",
 				},
@@ -167,6 +175,7 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionUpdate,
 					},
 					Title:              "My Dashboard",
+					SourceURL:          "https://github.com/example/repo/blob/pr/dashboard.json",
 					GrafanaURL:         "http://grafana/d/uid",
 					PreviewURL:         "http://grafana/admin/preview",
 					HasRemovedMetadata: true,
@@ -177,6 +186,7 @@ func TestGenerateComment(t *testing.T) {
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
 			RepositoryTitle: "My Repo",
+			RepositoryURL:   "https://github.com/example/repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -304,7 +314,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "2 changes")
+	require.Contains(t, capturedComment, "**2** resource change(s)")
 	require.Contains(t, capturedComment, "deleted")
 	require.Contains(t, capturedComment, ".json")
 }
@@ -334,7 +344,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "1 changes")
+	require.Contains(t, capturedComment, "**1** resource change(s)")
 	require.Contains(t, capturedComment, "created")
 }
 
@@ -374,8 +384,8 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 	commenter := NewCommenter(false)
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "2 changes")
-	require.Contains(t, capturedComment, "1 with issues")
+	require.Contains(t, capturedComment, "**2** resource change(s)")
+	require.Contains(t, capturedComment, "1 need attention")
 	require.Contains(t, capturedComment, "Validation Issues")
 	require.Contains(t, capturedComment, "broken.json")
 	require.Contains(t, capturedComment, "unable to parse resource")

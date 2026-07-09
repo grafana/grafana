@@ -1,5 +1,4 @@
-Hey there! 👋
-Grafana spotted 3 changes (2 with issues).
+Grafana detected **3** resource change(s) in this pull request — 2 need attention.
 
 | Action | Kind | Resource | Preview | Status |
 |--------|------|----------|---------|--------|

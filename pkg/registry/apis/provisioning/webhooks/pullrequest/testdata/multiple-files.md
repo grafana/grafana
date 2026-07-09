@@ -1,5 +1,4 @@
-Hey there! 👋
-Grafana spotted 3 changes.
+Grafana detected **3** resource change(s) in this pull request.
 
 | Action | Kind | Resource | Preview | Status |
 |--------|------|----------|---------|--------|
@@ -12,4 +11,4 @@ and 5 more files.
 All resources passed validation. ✅
 
 ---
-_Posted by [host](http://host/) · Repository: **My Repo** (`my-repo`)_
+_Posted by [host](http://host/) · Repository: [**My Repo**](https://github.com/example/repo) (`my-repo`)_

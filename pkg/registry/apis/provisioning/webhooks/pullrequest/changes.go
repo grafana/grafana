@@ -29,6 +29,8 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
+	// RepositoryURL links to the git repository (empty for local repositories)
+	RepositoryURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -57,6 +59,10 @@ type fileChangeInfo struct {
 
 	// The title from inside the resource (or name if not found)
 	Title string
+
+	// SourceURL links to the file in the git repository (empty when the
+	// repository does not expose web URLs, e.g. non-GitHub backends)
+	SourceURL string
 
 	// The URL where this will appear (target)
 	GrafanaURL           string
@@ -119,6 +125,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
+		RepositoryURL:        cfg.URL(),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
@@ -192,6 +199,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	// Find a name within the file
 	obj := info.Parsed.Obj
 	info.Title = info.Parsed.Meta.FindTitle(obj.GetName())
+
+	// Best-effort link back to the file in the git repository. Repositories
+	// that don't expose web URLs (e.g. non-GitHub backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = urls.SourceURL
+		}
+	}
 
 	// Check what happens when we apply changes
 	// NOTE: this will also invoke any server side validation

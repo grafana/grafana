@@ -92,8 +92,8 @@ func (c *commenter) generateComment(_ context.Context, info changeInfo) (string,
 	return result, nil
 }
 
-const commentTemplateSingleDashboard = `Hey there! 👋
-Grafana spotted some changes to your dashboard.
+const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{.Title}}**]({{.SourceURL}}){{else}}**{{.Title}}**{{end}}{{end -}}
+Grafana detected dashboard changes in this pull request.
 {{- if and .GrafanaScreenshotURL .PreviewScreenshotURL}}
 
 ### Side by Side Comparison of {{.Parsed.Info.Path}}
@@ -111,25 +111,20 @@ Grafana spotted some changes to your dashboard.
 {{- end -}}
 {{- if and .GrafanaURL .PreviewURL}}
 
-See the [original]({{.GrafanaURL}}) and [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
+{{template "title" .}} — [view current]({{.GrafanaURL}}) · [preview changes]({{.PreviewURL}})
 {{- else if .GrafanaURL}}
 
-See the [original]({{.GrafanaURL}}) of {{.Title}}.
+{{template "title" .}} — [view current]({{.GrafanaURL}})
 {{- else if .PreviewURL}}
 
-See the [preview]({{.PreviewURL}}) of {{.Parsed.Info.Path}}.
+{{template "title" .}} — [preview changes]({{.PreviewURL}})
 {{- end}}{{ if .Error}}
 
 > ⚠️ **Validation failed:** {{.TruncatedError}}
 {{- end}}
 `
 
-const commentTemplateTable = `Hey there! 👋
-{{- if .HasErrors}}
-Grafana spotted {{.TotalChanges}} changes ({{.ErrorCount}} with issues).
-{{- else}}
-Grafana spotted {{.TotalChanges}} changes.
-{{- end}}
+const commentTemplateTable = `Grafana detected **{{.TotalChanges}}** resource change(s) in this pull request{{- if .HasErrors}} — {{.ErrorCount}} need attention{{- end}}.
 
 | Action | Kind | Resource | Preview | Status |
 |--------|------|----------|---------|--------|
@@ -168,7 +163,7 @@ NOTE: To enable dashboard previews in pull requests, refer to the [image renderi
 const commentTemplateFooter = `
 
 ---
-_Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: **{{.RepositoryTitle}}** (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
+_Posted by [{{.GrafanaHost}}]({{.GrafanaBaseURL}}){{- if .RepositoryTitle}} · Repository: {{if .RepositoryURL}}[**{{.RepositoryTitle}}**]({{.RepositoryURL}}){{else}}**{{.RepositoryTitle}}**{{end}} (` + "`" + `{{.RepositoryName}}` + "`" + `){{- end}}_`
 
 func (f *fileChangeInfo) Action() string {
 	if f.Parsed != nil {
