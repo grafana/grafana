@@ -177,26 +177,45 @@ type RepositoryWithURLs interface {
 
 // WebhookRepository is implemented by repositories that can receive and handle
 // incoming webhook requests from their git provider.
+//
+//go:generate mockery --name WebhookRepository --structname MockWebhookRepository --inpackage --filename webhook_repository_mock.go --with-expecter
 type WebhookRepository interface {
 	Repository
 
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+	// Slug is the repository the webhook is configured for; the dispatcher uses
+	// it to reject events for anything else.
+	Slug() string
+
+	// VerifyRequest authenticates the inbound request and returns its verified form.
+	VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error)
+
+	// ProcessRequest normalizes an already-verified request into an event.
+	ProcessRequest(ctx context.Context, req *VerifiedWebhookRequest) (WebhookEvent, error)
+
+	WebhookClient() WebhookClient
+	WebhookURL() string
+	SubscribedEvents() []string
 }
 
-// Hooks called after the repository has been created, updated or deleted
-type Hooks interface {
-	Repository
-
-	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
-	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
-	OnDelete(ctx context.Context) error
+// WebhookConfig is the provider-agnostic representation of a git provider webhook.
+// Each provider implements it with its own struct holding the common fields
+// plus any provider-specific ones.
+type WebhookConfig interface {
+	GetID() int64
+	GetURL() string
+	GetEvents() []string
+	GetSecret() string
+	SetURL(url string)
+	SetEvents(events []string)
+	SetSecret(secret string)
 }
 
-// WebhookSecretRotator is implemented by repositories that support periodic
-// webhook secret rotation. The controller calls RotateWebhookSecret when the
-// secret is due for rotation based on the configured interval.
-type WebhookSecretRotator interface {
-	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
+//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
+type WebhookClient interface {
+	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
+	EditWebhook(ctx context.Context, hook WebhookConfig) error
+	DeleteWebhook(ctx context.Context, webhookID int64) error
 }
 
 type FileAction string

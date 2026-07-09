@@ -23,6 +23,7 @@ const (
 	FolderResource           = "folders.folder.grafana.app"
 	DashboardResource        = "dashboards.dashboard.grafana.app"
 	ShortURLResource         = "shorturls.shorturl.grafana.app"
+	SnapshotResource         = "snapshots.dashboard.grafana.app"
 	StarsResource            = "stars.collections.grafana.app"
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
@@ -35,6 +36,7 @@ var MigratedUnifiedResources = map[string]bool{
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
 	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,
 	DataSourceResources:      false,
@@ -178,6 +180,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
+	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
+	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
+	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
+	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
@@ -253,6 +260,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
 	// enable sqlkv backwards compatibility mode with sql/backend
 	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
+	// log every call reaching an exported method of the legacy sql/backend
+	// (temporary smoke-test instrumentation; default off)
+	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
+	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
 	// enable per-resource leases in the KV backend; only effective when the
 	// SQL RV manager is not in use.
 	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)

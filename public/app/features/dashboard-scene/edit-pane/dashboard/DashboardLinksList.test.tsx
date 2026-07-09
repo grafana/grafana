@@ -17,6 +17,7 @@ jest.mock('../../settings/links/LinkAddEditableElement', () => ({
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     addVariableButtonClicked: jest.fn(),
   },
 }));

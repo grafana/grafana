@@ -21,6 +21,7 @@ jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     addVariableButtonClicked: jest.fn(),
   },
 }));

@@ -436,15 +436,19 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
-		if err != nil {
-			return nil, fmt.Errorf("ensure folder path exists: %w", err)
-		}
+		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
+		// must not have one stamped onto them, or the apiserver rejects the write.
+		if parsed.FolderScoped {
+			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("ensure folder path exists: %w", err)
+			}
 
-		// In case the parent folder has a different ID than the one from the initially parsed resource,
-		// e.g. when the folder metadata has been generated as part of the create operation, we need to update it.
-		if parsed.Meta.GetFolder() != parent {
-			parsed.Meta.SetFolder(parent)
+			// In case the parent folder has a different ID than the one from the initially parsed resource,
+			// e.g. when the folder metadata has been generated as part of the create operation, we need to update it.
+			if parsed.Meta.GetFolder() != parent {
+				parsed.Meta.SetFolder(parent)
+			}
 		}
 
 		if err := parsed.Run(ctx); err != nil {
@@ -707,15 +711,19 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 
 	// Update the grafana database if this is the main branch
 	if r.shouldUpdateGrafanaDB(opts, newParsed) {
-		parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
-		if err != nil {
-			return nil, fmt.Errorf("ensure folder path exists: %w", err)
-		}
+		// Only folder-scoped kinds carry a folder annotation; org-scoped kinds (e.g. playlists)
+		// must not have one stamped onto them, or the apiserver rejects the write.
+		if newParsed.FolderScoped {
+			parent, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("ensure folder path exists: %w", err)
+			}
 
-		// In case the parent folder has a different ID than the one from the initially parsed resource,
-		// e.g. when the folder metadata has been generated as part of the move operation, we need to update it.
-		if newParsed.Meta.GetFolder() != parent {
-			newParsed.Meta.SetFolder(parent)
+			// In case the parent folder has a different ID than the one from the initially parsed resource,
+			// e.g. when the folder metadata has been generated as part of the move operation, we need to update it.
+			if newParsed.Meta.GetFolder() != parent {
+				newParsed.Meta.SetFolder(parent)
+			}
 		}
 
 		// Delete the old resource from grafana if name changed

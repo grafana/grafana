@@ -626,6 +626,39 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+
+  // Discover which resource identities (namespace/group/resource) exist in
+  // storage, without returning counts. This is a cheap alternative to
+  // GetStats for callers that only need to know what is stored, not how much.
+  rpc ListStoredResources(ListStoredResourcesRequest) returns (ListStoredResourcesResponse);
+}
+
+// Discovery filter for ListStoredResources.
+message ListStoredResourcesRequest {
+  // Namespace (tenant) to discover resources in. Required: discovery across
+  // all namespaces is not supported. An empty namespace is rejected with
+  // InvalidArgument.
+  string namespace = 1;
+
+  // Optional group filter. Empty means no filter on group.
+  string group = 2;
+
+  // Optional resource filter. Empty means no filter on resource.
+  string resource = 3;
+}
+
+message ListStoredResourcesResponse {
+  message StoredResource {
+    string namespace = 1;
+    string group = 2;
+    string resource = 3;
+  }
+
+  // Resource identities that exist in live storage. This is discovery-only:
+  // it may include false positives (a returned identity may have no live
+  // objects by the time the caller queries it). Errors are returned as gRPC
+  // errors, not embedded in this response.
+  repeated StoredResource items = 1;
 }
 
 service BulkStore {

@@ -292,9 +292,10 @@ func TestGRPCStore_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify deletion
-	_, err = store.Get(ctx, namespace, "test-1")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
+	got, err := store.Get(ctx, namespace, "test-1")
+	require.NoError(t, err)
+	require.NotNil(t, got.DeletionTimestamp, "expected tombstone to survive the gRPC round-trip")
+	assert.False(t, got.DeletionTimestamp.IsZero())
 }
 
 func TestGRPCStore_List(t *testing.T) {
@@ -385,6 +386,27 @@ func TestGRPCStore_List(t *testing.T) {
 		assert.Len(t, result.Items, 2)
 		assert.Equal(t, "user:alice", result.Items[0].GetCreatedBy())
 		assert.Equal(t, "user:alice", result.Items[1].GetCreatedBy())
+	})
+
+	t.Run("IncludeDeleted round-trips and surfaces tombstones", func(t *testing.T) {
+		require.NoError(t, store.Delete(ctx, namespace, "anno-3"))
+
+		excluded, err := store.List(ctx, namespace, ListOptions{})
+		require.NoError(t, err)
+		for i := range excluded.Items {
+			assert.NotEqual(t, "anno-3", excluded.Items[i].Name, "tombstone must be hidden by default")
+		}
+
+		included, err := store.List(ctx, namespace, ListOptions{IncludeDeleted: true})
+		require.NoError(t, err)
+		var tombstone *annotationV0.Annotation
+		for i := range included.Items {
+			if included.Items[i].Name == "anno-3" {
+				tombstone = &included.Items[i]
+			}
+		}
+		require.NotNil(t, tombstone, "IncludeDeleted must surface the tombstone")
+		require.NotNil(t, tombstone.DeletionTimestamp, "tombstone must carry a deletionTimestamp over the wire")
 	})
 }
 
