@@ -21,7 +21,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
-	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -111,26 +110,42 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 	return s.k8sClient.Delete(ctx, name, orgID, v1.DeleteOptions{})
 }
 
+// GetByLegacyID fetches an annotation by its legacy ID, returning a tombstone if it has been soft-deleted.
+//
 // TODO: expensive — the legacyID index does not cover the time partition, so this scans
 // every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
-	list, err := s.k8sClient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%d", annotationpkg.LabelKeyLegacyID, annotationID),
-	})
+	rc, err := s.getRESTClient()
 	if err != nil {
 		return nil, err
+	}
+
+	namespace := s.k8sClient.GetNamespace(orgID)
+	raw, err := rc.Get().
+		AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search").
+		Param("legacyID", strconv.FormatInt(annotationID, 10)).
+		Param("includeDeleted", "true").
+		DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var list annotationV0.AnnotationList
+	if err := json.Unmarshal(raw, &list); err != nil {
+		return nil, fmt.Errorf("decode search response: %w", err)
 	}
 	if len(list.Items) == 0 {
 		return nil, ErrNotFound
 	}
-	return fromUnstructured(&list.Items[0])
+	return &list.Items[0], nil
 }
 
 func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
 	return s.k8sClient.GetUsersFromMeta(ctx, usersMeta)
 }
 
-// Search calls the /search custom route, which handles all filtering server-side including tags.
+// Search calls the /search custom route, which handles all filtering server-side including
+// tags. It includes tombstones for soft-deleted annotations.
 func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error) {
 	rc, err := s.getRESTClient()
 	if err != nil {
@@ -138,7 +153,9 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 	}
 
 	namespace := s.k8sClient.GetNamespace(orgID)
-	req := rc.Get().AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search")
+	req := rc.Get().
+		AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search").
+		Param("includeDeleted", "true")
 
 	if query.DashboardUID != "" {
 		req = req.Param("dashboardUID", query.DashboardUID)

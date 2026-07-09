@@ -16,11 +16,12 @@ func TestMerge(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
-		new    []*annotations.ItemDTO
-		legacy []*annotations.ItemDTO
-		limit  int64
-		want   []*annotations.ItemDTO
+		name    string
+		new     []*annotations.ItemDTO
+		legacy  []*annotations.ItemDTO
+		deleted map[int64]bool
+		limit   int64
+		want    []*annotations.ItemDTO
 	}{
 		{
 			name:   "both empty",
@@ -57,11 +58,19 @@ func TestMerge(t *testing.T) {
 			limit:  0,
 			want:   []*annotations.ItemDTO{item(1, 30), item(2, 20), item(3, 10)},
 		},
+		{
+			name:    "tombstoned legacy item is suppressed",
+			new:     []*annotations.ItemDTO{item(1, 30)},
+			legacy:  []*annotations.ItemDTO{item(2, 20), item(3, 10)},
+			deleted: map[int64]bool{2: true},
+			limit:   10,
+			want:    []*annotations.ItemDTO{item(1, 30), item(3, 10)},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Merge(tt.new, tt.legacy, tt.limit)
+			got := Merge(tt.new, tt.legacy, tt.deleted, tt.limit)
 			require.Equal(t, tt.want, got)
 		})
 	}
