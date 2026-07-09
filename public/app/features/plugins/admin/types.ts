@@ -29,6 +29,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   downloads: number;
   hasUpdate: boolean;
   id: string;
+  aliasIDs?: string[];
   info: CatalogPluginInfo;
   isDev: boolean;
   isCore: boolean;
@@ -219,6 +220,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
     updated: string;
   };
   name: string;
+  aliasIDs?: string[];
   pinned: boolean;
   signature: PluginSignatureStatus;
   signatureOrg: string;

@@ -27,6 +27,7 @@ import {
   type LocalPlugin,
   type InstancePlugin,
   type ProvisionedPlugin,
+  type PluginCatalogStoreState,
   PluginStatus,
 } from '../types';
 
@@ -157,14 +158,16 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string, { state: PluginCatalogStoreState }>(
   `${STATE_PREFIX}/fetchDetails`,
   async (id, thunkApi) => {
     try {
       const details = await getPluginDetails(id);
-
+      const state = thunkApi.getState();
+      const allPlugins = Object.values(state.plugins.items.entities);
+      const canonical = allPlugins.find((p) => p?.aliasIDs?.includes(id));
       return {
-        id,
+        id: canonical?.id ?? id,
         changes: { details },
       };
     } catch (e) {
