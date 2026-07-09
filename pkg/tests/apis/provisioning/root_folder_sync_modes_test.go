@@ -1,9 +1,7 @@
 package provisioning
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -66,15 +64,14 @@ func TestIntegrationProvisioning_RootFolder_FolderMode(t *testing.T) {
 	requireRootFolderManagerAnnotations(t, root, repo)
 
 	// The default permissions must be granted on the root folder.
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-	requireDefaultRootFolderPermissions(t, addr, repo)
+	common.RequireDefaultRootFolderPermissions(t, helper, repo)
 
 	// The nested child folder is parented under the root, so it must NOT receive
 	// the default permissions — those are granted on root-level folders only.
 	child := findManagedFolderBySourcePath(t, helper, repo, "team")
 	require.Equal(t, repo, child.GetAnnotations()[utils.AnnoKeyFolder],
 		"nested folder should be parented under the repository root folder")
-	requireNoDefaultRootFolderPermissions(t, addr, child.GetName())
+	common.RequireNoDefaultRootFolderPermissions(t, helper, child.GetName())
 }
 
 // TestIntegrationProvisioning_RootFolder_FolderlessMode verifies that a repository
@@ -107,8 +104,6 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 	_, err := helper.Folders.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 	require.Error(t, err, "folderless mode must not create a repo-named wrapper folder")
 
-	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
-
 	// Each top-level directory becomes a root folder with default annotations and permissions.
 	for _, sourcePath := range []string{"applications", "platform"} {
 		folder := findManagedFolderBySourcePath(t, helper, repo, sourcePath)
@@ -118,7 +113,7 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 			"folderless root folder title should default to the directory name")
 
 		requireRootFolderManagerAnnotations(t, folder, repo)
-		requireDefaultRootFolderPermissions(t, addr, folder.GetName())
+		common.RequireDefaultRootFolderPermissions(t, helper, folder.GetName())
 	}
 
 	// The nested "applications/nested" folder is a child (parented under the
@@ -127,7 +122,7 @@ func TestIntegrationProvisioning_RootFolder_FolderlessMode(t *testing.T) {
 	child := findManagedFolderBySourcePath(t, helper, repo, "applications/nested")
 	require.Equal(t, applications.GetName(), child.GetAnnotations()[utils.AnnoKeyFolder],
 		"nested folder should be parented under the applications root folder")
-	requireNoDefaultRootFolderPermissions(t, addr, child.GetName())
+	common.RequireNoDefaultRootFolderPermissions(t, helper, child.GetName())
 }
 
 // findManagedFolderBySourcePath returns the folder managed by repoName whose
@@ -179,91 +174,4 @@ func requireRootFolderManagerAnnotations(t *testing.T, folder *unstructured.Unst
 		"root folder %q must have no parent folder", folder.GetName())
 	require.Empty(t, ann[utils.AnnoKeyGrantPermissions],
 		"grant-permissions annotation should be cleared after the default grant for %q", folder.GetName())
-}
-
-// requireDefaultRootFolderPermissions asserts that a root folder carries the
-// default role-based permissions granted on creation: Editor → Edit (2) and
-// Viewer → View (1). The creator-admin grant depends on the caller identity
-// type and is intentionally not asserted here.
-func requireDefaultRootFolderPermissions(t *testing.T, addr, folderUID string) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		perms := getFolderPermissions(c, addr, folderUID)
-		assertPermissionContainsRole(c, perms, "Editor", 2)
-		assertPermissionContainsRole(c, perms, "Viewer", 1)
-	}, 30*time.Second, 100*time.Millisecond,
-		"root folder %q should have default Editor/Viewer permissions", folderUID)
-}
-
-// requireNoDefaultRootFolderPermissions asserts that a folder was NOT granted
-// the root-level default permissions. Default Editor/Viewer grants are applied
-// only to root folders (empty parent); nested folders inherit access from their
-// parent and carry no explicit default ACL. The GET endpoint returns a folder's
-// own managed ACL entries (not inherited ones), so the defaults must be absent.
-func requireNoDefaultRootFolderPermissions(t *testing.T, addr, folderUID string) {
-	t.Helper()
-	// A one-shot check is sufficient: the child folder was already confirmed to
-	// exist (so sync processed it), and default permissions are never set on
-	// nested folders — there is no later write that could add them.
-	var perms []interface{}
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		perms = getFolderPermissions(c, addr, folderUID)
-	}, 30*time.Second, 100*time.Millisecond, "should be able to read permissions for %q", folderUID)
-
-	assertPermissionLacksRole(t, perms, "Editor", 2)
-	assertPermissionLacksRole(t, perms, "Viewer", 1)
-}
-
-// getFolderPermissions reads the ACL entries for a folder via the legacy
-// folder permissions API. It returns the decoded entries, or reports an error
-// on the CollectT (so it can be used inside EventuallyWithT).
-func getFolderPermissions(c *assert.CollectT, addr, folderUID string) []interface{} {
-	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", addr, folderUID)
-	resp, err := http.Get(u) //nolint:gosec
-	if !assert.NoError(c, err, "GET folder permissions for %q", folderUID) {
-		return nil
-	}
-	defer resp.Body.Close() //nolint:errcheck
-	if !assert.Equal(c, http.StatusOK, resp.StatusCode, "unexpected status from permissions endpoint for %q", folderUID) {
-		return nil
-	}
-	var perms []interface{}
-	if !assert.NoError(c, json.NewDecoder(resp.Body).Decode(&perms), "decode permissions response for %q", folderUID) {
-		return nil
-	}
-	return perms
-}
-
-// assertPermissionContainsRole asserts that perms contains at least one entry
-// matching the given built-in role and numeric permission level. JSON numbers
-// decode as float64, so the comparison is done via float64.
-func assertPermissionContainsRole(c *assert.CollectT, perms []interface{}, expectedRole string, expectedPermission int) {
-	for _, p := range perms {
-		entry, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		role, _ := entry["role"].(string)
-		level, _ := entry["permission"].(float64)
-		if role == expectedRole && int(level) == expectedPermission {
-			return
-		}
-	}
-	c.Errorf("expected role=%q permission=%d in ACL entries; got: %v", expectedRole, expectedPermission, perms)
-}
-
-// assertPermissionLacksRole asserts that perms contains NO entry matching the
-// given built-in role and numeric permission level.
-func assertPermissionLacksRole(t *testing.T, perms []interface{}, role string, permission int) {
-	t.Helper()
-	for _, p := range perms {
-		entry, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		r, _ := entry["role"].(string)
-		level, _ := entry["permission"].(float64)
-		require.Falsef(t, r == role && int(level) == permission,
-			"did not expect default role=%q permission=%d on non-root folder; got: %v", role, permission, perms)
-	}
 }
