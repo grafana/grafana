@@ -239,9 +239,11 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   };
 
   const onStaticOptionsChange = (staticOptions: StaticOptionsType) => {
-    updateVariable(draftVariable, { staticOptions });
+    draftVariable.setState({ staticOptions });
   };
   const onStaticOptionsOrderChange = (staticOptionsOrder: StaticOptionsOrderType) => {
+    // we force a query to run so the user does not have to click the "Refresh preview" button after selecting a new sort criteria
+    // compared to the above, this case is less frequent so querying each time the sort order changes is more affordable in terms of performance
     updateVariable(draftVariable, { staticOptionsOrder });
   };
 

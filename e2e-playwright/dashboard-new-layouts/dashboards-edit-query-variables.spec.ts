@@ -72,18 +72,21 @@ test.describe(
       await page.keyboard.press('Tab');
       await page.keyboard.type('Custom value one');
 
-      // 8. Assert that the first option has "Custom value one"
-      await expect(previewOptions.first()).toHaveText('Custom value one');
-
-      // 9. Press the Enter key
+      // 8. Press the Enter key
       await page.keyboard.press('Enter');
 
-      // 10. Type "custom-value-2" then press the tab key then type "Custom value two"
+      // 9. Type "custom-value-2" then press the tab key then type "Custom value two"
       await page.keyboard.type('custom-value-2');
       await page.keyboard.press('Tab');
       await page.keyboard.type('Custom value two');
 
-      // 11. Assert that the 2nd option has "Custom value two"
+      // 10, Click the "Refresh preview" button
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton)
+        .click();
+
+      // 11. Assert that both options have been added
+      await expect(previewOptions.first()).toHaveText('Custom value one');
       await expect(previewOptions.nth(1)).toHaveText('Custom value two');
 
       // 12. Press the "Apply" button
