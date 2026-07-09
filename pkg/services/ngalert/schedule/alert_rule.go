@@ -381,17 +381,16 @@ func (a *alertRule) Run() error {
 			ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 			defer cancelFunc()
 
+			a.logger.Info("Stopping alert rule routine", "reason", reason)
 			if errors.Is(reason, errRuleDeleted) {
 				// Clean up the state and send resolved notifications for firing alerts only if the reason for stopping
 				// the evaluation loop is that the rule was deleted.
 				stateTransitions := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
 				a.expireAndSend(grafanaCtx, stateTransitions)
-			} else {
-				// Otherwise, just clean up the cache.
-				a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
+				return nil
 			}
-
-			a.logger.Debug("Stopping alert rule routine", "reason", reason)
+			// Otherwise, just clean up the cache.
+			a.stateManager.ForgetStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key)
 			return nil
 		}
 	}
@@ -435,24 +434,24 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 
 		// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
 		if retry {
-			// The only thing that can return non-nil `err` from ruleEval.Evaluate is the server side expression pipeline.
-			// This includes transport errors such as transient network errors.
-			if err != nil {
+			// `err` is set only when the SSE pipeline itself failed; retry it unless it is
+			// deterministically non-retryable. The `err == nil` guard below is load-bearing:
+			// with a non-nil `err`, `results` is nil and HasNonRetryableErrors() would say retryable.
+			if err != nil && !eval.IsNonRetryableError(err) {
 				span.SetStatus(codes.Error, "rule evaluation failed")
 				span.RecordError(err)
 				return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
-			}
-
-			// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
-			if !results.HasNonRetryableErrors() {
+			} else if err == nil && !results.HasNonRetryableErrors() {
+				// If the pipeline executed successfully but have other types of errors that can be retryable, we should do so.
 				span.SetStatus(codes.Error, "rule evaluation failed")
-				span.RecordError(err)
+				span.RecordError(results.Error())
 				return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
 			}
-		} else {
-			// Only count the final attempt as a failure.
-			evalTotalFailures.Inc()
 		}
+
+		// Final failure (last attempt or non-retryable): count it once. Previously this ran
+		// only on the last attempt, so non-retryable early-stops were undercounted.
+		evalTotalFailures.Inc()
 
 		// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.
 		if results == nil {
@@ -498,7 +497,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.StateTransitions) definitions.PostableAlerts {
 	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	for _, alertState := range states {
-		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL, a.featureToggles))
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 
 	if len(alerts.PostableAlerts) > 0 {
@@ -510,7 +509,7 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 
 // sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
 func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
-	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock, a.featureToggles)
+	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, a.key.AlertRuleKey, expiredAlerts)
 	}

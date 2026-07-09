@@ -49,6 +49,9 @@ jest.mock('./MetricsQueryEditor/SQLCodeEditor', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({
+    publish: jest.fn(),
+  }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     featureToggles: {

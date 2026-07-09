@@ -13,6 +13,20 @@ import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
 import { type Options } from './panelcfg.gen';
 
+const MAX_PREVIEW_SERIES = 6;
+
+export const GAUGE_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
+  maxSeries: MAX_PREVIEW_SERIES,
+  previewModifier: (s) => {
+    if (s.options?.reduceOptions) {
+      s.options.reduceOptions.limit = 4;
+    }
+    if (s.fieldConfig) {
+      s.fieldConfig.defaults.unit = 'short';
+    }
+  },
+};
+
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
@@ -21,16 +35,7 @@ const withDefaults = (
       barWidthFactor: 0.3,
       showThresholdMarkers: false,
     },
-    cardOptions: {
-      previewModifier: (s) => {
-        if (s.options?.reduceOptions) {
-          s.options.reduceOptions.limit = 4;
-        }
-        if (s.fieldConfig) {
-          s.fieldConfig.defaults.unit = 'short';
-        }
-      },
-    },
+    cardOptions: GAUGE_CARD_OPTIONS,
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
 
 const MAX_GAUGES = 10;

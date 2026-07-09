@@ -40,14 +40,6 @@ func runDashboardTest(t *testing.T, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {
-					DualWriterMode: rest.Mode5,
-				},
-				"folders.folder.grafana.app": {
-					DualWriterMode: rest.Mode5,
-				},
-			},
 		})
 		t.Cleanup(helper.Shutdown)
 
@@ -260,7 +252,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			input: map[string]any{
 				"panels": []any{}, // this used to be a panic
 			},
-			expect: "Dashboard is missing required title property",
+			expect: "Dashboard spec is missing required title property",
 		}}
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
@@ -428,6 +420,77 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	}
 
 	//---------------------------------------------------------
+	// List as a Kubernetes Table — verify the Tags column is populated
+	//---------------------------------------------------------
+
+	t.Run("list as table includes tags", func(t *testing.T) {
+		// Tags must show up in the Table response for each dashboard listed in its
+		// native API version. The Accept header asks for a meta.k8s.io Table, which
+		// is what kubectl uses for `kubectl get`.
+		cases := []struct {
+			gv       schema.GroupVersion
+			name     string
+			wantTags []string
+		}{
+			{dashboardV0.GroupVersion, "test-v0", []string{"aaa", "bbb"}},
+			{dashboardV1.GroupVersion, "test-v1", []string{"bbb", "ccc"}},
+			{dashboardV2beta1.GroupVersion, "test-v2", []string{"ccc", "ddd"}},
+		}
+		ns := helper.Org1.Admin.Identity.GetNamespace()
+
+		for _, tc := range cases {
+			t.Run(tc.gv.String(), func(t *testing.T) {
+				cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+				cfg.GroupVersion = &tc.gv
+				restClient, err := k8srest.RESTClientFor(cfg)
+				require.NoError(t, err)
+
+				var statusCode int
+				res := restClient.Get().
+					AbsPath("apis", tc.gv.Group, tc.gv.Version, "namespaces", ns, "dashboards").
+					SetHeader("Accept", "application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/json").
+					Do(ctx).
+					StatusCode(&statusCode)
+				require.NoError(t, res.Error())
+				require.Equal(t, http.StatusOK, statusCode)
+
+				raw, err := res.Raw()
+				require.NoError(t, err)
+
+				table := &metav1.Table{}
+				require.NoError(t, json.Unmarshal(raw, table))
+
+				tagsCol, nameCol := -1, -1
+				for i, col := range table.ColumnDefinitions {
+					switch col.Name {
+					case "Tags":
+						tagsCol = i
+					case "Name":
+						nameCol = i
+					}
+				}
+				require.GreaterOrEqual(t, tagsCol, 0, "Tags column should be present in %s", tc.gv.String())
+				require.GreaterOrEqual(t, nameCol, 0, "Name column should be present in %s", tc.gv.String())
+
+				found := false
+				for _, row := range table.Rows {
+					name, _ := row.Cells[nameCol].(string)
+					if name != tc.name {
+						continue
+					}
+					found = true
+					raw, err := json.Marshal(row.Cells[tagsCol])
+					require.NoError(t, err)
+					var tags []string
+					require.NoError(t, json.Unmarshal(raw, &tags))
+					require.ElementsMatch(t, tc.wantTags, tags, "tags for %s in %s", tc.name, tc.gv.String())
+				}
+				require.True(t, found, "dashboard %s should appear in %s list", tc.name, tc.gv.String())
+			})
+		}
+	})
+
+	//---------------------------------------------------------
 	// Check that the legacy APIs return the correct apiVersion
 	//---------------------------------------------------------
 
@@ -451,6 +514,45 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
+
+	//---------------------------------------------------------
+	// Reject creating a second dashboard that reuses an existing
+	// grafana.app/deprecatedInternalID. Without admission enforcement, two
+	// dashboards could end up sharing the same legacy id (the symptom was
+	// /api/dashboards/db returning 500 with "unexpected number of dashboards
+	// for id N. found: 2. desired: 1" on any later overwrite).
+	//---------------------------------------------------------
+	t.Run("reject duplicate deprecatedInternalID on create", func(t *testing.T) {
+		const sharedID = int64(99999)
+
+		newDashboardWithID := func(name string) *unstructured.Unstructured {
+			return &unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": "dashboard.grafana.app/v1",
+					"kind":       "Dashboard",
+					"metadata": map[string]any{
+						"name": name,
+					},
+					"spec": map[string]any{
+						"id":            sharedID,
+						"title":         name,
+						"schemaVersion": int64(36),
+					},
+				},
+			}
+		}
+
+		first, err := clientV1.Resource.Create(ctx, newDashboardWithID("dup-id-a"), metav1.CreateOptions{})
+		require.NoError(t, err, "first create with spec.id should succeed")
+		require.Equal(t, "99999", first.GetLabels()[utils.LabelKeyDeprecatedInternalID], //nolint:staticcheck
+			"mutation hook should lift spec.id onto the label")
+
+		_, err = clientV1.Resource.Create(ctx, newDashboardWithID("dup-id-b"), metav1.CreateOptions{})
+		require.Error(t, err, "second create with same spec.id must be rejected")
+		require.True(t, errors.IsConflict(err),
+			"expected HTTP 409 Conflict, got %T: %v", err, err)
+		require.Contains(t, err.Error(), "deprecatedInternalID=99999")
+	})
 }
 
 func TestIntegrationListPagination(t *testing.T) {

@@ -22,8 +22,9 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -236,7 +237,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       }
 
       if (isNameExistsError(error)) {
-        return <NameAlreadyExistsError saveButton={saveButton} cancelButton={cancelButton} />;
+        return <NameAlreadyExistsError />;
       }
 
       if (isPluginDashboardError(error)) {

@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -123,15 +124,9 @@ func TestIntegrationHAEvaluation_StatePreservedOnFailover(t *testing.T) {
 	// Wait for rule to be firing (past the pending period).
 	waitForRuleFiring(t, grafanas[primaryIdx].Client, haTestRuleName)
 
-	// Remember the alert's StartsAt time from the primary.
-	alertsBefore, status, _ := grafanas[primaryIdx].Client.GetActiveAlertsWithStatus(t)
-	require.Equal(t, http.StatusOK, status)
-	require.NotEmpty(t, alertsBefore)
-	alertBefore := findAlert(alertsBefore, haTestRuleName)
-	require.NotNil(t, alertBefore, "should find alert")
-	startsAtBefore := time.Time(*alertBefore.StartsAt)
-
-	// Make sure alerts are on all nodes before stopping primary.
+	// Make sure alerts are on all nodes before stopping primary. Alert delivery
+	// to the Alertmanager is asynchronous, so the alert may not be visible
+	// immediately after the rule transitions to firing.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		for i, g := range grafanas {
 			alerts, status, _ := g.Client.GetActiveAlertsWithStatus(t)
@@ -139,6 +134,14 @@ func TestIntegrationHAEvaluation_StatePreservedOnFailover(t *testing.T) {
 			assert.NotEmpty(c, alerts, "Instance %d should have alerts before failover", i+1)
 		}
 	}, 30*time.Second, 2*time.Second)
+
+	// Remember the alert's StartsAt time from the primary.
+	alertsBefore, status, _ := grafanas[primaryIdx].Client.GetActiveAlertsWithStatus(t)
+	require.Equal(t, http.StatusOK, status)
+	require.NotEmpty(t, alertsBefore)
+	alertBefore := findAlert(alertsBefore, haTestRuleName)
+	require.NotNil(t, alertBefore, "should find alert")
+	startsAtBefore := time.Time(*alertBefore.StartsAt)
 
 	// Stop the primary node.
 	grafanas[primaryIdx].stop(t)
@@ -177,13 +180,19 @@ func TestIntegrationHAEvaluation_StatePreservedOnFailover(t *testing.T) {
 	require.NotNil(t, rule)
 	require.Equal(t, "firing", rule.State, "rule should remain firing after failover")
 
-	// Verify the alert's StartsAt time is preserved (not reset).
-	alertsAfter, status, _ := remainingGrafanas[newPrimaryIdx].Client.GetActiveAlertsWithStatus(t)
-	require.Equal(t, http.StatusOK, status)
-	require.NotEmpty(t, alertsAfter, "alerts should still be present after failover")
-	alertAfter := findAlert(alertsAfter, haTestRuleName)
-	require.NotNil(t, alertAfter, "should find alert")
-	startsAtAfter := time.Time(*alertAfter.StartsAt)
+	// Verify the alert's StartsAt time is preserved (not reset). The new primary
+	// delivers alerts to the Alertmanager asynchronously after it starts
+	// evaluating, so retry until the alert is visible.
+	var startsAtAfter time.Time
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		alertsAfter, status, _ := remainingGrafanas[newPrimaryIdx].Client.GetActiveAlertsWithStatus(t)
+		assert.Equal(c, http.StatusOK, status)
+		alertAfter := findAlert(alertsAfter, haTestRuleName)
+		if !assert.NotNil(c, alertAfter, "alert should be present after failover") {
+			return
+		}
+		startsAtAfter = time.Time(*alertAfter.StartsAt)
+	}, 30*time.Second, 1*time.Second)
 
 	timeDiff := startsAtAfter.Sub(startsAtBefore).Abs()
 	require.Less(t, timeDiff, 5*time.Second, "StartsAt should be preserved (diff: %v)", timeDiff)
@@ -376,7 +385,7 @@ func waitForClusterSettled(t *testing.T, grafanas []*haGrafana) {
 			pos := getPeerPosition(t, g.Addr)
 			positions[pos] = true
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			assert.True(c, positions[i], "Position %d should be assigned", i)
 		}
 	}, 30*time.Second, 1*time.Second)
@@ -449,6 +458,7 @@ func assertConsistentRuleMetadata(t *testing.T, grafanas []*haGrafana) {
 			return a.Labels.Get("alertname") < b.Labels.Get("alertname")
 		}),
 		cmpopts.IgnoreFields(apimodels.AlertingRule{}, "LastEvaluation", "EvaluationTime"),
+		cmpopts.EquateComparable(promlabels.Labels{}),
 	}
 
 	var refRules map[string]apimodels.AlertingRule

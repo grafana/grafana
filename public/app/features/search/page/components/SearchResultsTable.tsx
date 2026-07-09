@@ -124,7 +124,7 @@ export const SearchResultsTable = React.memo(
 
     const handleLoadMore = useCallback(
       async (startIndex: number, endIndex: number) => {
-        await response.loadMoreItems(startIndex, endIndex);
+        await response.loadMoreItems(endIndex);
 
         // After we load more items, select them if the "select all" checkbox
         // is selected
@@ -338,6 +338,10 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       userSelect: 'text',
       whiteSpace: 'nowrap',
     }),
+    nameCell: css({
+      // Gap between name and description tooltip
+      gap: theme.spacing(0.5),
+    }),
     typeCell: css({
       gap: theme.spacing(0.5),
     }),
@@ -380,6 +384,7 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
     tagList: css({
       justifyContent: 'flex-start',
       flexWrap: 'nowrap',
+      overflowX: 'auto',
     }),
   };
 };

@@ -1,16 +1,5 @@
-import {
-  DataTransformerID,
-  standardTransformers,
-  type TransformerRegistryItem,
-  type TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type TransformerUIProps } from '@grafana/data';
 import { type SeriesToRowsTransformerOptions } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
-
-import darkImage from '../images/dark/seriesToRows.svg';
-import lightImage from '../images/light/seriesToRows.svg';
-
 export const SeriesToRowsTransformerEditor = ({
   input,
   options,
@@ -18,18 +7,3 @@ export const SeriesToRowsTransformerEditor = ({
 }: TransformerUIProps<SeriesToRowsTransformerOptions>) => {
   return null;
 };
-
-export const getSeriesToRowsTransformerRegistryItem: () => TransformerRegistryItem<SeriesToRowsTransformerOptions> =
-  () => ({
-    id: DataTransformerID.seriesToRows,
-    editor: SeriesToRowsTransformerEditor,
-    transformation: standardTransformers.seriesToRowsTransformer,
-    name: t('transformers.series-to-rows-transformer-editor.name.series-to-rows', 'Series to rows'),
-    description: t(
-      'transformers.series-to-rows-transformer-editor.description.merge-multiple-series',
-      'Merge multiple series. Return time, metric and values as a row.'
-    ),
-    categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

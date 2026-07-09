@@ -13,6 +13,7 @@
 import * as common from '@grafana/schema';
 
 export interface Options {
+  allowDownload?: boolean;
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   detailsMode?: ('inline' | 'sidebar');

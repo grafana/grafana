@@ -25,7 +25,7 @@ export function forceObservableCompletion(
   );
 }
 
-export function expectObservableToBeDefined(received: unknown): jest.CustomMatcherResult | null {
+function expectObservableToBeDefined(received: unknown): jest.CustomMatcherResult | null {
   if (received) {
     return null;
   }
@@ -38,7 +38,7 @@ Expected ${printReceived(received)} to be ${printExpected('defined')}.`,
   };
 }
 
-export function expectObservableToBeObservable(received: unknown): jest.CustomMatcherResult | null {
+function expectObservableToBeObservable(received: unknown): jest.CustomMatcherResult | null {
   if (isObservable(received)) {
     return null;
   }

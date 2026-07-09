@@ -150,7 +150,7 @@ func (col *Column) ValueOfV(dataStruct *reflect.Value) (*reflect.Value, error) {
 		}
 		if fieldValue.Kind() == reflect.Struct {
 			fieldValue = fieldValue.FieldByName(fieldPath[i+1])
-		} else if fieldValue.Kind() == reflect.Ptr {
+		} else if fieldValue.Kind() == reflect.Pointer {
 			if fieldValue.IsNil() {
 				fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 			}
@@ -183,7 +183,7 @@ var DefaultCacheSize = 200
 
 func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
 	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Map {
 		return "", []interface{}{}, ErrNoMapPointer
 	}
 
@@ -204,7 +204,7 @@ func MapToSlice(query string, mp interface{}) (string, []interface{}, error) {
 
 func StructToSlice(query string, st interface{}) (string, []interface{}, error) {
 	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 		return "", []interface{}{}, ErrNoStructPointer
 	}
 
@@ -1068,7 +1068,7 @@ func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 	vvvs := make([]reflect.Value, len(dest))
 	for i, s := range dest {
 		vv := reflect.ValueOf(s)
-		if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+		if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 			return errors.New("dest should be a struct's pointer")
 		}
 
@@ -1122,7 +1122,7 @@ func fieldByName(v reflect.Value, name string) reflect.Value {
 // scan data to a struct's pointer according field name
 func (rs *Rows) ScanStructByName(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 		return errors.New("dest should be a struct's pointer")
 	}
 
@@ -1148,7 +1148,7 @@ func (rs *Rows) ScanStructByName(dest interface{}) error {
 // scan data to a slice's pointer, slice's length should equal to columns' number
 func (rs *Rows) ScanSlice(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Slice {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Slice {
 		return errors.New("dest should be a slice's pointer")
 	}
 
@@ -1183,7 +1183,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 // scan data to a map's pointer
 func (rs *Rows) ScanMap(dest interface{}) error {
 	vv := reflect.ValueOf(dest)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Map {
 		return errors.New("dest should be a map's pointer")
 	}
 
@@ -1446,7 +1446,7 @@ func (db *DB) Prepare(query string) (*Stmt, error) {
 
 func (s *Stmt) ExecMapContext(ctx context.Context, mp interface{}) (sql.Result, error) {
 	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Map {
 		return nil, errors.New("mp should be a map's pointer")
 	}
 
@@ -1463,7 +1463,7 @@ func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
 
 func (s *Stmt) ExecStructContext(ctx context.Context, st interface{}) (sql.Result, error) {
 	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 		return nil, errors.New("mp should be a map's pointer")
 	}
 
@@ -1492,7 +1492,7 @@ func (s *Stmt) Query(args ...interface{}) (*Rows, error) {
 
 func (s *Stmt) QueryMapContext(ctx context.Context, mp interface{}) (*Rows, error) {
 	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Map {
 		return nil, errors.New("mp should be a map's pointer")
 	}
 
@@ -1510,7 +1510,7 @@ func (s *Stmt) QueryMap(mp interface{}) (*Rows, error) {
 
 func (s *Stmt) QueryStructContext(ctx context.Context, st interface{}) (*Rows, error) {
 	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 		return nil, errors.New("mp should be a map's pointer")
 	}
 
@@ -1537,7 +1537,7 @@ func (s *Stmt) QueryRow(args ...interface{}) *Row {
 
 func (s *Stmt) QueryRowMapContext(ctx context.Context, mp interface{}) *Row {
 	vv := reflect.ValueOf(mp)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Map {
 		return &Row{nil, errors.New("mp should be a map's pointer")}
 	}
 
@@ -1555,7 +1555,7 @@ func (s *Stmt) QueryRowMap(mp interface{}) *Row {
 
 func (s *Stmt) QueryRowStructContext(ctx context.Context, st interface{}) *Row {
 	vv := reflect.ValueOf(st)
-	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
+	if vv.Kind() != reflect.Pointer || vv.Elem().Kind() != reflect.Struct {
 		return &Row{nil, errors.New("st should be a struct's pointer")}
 	}
 
@@ -2085,29 +2085,29 @@ var (
 )
 
 var (
-	PtrIntType   = reflect.PtrTo(IntType)
-	PtrInt8Type  = reflect.PtrTo(Int8Type)
-	PtrInt16Type = reflect.PtrTo(Int16Type)
-	PtrInt32Type = reflect.PtrTo(Int32Type)
-	PtrInt64Type = reflect.PtrTo(Int64Type)
+	PtrIntType   = reflect.PointerTo(IntType)
+	PtrInt8Type  = reflect.PointerTo(Int8Type)
+	PtrInt16Type = reflect.PointerTo(Int16Type)
+	PtrInt32Type = reflect.PointerTo(Int32Type)
+	PtrInt64Type = reflect.PointerTo(Int64Type)
 
-	PtrUintType   = reflect.PtrTo(UintType)
-	PtrUint8Type  = reflect.PtrTo(Uint8Type)
-	PtrUint16Type = reflect.PtrTo(Uint16Type)
-	PtrUint32Type = reflect.PtrTo(Uint32Type)
-	PtrUint64Type = reflect.PtrTo(Uint64Type)
+	PtrUintType   = reflect.PointerTo(UintType)
+	PtrUint8Type  = reflect.PointerTo(Uint8Type)
+	PtrUint16Type = reflect.PointerTo(Uint16Type)
+	PtrUint32Type = reflect.PointerTo(Uint32Type)
+	PtrUint64Type = reflect.PointerTo(Uint64Type)
 
-	PtrFloat32Type = reflect.PtrTo(Float32Type)
-	PtrFloat64Type = reflect.PtrTo(Float64Type)
+	PtrFloat32Type = reflect.PointerTo(Float32Type)
+	PtrFloat64Type = reflect.PointerTo(Float64Type)
 
-	PtrComplex64Type  = reflect.PtrTo(Complex64Type)
-	PtrComplex128Type = reflect.PtrTo(Complex128Type)
+	PtrComplex64Type  = reflect.PointerTo(Complex64Type)
+	PtrComplex128Type = reflect.PointerTo(Complex128Type)
 
-	PtrStringType = reflect.PtrTo(StringType)
-	PtrBoolType   = reflect.PtrTo(BoolType)
-	PtrByteType   = reflect.PtrTo(ByteType)
+	PtrStringType = reflect.PointerTo(StringType)
+	PtrBoolType   = reflect.PointerTo(BoolType)
+	PtrByteType   = reflect.PointerTo(ByteType)
 
-	PtrTimeType = reflect.PtrTo(TimeType)
+	PtrTimeType = reflect.PointerTo(TimeType)
 )
 
 // Type2SQLType generate SQLType acorrding Go's type
@@ -2140,7 +2140,7 @@ func Type2SQLType(t reflect.Type) (st SQLType) {
 			// TODO need to handle association struct
 			st = SQLType{Text, 0, 0}
 		}
-	case reflect.Ptr:
+	case reflect.Pointer:
 		st = Type2SQLType(t.Elem())
 	default:
 		st = SQLType{Text, 0, 0}

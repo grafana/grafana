@@ -18,7 +18,7 @@ import { AssistantPopoverContext } from './AssistantPopoverContext';
 
 const HINT_KEY_PREFIX = 'assistant-hint-';
 
-export function panelHasData(panel: VizPanel): boolean {
+function panelHasData(panel: VizPanel): boolean {
   return panel.state.$data != null || panel.parent?.state.$data != null;
 }
 

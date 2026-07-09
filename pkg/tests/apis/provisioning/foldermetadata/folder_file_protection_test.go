@@ -20,7 +20,7 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	files := helper.NewFilesClient(repo)
 
 	// Create a managed folder so its _folder.json exists for PUT/DELETE tests.
-	resp := files.Post(t, "protected-folder/")
+	resp := files.Post(t, "protected-folder/", nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating protected-folder should succeed")
 
 	t.Run("POST to _folder.json is blocked", func(t *testing.T) {

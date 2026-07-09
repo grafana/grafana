@@ -6,6 +6,7 @@ import {
   mockCombinedCloudRuleNamespace,
   mockCombinedRule,
   mockCombinedRuleGroup,
+  mockGrafanaPromAlertingRule,
   mockGrafanaRulerRule,
   mockPromAlertingRule,
   mockRuleWithLocation,
@@ -14,9 +15,11 @@ import {
 
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import {
+  getPromGroupReadOnlyStatus,
   getRuleGroupLocationFromCombinedRule,
   getRuleGroupLocationFromRuleWithLocation,
   getRulePluginOrigin,
+  getRulerGroupReadOnlyStatus,
   isUngroupedRuleGroup,
 } from './rules';
 
@@ -145,5 +148,103 @@ describe('isUngroupedRuleGroup', () => {
   it('should return false for group names that contain but do not start with NO_GROUP_PREFIX', () => {
     expect(isUngroupedRuleGroup('prefix_no_group_for_rule_abc123')).toBe(false);
     expect(isUngroupedRuleGroup('MyGroup_no_group_for_rule_')).toBe(false);
+  });
+});
+
+describe('getRulerGroupReadOnlyStatus', () => {
+  it('reports readOnly=false for an editable Ruler group', () => {
+    const group = {
+      rules: [mockRulerAlertingRule()],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: false });
+  });
+
+  it('reports reason=plugin when any rule carries the plugin origin label', () => {
+    const group = {
+      rules: [mockRulerAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } })],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
+  it('reports reason=provisioned for a Grafana-managed rule with provenance', () => {
+    const group = {
+      rules: [
+        { ...mockGrafanaRulerRule(), grafana_alert: { ...mockGrafanaRulerRule().grafana_alert, provenance: 'api' } },
+      ],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'provisioned' });
+  });
+
+  it('reports reason=federated when the group has source_tenants', () => {
+    const group = {
+      rules: [mockRulerAlertingRule()],
+      source_tenants: ['tenant-1'],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'federated' });
+  });
+
+  it('prefers plugin over provisioned when both apply', () => {
+    const group = {
+      rules: [
+        { ...mockGrafanaRulerRule(), grafana_alert: { ...mockGrafanaRulerRule().grafana_alert, provenance: 'api' } },
+        mockRulerAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } }),
+      ],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
+  it('prefers provisioned over federated when both apply', () => {
+    const group = {
+      rules: [
+        { ...mockGrafanaRulerRule(), grafana_alert: { ...mockGrafanaRulerRule().grafana_alert, provenance: 'api' } },
+      ],
+      source_tenants: ['tenant-1'],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'provisioned' });
+  });
+
+  it('prefers plugin over federated when both apply', () => {
+    const group = {
+      rules: [mockRulerAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } })],
+      source_tenants: ['tenant-1'],
+    };
+    expect(getRulerGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
+  it('reports readOnly=false for a group with no rules', () => {
+    expect(getRulerGroupReadOnlyStatus({ rules: [] })).toEqual({ readOnly: false });
+  });
+});
+
+describe('getPromGroupReadOnlyStatus', () => {
+  it('reports readOnly=false for an editable Prom group', () => {
+    const group = { rules: [mockPromAlertingRule()] };
+    expect(getPromGroupReadOnlyStatus(group)).toEqual({ readOnly: false });
+  });
+
+  it('reports reason=plugin when any rule carries the plugin origin label', () => {
+    const group = {
+      rules: [mockPromAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } })],
+    };
+    expect(getPromGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
+  it('reports reason=provisioned for a Grafana-managed Prom rule with provenance', () => {
+    const group = { rules: [mockGrafanaPromAlertingRule({ provenance: 'api' })] };
+    expect(getPromGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'provisioned' });
+  });
+
+  it('prefers plugin over provisioned when both apply', () => {
+    const group = {
+      rules: [
+        mockGrafanaPromAlertingRule({ provenance: 'api' }),
+        mockPromAlertingRule({ labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/grafana-test-app' } }),
+      ],
+    };
+    expect(getPromGroupReadOnlyStatus(group)).toEqual({ readOnly: true, reason: 'plugin' });
+  });
+
+  it('reports readOnly=false for a group with no rules', () => {
+    expect(getPromGroupReadOnlyStatus({ rules: [] })).toEqual({ readOnly: false });
   });
 });

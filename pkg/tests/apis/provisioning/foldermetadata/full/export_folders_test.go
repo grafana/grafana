@@ -53,7 +53,7 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled(t *tes
 	ctx := context.Background()
 
 	const repoName = "git-export-no-meta"
-	helper.CreateExportGitRepo(t, repoName)
+	helper.CreateExportGitRepo(t, repoName, nil)
 
 	createUnmanagedFolder(t, helper, "git-no-meta-uid", "git-no-meta-folder")
 

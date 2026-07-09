@@ -66,7 +66,7 @@ export function DashboardControlsMenu({
           ))}
 
         {/* Links */}
-        {links.length > 0 && dashboardUID && (
+        {links.length > 0 && (
           <>
             {(variables.length > 0 || annotations.length > 0) && <MenuDivider />}
             {sortDefaultLinksFirst(links).map((link, index) => (

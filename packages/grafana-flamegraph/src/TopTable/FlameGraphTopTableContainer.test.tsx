@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -32,12 +33,7 @@ describe('FlameGraphTopTableContainer', () => {
 
   it('should render correctly', async () => {
     // Needed for AutoSizer to work in test
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: jest.fn(() => ({
-        width: 500,
-        height: 500,
-      })),
-    });
+    mockBoundingClientRect({ width: 500, height: 500 });
 
     setup();
     const rows = screen.getAllByRole('row');

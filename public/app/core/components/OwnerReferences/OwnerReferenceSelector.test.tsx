@@ -1,9 +1,9 @@
 import { HttpResponse, http } from 'msw';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { type FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { backendSrv } from '../../services/backend_srv';
@@ -12,7 +12,7 @@ import { OwnerReferenceSelector } from './OwnerReferenceSelector';
 
 setBackendSrv(backendSrv);
 const server = setupMockServer();
-comboboxTestSetup();
+mockComboboxRect();
 
 const toggle: Array<keyof FeatureToggles> = ['kubernetesTeamsApi'];
 

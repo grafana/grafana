@@ -19,7 +19,7 @@ export function DashboardLinksControls({ links, dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const linksToDisplay = excludeControlMenuLinks(links);
 
-  if (!uid || linksToDisplay.length === 0) {
+  if (linksToDisplay.length === 0) {
     return null;
   }
 
@@ -58,6 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       // Match variable/annotation alignment in the controls row
       alignSelf: 'flex-start',
+      verticalAlign: 'middle',
     }),
   };
 }

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
-  - ../../../http_api/folder_permissions/ # /docs/grafana/next/http_api/folder_permissions/
-  - ../../../developers/http_api/folder_permissions/ # /docs/grafana/next/developers/http_api/folder_permissions/
+  - ../../../../http_api/dashboardpermissions/ # /docs/grafana/next/http_api/dashboardpermissions/
+  - ../../../../http_api/folder_permissions/ # /docs/grafana/next/http_api/folder_permissions/
+  - ../../../../developers/http_api/folder_permissions/ # /docs/grafana/next/developers/http_api/folder_permissions/
   - ../../../../developer-resources/api-reference/http-api/folder_permissions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_permissions/
 description: Grafana Folder Permissions HTTP API
@@ -59,7 +59,7 @@ See note in the [introduction](#folder-permission-api) for an explanation.
 GET /api/folders/nErXDvCkzz/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**
@@ -138,7 +138,7 @@ See note in the [introduction](#folder-permission-api) for an explanation.
 POST /api/folders/nErXDvCkzz/permissions
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 {
   "items": [
     {

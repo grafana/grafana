@@ -121,20 +121,12 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),
     withAuth({
       name: 'influxdb',
       testDir: path.join(pluginDirRoot, '/influxdb'),
-    }),
-    withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
     }),
     withAuth({
       name: 'jaeger',
@@ -147,10 +139,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
-    }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
     }),
     {
       name: 'unauthenticated',

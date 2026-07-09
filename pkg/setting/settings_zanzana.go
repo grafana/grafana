@@ -70,6 +70,10 @@ type ZanzanaReconcilerSettings struct {
 	FolderAPIServerURL string
 	// URL of the IAM apiserver (standalone mode only, not needed for embedded).
 	IAMAPIServerURL string
+	// URL of the setting apiserver (setting.grafana.app). When set, the reconciler reads
+	// per-namespace anonymous-access config and reconciles the anonymous role assignment.
+	// Standalone mode only; for embedded the loopback client is used when available.
+	SettingAPIServerURL string
 	// Skip TLS verification when connecting to apiservers.
 	TLSInsecure bool
 	// Number of worker goroutines.
@@ -80,6 +84,8 @@ type ZanzanaReconcilerSettings struct {
 	WriteBatchSize int
 	// Size of the buffered work queue for namespaces.
 	QueueSize int
+	// Page size when listing CRDs from the Kubernetes API.
+	ListPageSize int
 
 	// --- HA leader election (standalone mode in K8s) ---
 
@@ -112,15 +118,21 @@ type ZanzanaServerSettings struct {
 	ListObjectsMaxResults uint32
 	// Deadline for the ListObjects() query. Default is 3 seconds.
 	ListObjectsDeadline time.Duration
-	// Use streamed version of list objects.
-	// Returns full list of objects, but takes more time.
-	UseStreamedListObjects bool
 	// URL for fetching signing keys.
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
 	// Page size for Read queries in reconciler. Default is 100.
 	ReadPageSize int32
+	// Max unique folder checks per batch-check phase before switching from OpenFGA BatchCheck
+	// to ListObjects. Reduces graph exploration when many distinct folders are checked. Default 20.
+	FolderCheckBatchThreshold int
+	// Max number of concurrent in-flight Check/BatchCheck/List requests.
+	// 0 means no limit (default). When reached, new requests are rejected with ResourceExhausted.
+	MaxConcurrentRequests int
+	// Max number of concurrent in-flight requests per namespace (tenant).
+	// 0 means no limit (default). Prevents a single noisy tenant from starving others.
+	MaxConcurrentRequestsPerNamespace int
 }
 
 type OpenFgaServerSettings struct {
@@ -317,10 +329,12 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
-	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
 	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 	zs.ReadPageSize = int32(serverSec.Key("read_page_size").MustInt(defaultReadPageSize))
+	zs.FolderCheckBatchThreshold = serverSec.Key("folder_check_batch_threshold").MustInt(20)
+	zs.MaxConcurrentRequests = serverSec.Key("max_concurrent_requests").MustInt(0)
+	zs.MaxConcurrentRequestsPerNamespace = serverSec.Key("max_concurrent_requests_per_namespace").MustInt(0)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))
@@ -398,11 +412,13 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
 	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
 	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
+	zr.SettingAPIServerURL = reconcilerSec.Key("setting_apiserver_url").MustString("")
 	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)
 	zr.WriteBatchSize = reconcilerSec.Key("write_batch_size").MustInt(100)
 	zr.QueueSize = reconcilerSec.Key("queue_size").MustInt(1000)
+	zr.ListPageSize = reconcilerSec.Key("list_page_size").MustInt(1000)
 	zr.LeaderElection = leaderelection.Config{
 		Enabled:       reconcilerSec.Key("leader_election_enabled").MustBool(false),
 		LeaseName:     reconcilerSec.Key("leader_election_lease_name").MustString("zanzana-mt-reconciler"),

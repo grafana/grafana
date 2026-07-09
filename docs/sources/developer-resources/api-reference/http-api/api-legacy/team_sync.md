@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/external_group_sync/ # /docs/grafana/next/http_api/external_group_sync/
-  - ../../../developers/http_api/external_group_sync/ # /docs/grafana/next/developers/http_api/external_group_sync/
-  - ../../../developers/http_api/team_sync/ # /docs/grafana/next/developers/http_api/team_sync/
+  - ../../../../http_api/external_group_sync/ # /docs/grafana/next/http_api/external_group_sync/
+  - ../../../../developers/http_api/external_group_sync/ # /docs/grafana/next/developers/http_api/external_group_sync/
+  - ../../../../developers/http_api/team_sync/ # /docs/grafana/next/developers/http_api/team_sync/
   - ../../../../developer-resources/api-reference/http-api/team_sync/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/team_sync/
 description: Grafana Team Sync HTTP API
@@ -50,7 +50,7 @@ See note in the [introduction](#external-group-synchronization-api) for an expla
 GET /api/teams/1/groups HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -134,7 +134,7 @@ See note in the [introduction](#external-group-synchronization-api) for an expla
 DELETE /api/teams/1/groups?groupId=cn%3Deditors%2Cou%3Dgroups%2Cdc%3Dgrafana%2Cdc%3Dorg HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -171,7 +171,7 @@ Search for team groups with pagination support.
 GET /api/teams/1/groups/search?name=editors&query=group&page=1&perpage=10 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

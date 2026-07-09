@@ -122,20 +122,24 @@ export class RequestsRecorder {
       labels.plugin_name = plugin_name;
     }
 
-    if (!noBodyStatusCode) {
-      const body = await response.body();
-      this.#inflatedSizeBytesCounter.inc(labels, body.length);
-    }
+    try {
+      if (!noBodyStatusCode) {
+        const body = await response.body();
+        this.#inflatedSizeBytesCounter.inc(labels, body.length);
+      }
 
-    const sizes = await response.request().sizes();
+      const sizes = await response.request().sizes();
 
-    this.#transferSizeBytesCounter.inc(labels, sizes.responseBodySize + sizes.responseHeadersSize);
-    this.#requestCountCounter.inc(labels);
+      this.#transferSizeBytesCounter.inc(labels, sizes.responseBodySize + sizes.responseHeadersSize);
+      this.#requestCountCounter.inc(labels);
+    } catch (e) {
+      console.warn('Failed to record metrics for response', response.url(), e);
+    } finally {
+      this.#requestsInFlight -= 1;
 
-    this.#requestsInFlight -= 1;
-
-    if (this.#requestsInFlight === 0 && this.#resolve) {
-      this.#resolve();
+      if (this.#requestsInFlight === 0 && this.#resolve) {
+        this.#resolve();
+      }
     }
   }
 

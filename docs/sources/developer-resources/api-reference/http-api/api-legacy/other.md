@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/other/ # /docs/grafana/next/http_api/other/
-  - ../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
+  - ../../../../http_api/other/ # /docs/grafana/next/http_api/other/
+  - ../../../../developers/http_api/other/ # /docs/grafana/next/developers/http_api/other/
   - ../../../../developer-resources/api-reference/http-api/other/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/other/
 description: Grafana Other HTTP API
@@ -32,7 +32,7 @@ title: 'Other HTTP API '
 GET /api/frontend/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -82,7 +82,7 @@ Content-Type: application/json
 GET /api/login/ping HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

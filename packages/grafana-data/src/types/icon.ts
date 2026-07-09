@@ -2,6 +2,7 @@ export const availableIconsIndex = {
   google: true,
   microsoft: true,
   github: true,
+  'github-enterprise': true,
   gitlab: true,
   okta: true,
   scim: true,
@@ -67,6 +68,7 @@ export const availableIconsIndex = {
   check: true,
   'check-circle': true,
   'check-square': true,
+  'checkbox-multiple': true,
   circle: true,
   'circle-mono': true,
   'clipboard-alt': true,
@@ -303,6 +305,10 @@ export const availableIconsIndex = {
   'cmab-logo': true,
   'lightbulb-alt': true,
   vial: true,
+  'anthropic-logo': true,
+  'cursor-logo': true,
+  'github-copilot-logo': true,
+  robot: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

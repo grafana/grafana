@@ -96,4 +96,11 @@ func addTeamMigrations(mg *Migrator) {
 	mg.AddMigration("Add unique index team_member_uid", NewAddIndexMigration(teamMemberV1, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
+
+	// Widen `team.updated` to millisecond precision so it can act as a
+	// resourceVersion for optimistic concurrency on writes. SQLite stores
+	// DATETIME values as TEXT verbatim and Postgres TIMESTAMP already
+	// preserves sub-second precision, so only MySQL needs an ALTER.
+	mg.AddMigration("Increase precision of team.updated to DATETIME(3)",
+		NewRawSQLMigration("").Mysql("ALTER TABLE team MODIFY updated DATETIME(3) NOT NULL;"))
 }

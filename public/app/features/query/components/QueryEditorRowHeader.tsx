@@ -179,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus': {
-        border: `2px solid ${theme.colors.primary.border}`,
+        border: `2px solid ${theme.colors.accent.border}`,
       },
 
       '&:hover, &:focus': {
@@ -190,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryName: css({
       fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.primary.text,
+      color: theme.colors.accent.text,
       cursor: 'pointer',
       overflow: 'hidden',
       marginLeft: theme.spacing(0.5),

@@ -34,6 +34,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -52,7 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -164,7 +165,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/connections/datasources", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/new", authorize(datasources.NewPageAccess), hs.Index)
 	r.Get("/connections/datasources/edit/*", authorize(datasources.EditPageAccess), hs.Index)
-	r.Get("/connections", authorize(datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections", reqSignedIn, hs.Index)
 	r.Get("/connections/add-new-connection", authorize(datasources.ConfigurationPageAccess), hs.Index)
 	// Plugin details pages
 	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg, hs.AccessControl), hs.Index)
@@ -198,18 +199,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.Index,
 		)
 
 		r.Get("/bootdata/:accessToken",
 			reqNoAuth,
 			hs.PublicDashboardsApi.Middleware.HandleView,
-			publicdashboardsapi.SetPublicDashboardAccessToken,
-			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
-			publicdashboardsapi.CountPublicDashboardRequest(),
+			publicdashboards.SetPublicDashboardAccessToken,
+			publicdashboards.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
+			publicdashboards.CountPublicDashboardRequest(),
 			hs.GetBootdata,
 		)
 	}
@@ -300,10 +301,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
-			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
-
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
@@ -330,12 +327,6 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/", authorize(ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetCurrentOrg))
 			orgRoute.Get("/quotas", authorize(ac.EvalPermission(ac.ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
-
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
-			// Will eventually be replaced with the 'object' route
-			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
-		}
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
@@ -401,11 +392,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
-
-		// Preferences
-		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
-			prefRoute.Post("/set-home-dash", routing.Wrap(hs.SetHomeDashboard))
-		})
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
@@ -624,6 +610,8 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 		} else {
 			if errors.Is(err, user.ErrUserNotFound) {
 				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else if k8serrors.IsForbidden(err) {
+				c.JsonApiErr(http.StatusForbidden, "Access denied to user", err)
 			} else {
 				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
 			}

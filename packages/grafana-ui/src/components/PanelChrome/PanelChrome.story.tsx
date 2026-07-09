@@ -1,8 +1,8 @@
-import { action } from '@storybook/addon-actions';
-import { type Meta, type StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { merge } from 'lodash';
 import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
+import { action } from 'storybook/actions';
 
 import { LoadingState } from '@grafana/data';
 
@@ -144,7 +144,15 @@ export const Examples = () => {
           })}
           {renderPanel('Content', {
             loadingState: LoadingState.Error,
-            title: 'No title, loadingState is Error, no statusMessage',
+            title: 'loadingState is Error, no statusMessage',
+          })}
+          {renderPanel('Content', {
+            title: 'With description',
+            description: 'This is a description',
+          })}
+          {renderPanel('Content', {
+            title: 'With a subtitle',
+            subtitle: 'This is a sub title with',
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
@@ -370,6 +378,7 @@ const description =
 
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,

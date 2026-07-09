@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Card, Checkbox, useTheme2 } from '@grafana/ui';
 
-export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
+type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
   children?: ReactNode;

@@ -52,6 +52,7 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
     };
   }, []);
 
+  // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
   return <SVG innerRef={svgRef} src={notFoundSvg} className={styles.svg} height={height} width={width} />;
 };
 

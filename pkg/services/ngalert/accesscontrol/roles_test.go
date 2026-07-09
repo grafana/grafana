@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const snapshotDir = "testdata"
@@ -39,7 +38,7 @@ func declareFixedRolesForTest(t *testing.T) []accesscontrol.RoleRegistration {
 		captured = append(captured, registrations...)
 		return nil
 	}
-	require.NoError(t, DeclareFixedRoles(svc, featuremgmt.WithFeatures()))
+	require.NoError(t, DeclareFixedRoles(svc))
 	require.NotEmpty(t, captured, "DeclareFixedRoles should register at least one role")
 	return captured
 }
@@ -169,11 +168,23 @@ func TestAllAlertingActions_BoundToFixedRoles(t *testing.T) {
 	allActions := allAlertingActions()
 	require.NotEmpty(t, allActions, "should find ActionAlerting* constants")
 
+	// intentionallyUnboundActions enumerates actions that are deliberately
+	// not granted to any fixed role — typically system-only actions that the
+	// in-process service identity holds (see serviceIdentityPermissions in
+	// pkg/apimachinery/identity/context.go) but no human role should.
+	intentionallyUnboundActions := map[string]bool{
+		accesscontrol.ActionAlertingConfigStatusUpdate: true,
+	}
+
 	var unbound []string
 	for _, action := range allActions {
-		if _, ok := boundActions[action]; !ok {
-			unbound = append(unbound, action)
+		if _, ok := boundActions[action]; ok {
+			continue
 		}
+		if intentionallyUnboundActions[action] {
+			continue
+		}
+		unbound = append(unbound, action)
 	}
 	sort.Strings(unbound)
 
@@ -253,6 +264,13 @@ func allAlertingActions() []string {
 		accesscontrol.ActionAlertingNotificationsProvisioningRead,
 		accesscontrol.ActionAlertingNotificationsProvisioningWrite,
 		accesscontrol.ActionAlertingProvisioningSetStatus,
+		accesscontrol.ActionAlertingAlertmanagerImportsCreate,
+		accesscontrol.ActionAlertingAlertmanagerImportsRead,
+		accesscontrol.ActionAlertingAlertmanagerImportsWrite,
+		accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+		accesscontrol.ActionAlertingConfigRead,
+		accesscontrol.ActionAlertingConfigUpdate,
+		accesscontrol.ActionAlertingConfigStatusUpdate,
 	}
 	sort.Strings(actions)
 	return actions

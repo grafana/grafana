@@ -29,6 +29,17 @@ const additionalProperties = {
   version: 1,
 };
 
+// from public/app/features/search/service/types.ts
+interface NestedFolderDTO {
+  uid: string;
+  title: string;
+}
+
+export const minimalCustomFoldersHandler = (folders: NestedFolderDTO[]) =>
+  http.get('/api/folders', ({ request }) => {
+    return HttpResponse.json(folders);
+  });
+
 const listFoldersHandler = () =>
   http.get('/api/folders', ({ request }) => {
     const url = new URL(request.url);

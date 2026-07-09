@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/licensing/ # /docs/grafana/next/http_api/licensing/
-  - ../../../developers/http_api/licensing/ # /docs/grafana/next/developers/http_api/licensing/
+  - ../../../../http_api/licensing/ # /docs/grafana/next/http_api/licensing/
+  - ../../../../developers/http_api/licensing/ # /docs/grafana/next/developers/http_api/licensing/
   - ../../../../developer-resources/api-reference/http-api/licensing/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/licensing/
 description: Enterprise Licensing HTTP API
@@ -60,7 +60,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 ```http
 GET /api/licensing/check
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -103,7 +103,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 POST /licensing/token
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0aGlzIjoiaXMiLCJub3QiOiJhIiwidmFsaWQiOiJsaWNlbnNlIn0.bxDzxIoJlYMwiEYKYT_l2s42z0Y30tY-6KKoyz9RuLE"}
 ```
@@ -179,7 +179,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 POST /api/licensing/token/renew
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {}
 ```
@@ -240,7 +240,7 @@ See note in the [introduction](#enterprise-license-api) for an explanation.
 DELETE /api/licensing/token
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {"instance": "http://play.grafana.org/"}
 ```

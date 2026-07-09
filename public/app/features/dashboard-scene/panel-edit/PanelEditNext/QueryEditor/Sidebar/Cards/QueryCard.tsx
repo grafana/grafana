@@ -3,7 +3,7 @@ import { Icon } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
-import { type ActionItem } from '../../../Actions';
+import { queryToActionItem } from '../../../actionItem';
 import { PENDING_CARD_ID, QueryEditorType } from '../../../constants';
 import {
   useActionsContext,
@@ -11,6 +11,7 @@ import {
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
 } from '../../QueryEditorContext';
+import { usePanelScopedVars } from '../../hooks/usePanelScopedVars';
 import { getEditorType } from '../../utils';
 
 import { CardTitle } from './CardTitle';
@@ -19,34 +20,37 @@ import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
-  const queryDsSettings = useDatasource(query.datasource);
-  const { selectedQuery, toggleQuerySelection, selectedQueryRefIds, pendingExpression, pendingSavedQuery } =
-    useQueryEditorUIContext();
+  const scopedVars = usePanelScopedVars();
+  const queryDsSettings = useDatasource(query.datasource, scopedVars);
+  const {
+    selectedQuery,
+    setSelectedQuery,
+    toggleQuerySelection,
+    selectedQueryRefIds,
+    multiSelectMode,
+    pendingExpression,
+    pendingSavedQuery,
+  } = useQueryEditorUIContext();
   const { duplicateQuery, deleteQuery, toggleQueryHide } = useActionsContext();
   const { data } = useQueryRunnerContext();
   const typeConfig = useQueryEditorTypeConfig();
 
-  // Note: when a query is hidden, it is removed from the error list :(
   const error = data?.errors?.find((e) => e.refId === query.refId)?.message;
   const isSelected = selectedQuery?.refId === query.refId;
-  const isPartOfSelection = selectedQueryRefIds.includes(query.refId) && !isSelected;
+  const isMultiSelected = multiSelectMode && selectedQueryRefIds.includes(query.refId);
   const isHidden = !!query.hide;
 
-  const item: ActionItem = {
-    name: query.refId,
-    type: editorType,
-    isHidden,
-    error,
-  };
+  const item = queryToActionItem(query, { error });
 
   return (
     <>
       <SidebarCard
         id={query.refId}
         isSelected={isSelected}
-        isPartOfSelection={isPartOfSelection}
+        isMultiSelected={isMultiSelected}
         item={item}
-        onSelect={(modifiers) => toggleQuerySelection(query, modifiers)}
+        onSelect={() => setSelectedQuery(query)}
+        onToggleMultiSelect={(modifiers) => toggleQuerySelection(query, modifiers)}
         onDelete={() => deleteQuery(query.refId)}
         onDuplicate={() => duplicateQuery(query.refId)}
         onToggleHide={() => toggleQueryHide(query.refId)}

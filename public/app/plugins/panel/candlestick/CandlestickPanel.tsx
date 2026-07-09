@@ -20,10 +20,9 @@ import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } fr
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
-import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
@@ -44,16 +43,7 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const {
-    sync,
-    eventsScope,
-    canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
-    eventBus,
-    canExecuteActions,
-  } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -340,13 +330,6 @@ export const CandlestickPanel = ({
                 timeZone={timeZone}
                 maxHeight={options.tooltip.maxHeight}
                 maxWidth={options.tooltip.maxWidth}
-              />
-            )}
-            {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-              <ThresholdControlsPlugin
-                config={uplotConfig}
-                fieldConfig={fieldConfig}
-                onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
               />
             )}
           </>

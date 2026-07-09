@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { Stack, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -33,20 +33,12 @@ import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsE
 function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
-  const rootId = useId();
   const titleId = useId();
   const descriptionId = useId();
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: rootId,
-          render: () => <OpenPanelEditViz panel={this.panel} />,
-        })
-      )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.viz-panel.options.title-option', 'Title'),
@@ -73,7 +65,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
       );
-  }, [rootId, titleId, panel, descriptionId, backgroundId, isNewElement]);
+  }, [titleId, panel, descriptionId, backgroundId, isNewElement]);
 
   const layoutCategories = useMemo(
     () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -108,6 +100,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
       isHidden,
     };
+  }
+
+  public renderTopButton() {
+    return <OpenPanelEditViz panel={this.panel} />;
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this);
@@ -165,21 +161,19 @@ type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
   return (
-    <Stack alignItems="center" width="100%">
-      <Button
-        onClick={() => {
-          const panelId = getPanelIdForVizPanel(panel);
-          locationService.partial({ editPanel: panelId });
-          DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
-        }}
-        icon="sliders-v-alt"
-        fullWidth
-        size="sm"
-        tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
-        data-testid={selectors.components.Sidebar.configurePanelButton}
-      >
-        <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
-      </Button>
-    </Stack>
+    <Button
+      onClick={() => {
+        const panelId = getPanelIdForVizPanel(panel);
+        locationService.partial({ editPanel: panelId });
+        DashboardInteractions.panelActionClicked('configure', panelId, 'edit_pane');
+      }}
+      icon="graph-bar"
+      variant="secondary"
+      fullWidth
+      tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+      data-testid={selectors.components.Sidebar.configurePanelButton}
+    >
+      <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
+    </Button>
   );
 };

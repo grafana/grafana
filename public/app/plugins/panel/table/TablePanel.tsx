@@ -14,6 +14,8 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
+import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { type MatcherScope } from '@grafana/schema';
 import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
@@ -47,6 +49,8 @@ export function TablePanel(props: Props) {
     cacheFieldDisplayNames(data.series);
   }, [data.series]);
 
+  const tableProtoParserEnabled = useFlagTableProtoRowParser();
+  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
@@ -93,7 +97,9 @@ export function TablePanel(props: Props) {
       sortByBehavior={sortByBehavior}
       sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
+      onColumnResize={(displayName, resizedWidth, fieldScope) =>
+        onColumnResize(displayName, resizedWidth, fieldScope, props)
+      }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
@@ -107,6 +113,8 @@ export function TablePanel(props: Props) {
       transparent={transparent}
       disableSanitizeHtml={disableSanitizeHtml}
       disableKeyboardEvents={options.disableKeyboardEvents}
+      protoParserEnabled={tableProtoParserEnabled}
+      nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );
 
@@ -135,15 +143,25 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
+export function onColumnResize(
+  fieldDisplayName: string,
+  width: number,
+  fieldScope: MatcherScope = 'series',
+  props: Pick<Props, 'fieldConfig' | 'onFieldConfigChange'>
+) {
   const { fieldConfig } = props;
   const { overrides } = fieldConfig;
 
   const matcherId = FieldMatcherID.byName;
   const propId = 'custom.width';
 
-  // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+  // look for existing override. an unscoped override is treated as implicitly 'series'.
+  const override = overrides.find(
+    (o) =>
+      o.matcher.id === matcherId &&
+      o.matcher.options === fieldDisplayName &&
+      (o.matcher.scope ?? 'series') === fieldScope
+  );
 
   if (override) {
     // look for existing property
@@ -155,7 +173,7 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
     }
   } else {
     overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
+      matcher: { id: matcherId, options: fieldDisplayName, scope: fieldScope },
       properties: [{ id: propId, value: width }],
     });
   }

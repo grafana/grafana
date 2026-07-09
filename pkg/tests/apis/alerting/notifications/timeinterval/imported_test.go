@@ -28,6 +28,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})
@@ -42,12 +43,10 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-imported-time-intervals"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 	var amConfig apimodels.AlertmanagerUserConfig
 	require.NoError(t, yaml.Unmarshal(configYaml, &amConfig))

@@ -1,4 +1,4 @@
-import { type StoryFn, type Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
 import { VizOrientation, ThresholdsMode, type Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/schema';

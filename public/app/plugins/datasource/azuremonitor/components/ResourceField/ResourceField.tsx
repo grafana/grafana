@@ -68,9 +68,6 @@ const ResourceField = ({
         title={t('components.resource-field.title-select-resource', 'Select a resource')}
         isOpen={pickerIsOpen}
         onDismiss={closePicker}
-        // The growing number of rows added to the modal causes a focus
-        // error in the modal, making it impossible to click on new elements
-        trapFocus={false}
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}

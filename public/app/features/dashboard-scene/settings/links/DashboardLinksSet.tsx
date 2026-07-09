@@ -51,13 +51,10 @@ export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> i
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    const dashboard = this.state.dashboardRef.resolve();
-    const links = dashboard.state.links ?? [];
     return {
       typeName: t('dashboard.edit-pane.elements.link-set', 'Links'),
       icon: 'link',
       instanceName: t('dashboard.edit-pane.elements.link-set', 'Links'),
-      isHidden: links.length === 0,
     };
   }
 

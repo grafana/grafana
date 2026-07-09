@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -12,10 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 // mockGlobalEncryptedValueStorage wraps the real storage and allows injecting behavior during ListAll
@@ -82,7 +82,7 @@ func TestConsolidation(t *testing.T) {
 				},
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: "test description",
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),
 					Decrypters:  []string{"decrypter1"},
 				},
 			}
@@ -185,7 +185,7 @@ func TestConsolidation(t *testing.T) {
 				},
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: "test description",
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),
 					Decrypters:  []string{"decrypter1"},
 				},
 			}
@@ -234,7 +234,7 @@ func TestConsolidation(t *testing.T) {
 						},
 						Spec: secretv1beta1.SecureValueSpec{
 							Description: tc.desc,
-							Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+							Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),
 							Decrypters:  []string{"decrypter1"},
 						},
 					}

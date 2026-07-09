@@ -5,17 +5,7 @@ import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Icon,
-  Menu,
-  ToolbarButton,
-  ToolbarButtonRow,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -23,6 +13,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
@@ -39,8 +30,8 @@ import { isLibraryPanel } from '../utils/utils';
 import { type DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
-import { LeftActions } from './new-toolbar/LeftActions';
-import { RightActions } from './new-toolbar/RightActions';
+import { Actions } from './new-toolbar/Actions';
+import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -52,8 +43,8 @@ export const NavToolbarActions = memo<Props>(({ dashboard }) => {
 
   return hasNewToolbar ? (
     <AppChromeUpdate
-      breadcrumbActions={<LeftActions dashboard={dashboard} />}
-      actions={<RightActions dashboard={dashboard} />}
+      breadcrumbActions={<BreadcrumbActions dashboard={dashboard} />}
+      actions={<Actions dashboard={dashboard} />}
     />
   ) : (
     <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
@@ -139,13 +130,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return (
-          <Badge
-            color="darkgrey"
-            text={t('dashboard.toolbar.read-only', 'Read only')}
-            tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-          />
-        );
+        return <ReadOnlyBadge repoType={repoType} />;
       },
     });
   }

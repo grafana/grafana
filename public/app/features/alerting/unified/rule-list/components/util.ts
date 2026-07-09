@@ -1,4 +1,5 @@
-import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import { addMilliseconds } from 'date-fns/addMilliseconds';
+import { isBefore } from 'date-fns/isBefore';
 import { type ComponentProps } from 'react';
 
 import { type StateIcon } from '@grafana/alerting/unstable';
@@ -60,18 +61,6 @@ export function calculateNextEvaluationEstimate(
     humanized: `in ${dateTime(nextEvaluationDate).locale('en').fromNow(true)}`,
     fullDate: dateTimeFormat(nextEvaluationDate, { format: 'YYYY-MM-DD HH:mm:ss' }),
   };
-}
-
-export function getRelativeEvaluationInterval(lastEvaluation?: string) {
-  if (!lastEvaluation) {
-    return null;
-  }
-
-  if (isNullDate(lastEvaluation)) {
-    return;
-  }
-
-  return formatDistanceToNowStrict(new Date(lastEvaluation));
 }
 
 type NormalizedHealth = ComponentProps<typeof StateIcon>['health'];

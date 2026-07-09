@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
-  - ../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
+  - ../../../../http_api/query_history/ # /docs/grafana/next/http_api/query_history/
+  - ../../../../developers/http_api/query_history/ # /docs/grafana/next/developers/http_api/query_history/
   - ../../../../developer-resources/api-reference/http-api/query_history/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/query_history/
 description: Grafana Query History HTTP API
@@ -21,7 +21,7 @@ title: 'Query History HTTP API '
 
 # Query history API
 
-{{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="developers/deprecated-apis-nonmigrated.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This API can be used to add queries to Query history. It requires that the user is logged in and that Query history feature is enabled in config file.
 
@@ -37,7 +37,7 @@ Adds query to query history.
 POST /api/query-history HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 {
   "datasourceUid": "PE1C5CBDA0504A6A3",
   "queries": [
@@ -116,7 +116,7 @@ Query parameters:
 GET /api/query-history?datasourceUid="PE1C5CBDA0504A6A3"&datasourceUid="FG1C1CBDA0504A6EL"&searchString="ALERTS"&sort="time-asc" HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response for query history search**:
@@ -169,7 +169,7 @@ Deletes the query in query history that matches the specified uid. It requires t
 DELETE /api/query-history/P8zM2I1nz HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -206,7 +206,7 @@ Query parameters:
 PATCH /api/query-history/P8zM2I1nz HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 {
   "comment": "Debugging query",
 }
@@ -259,7 +259,7 @@ Stars query in query history.
 POST /api/query-history/star/P8zM2I1nz HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -308,7 +308,7 @@ Removes stars from query in query history.
 DELETE /api/query-history/star/P8zM2I1nz  HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**

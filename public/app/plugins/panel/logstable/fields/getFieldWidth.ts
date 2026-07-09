@@ -14,9 +14,9 @@ function getDefaultTimeFieldWidth(fieldIndex: number, options: LogsTableOptions)
     return undefined;
   }
 
-  if (options.showInspectLogLine && options.showCopyLogLink) {
+  if (options.enableLogDetails && options.showCopyLogLink) {
     return DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH;
-  } else if (options.showInspectLogLine || options.showCopyLogLink) {
+  } else if (options.enableLogDetails || options.showCopyLogLink) {
     return DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH / 2;
   }
   return DEFAULT_TIME_FIELD_WIDTH;

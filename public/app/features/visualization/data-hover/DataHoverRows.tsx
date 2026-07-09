@@ -7,9 +7,9 @@ import * as React from 'react';
 import { type DataFrame, FieldType, getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 import { DataHoverRow } from './DataHoverRow';
+import { renderValue } from './renderValue';
 
 type Props = {
   layers: GeomapLayerHover[];
@@ -25,7 +25,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   };
 
   return (
-    <TabContent>
+    <TabContent data-testid="data-hover-rows" data-active-tab={activeTabIndex}>
       {layers.map(
         (geomapLayer, index) =>
           index === activeTabIndex && (

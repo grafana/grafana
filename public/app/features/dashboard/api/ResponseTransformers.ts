@@ -1421,7 +1421,7 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
   }
 }
 
-export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
+function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
   const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
 
   const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
@@ -1461,7 +1461,7 @@ export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: Ob
   };
 }
 
-export function transformAnnotationMappingsV1ToV2(
+function transformAnnotationMappingsV1ToV2(
   mappings: AnnotationQuery['mappings']
 ): AnnotationQueryKind['spec']['mappings'] {
   if (!mappings) {

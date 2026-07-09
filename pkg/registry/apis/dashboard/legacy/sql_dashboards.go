@@ -13,7 +13,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -554,7 +553,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		meta.SetGeneration(version)
 
 		if deleted.Valid {
-			meta.SetDeletionTimestamp(ptr.To(metav1.NewTime(deleted.Time)))
+			meta.SetDeletionTimestamp(new(metav1.NewTime(deleted.Time)))
 			meta.SetGeneration(utils.DeletedGeneration)
 		}
 

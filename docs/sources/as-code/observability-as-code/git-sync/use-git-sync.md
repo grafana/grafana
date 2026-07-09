@@ -14,7 +14,7 @@ labels:
     - cloud
 title: Work with provisioned repositories in Git Sync
 menuTitle: Work with provisioned repositories
-weight: 400
+weight: 500
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/use-git-sync/
 aliases:
   - ../../../observability-as-code/provision-resources/use-git-sync/ # /docs/grafana/next/observability-as-code/provision-resources/use-git-sync/
@@ -29,11 +29,9 @@ refs:
 
 # Work with provisioned repositories in Git Sync
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -45,7 +43,7 @@ After you sync your resources, Git Sync creates a dashboard that provides a summ
 
 Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards) for more information about working with provisioned files.
 
-## View the current status of synchronization
+## View the current status of your synchronized repository
 
 Use the **View** section to see detailed information about the current status of your sync and [troubleshoot](#troubleshoot-synchronization) possible issues:
 
@@ -55,7 +53,7 @@ Use the **View** section to see detailed information about the current status of
 
 ### Troubleshoot synchronization
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 Before you proceed to troubleshoot, understand the [Usage and performance known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits/).
 
@@ -97,34 +95,44 @@ To update or delete your repository configuration after you complete setup:
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
+
 ## Manage folder permissions
 
-{{< admonition type="caution" >}}
+By default, users keep their roles in folders provisioned with Git Sync.
+
+| Grafana Role | Folder Permission |
+| ------------ | ----------------- |
+| Admin        | Admin             |
+| Editor       | Editor            |
+| Viewer       | Viewer            |
+
+Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) to understand and set up permissions in Git Sync.
+
+### Modify folder permissions
+
+{{< admonition type="note" >}}
 To modify permissions, each provisioned folder must include the `_folder.json` metadata file with the folder's UID, which defines a stable folder ID used to set folder permissions. Without it, the folder's permissions will be lost if you move that folder to a different path in the Git repository.
 
 For new provisioned folders managed with Git Sync, the metadata file is added automatically if you created the folder from the Grafana UI. If your folder is missing the metadata file, you'll see a warning in the UI with instructions on how to add the missing metadata.
 {{< /admonition >}}
 
-By default, folders provisioned with Git Sync have these roles with its associated permissions:
+To add or modify folder permissions:
 
-- Admin = Admin
-- Editor = Editor
-- Viewer = Viewer.
-
-Refer to [Roles and permissions](ref:roles-and-permissions) for more information on what each role implies.
-
-To modify folder permissions:
-
-- From the UI, refer to [Manage dashboard permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/).
+- From the UI, select **Folder actions > Manage permissions** on the top right corner.
 - Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
 
-### The folder's JSON metadata file
+### The Git Sync folder JSON metadata file
 
-Each folder in a synced repository contains a `.folder.json` file at its root:
+Each folder in a synced repository contains a `_folder.json` file at its root:
 
 ```json
 {
-  "apiVersion": "folder.grafana.app/v1beta1",
+  "apiVersion": "<API_VERSION>",
   "kind": "Folder",
   "metadata": {
     "name": "<FOLDER_UID>"
@@ -137,5 +145,6 @@ Each folder in a synced repository contains a `.folder.json` file at its root:
 
 Where:
 
+- `<API_VERSION>` is the version of the API you want to use. For example, `folder.grafana.app/v1`.
 - `<FOLDER_UID>` is the stable folder UID that Grafana uses for permissions, bookmarks, and API references.
 - `<FOLDER_UI_NAME>` is the display name shown in the Grafana UI. This parameter is optional. If not used, the folder name will be passed instead.

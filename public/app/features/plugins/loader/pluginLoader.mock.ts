@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-export const mockSystemModule = `System.register(['./dependencyA'], function (_export, _context) {
+const mockSystemModule = `System.register(['./dependencyA'], function (_export, _context) {
   "use strict";
 
   var DependencyACtrl;
@@ -15,7 +15,7 @@ export const mockSystemModule = `System.register(['./dependencyA'], function (_e
   };
 });`;
 
-export const mockAmdModule = `define([], function() {
+const mockAmdModule = `define([], function() {
   return function() {
     console.log('AMD module loaded');
     var pluginPath = "/public/plugins/";

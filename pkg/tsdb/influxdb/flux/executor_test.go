@@ -19,9 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/simplejson"
 )
 
 // --------------------------------------------------------------
@@ -155,9 +154,9 @@ func TestAggregateGrouping(t *testing.T) {
 	expectedFrame := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
 		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
-			util.Pointer(8.291),
-			util.Pointer(0.534),
-			util.Pointer(0.667),
+			new(8.291),
+			new(0.534),
+			new(0.667),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -190,7 +189,7 @@ func TestNonStandardTimeColumn(t *testing.T) {
 		data.NewField("_start_water", map[string]string{"st": "1"}, []*time.Time{&t1}),
 		data.NewField("_stop_water", map[string]string{"st": "1"}, []*time.Time{&t2}),
 		data.NewField("_value", map[string]string{"st": "1"}, []*float64{
-			util.Pointer(156.304),
+			new(156.304),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}

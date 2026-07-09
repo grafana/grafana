@@ -113,6 +113,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleNotificationSettingsColumns(mg)
 
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
+	accesscontrol.AddAnnotationsAllScopeReplacementMigration(mg)
 
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
 
@@ -127,6 +128,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddOrphanedMigrations(mg)
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
+	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
 
 	externalsession.AddMigration(mg)
 
@@ -173,4 +176,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleAlertRoutingColumns(mg)
 
 	accesscontrol.AddManagedRoutesPermissions(mg)
+
+	addNatsDiscoveryMigrations(mg)
+
+	ualert.AddAlertRuleStateBigIntMigration(mg)
 }

@@ -5,4 +5,6 @@ TeamSpec: {
 	email:       string
 	provisioned: bool
 	externalUID: string
+	members: [...TeamMember]
+	externalGroups?: [...string]
 }

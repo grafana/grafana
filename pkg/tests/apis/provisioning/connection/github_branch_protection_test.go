@@ -111,7 +111,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -154,7 +154,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
 						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
-						LockBranch:                 &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch:                 &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -239,7 +239,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
 						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
-						LockBranch:                 &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch:                 &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -419,7 +419,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -776,7 +776,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),

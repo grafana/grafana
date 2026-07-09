@@ -12,27 +12,22 @@ import (
 // InitOpenFeatureWithCfg initializes OpenFeature from setting.Cfg.
 // This is the main entry point for Grafana production code to initialize OpenFeature.
 func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
-	// Phase 1: Read configuration
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
-	if err != nil {
-		return fmt.Errorf("failed to read feature flags from config: %w", err)
-	}
-
 	contextAttrs := buildContextAttrs(cfg)
 
-	// Phase 2: Create provider based on type
-	var provider openfeature.FeatureProvider
+	var (
+		provider openfeature.FeatureProvider
+		err      error
+	)
 	switch cfg.OpenFeature.ProviderType {
 	case features.FeaturesServiceProviderType, features.OFREPProviderType:
 		provider, err = createRemoteProvider(cfg)
 	default: // Static provider
-		provider, err = CreateStaticProviderWithStandardFlags(confFlags)
+		provider, err = newStaticProviderFromCfg(cfg)
 	}
 	if err != nil {
 		return err
 	}
 
-	// Phase 3: Initialize OpenFeature
 	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		return fmt.Errorf("failed to set feature provider: %w", err)
 	}

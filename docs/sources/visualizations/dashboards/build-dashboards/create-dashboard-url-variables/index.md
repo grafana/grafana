@@ -20,17 +20,17 @@ weight: 250
 refs:
   filters:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/filter-group-by/
   manage-dashboard-links:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
   variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/
 ---
@@ -81,19 +81,23 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 [This dashboard in Grafana Play](https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h) passes the variable `server` with multiple values, and the variables `app` and `interval` with a single value each.
 
-## Filters
+## Filters and group by dimensions
 
-Filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add filters](ref:filters).
+Filters automatically query your data source for available dimensions and lets users add or remove filters and group by dimensions on the dashboard dynamically.
+This allows you to quickly apply filters dashboard-wide to all metric queries that use the specified data source.
+The group by function allows you to then group data by keys, letting you split it up.
 
-To pass a filter as a query parameter, use the variable syntax to pass the filter variable. Then provide the key, operator, and value as a pipe-separated list.
+For more information, refer to [Filter and Group by documentation](https://grafana.com/docs/<GRAFANA_VERSION>visualizations/dashboards/build-dashboards/filter-group-by).
+
+To pass a filter as a query parameter, use the variable syntax to pass the filter. Then provide the key, operator, and value as a pipe-separated list.
 
 For example:
 
 ```
-https://${your-domain}/path/to/your/dashboard?var-adhoc=example_key|=|example_value
+https://${your-domain}/path/to/your/dashboard?var-filter=example_key|=|example_value
 ```
 
-In this URL, the query parameter `var-adhoc=key|=|value` applies the filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
+In this URL, the query parameter `var-filter=key|=|value` applies the configured filter using the `example_key` key, the `=` operator, and the `example_value` value.
 
 {{< admonition type="note" >}}
 When sharing URLs with filters, remember to encode the URL. In the preceding example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.

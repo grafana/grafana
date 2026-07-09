@@ -120,7 +120,7 @@ func (s slugger) Slugify(value string) string {
 		if lastCharacterWasInvalid {
 			buffer.WriteRune(s.replaceCharacter)
 		}
-		for i := 0; i < size; i++ {
+		for i := range size {
 			buffer.WriteString(fmt.Sprintf("%x", p[i]))
 		}
 		lastCharacterWasInvalid = true

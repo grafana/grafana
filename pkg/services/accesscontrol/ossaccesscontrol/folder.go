@@ -44,8 +44,11 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{folder.ActionFoldersPermissionsRead, folder.ActionFoldersPermissionsWrite}...)
 
-func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
-	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
+// FolderFixedRoleRegistrations returns the wildcard seed role registrations for
+// folders. When wildcardSeed is false an empty slice is returned (the feature
+// is disabled for this instance).
+func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistration {
+	if !wildcardSeed {
 		return nil
 	}
 
@@ -85,7 +88,26 @@ func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service
 		Grants: []string{"Admin"},
 	}
 
-	return service.DeclareFixedRoles(viewer, editor, admin)
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
+}
+
+func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FolderFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("folder"))...)
+}
+
+// FolderPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for folder resource permissions (fixed:folders.permissions:reader and
+// :writer). These mirror the roles declared by ProvideFolderPermissions through
+// resourcepermissions.New; the identity fields below must match the Options
+// passed there.
+func FolderPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       folderPermissionsResource,
+		APIGroup:       folderv1.APIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      folderPermissionsRoleGroup,
+	})
 }
 
 func ProvideFolderPermissions(
@@ -99,7 +121,7 @@ func ProvideFolderPermissions(
 	}
 
 	options := resourcepermissions.Options{
-		Resource:          "folders",
+		Resource:          folderPermissionsResource,
 		ResourceAttribute: "uid",
 		APIGroup:          folderv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -143,9 +165,9 @@ func ProvideFolderPermissions(
 			"Edit":  append(DashboardEditActions, FolderEditActions...),
 			"Admin": append(DashboardAdminActions, FolderAdminActions...),
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Folders",
+		ReaderRoleName:     permissionReaderRoleName,
+		WriterRoleName:     permissionWriterRoleName,
+		RoleGroup:          folderPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)

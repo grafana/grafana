@@ -637,6 +637,30 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, result.Tags, 0)
 		})
+
+		t.Run("insertTagsIgnoringConflicts tolerates duplicate annotation_tag rows", func(t *testing.T) {
+			annotation := &annotations.Item{
+				OrgID:  1,
+				UserID: 1,
+				Text:   "test duplicate tags",
+				Epoch:  10,
+				Tags:   []string{"alertname:cpu", "severity:critical"},
+			}
+			err := store.Add(t.Context(), annotation)
+			require.NoError(t, err)
+
+			var existingTags []annotationTag
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return sess.SQL("SELECT annotation_id, tag_id FROM annotation_tag WHERE annotation_id = ?", annotation.ID).Find(&existingTags)
+			})
+			require.NoError(t, err)
+			require.Len(t, existingTags, 2)
+
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return store.insertTagsIgnoringConflicts(sess, existingTags)
+			})
+			require.NoError(t, err)
+		})
 	})
 }
 
@@ -716,7 +740,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 	require.NoError(b, err)
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 			OrgID: 1,
 			Tag:   "outage",

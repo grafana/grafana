@@ -23,7 +23,7 @@ const dummyFieldSettings = {
 export const ResourceDimensionEditor = (
   props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
 ) => {
-  const { value, context, onChange, item } = props;
+  const { value, context, onChange, item, id } = props;
   const labelWidth = 9;
   const resourceOptions = [
     {
@@ -119,6 +119,7 @@ export const ResourceDimensionEditor = (
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <ResourcePicker
+          id={id}
           onChange={onFixedChange}
           onClear={onClear}
           value={value?.fixed}
@@ -147,7 +148,7 @@ export const ResourceDimensionEditor = (
   );
 };
 
-export function niceName(value?: string): string | undefined {
+function niceName(value?: string): string | undefined {
   if (!value) {
     return undefined;
   }

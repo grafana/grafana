@@ -98,7 +98,7 @@ func TestQuotaTracker_ReleaseNeverGoesBelowZero(t *testing.T) {
 	tracker.Release() // should stay at 0
 
 	// Current is 0, so we should be able to acquire exactly 10 times
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		require.True(t, tracker.TryAcquire(), "acquire %d should succeed", i)
 	}
 	require.False(t, tracker.TryAcquire(), "acquire at limit should fail")
@@ -112,7 +112,7 @@ func TestQuotaTracker_ConcurrentAccess(t *testing.T) {
 	acquired := make(chan bool, 200)
 
 	// Launch 200 goroutines each trying to acquire
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -172,7 +172,7 @@ func TestQuotaTracker_ConcurrentAcquireAndRelease(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Release 10 slots concurrently
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -183,7 +183,7 @@ func TestQuotaTracker_ConcurrentAcquireAndRelease(t *testing.T) {
 
 	// Now we should be able to acquire exactly 10
 	acquired := 0
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if tracker.TryAcquire() {
 			acquired++
 		}

@@ -16,6 +16,7 @@ import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
+import { LogListModel } from 'app/features/logs/components/panel/processing';
 import {
   DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
@@ -23,8 +24,12 @@ import {
   type LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
+import { LogDetailsContextProvider } from './LogDetailsContext';
+import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { detectLevelField } from './fields/logs';
@@ -45,6 +50,11 @@ import {
 
 interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
 
+/**
+ * Props:
+ * Determines if a given key => value filter is active in a given query. Used by Log details.
+ * isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+ */
 export const LogsTable = ({
   data,
   width,
@@ -203,7 +213,7 @@ export const LogsTable = ({
   );
 
   // Extract fields transform
-  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
+  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone, replaceVariables });
 
   // Organize fields transform
   const { organizedFrame } = useOrganizeFields({
@@ -231,14 +241,31 @@ export const LogsTable = ({
 
   const tableOptions = useMemo(
     () => ({
-      sortOrder: LogsSortOrder.Descending,
-      sortBy: [{ displayName: timeFieldName, desc: true }],
+      sortOrder: options.sortOrder ?? LogsSortOrder.Descending,
+      sortBy: [
+        { displayName: timeFieldName, desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true },
+      ],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
+      logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
       ...options,
       wrapText,
     }),
     [options, timeFieldName, wrapText]
   );
+
+  const logRows = useMemo(() => {
+    const logs = rawTableFrame
+      ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
+          (logRow) =>
+            new LogListModel(logRow, {
+              escape: false,
+              timeZone,
+              wrapLogMessage: true,
+            })
+        )
+      : null;
+    return logs ?? [];
+  }, [panelData.request?.targets, rawTableFrame, timeZone]);
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
@@ -248,7 +275,15 @@ export const LogsTable = ({
 
   // Show no data state if query returns nothing
   if ((noSeries || noValues || noLogsFrame) && data.state === LoadingState.Done) {
-    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
+    return (
+      <PanelDataErrorView
+        fieldConfig={fieldConfig}
+        panelId={id}
+        data={data}
+        needsStringField={isMissingStringField(data.series)}
+        needsTimeField={isMissingTimeField(data.series)}
+      />
+    );
   }
 
   // Don't render the table if we don't have the required data to show the visualization
@@ -257,7 +292,7 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper} ref={containerRef}>
       {renderTable && containerElement && (
-        <>
+        <LogDetailsContextProvider enableLogDetails={options.enableLogDetails ?? true} logs={logRows}>
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
@@ -295,7 +330,15 @@ export const LogsTable = ({
             onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
           />
-        </>
+
+          <LogsTableDetails
+            containerElement={containerElement}
+            options={tableOptions}
+            onOptionsChange={handleTableOptionsChange}
+            timeRange={data.timeRange}
+            timeZone={timeZone}
+          />
+        </LogDetailsContextProvider>
       )}
     </div>
   );

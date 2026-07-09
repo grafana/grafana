@@ -1,6 +1,5 @@
 import WKT from 'ol/format/WKT';
 import { type Geometry, Point } from 'ol/geom';
-import { type SortColumn } from 'react-data-grid';
 
 import {
   createDataFrame,
@@ -15,11 +14,13 @@ import {
   type LinkModel,
   type ValueLinkConfig,
 } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
+import { getJustifyContent } from './styles';
 import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
@@ -27,8 +28,9 @@ import {
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
-  compileFrameToRecords,
+  compileFrameToRecordsV2 as compileFrameToRecords,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
@@ -43,8 +45,6 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
-  getIsNestedTable,
-  getJustifyContent,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
@@ -227,7 +227,9 @@ describe('TableNG utils', () => {
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
+      // Columns are exposed via prototype getters, not own properties, so assert with
+      // toMatchObject (walks the prototype chain) rather than toEqual (own-props only).
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
     });
 
     it('should handle nested frames', () => {
@@ -253,9 +255,9 @@ describe('TableNG utils', () => {
       const frameToRecords = compileFrameToRecords(parentFrame, 'nested');
       const records = frameToRecords(parentFrame);
       expect(records).toHaveLength(4);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, id: 100 });
       expect(records[1]).toEqual({ __depth: 1, __index: 0 });
-      expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 1, id: 200 });
       expect(records[3]).toEqual({ __depth: 1, __index: 1 });
     });
 
@@ -271,8 +273,36 @@ describe('TableNG utils', () => {
       const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
-      expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+    });
+
+    it('should infer length from field values when frame.length is not set', () => {
+      const frame: DataFrame = {
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+        ],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame);
+
+      expect(records).toHaveLength(3);
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, time: 2, value: 20 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 2, time: 3, value: 30 });
+    });
+
+    it('should produce no rows when frame.length is not set and the nested frame has no fields', () => {
+      const frame: DataFrame = {
+        fields: [],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame);
+      const records = frameToRecords(frame, 3);
+
+      expect(records).toHaveLength(0);
     });
   });
 
@@ -469,32 +499,6 @@ describe('TableNG utils', () => {
       };
 
       expect(getColumnTypes(frame.fields)).toEqual({ stringCol: FieldType.string });
-    });
-  });
-
-  describe('getIsNestedTable', () => {
-    it('should detect nested frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(true);
-    });
-
-    it('should return false for regular frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.number, name: 'numberCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(false);
     });
   });
 
@@ -1533,6 +1537,43 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('buildNestedColumnWidthsMap', () => {
+    it('maps field display names to ColumnWidth entries', () => {
+      const fields: Field[] = [
+        { name: 'Time', type: FieldType.time, values: [], config: {}, state: { displayName: 'Time' } },
+        { name: 'Value', type: FieldType.number, values: [], config: {}, state: { displayName: 'Value' } },
+      ];
+      const widths = [120, 200];
+
+      const result = buildNestedColumnWidthsMap(fields, widths);
+
+      expect(result.get('Time')).toEqual({ type: 'resized', width: 120 });
+      expect(result.get('Value')).toEqual({ type: 'resized', width: 200 });
+      expect(result.size).toBe(2);
+    });
+
+    it('uses the field display name (from state.displayName) as the map key', () => {
+      const fields: Field[] = [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values: [],
+          config: {},
+          state: { displayName: 'Pretty Name' },
+        },
+      ];
+
+      const result = buildNestedColumnWidthsMap(fields, [150]);
+
+      expect(result.has('Pretty Name')).toBe(true);
+      expect(result.has('raw_name')).toBe(false);
+    });
+
+    it('returns an empty map for empty inputs', () => {
+      expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
     });
   });
 

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -358,10 +360,127 @@ func (c *K8sTestHelper) GetResourceClient(args ResourceClientArgs) *K8sResourceC
 	require.NoError(c.t, clientErr)
 
 	return &K8sResourceClient{
-		t:        c.t,
-		Args:     args,
-		Resource: client.Resource(args.GVR).Namespace(args.Namespace),
+		t:    c.t,
+		Args: args,
+		Resource: retryingResourceInterface{
+			ResourceInterface: client.Resource(args.GVR).Namespace(args.Namespace),
+		},
 	}
+}
+
+// transientLockErrorRetries bounds how many times a request that fails with a
+// transient SQLite "database is locked" error is retried.
+const (
+	transientLockErrorRetries = 10
+	transientLockErrorDelay   = 20 * time.Millisecond
+)
+
+// isTransientLockError reports whether err is a transient SQLite busy/locked
+// error surfaced through the API server. SQLite permits only a single writer,
+// so a deferred read-then-write transaction can fail with SQLITE_BUSY when
+// another connection is mid-write (for example the dual writer's background
+// unified write racing a foreground legacy write). busy_timeout does not apply
+// to lock upgrades, so these surface immediately. They are always transient and
+// never an intentional API outcome, so retrying them in integration tests is
+// safe and removes a class of flakes.
+func isTransientLockError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// errors.Is is not an option here: these errors reach us through the
+	// client-go dynamic client, so the original typed sqlite3.Error has already
+	// been serialized into a *apierrors.StatusError (a generic 500) by the API
+	// server. The typed sentinel does not survive the HTTP boundary, and the
+	// StatusError code is too broad to distinguish lock contention from other
+	// internal errors, so the message string is the only reliable signal left.
+	msg := err.Error()
+	return strings.Contains(msg, "database is locked") ||
+		strings.Contains(msg, "database table is locked") ||
+		strings.Contains(msg, "SQLITE_BUSY")
+}
+
+func retryOnLockError[T any](fn func() (T, error)) (T, error) {
+	var (
+		res T
+		err error
+	)
+	for i := 0; ; i++ {
+		res, err = fn()
+		if !isTransientLockError(err) || i >= transientLockErrorRetries {
+			return res, err
+		}
+		time.Sleep(transientLockErrorDelay)
+	}
+}
+
+// retryingResourceInterface decorates a dynamic.ResourceInterface so that
+// operations failing with a transient SQLite "database is locked" error are
+// retried. Methods that are not overridden are served by the embedded interface
+// unchanged.
+type retryingResourceInterface struct {
+	dynamic.ResourceInterface
+}
+
+func (r retryingResourceInterface) Create(ctx context.Context, obj *unstructured.Unstructured, options metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Create(ctx, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) Update(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Update(ctx, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, options metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.UpdateStatus(ctx, obj, options)
+	})
+}
+
+func (r retryingResourceInterface) Delete(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+	_, err := retryOnLockError(func() (struct{}, error) {
+		return struct{}{}, r.ResourceInterface.Delete(ctx, name, options, subresources...)
+	})
+	return err
+}
+
+func (r retryingResourceInterface) DeleteCollection(ctx context.Context, options metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	_, err := retryOnLockError(func() (struct{}, error) {
+		return struct{}{}, r.ResourceInterface.DeleteCollection(ctx, options, listOptions)
+	})
+	return err
+}
+
+func (r retryingResourceInterface) Get(ctx context.Context, name string, options metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Get(ctx, name, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	return retryOnLockError(func() (*unstructured.UnstructuredList, error) {
+		return r.ResourceInterface.List(ctx, opts)
+	})
+}
+
+func (r retryingResourceInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Patch(ctx, name, pt, data, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) Apply(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.Apply(ctx, name, obj, options, subresources...)
+	})
+}
+
+func (r retryingResourceInterface) ApplyStatus(ctx context.Context, name string, obj *unstructured.Unstructured, options metav1.ApplyOptions) (*unstructured.Unstructured, error) {
+	return retryOnLockError(func() (*unstructured.Unstructured, error) {
+		return r.ResourceInterface.ApplyStatus(ctx, name, obj, options)
+	})
 }
 
 // Cast the error to status error
@@ -600,9 +719,12 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	// Get the URL
 	addr := c.env.Server.HTTPServer.Listener.Addr()
 	baseUrl := fmt.Sprintf("http://%s", addr)
-	login := params.User.Identity.GetLogin()
-	if login != "" && params.User.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+	// User may be zero when callers authenticate via params.Headers (bearer token).
+	if params.User.Identity != nil {
+		login := params.User.Identity.GetLogin()
+		if login != "" && params.User.password != "" {
+			baseUrl = fmt.Sprintf("http://%s:%s@%s", login, params.User.password, addr)
+		}
 	}
 
 	contentType := params.ContentType
@@ -764,6 +886,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		OrgID:          orgId,
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
+		Email:          fmt.Sprintf("%s@example.com", login),
 	})
 	require.NoError(c.t, err)
 
@@ -812,6 +935,19 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	}
 
 	return usr
+}
+
+func (c *K8sTestHelper) AddUserToOrg(u User, orgName string, role org.RoleType) {
+	c.t.Helper()
+	orgID := c.CreateOrg(orgName)
+	userID, err := identity.UserIdentifier(u.Identity.GetID())
+	require.NoError(c.t, err)
+	err = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+		OrgID:  orgID,
+		UserID: userID,
+		Role:   role,
+	})
+	require.NoError(c.t, err)
 }
 
 func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissions.SetResourcePermissionCommand) {

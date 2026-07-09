@@ -52,6 +52,7 @@ describe('randomWalk', () => {
     expect(frame.fields[1].name).toBe('A-series');
     expect(frame.fields[1].type).toBe(FieldType.number);
     expect(frame.meta?.type).toBe(DataFrameType.TimeSeriesMulti);
+    expect(frame.refId).toBe('A');
     expect(frame.length).toBe(frame.fields[0].values.length);
   });
 

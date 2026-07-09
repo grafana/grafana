@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	storev1 "github.com/grafana/grafana/pkg/registry/apps/annotation/storepb/v1"
@@ -18,6 +20,7 @@ import (
 // LifecycleManager, and TagProvider interfaces
 type storeGRPC struct {
 	client storev1.AnnotationStoreClient
+	conn   *grpc.ClientConn
 }
 
 var _ Store = (*storeGRPC)(nil)
@@ -25,10 +28,19 @@ var _ LifecycleManager = (*storeGRPC)(nil)
 var _ TagProvider = (*storeGRPC)(nil)
 
 // NewStoreGRPC creates a new gRPC-based annotation store client
-func NewStoreGRPC(conn grpc.ClientConnInterface) *storeGRPC {
+func NewStoreGRPC(conn *grpc.ClientConn) *storeGRPC {
 	return &storeGRPC{
 		client: storev1.NewAnnotationStoreClient(conn),
+		conn:   conn,
 	}
+}
+
+// Close shuts down the underlying gRPC connection
+func (s *storeGRPC) Close() error {
+	if s.conn == nil {
+		return nil
+	}
+	return s.conn.Close()
 }
 
 func (s *storeGRPC) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
@@ -107,8 +119,10 @@ func (s *storeGRPC) Delete(ctx context.Context, namespace, name string) error {
 	return nil
 }
 
-func (s *storeGRPC) Cleanup(ctx context.Context) (int64, error) {
-	req := &storev1.CleanupRequest{}
+func (s *storeGRPC) Cleanup(ctx context.Context, before time.Time) (int64, error) {
+	req := &storev1.CleanupRequest{
+		BeforeMs: before.UnixMilli(),
+	}
 
 	resp, err := s.client.Cleanup(ctx, req)
 	if err != nil {
@@ -154,6 +168,7 @@ func toProtoListOptions(opts ListOptions) *storev1.ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		IncludeDeleted: opts.IncludeDeleted,
 	}
 }
 
@@ -175,6 +190,7 @@ func fromProtoListOptions(opts *storev1.ListOptions) ListOptions {
 		Scopes:         opts.Scopes,
 		ScopesMatchAny: opts.ScopesMatchAny,
 		CreatedBy:      opts.CreatedBy,
+		IncludeDeleted: opts.IncludeDeleted,
 	}
 }
 
@@ -211,11 +227,11 @@ func mapGRPCError(err error) error {
 
 	switch st.Code() {
 	case codes.NotFound:
-		return ErrNotFound
+		return fmt.Errorf("%w: %s", ErrNotFound, st.Message())
 	case codes.AlreadyExists:
-		return fmt.Errorf("annotation already exists")
+		return fmt.Errorf("%w: %s", ErrAlreadyExists, st.Message())
 	case codes.InvalidArgument:
-		return fmt.Errorf("invalid argument: %s", st.Message())
+		return fmt.Errorf("%w: %s", ErrInvalidInput, st.Message())
 	default:
 		return fmt.Errorf("grpc error: %s", st.Message())
 	}
@@ -227,8 +243,13 @@ func mapToGRPCStatus(err error) error {
 		return nil
 	}
 
-	if errors.Is(err, ErrNotFound) {
+	switch {
+	case errors.Is(err, ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, ErrAlreadyExists):
+		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	return status.Error(codes.Internal, err.Error())
@@ -262,6 +283,10 @@ func toProtoAnnotation(anno *annotationV0.Annotation) *storev1.Annotation {
 	if anno.Spec.PanelID != nil {
 		protoAnno.Spec.PanelId = anno.Spec.PanelID
 	}
+	if anno.DeletionTimestamp != nil {
+		deletedAt := anno.DeletionTimestamp.UnixMilli()
+		protoAnno.DeletedAt = &deletedAt
+	}
 
 	return protoAnno
 }
@@ -276,11 +301,17 @@ func fromProtoAnnotation(protoAnno *storev1.Annotation) *annotationV0.Annotation
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      protoAnno.Name,
 			Namespace: protoAnno.Namespace,
+			UID:       types.UID(protoAnno.Name),
 		},
 	}
 
 	if protoAnno.CreatedBy != "" {
 		anno.SetCreatedBy(protoAnno.CreatedBy)
+	}
+
+	if protoAnno.DeletedAt != nil {
+		ts := metav1.NewTime(time.UnixMilli(*protoAnno.DeletedAt))
+		anno.DeletionTimestamp = &ts
 	}
 
 	if protoAnno.Spec != nil {

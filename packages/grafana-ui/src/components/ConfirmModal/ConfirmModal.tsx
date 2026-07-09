@@ -31,7 +31,9 @@ export interface ConfirmModalProps {
   confirmationText?: string;
   /** Text for alternative button */
   alternativeText?: string;
-  /** Confirm button variant */
+  /** Confirm button variant
+   * @deprecated Use `confirmVariant` instead. This prop will be removed in a future release.
+   */
   confirmButtonVariant?: ButtonVariant;
   /** Confirm action callback
    * Return a promise to disable the confirm button until the promise is resolved
@@ -65,7 +67,7 @@ export const ConfirmModal = ({
   onConfirm,
   onDismiss,
   onAlternative,
-  confirmButtonVariant = 'destructive',
+  confirmButtonVariant,
   disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
@@ -80,7 +82,7 @@ export const ConfirmModal = ({
         dismissButtonVariant={dismissVariant}
         confirmPromptText={confirmationText}
         alternativeButtonLabel={alternativeText}
-        confirmButtonVariant={confirmButtonVariant}
+        confirmButtonVariant={confirmButtonVariant ?? confirmVariant}
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         onAlternative={onAlternative}

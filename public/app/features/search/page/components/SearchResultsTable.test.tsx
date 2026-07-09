@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 
-import { getGrafanaSearcher } from '../../service/searcher';
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
@@ -73,10 +72,6 @@ describe('SearchResultsTable', () => {
       view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
     };
 
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
-    });
-
     it('shows the table with the correct accessible label', async () => {
       render(
         <SearchResultsTable
@@ -134,6 +129,71 @@ describe('SearchResultsTable', () => {
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
       expect(screen.getByText('bar')).toBeInTheDocument();
+    });
+
+    it('does not render a description tooltip indicator when there is no description', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.queryByLabelText('Description')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when an item has a description', () => {
+    const searchData = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'kind', type: FieldType.string, config: {}, values: [DashboardSearchItemType.DashDB] },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+        { name: 'description', type: FieldType.string, config: {}, values: ['A helpful description'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: [''] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: [''] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+      ],
+    });
+    const dataFrames = applyFieldOverrides({
+      data: [searchData],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+    const mockSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+      totalRows: searchData.length,
+      view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
+    };
+
+    it('renders a description tooltip indicator', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.getByLabelText('Description')).toBeInTheDocument();
     });
   });
 
@@ -199,10 +259,6 @@ describe('SearchResultsTable', () => {
       totalRows: emptySearchData.length,
       view: new DataFrameView<DashboardQueryResult>(emptySearchData),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
-    });
 
     it('shows a "No data" message', async () => {
       render(

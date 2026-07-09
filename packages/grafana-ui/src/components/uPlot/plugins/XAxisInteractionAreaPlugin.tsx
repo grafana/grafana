@@ -1,7 +1,6 @@
 import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
-import { getFeatureToggle } from '../../../utils/featureToggle';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 const MIN_PAN_DIST = 5;
@@ -151,7 +150,7 @@ export const XAxisInteractionAreaPlugin = ({ config, queryZoom }: XAxisInteracti
     let cleanup: (() => void) | undefined;
 
     config.addHook('init', (u) => {
-      if (queryZoom != null && getFeatureToggle('timeRangePan')) {
+      if (queryZoom != null) {
         cleanup = setupXAxisPan(u, config, queryZoom);
       }
     });

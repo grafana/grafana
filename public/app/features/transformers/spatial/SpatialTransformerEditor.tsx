@@ -2,26 +2,19 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import {
-  DataTransformerID,
   type GrafanaTheme2,
   type PanelOptionsEditorBuilder,
-  PluginState,
   type StandardEditorContext,
-  type TransformerRegistryItem,
   type TransformerUIProps,
-  TransformerCategory,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
-import darkImage from '../images/dark/spatial.svg';
-import lightImage from '../images/light/spatial.svg';
-
 import { SpatialCalculation, SpatialOperation, SpatialAction, type SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
-import { isLineBuilderOption, getSpatialTransformer } from './spatialTransformer';
+import { isLineBuilderOption } from './spatialTransformer';
 
 // Nothing defined in state
 const supplier = (
@@ -137,7 +130,6 @@ export const SetGeometryTransformerEditor = (props: Props) => {
     if (!props.options.source?.mode) {
       const opts = getDefaultOptions(supplier);
       props.onChange({ ...opts, ...props.options });
-      console.log('geometry useEffect', opts);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -171,20 +163,5 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderLeft: `4px solid ${theme.colors.border.strong}`,
       paddingLeft: '10px',
     }),
-  };
-};
-
-export const getSpatialTransformRegistryItem: () => TransformerRegistryItem<SpatialTransformOptions> = () => {
-  const spatialTransformer = getSpatialTransformer();
-  return {
-    id: DataTransformerID.spatial,
-    editor: SetGeometryTransformerEditor,
-    transformation: spatialTransformer,
-    name: spatialTransformer.name,
-    description: spatialTransformer.description,
-    state: PluginState.alpha,
-    categories: new Set([TransformerCategory.PerformSpatialOperations]),
-    imageDark: darkImage,
-    imageLight: lightImage,
   };
 };

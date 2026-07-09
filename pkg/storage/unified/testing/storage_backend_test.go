@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -9,9 +10,13 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
+	"github.com/google/uuid"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -44,7 +49,9 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 	kvOpts := resource.KVBackendOptions{
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
-		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
+		WatchOptions:   resource.WatchOptions{SettleDelay: time.Millisecond},
+		EnableKVLeases: true,
+		Holder:         fmt.Sprintf("badger-holder-%s", uuid.NewString()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)
@@ -71,12 +78,12 @@ func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
 	})
 
 	t.Run("With RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-rvmanager-no-already-exists")
 	})
 }
@@ -148,8 +155,13 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	// All creates should have received `AlreadyExists`
 	for _, e := range createErrors {
 		require.Error(t, e, "all creates should have failed")
-		require.ErrorIs(t, e, resource.ErrResourceAlreadyExists,
-			"should receive ErrResourceAlreadyExists after resource is created")
+
+		// TODO: once leases graduates from being optional (i.e., it should
+		// eventually be always enabled), then we can acquire the lease only
+		// after doing validations, and that should allow us to enforce that
+		// all clients get an "already exists" error here.
+		validError := errors.Is(e, resource.ErrResourceAlreadyExists) || apierrors.IsConflict(e)
+		require.True(t, validError, "should receive ErrResourceAlreadyExists after resource is created")
 	}
 }
 
@@ -157,25 +169,25 @@ func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
 	})
 
 	t.Run("Without RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
 	})
 
 	t.Run("With RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
 	})
 
 	t.Run("With RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
 	})
@@ -196,10 +208,10 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	features := featuremgmt.WithFeatures()
 	reg := prometheus.NewPedanticRegistry()
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)
@@ -259,10 +271,23 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		success       bool
 	}
 	results := make([]result, concurrency)
+
+	// The local client (pkg/storage/unified/resource/client.go) and the remote
+	// gRPC connection (pkg/storage/unified/client.go) both wire a retry
+	// interceptor with WithMax(3) and a 1s exponential backoff. With
+	// concurrency=10 that budget is too small: lease.Acquire returns
+	// ErrLeaseAlreadyHeld without waiting, so callers contend in waves and only
+	// ~1 caller can drain per wave. Override the retry budget per call so all 9
+	// losers can observe AlreadyExists. This does not change production behavior.
+	retryOpts := []grpc.CallOption{
+		grpc_retry.WithMax(uint(concurrency * 2)),
+		grpc_retry.WithBackoff(grpc_retry.BackoffLinearWithJitter(500*time.Millisecond, 0.5)),
+	}
+
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
 			if err != nil {
 				results[i] = result{err: err}
 				return
@@ -298,16 +323,160 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
 }
 
+func TestConcurrentWritesWithLeasesBadger(t *testing.T) {
+	runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+		return setupBadgerKV(t)
+	}, "badgerkv-leases")
+}
+
+func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
+	t.Run("sqlkv", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
+			return backend
+		}, "sqlkv-leases")
+	})
+}
+
+// runConcurrentWritesWithLeases verifies that with leases enabled and
+// no RV manager, concurrent writes to the same resource serialize cleanly:
+// exactly one succeeds and the rest get a recognizable conflict-style error.
+func runConcurrentWritesWithLeases(t *testing.T, newBackend func() resource.StorageBackend, ns string) {
+	t.Run("concurrent creates", func(t *testing.T) {
+		runConcurrentCreatesWithLeases(t, newBackend(), ns+"-create")
+	})
+	t.Run("concurrent updates", func(t *testing.T) {
+		runConcurrentUpdatesWithLeases(t, newBackend(), ns+"-update")
+	})
+	t.Run("concurrent deletes", func(t *testing.T) {
+		runConcurrentDeletesWithLeases(t, newBackend(), ns+"-delete")
+	})
+}
+
+func runConcurrentCreatesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-create"
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+				WithNamespace(ns),
+				WithValue(fmt.Sprintf("create-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsAlreadyExists(err), apierrors.IsConflict(err):
+			// Expected: lost the lease race, or acquired the lease after
+			// the winner committed and saw the resource.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent creates")
+	require.Equal(t, 1, successes, "exactly one concurrent create must succeed")
+}
+
+func runConcurrentUpdatesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-update"
+
+	rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("initial"))
+	require.NoError(t, err)
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_MODIFIED,
+				WithNamespaceAndRV(ns, rv),
+				WithValue(fmt.Sprintf("update-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsConflict(err):
+			// Expected: lost the lease race, or PreviousRV no longer matches.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent updates")
+	require.Equal(t, 1, successes, "exactly one concurrent update must succeed")
+}
+
+func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBackend, ns string) {
+	ctx := t.Context()
+	const concurrency = 10
+	name := "lease-concurrent-delete"
+
+	rv, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+		WithNamespace(ns), WithValue("initial"))
+	require.NoError(t, err)
+
+	errs := make([]error, concurrency)
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Go(func() {
+			_, errs[i] = WriteEvent(ctx, backend, name, resourcepb.WatchEvent_DELETED,
+				WithNamespaceAndRV(ns, rv),
+				WithValue(fmt.Sprintf("delete-%d", i)))
+		})
+	}
+	wg.Wait()
+
+	var successes int
+	var unexpected []error
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			successes++
+		case apierrors.IsConflict(err), errors.Is(err, resource.ErrNotFound):
+			// Expected: lost the lease race, or the resource is already gone.
+		default:
+			unexpected = append(unexpected, err)
+		}
+	}
+
+	require.Empty(t, unexpected, "unexpected error types from concurrent deletes")
+	require.Equal(t, 1, successes, "exactly one concurrent delete must succeed")
+}
+
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{
+		SQLKVBackendModeRVManager,
+		SQLKVBackendModeLeases,
+		SQLKVBackendModeOptimisticLocking,
+	} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				opts.Concurrency = 1 // to avoid SQLite database is locked error
 			}
-			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), mode)
 			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
 			RunStorageBackendBenchmark(t, backend, opts)
 		})
@@ -315,14 +484,14 @@ func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{SQLKVBackendModeRVManager, SQLKVBackendModeLeases} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				t.Skip("concurrency benchmark skipped with sqlite")
 			}
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), mode)
 			searchBackend, err := search.NewBleveBackend(search.BleveOptions{
 				Root:                   t.TempDir(),
 				FileThreshold:          0,
@@ -355,7 +524,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("Without RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeLeases)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest",
@@ -365,7 +534,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("With RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeRVManager)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest-rvmanager",

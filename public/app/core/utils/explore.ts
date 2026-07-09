@@ -1,6 +1,5 @@
 import { customAlphabet } from 'nanoid';
 import { type Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   type AdHocVariableFilter,
@@ -23,6 +22,7 @@ import {
   type TimeZone,
   toURLRange,
   urlUtil,
+  generateUUID,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
@@ -166,7 +166,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
 };
 
 export function generateKey(index = 0): string {
-  return `Q-${uuidv4()}-${index}`;
+  return `Q-${generateUUID()}-${index}`;
 }
 
 export async function generateEmptyQuery(

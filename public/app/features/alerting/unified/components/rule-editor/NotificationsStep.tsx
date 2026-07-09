@@ -13,6 +13,7 @@ import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../typ
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
+import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -242,7 +243,11 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   const selectedPolicy = watch('selectedPolicy');
 
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-  const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
+
+  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend
+  // in both toggle states), falling back to the legacy __grafana_managed_route__ label, so the
+  // notification preview fetches the correct routing tree instead of always defaulting to root.
+  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
 
   return (
     <Stack direction="column" gap={2}>
@@ -254,7 +259,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         folder={folder}
         alertName={alertName}
         alertUid={alertUid}
-        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
+        policyName={policyNameForPreview}
       />
     </Stack>
   );
@@ -323,7 +328,7 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

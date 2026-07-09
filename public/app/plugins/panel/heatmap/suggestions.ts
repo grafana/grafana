@@ -53,7 +53,8 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
     !dataSummary.rawFrames ||
     !dataSummary.hasData ||
     !dataSummary.hasFieldType(FieldType.time) ||
-    !dataSummary.hasFieldType(FieldType.number)
+    !dataSummary.hasFieldType(FieldType.number) ||
+    dataSummary.hasFieldType(FieldType.string)
   ) {
     return;
   }
@@ -75,8 +76,8 @@ export const heatmapSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
   return [
     {
       score: determineScore(dataSummary),
-      maxSeries: MAX_SUGGESTIONS_SERIES,
       cardOptions: {
+        maxSeries: MAX_SUGGESTIONS_SERIES,
         previewModifier: (s) => {
           s.options!.legend = { show: false };
         },

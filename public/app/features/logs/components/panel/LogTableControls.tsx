@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, LogsSortOrder, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Menu, usePanelContext, useStyles2 } from '@grafana/ui';
 
 import { DownloadFormat } from '../../utils';
 
@@ -13,6 +13,7 @@ import { LogListControlsOption } from './LogListControlsOption';
 import { LOG_LIST_CONTROLS_WIDTH } from './virtualization';
 
 type Props = {
+  allowDownload?: boolean;
   controlsExpanded: boolean;
   setControlsExpanded: (expanded: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export const LogTableControls = ({
+  allowDownload,
   controlsExpanded,
   logOptionsStorageKey,
   setControlsExpanded,
@@ -34,6 +36,7 @@ export const LogTableControls = ({
   wrapText,
 }: Props) => {
   const styles = useStyles2(getStyles, controlsExpanded);
+  const { app } = usePanelContext();
 
   const onExpandControlsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_expand_controls_clicked');
@@ -82,6 +85,9 @@ export const LogTableControls = ({
     ),
     [downloadLogs]
   );
+
+  const inDashboard = app === CoreApp.Dashboard || app === CoreApp.PanelEditor || app === CoreApp.PanelViewer;
+  const canDownload = (inDashboard && allowDownload === true) || (!inDashboard && !config.exploreHideLogsDownload);
 
   return (
     <div className={styles.navContainer}>
@@ -138,7 +144,7 @@ export const LogTableControls = ({
         }
       />
 
-      {!config.exploreHideLogsDownload && (
+      {canDownload && (
         <>
           <div className={styles.divider} />
           <Dropdown overlay={downloadMenu} placement="auto-end">

@@ -1,7 +1,6 @@
 /* eslint-disable @grafana/i18n/no-translation-top-level */
 import { useSessionStorage } from 'react-use';
 
-import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   dataLayers,
@@ -33,8 +32,10 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementForSelection(
@@ -119,28 +120,6 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
   return undefined;
 }
 
-export class NewObjectAddedToCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'new-object-added-to-canvas';
-}
-
-export class ObjectRemovedFromCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'object-removed-from-canvas';
-}
-
-export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'objects-reordered-on-canvas';
-}
-
-export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'conditional-rendering-changed';
-}
-
-export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
-  static type = 'repeats-updated';
-}
-
-export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
-
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
   source: SceneObject;
@@ -169,18 +148,6 @@ export interface ChangeVariableTypeActionHelperProps {
   oldVariable: SceneVariable;
   newVariable: SceneVariable;
   source: SceneVariableSet;
-}
-
-export interface ChangeTitleActionHelperProps {
-  oldTitle: string;
-  newTitle: string;
-  source: DashboardScene;
-}
-
-export interface ChangeDescriptionActionHelperProps {
-  oldDescription: string;
-  newDescription: string;
-  source: DashboardScene;
 }
 
 export interface MoveElementActionHelperProps {
@@ -366,7 +333,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

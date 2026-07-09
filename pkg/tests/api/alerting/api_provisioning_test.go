@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -660,7 +659,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
+					MissingSeriesEvalsToResolve: new(int64(3)),
 				},
 			},
 		}

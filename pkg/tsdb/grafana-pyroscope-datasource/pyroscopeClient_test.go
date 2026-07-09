@@ -2,11 +2,14 @@ package pyroscope
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
@@ -89,6 +92,44 @@ func Test_PyroscopeClient(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, selector, req.Msg.ProfileIdSelector)
 	})
+
+	ctxWithToggle := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: utf8LabelNamesFeatureToggle,
+	}))
+
+	t.Run("LabelNames sets UTF-8 Accept header when toggle enabled", func(t *testing.T) {
+		_, err := client.LabelNames(ctxWithToggle, "{}", 0, 100)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[typesv1.LabelNamesRequest])
+		require.True(t, ok)
+		require.Equal(t, "*/*; allow-utf8-labelnames=true", req.Header().Get("Accept"))
+	})
+
+	t.Run("LabelNames does not set UTF-8 Accept header when toggle disabled", func(t *testing.T) {
+		_, err := client.LabelNames(context.Background(), "{}", 0, 100)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[typesv1.LabelNamesRequest])
+		require.True(t, ok)
+		require.Empty(t, req.Header().Get("Accept"))
+	})
+
+	t.Run("GetSeries sets UTF-8 Accept header when toggle enabled", func(t *testing.T) {
+		limit := int64(10)
+		_, err := client.GetSeries(ctxWithToggle, "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15, typesv1.ExemplarType_EXEMPLAR_TYPE_NONE)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[querierv1.SelectSeriesRequest])
+		require.True(t, ok)
+		require.Equal(t, "*/*; allow-utf8-labelnames=true", req.Header().Get("Accept"))
+	})
+
+	t.Run("GetSeries does not set UTF-8 Accept header when toggle disabled", func(t *testing.T) {
+		limit := int64(10)
+		_, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15, typesv1.ExemplarType_EXEMPLAR_TYPE_NONE)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[querierv1.SelectSeriesRequest])
+		require.True(t, ok)
+		require.Empty(t, req.Header().Get("Accept"))
+	})
 }
 
 type FakePyroscopeConnectClient struct {
@@ -102,8 +143,8 @@ func (f *FakePyroscopeConnectClient) LabelValues(ctx context.Context, c *connect
 }
 
 func (f *FakePyroscopeConnectClient) LabelNames(ctx context.Context, c *connect.Request[typesv1.LabelNamesRequest]) (*connect.Response[typesv1.LabelNamesResponse], error) {
-	//TODO implement me
-	panic("implement me")
+	f.Req = c
+	return &connect.Response[typesv1.LabelNamesResponse]{Msg: &typesv1.LabelNamesResponse{}}, nil
 }
 
 func (f *FakePyroscopeConnectClient) Diff(ctx context.Context, c *connect.Request[querierv1.DiffRequest]) (*connect.Response[querierv1.DiffResponse], error) {
@@ -199,4 +240,34 @@ func (f *FakePyroscopeConnectClient) AnalyzeQuery(ctx context.Context, c *connec
 
 func (f *FakePyroscopeConnectClient) GetProfileStats(ctx context.Context, c *connect.Request[typesv1.GetProfileStatsRequest]) (*connect.Response[typesv1.GetProfileStatsResponse], error) {
 	panic("implement me")
+}
+
+func Test_setUTF8AcceptHeader(t *testing.T) {
+	tests := []struct {
+		description    string
+		existingAccept string
+		expectedAccept string
+	}{
+		{
+			description:    "no existing Accept header",
+			existingAccept: "",
+			expectedAccept: "*/*; allow-utf8-labelnames=true",
+		},
+		{
+			description:    "existing Accept header",
+			existingAccept: "application/json",
+			expectedAccept: "application/json; allow-utf8-labelnames=true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			h := http.Header{}
+			if tt.existingAccept != "" {
+				h.Set("Accept", tt.existingAccept)
+			}
+			setUTF8AcceptHeader(h)
+			require.Equal(t, tt.expectedAccept, h.Get("Accept"))
+		})
+	}
 }

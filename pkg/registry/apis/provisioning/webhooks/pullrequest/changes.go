@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -69,20 +71,37 @@ type fileChangeInfo struct {
 	HasRemovedMetadata bool
 }
 
-type evaluator struct {
-	render      ScreenshotRenderer
-	parsers     resources.ParserFactory
-	urlProvider func(ctx context.Context, namespace string) string
-	metrics     screenshotMetrics
+// URLProvider yields the two base URLs Grafana uses when referring to itself
+// from a PR comment. They split because consumers differ:
+//
+//   - Internal builds the dashboard view and preview URLs surfaced as
+//     clickable links. Reviewers click these from their own browsers — usually
+//     from inside the corp network — so the canonical AppURL works.
+//   - Public prefixes screenshot images embedded in the same comment. These
+//     images are fetched server-side by the Git provider's image proxy, so
+//     the URL must be reachable from the public internet.
+//
+// Operator deployments that don't need the split can set both fields to the
+// same closure.
+type URLProvider struct {
+	Internal func(ctx context.Context, namespace string) string
+	Public   func(ctx context.Context, namespace string) string
 }
 
-func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(ctx context.Context, namespace string) string, registry prometheus.Registerer) Evaluator {
+type evaluator struct {
+	render  ScreenshotRenderer
+	parsers resources.ParserFactory
+	urls    URLProvider
+	metrics screenshotMetrics
+}
+
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urls URLProvider, registry prometheus.Registerer) Evaluator {
 	metrics := registerScreenshotMetrics(registry)
 	return &evaluator{
-		render:      render,
-		parsers:     parsers,
-		urlProvider: urlProvider,
-		metrics:     metrics,
+		render:  render,
+		parsers: parsers,
+		urls:    urls,
+		metrics: metrics,
 	}
 }
 
@@ -97,11 +116,13 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	rendererAvailable := e.render.IsAvailable(ctx)
 	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
 	info := changeInfo{
-		GrafanaBaseURL:       e.urlProvider(ctx, cfg.Namespace),
+		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
 		MissingImageRenderer: !rendererAvailable,
 	}
+	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
+	orgID := orgIDForLinks(cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -115,7 +136,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, change, opts, parser, shouldRender))
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
@@ -123,9 +144,21 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
+// orgIDForLinks returns the org to pin on PR-comment links when the repo lives
+// in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
+// (stacks-N) and unresolved namespaces return 0, leaving links unscoped since
+// the viewer's default org already resolves them.
+func orgIDForLinks(namespace string) int64 {
+	ns, err := authlib.ParseNamespace(namespace)
+	if err != nil || ns.OrgID <= 1 {
+		return 0
+	}
+	return ns.OrgID
+}
+
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, orgID int64, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
+		return e.evaluateDeletedFile(ctx, repo, baseURL, orgID, change, parser)
 	}
 
 	info := fileChangeInfo{Change: change}
@@ -180,6 +213,11 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 
@@ -192,17 +230,20 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		if opts.URL != "" {
 			query.Set("pull_request_url", url.QueryEscape(opts.URL))
 		}
+		if orgID > 0 {
+			query.Set("orgId", strconv.FormatInt(orgID, 10))
+		}
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
@@ -215,7 +256,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 // evaluateDeletedFile is best-effort: it tries to read and parse the file at
 // the previous ref to extract metadata (kind, title, GrafanaURL)
-func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
+func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, orgID int64, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
 	info := fileChangeInfo{Change: change}
 
 	fileInfo, err := repo.Read(ctx, change.Path, change.PreviousRef)
@@ -238,6 +279,11 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 		}
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 	}
@@ -262,7 +308,13 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 		logging.FromContext(ctx).Warn("invalid", "url", grafanaURL, "err", err)
 		return "", err
 	}
-	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
+	// orgId belongs only on the human-facing comment link, where OrgRedirect
+	// switches the viewer's org on click. The render callback already
+	// authenticates in the repository's org via the render-service identity, so
+	// an orgId here would make OrgRedirect try to switch the render user instead.
+	query := parsed.Query()
+	query.Del("orgId")
+	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), query)
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot: %w", err)

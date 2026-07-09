@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -15,14 +13,13 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
-
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
 
-func RunRepoController(deps server.OperatorDependencies) error {
+func RunRepoController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-repo-controller")
@@ -33,26 +30,10 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to setup provisioning controller: %w", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		fmt.Println("Received shutdown signal, stopping controllers")
-		cancel()
-	}()
-
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
-
-	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
@@ -60,7 +41,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	}
 
 	resourceLister := resources.NewResourceLister(unified)
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -99,15 +80,16 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	controller, err := controller.NewRepositoryController(
+	// The repository delta source and the getter it backs.
+	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
-		repoInformer,
+		repoGetter,
 		repoFactory,
 		connectionFactory,
 		resourceLister,
@@ -122,15 +104,21 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
-		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+		controller.NewRepositoryQuotaChecker(repoGetter),
+		repository.NewIncrementalSyncPolicy(
+			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
+			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
+		),
+		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
+	reg, err := repoSource.AddEventHandler(controller.EventHandler())
 	if err != nil {
-		return fmt.Errorf("failed to create repository controller: %w", err)
+		return fmt.Errorf("failed to add repository event handler: %w", err)
 	}
+	go repoSource.Run(ctx.Done())
 
-	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), repoInformer.Informer().HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
+		return fmt.Errorf("failed to sync repository informer cache")
 	}
 
 	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

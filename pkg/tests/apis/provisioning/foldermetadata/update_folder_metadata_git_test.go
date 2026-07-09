@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -121,6 +122,66 @@ func TestIntegrationGitFiles_UpdateFolderMetadataOnNewBranch(t *testing.T) {
 			"rename-target/child/_folder.json", nestedBranch, "metadata", "name")
 		require.Equal(t, childUID, uid, "nested folder UID must not change")
 	})
+}
+
+// TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermissions
+// verifies that an editor with granular folder-scoped permissions can create a
+// dashboard on a new PR branch. Before the fix, the parser read _folder.json from
+// the target branch (which didn't exist yet), fell back to a hash-based folder UID,
+// and the RBAC ancestor walk failed because the hash-based UID wasn't in the folder tree.
+func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermissions(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	const repoName = "editor-new-branch-granular-perms"
+	helper.CreateGitRepo(t, repoName, nil, "write", "branch")
+
+	// Create a subfolder on the default branch (writes _folder.json with stable UID).
+	resp := postFolderViaFilesAPI(t, helper, repoName, "team-a/", "", "Create team-a folder")
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusOK, resp.StatusCode, "folder creation should succeed: %s", string(body))
+
+	folderUID := readFolderFieldOnRef(t, helper, ctx, repoName, "team-a/_folder.json", "", "metadata", "name")
+	require.NotEmpty(t, folderUID, "team-a should have a stable UID from _folder.json")
+
+	// Grant editor granular permissions scoped to the repo root folder only.
+	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        repoName,
+		},
+	})
+
+	// Editor creates a dashboard inside team-a/ on a new branch.
+	const branchName = "editor/add-dashboard"
+	dashboardContent := common.DashboardJSON("editor-dash-1", "Editor Dashboard 1", 1)
+
+	result := helper.EditorREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "team-a", "editor-dashboard.json").
+		Param("ref", branchName).
+		Param("message", "Add dashboard on new branch").
+		Body(dashboardContent).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+
+	require.NoError(t, result.Error(),
+		"editor with granular folder permissions should be able to create a dashboard on a new branch")
+
+	// Verify the file was actually created on the branch.
+	getResult := helper.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("files", "team-a", "editor-dashboard.json").
+		Param("ref", branchName).
+		Do(ctx)
+	require.NoError(t, getResult.Error(), "dashboard file should exist on the new branch")
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────

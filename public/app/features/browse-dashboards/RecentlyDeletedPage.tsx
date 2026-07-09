@@ -11,6 +11,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
+import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
@@ -43,6 +44,7 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
+        <DeletedDashboardsLimitBanner resultToken={searchState.result} />
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}

@@ -212,8 +212,10 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     // Generate upper bounds: shift values + calculate last bucket
     bucketBoundsMax = bucketBounds.slice();
     bucketBoundsMax.shift();
+    const lastBound = bucketBounds[bucketBounds.length - 1];
     const factor = calculateBucketFactor(bucketBounds);
-    bucketBoundsMax.push(bucketBounds[bucketBounds.length - 1] * factor);
+    // When the last bucket starts at 0, multiplicative expansion gives 0; use the factor directly instead.
+    bucketBoundsMax.push(lastBound === 0 ? factor : lastBound * factor);
 
     custom.yMatchWithLabel = undefined;
   } else {

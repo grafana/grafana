@@ -8,6 +8,16 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		CreateSearchExternalGroupMappingsBody{}.OpenAPIModelName():                          schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref),
+		CreateSearchExternalGroupMappingsResponse{}.OpenAPIModelName():                      schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref),
+		CreateServiceAccountTokenBody{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenBody(ref),
+		CreateServiceAccountTokenResponse{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenResponse(ref),
+		CreateTeamMemberBody{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_CreateTeamMemberBody(ref),
+		CreateTeamMemberResponse{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_CreateTeamMemberResponse(ref),
+		DeleteServiceAccountTokenBody{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_DeleteServiceAccountTokenBody(ref),
+		DeleteServiceAccountTokenResponse{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_DeleteServiceAccountTokenResponse(ref),
+		DeleteTeamMemberBody{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_DeleteTeamMemberBody(ref),
+		DeleteTeamMemberResponse{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_DeleteTeamMemberResponse(ref),
 		ExternalGroupMapping{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
 		ExternalGroupMappingList{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
 		ExternalGroupMappingSpec{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
@@ -17,8 +27,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GetSearchTeamsTeamHit{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
 		GetSearchUsersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref),
 		GetSearchUsersUserHit{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref),
+		GetServiceAccountTokenBody{}.OpenAPIModelName():                                     schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenBody(ref),
+		GetServiceAccountTokenResponse{}.OpenAPIModelName():                                 schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenResponse(ref),
+		GetServiceAccountTokenToken{}.OpenAPIModelName():                                    schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenToken(ref),
 		GetTeamGroupsBody{}.OpenAPIModelName():                                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref),
-		GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref),
 		GetTeamGroupsResponse{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref),
 		GetTeamMembersBody{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref),
 		GetTeamMembersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersResponse(ref),
@@ -35,6 +47,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GlobalRoleList{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref),
 		GlobalRoleSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
 		GlobalRolespecPermission{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
+		ListServiceAccountTokensBody{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensBody(ref),
+		ListServiceAccountTokensResponse{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensResponse(ref),
+		ListServiceAccountTokensToken{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensToken(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionSpec":          schema_pkg_apis_iam_v0alpha1_PermissionSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult": schema_pkg_apis_iam_v0alpha1_PermissionsSearchResult(ref),
 		ResourcePermission{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
@@ -66,11 +81,401 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		TeamLBACRuleSpec{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
 		TeamList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamList(ref),
 		TeamSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
+		TeamTeamMember{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_TeamTeamMember(ref),
 		User{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_User(ref),
+		UserExternalAuthInfo{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref),
 		UserList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		UserSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		UserStatus{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
 		UserTeamSyncStatus{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_UserTeamSyncStatus(ref),
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"teams", "totalHits"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateSearchExternalGroupMappingsResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"teams", "totalHits"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"token": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"serviceAccountTokenName": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"token", "serviceAccountTokenName", "expires"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateServiceAccountTokenResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"token": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"serviceAccountTokenName": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"token", "serviceAccountTokenName", "expires"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateTeamMemberBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"team", "user", "permission", "external"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_CreateTeamMemberResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "external reflects the stored origin of the membership after the operation. On a re-add this may differ from the value submitted in the request; clients that care about origin should diff request vs response.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"team", "user", "permission", "external"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_DeleteServiceAccountTokenBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"message"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_DeleteServiceAccountTokenResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"message"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_DeleteTeamMemberBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"team", "user"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_DeleteTeamMemberResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"team", "user"},
+			},
+		},
 	}
 }
 
@@ -380,6 +785,12 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"internalId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"memberCount": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -526,6 +937,29 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 							Format:  "",
 						},
 					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"internalId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated internal (legacy SQL) id of the user.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Creation timestamp, in epoch milliseconds.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"score": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -549,7 +983,118 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"},
+				Required: []string{"name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "disabled", "internalId", "created", "score"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(GetServiceAccountTokenToken{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"body"},
+			},
+		},
+		Dependencies: []string{
+			GetServiceAccountTokenToken{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(GetServiceAccountTokenToken{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"body"},
+			},
+		},
+		Dependencies: []string{
+			GetServiceAccountTokenToken{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetServiceAccountTokenToken(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"revoked": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"updated": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"lastUsed": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"title", "revoked", "expires", "created", "updated", "lastUsed"},
 			},
 		},
 	}
@@ -561,50 +1106,22 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsBody(ref common.ReferenceCallback
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"items": {
+					"externalGroups": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsExternalGroupMapping(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"externalGroup": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"name", "externalGroup"},
+				Required: []string{"externalGroups"},
 			},
 		},
 	}
@@ -630,25 +1147,24 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"items": {
+					"externalGroups": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"externalGroups"},
 			},
 		},
-		Dependencies: []string{
-			GetTeamGroupsExternalGroupMapping{}.OpenAPIModelName()},
 	}
 }
 
@@ -811,6 +1327,12 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
+						},
+					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -825,11 +1347,11 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsResponse(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"items"},
+				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetUserTeamsUserTeam{}.OpenAPIModelName()},
+			GetUserTeamsUserTeam{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
@@ -1221,6 +1743,145 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref common.ReferenceC
 					},
 				},
 				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ListServiceAccountTokensToken{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"items", "continue"},
+			},
+		},
+		Dependencies: []string{
+			ListServiceAccountTokensToken{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ListServiceAccountTokensToken{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"items", "continue"},
+			},
+		},
+		Dependencies: []string{
+			ListServiceAccountTokensToken{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_ListServiceAccountTokensToken(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"revoked": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"expires": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"updated": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"lastUsed": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"title", "revoked", "expires", "created", "updated", "lastUsed"},
 			},
 		},
 	}
@@ -2483,8 +3144,82 @@ func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
+					"members": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(TeamTeamMember{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"externalGroups": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"title", "email", "provisioned", "externalUID"},
+				Required: []string{"title", "email", "provisioned", "externalUID", "members"},
+			},
+		},
+		Dependencies: []string{
+			TeamTeamMember{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_TeamTeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "kind of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the identity",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "permission of the identity in the team",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Description: "whether the member was added externally (e.g. team sync)",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"kind", "name", "permission", "external"},
 			},
 		},
 	}
@@ -2535,6 +3270,39 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 		},
 		Dependencies: []string{
 			UserSpec{}.OpenAPIModelName(), UserStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"module": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"authID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"externalUID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"module", "authID"},
+			},
+		},
 	}
 }
 
@@ -2648,10 +3416,25 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
+					"externalAuthInfo": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(UserExternalAuthInfo{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "title", "provisioned", "role"},
 			},
 		},
+		Dependencies: []string{
+			UserExternalAuthInfo{}.OpenAPIModelName()},
 	}
 }
 

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../../../http_api/preferences/ # /docs/grafana/next/http_api/preferences/
-  - ../../../developers/http_api/preferences/ # /docs/grafana/next/developers/http_api/preferences/
+  - ../../../../http_api/preferences/ # /docs/grafana/next/http_api/preferences/
+  - ../../../../developers/http_api/preferences/ # /docs/grafana/next/developers/http_api/preferences/
   - ../../../../developer-resources/api-reference/http-api/preferences/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/preferences/
 description: Grafana HTTP API
@@ -43,7 +43,7 @@ system default value.
 GET /api/user/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -77,7 +77,7 @@ Content-Type: application/json
 PUT /api/user/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "",
@@ -107,7 +107,7 @@ Update one or more preferences without modifying the others.
 PATCH /api/user/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "dark"
@@ -133,7 +133,7 @@ Content-Type: text/plain; charset=utf-8
 GET /api/org/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -167,7 +167,7 @@ Content-Type: application/json
 PUT /api/org/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "",
@@ -197,7 +197,7 @@ Update one or more preferences without modifying the others.
 PATCH /api/org/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "dark"

@@ -75,6 +75,12 @@ func TestAPIBuilder_ValidateNamespaceIfPresent(t *testing.T) {
 			expectedValid: true,
 		},
 		{
+			name:          "wildcard auth namespace - valid for any specific namespace",
+			authNamespace: "*",
+			requestBody:   `{"context":{"namespace":"stacks-1"}}`,
+			expectedValid: true,
+		},
+		{
 			name:          "empty body - always valid",
 			authNamespace: "stacks-1",
 			requestBody:   ``,

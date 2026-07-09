@@ -1,9 +1,0 @@
-{
-  "extends": "../scripts/tsconfig.base.json",
-  "compilerOptions": {
-    "moduleResolution": "bundler",
-    "types": ["cypress"],
-    "resolveJsonModule": true
-  },
-  "include": ["**/*.ts", "cypress/support/e2e.js", "cypress/support/index.d.ts"]
-}

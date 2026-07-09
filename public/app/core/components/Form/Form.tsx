@@ -12,7 +12,7 @@ import {
   type FieldPath,
 } from 'react-hook-form';
 
-export type FormAPI<T extends FieldValues> = Omit<UseFormReturn<T>, 'handleSubmit'> & {
+type FormAPI<T extends FieldValues> = Omit<UseFormReturn<T>, 'handleSubmit'> & {
   errors: FieldErrors<T>;
 };
 

@@ -12,11 +12,12 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1509,7 +1510,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 						newResult(
 							eval.WithState(eval.Normal),
 							eval.WithLabels(labels1),
-							eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}}),
+							eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}}),
 						),
 					},
 					t2: {
@@ -3777,7 +3778,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}})),
+						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
 						newResult(eval.WithError(datasourceError)),
@@ -3882,13 +3883,13 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}})),
+						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
 						newResult(eval.WithError(datasourceError)),
 					},
 					t3: {
-						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}})),
+						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 				},
 				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
@@ -4079,7 +4080,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				desc: "t1[1:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
-						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: util.Pointer(1.0)}})),
+						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1), eval.WithValues(map[string]eval.NumberValueCapture{"A": {Var: "A", Value: new(1.0)}})),
 					},
 					t2: {
 						newResult(eval.WithError(datasourceError)),
@@ -5434,7 +5435,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 func TestProcessEvalResults_Screenshots(t *testing.T) {
 	gen := ngmodels.RuleGen
 	baseRule := gen.With(
-		gen.WithDashboardAndPanel(util.Pointer(util.GenerateShortUID()), util.Pointer(rand.Int63())),
+		gen.WithDashboardAndPanel(new(util.GenerateShortUID()), new(rand.Int63())),
 		gen.WithLabels(nil),
 		gen.WithFor(0),
 	).Generate()
@@ -5687,3 +5688,36 @@ func (f *fakePersister) Sync(_ context.Context, _ trace.Span, _ ngmodels.AlertRu
 }
 
 var _ StatePersister = (*fakePersister)(nil)
+
+func TestDatasourceErrorInfo(t *testing.T) {
+	rule := &ngmodels.AlertRule{
+		Data: []ngmodels.AlertQuery{
+			{RefID: "A", DatasourceUID: "ds-uid-1"},
+		},
+	}
+
+	t.Run("extracts refID and datasource UID from a query error", func(t *testing.T) {
+		err := expr.MakeQueryError("A", "ds-uid-1", errors.New("boom"))
+		refID, dsUID := datasourceErrorInfo(err, rule)
+		require.Equal(t, "A", refID)
+		require.Equal(t, "ds-uid-1", dsUID)
+	})
+
+	t.Run("still extracts them when the query error is wrapped as a query-limit error", func(t *testing.T) {
+		// MakeQueryError tags this with the queryLimitError wrapper because the message
+		// carries a Mimir query-limit ID. datasourceErrorInfo must still unwrap through
+		// that wrapper to reach the errutil error and read refId from its public payload.
+		err := expr.MakeQueryError("A", "ds-uid-1", errors.New("the query exceeded the maximum number of chunks (err-mimir-max-chunks-per-query)"))
+		require.True(t, errors.Is(err, expr.ErrQueryLimit), "precondition: error is wrapped by the query-limit helper")
+
+		refID, dsUID := datasourceErrorInfo(err, rule)
+		require.Equal(t, "A", refID, "refID must be extractable through the queryLimitError wrapper")
+		require.Equal(t, "ds-uid-1", dsUID)
+	})
+
+	t.Run("returns empty for a non-query error", func(t *testing.T) {
+		refID, dsUID := datasourceErrorInfo(errors.New("generic"), rule)
+		require.Empty(t, refID)
+		require.Empty(t, dsUID)
+	})
+}

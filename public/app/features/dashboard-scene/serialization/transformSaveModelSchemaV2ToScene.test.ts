@@ -16,6 +16,7 @@ import {
   type SceneGridItem,
   SwitchVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -366,6 +367,56 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(2);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('interval variables', () => {
+    it('should handle $___auto value', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const intervalVar = dashboard.spec.variables.find((v) => v.kind === 'IntervalVariable') as IntervalVariableKind;
+      intervalVar.spec.current.value = '$__auto';
+      intervalVar.spec.auto = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+      const variable = scene.state.$variables?.getByName('intervalVar') as IntervalVariable;
+
+      expect(variable.state.value).toBe('$__auto');
+    });
+  });
+
+  describe('query variables in public dashboard mode', () => {
+    it('forces refresh to never when publicDashboardAccessToken is set, regardless of spec refresh', () => {
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const queryVar = dashboard.spec.variables.find((v) => v.kind === 'QueryVariable') as QueryVariableKind;
+        queryVar.spec.refresh = 'onDashboardLoad';
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const variable = scene.state.$variables?.getByName('queryVar') as QueryVariable;
+
+        expect(variable.state.refresh).toBe(VariableRefresh.never);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
+
+    it('honors the spec refresh value when not in public dashboard mode', () => {
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = '';
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const queryVar = dashboard.spec.variables.find((v) => v.kind === 'QueryVariable') as QueryVariableKind;
+        queryVar.spec.refresh = 'onDashboardLoad';
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        const variable = scene.state.$variables?.getByName('queryVar') as QueryVariable;
+
+        expect(variable.state.refresh).toBe(VariableRefresh.onDashboardLoad);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
+    });
   });
 
   describe('adhoc variables', () => {

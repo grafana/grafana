@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { type ActionItem } from '../../Actions';
+import { type ActionItem } from '../../actionItem';
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
@@ -14,11 +14,12 @@ interface MockActionsProps {
 }
 
 jest.mock('../../Actions', () => ({
+  ...jest.requireActual('../../Actions'),
   Actions: ({ item, onDelete, onToggleHide }: MockActionsProps) => (
     <div
       data-testid="actions"
       data-item-type={item.type}
-      data-item-name={item.name}
+      data-item-id={item.id}
       data-item-hidden={String(item.isHidden)}
     >
       {onToggleHide && <button onClick={onToggleHide}>Toggle hide action</button>}
@@ -72,7 +73,7 @@ describe('HeaderActions', () => {
     expect(screen.getByTestId('query-actions-menu')).toBeInTheDocument();
     expect(screen.queryByTestId('transformation-action-buttons')).not.toBeInTheDocument();
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-type', QueryEditorType.Query);
-    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-name', 'A');
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-id', 'A');
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-hidden', 'false');
 
     await user.click(screen.getByRole('button', { name: 'Toggle hide action' }));
@@ -94,6 +95,7 @@ describe('HeaderActions', () => {
 
     expect(screen.getByTestId('query-actions-menu')).toBeInTheDocument();
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-type', QueryEditorType.Expression);
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-id', 'B');
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-hidden', 'true');
 
     await user.click(screen.getByRole('button', { name: 'Toggle hide action' }));
@@ -121,7 +123,7 @@ describe('HeaderActions', () => {
     expect(screen.getByTestId('transformation-action-buttons')).toBeInTheDocument();
     expect(screen.queryByTestId('query-actions-menu')).not.toBeInTheDocument();
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-type', QueryEditorType.Transformation);
-    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-name', 'Reduce');
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-id', 'transform-42');
     expect(screen.getByTestId('actions')).toHaveAttribute('data-item-hidden', 'true');
 
     await user.click(screen.getByRole('button', { name: 'Toggle hide action' }));
@@ -129,5 +131,19 @@ describe('HeaderActions', () => {
 
     expect(toggleTransformationDisabled).toHaveBeenCalledWith('transform-42');
     expect(deleteTransformation).toHaveBeenCalledWith('transform-42');
+  });
+
+  it('passes the selected transformation id to Actions', () => {
+    const selectedTransformation = makeTransformation({
+      transformId: 'reduce-0',
+      registryItem: { name: 'Reduce' } as Transformation['registryItem'],
+    });
+
+    renderWithQueryEditorProvider(<HeaderActions />, {
+      selectedTransformation,
+      uiStateOverrides: { cardType: QueryEditorType.Transformation },
+    });
+
+    expect(screen.getByTestId('actions')).toHaveAttribute('data-item-id', 'reduce-0');
   });
 });

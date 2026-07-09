@@ -23,7 +23,7 @@ import {
 import { StateTimelineTooltip } from '../state-timeline/StateTimelineTooltip';
 import { usePagination } from '../state-timeline/hooks';
 import { containerStyles } from '../state-timeline/styles';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 import { getTimezones } from '../timeseries/utils';
@@ -81,7 +81,16 @@ export const StatusHistoryPanel = ({
     return (
       <div className="panel-empty">
         <p>
-          <Trans i18nKey="status-history.status-history-panel.too-many-points" count={paginatedFrames[0].length}>
+          <Trans
+            i18nKey="status-history.status-history-panel.too-many-points"
+            count={paginatedFrames[0].length}
+            tOptions={{
+              defaultValue_one:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+              defaultValue_other:
+                'Too many points to visualize properly. <br/>Update the query to return fewer points. <br/>({{count}} points received)',
+            }}
+          >
             Too many points to visualize properly. <br />
             Update the query to return fewer points. <br />({'{{count}}'} points received)
           </Trans>

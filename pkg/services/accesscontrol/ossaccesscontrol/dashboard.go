@@ -35,8 +35,11 @@ var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontr
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
-func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
-	if !cfg.RBAC.PermissionsWildcardSeed("dashboard") {
+// DashboardFixedRoleRegistrations returns the wildcard seed role registrations
+// for dashboards. When wildcardSeed is false an empty slice is returned
+// (the feature is disabled for this instance).
+func DashboardFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistration {
+	if !wildcardSeed {
 		return nil
 	}
 
@@ -76,7 +79,26 @@ func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, serv
 		Grants: []string{"Admin"},
 	}
 
-	return service.DeclareFixedRoles(viewer, editor, admin)
+	return []accesscontrol.RoleRegistration{viewer, editor, admin}
+}
+
+func registerDashboardRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(DashboardFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("dashboard"))...)
+}
+
+// DashboardPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for dashboard resource permissions (fixed:dashboards.permissions:reader
+// and :writer). These mirror the roles declared by ProvideDashboardPermissions
+// through resourcepermissions.New; the identity fields below must match the
+// Options passed there.
+func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       dashboardPermissionsResource,
+		APIGroup:       dashboardv1.APIGroup,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
+	})
 }
 
 func ProvideDashboardPermissions(
@@ -99,7 +121,7 @@ func ProvideDashboardPermissions(
 	}
 
 	options := resourcepermissions.Options{
-		Resource:          "dashboards",
+		Resource:          dashboardPermissionsResource,
 		ResourceAttribute: "uid",
 		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
@@ -151,9 +173,9 @@ func ProvideDashboardPermissions(
 			"Edit":  DashboardEditActions,
 			"Admin": DashboardAdminActions,
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      dashboardPermissionsRoleGroup,
 		GetParentFolder: func(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (string, error) {
 			dashboardsGVR := schema.GroupVersionResource{
 				Group:    dashboardv1.APIGroup,

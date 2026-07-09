@@ -13,13 +13,14 @@ import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch
 
 export class DashboardFiltersOverviewPane extends SceneObjectBase {
   public static Component = DashboardFiltersOverviewPaneRenderer;
+  public minWidth = 500;
 
   public getId() {
     return 'filters' as const;
   }
 }
 
-export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
+function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - ../../../http_api/folder_dashboard_search/ # /docs/grafana/next/http_api/folder_dashboard_search/
-  - ../../../developers/http_api/folder_dashboard_search/ # /docs/grafana/next/developers/http_api/folder_dashboard_search/
+  - ../../../../http_api/folder_dashboard_search/ # /docs/grafana/next/http_api/folder_dashboard_search/
   - ../../../../developers/http_api/folder_dashboard_search/ # /docs/grafana/next/developers/http_api/folder_dashboard_search/
   - ../../../../developer-resources/api-reference/http-api/folder_dashboard_search/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/
@@ -51,7 +50,7 @@ Query parameters:
 GET /api/search?query=&starred=false HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response for retrieving folders and dashboards at the root level**:
@@ -92,7 +91,7 @@ Content-Type: application/json
 GET /api/search?query=Production%20Overview&starred=true&tag=prod HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response searching for dashboards**:

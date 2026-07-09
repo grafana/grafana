@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -19,8 +19,9 @@ import { formatDate, formatDuration } from 'app/core/internationalization/dates'
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { getIconForKind } from '../../service/utils';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -29,6 +30,7 @@ import { type TableColumn } from './SearchResultsTable';
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -118,6 +120,7 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
+      const description = access.description?.values[p.row.index];
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -125,10 +128,11 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
+      const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={styles.cell} {...cellProps}>
-          {!response.isItemLoaded(p.row.index) ? (
+        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
+          {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
@@ -137,6 +141,7 @@ export const generateColumns = (
               {name}
             </a>
           )}
+          {isLoaded ? <DescriptionTooltip description={description} /> : null}
         </div>
       );
     },
@@ -157,6 +162,46 @@ export const generateColumns = (
   } else {
     width = TYPE_COLUMN_WIDTH;
     columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
+    availableWidth -= width;
+  }
+
+  const deletedByField = access.deletedBy;
+  if (deletedByField && hasValue(deletedByField)) {
+    width = DELETED_BY_COLUMN_WIDTH;
+    columns.push({
+      id: `column-deleted-by`,
+      field: deletedByField,
+      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+      width,
+      Cell: (p) => {
+        const rawValue = deletedByField.values[p.row.index];
+        const { key, ...cellProps } = p.cellProps;
+        return (
+          <div key={key} {...cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : rawValue === DELETED_BY_UNKNOWN ? (
+              <Tooltip
+                content={t(
+                  'search.results-table.deleted-by-unknown-tooltip',
+                  'Failed to look up the account that deleted this dashboard'
+                )}
+              >
+                <Text variant="body" truncate>
+                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                    <Icon name="exclamation-triangle" /> Unknown
+                  </Trans>
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text variant="body" truncate>
+                {formatDeletedByDisplayValue(rawValue, t)}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    });
     availableWidth -= width;
   }
 

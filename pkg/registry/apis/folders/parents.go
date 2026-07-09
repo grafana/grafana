@@ -44,12 +44,12 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				item.Description = *folder.Spec.Description
 			}
 			info.Items = append(info.Items, item)
-			if item.Parent == "" {
+			if folderLegacy.IsRootFolderUID(item.Parent) {
 				break
 			}
 
 			if found[item.Parent] {
-				return nil, fmt.Errorf("cyclic folder references found: %s", item.Parent)
+				return nil, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent)
 			}
 
 			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})

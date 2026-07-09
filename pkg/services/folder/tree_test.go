@@ -227,7 +227,7 @@ func TestFolderTree_Contains(t *testing.T) {
 	t.Run("general folder is always accessible", func(t *testing.T) {
 		tree := NewFolderTree([]*Folder{})
 		assert.True(t, tree.Contains(GeneralFolderUID))
-		assert.True(t, tree.Contains("")) // RootFolderUID
+		assert.True(t, tree.Contains("")) // LegacyRootFolderUID
 	})
 
 	t.Run("folders from GetFolders are accessible", func(t *testing.T) {

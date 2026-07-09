@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen } from 'test/test-utils';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -81,6 +82,10 @@ const defaultStep1Props = {
 };
 
 describe('Step1AlertmanagerResources', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
     grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);

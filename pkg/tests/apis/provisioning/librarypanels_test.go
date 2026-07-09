@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -12,11 +11,31 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+// waitForSingleFolder waits until the folder List reports exactly one folder and
+// returns it. The folder List is served by the eventually-consistent search
+// index, which can briefly report zero right after an initial sync completes —
+// even though CreateLocalRepo already observed the folder — so callers must poll
+// rather than read once.
+func waitForSingleFolder(t *testing.T, helper *common.ProvisioningTestHelper) *unstructured.Unstructured {
+	t.Helper()
+	var folder *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		if !assert.Len(collect, folders.Items, 1) {
+			return
+		}
+		folder = &folders.Items[0]
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "expected exactly one folder to be listable after sync")
+	return folder
+}
 
 // We currently block the creation of library panels in provisioned folders.
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
@@ -28,11 +47,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 	})
 
 	t.Run("should fail to create library element in provisioned folder", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
-
-		managedFolderName := folders.Items[0].GetName()
+		managedFolderName := waitForSingleFolder(t, helper).GetName()
 		libraryElement := map[string]interface{}{
 			"kind":      1,
 			"name":      "Library Panel",
@@ -52,10 +67,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 
 	t.Run("should fail to patch library element, moving it in a provisioned folder", func(t *testing.T) {
 		// Getting managed folder
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
-		managedFolderName := folders.Items[0].GetName()
+		managedFolderName := waitForSingleFolder(t, helper).GetName()
 
 		unmanagedFolder := &unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -127,14 +139,12 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	})
 
 	t.Run("should create library element when folder is released", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, folders.Items, 1)
-		managedFolderName := folders.Items[0].GetName()
-		require.Contains(t, folders.Items[0].GetAnnotations(), utils.AnnoKeyManagerKind, "folder should be managed")
-		require.Contains(t, folders.Items[0].GetAnnotations(), utils.AnnoKeyManagerIdentity, "folder should be managed")
+		managedFolder := waitForSingleFolder(t, helper)
+		managedFolderName := managedFolder.GetName()
+		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerKind, "folder should be managed")
+		require.Contains(t, managedFolder.GetAnnotations(), utils.AnnoKeyManagerIdentity, "folder should be managed")
 
-		_, err = helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repo, types.JSONPatchType, []byte(`[
 		{
 			"op": "replace",
 			"path": "/metadata/finalizers",
@@ -144,20 +154,8 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err, "should successfully patch finalizers")
 
 		require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repo, metav1.DeleteOptions{}))
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			_, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
-			assert.True(collect, apierrors.IsNotFound(err), "repository should be deleted")
-		}, time.Second*10, time.Millisecond*50, "repository should be deleted")
-		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			foundFolders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-			require.NoError(t, err, "can list values")
-			for _, v := range foundFolders.Items {
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerKind)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeyManagerIdentity)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourcePath)
-				assert.NotContains(t, v.GetAnnotations(), utils.AnnoKeySourceChecksum)
-			}
-		}, time.Second*20, time.Millisecond*10, "Expected folders to be released")
+		helper.WaitForRepositoryDeleted(t, t.Context(), repo)
+		common.WaitForResourcesReleased(t, t.Context(), helper.Folders.Resource, "folders")
 
 		libraryElement := map[string]interface{}{
 			"kind":      1,

@@ -132,7 +132,7 @@ func TestCachedProvider_ConcurrentAccess(t *testing.T) {
 	numGoroutines := 100
 
 	// Launch many goroutines that all try to access the cache simultaneously
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -171,7 +171,7 @@ func TestCachedProvider_ConcurrentNamespaces(t *testing.T) {
 
 	for _, ns := range namespaces {
 		ctx := request.WithNamespace(context.Background(), ns)
-		for i := 0; i < callsPerOrg; i++ {
+		for range callsPerOrg {
 			wg.Add(1)
 			go func(ctx context.Context) {
 				defer wg.Done()
@@ -386,7 +386,7 @@ func TestCachedProvider_ParallelNamespacesFetch(t *testing.T) {
 
 	// Launch fetches for different namespaces simultaneously
 	startTime := time.Now()
-	for i := 0; i < numNamespaces; i++ {
+	for i := range numNamespaces {
 		wg.Add(1)
 		namespace := fmt.Sprintf("org-%d", i+1)
 		go func(ns string) {
@@ -428,7 +428,7 @@ func TestCachedProvider_SameNamespaceSerialFetch(t *testing.T) {
 
 	// Launch multiple fetches for the SAME namespace simultaneously
 	ctx := request.WithNamespace(context.Background(), "default")
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

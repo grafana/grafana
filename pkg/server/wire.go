@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -27,9 +28,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -43,11 +46,17 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	collectionsmigration "github.com/grafana/grafana/pkg/registry/apis/collections"
 	legacystars "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	snapshotmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
+	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
+	dsmigration "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	preferencesmigration "github.com/grafana/grafana/pkg/registry/apis/preferences"
+	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -72,6 +81,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -136,14 +146,11 @@ import (
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	promTypeMigration "github.com/grafana/grafana/pkg/services/promtypemigration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
-	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
-	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -172,7 +179,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
@@ -194,9 +200,8 @@ import (
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
@@ -208,11 +213,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 func otelTracer() trace.Tracer {
@@ -254,7 +255,9 @@ var wireBasicSet = wire.NewSet(
 	playlistmigrator.ProvidePlaylistMigrator,
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	snapshotmigrator.ProvideSnapshotMigrator,
 	legacystars.ProvideStarsMigrator,
+	legacypreferences.ProvidePreferencesMigrator,
 	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
@@ -262,7 +265,6 @@ var wireBasicSet = wire.NewSet(
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
-	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
 	mysql.ProvideService,
@@ -314,29 +316,31 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	infranats.ProvideNATSConfig,
+	infranats.ProvideServer,
+	infranats.ProvidePublisher,
+	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
+	infranats.ProvideSubscriber,
+	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
-	opentsdb.ProvideService,
 	socialimpl.ProvideService,
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
-	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
 	pyroscope.ProvideService,
-	parca.ProvideService,
-	zipkin.ProvideService,
 	jaeger.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
-	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
+	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,
-	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
+	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsgarbagecollectionworker.ProvideWorker,
 	grafanads.ProvideService,
 	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
@@ -389,13 +393,15 @@ var wireBasicSet = wire.NewSet(
 	starimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
-	publicdashboardsService.ProvideService,
-	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
-	publicdashboardsStore.ProvideStore,
-	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
-	publicdashboardsmetric.ProvideService,
-	publicdashboardsApi.ProvideApi,
+	publicdashboards.ProvideService,
+	publicdashboards.ProvideStore,
+	publicdashboards.ProvideMetricsService,
+	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
+	prefapi.ProvideK8sHandler,
+	annotationsapi.ProvideTokenExchanger,
+	annotationsapi.ProvideMigrationProxy,
+	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
@@ -404,7 +410,6 @@ var wireBasicSet = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
@@ -425,6 +430,7 @@ var wireBasicSet = wire.NewSet(
 	acimpl.ProvideAccessControl,
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
+	accesscontrol.ProvideNoopGlobalRoleSeeder,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -456,7 +462,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
-	authz.WireSet,
+	authz.WireSetBase,
 	// Secrets Manager
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
@@ -485,6 +491,7 @@ var wireBasicSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
+	resource.ProvideVectorMetrics,
 	unifiedmigrations.ProvideUnifiedStorageMigrationService,
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
@@ -508,6 +515,10 @@ var wireSet = wire.NewSet(
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Server only — builds the kvlease-backed Elector for the embedded zanzana
+	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
+	// the unified-storage KV is never opened from grafana-cli.
+	authz.ProvideEmbeddedZanzanaElector,
 )
 
 var wireCLISet = wire.NewSet(
@@ -523,6 +534,10 @@ var wireCLISet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	// CLI never participates in leader election; binding directly to the
+	// default elector keeps grafana-cli from pulling in the KV store.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 var wireTestSet = wire.NewSet(
@@ -541,6 +556,10 @@ var wireTestSet = wire.NewSet(
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	// Tests get a default elector — none of the integration tests today need to
+	// exercise real leader election.
+	leaderelection.NewDefaultElector,
+	wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -582,9 +601,23 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }
 
-func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
-	wire.Build(wireExtsSet)
-	return &unifiedsearch.StandardDocumentBuilders{}, nil
+// InitializeSearchSupport builds the document builders together with the
+// dashboard stats they use, so the storage-server target shares a single
+// stats instance (and a single metrics registration) between the search
+// document builders and the vector backfiller. It receives the dependencies
+// the module server has already constructed so they aren't recreated.
+func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg promclient.Registerer) (SearchSupport, error) {
+	wire.Build(wireExtsSearchSupportSet, wire.Struct(new(SearchSupport), "*"))
+	return SearchSupport{}, nil
+}
+
+// InitializeDashboardStats builds only the dashboard stats dependency used by
+// the vector backfiller views filter, for the storage-server target running
+// without enable_search. It receives the dependencies the module server has
+// already constructed so they aren't recreated.
+func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg promclient.Registerer) (builders.DashboardStats, error) {
+	wire.Build(wireExtsDashboardStatsSet)
+	return nil, nil
 }
 
 /*
@@ -596,16 +629,20 @@ func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+	snapshotMigrator snapshotmigrator.SnapshotMigrator,
 	dataSourceMigrator dsmigrator.DataSourceMigrator,
 	starsMigrator legacystars.StarsMigrator,
+	preferencesMigrator legacypreferences.PreferencesMigrator,
 	queryCacheConfigMigrator querycachingmigrator.QueryCacheConfigMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
-	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
-	r.Register(legacystars.StarsMigrationDefinition(starsMigrator))
+	r.Register(snapshotmigration.SnapshotMigration(snapshotMigrator))
+	r.Register(dsmigration.DataSourceMigration(dataSourceMigrator))
+	r.Register(collectionsmigration.StarsMigration(starsMigrator))
+	r.Register(preferencesmigration.PreferencesMigration(preferencesMigrator))
 	r.Register(querycachingmigration.QueryCacheConfigMigration(queryCacheConfigMigrator))
 	return r
 }

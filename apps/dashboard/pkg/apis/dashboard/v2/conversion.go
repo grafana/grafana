@@ -2,7 +2,6 @@ package v2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 func (d *Dashboard) GetStoredVersion() string {
@@ -22,7 +21,7 @@ func (d *Dashboard) GetAPIVersion() string {
 
 func (d *Dashboard) SetConversionStatus(storedVersion string, failed bool, errMsg *string, source interface{}) {
 	d.Status.Conversion = &DashboardConversionStatus{
-		StoredVersion: ptr.To(storedVersion),
+		StoredVersion: new(storedVersion),
 		Failed:        failed,
 		Error:         errMsg,
 		Source:        source,

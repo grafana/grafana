@@ -44,7 +44,7 @@ describe('usePendingExpression', () => {
   });
 
   describe('setPendingExpression', () => {
-    it('should set pending expression and deselect cards', () => {
+    it('should set pending expression without touching card selection', () => {
       const { result, options } = setup();
 
       act(() => {
@@ -52,7 +52,9 @@ describe('usePendingExpression', () => {
       });
 
       expect(result.current.pendingExpression).toEqual({ insertAfter: 'A' });
-      expect(options.onCardSelectionChange).toHaveBeenCalledWith(null, null);
+      // Opening the picker must not deselect cards: doing so would wipe the bulk
+      // selection while leaving multi-select mode on.
+      expect(options.onCardSelectionChange).not.toHaveBeenCalled();
     });
 
     it('should not deselect cards when clearing pending expression', () => {

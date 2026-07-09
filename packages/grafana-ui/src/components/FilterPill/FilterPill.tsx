@@ -24,7 +24,12 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterP
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (
-    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
+    <button
+      aria-pressed={selected}
+      type="button"
+      className={cx(clearButton, styles.wrapper, selected && styles.selected)}
+      onClick={onClick}
+    >
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} data-testid="filter-pill-icon" />}
     </button>

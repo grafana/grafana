@@ -3,7 +3,8 @@
   "name": "Logs Table",
   "id": "logstable",
   "suggestions": true,
-  "state": "alpha",
+  "state": "beta",
+  "hideFromList": true,
   "info": {
     "author": {
       "name": "Grafana Labs",

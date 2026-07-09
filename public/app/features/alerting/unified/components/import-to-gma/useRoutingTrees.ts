@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
-export interface RoutingTreeOption {
+interface RoutingTreeOption {
   /** The actual routing tree name (used as value) */
   name: string;
   /** The display label for the dropdown */

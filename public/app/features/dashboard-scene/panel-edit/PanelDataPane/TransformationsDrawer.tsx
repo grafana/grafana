@@ -40,7 +40,11 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     setDrawerState({ ...drawerState, ...{ selectedFilter } });
 
   const allTransformations = useMemo(
-    () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
+    () =>
+      standardTransformersRegistry
+        .list()
+        .filter((t) => !t.excludeFromPicker)
+        .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
 

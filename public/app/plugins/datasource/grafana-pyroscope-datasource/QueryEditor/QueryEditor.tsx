@@ -16,7 +16,7 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>;
 
-const labelSelectorRegex = /(\w+)\s*=\s*("[^,"]+")/g;
+const labelSelectorRegex = /((?:"(?:\\.|[^\\"])*"|[a-zA-Z_][a-zA-Z0-9_]*))\s*=\s*("[^"]*")/g;
 
 export function QueryEditor(props: Props) {
   const { onChange, onRunQuery, datasource, query, range, app } = props;
@@ -123,7 +123,11 @@ function useLabels(range: TimeRange | undefined, datasource: PyroscopeDataSource
     let match;
     while ((match = labelSelectorRegex.exec(rawInput)) !== null) {
       if (match[1] && match[2]) {
-        if (match[1] === labelToRemove) {
+        let labelName = match[1];
+        if (labelName.startsWith('"') && labelName.endsWith('"')) {
+          labelName = labelName.slice(1, -1).replace(/\\(.)/g, '$1');
+        }
+        if (labelName === labelToRemove) {
           continue;
         }
         labels.push(`${match[1]}=${match[2]}`);

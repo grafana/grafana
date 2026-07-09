@@ -38,7 +38,7 @@ type Service struct {
 	store            ssosettings.Store
 	settingsProvider setting.Provider
 	ac               ac.AccessControl
-	secrets          secrets.Service
+	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	metrics          *metrics
 
 	fbStrategies          []ssosettings.FallbackStrategy
@@ -51,8 +51,10 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
-	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
-	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
+	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	usageStats usagestats.Service, registerer prometheus.Registerer,
+	settingsProvider setting.Provider, licensing licensing.Licensing,
+) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		strategies.NewLDAPStrategy(cfg),

@@ -24,6 +24,11 @@ var (
 		Help: "Total number of errors from the status reader when resolving storage mode",
 	}, []string{"resource"})
 
+	currentModeMetric = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "unified_storage_dual_writer_current_mode",
+		Help: "Unified storage current storage mode, resolved dynamically from migration log (0=legacy, 1=dual-write, 5=unified)",
+	}, []string{"resource", "group"})
+
 	backgroundErrorMethods = []string{"GET", "LIST", "CREATE", "DELETE", "UPDATE", "DELETE_COLLECTION"}
 )
 
@@ -31,12 +36,13 @@ type dualWriterMetrics struct {
 	backgroundErrors   *prometheus.CounterVec
 	statusReaderNull   *prometheus.CounterVec
 	statusReaderErrors *prometheus.CounterVec
+	currentMode        *prometheus.GaugeVec
 }
 
 func provideDualWriterMetrics(reg prometheus.Registerer) *dualWriterMetrics {
 	registerMetricsOnce.Do(func() {
 		if reg != nil {
-			for _, m := range []prometheus.Collector{backgroundErrorsMetric, statusReaderNullMetric, statusReaderErrorsMetric} {
+			for _, m := range []prometheus.Collector{backgroundErrorsMetric, statusReaderNullMetric, statusReaderErrorsMetric, currentModeMetric} {
 				if err := reg.Register(m); err != nil {
 					log.New("dualwrite").Warn("failed to register dualwriter metrics", "error", err)
 				}
@@ -47,6 +53,7 @@ func provideDualWriterMetrics(reg prometheus.Registerer) *dualWriterMetrics {
 		backgroundErrors:   backgroundErrorsMetric,
 		statusReaderNull:   statusReaderNullMetric,
 		statusReaderErrors: statusReaderErrorsMetric,
+		currentMode:        currentModeMetric,
 	}
 }
 

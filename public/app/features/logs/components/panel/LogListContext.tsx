@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { usePrevious } from 'react-use';
 
 import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
@@ -24,7 +25,8 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
@@ -73,6 +75,7 @@ export interface LogListContextData
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -144,8 +147,9 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
@@ -191,6 +195,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -379,11 +384,15 @@ export const LogListContextProvider = ({
   }, [timestampResolution]);
 
   // Sync showLogAttributes
+  const prevShowLogAttributes = usePrevious(showLogAttributes);
   useEffect(() => {
-    if (showLogAttributes === false && setDisplayedFields) {
+    if (prevShowLogAttributes === undefined) {
+      return;
+    }
+    if (prevShowLogAttributes === true && showLogAttributes === false && setDisplayedFields) {
       setDisplayedFields([]);
     }
-  }, [setDisplayedFields, showLogAttributes]);
+  }, [prevShowLogAttributes, setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
@@ -594,6 +603,7 @@ export const LogListContextProvider = ({
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,
@@ -674,7 +684,7 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
-  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const datasource = await getDataSourceInstance(log.datasourceUid);
   const context = [];
   if (datasource) {
     context.push(

@@ -2,7 +2,7 @@ import { useEffect, useReducer } from 'react';
 
 import { dateMath, type TimeRange, type TimeZone } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, isWeekStart, RefreshPicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
@@ -66,7 +66,6 @@ export function DashNavTimeControls({
     };
 
     getTimeSrv().setTime(nextRange);
-    reportInteraction('grafana_dashboards_time_picker_changed');
   };
 
   const handleChangeTimeZone = (timeZone: TimeZone) => {

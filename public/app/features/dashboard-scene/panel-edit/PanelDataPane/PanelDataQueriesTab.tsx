@@ -40,8 +40,8 @@ import { ExpressionDatasourceUID } from '../../../expressions/types';
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 import { PanelInspectDrawer } from '../../inspect/PanelInspectDrawer';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { hasBackendDatasource } from './utils';
@@ -251,7 +251,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     if (timeFrom !== undefined || timeShift !== undefined) {
       panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
-      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange?.state);
     } else {
       panelStateUpdate.$timeRange = undefined;
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);

@@ -11,34 +11,6 @@ const (
 )
 
 var (
-	// Plugin reconciliation metrics
-	ChildReconciliationTotal = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: namespace,
-			Name:      "plugin_child_reconciliation_total",
-			Help:      "Total number of child plugin reconciliation operations",
-		},
-		[]string{"status", "action", "plugin_id"},
-	)
-
-	ChildReconciliationDurationSeconds = prometheus.NewHistogram(
-		prometheus.HistogramOpts{
-			Namespace: namespace,
-			Name:      "plugin_child_reconciliation_duration_seconds",
-			Help:      "Duration of child plugin reconciliation operations in seconds",
-			Buckets:   prometheus.DefBuckets,
-		},
-	)
-
-	ChildrenCountPerReconcile = prometheus.NewHistogram(
-		prometheus.HistogramOpts{
-			Namespace: namespace,
-			Name:      "plugin_children_count_per_reconcile",
-			Help:      "Number of child plugins found per reconciliation cycle.",
-			Buckets:   []float64{0, 1, 2, 3, 5, 7, 10},
-		},
-	)
-
 	// Plugin registration metrics
 	RegistrationOperationsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -118,9 +90,6 @@ var (
 
 func MustRegister(registerer prometheus.Registerer) {
 	metricsToRegister := []prometheus.Collector{
-		ChildReconciliationTotal,
-		ChildReconciliationDurationSeconds,
-		ChildrenCountPerReconcile,
 		RegistrationOperationsTotal,
 		RegistrationDurationSeconds,
 		MetaCacheLookupTotal,

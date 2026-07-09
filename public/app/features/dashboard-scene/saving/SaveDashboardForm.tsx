@@ -100,7 +100,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     }
 
     if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
 
     if (isPluginDashboardError(error)) {

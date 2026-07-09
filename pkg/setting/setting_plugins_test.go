@@ -281,6 +281,16 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 }
 
+func Test_readGrafanaComSettings_GrafanaComProxyAPIToken(t *testing.T) {
+	t.Run("reads proxy_token into GrafanaComProxyAPIToken when set", func(t *testing.T) {
+		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "test-gnet-proxy-token")
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+		assert.Equal(t, "test-gnet-proxy-token", cfg.GrafanaComProxyAPIToken)
+	})
+}
+
 func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 	tests := []struct {
 		name                string

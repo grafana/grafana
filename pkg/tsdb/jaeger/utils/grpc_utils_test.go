@@ -750,7 +750,7 @@ func TestConvertGrpcEventsToLogs(t *testing.T) {
 	t.Run("converts events with timestamp and attributes", func(t *testing.T) {
 		events := []types.GrpcSpanEvent{
 			{
-				TimeUnixNano: "2000",
+				TimeUnixNano: "2000000",
 				Name:         "error",
 				Attributes: []types.GrpcKeyValue{
 					{
@@ -768,7 +768,7 @@ func TestConvertGrpcEventsToLogs(t *testing.T) {
 		expected := []types.TraceLog{
 			{
 				Name:      "error",
-				Timestamp: int64(2),
+				Timestamp: float64(2000000) / 1000000.0, // 2ms
 				Fields: []types.KeyValueType{
 					{
 						Key:   "event",
@@ -792,9 +792,24 @@ func TestConvertGrpcEventsToLogs(t *testing.T) {
 
 		logs := convertGrpcEventsToLogs(events)
 		assert.Len(t, logs, 1)
-		assert.Equal(t, int64(0), logs[0].Timestamp)
+		assert.Equal(t, float64(0), logs[0].Timestamp)
 		assert.Equal(t, "log-without-timestamp", logs[0].Name)
 		assert.Empty(t, logs[0].Fields)
+	})
+
+	t.Run("preserves sub-millisecond precision", func(t *testing.T) {
+		// 1776893430228270123 ns = 1776893430228.270123 ms
+		events := []types.GrpcSpanEvent{
+			{
+				TimeUnixNano: "1776893430228270123",
+				Name:         "cache-miss",
+			},
+		}
+
+		logs := convertGrpcEventsToLogs(events)
+		assert.Len(t, logs, 1)
+		// Should preserve sub-ms precision — not truncate to integer ms
+		assert.InDelta(t, 1776893430228.270, logs[0].Timestamp, 0.001)
 	})
 }
 

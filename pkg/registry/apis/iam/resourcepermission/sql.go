@@ -23,11 +23,12 @@ import (
 // resolveScope returns the legacy db scope for the given resource name.
 // For id-scoped resources (teams, users, service accounts), translates uid→id via the identity store.
 func resolveScope(ctx context.Context, ns types.NamespaceInfo, store IdentityStore, mapper Mapper, name string) (string, error) {
-	scope := mapper.Scope(name)
 	if isIDScoped(mapper) && store != nil {
-		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, scope)
+		// The resource name (grn.Name) is always a UID. UIDScope returns the uid-form
+		// scope so ResolveUIDScopeForWrite can translate it to the id-based equivalent.
+		return legacy.ResolveUIDScopeForWrite(ctx, store, ns, mapper.UIDScope(name))
 	}
-	return scope, nil
+	return mapper.Scope(name), nil
 }
 
 // List
@@ -264,7 +265,7 @@ func (s *ResourcePermSqlBackend) createAndAssignManagedRole(ctx context.Context,
 	_, err = tx.Exec(ctx, insertRoleQuery, args...)
 	if err != nil {
 		s.logger.Error("could not insert new role", "orgID", orgID, "roleName", assignment.RoleName, "error", err.Error())
-		return 0, fmt.Errorf("could not insert new role")
+		return 0, fmt.Errorf("could not insert new role: %w", err)
 	}
 
 	var roleID int64
@@ -272,7 +273,7 @@ func (s *ResourcePermSqlBackend) createAndAssignManagedRole(ctx context.Context,
 	err = tx.Get(ctx, &roleID, idQuery, orgID, assignment.RoleName)
 	if err != nil {
 		s.logger.Error("could not retrieve id of created role", "orgID", orgID, "roleName", assignment.RoleName, "error", err.Error())
-		return 0, fmt.Errorf("could not retrieve id of created role")
+		return 0, fmt.Errorf("could not retrieve id of created role: %w", err)
 	}
 
 	assignQuery, args, err := buildInsertAssignmentQuery(dbHelper, orgID, roleID, assignment)
@@ -282,7 +283,7 @@ func (s *ResourcePermSqlBackend) createAndAssignManagedRole(ctx context.Context,
 	_, err = tx.Exec(ctx, assignQuery, args...)
 	if err != nil {
 		s.logger.Error("could not insert role assignment", "orgID", orgID, "roleName", assignment.RoleName, "subjectID", assignment.SubjectID, "error", err.Error())
-		return 0, fmt.Errorf("could not insert role assignment")
+		return 0, fmt.Errorf("could not insert role assignment: %w", err)
 	}
 
 	return roleID, nil
@@ -297,26 +298,26 @@ func (s *ResourcePermSqlBackend) storeRbacAssignment(ctx context.Context, dbHelp
 	err := tx.Get(ctx, &roleID, query, orgID, assignment.RoleName)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.logger.Error("could not check for existing role", "orgID", orgID, "roleName", assignment.RoleName, "error", err.Error())
-		return fmt.Errorf("could not check for existing role")
+		return fmt.Errorf("could not check for existing role: %w", err)
 	}
 
 	// Role doesn't exist, create it
 	if roleID == 0 {
 		roleID, err = s.createAndAssignManagedRole(ctx, tx, dbHelper, orgID, assignment)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not create and assign managed role: %w", err)
 		}
 	}
 
 	// Add the new permission
 	insertPermQuery, args, err := buildInsertPermissionQuery(dbHelper, roleID, assignment.permission())
 	if err != nil {
-		return err
+		return fmt.Errorf("could not build insert permission query: %w", err)
 	}
 	_, err = tx.Exec(ctx, insertPermQuery, args...)
 	if err != nil {
 		s.logger.Error("could not insert role permission", "roleID", roleID, "scope", assignment.Scope, "error", err.Error())
-		return fmt.Errorf("could not insert role permission")
+		return fmt.Errorf("could not insert role permission: %w", err)
 	}
 
 	return nil
@@ -426,7 +427,7 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 	err := tx.Get(ctx, &roleID, idQuery, orgID, "managed:%", scope)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.logger.Error("could not check for existing resource permission", "orgID", orgID, "scope", scope, "error", err.Error())
-		return fmt.Errorf("could not check for existing resource permission")
+		return fmt.Errorf("could not check for existing resource permission: %w", err)
 	}
 	if roleID != 0 {
 		return errConflict
@@ -478,7 +479,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 				return apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), grn.string())
 			}
 			s.logger.Error("could not get resource permissions", "orgID", ns.OrgID, "scope", grn.Name, "error", err.Error())
-			return fmt.Errorf("could not get the existing resource permissions for resource %s", grn.Name)
+			return fmt.Errorf("could not get the existing resource permissions for resource %s: %w", grn.Name, err)
 		}
 
 		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
@@ -507,7 +508,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 				_, err = tx.Exec(ctx, removePermQuery, args...)
 				if err != nil {
 					s.logger.Error("could not remove role permission", "scope", perm.Scope, "role", perm.RoleName, "error", err.Error())
-					return fmt.Errorf("could not remove role permission")
+					return fmt.Errorf("could not remove role permission: %w", err)
 				}
 			}
 		}
@@ -515,12 +516,12 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		if len(permissionsToAdd) > 0 {
 			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, rbacScope, datasourcek8s.DSTypeFromDatasourceAPIGroup(grn.Group))
 			if err != nil {
-				return err
+				return fmt.Errorf("could not build rbac assignments: %w", err)
 			}
 
 			for _, assignment := range permsToAdd {
 				if err := s.storeRbacAssignment(ctx, dbHelper, tx, ns.OrgID, assignment); err != nil {
-					return err
+					return fmt.Errorf("could not store role assignment: %w", err)
 				}
 			}
 		}
@@ -595,8 +596,8 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 
 	_, err = sql.DB.GetSqlxSession().Exec(ctx, rawQuery, args...)
 	if err != nil {
-		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, err.Error())
-		return fmt.Errorf("could not delete resource permission")
+		s.logger.Error("could not delete resource permissions", "scope", scope, "orgID", ns.OrgID, "error", err.Error())
+		return fmt.Errorf("could not delete resource permission: %w", err)
 	}
 
 	return nil

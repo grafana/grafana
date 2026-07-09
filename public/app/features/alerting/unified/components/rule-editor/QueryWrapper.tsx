@@ -17,7 +17,6 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
@@ -33,8 +32,8 @@ import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQuery
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-export const DEFAULT_MAX_DATA_POINTS = 43200;
-export const DEFAULT_MIN_INTERVAL = '1s';
+const DEFAULT_MAX_DATA_POINTS = 43200;
+const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -56,7 +55,6 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -77,7 +75,6 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
-  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,
@@ -87,8 +84,7 @@ export const QueryWrapper = ({
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   const { getValues } = useFormContext<RuleFormValues>();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,

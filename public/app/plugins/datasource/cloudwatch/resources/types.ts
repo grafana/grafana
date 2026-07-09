@@ -35,6 +35,7 @@ export interface DescribeLogGroupsRequest extends ResourceRequest {
   limit?: number;
   listAllLogGroups?: boolean;
   accountId?: string;
+  nextToken?: string;
 }
 
 export interface Account {
@@ -56,6 +57,11 @@ export interface MetricResponse {
 
 export interface RegionResponse {
   name: string;
+}
+
+export interface LogGroupsResponse {
+  results: Array<ResourceResponse<LogGroupResponse>>;
+  nextToken?: string;
 }
 
 export interface SelectableResourceValue extends SelectableValue<string> {

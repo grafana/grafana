@@ -3,7 +3,6 @@ package appregistry
 import (
 	"context"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -51,19 +50,14 @@ func ProvideAppInstallers(
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	featureClient := openfeature.NewDefaultClient()
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsAppInstaller,
 		exampleAppInstaller,
+		quotasAppInstaller,
 	}
-	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
-		installers = append(installers, quotasAppInstaller)
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		installers = append(installers, shorturlAppInstaller)
-	}
+	installers = append(installers, shorturlAppInstaller)
+
 	if rulesAppInstaller != nil {
 		installers = append(installers, rulesAppInstaller)
 	}
@@ -89,7 +83,7 @@ func ProvideAppInstallers(
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
+	if features.IsEnabledGlobally(featuremgmt.FlagLiveRunAPIServer) {
 		installers = append(installers, liveAppInstaller)
 	}
 

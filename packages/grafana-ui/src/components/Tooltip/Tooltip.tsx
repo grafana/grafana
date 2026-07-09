@@ -127,7 +127,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
 Tooltip.displayName = 'Tooltip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
