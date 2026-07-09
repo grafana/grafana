@@ -4,6 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
@@ -132,7 +133,7 @@ export const getActiveItem = (
   return undefined;
 };
 
-export function getEditionAndUpdateLinks(): NavModelItem[] {
+function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];
@@ -157,6 +158,135 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
 
   return links;
 }
+
+/**
+ * Whether an item can be pinned. "Create" actions are shortcuts, Home is excluded, and individual
+ * starred dashboards (the `starred/` id prefix) aren't pinnable — only the Starred section is.
+ * This also makes Starred a pinning "leaf" (no pinnable children), so it pins/unpins as a whole
+ * regardless of its dynamic children.
+ */
+const isPinnable = (item: NavModelItem): boolean =>
+  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(ID_PREFIX);
+
+// Children that participate in pinning.
+const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
+
+/** Urls of the pinnable leaves under an item — or the item's own url if it has no pinnable children. */
+export function getPinnableLeafUrls(item: NavModelItem): string[] {
+  const children = pinnableChildren(item);
+  if (children.length > 0) {
+    return children.flatMap(getPinnableLeafUrls);
+  }
+  return item.url ? [item.url] : [];
+}
+
+/**
+ * Expand a stored (canonical) pin set into the flat set of effective leaf urls — a stored section
+ * url becomes all its pinnable leaves. A stored url that no longer resolves to a nav item (e.g. the
+ * page was removed, a plugin uninstalled, or it's hidden by the current permissions/flags) is kept
+ * as-is so the pin isn't silently dropped, and re-resolves if the item comes back.
+ */
+export function expandPinnedUrls(storedUrls: string[], items: NavModelItem[]): Set<string> {
+  const leaves = new Set<string>();
+  for (const url of storedUrls) {
+    const node = findByUrl(items, url);
+    const urls = node ? getPinnableLeafUrls(node) : [url];
+    urls.forEach((u) => leaves.add(u));
+  }
+  return leaves;
+}
+
+/**
+ * Collapse a flat set of pinned leaf urls back into the canonical stored form: a top-level section
+ * whose every pinnable leaf is pinned is stored as the section itself; otherwise its pinned leaves
+ * are stored individually. Collapse is top-level only (intermediate groups aren't collapsed).
+ */
+export function normalizePinnedUrls(leafSet: Set<string>, items: NavModelItem[]): string[] {
+  const result: string[] = [];
+  for (const item of items) {
+    const leaves = getPinnableLeafUrls(item);
+    const pinned = leaves.filter((url) => leafSet.has(url));
+    if (pinned.length === 0) {
+      continue;
+    }
+    if (item.url && pinned.length === leaves.length) {
+      result.push(item.url);
+    } else {
+      result.push(...pinned);
+    }
+  }
+  return result;
+}
+
+/** Whether an item is pinned in its own right (its url is in the pinned set). */
+function isItemPinned(item: NavModelItem, pinned: Set<string>): boolean {
+  return Boolean(item.url && pinned.has(item.url));
+}
+
+/**
+ * Whether an item has been "moved" out of the normal nav into the pinned area. An item is moved
+ * when it is pinned in its own right (the whole item, including any children), or when it is a
+ * section whose every child is moved (so a fully-pinned parent disappears from the normal nav).
+ * Pinning is keyed on the item's own url rather than its children so that sections with dynamic
+ * children (e.g. "Starred") stay correctly pinned as items are starred/unstarred.
+ */
+function isNavItemMoved(item: NavModelItem, pinned: Set<string>): boolean {
+  if (isItemPinned(item, pinned)) {
+    return true;
+  }
+  const children = pinnableChildren(item);
+  return children.length > 0 && children.every((child) => isNavItemMoved(child, pinned));
+}
+
+/** Whether an item is pinned itself or has any pinned descendant (so it appears in the pinned area). */
+function hasPinnedItem(item: NavModelItem, pinned: Set<string>): boolean {
+  return isItemPinned(item, pinned) || pinnableChildren(item).some((child) => hasPinnedItem(child, pinned));
+}
+
+/**
+ * Build the pinned subtree to render at the top of the menu. A directly-pinned item is kept whole
+ * (with all its live children); an item that only has pinned descendants is kept as a structural
+ * ancestor with just the branches that lead to a pinned item — so pinning "Playlists" surfaces
+ * "Dashboards → Playlists".
+ */
+function buildPinnedTree(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
+  return items
+    .filter((item) => hasPinnedItem(item, pinned))
+    .map((item) => {
+      if (isItemPinned(item, pinned)) {
+        return { ...item };
+      }
+      const children = pinnableChildren(item);
+      return children.length > 0
+        ? { ...item, children: buildPinnedTree(children, pinned) }
+        : { ...item, children: undefined };
+    });
+}
+
+/**
+ * Build the normal nav with pinned items removed. A partially-pinned section is kept with only
+ * its un-pinned children; a fully-pinned section is dropped entirely.
+ */
+function removeMovedItems(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
+  return items
+    .filter((item) => !isNavItemMoved(item, pinned))
+    .map((item) => (item.children ? { ...item, children: removeMovedItems(item.children, pinned) } : item));
+}
+
+/**
+ * Split a nav tree into the pinned subtree (hoisted to the top of the menu) and the rest (with
+ * pinned items removed). Single entry point so callers don't orchestrate the two transforms.
+ */
+export function partitionNavForPinning(
+  items: NavModelItem[],
+  pinned: Set<string>
+): { pinned: NavModelItem[]; rest: NavModelItem[] } {
+  return { pinned: buildPinnedTree(items, pinned), rest: removeMovedItems(items, pinned) };
+}
+
+// Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
+// the logo, so it isn't repeated as a menu item.
+export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {

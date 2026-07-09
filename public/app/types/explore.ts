@@ -30,7 +30,7 @@ export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_EDITOR,
 }
 
-export interface CorrelationEditorDetails {
+interface CorrelationEditorDetails {
   editorMode: boolean;
   correlationDirty: boolean;
   queryEditorDirty: boolean;
@@ -254,13 +254,6 @@ export interface ExploreItemState {
   compact: boolean;
 }
 
-export interface ExploreUpdateState {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  mode: boolean;
-}
-
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
@@ -307,7 +300,7 @@ export enum TABLE_RESULTS_STYLE {
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
-export interface SupplementaryQuery {
+interface SupplementaryQuery {
   enabled: boolean;
   dataProvider?: Observable<DataQueryResponse>;
   dataSubscription?: SubscriptionLike;

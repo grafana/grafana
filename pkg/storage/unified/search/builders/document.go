@@ -7,6 +7,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	sdkResource "github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -84,6 +85,43 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 	}
 
 	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
+}
+
+// tableColumnsByName builds a map[fieldName]*ResourceTableColumnDefinition
+// from the given SearchFieldDefinitions. Used by IAM builders that expose
+// the historical XxxTableColumnDefinitions shape for wire-API consumers
+// (legacy SQL search backends) that look fields up by name.
+func tableColumnsByName(sfds []resource.SearchFieldDefinition) map[string]*resourcepb.ResourceTableColumnDefinition {
+	cols := resource.SearchFieldDefinitionsToTableColumns(sfds)
+	out := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
+	for _, c := range cols {
+		out[c.Name] = c
+	}
+	return out
+}
+
+// iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
+// is wired the same way: its search fields come from the generated IAM manifest
+// and its documents are extracted by the standard builder, so only the resource
+// and its field set differ per kind.
+func iamBuilder(ri utils.ResourceInfo, searchFields []resource.SearchFieldDefinition) (resource.DocumentBuilderInfo, error) {
+	gvr := ri.GroupVersionResource()
+	gr := ri.GroupResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: searchFields},
+		// The preferred version for this resource. Documents stored with an
+		// apiVersion the server does not recognise fall back to it when their
+		// fields are extracted. IAM kinds serve a single version, so that is the
+		// value here.
+		map[schema.GroupResource]string{gr: gvr.Version},
+	)
+
+	return resource.DocumentBuilderInfo{
+		GroupResource:        gr,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
+	}, nil
 }
 
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.

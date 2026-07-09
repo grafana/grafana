@@ -17,10 +17,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -43,10 +41,8 @@ type ConnectionStatusPatcher interface {
 
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
-	client     client.ProvisioningV0alpha1Interface
-	connLister listers.ConnectionLister
-	connSynced cache.InformerSynced
-	logger     logging.Logger
+	conns  informer.ConnectionGetter
+	logger logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
 	healthChecker     ConnectionHealthCheckerInterface
@@ -63,19 +59,16 @@ type ConnectionController struct {
 
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
-	provisioningClient client.ProvisioningV0alpha1Interface,
-	connInformer informer.ConnectionInformer,
+	conns informer.ConnectionGetter,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
-) (*ConnectionController, error) {
+) *ConnectionController {
 	cc := &ConnectionController{
-		client:     provisioningClient,
-		connLister: connInformer.Lister(),
-		connSynced: connInformer.Informer().HasSynced,
+		conns: conns,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
@@ -91,19 +84,20 @@ func NewConnectionController(
 		drainTimeout:      drainTimeout,
 	}
 
-	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	cc.processFn = cc.process
+
+	return cc
+}
+
+// EventHandler returns the informer event handlers for the controller. Register
+// it with the Connection informer to enqueue connections on add and update.
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
 		AddFunc: cc.enqueue,
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			cc.enqueue(newObj)
 		},
-	})
-	if err != nil {
-		return nil, err
 	}
-
-	cc.processFn = cc.process
-
-	return cc, nil
 }
 
 func (cc *ConnectionController) enqueue(obj interface{}) {
@@ -209,10 +203,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	conn, err := cc.connLister.Connections(namespace).Get(name)
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the informer.ConnectionGetter's concern, not the controller's.
+	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found in cache")
+		return errors.New("connection not found")
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err

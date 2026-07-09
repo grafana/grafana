@@ -15,9 +15,9 @@ import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
 import { useScenesFlickeringFix } from '../utils/utils';
 
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 
 export interface Props

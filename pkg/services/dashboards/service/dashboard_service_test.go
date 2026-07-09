@@ -797,8 +797,9 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 				UID: "general",
 			},
 		},
-		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-		log: log.NewNopLogger(),
+		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
+		log:      log.NewNopLogger(),
+		features: featuremgmt.WithFeatures(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -843,7 +844,8 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
-		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
+		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
+		features: featuremgmt.WithFeatures(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{

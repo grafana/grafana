@@ -138,14 +138,6 @@ export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter
   return rulerGetRequest<RulerRulesConfigDTO>(url, {}, params);
 }
 
-// fetch rule groups for a particular namespace
-// will throw with { status: 404 } if namespace does not exist
-export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfig, namespace: string) {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(path, {}, params);
-  return result[namespace] || [];
-}
-
 // fetch a particular rule group
 // will throw with { status: 404 } if rule group does not exist
 export async function fetchTestRulerRulesGroup(

@@ -908,10 +908,9 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					return err
 				}
 			}
-		}
-
-		if err := service.checkLimitsTransactionCtx(ctx, user); err != nil {
-			return err
+			if err := service.checkLimitsTransactionCtx(ctx, user); err != nil {
+				return err
+			}
 		}
 
 		return nil

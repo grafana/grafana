@@ -33,8 +33,17 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", r.GetNamespace(),
+		"group", r.GetGroup(),
+		"resource", r.GetResource(),
+		"subresource", r.GetSubresource(),
+		"verb", r.GetVerb(),
+	)
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
+		ctxLogger.Debug("List execution time", "duration", time.Since(t).Milliseconds())
 	}(time.Now())
 
 	res, err := s.list(ctx, r)
@@ -86,23 +95,16 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	ctx, span := s.tracer.Start(ctx, "server.listTyped")
 	defer span.End()
 
-	if !resource.IsValidRelation(relation) {
-		return &authzv1.ListResponse{}, nil
-	}
-
 	var (
 		subresourceRelation = common.SubresourceRelation(relation)
 		resourceCtx         = resource.Context()
 	)
 
-	// Use optimized folder permission relations for permission management
-	listRelation := relation
-	if resource.Type() == common.TypeFolder {
-		listRelation = common.FolderPermissionRelation(relation)
-	}
-
+	// The subresource branch is gated on the subresource relation, independently of the base
+	// relation: a type may support e.g. resource_create without a per-object base create
+	// (user / service-account), so the base-relation guard below must not block it.
 	var items []string
-	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
+	if resource.HasSubresource() && resource.IsValidRelation(subresourceRelation) {
 		// List requested subresources
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 			StoreId:              store.ID,
@@ -120,18 +122,26 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 	}
 
-	// List all resources user has access too
-	res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Type:                 resource.Type(),
-		Relation:             listRelation,
-		User:                 subject,
-	}, contextuals)
-	if err != nil {
-		return nil, err
+	// List all resources the subject has direct access to via the base relation.
+	if resource.IsValidRelation(relation) {
+		// Use optimized folder permission relations for permission management
+		listRelation := relation
+		if resource.Type() == common.TypeFolder {
+			listRelation = common.FolderPermissionRelation(relation)
+		}
+
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 resource.Type(),
+			Relation:             listRelation,
+			User:                 subject,
+		}, contextuals)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 	}
-	items = append(items, typedObjects(resource.Type(), res.GetObjects())...)
 
 	return &authzv1.ListResponse{
 		Items: items,

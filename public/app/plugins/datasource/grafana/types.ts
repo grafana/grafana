@@ -41,7 +41,7 @@ export interface GrafanaQuery extends DataQuery {
   dropPercent?: number;
 }
 
-export interface GrafanaQueryFile {
+interface GrafanaQueryFile {
   name: string;
   size: number;
 }

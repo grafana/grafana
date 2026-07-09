@@ -6,6 +6,7 @@ import {
   createDataFrame,
   type DataFrame,
   DataFrameType,
+  type DataSourceApi,
   dateTime,
   type Field,
   FieldType,
@@ -16,9 +17,9 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
-import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
@@ -30,6 +31,7 @@ import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from 
 import { LogLineDetails, type Props } from './LogLineDetails';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
@@ -53,8 +55,12 @@ jest.mock('@grafana/assistant', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   usePluginLinks: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -142,19 +148,15 @@ describe('LogLineDetails', () => {
       links: [],
       isLoading: false,
     });
-    jest.mocked(getDataSourceSrv).mockImplementation(
-      () =>
-        ({
-          get: (uid: string) => {
-            if (uid === 'loki-ds') {
-              return Promise.resolve(lokiDS);
-            } else if (uid === 'tempo-ds') {
-              return Promise.resolve(tempoDS);
-            }
-            return Promise.resolve(null);
-          },
-        }) as unknown as DataSourceSrv
-    );
+    jest.mocked(getDataSourceInstance).mockImplementation((ref) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      if (uid === 'loki-ds') {
+        return Promise.resolve(lokiDS as unknown as DataSourceApi);
+      } else if (uid === 'tempo-ds') {
+        return Promise.resolve(tempoDS as unknown as DataSourceApi);
+      }
+      return Promise.resolve(null as unknown as DataSourceApi);
+    });
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
@@ -240,6 +242,53 @@ describe('LogLineDetails', () => {
       );
     });
   });
+  describe('Filtering by log line string', () => {
+    test('calls onClickFilterString with the log line and refId', async () => {
+      const onClickFilterString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter for this log line'));
+
+      expect(onClickFilterString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('calls onClickFilterOutString with the log line and refId', async () => {
+      const onClickFilterOutString = jest.fn();
+      const log = createLogLine({
+        entry: 'some log line',
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        datasourceUid: lokiDS.uid,
+      });
+
+      await setup({ logs: [log] }, undefined, { onClickFilterOutString }, { showDetails: [log], currentLog: log });
+
+      await userEvent.click(screen.getByText('Log line'));
+      await userEvent.click(screen.getByLabelText('Filter out this log line'));
+
+      expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutString).toHaveBeenCalledWith('some log line', log.dataFrame.refId);
+    });
+
+    test('does not render the filter buttons when the callbacks are not provided', async () => {
+      await setup(undefined, { labels: { key1: 'label1' } });
+
+      await userEvent.click(screen.getByText('Log line'));
+
+      expect(screen.queryByLabelText('Filter for this log line')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out this log line')).not.toBeInTheDocument();
+    });
+  });
+
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -592,9 +641,7 @@ describe('LogLineDetails', () => {
       });
 
       test('should fallback to a single group of Fields if not supported', async () => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.reject(null),
-        }));
+        jest.mocked(getDataSourceInstance).mockImplementation(() => Promise.reject(null));
 
         await setup(
           undefined,

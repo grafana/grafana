@@ -589,8 +589,6 @@ func TestFrontendService_CSP(t *testing.T) {
 	})
 
 	t.Run("should apply per-tenant allow_embedding_hosts override to CSP header", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",
@@ -701,8 +699,6 @@ func TestFrontendService_CSP(t *testing.T) {
 	})
 
 	t.Run("should apply per-tenant form_action_additional_hosts override to CSP header", func(t *testing.T) {
-		enableSettingsOverridesToggle(t)
-
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),
 			HTTPPort:       "3000",

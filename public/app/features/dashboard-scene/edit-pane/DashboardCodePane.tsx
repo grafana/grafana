@@ -4,17 +4,12 @@ import { useCallback, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, IconButton, Modal, Sidebar, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
-
-export interface DashboardCodePaneProps {
-  initialValue: string;
-  onApply: (jsonText: string) => { success: boolean; error?: string };
-}
+import { applyJsonToDashboard, getDashboardJsonText, getDashboardResourceText } from './codePaneUtils';
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
@@ -25,7 +20,7 @@ export class DashboardCodePane extends SceneObjectBase {
   }
 }
 
-export function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
+function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
 
@@ -48,6 +43,26 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
       setApplyError(result.error ?? 'Failed to apply changes');
     }
   }, [dashboard, jsonText]);
+
+  const getResourceText = useCallback(
+    () => getDashboardResourceText(dashboard, editorFormat),
+    [dashboard, editorFormat]
+  );
+
+  const copyAsResourceButton = (
+    <ClipboardButton
+      variant="secondary"
+      size="sm"
+      icon="copy"
+      getText={getResourceText}
+      tooltip={t(
+        'dashboard.code-pane.copy-as-resource-tooltip',
+        'Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files'
+      )}
+    >
+      {t('dashboard.code-pane.copy-as-resource', 'Copy as resource')}
+    </ClipboardButton>
+  );
 
   const applyTooltip =
     editorFormat === 'yaml'
@@ -93,7 +108,10 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
           <DashboardSchemaEditor {...editorProps} containerStyles={styles.codeEditor} />
         </div>
         <div className={styles.toolbar}>
-          {applyButton}
+          <Stack gap={1} alignItems="center">
+            {applyButton}
+            {copyAsResourceButton}
+          </Stack>
           <IconButton
             name="expand-arrows"
             size="sm"
@@ -117,7 +135,10 @@ export function DashboardCodePaneRenderer({ model }: SceneComponentProps<Dashboa
             {errorAlert}
             <DashboardSchemaEditor {...editorProps} />
             <div className={styles.toolbar}>
-              {applyButton}
+              <Stack gap={1} alignItems="center">
+                {applyButton}
+                {copyAsResourceButton}
+              </Stack>
               <IconButton
                 name="compress-arrows"
                 size="sm"

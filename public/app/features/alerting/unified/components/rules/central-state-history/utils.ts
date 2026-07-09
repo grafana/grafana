@@ -17,11 +17,7 @@ import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { isPromQLStyleMatcher, parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
-import { StateFilterValues } from './constants';
-
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
-const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 
 /**
  * Normalise a free-text PromQL-style label filter string into the selector
@@ -71,27 +67,11 @@ export function historyResultToDataFrame(stateHistory: DataFrameJSON, filters = 
   return groupDataFramesByTimeAndFilterByLabels(dataFrames, filters);
 }
 
-// Scenes sync variables in the URL adding a prefix to the variable name.
-export function getLabelsFilterInQueryParams() {
-  const queryParams = new URLSearchParams(window.location.search);
-  return queryParams.get(`${QUERY_PARAM_PREFIX}${LABELS_FILTER}`) ?? '';
-}
-
-export function getStateFilterToInQueryParams() {
-  const queryParams = new URLSearchParams(window.location.search);
-  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_TO}`) ?? StateFilterValues.all;
-}
-
-export function getStateFilterFromInQueryParams() {
-  const queryParams = new URLSearchParams(window.location.search);
-  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_FROM}`) ?? StateFilterValues.all;
-}
-
 /*
  * This function groups the data frames by time and filters them by labels.
  * The interval is set to 10 seconds.
  * */
-export function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[], filters: HistoryFilters): DataFrame[] {
+function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[], filters: HistoryFilters): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
   const labelsFilterValue = filters.labels;
   const dataframesFiltered = dataFrames.filter((frame) => {

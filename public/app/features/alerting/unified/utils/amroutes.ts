@@ -76,10 +76,6 @@ export const emptyRoute: FormAmRoute = {
   activeTimeIntervals: [],
 };
 
-export function addUniqueIdentifierToRoutes(routes: Route[]): RouteWithID[] {
-  return routes.map((policy, index) => addUniqueIdentifierToRoute(policy, policy.name ?? index.toString()));
-}
-
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
 // ⚠️ make sure this function uses _stable_ identifiers!
 export function addUniqueIdentifierToRoute(route: Route, position = route.name ?? '0'): RouteWithID {
@@ -252,14 +248,6 @@ export function promDurationValidator(duration?: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
-
-// function to convert ObjectMatchers to a array of strings
-export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
-  return matchers.map((matcher) => {
-    const [name, operator, value] = matcher;
-    return `${name}${operator}${value}`;
-  });
-};
 
 export const repeatIntervalValidator = (repeatInterval: string, groupInterval = '') => {
   if (repeatInterval.length === 0) {

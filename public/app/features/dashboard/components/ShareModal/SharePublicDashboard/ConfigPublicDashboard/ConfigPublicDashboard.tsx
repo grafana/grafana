@@ -56,7 +56,7 @@ interface Props {
   dashboard: DashboardModel | DashboardScene;
 }
 
-export function ConfigPublicDashboardBase({
+function ConfigPublicDashboardBase({
   onRevoke,
   timeRange,
   hasTemplateVariables = false,

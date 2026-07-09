@@ -1,7 +1,6 @@
 import { produce } from 'immer';
 
 import {
-  type DataSourceInstanceSettings,
   type IntervalValues,
   type RelativeTimeRange,
   type ScopedVars,
@@ -15,7 +14,7 @@ import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
-import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -107,7 +106,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
+function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
   const list = [...recordToArray(item || {})];
   if (addEmpty) {
     list.push({ key: '', value: '' });
@@ -327,11 +326,6 @@ export function normalizeContactPoints(
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
-  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
-  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    return undefined;
-  }
-
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
@@ -617,24 +611,6 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
       },
     },
     ...expressions,
-  ];
-};
-
-export const getDefaultRecordingRulesQueries = (
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
-): AlertQuery[] => {
-  const relativeTimeRange = getDefaultRelativeTimeRange();
-
-  return [
-    {
-      refId: 'A',
-      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
-      queryType: '',
-      relativeTimeRange,
-      model: {
-        refId: 'A',
-      },
-    },
   ];
 };
 
@@ -962,7 +938,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   return formValues;
 };
 
-export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
       return {

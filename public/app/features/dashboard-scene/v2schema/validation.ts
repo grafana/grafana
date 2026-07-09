@@ -133,12 +133,6 @@ export function isPanelKindV2(value: unknown): value is PanelKind {
   return true;
 }
 
-export function validatePanelKindV2(value: unknown): asserts value is PanelKind {
-  if (!isPanelKindV2(value)) {
-    throw new Error('Provided JSON is not a valid v2 Panel spec');
-  }
-}
-
 const ElementReferenceSchema = z.object({
   kind: z.literal('ElementReference'),
   name: z.string(),
