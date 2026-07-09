@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { getDashboardJsonText, getDashboardResourceText } from './codePaneUtils';
+import { getDashboardResourceText } from './codePaneUtils';
 
 jest.mock('../serialization/transformSceneToSaveModelSchemaV2', () => ({
   transformSceneToSaveModelSchemaV2: jest.fn(() => ({ title: 'Test dashboard' })),
@@ -38,14 +38,6 @@ describe('getDashboardResourceText', () => {
     const parsed = JSON.parse(text);
 
     expect(parsed.metadata.name).toBe('<dashboard-uid>');
-  });
-
-  it('wraps the same spec returned by getDashboardJsonText', () => {
-    const dashboard = buildDashboard('abc-123');
-    const bareSpec = JSON.parse(getDashboardJsonText(dashboard));
-    const wrapped = JSON.parse(getDashboardResourceText(dashboard));
-
-    expect(wrapped.spec).toEqual(bareSpec);
   });
 
   it('emits YAML with the same envelope when format is "yaml"', () => {

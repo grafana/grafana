@@ -86,7 +86,6 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       severity="error"
       topSpacing={0}
       bottomSpacing={0}
-      style={{ flexGrow: 0 }}
     >
       {applyError}
     </Alert>
