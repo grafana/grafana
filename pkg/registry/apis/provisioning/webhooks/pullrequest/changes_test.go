@@ -1524,7 +1524,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.GitHubRepositoryType,
-			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://user:token@github.com/example/repo"},
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://user:token@github.com/example/repo"}, // trufflehog:ignore
 		},
 	})
 	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
@@ -1555,7 +1555,7 @@ func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
 
 	repo := &readerWithURLs{
 		MockReader: reader,
-		sourceURL:  "https://user:token@github.com/example/repo/blob/ref/path/to/file.json",
+		sourceURL:  "https://user:token@github.com/example/repo/blob/ref/path/to/file.json", // trufflehog:ignore
 	}
 
 	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
