@@ -1,0 +1,141 @@
+package foldermetadata
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+)
+
+// TestIntegrationProvisioning_MigrateFolderTitleNormalization migrates a nested
+// tree of folders whose titles each contain a different path-unsafe pattern and
+// verifies the end-to-end result:
+//
+//   - each folder is exported under a normalized, IsSafe path segment while its
+//     original display title is preserved in _folder.json (spec.title),
+//   - a title with no usable characters falls back to the folder UID as its path
+//     segment (so the segment is always non-empty and deterministic),
+//   - a folder path containing a space round-trips through the /files endpoint,
+//   - the migrate completes successfully and the resources become managed, which
+//     proves the pull half of the migrate consumed the normalized/space paths.
+//
+// Before the title-normalization fix a folder titled "» R&D" produced an unsafe
+// repository path; the write failed but was recorded as an ignored no-op, so the
+// migrate reported "no changes to sync" as a success while exporting nothing.
+func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	// Fixed UIDs keep every assertion deterministic — including the UID-fallback
+	// case, where the path segment is the UID itself.
+	const (
+		rdUID         = "norm-rd"
+		rdTitle       = "» R&D"
+		backendUID    = "norm-backend"
+		backendTitle  = "Grafana Backend"
+		internalUID   = "norm-internal"
+		internalTitle = ".internal"
+		rocketUID     = "norm-rocket"
+		rocketTitle   = "🚀🎉"
+	)
+
+	createUnmanagedFolder(t, helper, rdUID, rdTitle)
+	createUnmanagedFolderWithParent(t, helper, backendUID, backendTitle, rdUID)
+	createUnmanagedFolderWithParent(t, helper, internalUID, internalTitle, backendUID)
+	createUnmanagedFolderWithParent(t, helper, rocketUID, rocketTitle, internalUID)
+	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Deep Dashboard", rocketUID)
+
+	const repo = "folder-title-normalization-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	// Expected normalized path segments. Titles themselves are preserved in
+	// _folder.json and asserted separately below.
+	const (
+		rdSeg       = "RD"              // "» R&D": unicode + '&' dropped, leading space trimmed
+		backendSeg  = "Grafana Backend" // interior space preserved
+		internalSeg = "internal"        // leading dot trimmed (not a hidden path)
+		rocketSeg   = rocketUID         // emoji-only title falls back to the UID
+	)
+	backendPath := filepath.Join(rdSeg, backendSeg)
+	internalPath := filepath.Join(backendPath, internalSeg)
+	rocketPath := filepath.Join(internalPath, rocketSeg)
+
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "Migrate folders with problematic titles",
+		},
+	})
+
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// 1) _folder.json at each normalized path: the path segment is sanitized but
+	// the display title survives untouched.
+	readManifest := func(t *testing.T, relPath string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, relPath, "_folder.json")) //nolint:gosec // known test output path
+		require.NoError(t, err, "_folder.json should exist at %s", relPath)
+		var f foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &f), "_folder.json at %s should be valid JSON", relPath)
+		return f
+	}
+	for _, tc := range []struct {
+		relPath   string
+		wantUID   string
+		wantTitle string
+	}{
+		{rdSeg, rdUID, rdTitle},
+		{backendPath, backendUID, backendTitle},
+		{internalPath, internalUID, internalTitle},
+		{rocketPath, rocketUID, rocketTitle},
+	} {
+		m := readManifest(t, tc.relPath)
+		assert.Equal(t, tc.wantUID, m.Name, "UID preserved for %s", tc.relPath)
+		assert.Equal(t, tc.wantTitle, m.Spec.Title, "display title preserved for %s", tc.relPath)
+	}
+
+	// 2) The dashboard lands under the deepest path, which combines a preserved
+	// space segment and the UID-fallback segment.
+	dashFile := filepath.Join(helper.ProvisioningPath, rocketPath, "deep-dashboard.json")
+	_, err := os.Stat(dashFile)
+	require.NoError(t, err, "dashboard should be exported at its normalized nested path %s", dashFile)
+
+	// 3) The /files endpoint serves a space-containing path correctly (the path is
+	// URL-encoded on the wire and decoded server-side before IsSafe validation).
+	files := helper.NewFilesClient(repo)
+	require.Equal(t, backendTitle, files.ReadFolderTitle(t, ctx, backendPath+"/_folder.json"),
+		"reading a _folder.json at a path with a space through the /files endpoint should work")
+	require.Equal(t, rocketUID, files.ReadFolderUID(t, ctx, rocketPath+"/_folder.json"))
+
+	// 4) The pull half of the migrate consumed the normalized/space paths: the
+	// deepest folder and the dashboard end up managed by the repository.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		f, err := helper.Folders.Resource.Get(ctx, rocketUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "deepest folder should exist") {
+			return
+		}
+		assert.Equal(collect, repo, f.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"deepest folder should be managed by the repo after migrate")
+
+		d, err := helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "dashboard should exist") {
+			return
+		}
+		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"dashboard should be managed by the repo after migrate")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "resources should become managed after migrate")
+}
