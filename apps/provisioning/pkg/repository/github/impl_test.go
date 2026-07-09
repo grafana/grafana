@@ -553,9 +553,9 @@ Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook"), Conte
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-						hooks := []*github.Hook{
-							{ID: new(int64(111)), Config: &github.HookConfig{URL: new("https://other.example.com/webhook")}},
-						}
+hooks := []*github.Hook{
+	{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
+}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(hooks))
 					}),
