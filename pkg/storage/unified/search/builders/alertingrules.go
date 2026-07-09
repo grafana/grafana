@@ -18,8 +18,6 @@ import (
 // search handler uses when building ResourceSearchRequests so the legacy and
 // unified backends are interchangeable, and the "name" values declared for the
 // rule kinds' searchFields in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
-// Sequence is intentionally not a column: it is a known label key matched via
-// IndexableDocument.Labels.
 const (
 	ruleSearchType           = "type"
 	ruleSearchLabels         = "labels"

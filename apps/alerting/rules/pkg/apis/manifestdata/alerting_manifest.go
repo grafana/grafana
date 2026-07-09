@@ -469,24 +469,6 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name: "sequences",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
 											Name: "sort",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -797,24 +779,6 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name: "sequences",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
 											Name: "sort",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -1053,24 +1017,6 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
-											Name: "sequences",
-											In:   "query",
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"array"},
-													Items: &spec.SchemaOrArray{
-														Schema: &spec.Schema{
-															SchemaProps: spec.SchemaProps{
-																Type: []string{"string"},
-															}},
-													},
-												},
-											},
-										},
-									},
-
-									{
-										ParameterProps: spec3.ParameterProps{
 											Name: "sort",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -1276,11 +1222,6 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"sequence": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
 								"title": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -1360,11 +1301,6 @@ var appManifestData = app.ManifestData{
 								"paused": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"boolean"},
-									},
-								},
-								"sequence": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
 									},
 								},
 								"targetDatasourceUID": {
@@ -1495,11 +1431,6 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
-								"sequence": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
 								"title": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -1570,11 +1501,6 @@ var appManifestData = app.ManifestData{
 								"paused": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"boolean"},
-									},
-								},
-								"sequence": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
 									},
 								},
 								"targetDatasourceUID": {

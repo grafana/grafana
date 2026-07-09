@@ -746,12 +746,6 @@ spec:
               schema:
                 type: string
             - in: query
-              name: sequences
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: sort
               schema:
                 $ref: '#/components/schemas/RuleSearchSortField'
@@ -870,12 +864,6 @@ spec:
               schema:
                 type: string
             - in: query
-              name: sequences
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: sort
               schema:
                 $ref: '#/components/schemas/RuleSearchSortField'
@@ -970,12 +958,6 @@ spec:
               schema:
                 type: string
             - in: query
-              name: sequences
-              schema:
-                items:
-                  type: string
-                type: array
-            - in: query
               name: sort
               schema:
                 $ref: '#/components/schemas/RuleSearchSortField'
@@ -1063,8 +1045,6 @@ spec:
               type: string
             routingTree:
               type: string
-            sequence:
-              type: string
             title:
               type: string
             type:
@@ -1101,8 +1081,6 @@ spec:
               type: string
             paused:
               type: boolean
-            sequence:
-              type: string
             targetDatasourceUID:
               type: string
             title:
@@ -1157,8 +1135,6 @@ spec:
               type: string
             routingTree:
               type: string
-            sequence:
-              type: string
             title:
               type: string
             type:
@@ -1190,8 +1166,6 @@ spec:
               type: string
             paused:
               type: boolean
-            sequence:
-              type: string
             targetDatasourceUID:
               type: string
             title:

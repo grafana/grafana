@@ -5,10 +5,8 @@ package v0alpha1
 type GetSearchAlertRulesRequestRuleSearchSortField string
 
 const (
-	GetSearchAlertRulesRequestRuleSearchSortFieldTitleAsc     GetSearchAlertRulesRequestRuleSearchSortField = "title"
-	GetSearchAlertRulesRequestRuleSearchSortFieldTitleDesc    GetSearchAlertRulesRequestRuleSearchSortField = "-title"
-	GetSearchAlertRulesRequestRuleSearchSortFieldSequenceAsc  GetSearchAlertRulesRequestRuleSearchSortField = "sequence"
-	GetSearchAlertRulesRequestRuleSearchSortFieldSequenceDesc GetSearchAlertRulesRequestRuleSearchSortField = "-sequence"
+	GetSearchAlertRulesRequestRuleSearchSortFieldTitleAsc  GetSearchAlertRulesRequestRuleSearchSortField = "title"
+	GetSearchAlertRulesRequestRuleSearchSortFieldTitleDesc GetSearchAlertRulesRequestRuleSearchSortField = "-title"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for GetSearchAlertRulesRequestRuleSearchSortField.
@@ -24,7 +22,6 @@ type GetSearchAlertRulesRequestParams struct {
 	Q                *string                                        `json:"q,omitempty"`
 	Names            []string                                       `json:"names,omitempty"`
 	Folders          []string                                       `json:"folders,omitempty"`
-	Sequences        []string                                       `json:"sequences,omitempty"`
 	Paused           *bool                                          `json:"paused,omitempty"`
 	DatasourceUIDs   []string                                       `json:"datasourceUIDs,omitempty"`
 	Labels           []string                                       `json:"labels,omitempty"`

@@ -15,7 +15,6 @@ import (
 	q?: string
 	names?: [...string]
 	folders?: [...string]
-	sequences?: [...string]
 	paused?: bool
 	datasourceUIDs?: [...string]
 	labels?: [...string]
