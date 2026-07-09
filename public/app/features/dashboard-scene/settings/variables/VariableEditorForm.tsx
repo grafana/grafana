@@ -66,7 +66,8 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const result = validateVariableName(variable, e.currentTarget.value);
+      const nextName = e.currentTarget.value;
+      const result = validateVariableName(variable, nextName);
       if (result.errorMessage !== nameError) {
         setNameError(result.errorMessage);
         onNameErrorChange?.(Boolean(result.errorMessage));
@@ -74,15 +75,14 @@ export function VariableEditorForm({
       if (result.warningMessage !== nameWarning) {
         setNameWarning(result.warningMessage);
       }
+      // Commit on change (not only blur) so Save / Preview see the typed name
+      // even when the field still has focus — same pattern as the edit pane.
+      if (!result.errorMessage) {
+        variable.setState({ name: nextName });
+      }
     },
     [variable, nameError, nameWarning, onNameErrorChange]
   );
-
-  const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
-    if (!nameError) {
-      variable.setState({ name: e.currentTarget.value });
-    }
-  };
 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
@@ -119,7 +119,6 @@ export function VariableEditorForm({
         placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
         defaultValue={name ?? ''}
         onChange={onNameChange}
-        onBlur={onNameBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required

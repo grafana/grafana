@@ -64,7 +64,9 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
   const [isRecreating, setIsRecreating] = useState(false);
   const [hasNameError, setHasNameError] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const isSaving = isCreating || isUpdating || isDeleting || isRecreating;
+  // Keep delete out of isSaving so the Save button doesn't flash "Saving..." mid-delete.
+  const isSaving = isCreating || isUpdating || isRecreating;
+  const isBusy = isSaving || isDeleting;
 
   const scene = useMemo(
     () =>
@@ -180,16 +182,16 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
       />
 
       <Stack gap={2}>
-        <Button variant="primary" onClick={onSave} disabled={isSaving || hasNameError}>
+        <Button variant="primary" onClick={onSave} disabled={isBusy || hasNameError}>
           {isSaving
             ? t('variables-management.editor.saving', 'Saving...')
             : t('variables-management.editor.save', 'Save')}
         </Button>
-        <Button variant="secondary" fill="outline" onClick={onBack}>
+        <Button variant="secondary" fill="outline" onClick={onBack} disabled={isBusy}>
           <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
         </Button>
         {!isNew && (
-          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isSaving}>
+          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isBusy}>
             <Trans i18nKey="variables-management.editor.delete">Delete</Trans>
           </Button>
         )}
