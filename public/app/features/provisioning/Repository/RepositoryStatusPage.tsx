@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type SelectableValue, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Alert, EmptyState, Spinner, Stack, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -54,6 +55,7 @@ export default function RepositoryStatusPage() {
     ],
     []
   );
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   return (
     <Page
@@ -65,7 +67,13 @@ export default function RepositoryStatusPage() {
       renderTitle={(title) => (
         <Stack alignItems="center">
           <RepoIcon type={data?.spec?.type} autoHeight />
-          <Text element="h1">{title}</Text>
+          <Text
+            element={'h1'}
+            variant={visualRefreshEnabled ? 'h4' : 'h1'}
+            weight={visualRefreshEnabled ? 'bold' : 'regular'}
+          >
+            {title}
+          </Text>
         </Stack>
       )}
       actions={data && <RepositoryActions repository={data} />}
