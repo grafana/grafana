@@ -1,9 +1,9 @@
 📋 Grafana detected **2** resource change(s) in this pull request.
 
-| Action | Kind | Resource | Preview | Status |
-|--------|------|----------|---------|--------|
-| create | Dashboard | Dashboard A | [preview](http://grafana/admin/preview) | ✅ |
-| update | Dashboard | [Dashboard B](http://grafana/d/bbb) | [preview](http://grafana/admin/preview) | ✅ |
+| Action | Kind | Resource | File | Preview | Status |
+|--------|------|----------|------|---------|--------|
+| ➕ Added | Dashboard | Dashboard A | [source](https://github.com/example/repo/blob/pr/good.json) | [preview](http://grafana/admin/preview) | ✅ |
+| ✏️ Updated | Dashboard | [Dashboard B](http://grafana/d/bbb) | [source](https://github.com/example/repo/blob/pr/stripped.json) | [preview](http://grafana/admin/preview) | ✅ |
 
 All resources passed validation. ✅
 

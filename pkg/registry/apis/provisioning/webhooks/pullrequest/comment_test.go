@@ -119,6 +119,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash A",
+					SourceURL:  "https://github.com/example/repo/blob/pr/aaa.json",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
@@ -130,18 +131,20 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash B",
+					SourceURL:  "https://github.com/example/repo/blob/pr/bbb.json",
 					GrafanaURL: "http://grafana/d/bbb",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
-							Path: "bbb.json",
+							Path: "ccc.json",
 						},
 						Action: v0alpha1.ResourceActionCreate,
 						GVK:    schema.GroupVersionKind{Kind: "Playlist"},
 					},
-					Title: "My Playlist",
+					Title:     "My Playlist",
+					SourceURL: "https://github.com/example/repo/blob/pr/ccc.json",
 				},
 			},
 		}},
@@ -197,6 +200,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dashboard A",
+					SourceURL:  "https://github.com/example/repo/blob/pr/good.json",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
@@ -208,6 +212,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:              "Dashboard B",
+					SourceURL:          "https://github.com/example/repo/blob/pr/stripped.json",
 					GrafanaURL:         "http://grafana/d/bbb",
 					PreviewURL:         "http://grafana/admin/preview",
 					HasRemovedMetadata: true,
@@ -315,8 +320,8 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**2** resource change(s)")
-	require.Contains(t, capturedComment, "deleted")
-	require.Contains(t, capturedComment, ".json")
+	require.Contains(t, capturedComment, "🗑️ Deleted")
+	require.Contains(t, capturedComment, "File")
 }
 
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
@@ -345,7 +350,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**1** resource change(s)")
-	require.Contains(t, capturedComment, "created")
+	require.Contains(t, capturedComment, "➕ Added")
 }
 
 func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {

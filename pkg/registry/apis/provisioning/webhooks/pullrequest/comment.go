@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -126,10 +125,10 @@ const commentTemplateSingleDashboard = `{{define "title"}}{{if .SourceURL}}[**{{
 
 const commentTemplateTable = `📋 Grafana detected **{{.TotalChanges}}** resource change(s) in this pull request{{- if .HasErrors}} — ⚠️ {{.ErrorCount}} need attention{{- end}}.
 
-| Action | Kind | Resource | Preview | Status |
-|--------|------|----------|---------|--------|
+| Action | Kind | Resource | File | Preview | Status |
+|--------|------|----------|------|---------|--------|
 {{- range .Changes}}
-| {{.Action}} | {{.Kind}} | {{.ExistingLink}} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
+| {{.ActionLabel}} | {{.Kind}} | {{.ExistingLink}} | {{ if .SourceURL}}[source]({{.SourceURL}}){{ end }} | {{ if .PreviewURL}}[preview]({{.PreviewURL}}){{ end }} | {{.StatusIcon}} |
 {{- end -}}
 {{- if .SkippedFiles}}
 
@@ -172,14 +171,36 @@ func (f *fileChangeInfo) Action() string {
 	return string(f.Change.Action)
 }
 
-// TODO: does this have some value?
-func (f *fileChangeInfo) Kind() string {
-	if f.Parsed == nil {
-		return filepath.Ext(f.Change.Path)
+// ActionLabel returns a normalized, human-friendly label for the change action.
+// It reconciles the two action vocabularies used in the codebase: the parsed
+// ResourceAction ("create") and the raw FileAction ("created"), so the table
+// never mixes tenses.
+func (f *fileChangeInfo) ActionLabel() string {
+	switch f.Action() {
+	case "create", "created":
+		return "➕ Added"
+	case "update", "updated":
+		return "✏️ Updated"
+	case "delete", "deleted":
+		return "🗑️ Deleted"
+	case "move":
+		return "➡️ Moved"
+	case "renamed":
+		return "📝 Renamed"
+	case "ignored":
+		return "🚫 Ignored"
+	default:
+		action := f.Action()
+		if action == "" {
+			return action
+		}
+		return strings.ToUpper(action[:1]) + action[1:]
 	}
-	v := f.Parsed.GVK.Kind
-	if v == "" {
-		return filepath.Ext(f.Parsed.Info.Path)
+}
+
+func (f *fileChangeInfo) Kind() string {
+	if f.Parsed == nil || f.Parsed.GVK.Kind == "" {
+		return "File"
 	}
 	return f.Parsed.GVK.Kind
 }
