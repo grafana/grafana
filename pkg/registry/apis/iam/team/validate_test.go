@@ -480,12 +480,27 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		// so a shrunken page (breaking the self-match exclusion against a real
 		// backend) would otherwise go unnoticed here.
 		assert.Equal(t, int64(titleUniqueSearchLimit), client.lastReq.Limit)
+		assert.Equal(t, int64(1), client.lastReq.Page)
 		require.NotNil(t, client.lastReq.Options)
 		require.NotNil(t, client.lastReq.Options.Key)
+		gr := iamv0alpha1.TeamResourceInfo.GroupResource()
+		assert.Equal(t, gr.Group, client.lastReq.Options.Key.Group)
+		assert.Equal(t, gr.Resource, client.lastReq.Options.Key.Resource)
 		assert.Equal(t, "stacks-1", client.lastReq.Options.Key.Namespace)
 		require.Len(t, client.lastReq.Options.Fields, 1)
 		assert.Equal(t, resource.SEARCH_FIELD_TITLE, client.lastReq.Options.Fields[0].Key)
 		assert.Equal(t, string(selection.DoubleEquals), client.lastReq.Options.Fields[0].Operator)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE}, client.lastReq.Fields)
+	})
+
+	t.Run("unparseable requester namespace is an internal error", func(t *testing.T) {
+		badNs := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-abc"}
+		ctx := identity.WithRequester(context.Background(), badNs)
+		client := &fakeTeamSearchClient{}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsInternalError(err), "expected an InternalError, got %v", err)
+		assert.Nil(t, client.lastReq, "the lookup must not run without a resolved org")
 	})
 
 	t.Run("lookup runs under the service identity, not the requester", func(t *testing.T) {

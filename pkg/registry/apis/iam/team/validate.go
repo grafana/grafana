@@ -138,6 +138,7 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 		},
 		Fields: []string{resource.SEARCH_FIELD_TITLE},
 		Limit:  titleUniqueSearchLimit,
+		Page:   1,
 	}
 
 	resp, err := searchClient.Search(ctx, req)
@@ -145,8 +146,8 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 		return err
 	}
 
-	// A hit on the team itself isn't a conflict: on update it matches its own
-	// title, and under dual-write it can be indexed from both stores. Any hit on a
+	// A hit on the team itself isn't a conflict: on update the search can match
+	// the team's own indexed title (e.g. a case-only rename). Any hit on a
 	// different team means the title is taken.
 	for _, row := range resp.GetResults().GetRows() {
 		if row.Key.GetName() != name {
