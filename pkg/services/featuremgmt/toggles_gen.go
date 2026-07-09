@@ -223,6 +223,10 @@ const (
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
 
+	// FlagDashboardNotebooks
+	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+	FlagDashboardNotebooks = "dashboard.notebooks"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -414,10 +418,6 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
-
-	// FlagGroupToNestedTableV2
-	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
 
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.

@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/logsdrilldown
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/grafana/grafana-app-sdk v0.56.4
@@ -28,7 +28,7 @@ require (
 	github.com/go-openapi/swag v0.26.0 // indirect
 	github.com/go-openapi/swag/cmdutils v0.26.0 // indirect
 	github.com/go-openapi/swag/conv v0.26.1 // indirect
-	github.com/go-openapi/swag/fileutils v0.26.0 // indirect
+	github.com/go-openapi/swag/fileutils v0.26.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.1 // indirect
 	github.com/go-openapi/swag/jsonutils v0.26.1 // indirect
 	github.com/go-openapi/swag/loading v0.26.1 // indirect

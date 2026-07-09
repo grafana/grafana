@@ -149,11 +149,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features for dashboards to auto-summary changes when saving
-  * @default false
-  */
-  aiGeneratedDashboardChanges?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -314,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
-  * @default false
-  */
-  dashboardNotebookLayout?: boolean;
-  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -333,11 +323,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardUndoRedo?: boolean;
-  /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
@@ -669,11 +654,6 @@ export interface FeatureToggles {
   * @default false
   */
   groupAttributeSync?: boolean;
-  /**
-  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-  * @default false
-  */
-  groupToNestedTableV2?: boolean;
   /**
   * Enables step mode for alerting queries and expressions
   * @default true
@@ -1156,11 +1136,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
-  * @default true
-  */
-  panelStyleActions?: boolean;
-  /**
   * Enable visualization presets
   * @default true
   */
@@ -1465,11 +1440,6 @@ export interface FeatureToggles {
   * @default false
   */
   tracesDrilldownTimeSeeker?: boolean;
-  /**
-  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default true
-  */
-  clearPreviousFieldValues?: boolean;
   /**
   * Enables new colorblind safe palette and line fill patterns for panels
   * @default false

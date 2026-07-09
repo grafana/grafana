@@ -229,12 +229,12 @@ func exportItem(ctx context.Context,
 		return nil
 	}
 
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity != "" {
+	manager, managed := meta.GetManagerProperties()
+	if managed {
 		if explicitlyRequested {
 			// Leave the default action in place: the recorder discards errors
 			// on FileActionIgnored results, and we want this failure to count.
-			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Kind))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}
