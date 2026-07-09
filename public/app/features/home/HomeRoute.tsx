@@ -21,14 +21,16 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
 function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
+  const homeDashboardUID = data?.spec?.homeDashboardUID;
 
   useEffect(() => {
-    if (!redirectUri) {
+    // homeDashboardUID takes precedence over homeURL, also skip the setup guide redirect if new homepage toggle is on
+    if (homeDashboardUID || !redirectUri || redirectUri === '/a/grafana-setupguide-app/home') {
       return;
     }
     const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
     locationService.replace(newUrl);
-  }, [redirectUri]);
+  }, [redirectUri, homeDashboardUID]);
 
   if (isLoading || redirectUri) {
     return <GrafanaRouteLoading />;
@@ -40,7 +42,6 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
     return <DashboardPageProxy {...props} />;
   }
 
-  const homeDashboardUID = data.spec?.homeDashboardUID;
   if (homeDashboardUID) {
     return <DashboardPageProxy {...props} />;
   }
