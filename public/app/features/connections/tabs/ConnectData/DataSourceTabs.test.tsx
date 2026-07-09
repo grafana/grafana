@@ -127,6 +127,31 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  // Resolve instance settings synchronously so the FavoriteButton in
+  // EditDataSourceActions does not update state after the test's render.
+  useDataSourceInstanceSettings: jest.fn((uid: string) => ({
+    isLoading: false,
+    settings: {
+      id: 1,
+      uid: uid,
+      type: PluginType.datasource,
+      name: uid,
+      access: 'proxy',
+      readOnly: false,
+      jsonData: {},
+      meta: {
+        id: uid,
+        name: uid,
+        type: PluginType.datasource,
+        backend: true,
+        isBackend: true,
+      },
+    },
+  })),
+}));
+
 describe('DataSourceEditTabs', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
