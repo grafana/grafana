@@ -11,6 +11,15 @@ import { alertingFactory } from '../../mocks/server/db';
 
 import ImportToGMARules from './ImportToGMARules';
 
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // useDatasource() is now async (it wraps getDataSourceInstanceSettings). Delegate to the real
+  // getDataSourceSrv (configured via the alerting test factories) so the current data source
+  // resolves synchronously and no post-render state update escapes act() in these tests.
+  useDatasource: (ref: unknown) =>
+    jest.requireActual('@grafana/runtime').getDataSourceSrv().getInstanceSettings(ref),
+}));
+
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
