@@ -124,7 +124,7 @@ func TestIntegrationPreferences_K8sAPIs(t *testing.T) {
 		require.NoError(t, putResult.Error())
 
 		client := admin.RESTClient(t, &preferences.GroupVersion)
-		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1",
+		raw, err := client.Get().AbsPath("apis", "preferences.grafana.app", "v1alpha1",
 			"namespaces", "default",
 			"preferences", "merged").Do(context.Background()).Raw()
 		require.NoError(t, err, "GET preferences/merged: %s", string(raw))

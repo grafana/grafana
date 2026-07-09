@@ -63,7 +63,7 @@ func TestIntegrationPreferences_Anonymous(t *testing.T) {
 		merged := preferences.Preferences{}
 		resp := apis.DoRequest(helper, apis.RequestParams{
 			Method: http.MethodGet,
-			Path:   "/apis/preferences.grafana.app/v1/namespaces/default/preferences/merged",
+			Path:   "/apis/preferences.grafana.app/v1alpha1/namespaces/default/preferences/merged",
 		}, &merged)
 		require.Equal(t, http.StatusOK, resp.Response.StatusCode, string(resp.Body))
 
