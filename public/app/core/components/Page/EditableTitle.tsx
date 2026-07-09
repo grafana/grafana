@@ -5,6 +5,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
 export interface Props {
@@ -13,7 +14,8 @@ export interface Props {
 }
 
 export const EditableTitle = ({ value, onEdit }: Props) => {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const [localValue, setLocalValue] = useState(value);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,7 +83,12 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           this is to prevent the title from flickering back to the old value after the user has edited
           caused by the delay between the save completing and the new value being refetched
         */}
-        <Text element="h1" truncate>
+        <Text
+          element="h1"
+          variant={visualRefreshEnabled ? 'h4' : 'h1'}
+          weight={visualRefreshEnabled ? 'bold' : 'regular'}
+          truncate
+        >
           {localValue}
         </Text>
         <IconButton
@@ -149,7 +156,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
 
 EditableTitle.displayName = 'EditableTitle';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     textContainer: css({
       minWidth: 0,
@@ -162,11 +169,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       marginBottom: 0,
     }),
-    input: css({
-      input: {
-        ...theme.typography.h1,
+    input: css(
+      {
+        input: {
+          ...theme.typography.h1,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        input: {
+          ...theme.typography.h4,
+        },
+      }
+    ),
     inputContainer: css({
       display: 'flex',
       alignItems: 'baseline',
