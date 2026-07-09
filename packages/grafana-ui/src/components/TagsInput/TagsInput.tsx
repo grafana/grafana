@@ -57,7 +57,6 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
     const [newTagName, setNewTagName] = useState('');
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
-    const isTagTooLong = newTagName.length > maxLength;
 
     const onNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
       setNewTagName(event.target.value);
@@ -69,9 +68,6 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
 
     const onAdd = (event?: React.MouseEvent | React.KeyboardEvent) => {
       event?.preventDefault();
-      if (isTagTooLong) {
-        return;
-      }
       if (!tags.includes(newTagName)) {
         onChange(tags.concat(newTagName));
       }
@@ -101,19 +97,15 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
           value={newTagName}
           onKeyDown={onKeyboardAdd}
           onBlur={onBlur}
-          invalid={invalid || isTagTooLong}
+          invalid={invalid}
+          maxLength={maxLength}
           suffix={
             <Button
               fill="text"
               className={styles.addButtonStyle}
               onClick={onAdd}
               size="md"
-              disabled={newTagName.length <= 0 || isTagTooLong}
-              title={
-                isTagTooLong
-                  ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max {{maxLength}} characters', { maxLength })
-                  : undefined
-              }
+              disabled={newTagName.length <= 0}
             >
               <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
             </Button>

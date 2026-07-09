@@ -24,7 +24,7 @@ describe('TagsInput', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('does NOT add a tag that exceeds the default max length of 50 characters', async () => {
+  it('caps typed input at the default max length of 50 characters', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(<TagsInput onChange={onChange} tags={[]} />);
@@ -32,8 +32,7 @@ describe('TagsInput', () => {
     await user.type(screen.getByRole('textbox'), 'a'.repeat(51));
     await user.keyboard('{Enter}');
 
-    expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /Tag too long, max 50 characters/i })).toBeDisabled();
+    expect(onChange).toHaveBeenCalledWith(['a'.repeat(50)]);
   });
 
   it('adds a tag longer than 50 characters when a larger maxLength is provided', async () => {
