@@ -1,9 +1,15 @@
+import { keywordCompletionSource, MySQL, StandardSQL } from '@codemirror/lang-sql';
 import { css } from '@emotion/css';
 import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, signatureHelp, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
+import {
+  CodeMirrorEditor,
+  signatureHelp,
+  type CodeMirrorCompletionSource,
+  type CodeMirrorSqlDialect,
+} from '@grafana/ui/unstable';
 
 import { getSqlSignatureHelpProvider, type SqlFunctionSignature } from './signatureHelp';
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
@@ -38,12 +44,14 @@ export const SqlEditor = ({
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const completionSources = useMemo(() => {
+    const sources: CodeMirrorCompletionSource[] = [getUpperCaseKeywordCompletionSource(dialect)];
+
     if (!completionProvider) {
-      return undefined;
+      return sources;
     }
 
-    return [getSqlCompletionSource(completionProvider)];
-  }, [completionProvider]);
+    return [...sources, getSqlCompletionSource(completionProvider)];
+  }, [completionProvider, dialect]);
 
   const extensions = useMemo(() => {
     if (!functionSignatures?.length) {
@@ -65,12 +73,12 @@ export const SqlEditor = ({
         <CodeMirrorEditor
           language="sql"
           sqlDialect={dialect}
-          sqlUpperCaseKeywords
           value={value}
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
           completionSources={completionSources}
+          completionMode="override"
           extensions={extensions}
         />
       </div>
@@ -87,3 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
   }),
 });
+
+function getUpperCaseKeywordCompletionSource(dialect?: CodeMirrorSqlDialect): CodeMirrorCompletionSource {
+  return keywordCompletionSource(dialect === 'mySql' ? MySQL : StandardSQL, true);
+}

@@ -5,7 +5,7 @@ const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
 const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
-const loadSql = async (dialect: CodeMirrorSqlDialect, upperCaseKeywords: boolean): Promise<CodeMirrorExtension> => {
+const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
   const { sql, StandardSQL, MySQL } = await import(
     /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
   );
@@ -13,14 +13,12 @@ const loadSql = async (dialect: CodeMirrorSqlDialect, upperCaseKeywords: boolean
     standardSql: StandardSQL,
     mySql: MySQL,
   };
-  return sql({ dialect: dialects[dialect], upperCaseKeywords });
+  return sql({ dialect: dialects[dialect] });
 };
 
 interface LoadLanguageOptions {
   /** SQL dialect to load. Only used when `language` is `'sql'`. */
   sqlDialect?: CodeMirrorSqlDialect;
-  /** Whether SQL keyword completions should be inserted as upper-case. */
-  sqlUpperCaseKeywords?: boolean;
 }
 
 // Each language resolves to a cache key and a parameterless loader. The cache
@@ -35,11 +33,7 @@ const resolveLoad = (
       return { cacheKey: 'json', load: loadJson };
     case 'sql': {
       const dialect = options.sqlDialect ?? DEFAULT_SQL_DIALECT;
-      const upperCaseKeywords = options.sqlUpperCaseKeywords ?? false;
-      return {
-        cacheKey: `sql:${dialect}:${upperCaseKeywords}`,
-        load: () => loadSql(dialect, upperCaseKeywords),
-      };
+      return { cacheKey: `sql:${dialect}`, load: () => loadSql(dialect) };
     }
   }
 };
