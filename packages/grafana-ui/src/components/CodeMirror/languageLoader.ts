@@ -1,3 +1,5 @@
+import { type SQLDialect } from '@codemirror/lang-sql';
+
 import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
 
 const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
@@ -9,7 +11,7 @@ const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtensi
   const { sql, StandardSQL, MySQL } = await import(
     /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
   );
-  const dialects = {
+  const dialects: Record<CodeMirrorSqlDialect, SQLDialect> = {
     standardSql: StandardSQL,
     mySql: MySQL,
   };
