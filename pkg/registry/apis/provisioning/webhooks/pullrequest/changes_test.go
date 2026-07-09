@@ -1507,6 +1507,71 @@ func TestEvaluate_PopulatesSourceAndRepositoryURLs(t *testing.T) {
 	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
 }
 
+func TestEvaluate_StripsCredentialsFromURLs(t *testing.T) {
+	finfo := &repository.FileInfo{Path: "path/to/file.json", Ref: "ref", Data: []byte("xxxx")}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": resources.DashboardResource.GroupVersion().String(),
+			"kind":       dashboardKind,
+			"metadata":   map[string]interface{}{"name": "the-uid"},
+			"spec":       map[string]interface{}{"title": "hello world"},
+		},
+	}
+	meta, _ := utils.MetaAccessor(obj)
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "creds-repo", Namespace: "x"},
+		Spec: provisioning.RepositorySpec{
+			Type:   provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{URL: "https://user:token@github.com/example/repo"},
+		},
+	})
+	reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+		Info:           finfo,
+		Repo:           provisioning.ResourceRepositoryInfo{Namespace: "x", Name: "y"},
+		GVK:            schema.GroupVersionKind{Kind: dashboardKind},
+		Obj:            obj,
+		Meta:           meta,
+		DryRunResponse: obj,
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	repo := &readerWithURLs{
+		MockReader: reader,
+		sourceURL:  "https://user:token@github.com/example/repo/blob/ref/path/to/file.json",
+	}
+
+	info, err := evaluator.Evaluate(context.Background(), repo, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{{
+		Action: repository.FileActionCreated,
+		Path:   "path/to/file.json",
+		Ref:    "ref",
+	}}, progress)
+
+	require.NoError(t, err)
+	require.Equal(t, "https://github.com/example/repo", info.RepositoryURL)
+	require.Len(t, info.Changes, 1)
+	require.Equal(t, "https://github.com/example/repo/blob/ref/path/to/file.json", info.Changes[0].SourceURL)
+	require.NotContains(t, info.RepositoryURL, "token")
+	require.NotContains(t, info.Changes[0].SourceURL, "token")
+}
+
 func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	// A GitHub Enterprise repo has Spec.GitHubEnterprise set and Spec.GitHub nil;
 	// reading GenerateDashboardPreviews off Spec.GitHub would panic. Renderer is

@@ -130,7 +130,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
-		RepositoryURL:        cfg.URL(),
+		RepositoryURL:        stripUserinfo(cfg.URL()),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
@@ -155,6 +155,22 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
+
+// stripUserinfo removes any embedded credentials (userinfo) from a URL so a
+// repository configured with an HTTPS URL like https://user:token@host/org/repo
+// never renders that token into a public PR comment. Returns "" when the URL
+// cannot be parsed, to avoid leaking a malformed credential-bearing string.
+func stripUserinfo(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	u.User = nil
+	return u.String()
+}
 
 // orgIDForLinks returns the org to pin on PR-comment links when the repo lives
 // in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
@@ -187,7 +203,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 	// backends) leave this empty.
 	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
 		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
-			info.SourceURL = urls.SourceURL
+			info.SourceURL = stripUserinfo(urls.SourceURL)
 		}
 	}
 

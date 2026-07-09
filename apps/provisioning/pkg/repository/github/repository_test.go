@@ -636,6 +636,28 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 		},
 		{
+			name: "scoped repo includes configured path",
+			file: &repo.FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/grafana/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
 			name: "file without ref uses default branch",
 			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
