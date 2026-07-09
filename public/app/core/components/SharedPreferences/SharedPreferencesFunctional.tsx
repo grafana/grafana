@@ -5,6 +5,7 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   Alert,
   Box,
@@ -27,7 +28,7 @@ import { changeTheme } from 'app/core/services/theme';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
+import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
@@ -90,6 +91,10 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       });
     }
 
+    // Capture before the mutation: RTK refetches prefs after updatePreferences, so comparing afterwards would race.
+    const previousHomeDashboardUID = prefs?.homeDashboardUID ?? '';
+    const nextHomeDashboardUID = state.homeDashboardUID ?? '';
+
     const prefsData = state;
     // prevent page reload on save failure so the error banner remains visible
     try {
@@ -97,6 +102,14 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     } catch {
       // error is surfaced via isUpdateError — just prevent the reload below
       return;
+    }
+
+    if (nextHomeDashboardUID !== previousHomeDashboardUID) {
+      homeDashboardChanged({
+        preferenceType: props.preferenceType,
+        action: nextHomeDashboardUID ? 'set' : 'cleared',
+        unifiedHomepageEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false),
+      });
     }
 
     window.location.reload();
