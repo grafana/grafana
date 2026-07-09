@@ -224,10 +224,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hidePlaylistNav,
   } = model.useState();
 
+  const timeNavigatorEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaTimeNavigator, false);
+
   // Show/hide preference for the time navigator. Only read/write localStorage when the feature is on, so a
   // disabled instance never touches it (react-use's useLocalStorage would persist the default on mount).
   const [showTimebar, setShowTimebar] = useState(() =>
-    config.featureToggles.timeNavigator ? store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true) : true
+    timeNavigatorEnabled ? store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true) : true
   );
   const toggleTimebar = () => {
     const next = !showTimebar;
@@ -291,7 +293,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <div className={styles.fixedControls}>
               <timePicker.Component model={timePicker} />
               <refreshPicker.Component model={refreshPicker} />
-              {config.featureToggles.timeNavigator && (
+              {timeNavigatorEnabled && (
                 <ToolbarButton
                   icon="bars-clock"
                   variant={showTimebar ? 'active' : 'default'}
@@ -335,7 +337,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
-      {config.featureToggles.timeNavigator && !hideTimeControls && showTimebar && (
+      {timeNavigatorEnabled && !hideTimeControls && showTimebar && (
         <div style={{ width: '100%', padding: '4px 8px' }}>
           <timebar.Component model={timebar} />
         </div>

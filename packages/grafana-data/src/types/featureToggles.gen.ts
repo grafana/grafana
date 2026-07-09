@@ -104,11 +104,6 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
-  * Adds a dashboard timebar / time navigator control that drives the dashboard time range
-  * @default false
-  */
-  timeNavigator?: boolean;
-  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */

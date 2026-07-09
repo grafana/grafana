@@ -69,6 +69,8 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
+  /** Adds a dashboard timebar / time navigator control that drives the dashboard time range */
+  GrafanaTimeNavigator: "grafana.timeNavigator",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set and grafana.enableScopesFirstMode is enabled. */
@@ -435,6 +437,17 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.starredFolders", false, options).value;
+};
+
+/**
+ * Adds a dashboard timebar / time navigator control that drives the dashboard time range
+ *
+ * **Details:**
+ * - flag key: `grafana.timeNavigator`
+ * - default value: `false`
+ */
+export const useFlagGrafanaTimeNavigator = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.timeNavigator", false, options).value;
 };
 
 /**

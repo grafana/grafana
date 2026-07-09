@@ -2782,6 +2782,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.timeNavigator",
+        "resourceVersion": "1783598807681",
+        "creationTimestamp": "2026-07-09T12:06:47Z"
+      },
+      "spec": {
+        "description": "Adds a dashboard timebar / time navigator control that drives the dashboard time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -5532,7 +5546,8 @@
       "metadata": {
         "name": "timeNavigator",
         "resourceVersion": "1783453754106",
-        "creationTimestamp": "2026-07-07T19:49:14Z"
+        "creationTimestamp": "2026-07-07T19:49:14Z",
+        "deletionTimestamp": "2026-07-09T12:06:47Z"
       },
       "spec": {
         "description": "Adds a dashboard timebar / time navigator control that drives the dashboard time range",

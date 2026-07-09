@@ -201,12 +201,12 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:        "timeNavigator",
+			Name:        "grafana.timeNavigator",
 			Description: "Adds a dashboard timebar / time navigator control that drives the dashboard time range",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "awsDatasourcesTempCredentials",
