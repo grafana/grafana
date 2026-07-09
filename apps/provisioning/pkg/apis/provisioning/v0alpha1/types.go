@@ -77,6 +77,7 @@ type GitHubRepositoryConfig struct {
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
@@ -102,9 +103,6 @@ type GitHubEnterpriseRepositoryConfig struct {
 
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
-
-	// Whether we should show dashboard previews for pull requests.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
 	// Path is the subdirectory for the Grafana data inside the repository.
 	Path string `json:"path,omitempty"`
@@ -334,20 +332,12 @@ func (r *Repository) Path() string {
 }
 
 func (r *Repository) ShouldGenerateDashboardPreviews() bool {
-	switch r.Spec.Type {
-	case GitHubRepositoryType:
-		if r.Spec.GitHub != nil {
-			return r.Spec.GitHub.GenerateDashboardPreviews
-		}
-	case GitHubEnterpriseRepositoryType:
-		if r.Spec.GitHubEnterprise != nil {
-			return r.Spec.GitHubEnterprise.GenerateDashboardPreviews
-		}
-	default:
-		return false
+	// GitHub keeps this on its own config until existing repositories are backfilled
+	// onto PullRequest options. Every other provider reads it from PullRequest.
+	if r.Spec.Type == GitHubRepositoryType {
+		return r.Spec.GitHub != nil && r.Spec.GitHub.GenerateDashboardPreviews
 	}
-
-	return false
+	return r.Spec.PullRequest != nil && r.Spec.PullRequest.GenerateDashboardPreviews
 }
 
 // ConnectionName returns the name of the connection referenced by this repository,
@@ -444,6 +434,10 @@ type PullRequestOptions struct {
 
 	// When true, the PR title field in Save drawers is read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Whether we should show dashboard previews for pull requests.
+	// By default, this is false (i.e. we will not create previews).
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
 func (PullRequestOptions) OpenAPIModelName() string {
