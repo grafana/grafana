@@ -162,7 +162,7 @@ export interface VariableTypeSelectOptionsArgs {
    * True when the type selector renders outside a dashboard (e.g. the variables
    * management page). Standalone contexts have no dedicated "Filter and Group by"
    * entry point, so with unified drilldown controls the adhoc type stays selectable
-   * (relabeled) and the deprecated standalone groupby type is hidden.
+   * and is relabeled accordingly.
    */
   standalone?: boolean;
 }
@@ -204,15 +204,10 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
   );
 
   return results.filter((option) => {
-    if (option.value === 'groupby') {
-      if (!config.featureToggles.groupByVariable) {
-        return false;
-      }
-      // Under unified drilldown controls group by is a capability of the adhoc
-      // variable, so standalone contexts don't offer it as a separate type.
-      if (unifiedDrilldown && standalone) {
-        return false;
-      }
+    // Legacy standalone groupby is experimental/deprecated; leave it gated only
+    // by groupByVariable and focus new work on the unified adhoc path.
+    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+      return false;
     }
     if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
       // Dashboards have a dedicated "Filter and Group by" entry point instead.
