@@ -41,6 +41,9 @@ func SplitTrailingSQLCommenter(sql string) (string, string) {
 		return sql, ""
 	}
 	comment := trimmed[open:]
+	if len(comment) < len("/**/") {
+		return sql, ""
+	}
 	// The block comment must be self-contained: an internal */ means the database
 	// would close the comment early, leaving executable text we must not move.
 	if strings.Contains(comment[2:len(comment)-2], "*/") {

@@ -50,6 +50,12 @@ func TestSplitTrailingSQLCommenter(t *testing.T) {
 			wantTag:  "",
 		},
 		{
+			name:     "overlapping opener and closer is not a tag",
+			sql:      "SELECT 1 /*/",
+			wantBody: "SELECT 1 /*/",
+			wantTag:  "",
+		},
+		{
 			name:     "inline (non-trailing) tag is left in place",
 			sql:      "SELECT 1 /*k='v'*/ WHERE x = 1",
 			wantBody: "SELECT 1 /*k='v'*/ WHERE x = 1",
