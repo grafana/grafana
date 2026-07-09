@@ -452,15 +452,6 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 			},
 			"https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
 		},
-		{
-			"azure managed prometheus endpoint URL",
-			datasources.DataSource{
-				Type:     datasources.DS_AZURE_PROMETHEUS,
-				JsonData: simplejson.MustJson([]byte(`{}`)),
-				URL:      "https://myworkspace.monitor.azure.com",
-			},
-			"https://myworkspace.monitor.azure.com/api/v1/write",
-		},
 	}
 
 	for _, tt := range tc {
@@ -503,38 +494,6 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 			# TYPE grafana_alerting_remote_writer_writes_total counter
 			grafana_alerting_remote_writer_writes_total{backend="%s",org="1",status_code="200"} 1
 		`, string(amazonPrometheusType))
-		require.NoError(t, testutil.CollectAndCompare(met.WritesTotal,
-			strings.NewReader(expectedMetric),
-			"grafana_alerting_remote_writer_writes_total"))
-	})
-
-	t.Run("when writing an Azure Prometheus datasource then it succeeds and uses the azure-prometheus backend", func(t *testing.T) {
-		testDS := setupDataSources(t)
-		testDS.Reset()
-
-		azureDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			Name:     "azure-1",
-			UID:      "azure-1",
-			Type:     datasources.DS_AZURE_PROMETHEUS,
-			JsonData: simplejson.MustJson([]byte(`{}`)),
-		})
-		azureDS.URL = testDS.prom1.srv.URL
-		testDS.prom1.ExpectedPath = azurePrometheusRemoteWritePath
-
-		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
-		reg := prometheus.NewRegistry()
-		met := metrics.NewRemoteWriterMetrics(reg)
-		writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
-
-		err := writer.WriteDatasource(context.Background(), "azure-1", "metric", time.Now(), frames, 1, map[string]string{})
-		require.NoError(t, err)
-		assert.Equal(t, 1, testDS.prom1.RequestsCount)
-
-		expectedMetric := fmt.Sprintf(`
-			# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
-			# TYPE grafana_alerting_remote_writer_writes_total counter
-			grafana_alerting_remote_writer_writes_total{backend="%s",org="1",status_code="200"} 1
-		`, string(azurePrometheusType))
 		require.NoError(t, testutil.CollectAndCompare(met.WritesTotal,
 			strings.NewReader(expectedMetric),
 			"grafana_alerting_remote_writer_writes_total"))

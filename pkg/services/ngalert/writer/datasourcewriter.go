@@ -40,26 +40,20 @@ const (
 	grafanaCloudPromType backendType = "grafanacloud-prom"
 	prometheusType       backendType = "prometheus"
 	amazonPrometheusType backendType = "amazon-prometheus"
-	azurePrometheusType  backendType = "azure-prometheus"
 )
 
 const (
 	// amazonPrometheusRemoteWritePath is appended to an Amazon Managed Prometheus
 	// workspace URL to form the remote write endpoint.
 	amazonPrometheusRemoteWritePath = "/api/v1/remote_write"
-
-	// azurePrometheusRemoteWritePath is appended to an Azure Managed Prometheus
-	// endpoint URL to form the remote write endpoint.
-	azurePrometheusRemoteWritePath = "/api/v1/write"
 )
 
 // supportedRemoteWriteTypes is the set of data source types that recording rules
-// can write to. In addition to core Prometheus, the purpose-built Amazon and Azure
-// managed Prometheus data source plugins are supported.
+// can write to. In addition to core Prometheus, the purpose-built Amazon Managed
+// Prometheus data source plugin is supported.
 var supportedRemoteWriteTypes = map[string]bool{
 	datasources.DS_PROMETHEUS:        true,
 	datasources.DS_AMAZON_PROMETHEUS: true,
-	datasources.DS_AZURE_PROMETHEUS:  true,
 }
 
 type DatasourceWriterConfig struct {
@@ -150,11 +144,6 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 		return u.JoinPath(amazonPrometheusRemoteWritePath), nil
 	}
 
-	// Azure Managed Prometheus: append the standard write path to the endpoint URL.
-	if ds.Type == datasources.DS_AZURE_PROMETHEUS {
-		return u.JoinPath(azurePrometheusRemoteWritePath), nil
-	}
-
 	if getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
@@ -211,8 +200,8 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	}
 
 	if !supportedRemoteWriteTypes[ds.Type] {
-		return nil, fmt.Errorf("can only write to data sources of type prometheus, "+
-			"amazon managed prometheus, or azure managed prometheus, but got %q", ds.Type)
+		return nil, fmt.Errorf("can only write to data sources of type prometheus "+
+			"or amazon managed prometheus, but got %q", ds.Type)
 	}
 
 	is, err := adapters.ModelToInstanceSettings(ds, w.decrypt)
@@ -267,8 +256,6 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		backend = grafanaCloudPromType
 	case ds.Type == datasources.DS_AMAZON_PROMETHEUS:
 		backend = amazonPrometheusType
-	case ds.Type == datasources.DS_AZURE_PROMETHEUS:
-		backend = azurePrometheusType
 	default:
 		backend = prometheusType
 	}
@@ -283,7 +270,7 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			ProxyOptions: ho.ProxyOptions,
 			// SigV4 is required for Amazon Managed Prometheus, which only accepts
 			// SigV4-signed remote_write requests. CustomOptions and Middlewares carry
-			// plugin-specific auth (e.g. the AMP/Azure data source plugins) that must
+			// plugin-specific auth (e.g. the AMP data source plugin) that must
 			// reach the writer's HTTP client for signing to work.
 			SigV4:         ho.SigV4,
 			CustomOptions: ho.CustomOptions,
