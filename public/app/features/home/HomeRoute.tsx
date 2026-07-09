@@ -24,10 +24,10 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const redirectUri = data?.spec?.homeURL;
   const homeDashboardUID = data?.spec?.homeDashboardUID;
   // homeDashboardUID takes precedence over homeURL; the setup guide redirect is superseded by the new homepage
-  const willRedirect = Boolean(redirectUri) && !homeDashboardUID && redirectUri !== SETUP_GUIDE_HOME_URL;
+  const willRedirect = !!redirectUri && !homeDashboardUID && redirectUri !== SETUP_GUIDE_HOME_URL;
 
   useEffect(() => {
-    if (!willRedirect || !redirectUri) {
+    if (!willRedirect) {
       return;
     }
     const newUrl = locationUtil.processRedirectUri(redirectUri, locationService.getLocation());
