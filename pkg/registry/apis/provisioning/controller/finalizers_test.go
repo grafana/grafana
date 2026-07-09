@@ -1044,10 +1044,6 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				On("ForResource", mock.Anything, mock.Anything).
 				Return(client, schema.GroupVersionKind{}, nil).
 				Maybe()
-			clients.
-				On("Folder", mock.Anything, "v1").
-				Return(client, schema.GroupVersionKind{}, nil).
-				Maybe()
 
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			f := &finalizer{
