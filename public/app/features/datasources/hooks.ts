@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type * as React from 'react';
-import { useLocalStorage } from 'react-use';
+import { useAsync, useLocalStorage } from 'react-use';
 import { type Observable } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 const LOCAL_STORAGE_KEY = 'grafana.features.datasources.components.picker.DataSourceDropDown.history';
 
@@ -55,14 +56,18 @@ export function useDatasources(filters: GetDataSourceListFilters, datasources?: 
 export function useDatasource(
   dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined,
   scopedVars?: ScopedVars
-) {
-  const dataSourceSrv = getDataSourceSrv();
+): DataSourceInstanceSettings | undefined {
+  // Compare `dataSource` and `scopedVars` by value so inline objects don't re-trigger the lookup.
+  const refKey = JSON.stringify(dataSource ?? null);
+  const scopedVarsKey = JSON.stringify(scopedVars ?? null);
 
-  if (typeof dataSource === 'string') {
-    return dataSourceSrv.getInstanceSettings(dataSource, scopedVars);
-  }
+  const { value } = useAsync(
+    () => getDataSourceInstanceSettings(dataSource, scopedVars),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refKey, scopedVarsKey]
+  );
 
-  return dataSourceSrv.getInstanceSettings(dataSource, scopedVars);
+  return value;
 }
 
 export interface KeyboardNavigatableListProps {
