@@ -32,8 +32,8 @@ func (m *mockReaderWriter) LatestRef(ctx context.Context) (string, error) {
 	return m.MockVersioned.LatestRef(ctx)
 }
 
-func (m *mockReaderWriter) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
-	return m.MockVersioned.CompareFiles(ctx, base, ref)
+func (m *mockReaderWriter) CompareFiles(ctx context.Context, base string, refs ...string) ([]repository.VersionedFileChange, error) {
+	return m.MockVersioned.CompareFiles(ctx, base, refs...)
 }
 
 func (m *mockReaderWriter) Move(ctx context.Context, oldPath, newPath, ref, message string) error {

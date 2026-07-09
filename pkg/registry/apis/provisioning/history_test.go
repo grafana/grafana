@@ -30,7 +30,7 @@ func (v *versionedFakeRepo) LatestRef(_ context.Context) (string, error) { retur
 func (v *versionedFakeRepo) ListRefs(_ context.Context) ([]provisioningapi.RefItem, error) {
 	return nil, nil
 }
-func (v *versionedFakeRepo) CompareFiles(_ context.Context, _, _ string) ([]repository.VersionedFileChange, error) {
+func (v *versionedFakeRepo) CompareFiles(_ context.Context, _ string, _ ...string) ([]repository.VersionedFileChange, error) {
 	return nil, nil
 }
 
