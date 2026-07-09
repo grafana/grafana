@@ -535,15 +535,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	annotations := map[string]string{}
-	if sig, ok := UserAttribution(ctx); ok {
-		if sig.Name != "" {
-			annotations[appjobs.AnnoTriggeredBy] = sig.Name
-		}
-		if sig.Email != "" {
-			annotations[appjobs.AnnoTriggeredByEmail] = sig.Email
-		}
-	}
+	annotations := appjobs.AuthorAnnotations(ctx)
 
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)

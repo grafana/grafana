@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -62,5 +63,11 @@ func TestIntegrationGit_DeleteJob_CommitAuthor(t *testing.T) {
 	name, email := user.Identity.GetName(), user.Identity.GetEmail()
 	require.NotEmpty(t, name)
 	require.NotEmpty(t, email)
+
+	annotations := unstruct.GetAnnotations()
+	require.Equal(t, name, annotations[appjobs.AnnoAuthor])
+	require.Equal(t, email, annotations[appjobs.AnnoAuthorEmail])
+	require.Equal(t, user.Identity.GetUID(), annotations[appjobs.AnnoAuthorID])
+
 	require.Equal(t, fmt.Sprintf("%s <%s>", name, email), common.LatestCommitAuthor(t, local, "main"))
 }

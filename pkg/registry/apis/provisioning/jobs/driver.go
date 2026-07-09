@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Store is an abstraction for the storage API.
@@ -393,11 +391,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
 
-	name, email := job.Annotations[appjobs.AnnoTriggeredBy], job.Annotations[appjobs.AnnoTriggeredByEmail]
-	if (name != "" || email != "") &&
-		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
-		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
-	}
+	ctx = withJobAuthorSignature(ctx, job)
 
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {
@@ -519,4 +513,12 @@ func (d *jobDriver) onProgress() ProgressFn {
 		span.RecordError(err)
 		return err
 	}
+}
+
+func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
+	name, email := job.Annotations[appjobs.AnnoAuthor], job.Annotations[appjobs.AnnoAuthorEmail]
+	if name == "" && email == "" {
+		return ctx
+	}
+	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
 }

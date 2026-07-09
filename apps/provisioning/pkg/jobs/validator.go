@@ -17,14 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// AnnoTriggeredBy and AnnoTriggeredByEmail carry the display name and email of
-// the user that triggered the job. They are set by the server at creation time
-// and are immutable.
-const (
-	AnnoTriggeredBy      = "provisioning.grafana.app/triggeredBy"
-	AnnoTriggeredByEmail = "provisioning.grafana.app/triggeredByEmail"
-)
-
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
 // supportedResources is the configured set of resource types provisioning can manage; export-style
 // job options (push and migrate) are validated against it.
@@ -325,33 +317,49 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
-	if err := validateTriggeredBy(ctx, a, job); err != nil {
+	if err := validateAuthor(ctx, a, job); err != nil {
 		return err
 	}
 
 	return ValidateJob(job, v.supportedResources)
 }
 
-func validateTriggeredBy(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
-	name := job.Annotations[AnnoTriggeredBy]
-	email := job.Annotations[AnnoTriggeredByEmail]
+func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	name := job.Annotations[AnnoAuthor]
+	email := job.Annotations[AnnoAuthorEmail]
+	authorID := job.Annotations[AnnoAuthorID]
 
 	switch a.GetOperation() {
 	case admission.Create:
-		if (name == "" && email == "") || identity.IsServiceIdentity(ctx) {
+		if (name == "" && email == "" && authorID == "") || identity.IsServiceIdentity(ctx) {
 			return nil
 		}
 		id, err := identity.GetRequester(ctx)
-		if err != nil || (name != "" && name != id.GetName()) || (email != "" && email != id.GetEmail()) {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoTriggeredBy))
+		if err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		}
+		if name != "" && name != id.GetName() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		}
+		if email != "" && email != id.GetEmail() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+		}
+		if authorID != "" && authorID != id.GetUID() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
 		}
 	case admission.Update:
 		old, ok := a.GetOldObject().(*provisioning.Job)
 		if !ok {
 			return nil
 		}
-		if old.Annotations[AnnoTriggeredBy] != name || old.Annotations[AnnoTriggeredByEmail] != email {
-			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoTriggeredBy))
+		if old.Annotations[AnnoAuthor] != name {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
+		}
+		if old.Annotations[AnnoAuthorEmail] != email {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
+		}
+		if old.Annotations[AnnoAuthorID] != authorID {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorID))
 		}
 	case admission.Delete, admission.Connect:
 	}
