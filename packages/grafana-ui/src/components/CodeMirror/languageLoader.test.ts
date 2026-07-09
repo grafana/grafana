@@ -9,6 +9,10 @@ jest.mock('@codemirror/lang-sql', () => {
 // The language loader memoizes extensions in a module-level cache, so each test
 // runs with an isolated module registry to exercise loading fresh.
 describe('loadLanguageExtension', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('returns null when no language is provided', async () => {
     await jest.isolateModulesAsync(async () => {
       const { loadLanguageExtension } = await import('./languageLoader');
