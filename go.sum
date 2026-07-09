@@ -1642,8 +1642,8 @@ github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675 h1:U94jQ2TQr1m3
 github.com/grafana/jsonparser v0.0.0-20241004153430-023329977675/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
-github.com/grafana/loki/v3 v3.7.2 h1:YqrDecBkmlYOhdWiCY34GKzZcW8anhTABhZY2qL98AQ=
-github.com/grafana/loki/v3 v3.7.2/go.mod h1:dM38zSrv141vSEh3+8CXZNrvVj6qB0IEXpy4uwGcjHY=
+github.com/grafana/loki/v3 v3.7.3 h1:oXJJtdGJ2zh3sJJvA3CfOzw4dV5gIHs0bgt1AgI0WQY=
+github.com/grafana/loki/v3 v3.7.3/go.mod h1:dGAX6YG/eXRoEUWXcFmsLBJ95JV2wWMugelP7gnsFTE=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
 github.com/grafana/nanogit v1.2.0 h1:9JoLb1GNgJrNbOL/R7ww/ePySMFtDqjqMcnzyrZH5bU=
