@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type default as uPlot, type AlignedData } from 'uplot';
 
-import { colorManipulator, type DataFrame, dateTimeFormat, type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type DataFrame, dateTimeFormat, FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphDrawStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import {
   AxisPlacement,
   DEFAULT_ANNOTATION_COLOR,
+  FeatureBadge,
   IconButton,
   Popover,
   Tooltip,
@@ -588,6 +589,13 @@ export const TimeBar: React.FC<TimeBarProps> = ({
           onClick={() => actions.reset()}
         />
         {extraControls}
+        <FeatureBadge
+          featureState={FeatureState.experimental}
+          tooltip={t(
+            'time-navigator.experimental-info',
+            'Experimental. Sparkline and annotation selections are saved in your browser only (per dashboard), not in the dashboard.'
+          )}
+        />
       </div>
 
       <div className={styles.plotArea} style={{ width: chartWidth, height: CHART_HEIGHT }}>

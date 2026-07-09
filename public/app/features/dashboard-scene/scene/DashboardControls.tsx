@@ -299,8 +299,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                   variant={showTimebar ? 'active' : 'default'}
                   tooltip={
                     showTimebar
-                      ? t('time-navigator.hide', 'Hide time navigator')
-                      : t('time-navigator.show', 'Show time navigator')
+                      ? t('time-navigator.hide', 'Hide time navigator (experimental)')
+                      : t('time-navigator.show', 'Show time navigator (experimental)')
                   }
                   onClick={toggleTimebar}
                 />
