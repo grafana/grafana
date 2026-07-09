@@ -29,6 +29,30 @@ import (
 //   - the migrate completes successfully and the resources become managed, which
 //     proves the pull half of the migrate consumed the normalized/space paths.
 //
+// # How a Grafana folder tree maps into the repository
+//
+// In Grafana a folder has a stable UID (metadata.name) and a free-form display
+// title (spec.title); nesting is expressed by each folder pointing at its parent
+// UID. Titles may contain any character. When such a tree is exported, the
+// repository mirrors the *hierarchy*, but each directory name is a sanitized
+// segment derived from the title — the raw title itself lives on inside that
+// directory's _folder.json (spec.title), so display names survive untouched.
+//
+//	Grafana (UID · "title")                    Repository layout
+//	──────────────────────────────            ─────────────────────────────────────
+//	norm-rd      · "» R&D"                      RD/
+//	└─ norm-backend  · "Grafana Backend"        └─ Grafana Backend/          (space kept)
+//	   └─ norm-internal · ".internal"              └─ internal/              (leading dot trimmed)
+//	      └─ norm-rocket · "🚀🎉"                    └─ norm-rocket/         (no safe chars → UID)
+//	         └─ dash "Deep Dashboard"                  ├─ _folder.json       (metadata.name+spec.title)
+//	                                                    └─ deep-dashboard.json
+//
+// Every folder title is normalized per SanitizeSegment: "» R&D" drops the "»" and
+// "&" (leading space trimmed) → "RD"; "Grafana Backend" keeps its space;
+// ".internal" loses its leading dot; and "🚀🎉" has no representable characters so
+// the segment falls back to the folder UID "norm-rocket". A resource file name is
+// the slug of its title, so "Deep Dashboard" → deep-dashboard.json.
+//
 // Before the title-normalization fix a folder titled "» R&D" produced an unsafe
 // repository path; the write failed but was recorded as an ignored no-op, so the
 // migrate reported "no changes to sync" as a success while exporting nothing.
