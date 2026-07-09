@@ -2,8 +2,7 @@ import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config, locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
-import { ErrorBoundary } from '@grafana/ui';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { ErrorBoundary, PageLoader } from '@grafana/ui';
 import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 

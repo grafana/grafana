@@ -1,7 +1,7 @@
 // Libraries
 import * as React from 'react';
 
-import PageLoader from '../PageLoader/PageLoader';
+import { PageLoader } from '@grafana/ui';
 
 interface Props {
   isLoading?: boolean;

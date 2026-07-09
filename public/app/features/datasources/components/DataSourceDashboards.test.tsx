@@ -31,13 +31,13 @@ describe('<DataSourceDashboards>', () => {
   it('should show a loading indicator while loading', () => {
     setup({ isLoading: true });
 
-    expect(screen.queryByText(/loading/i)).toBeVisible();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
   it('should not show a loading indicator when loaded', () => {
     setup({ isLoading: false });
 
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
   });
 
   it('should show a list of dashboards once loaded', () => {
