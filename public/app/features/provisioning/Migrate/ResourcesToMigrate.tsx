@@ -93,6 +93,11 @@ export function ResourcesToMigrate({
     [filtered, currentPage]
   );
 
+  // 1-based range of matching folders visible on the current page, shown in the
+  // footer so the count stays honest once only a page's worth of rows renders.
+  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (currentPage - 1) * PAGE_SIZE + paged.length;
+
   // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
   // stored) so deselecting one folder doesn't strip resources covered by
@@ -107,9 +112,10 @@ export function ResourcesToMigrate({
     return covered;
   }, [folders, selectedFolderUids]);
 
-  // Select-all is scoped to the rows currently shown (after search), matching
-  // standard table behaviour — it never reaches past the filter to tick the
-  // whole instance.
+  // Select-all covers the whole filtered set — every matching folder across all
+  // pages, not just the page on screen — matching standard table behaviour
+  // where search narrows the target but pagination doesn't. It never reaches
+  // past the filter to tick the whole instance.
   const filteredFolderUids = filtered.map((folder) => folder.uid);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
@@ -237,24 +243,20 @@ export function ResourcesToMigrate({
 
       {numberOfPages > 1 && (
         <Stack justifyContent="flex-end">
-          <Pagination
-            currentPage={currentPage}
-            numberOfPages={numberOfPages}
-            onNavigate={setPage}
-            hideWhenSinglePage
-          />
+          <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setPage} hideWhenSinglePage />
         </Stack>
       )}
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
         <Text variant="bodySmall" color="secondary">
           {t('provisioning.migrate.resources-to-migrate-footer', '', {
-            // Plural agrees with the total folder count (the noun), not the
-            // number of rows shown.
-            shown: filtered.length,
-            count: folders.length,
-            defaultValue_one: 'Showing {{shown}} of {{count}} folder',
-            defaultValue_other: 'Showing {{shown}} of {{count}} folders',
+            // Plural agrees with the total matching folder count (the noun), not
+            // the size of the visible page range.
+            from: rangeStart,
+            to: rangeEnd,
+            count: filtered.length,
+            defaultValue_one: 'Showing {{from}}–{{to}} of {{count}} folder',
+            defaultValue_other: 'Showing {{from}}–{{to}} of {{count}} folders',
           })}
         </Text>
         {folders.length > 0 &&

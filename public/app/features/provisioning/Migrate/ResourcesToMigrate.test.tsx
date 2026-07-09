@@ -42,7 +42,7 @@ describe('ResourcesToMigrate', () => {
 
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1–1 of 1 folder')).toBeInTheDocument();
   });
 
   it('expands a folder to reveal its resources', async () => {
@@ -184,9 +184,9 @@ describe('ResourcesToMigrate', () => {
       expect(screen.getByText('Folder 9')).toBeInTheDocument();
       expect(screen.queryByText('Folder 10')).not.toBeInTheDocument();
 
-      // 25 folders / 10 per page => 3 pages, and the footer still reports the
-      // full count.
-      expect(screen.getByText('Showing 25 of 25 folders')).toBeInTheDocument();
+      // 25 folders / 10 per page => 3 pages; the footer reports the visible page
+      // range against the full matching count.
+      expect(screen.getByText('Showing 1–10 of 25 folders')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '3' })).toBeInTheDocument();
     });
 
@@ -197,6 +197,26 @@ describe('ResourcesToMigrate', () => {
 
       expect(screen.getByText('Folder 10')).toBeInTheDocument();
       expect(screen.queryByText('Folder 0')).not.toBeInTheDocument();
+      // Footer tracks the page range, not just page 1.
+      expect(screen.getByText('Showing 11–20 of 25 folders')).toBeInTheDocument();
+    });
+
+    it('jumps back to the first page when the sort changes', async () => {
+      const { user } = setup({ folders: manyFolders });
+
+      await user.click(screen.getByRole('button', { name: '2' }));
+      // Under the default count-desc sort, page 2 holds Folder 10–19.
+      expect(screen.getByText('Folder 10')).toBeInTheDocument();
+
+      // Switch to "Fewest resources" (count-asc). Folder 24 has the fewest, so
+      // it heads the list — visible only if we're back on page 1, proving the
+      // sort change reset the page rather than leaving us stranded on page 2.
+      const sort = screen.getByRole('combobox');
+      await user.click(sort);
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      expect(screen.getByText('Folder 24')).toBeInTheDocument();
+      expect(screen.queryByText('Folder 10')).not.toBeInTheDocument();
     });
 
     it('does not render pagination for a single page of folders', () => {
