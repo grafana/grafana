@@ -11,6 +11,13 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { RECEIVER_NAME, listContactPointsScenario } from './ContactPointLink.scenario';
 import { Details } from './Details';
 
+// useDatasource wraps the async settings API. Stub it so the (synchronous) tests below
+// don't trigger a post-mount state update for a datasource none of them assert on.
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  useDatasource: jest.fn(),
+}));
+
 const server = setupMockServer();
 
 beforeAll(() => {
