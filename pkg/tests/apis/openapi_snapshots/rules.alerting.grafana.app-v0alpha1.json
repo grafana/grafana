@@ -2923,14 +2923,6 @@
           }
         },
         {
-          "name": "groups",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
           "name": "labels",
           "in": "query",
           "schema": {
@@ -3106,14 +3098,6 @@
           }
         },
         {
-          "name": "groups",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
           "name": "labels",
           "in": "query",
           "schema": {
@@ -3250,14 +3234,6 @@
         },
         {
           "name": "folders",
-          "in": "query",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "groups",
           "in": "query",
           "schema": {
             "type": "string",
@@ -3760,9 +3736,6 @@
           "for": {
             "type": "string"
           },
-          "group": {
-            "type": "string"
-          },
           "interval": {
             "type": "string"
           },
@@ -3857,9 +3830,6 @@
             }
           },
           "folder": {
-            "type": "string"
-          },
-          "group": {
             "type": "string"
           },
           "interval": {

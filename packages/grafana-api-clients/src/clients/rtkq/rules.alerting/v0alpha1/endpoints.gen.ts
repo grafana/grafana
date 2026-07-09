@@ -430,6 +430,69 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
+      getSearchRules: build.query<GetSearchRulesApiResponse, GetSearchRulesApiArg>({
+        query: (queryArg) => ({
+          url: `/search`,
+          params: {
+            continueToken: queryArg.continueToken,
+            dashboardUID: queryArg.dashboardUid,
+            datasourceUIDs: queryArg.datasourceUiDs,
+            folders: queryArg.folders,
+            labels: queryArg.labels,
+            limit: queryArg.limit,
+            metric: queryArg.metric,
+            names: queryArg.names,
+            notificationType: queryArg.notificationType,
+            panelID: queryArg.panelId,
+            paused: queryArg.paused,
+            q: queryArg.q,
+            receiver: queryArg.receiver,
+            routingTree: queryArg.routingTree,
+            sort: queryArg.sort,
+            targetDatasourceUID: queryArg.targetDatasourceUid,
+            type: queryArg['type'],
+          },
+        }),
+      }),
+      getSearchAlertRules: build.query<GetSearchAlertRulesApiResponse, GetSearchAlertRulesApiArg>({
+        query: (queryArg) => ({
+          url: `/search/alertrules`,
+          params: {
+            continueToken: queryArg.continueToken,
+            dashboardUID: queryArg.dashboardUid,
+            datasourceUIDs: queryArg.datasourceUiDs,
+            folders: queryArg.folders,
+            labels: queryArg.labels,
+            limit: queryArg.limit,
+            names: queryArg.names,
+            notificationType: queryArg.notificationType,
+            panelID: queryArg.panelId,
+            paused: queryArg.paused,
+            q: queryArg.q,
+            receiver: queryArg.receiver,
+            routingTree: queryArg.routingTree,
+            sort: queryArg.sort,
+          },
+        }),
+      }),
+      getSearchRecordingRules: build.query<GetSearchRecordingRulesApiResponse, GetSearchRecordingRulesApiArg>({
+        query: (queryArg) => ({
+          url: `/search/recordingrules`,
+          params: {
+            continueToken: queryArg.continueToken,
+            datasourceUIDs: queryArg.datasourceUiDs,
+            folders: queryArg.folders,
+            labels: queryArg.labels,
+            limit: queryArg.limit,
+            metric: queryArg.metric,
+            names: queryArg.names,
+            paused: queryArg.paused,
+            q: queryArg.q,
+            sort: queryArg.sort,
+            targetDatasourceUID: queryArg.targetDatasourceUid,
+          },
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -989,6 +1052,57 @@ export type UpdateRuleSequenceStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetSearchRulesApiResponse = /** status 200 OK */ GetSearchRulesResponse;
+export type GetSearchRulesApiArg = {
+  continueToken?: string;
+  dashboardUid?: string;
+  datasourceUiDs?: string;
+  folders?: string;
+  labels?: string;
+  limit?: string;
+  metric?: string;
+  names?: string;
+  notificationType?: string;
+  panelId?: string;
+  paused?: string;
+  q?: string;
+  receiver?: string;
+  routingTree?: string;
+  sort?: string;
+  targetDatasourceUid?: string;
+  type?: string;
+};
+export type GetSearchAlertRulesApiResponse = /** status 200 OK */ GetSearchAlertRulesResponse;
+export type GetSearchAlertRulesApiArg = {
+  continueToken?: string;
+  dashboardUid?: string;
+  datasourceUiDs?: string;
+  folders?: string;
+  labels?: string;
+  limit?: string;
+  names?: string;
+  notificationType?: string;
+  panelId?: string;
+  paused?: string;
+  q?: string;
+  receiver?: string;
+  routingTree?: string;
+  sort?: string;
+};
+export type GetSearchRecordingRulesApiResponse = /** status 200 OK */ GetSearchRecordingRulesResponse;
+export type GetSearchRecordingRulesApiArg = {
+  continueToken?: string;
+  datasourceUiDs?: string;
+  folders?: string;
+  labels?: string;
+  limit?: string;
+  metric?: string;
+  names?: string;
+  paused?: string;
+  q?: string;
+  sort?: string;
+  targetDatasourceUid?: string;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1404,6 +1518,69 @@ export type RuleSequenceList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type GetSearchRulesRuleHit = any;
+export type GetSearchRulesResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  items: GetSearchRulesRuleHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: ListMeta;
+};
+export type GetSearchAlertRulesRuleSearchType = 'alertrule' | 'recordingrule';
+export type GetSearchAlertRulesAlertRuleHit = {
+  annotations?: {
+    [key: string]: string;
+  };
+  dashboardUID?: string;
+  datasourceUIDs?: string[];
+  folder: string;
+  for?: string;
+  interval?: string;
+  keepFiringFor?: string;
+  labels?: {
+    [key: string]: string;
+  };
+  name: string;
+  notificationType?: string;
+  panelID?: number;
+  paused?: boolean;
+  receiver?: string;
+  routingTree?: string;
+  title: string;
+  type: GetSearchAlertRulesRuleSearchType;
+};
+export type GetSearchAlertRulesResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  items: GetSearchAlertRulesAlertRuleHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: ListMeta;
+};
+export type GetSearchRecordingRulesRuleSearchType = 'alertrule' | 'recordingrule';
+export type GetSearchRecordingRulesRecordingRuleHit = {
+  datasourceUIDs?: string[];
+  folder: string;
+  interval?: string;
+  labels?: {
+    [key: string]: string;
+  };
+  metric?: string;
+  name: string;
+  paused?: boolean;
+  targetDatasourceUID?: string;
+  title: string;
+  type: GetSearchRecordingRulesRuleSearchType;
+};
+export type GetSearchRecordingRulesResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  items: GetSearchRecordingRulesRecordingRuleHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: ListMeta;
+};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -1445,4 +1622,10 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
+  useGetSearchRulesQuery,
+  useLazyGetSearchRulesQuery,
+  useGetSearchAlertRulesQuery,
+  useLazyGetSearchAlertRulesQuery,
+  useGetSearchRecordingRulesQuery,
+  useLazyGetSearchRecordingRulesQuery,
 } = injectedRtkApi;
