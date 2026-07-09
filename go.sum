@@ -1650,8 +1650,8 @@ github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOm
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
 github.com/grafana/nanogit v1.4.0 h1:cfjtLc0PA9L2ukDwWhq6tmqRp3Pfm4eEFzm8mu0/Qek=
 github.com/grafana/nanogit v1.4.0/go.mod h1:Qgtv/BgRfVis/xhv6H35AY/aYLrzZFPn8rRwdVuR55E=
-github.com/grafana/nanogit/gittest v1.2.0 h1:Ik5kt/dmygsJrEf4gVE9dwFVRMo+2UC9cawfufgDDrM=
-github.com/grafana/nanogit/gittest v1.2.0/go.mod h1:qwQYVjtgEWuQTNjZM1a2SgfbXf+mPL3Gprrm0TWFAk4=
+github.com/grafana/nanogit/gittest v1.4.0 h1:HEO6yEL3Z4GM5mIkkaalLn0v1JORIyCNzaxO52PkV+g=
+github.com/grafana/nanogit/gittest v1.4.0/go.mod h1:qwQYVjtgEWuQTNjZM1a2SgfbXf+mPL3Gprrm0TWFAk4=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c h1:xE7mhc2gIi1iWNCLctz9YjaiEsJ+A/hws8kwt3l7F94=
