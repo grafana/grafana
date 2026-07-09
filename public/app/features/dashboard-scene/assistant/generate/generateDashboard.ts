@@ -7,6 +7,12 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type DatasourceCapabilities, type MetricFamily, type MetricMeta, type MetricType } from './capabilities';
 import { composeRecipe } from './composeRecipe';
 import {
+  type DashboardBuildBrief,
+  type DashboardBuildResult,
+  chooseBuildStrategy,
+  ensureDashboardBuildEngineInitialized,
+} from './dashboardBuildStrategy';
+import {
   type DashboardRecipe,
   type RecipeInnerLayout,
   type RecipePanel,
@@ -22,9 +28,12 @@ import {
 } from './recipe';
 import {
   type CustomizationOptions,
+  type DashboardOrientation,
   type DatasourceAnalysis,
   type ExplorationOption,
+  type IntentGenerationContext,
   type IntentSelection,
+  type WizardMode,
 } from './types';
 
 /**
@@ -106,12 +115,23 @@ export interface GenerateDashboardRequest {
   additionalDatasources: DataSourceInstanceSettings[];
   analysis: DatasourceAnalysis;
   customization: CustomizationOptions;
+  /**
+   * Mode, orientation and refinement the user chose in the modal. Threaded
+   * through so the dashboard-generation prompts can bias toward the requested
+   * audience (technical vs business) and subject.
+   */
+  context: IntentGenerationContext;
 }
 
 export interface GeneratedDashboard {
   spec: DashboardV2Spec;
-  /** Raw recipe returned by the LLM, useful for debugging / telemetry. */
-  recipe: DashboardRecipe;
+  /**
+   * Recipe returned by the local composer. Absent when the headless build
+   * engine ran the generation, since the engine returns a V2 spec directly.
+   */
+  recipe?: DashboardRecipe;
+  /** Which build path produced this dashboard — engine or composer. */
+  source: 'engine' | 'composer';
 }
 
 interface UseDashboardGeneratorResult {
@@ -176,23 +196,37 @@ export function useDashboardGenerator(): UseDashboardGeneratorResult {
       setError(null);
       setIsLoading(true);
 
-      runMultiAgentGeneration(request, {
-        register: (assistant) => activeAssistantsRef.current.push(assistant),
-        isStale: () => requestIdRef.current !== requestId,
-      })
-        .then((outcome) => {
+      // The composer path (local, multi-agent LLM recipe generation) is the
+      // fallback for chooseBuildStrategy. When the headless build engine is
+      // registered and enabled, the strategy prefers it and only falls back
+      // here if it throws. This keeps the OSS wizard shippable independently
+      // of the plugin-side engine rollout.
+      const composerBuild = async (brief: DashboardBuildBrief): Promise<DashboardBuildResult> => {
+        const outcome = await runMultiAgentGeneration(brief, {
+          register: (assistant) => activeAssistantsRef.current.push(assistant),
+          isStale: () => requestIdRef.current !== requestId,
+        });
+        if (!outcome.recipe) {
+          throw outcome.error ?? new Error('Dashboard generation produced no panels.');
+        }
+        return { spec: composeRecipe(outcome.recipe), recipe: outcome.recipe, source: 'composer' };
+      };
+
+      // Trigger any lazy initializer the plugin registered so the engine has a
+      // chance to be wired up before we commit to a strategy. Errors are
+      // swallowed inside `ensureDashboardBuildEngineInitialized` — a broken
+      // initializer falls through to the composer.
+      ensureDashboardBuildEngineInitialized()
+        .then(() => chooseBuildStrategy(composerBuild).build(request))
+        .then((buildResult) => {
           if (requestIdRef.current !== requestId) {
             return;
           }
-          if (outcome.recipe) {
-            try {
-              setResult({ spec: composeRecipe(outcome.recipe), recipe: outcome.recipe });
-            } catch (err) {
-              setError(err instanceof Error ? err : new Error(String(err)));
-            }
-          } else {
-            setError(outcome.error ?? new Error('Dashboard generation produced no panels.'));
-          }
+          setResult({
+            spec: buildResult.spec,
+            recipe: buildResult.recipe,
+            source: buildResult.source,
+          });
         })
         .catch((err) => {
           if (requestIdRef.current !== requestId) {
@@ -715,6 +749,18 @@ function buildSystemPrompt(mode: JobMode): string {
     '- When a template variable is present, add `{label=~"$name"}` (or the appropriate matcher) to every panel query so the dashboard filters correctly.',
     '- Order rows from most important (top) to least (bottom), and panels most-important-first (top-left) within each row.',
     '',
+    'LogQL / Loki dashboards (when `metrics.query_language` is "LogQL" or `capabilities.logs` is present):',
+    '- Every LogQL query starts with a stream selector using the labels listed in `capabilities.logs.stream_labels` (e.g. `{namespace="$namespace"}`). Never invent label names — the selector must reference a real stream label.',
+    '- If `capabilities.logs.has_json` is true, add ` | json` to parse structured logs; if `has_logfmt` is true, add ` | logfmt`. Only add both parsers when you have a specific reason (the pipeline is expensive).',
+    '- To reference detected message fields (from `capabilities.logs.detected_fields`), pipe through the parser first and then filter/aggregate on them (e.g. `{app="$app"} | json | status_code >= 500`). Do NOT put detected fields inside the stream selector `{}`.',
+    '- If `capabilities.logs.level` is present, use its field name (usually `level`) and its enumerated values (`error`, `warn`, etc.) to build error-rate and log-breakdown panels: `sum by (level) (rate({...} | json [$__rate_interval]))`.',
+    '- Log rate panels (`timeseries`): wrap the pipeline in `sum(rate({...} | json [$__rate_interval]))` — never plot raw log volume without an aggregator.',
+    '- Error-rate panels (`stat` / `timeseries`): use `sum(rate({...} | json | level=~"error|fatal" [$__rate_interval])) / sum(rate({...} | json [$__rate_interval]))` when a level field is available, or fall back to matching on the message with `|~ "(?i)error"`.',
+    '- Top-N breakdowns (`table`): `topk(10, sum by (<detected_field>) (count_over_time({...} | json [$__interval])))` — pivot on a detected field (status, endpoint, user, tenant) that has moderate cardinality.',
+    '- Latency from logs: if a `duration_ms` / `latency` field is detected, use `quantile_over_time(0.95, {...} | json | unwrap duration_ms [5m])` — never assume it exists without checking `capabilities.logs.detected_fields`.',
+    '- Add at least ONE `logs` panel with a raw tail of the filtered stream (`{...} | json` or `| logfmt`, no aggregation) so the user can drill into individual entries.',
+    '- For Loki-first dashboards, structure rows as: "Overview" (log volume, error rate, unique services/labels as stats) → "Errors" (rate by level, top error messages) → "Volume & routes" (by endpoint/status) → "Raw logs" (full-width `logs` panel at the bottom).',
+    '',
     mode === 'tab'
       ? 'This recipe is ONE subject that will be embedded as a single tab of a larger dashboard. Return `sections` shaped as ROWS: an "Overview" `auto` KPI row followed by 2–3 `grid` detail rows (8–14 panels total). Do NOT use `kind: "tab"` and do NOT return a flat `panels` list.'
       : 'This recipe is a standalone dashboard. Return `sections` shaped as ROWS: an "Overview" `auto` KPI row followed by 3–4 `grid` detail rows (12–18 panels total). Reserve `kind: "tab"` for truly independent facets only.',
@@ -730,7 +776,7 @@ function buildSystemPrompt(mode: JobMode): string {
  * dashboard.
  */
 function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboardRequest, mode: JobMode): string {
-  const { primaryDatasource, additionalDatasources, analysis, customization } = request;
+  const { primaryDatasource, additionalDatasources, analysis, customization, context } = request;
   const labelKeys = analysis.labelKeys.slice(0, MAX_LABEL_KEYS_IN_PROMPT);
   const labelSamples: Record<string, string[]> = {};
   for (const key of labelKeys) {
@@ -780,6 +826,10 @@ function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboa
       ? { min: 8, max: 14, human_readable: 'a dense 8–14 panel view' }
       : { min: 12, max: 18, human_readable: 'an in-depth 12–18 panel dashboard' };
 
+  const audienceHint = audienceHintForOrientation(context.orientation);
+  const modeHint = modeHintForWizardMode(context.mode);
+  const refinement = context.refinement.trim();
+
   const payload = {
     intent: intentPayload,
     primary_datasource: {
@@ -797,6 +847,11 @@ function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboa
     label_samples: labelSamples,
     capabilities,
     metrics,
+    user_context: {
+      mode: context.mode,
+      orientation: context.orientation,
+      refinement: refinement || undefined,
+    },
     customization: {
       panel_count_target: panelTarget,
       additional_notes: notes || undefined,
@@ -807,6 +862,9 @@ function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboa
   const notesLine = notes
     ? `The user added these notes — treat them as authoritative: ${JSON.stringify(notes)}.`
     : 'No additional notes from the user.';
+  const refinementLine = refinement
+    ? `The user described the subject as follows — bias the panels accordingly: ${JSON.stringify(refinement)}.`
+    : 'No specific subject refinement — cover the intent broadly.';
 
   if (mode === 'tab') {
     return [
@@ -815,8 +873,11 @@ function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboa
       '',
       `Produce ONE cohesive, well-organised Grafana view for the single concern "${selection.intent.title}", pivoting on ${selection.option.labelKey}. It will be embedded as a tab of a larger dashboard.`,
       variableLine,
+      audienceHint,
+      modeHint,
       'Shape it as `sections` = ROWS: first an "Overview" row (`layout: "auto"`) of 3–5 KPI stats/gauges, then 2–3 `grid` detail rows each focused on one facet with a wide hero panel plus narrower supporting panels. Use at least four different panel types across the rows and vary the panel spans. Do NOT use `kind: "tab"`.',
       `Target ${panelTarget.human_readable}.`,
+      refinementLine,
       notesLine,
       '',
       'Reply with the JSON recipe only.',
@@ -829,12 +890,35 @@ function buildJobUserPrompt(selection: IntentSelection, request: GenerateDashboa
     '',
     `Produce a comprehensive, well-composed Grafana dashboard recipe for the "${selection.intent.title}" intent, pivoting on ${selection.option.labelKey}.`,
     variableLine,
+    audienceHint,
+    modeHint,
     `Target ${panelTarget.human_readable} split across rows.`,
     layoutHintForSelections([selection]),
+    refinementLine,
     notesLine,
     '',
     'Reply with the JSON recipe only.',
   ].join('\n');
+}
+
+/** Prompt line steering the LLM toward a technical, business, or mixed audience. */
+function audienceHintForOrientation(orientation: DashboardOrientation): string {
+  switch (orientation) {
+    case 'business':
+      return 'Audience: BUSINESS. Lead with outcome KPIs (revenue, signups, conversion, orders, activation) presented as clean stats and simple trends. Panel titles should read like a report ("Revenue today", "New signups", "Conversion rate"), not like an SRE dashboard. Use business-friendly units where possible.';
+    case 'both':
+      return 'Audience: MIXED. Include both technical rows (RED/USE, latency, saturation, errors) and business-oriented rows (outcome KPIs, conversion, activation). Order rows so the business summary is at the top.';
+    case 'technical':
+    default:
+      return 'Audience: TECHNICAL (SRE / SDE). Follow RED/USE, prioritise latency percentiles, error rates, saturation, capacity, dependencies.';
+  }
+}
+
+/** Prompt line adjusting depth and density based on beginner vs expert entry path. */
+function modeHintForWizardMode(mode: WizardMode): string {
+  return mode === 'expert'
+    ? 'The user chose EXPERT mode: assume they can read advanced panels — feel free to include drill-down rows (histograms, error breakdowns, top-N tables) that require domain familiarity, and lean toward the higher end of the panel-count target.'
+    : 'The user chose BEGINNER mode: prefer immediately-readable panels (a small number of headline KPIs plus one or two trend rows) over deep drill-downs. Every panel title should be self-explanatory to someone new to Grafana.';
 }
 
 /** Distinct pivot dimensions across selections, preserving first-seen order. */
@@ -973,6 +1057,36 @@ function summariseCapabilities(capabilities: DatasourceCapabilities): Record<str
   }
   if (capabilities.runtimes.length) {
     out.runtimes = capabilities.runtimes;
+  }
+  // Loki datasources: forward the log-signals probe (detected fields, parsers,
+  // level values) so the LLM can build LogQL queries that reference REAL
+  // detected fields with the right parser instead of guessing at label names.
+  if (capabilities.isLokiLike) {
+    const { logs } = capabilities;
+    const summary: Record<string, unknown> = {};
+    if (logs.streamLabelKeys.length) {
+      summary.stream_labels = logs.streamLabelKeys;
+    }
+    if (logs.detectedFields.length) {
+      summary.detected_fields = logs.detectedFields.map((f) => ({
+        name: f.name,
+        type: f.type,
+        parsers: f.parsers,
+        cardinality: f.cardinality,
+      }));
+    }
+    if (logs.hasJSON) {
+      summary.has_json = true;
+    }
+    if (logs.hasLogfmt) {
+      summary.has_logfmt = true;
+    }
+    if (logs.hasLevel) {
+      summary.level = { field_name: 'level', values: logs.levelValues };
+    }
+    if (Object.keys(summary).length) {
+      out.logs = summary;
+    }
   }
   // Metric names are forwarded per-intent (curated + families) rather than here,
   // so the LLM sees the names that matter for the concern it's building.

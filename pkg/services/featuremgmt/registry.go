@@ -2908,6 +2908,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistantDashboardBuildEngine",
+			Description: "Route the OSS Generate Dashboard wizard through the Assistant plugin's headless dashboard-build engine when it registers itself; falls back to the local composer when off or unavailable",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:        "grafana.correlationsSkipLegacy",
 			Description: "Route any calls to legacy correlations endpoints to call through to app platform",
 			Stage:       FeatureStageExperimental,

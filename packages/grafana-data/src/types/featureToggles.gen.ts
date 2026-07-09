@@ -1516,6 +1516,11 @@ export interface FeatureToggles {
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
   /**
+  * Route the OSS Generate Dashboard wizard through the Assistant plugin's headless dashboard-build engine when it registers itself; falls back to the local composer when off or unavailable
+  * @default false
+  */
+  assistantDashboardBuildEngine?: boolean;
+  /**
   * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
   * @default false
   */

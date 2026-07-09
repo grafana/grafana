@@ -100,6 +100,57 @@ export interface CustomizationOptions {
   additionalNotes: string;
 }
 
+/**
+ * Broad "entry path" the user chose in the modal. `beginner` prioritises curated
+ * top picks and one-click generation; `expert` widens the aperture — full
+ * category browsing, multi-select — and steers the LLM toward more advanced,
+ * detail-heavy dashboards.
+ */
+export type WizardMode = 'beginner' | 'expert';
+
+/**
+ * Orientation of the dashboard the user wants to build:
+ * - `technical`: SRE / SDE-oriented (RED/USE, saturation, error budgets, runtime).
+ * - `business`: outcome-oriented KPIs (revenue, signups, conversion, orders).
+ * - `both`: mix technical panels with business-oriented ones.
+ *
+ * Threaded through to the LLM so it can pick appropriate panel titles, units and
+ * groupings, and to the local composer so its fallback panels reflect the choice.
+ */
+export type DashboardOrientation = 'technical' | 'business' | 'both';
+
+/**
+ * Extra structured signals the modal collects before intent generation runs.
+ * The `refinement` field carries a free-form user description of what dashboard
+ * they want ("show me revenue by region and error rate by service") — the LLM
+ * uses it to filter which intents to propose and to bias intent guidance
+ * toward the user's target subject.
+ */
+export interface IntentGenerationContext {
+  mode: WizardMode;
+  orientation: DashboardOrientation;
+  refinement: string;
+}
+
+/**
+ * A semantic group of intents generated (or curated) for the current
+ * datasource — e.g. "Apps & Services", "Databases", "Business KPIs". Categories
+ * are produced by the LLM based on what's actually present in the data instead
+ * of being pinned to raw label dimensions.
+ */
+export interface GeneratedCategoryGroup {
+  /** Stable kebab-case id, unique across the response. */
+  id: string;
+  /** Human-readable category title (e.g. "Apps & Services"). */
+  title: string;
+  /** Icon shown next to the title in the UI. */
+  icon: string;
+  /** Optional short description shown under the title. */
+  description?: string;
+  /** Selections belonging to this category, in the order the LLM returned them. */
+  selections: IntentSelection[];
+}
+
 export interface GenerateDashboardWizardState {
   analysisStatus: AnalysisStatus;
   generationStatus: GenerationStatus;

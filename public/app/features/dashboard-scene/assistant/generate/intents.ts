@@ -7,10 +7,11 @@ import { type DashboardIntent } from './types';
  * templates — each intent is a name + short description + LLM guidance that the
  * Assistant expands into an actual dashboard using its dashboarding-mode tools.
  *
- * We deliberately ship a broad-but-not-huge set (typically 4–6 per category).
- * A "suggested for your data" batch is generated on demand by the Assistant
- * (see `generateIntents.ts`) and appended to this list at runtime, so the
- * static set only needs to cover the common cases well.
+ * **Fallback-only.** The primary source of intents for the modal is now the
+ * data-driven generator in `generateIntents.ts`, which produces both categories
+ * and intents grounded in the actual metrics / logs / labels of the datasource.
+ * This static set is consulted only when the LLM call fails or the Assistant is
+ * unavailable, so it just needs to cover the common shapes well.
  */
 export const INTENTS_BY_CATEGORY: Record<LabelCategory, DashboardIntent[]> = {
   service: [
@@ -385,6 +386,11 @@ export const INTENTS_BY_CATEGORY: Record<LabelCategory, DashboardIntent[]> = {
  * Each entry pairs a curated intent with a predicate over `DatasourceCapabilities`
  * and the currently-selected label category. We keep the predicates deliberately
  * narrow — false positives waste the user's time.
+ *
+ * **Fallback-only.** As with {@link INTENTS_BY_CATEGORY}, this list is consulted
+ * only when the data-driven generator in `generateIntents.ts` is unavailable
+ * (Assistant off, LLM failure, empty response). The primary intent source is
+ * the LLM output built from the datasource's actual signals.
  */
 interface CapabilityIntent {
   intent: DashboardIntent;

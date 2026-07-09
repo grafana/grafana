@@ -979,6 +979,20 @@
     },
     {
       "metadata": {
+        "name": "assistantDashboardBuildEngine",
+        "resourceVersion": "1783590757823",
+        "creationTimestamp": "2026-07-09T09:52:37Z"
+      },
+      "spec": {
+        "description": "Route the OSS Generate Dashboard wizard through the Assistant plugin's headless dashboard-build engine when it registers itself; falls back to the local composer when off or unavailable",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-12-29T15:28:29Z"

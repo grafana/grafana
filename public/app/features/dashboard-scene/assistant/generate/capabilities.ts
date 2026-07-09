@@ -58,6 +58,57 @@ export interface DatasourceCapabilities {
    * and the right panel unit. Empty for datasources without a metadata endpoint.
    */
   metricMetadata: Record<string, MetricMeta>;
+  /**
+   * Log-analysis signals for Loki-like datasources. Populated by probing the
+   * `/detected_labels` and `/detected_fields` resource endpoints against a broad
+   * selector. Empty for non-Loki datasources.
+   */
+  logs: LogSignals;
+}
+
+/**
+ * Log-analysis signals sourced from a Loki-compatible datasource. Everything
+ * here is best-effort and safe to be empty — the LLM still knows the datasource
+ * is Loki (via `isLokiLike`) and can build reasonable panels from the labels.
+ */
+export interface LogSignals {
+  /**
+   * Stream label keys present on the datasource. Same list as
+   * {@link DatasourceCapabilities} label keys but restricted to Loki, so callers
+   * that only care about log streams can consume them independently.
+   */
+  streamLabelKeys: string[];
+  /**
+   * Detected non-indexed fields (from JSON / logfmt parsers) with their name,
+   * inferred type and the parsers that expose them. Ranked by cardinality (highest
+   * first) so the LLM sees the most discriminating fields first.
+   */
+  detectedFields: DetectedLogField[];
+  /** JSON parsing detected on the sampled logs (the LLM can rely on `| json`). */
+  hasJSON: boolean;
+  /** Logfmt parsing detected on the sampled logs (the LLM can rely on `| logfmt`). */
+  hasLogfmt: boolean;
+  /**
+   * A `level`/`severity` field or label was detected — the dashboard should
+   * include a "logs by level" breakdown and a level filter.
+   */
+  hasLevel: boolean;
+  /**
+   * A sample of level values found in the logs (e.g. `["info", "warn", "error"]`).
+   * Empty when levels weren't reliably detected.
+   */
+  levelValues: string[];
+}
+
+/** A single detected non-indexed field, as reported by Loki's `/detected_fields`. */
+export interface DetectedLogField {
+  name: string;
+  /** Inferred value type — helps the LLM pick the right panel unit / aggregation. */
+  type: 'bytes' | 'float' | 'int' | 'string' | 'duration';
+  /** Approximate cardinality of the field. */
+  cardinality: number;
+  /** Parsers required to expose this field (empty means indexed label). */
+  parsers: string[];
 }
 
 /** A metric-name family (prefix) and how many sampled metrics belong to it. */
@@ -123,6 +174,25 @@ const MAX_METADATA_ENTRIES = 3000;
 /** Metric `help` text is truncated to this many characters before we retain it. */
 const MAX_METRIC_HELP_LENGTH = 140;
 
+/** How many detected fields we surface from a Loki datasource. */
+const MAX_DETECTED_LOG_FIELDS = 40;
+
+/** How many level values (e.g. info, warn, error) we surface. */
+const MAX_LEVEL_VALUES = 6;
+
+/**
+ * How far back we look when probing Loki's `/detected_fields` — long enough to
+ * catch a representative sample even on low-traffic streams, short enough to
+ * keep the resource call cheap. Expressed in milliseconds.
+ */
+const LOKI_PROBE_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Well-known level field/label names we recognise, in preference order. `level`
+ * is by far the most common; the others cover popular vendor conventions.
+ */
+const LEVEL_FIELD_NAMES: readonly string[] = ['level', 'severity', 'log_level', 'loglevel', 'lvl'];
+
 /**
  * How many distinct hits a pattern needs before we count it as "detected". Set to 1
  * for cheap patterns (a single `apiserver_request_total` is enough to confirm the
@@ -134,18 +204,28 @@ const DEFAULT_HIT_THRESHOLD = 1;
  * Discovers datasource capabilities from a metric-name sample plus label metadata.
  * Failures are non-fatal — we degrade to a mostly-empty snapshot rather than
  * blocking the wizard.
+ *
+ * Branches on the datasource type: Prometheus-like stores get metric-name and
+ * metadata probes; Loki-like stores get log signal probes (detected fields /
+ * parsers / level detection). Both paths share the label-based detection layer
+ * so K8s / cloud / service-mesh signals still surface for Loki when they're
+ * present in the stream labels.
  */
 export async function detectCapabilities(
   dsSettings: DataSourceInstanceSettings,
   labelKeys: string[],
   labelSamples: Record<string, string[]>
 ): Promise<DatasourceCapabilities> {
-  // Metric names and metadata come from independent endpoints — fetch together.
-  const [metricNames, metricMetadata] = await Promise.all([
-    fetchMetricNames(dsSettings),
-    fetchMetricMetadata(dsSettings),
+  const type = dsSettings.type.toLowerCase();
+  const isLokiLike = type.includes('loki');
+
+  // Metric probes and log probes are independent — fetch in parallel.
+  const [metricNames, metricMetadata, logs] = await Promise.all([
+    isLokiLike ? Promise.resolve<string[]>([]) : fetchMetricNames(dsSettings),
+    isLokiLike ? Promise.resolve<Record<string, MetricMeta>>({}) : fetchMetricMetadata(dsSettings),
+    isLokiLike ? fetchLogSignals(dsSettings, labelKeys, labelSamples) : Promise.resolve<LogSignals>(emptyLogSignals()),
   ]);
-  return buildCapabilities(dsSettings, metricNames, labelKeys, labelSamples, metricMetadata);
+  return buildCapabilities(dsSettings, metricNames, labelKeys, labelSamples, metricMetadata, logs);
 }
 
 /**
@@ -157,7 +237,8 @@ export function buildCapabilities(
   metricNames: string[],
   labelKeys: string[],
   labelSamples: Record<string, string[]>,
-  metricMetadata: Record<string, MetricMeta> = {}
+  metricMetadata: Record<string, MetricMeta> = {},
+  logs: LogSignals = emptyLogSignals()
 ): DatasourceCapabilities {
   const type = dsSettings.type.toLowerCase();
   const labelKeySet = new Set(labelKeys.map((k) => k.toLowerCase()));
@@ -196,6 +277,19 @@ export function buildCapabilities(
     sampledMetricNames: retainedMetricNames,
     metricFamilies: computeMetricFamilies(metricNames, MAX_METRIC_FAMILIES),
     metricMetadata: retainMetadataForPool(metricMetadata, retainedMetricNames),
+    logs,
+  };
+}
+
+/** All-empty log signals, used for non-Loki datasources or when a fetch fails. */
+export function emptyLogSignals(): LogSignals {
+  return {
+    streamLabelKeys: [],
+    detectedFields: [],
+    hasJSON: false,
+    hasLogfmt: false,
+    hasLevel: false,
+    levelValues: [],
   };
 }
 
@@ -612,6 +706,250 @@ async function fetchMetricMetadata(dsSettings: DataSourceInstanceSettings): Prom
     return out;
   } catch {
     return {};
+  }
+}
+
+/**
+ * Fetches log-shape signals from a Loki-compatible datasource. Best-effort:
+ * every failure falls back to the empty-signals structure so a probe outage
+ * never breaks the wizard.
+ *
+ * Strategy:
+ * 1. Pick a broad but valid stream selector from the labels we already
+ *    discovered (Loki refuses fully-empty matchers).
+ * 2. Ask `/detected_fields` for that selector — this gives us field names /
+ *    types / cardinalities / parsers with a single cheap resource call.
+ * 3. Derive parser signals (`hasJSON` / `hasLogfmt`) from the returned
+ *    parsers, and level presence from a `level`/`severity`-style field. When
+ *    level is present, ask `/detected_field/{name}/values` for a compact
+ *    sample of level values.
+ */
+async function fetchLogSignals(
+  dsSettings: DataSourceInstanceSettings,
+  labelKeys: string[],
+  labelSamples: Record<string, string[]>
+): Promise<LogSignals> {
+  const type = dsSettings.type.toLowerCase();
+  if (!type.includes('loki')) {
+    return emptyLogSignals();
+  }
+  try {
+    const ds: DataSourceApi = await getDataSourceSrv().get(dsSettings);
+    const getResource: unknown = Reflect.get(ds, 'getResource');
+    if (typeof getResource !== 'function') {
+      return { ...emptyLogSignals(), streamLabelKeys: labelKeys.slice(0, 40) };
+    }
+    const selector = buildLokiProbeSelector(labelKeys, labelSamples);
+    if (!selector) {
+      return { ...emptyLogSignals(), streamLabelKeys: labelKeys.slice(0, 40) };
+    }
+    const range = lokiProbeRange();
+    const detected = await fetchDetectedFields(getResource, ds, selector, range);
+    if (detected.length === 0) {
+      return { ...emptyLogSignals(), streamLabelKeys: labelKeys.slice(0, 40) };
+    }
+    const hasJSON = detected.some((f) => f.parsers.includes('json'));
+    const hasLogfmt = detected.some((f) => f.parsers.includes('logfmt'));
+    const levelField = detected.find((f) => LEVEL_FIELD_NAMES.includes(f.name.toLowerCase()));
+    // Fall back to a label named `level` when parsing missed it.
+    const hasLevelLabel = labelKeys.some((k) => LEVEL_FIELD_NAMES.includes(k.toLowerCase()));
+    const hasLevel = Boolean(levelField) || hasLevelLabel;
+
+    let levelValues: string[] = [];
+    if (levelField) {
+      levelValues = await fetchDetectedFieldValues(getResource, ds, levelField.name, selector, range);
+    } else if (hasLevelLabel) {
+      const labelName = labelKeys.find((k) => LEVEL_FIELD_NAMES.includes(k.toLowerCase()));
+      const values = labelName ? (labelSamples[labelName] ?? []) : [];
+      levelValues = values.slice(0, MAX_LEVEL_VALUES);
+    }
+
+    return {
+      streamLabelKeys: labelKeys.slice(0, 40),
+      detectedFields: detected.slice(0, MAX_DETECTED_LOG_FIELDS),
+      hasJSON,
+      hasLogfmt,
+      hasLevel,
+      levelValues,
+    };
+  } catch {
+    return { ...emptyLogSignals(), streamLabelKeys: labelKeys.slice(0, 40) };
+  }
+}
+
+/**
+ * Assembles a stream selector we can pass to Loki's metadata endpoints. Loki
+ * rejects fully-empty matchers (`{}`) so we pick the first label that has real
+ * sample values and match either its top value verbatim, or every stream that
+ * has the label (`{label=~".+"}`). The former is safer against label-value
+ * explosion on huge datasources; the latter is our fallback.
+ */
+function buildLokiProbeSelector(labelKeys: string[], labelSamples: Record<string, string[]>): string | null {
+  const preferred = ['service_name', 'service', 'job', 'app', 'namespace', 'container', 'pod', 'cluster'];
+  const orderedKeys = [...preferred.filter((k) => labelKeys.includes(k)), ...labelKeys];
+  for (const key of orderedKeys) {
+    const values = labelSamples[key];
+    if (values && values.length > 0) {
+      // Loki label values must be double-quoted; escape backslashes and quotes.
+      const escaped = values[0].replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      return `{${key}="${escaped}"}`;
+    }
+  }
+  const anyKey = labelKeys.find((k) => k && !k.startsWith('__'));
+  if (anyKey) {
+    return `{${anyKey}=~".+"}`;
+  }
+  return null;
+}
+
+/** Loki's metadata endpoints want nanosecond epochs; a 1h window is enough for a probe. */
+function lokiProbeRange(): { start: string; end: string } {
+  const nowMs = Date.now();
+  const endNs = String(nowMs) + '000000';
+  const startNs = String(nowMs - LOKI_PROBE_WINDOW_MS) + '000000';
+  return { start: startNs, end: endNs };
+}
+
+/**
+ * Calls Loki's `/detected_fields` resource endpoint and normalises the response
+ * into our {@link DetectedLogField} shape. The endpoint can wrap the payload in
+ * `.data` or return `{ fields: [...] }` directly depending on server version, so
+ * we accept either.
+ */
+async function fetchDetectedFields(
+  getResource: Function,
+  ds: DataSourceApi,
+  query: string,
+  range: { start: string; end: string }
+): Promise<DetectedLogField[]> {
+  try {
+    const response: unknown = await getResource.call(ds, 'detected_fields', {
+      query,
+      start: range.start,
+      end: range.end,
+      limit: 1000,
+    });
+    const fields = extractFieldsArray(response);
+    if (!Array.isArray(fields)) {
+      return [];
+    }
+    const parsed: DetectedLogField[] = [];
+    for (const item of fields) {
+      if (!isRecord(item)) {
+        continue;
+      }
+      const name = typeof item.label === 'string' ? item.label : typeof item.name === 'string' ? item.name : '';
+      if (!name) {
+        continue;
+      }
+      const type = normaliseDetectedFieldType(typeof item.type === 'string' ? item.type : undefined);
+      const cardinality =
+        typeof item.cardinality === 'number' && Number.isFinite(item.cardinality) ? item.cardinality : 0;
+      const parsers = extractParsers(item.parsers);
+      parsed.push({ name, type, cardinality, parsers });
+    }
+    // Rank by cardinality desc so the most discriminating fields lead.
+    parsed.sort((a, b) => b.cardinality - a.cardinality || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+/** Detected-field values endpoint (`/detected_field/{name}/values`) returns `{ values: string[] }`. */
+async function fetchDetectedFieldValues(
+  getResource: Function,
+  ds: DataSourceApi,
+  name: string,
+  query: string,
+  range: { start: string; end: string }
+): Promise<string[]> {
+  try {
+    const encoded = encodeURIComponent(name);
+    const response: unknown = await getResource.call(ds, `detected_field/${encoded}/values`, {
+      query,
+      start: range.start,
+      end: range.end,
+    });
+    const values = extractValuesArray(response);
+    if (!Array.isArray(values)) {
+      return [];
+    }
+    return values
+      .filter((v): v is string => typeof v === 'string' && v.length > 0)
+      .slice(0, MAX_LEVEL_VALUES)
+      .map((v) => v.toLowerCase());
+  } catch {
+    return [];
+  }
+}
+
+function extractFieldsArray(response: unknown): unknown[] | null {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (!isRecord(response)) {
+    return null;
+  }
+  if (Array.isArray(response.fields)) {
+    return response.fields;
+  }
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (isRecord(data) && Array.isArray(data.fields)) {
+    return data.fields;
+  }
+  return null;
+}
+
+function extractValuesArray(response: unknown): unknown[] | null {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  if (!isRecord(response)) {
+    return null;
+  }
+  if (Array.isArray(response.values)) {
+    return response.values;
+  }
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return data;
+  }
+  if (isRecord(data) && Array.isArray(data.values)) {
+    return data.values;
+  }
+  return null;
+}
+
+function extractParsers(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string' && (item === 'json' || item === 'logfmt')) {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
+/** Maps a Loki detected-field type string to the small enum our consumer uses. */
+function normaliseDetectedFieldType(type: string | undefined): DetectedLogField['type'] {
+  switch ((type ?? '').toLowerCase()) {
+    case 'bytes':
+      return 'bytes';
+    case 'float':
+      return 'float';
+    case 'int':
+      return 'int';
+    case 'duration':
+      return 'duration';
+    default:
+      return 'string';
   }
 }
 

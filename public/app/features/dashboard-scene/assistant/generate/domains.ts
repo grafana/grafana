@@ -4,18 +4,27 @@ import { type IconName } from '@grafana/ui';
 import { type LabelCategory, categorizeLabelKey, descriptionForLabelKey, titleForLabelKey } from './analysis';
 import { type CloudSignal, type DatabaseSignal, type RuntimeSignal } from './capabilities';
 import { CAPABILITY_INTENTS, INTENTS_BY_CATEGORY } from './intents';
-import { type DashboardIntent, type DatasourceAnalysis, type ExplorationOption, type IntentSelection } from './types';
+import {
+  type DashboardIntent,
+  type DatasourceAnalysis,
+  type ExplorationOption,
+  type GeneratedCategoryGroup,
+  type IntentSelection,
+} from './types';
 
 /**
  * A semantic "domain" of the observability stack — Apps, Databases, Kubernetes,
- * Cloud, and so on — rather than a raw label dimension. Domains are assembled on
- * the fly from the detected {@link DatasourceCapabilities} plus the available
- * label dimensions: we only surface a domain when the datasource actually carries
- * signals for it, and each intent inside a domain remembers which label it pivots
- * on (so a Kubernetes domain can mix pod-, namespace- and node-scoped shapes).
+ * Cloud, and so on — rather than a raw label dimension. Domains are assembled
+ * either from LLM-generated categories (primary path) or from the detected
+ * capabilities plus label dimensions (fallback path used when the Assistant is
+ * unavailable): we only surface a domain when the datasource actually carries
+ * signals for it, and each intent inside a domain remembers which label it
+ * pivots on (so a Kubernetes domain can mix pod-, namespace- and node-scoped
+ * shapes).
  *
- * This is the organising principle the wizard shows first — "Databases", "Apps" —
- * which is far more meaningful to a user than "Namespaces" or "Pods".
+ * This is the organising principle the wizard shows first — "Databases", "Apps",
+ * "Business KPIs" — which is far more meaningful to a user than "Namespaces" or
+ * "Pods".
  */
 export interface DomainGroup {
   /** Stable id used as a React key and telemetry dimension. */
@@ -32,6 +41,63 @@ export interface DomainGroup {
   samplePreview?: string;
   /** The (intent, pivot) picks this domain offers, already de-duplicated. */
   selections: IntentSelection[];
+}
+
+/**
+ * Adapts LLM-generated categories to the modal's `DomainGroup` shape. This is
+ * the primary path: `useIntentSuggestions` returns categories rooted in the
+ * datasource's actual data, and the modal renders them as domain groups.
+ *
+ * We coerce the raw icon string to an `IconName` via the same allow-list the
+ * suggestion parser used, so any invalid icon that snuck through still becomes a
+ * safe fallback here.
+ */
+export function domainGroupsFromCategories(categories: GeneratedCategoryGroup[]): DomainGroup[] {
+  return categories
+    .filter((category) => category.selections.length > 0)
+    .map((category) => ({
+      id: `generated-${category.id}`,
+      title: category.title,
+      icon: coerceIcon(category.icon),
+      samplePreview: category.description,
+      selections: category.selections,
+    }));
+}
+
+/**
+ * Coerces an arbitrary icon string (from LLM output) to the small set of icons
+ * we render in the group header. Anything unrecognised falls back to a generic
+ * layer-group icon so the UI never breaks on an unexpected value.
+ */
+function coerceIcon(input: string): IconName {
+  const allowed: readonly IconName[] = [
+    'apps',
+    'sitemap',
+    'database',
+    'exchange-alt',
+    'kubernetes',
+    'laptop-cloud',
+    'cloud',
+    'process',
+    'shield',
+    'dollar-alt',
+    'chart-line',
+    'graph-bar',
+    'layer-group',
+    'bell',
+    'clock-nine',
+    'history',
+    'list-ul',
+    'columns',
+    'monitor',
+    'exclamation-triangle',
+  ];
+  for (const icon of allowed) {
+    if (icon === input) {
+      return icon;
+    }
+  }
+  return 'layer-group';
 }
 
 /** Keep each domain scannable — a wall of cards defeats the point of grouping. */
@@ -81,10 +147,16 @@ const RUNTIME_INTENT_IDS: Partial<Record<RuntimeSignal, string>> = {
 };
 
 /**
- * Builds the domain groups for a datasource. Order is deliberate: application-level
+ * Fallback builder — used when the data-driven generator (`generateIntents.ts`)
+ * is unavailable (Assistant off) or returns nothing. Builds domain groups
+ * directly from the detected capabilities plus label dimensions using the
+ * static curated intents in `intents.ts`. Order is deliberate: application-level
  * concerns first (what most users came for), then backing systems, then
  * infrastructure, and finally a generic "explore by label" catch-all so no
  * dimension is ever unreachable.
+ *
+ * The primary path is `domainGroupsFromCategories`, which adapts the LLM's
+ * generated categories to the same `DomainGroup` shape.
  */
 export function buildDomainGroups(analysis: DatasourceAnalysis): DomainGroup[] {
   const caps = analysis.capabilities;
