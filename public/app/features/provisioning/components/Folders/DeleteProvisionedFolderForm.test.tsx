@@ -1,6 +1,8 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import {
   type RepositoryView,
   useCreateRepositoryJobsMutation,
@@ -181,7 +183,11 @@ function setup(
     onDismiss,
   };
 
-  const renderResult = render(<DeleteProvisionedFolderForm {...defaultProps} {...props} />);
+  const renderResult = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <DeleteProvisionedFolderForm {...defaultProps} {...props} />
+    </OpenFeatureProvider>
+  );
 
   const clickDeleteButton = async () => {
     const deleteButton = screen.getByRole('button', { name: /delete/i });
@@ -239,6 +245,7 @@ describe('DeleteProvisionedFolderForm', () => {
           name: 'test-repo',
           jobSpec: {
             action: 'delete',
+            message: 'Delete folder: Test Folder',
             delete: {
               ref: undefined, // write workflow doesn't set ref
               resources: [
@@ -251,6 +258,29 @@ describe('DeleteProvisionedFolderForm', () => {
             },
           },
         });
+      });
+    });
+
+    it('commits the rendered commit template on the write workflow', async () => {
+      const { mockCreateJob, clickDeleteButton } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...mockRepository,
+            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+          },
+        }
+      );
+
+      await clickDeleteButton();
+
+      await waitFor(() => {
+        expect(mockCreateJob).toHaveBeenCalledWith(
+          expect.objectContaining({
+            jobSpec: expect.objectContaining({ message: 'chore(folders): delete Test Folder' }),
+          })
+        );
       });
     });
 

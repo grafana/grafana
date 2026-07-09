@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	annotationapp "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -38,6 +39,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		To:           c.QueryInt64("to"),
 		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -158,20 +160,10 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
-	startID := item.ID
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
-		"id":      startID,
+		"id":      item.ID,
 	})
-}
-
-func formatGraphiteAnnotation(what string, data string) string {
-	text := what
-	if data != "" {
-		text = text + "\n" + data
-	}
-	return text
 }
 
 // swagger:route POST /annotations/graphite annotations postGraphiteAnnotation
@@ -187,40 +179,16 @@ func formatGraphiteAnnotation(what string, data string) string {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) response.Response {
-	cmd := dtos.PostGraphiteAnnotationsCmd{}
+	cmd := annotationapp.PostGraphiteAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if cmd.What == "" {
-		err := &AnnotationError{"what field should not be empty"}
+	tagsArray, err := cmd.Validate()
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
-
-	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
-	var tagsArray []string
-	switch tags := cmd.Tags.(type) {
-	case string:
-		if tags != "" {
-			tagsArray = strings.Split(tags, " ")
-		} else {
-			tagsArray = []string{}
-		}
-	case []any:
-		for _, t := range tags {
-			if tagStr, ok := t.(string); ok {
-				tagsArray = append(tagsArray, tagStr)
-			} else {
-				err := &AnnotationError{"tag should be a string"}
-				return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-			}
-		}
-	default:
-		err := &AnnotationError{"unsupported tags format"}
-		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-	}
-
+	text := annotationapp.FormatGraphiteText(cmd.What, cmd.Data)
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.GetOrgID(),
@@ -263,12 +231,12 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
-	if resp != nil {
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if _, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser); resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -277,9 +245,8 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
-		Data:     annotation.Data,
 	}
-
+	// Data is omitted unless supplied; the repository preserves the stored value.
 	if cmd.Data != nil {
 		item.Data = cmd.Data
 	}
@@ -315,12 +282,14 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
+	// Start from the stored annotation, then apply the supplied fields.
 	existing := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -329,31 +298,30 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
-		Data:     annotation.Data,
+		PanelID:  annotation.PanelID,
+	}
+	if annotation.DashboardUID != nil {
+		existing.DashboardUID = *annotation.DashboardUID
 	}
 
 	if cmd.Tags != nil {
 		existing.Tags = cmd.Tags
 	}
-
-	if cmd.Text != "" && cmd.Text != existing.Text {
+	if cmd.Text != "" {
 		existing.Text = cmd.Text
 	}
-
-	if cmd.Time > 0 && cmd.Time != existing.Epoch {
+	if cmd.Time > 0 {
 		existing.Epoch = cmd.Time
 	}
-
-	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+	if cmd.TimeEnd > 0 {
 		existing.EpochEnd = cmd.TimeEnd
 	}
-
 	if cmd.Data != nil {
 		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -640,6 +608,10 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
 	// Find annotations for a specified alert rule by its ID.
 	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query
@@ -716,7 +688,7 @@ type PostAnnotationParams struct {
 type PostGraphiteAnnotationParams struct {
 	// in:body
 	// required:true
-	Body dtos.PostGraphiteAnnotationsCmd `json:"body"`
+	Body annotationapp.PostGraphiteAnnotationsCmd `json:"body"`
 }
 
 // swagger:parameters updateAnnotation

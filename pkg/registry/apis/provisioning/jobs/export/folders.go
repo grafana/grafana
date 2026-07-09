@@ -32,9 +32,10 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 			return fmt.Errorf("extract meta accessor: %w", err)
 		}
 
-		manager, _ := meta.GetManagerProperties()
-		// Skip if already managed by any manager (repository, file provisioning, etc.)
-		if manager.Identity != "" {
+		_, managed := meta.GetManagerProperties()
+		// Skip if already managed by any manager (repository, file provisioning, etc.).
+		// Classic shim kinds are managed without an identity, so rely on the managed flag.
+		if managed {
 			return nil
 		}
 
@@ -56,19 +57,24 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 // selective export, which only assembles the folders that the requested
 // resources actually need.
 func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
-	return repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
-		resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
+	return repositoryResources.EnsureFolderTreeExists(ctx, tree, resources.EnsureFolderTreeExistsOptions{
+		Ref:                  options.Branch,
+		Path:                 options.Path,
+		GenerateNewFolderIDs: options.GenerateNewFolderIDs,
+		OnFolder: func(folder resources.Folder, created bool, err error) error {
+			resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
 
-		if err != nil {
-			resultBuilder.WithError(fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err))
-		}
+			if err != nil {
+				resultBuilder.WithError(fmt.Errorf("creating folder %s at path %s: %w", folder.ID, folder.Path, err))
+			}
 
-		if !created {
-			resultBuilder.WithAction(repository.FileActionIgnored)
-		}
-		progress.Record(ctx, resultBuilder.Build())
+			if !created {
+				resultBuilder.WithAction(repository.FileActionIgnored)
+			}
+			progress.Record(ctx, resultBuilder.Build())
 
-		return progress.TooManyErrors()
+			return progress.TooManyErrors()
+		},
 	})
 }
 
@@ -130,7 +136,7 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 		}
 		seen[current] = struct{}{}
 
-		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
+		if _, managed := meta.GetManagerProperties(); managed {
 			return nil
 		}
 

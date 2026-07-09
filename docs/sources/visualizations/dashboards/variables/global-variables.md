@@ -20,8 +20,8 @@ weight: 200
 # Global variables
 
 Grafana has global built-in variables that can be used in expressions in the query editor.
-You can use these variables in queries, dashboard links, panel links, and data links.
 This page lists them in alphabetical order and defines them.
+Most variables are useful in queries, dashboard links, panel links, and data links — but some, like `$__url_time_range`, are intended only for use in links, not query editors.
 
 ## `$__dashboard`
 
@@ -29,17 +29,18 @@ This variable is the name of the current dashboard.
 
 ## `$__from` and `$__to`
 
-Grafana has two built-in time range variables: `$__from` and `$__to`. They're currently always interpolated as epoch milliseconds by default, but you can control date formatting.
+Grafana has built-in time range variables: `$__from` and `$__to`.
+They're always interpolated as epoch milliseconds by default, but you can control date formatting.
 
 <!-- prettier-ignore-start -->
 
-| Syntax                   | Example result           | Description                                                                                                                                                      |
-| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                                                                           |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No arguments, defaults to ISO 8601/RFC 3339                                                                                                                      |
-| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                                                                |
-| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                                                                               |
-| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that doesn't include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC |
+| Syntax                   | Example result           | Description                                 |
+| ------------------------ | ------------------------ | ------------------------------------------- |
+| `${__from}`              | 1594671549254            | Unix millisecond epoch                      |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No arguments, defaults to ISO 8601/RFC 3339 |
+| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                           |
+| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                          |
+| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that doesn't include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC                                                                                 |
 
 <!-- prettier-ignore-end -->
 
@@ -112,3 +113,38 @@ This is used in several places, including:
 The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
 
 If the currently selected time zone is _Browser Time_, Grafana tries to determine your browser time zone.
+
+## `$__url_time_range`
+
+The `$__url_time_range` variable returns the current dashboard time range as URL query parameters.
+It's intended for use in data links and panel links, not in query editors.
+
+The variable expands to a string like `from=1607687293000&to=1607687293100`, where the values are Unix millisecond timestamps matching the current time range selection.
+
+You must include the `?` or `&` separator yourself when constructing URLs:
+
+<!-- prettier-ignore-start -->
+
+| Usage | Example result |
+| ----- | -------------- |
+| `https://example.com/d/abc?${__url_time_range}`         | `https://example.com/d/abc?from=1594671549254&to=1594672349254`         |
+| `https://example.com/d/abc?orgId=1&${__url_time_range}` | `https://example.com/d/abc?orgId=1&from=1594671549254&to=1594672349254` |
+
+<!-- prettier-ignore-end -->
+
+To link to another dashboard while preserving the current time range, follow this pattern:
+
+```text
+https://your-grafana/d/other-dashboard?${__url_time_range}
+```
+
+To also pass a variable value from the current dashboard, follow this pattern:
+
+```text
+https://your-grafana/d/other-dashboard?{__url_time_range}&var-host= {host}
+```
+
+{{< admonition type="note" >}}
+`$__url_time_range` always uses Unix millisecond epoch timestamps.
+To include only the start or end of the time range with specific formatting, use [`$__from` and `$__to` variables](#__from-and-__to) instead.
+{{< /admonition >}}

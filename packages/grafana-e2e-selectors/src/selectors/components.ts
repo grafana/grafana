@@ -90,6 +90,9 @@ export const versionedComponents = {
     configurePanelButton: {
       '13.1.0': 'data-testid edit pane configure panel button',
     },
+    addNewVariableButton: {
+      '13.1.0': 'data-testid edit pane add new variable button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -753,6 +756,9 @@ export const versionedComponents = {
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
       },
+      showDependenciesButton: {
+        '13.1.0': 'data-testid show dependencies button',
+      },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
       },
@@ -848,6 +854,11 @@ export const versionedComponents = {
     },
     intervalButtonV2: {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker interval button',
+    },
+  },
+  ResourcePicker: {
+    card: {
+      '13.2.0': 'data-testid resource-picker-card',
     },
   },
   QueryTab: {

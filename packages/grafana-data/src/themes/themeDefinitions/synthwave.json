@@ -28,6 +28,7 @@
     },
     "background": {
       "canvas": "#1A1A2E",
+      "page": "#181E36",
       "primary": "#16213E",
       "secondary": "#0F3460",
       "elevated": "#0F3460"

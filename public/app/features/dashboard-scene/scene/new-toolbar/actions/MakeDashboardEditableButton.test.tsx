@@ -18,6 +18,7 @@ import { MakeDashboardEditableButton } from './MakeDashboardEditableButton';
 // Mock the DashboardInteractions module
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     editButtonClicked: jest.fn(),
     exitEditButtonClicked: jest.fn(),
   },
