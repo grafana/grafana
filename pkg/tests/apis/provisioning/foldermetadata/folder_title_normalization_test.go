@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -188,4 +189,86 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 		assert.Equal(collect, backendUID, d.GetAnnotations()[utils.AnnoKeyFolder],
 			"written dashboard should be parented under the space-named folder")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "written dashboard should sync under the space folder")
+}
+
+// TestIntegrationProvisioning_PullFoldersWithSpaces proves the sync/pull
+// direction handles repository folder paths that contain spaces in isolation —
+// with no export/migrate step first. A repository is seeded with a nested folder
+// tree whose directory names contain spaces (each with its own _folder.json) plus
+// a dashboard in the deepest folder; a full pull must read those space-containing
+// directory names out of the repo tree and reconcile the whole hierarchy into
+// Grafana, preserving each folder's title and parent relationship.
+//
+//	Repository (seeded on disk)                 Grafana (after pull)
+//	─────────────────────────────────         ─────────────────────────────────────
+//	Space Parent/_folder.json                  folder "pull-space-parent" · "Space Parent"
+//	└─ Nested Child/_folder.json               └─ folder "pull-space-child" · "Nested Child"
+//	   └─ pulled-dashboard.json                   └─ dashboard "pull-space-dash"
+func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := t.Context()
+
+	const (
+		repo        = "pull-space-folders-repo"
+		parentUID   = "pull-space-parent"
+		parentTitle = "Space Parent"
+		childUID    = "pull-space-child"
+		childTitle  = "Nested Child"
+		dashUID     = "pull-space-dash"
+		dashTitle   = "Pulled Dashboard"
+	)
+
+	// SkipSync so the repository exists before we seed it; the pull below is the
+	// action under test.
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	// Seed a repository whose directory names contain spaces, each carrying a
+	// _folder.json, with a dashboard in the deepest folder.
+	parentPath := parentTitle                          // "Space Parent"
+	childPath := filepath.Join(parentPath, childTitle) // "Space Parent/Nested Child"
+	helper.WriteToProvisioningPath(t, filepath.Join(parentPath, "_folder.json"), common.FolderBody(t, parentUID, parentTitle))
+	helper.WriteToProvisioningPath(t, filepath.Join(childPath, "_folder.json"), common.FolderBody(t, childUID, childTitle))
+	helper.WriteToProvisioningPath(t, filepath.Join(childPath, "pulled-dashboard.json"), common.DashboardJSON(dashUID, dashTitle, 1))
+
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		parent, err := helper.Folders.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "parent folder should be created by the pull") {
+			return
+		}
+		assert.Equal(collect, repo, parent.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"parent folder should be managed by the repo")
+		parentGrafanaTitle, _, _ := unstructured.NestedString(parent.Object, "spec", "title")
+		assert.Equal(collect, parentTitle, parentGrafanaTitle, "parent title should survive the pull")
+
+		child, err := helper.Folders.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "nested folder should be created by the pull") {
+			return
+		}
+		assert.Equal(collect, repo, child.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"nested folder should be managed by the repo")
+		assert.Equal(collect, parentUID, child.GetAnnotations()[utils.AnnoKeyFolder],
+			"nested folder should be parented under the space-named parent")
+		childGrafanaTitle, _, _ := unstructured.NestedString(child.Object, "spec", "title")
+		assert.Equal(collect, childTitle, childGrafanaTitle, "nested folder title should survive the pull")
+
+		d, err := helper.DashboardsV1.Resource.Get(ctx, dashUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "dashboard should be created by the pull") {
+			return
+		}
+		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"dashboard should be managed by the repo")
+		assert.Equal(collect, childUID, d.GetAnnotations()[utils.AnnoKeyFolder],
+			"dashboard should be parented under the deepest space folder")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "pull should reconcile the space-named folder tree into Grafana")
 }

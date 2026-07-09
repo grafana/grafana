@@ -24,6 +24,21 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "directory with a space and trailing slash",
+			path:    "Grafana Backend/",
+			wantErr: nil,
+		},
+		{
+			name:    "nested directories with spaces",
+			path:    "Grafana Backend/Cloud App Platform/dashboard.json",
+			wantErr: nil,
+		},
+		{
+			name:    "nested directories with spaces and trailing slash",
+			path:    "Grafana Backend/Cloud App Platform/",
+			wantErr: nil,
+		},
+		{
 			name:    "valid path with extension",
 			path:    "path/to/file.json",
 			wantErr: nil,
