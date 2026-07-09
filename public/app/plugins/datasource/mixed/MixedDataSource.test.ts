@@ -1,14 +1,17 @@
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, type Observable, of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   type DataQueryRequest,
+  type DataQueryResponse,
+  DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
   LoadingState,
 } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
@@ -28,6 +31,23 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
     { data: ['B'], key: 'B' },
   ]),
 });
+
+class RecordingExpressionDatasource extends DataSourceApi {
+  requests: DataQueryRequest[] = [];
+
+  constructor() {
+    super({ name: 'Expression' } as DataSourceInstanceSettings);
+  }
+
+  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+    this.requests.push(request);
+    return of({ data: [] });
+  }
+
+  testDatasource() {
+    return Promise.resolve({ message: '', status: '' });
+  }
+}
 
 describe('MixedDatasource', () => {
   beforeEach(() => {
@@ -189,6 +209,93 @@ describe('MixedDatasource', () => {
         expect(results).toHaveLength(1);
         expect(results[0].data).toEqual(['BBBB']);
       });
+    });
+  });
+
+  describe('with expressions', () => {
+    const multiScene = new SceneFlexLayout({
+      children: [],
+      $variables: new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'ds', value: ['B', 'C'] })],
+      }),
+    });
+
+    let expressionDS: RecordingExpressionDatasource;
+
+    beforeEach(() => {
+      expressionDS = new RecordingExpressionDatasource();
+      setDataSourceSrv({
+        ...datasourceSrv,
+        get: (ref?: DataSourceRef | string) => {
+          const uid = typeof ref === 'string' ? ref : ref?.uid;
+          if (uid === ExpressionDatasourceRef.uid) {
+            return Promise.resolve(expressionDS);
+          }
+          return datasourceSrv.get(ref);
+        },
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+        registerRuntimeDataSource: jest.fn(),
+      } as unknown as DataSourceSrv);
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('fans the whole query graph out to the expression datasource once per selected datasource', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'A', datasource: { uid: '$ds' }, hide: true },
+          { refId: 'B', datasource: ExpressionDatasourceRef, type: 'math', expression: '$A' },
+        ],
+        scopedVars: { __sceneObject: { value: multiScene } },
+      } as unknown as DataQueryRequest;
+
+      await lastValueFrom(ds.query(request));
+
+      // one expression request per selected datasource
+      expect(expressionDS.requests).toHaveLength(2);
+      // each carries the data query AND the expression query
+      for (const req of expressionDS.requests) {
+        expect(req.targets.map((t) => t.refId).sort()).toEqual(['A', 'B']);
+      }
+      // the multi value variable is pinned to a distinct datasource per request
+      expect(expressionDS.requests.map((r) => r.scopedVars?.ds?.value)).toEqual(['B', 'C']);
+    });
+
+    it('emits one namespaced result per selected datasource', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'A', datasource: { uid: '$ds' }, hide: true },
+          { refId: 'B', datasource: ExpressionDatasourceRef, type: 'math', expression: '$A' },
+        ],
+        scopedVars: { __sceneObject: { value: multiScene } },
+      } as unknown as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(2);
+        expect(results[0].key).toBe('mixed-0-');
+        expect(results[1].key).toBe('mixed-1-');
+        expect(results[1].state).toBe(LoadingState.Done);
+      });
+    });
+
+    it('sends a single expression request when no multi value datasource variable is used', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'A', datasource: { uid: 'A' } },
+          { refId: 'C', datasource: { uid: 'C' } },
+          { refId: 'B', datasource: ExpressionDatasourceRef, type: 'math', expression: '$A + $C' },
+        ],
+      } as unknown as DataQueryRequest;
+
+      await lastValueFrom(ds.query(request));
+
+      // expression still gets all of its inputs in a single request (no per-uid split)
+      expect(expressionDS.requests).toHaveLength(1);
+      expect(expressionDS.requests[0].targets.map((t) => t.refId).sort()).toEqual(['A', 'B', 'C']);
     });
   });
 

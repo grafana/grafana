@@ -216,9 +216,14 @@ function callQueryMethod(
     return from(datasource.query(request));
   }
 
-  for (const target of request.targets) {
-    if (isExpressionReference(target.datasource)) {
-      return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
+  // The Mixed datasource handles its own expression fan-out (so a multi-value datasource variable
+  // feeding an expression is expanded across every selected datasource). Only route directly to the
+  // expression datasource for non-mixed requests.
+  if (!datasource.meta?.mixed) {
+    for (const target of request.targets) {
+      if (isExpressionReference(target.datasource)) {
+        return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
+      }
     }
   }
 

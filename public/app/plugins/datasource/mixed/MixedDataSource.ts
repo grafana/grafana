@@ -12,7 +12,8 @@ import {
   LoadingState,
   type ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv, isExpressionReference, toDataQueryError } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
@@ -42,6 +43,18 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     if (!queries.length) {
       return of({ data: [] }); // nothing
+    }
+
+    // When a server-side expression is involved the whole query graph must stay in a single request
+    // (the expression references the other queries by refId). So instead of grouping by datasource we
+    // replicate the entire target set once per selected value of a multi-value datasource variable and
+    // route each replica through the expression datasource.
+    if (queries.some((t) => isExpressionReference(t.datasource))) {
+      const batches = this.getExpressionBatches(queries, request);
+      if (!batches.length) {
+        return of({ data: [] });
+      }
+      return this.batchQueries(batches, request);
     }
 
     // Build groups of queries to run in parallel
@@ -119,6 +132,76 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     }
 
     return batches;
+  }
+
+  /**
+   * Builds the batches for a request that contains a server-side expression. Every batch keeps the
+   * complete target set (data queries + expressions) and is routed to the expression datasource.
+   * When a data query uses a multi-value datasource variable we produce one batch per selected value,
+   * pinning that value in scopedVars so each replica queries a single datasource — matching the
+   * fan-out behaviour of direct queries.
+   */
+  private getExpressionBatches(queries: DataQuery[], request: DataQueryRequest<DataQuery>): BatchedQueries[] {
+    const expressionDatasource = getDataSourceSrv().get(ExpressionDatasourceRef);
+    const multiValue = this.findMultiValueDatasourceVariable(queries, request);
+
+    if (!multiValue) {
+      return [
+        {
+          datasource: expressionDatasource,
+          queries: cloneDeep(queries),
+          scopedVars: { ...request.scopedVars },
+        },
+      ];
+    }
+
+    return multiValue.uids.map((uid) => ({
+      datasource: expressionDatasource,
+      queries: cloneDeep(queries),
+      scopedVars: {
+        ...request.scopedVars,
+        [multiValue.variableName]: { value: uid, text: getDataSourceSrv().getInstanceSettings(uid)?.name },
+      },
+    }));
+  }
+
+  /**
+   * Finds the first data query whose datasource is a multi-value template variable and returns the
+   * variable name together with the selected datasource UIDs. Reuses the templateSrv custom formatter
+   * trick to read the raw variable value. Returns undefined when no multi-value datasource variable is
+   * used (single value or a fixed datasource).
+   */
+  private findMultiValueDatasourceVariable(
+    queries: DataQuery[],
+    request: DataQueryRequest<DataQuery>
+  ): { variableName: string; uids: string[] } | undefined {
+    for (const query of queries) {
+      const dsUid = query.datasource?.uid;
+      if (!dsUid || isExpressionReference(query.datasource)) {
+        continue;
+      }
+
+      let found: { variableName: string; uids: string[] } | undefined;
+      getTemplateSrv().replace(
+        dsUid,
+        request.scopedVars,
+        (value: string | string[], variable: CustomFormatterVariable) => {
+          if (Array.isArray(value)) {
+            const uids = value.filter((uid) => uid !== 'default');
+            if (uids.length > 0) {
+              found = { variableName: variable.name, uids };
+            }
+          }
+          return '';
+        }
+      );
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return undefined;
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {

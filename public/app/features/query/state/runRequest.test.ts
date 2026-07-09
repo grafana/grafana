@@ -18,6 +18,7 @@ import { type DataQuery } from '@grafana/schema';
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+import { dataSource as expressionDataSource } from '../../expressions/ExpressionDatasource';
 
 import { getMockDataSource, type TestQuery } from './mocks/mockDataSource';
 import { callQueryMethodWithMigration, runRequest } from './runRequest';
@@ -426,12 +427,14 @@ describe('callQueryMethodWithMigration', () => {
     getDefaultQuery,
     queryFunction,
     migrateRequest,
+    mixed,
   }: {
     targets: TestQuery[];
     getDefaultQuery?: (app: CoreApp) => Partial<TestQuery>;
     filterQuery?: typeof ds.filterQuery;
     queryFunction?: typeof ds.query;
     migrateRequest?: jest.Mock;
+    mixed?: boolean;
   }) => {
     request = {
       range: {
@@ -450,6 +453,9 @@ describe('callQueryMethodWithMigration', () => {
     };
 
     const ds = getMockDataSource();
+    if (mixed) {
+      ds.meta = { ...ds.meta, mixed: true };
+    }
     if (filterQuery) {
       ds.filterQuery = filterQuery;
       filterQuerySpy = jest.spyOn(ds, 'filterQuery');
@@ -573,6 +579,29 @@ describe('callQueryMethodWithMigration', () => {
       filterQuery: (query: DataQuery) => query.refId !== 'A',
     });
     expect(filterQuerySpy).not.toHaveBeenCalled();
+  });
+
+  it('Should route to the expression datasource when a non-mixed datasource has an expression target', async () => {
+    setup({
+      targets: [
+        { refId: 'A', q: 'SUM(foo)' },
+        { datasource: ExpressionDatasourceRef, refId: 'B' },
+      ],
+    });
+    expect(expressionDataSource.query).toHaveBeenCalled();
+    expect(querySpy).not.toHaveBeenCalled();
+  });
+
+  it('Should delegate to the datasource query (not the expression datasource) when a mixed datasource has an expression target', async () => {
+    setup({
+      targets: [
+        { refId: 'A', q: 'SUM(foo)' },
+        { datasource: ExpressionDatasourceRef, refId: 'B' },
+      ],
+      mixed: true,
+    });
+    expect(expressionDataSource.query).not.toHaveBeenCalled();
+    expect(querySpy).toHaveBeenCalled();
   });
 
   it('Should get ds default query when query is empty', async () => {
