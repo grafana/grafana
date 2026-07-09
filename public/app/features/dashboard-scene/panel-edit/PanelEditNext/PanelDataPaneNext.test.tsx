@@ -56,6 +56,8 @@ const mockQueryRunner = {
   },
   setState: jest.fn(),
   runQueries: jest.fn(),
+  // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
+  subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
 } as unknown as SceneQueryRunner;
 
 // Mockable getDashboardSceneFor for localStorage tests
@@ -507,11 +509,22 @@ describe('PanelDataPaneNext', () => {
       });
     });
 
-    it('should assign the default datasource when the panel datasource is Mixed', () => {
+    it('should assign the default datasource when the panel datasource is Mixed', async () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
 
-      // The default ref is pre-resolved into state on activation; addQuery reads it synchronously.
-      dataPane.setState({ dsSettings: mixedDsSettings, defaultDatasourceRef: getDataSourceRef(defaultDsSettings) });
+      // Resolve the configured default through the real activation path (resolveDefaultDatasourceRef)
+      // rather than stubbing defaultDatasourceRef into state, so a regression there fails this test.
+      mockGetDataSourceInstance.mockResolvedValue({});
+      mockGetInstanceSettings.mockImplementation((ref: unknown) =>
+        ref === config.defaultDatasource ? defaultDsSettings : promDsSettings
+      );
+
+      dataPane.activate();
+      // Let onActivate's async work (resolveDefaultDatasourceRef + loadDatasource) settle
+      // before overriding dsSettings, so loadDatasource can't clobber the override.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      dataPane.setState({ dsSettings: mixedDsSettings });
 
       const refId = dataPane.addQuery();
 
