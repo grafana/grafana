@@ -113,7 +113,7 @@ export const FolderPickerTab = (props: Props) => {
 
   return (
     <>
-      <Field noMargin>
+      <Field noMargin={false}>
         <Combobox
           options={folders}
           onChange={(folder) => {
@@ -127,7 +127,7 @@ export const FolderPickerTab = (props: Props) => {
           aria-label={t('dimensions.folder-picker-tab.label-folder', 'Folder')}
         />
       </Field>
-      <Field noMargin>
+      <Field noMargin={false}>
         <FilterInput
           value={searchQuery ?? ''}
           placeholder={t('dimensions.folder-picker-tab.placeholder-search', 'Search')}
