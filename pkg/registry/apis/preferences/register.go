@@ -114,7 +114,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			return err
 		}
 	}
-	wrappedStorage := &preferencesStorage{store}
+	wrappedStorage := &preferencesStorage{Storage: store, gvk: prefs.GroupVersionKind()}
 	storage[prefs.StoragePath()] = wrappedStorage
 	b.merger.lister = wrappedStorage
 
