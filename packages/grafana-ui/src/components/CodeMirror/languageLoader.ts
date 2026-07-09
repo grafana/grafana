@@ -13,7 +13,8 @@ const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtensi
     standardSql: StandardSQL,
     mySql: MySQL,
   };
-  return sql({ dialect: dialects[dialect] });
+  // Always surface SQL keyword completions in upper-case.
+  return sql({ dialect: dialects[dialect], upperCaseKeywords: true });
 };
 
 interface LoadLanguageOptions {

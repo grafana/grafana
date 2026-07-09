@@ -1,5 +1,3 @@
-import { CompletionContext } from '@codemirror/autocomplete';
-import { EditorState } from '@codemirror/state';
 import { render } from '@testing-library/react';
 
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
@@ -18,25 +16,13 @@ describe('SqlEditor', () => {
     CodeMirrorEditorMock.mockClear();
   });
 
-  it('uses upper-case SQL keyword completions', async () => {
+  it('renders the SQL language editor, relying on language defaults for keyword completions', () => {
     render(<SqlEditor value="sele" onChange={jest.fn()} />);
 
-    expect(CodeMirrorEditorMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        completionMode: 'override',
-        completionSources: expect.any(Array),
-      }),
-      expect.anything()
-    );
-
-    const completionSource = CodeMirrorEditorMock.mock.calls[0][0].completionSources?.[0];
-    if (!completionSource) {
-      throw new Error('Expected SQL keyword completion source');
-    }
-
-    const state = EditorState.create({ doc: 'sele' });
-    const result = await completionSource(new CompletionContext(state, 4, true));
-
-    expect(result?.options).toContainEqual(expect.objectContaining({ label: 'SELECT', type: 'keyword' }));
+    const props = CodeMirrorEditorMock.mock.calls[0][0];
+    expect(props.language).toBe('sql');
+    // Keyword completions come from the SQL language extension (merge mode), not
+    // an override completion source supplied by SqlEditor.
+    expect(props.completionMode).not.toBe('override');
   });
 });

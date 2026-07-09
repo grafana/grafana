@@ -11,6 +11,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
 import {
+  type CodeMirrorBasicSetup,
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
   type CodeMirrorEditorProps,
@@ -37,6 +38,24 @@ const getCompletionExtensions = (
     autocompleteSpaceKeymap,
     ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
   ];
+};
+
+// When we wire up our own autocompletion (because completion sources are
+// provided), disable the bundled basic-setup autocompletion so the two
+// instances don't fight over the completion facet.
+const getBasicSetup = (
+  basicSetup: CodeMirrorBasicSetup | undefined,
+  completionSources: readonly CodeMirrorCompletionSource[] | undefined
+): CodeMirrorBasicSetup | undefined => {
+  if (!completionSources?.length || basicSetup === false) {
+    return basicSetup;
+  }
+
+  if (!basicSetup || basicSetup === true) {
+    return { autocompletion: false };
+  }
+
+  return { ...basicSetup, autocompletion: false };
 };
 
 const getAccessibilityExtensions = (
@@ -99,6 +118,10 @@ export const CodeEditor = memo(function CodeEditor({
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const resolvedBasicSetup = useMemo(
+    () => getBasicSetup(basicSetup, completionSources),
+    [basicSetup, completionSources]
+  );
 
   const extensions = useMemo(
     () => [
@@ -126,7 +149,7 @@ export const CodeEditor = memo(function CodeEditor({
         height={height}
         extensions={extensions}
         onChange={onChange}
-        basicSetup={basicSetup}
+        basicSetup={resolvedBasicSetup}
         indentWithTab={indentWithTab}
       />
     </>
