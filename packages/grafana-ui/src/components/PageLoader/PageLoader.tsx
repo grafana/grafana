@@ -1,5 +1,4 @@
 import { css, keyframes } from '@emotion/css';
-import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,17 +8,13 @@ import { useBranding } from '../Branding/BrandingContext';
 
 import grafanaIconSvg from './grafana_icon.svg';
 
-interface Props {
-  children?: ReactNode;
-}
-
-export function PageLoader({ children }: Props) {
+export function PageLoader() {
   const styles = useStyles2(getStyles);
   const { AppLogo } = useBranding();
 
-  // Prefer an explicitly-passed logo, then the branded logo supplied by the host app, then the
-  // default Grafana icon. This lets the loader pick up custom branding without the caller knowing.
-  const logo = children ?? (AppLogo ? <AppLogo /> : <img src={grafanaIconSvg} alt="Grafana" />);
+  // Use the branded logo supplied by the host app, falling back to the default Grafana icon.
+  // This lets the loader pick up custom branding without the caller knowing.
+  const logo = AppLogo ? <AppLogo /> : <img src={grafanaIconSvg} alt="Grafana" />;
 
   return (
     <div className={styles.loadingPage}>

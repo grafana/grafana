@@ -24,20 +24,4 @@ describe('PageLoader', () => {
     expect(screen.getByTestId('branded-logo')).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: 'Grafana' })).not.toBeInTheDocument();
   });
-
-  it('prefers explicit children over both branding and the default logo', () => {
-    const AppLogo = () => <div data-testid="branded-logo" />;
-
-    render(
-      <BrandingContext.Provider value={{ AppLogo }}>
-        <PageLoader>
-          <div data-testid="explicit-logo" />
-        </PageLoader>
-      </BrandingContext.Provider>
-    );
-
-    expect(screen.getByTestId('explicit-logo')).toBeInTheDocument();
-    expect(screen.queryByTestId('branded-logo')).not.toBeInTheDocument();
-    expect(screen.queryByRole('img', { name: 'Grafana' })).not.toBeInTheDocument();
-  });
 });
