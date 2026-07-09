@@ -18477,7 +18477,6 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    diff: "npm:^8.0.0"
     dompurify: "npm:3.4.0"
     downsample: "npm:1.4.0"
     enquirer: "npm:^2.4.1"
