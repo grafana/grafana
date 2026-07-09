@@ -900,6 +900,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/history/ @grafana/datapro
 /public/app/core/hooks/useBusEvent.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useCleanup.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useHomeNav* @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
