@@ -356,7 +356,7 @@ func (r *githubClient) CreateWebhook(ctx context.Context, url string, events []s
 		// idempotent so the repository can self-heal rather than looping unhealthy.
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && isWebhookAlreadyExists(ghErr) {
-			return r.findExistingWebhook(ctx, cfg)
+			return r.adoptExistingWebhook(ctx, cfg)
 		}
 		return nil, translateGitHubError(err)
 	}
@@ -373,13 +373,13 @@ func (r *githubClient) CreateWebhook(ctx context.Context, url string, events []s
 	}, nil
 }
 
-// findExistingWebhook recovers the hook already registered for cfg.URL after
+// adoptExistingWebhook recovers the hook already registered for cfg.URL after
 // CreateHook reported it exists. GitHub's 422 does not include the hook ID, so we
 // list the repo's hooks and match on the payload URL (GitHub's uniqueness key).
 // The stored secret is never returned by GitHub, so the matched hook is edited to
 // use cfg's secret and events, leaving a fully-owned webhook whose ID the caller
 // can persist to Status.Webhook.
-func (r *githubClient) findExistingWebhook(ctx context.Context, cfg webhookConfig) (repo.WebhookConfig, error) {
+func (r *githubClient) adoptExistingWebhook(ctx context.Context, cfg webhookConfig) (repo.WebhookConfig, error) {
 	opts := &github.ListOptions{PerPage: 100}
 	for {
 		hooks, resp, err := r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
@@ -424,6 +424,7 @@ func (r *githubClient) findExistingWebhook(ctx context.Context, cfg webhookConfi
 	}
 
 	// GitHub said the hook exists but no hook matched our URL; surface it.
+	logging.FromContext(ctx).Error("GitHub said webhook exists but no hook with URL: %s exists when queried", cfg.URL)
 	return nil, ErrWebhookAlreadyExists
 }
 
