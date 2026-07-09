@@ -2,7 +2,9 @@ package socialimpl
 
 import (
 	"context"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -10,10 +12,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -375,4 +379,60 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, oauthInfo)
+}
+
+func TestGetOAuthHttpClient_TokenExchangeTimeout(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name                 string
+		tokenExchangeTimeout int
+		wantTimeout          time.Duration
+	}{
+		{
+			name:                 "defaults to 15s when unset",
+			tokenExchangeTimeout: 0,
+			wantTimeout:          15 * time.Second,
+		},
+		{
+			name:                 "uses configured timeout for high-latency environments",
+			tokenExchangeTimeout: 30,
+			wantTimeout:          30 * time.Second,
+		},
+		{
+			name:                 "supports larger token exchange budgets",
+			tokenExchangeTimeout: 60,
+			wantTimeout:          60 * time.Second,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockConnector := socialtest.NewMockSocialConnector(t)
+			mockConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{
+				Enabled:              true,
+				TokenExchangeTimeout: tc.tokenExchangeTimeout,
+			})
+
+			ss := &SocialService{
+				socialMap: map[string]social.SocialConnector{
+					"azuread": mockConnector,
+				},
+				log: log.New("test"),
+			}
+
+			client, err := ss.GetOAuthHttpClient("azuread")
+			require.NoError(t, err)
+			require.NotNil(t, client)
+			require.Equal(t, tc.wantTimeout, client.Timeout)
+
+			// Dial timeout is not directly exposed; ensure transport is configured.
+			transport, ok := client.Transport.(*http.Transport)
+			require.True(t, ok)
+			require.NotNil(t, transport.DialContext)
+			require.Equal(t, tc.wantTimeout, transport.TLSHandshakeTimeout)
+		})
+	}
 }
