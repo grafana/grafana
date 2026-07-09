@@ -7325,9 +7325,10 @@
         "apply-description": "Change variable query",
         "discard": "Discard",
         "drag-to-resize": "Drag to resize",
-        "preview": "Preview",
+        "no-values-found": "No values found",
         "preview-of-values": "Preview of values ({{ optionsCount }})",
-        "refresh-preview": "Refresh preview",
+        "run-query": "Run query",
+        "static-options-require-query": "Static options only appear once a query is set.",
         "tabs": {
           "query": "Query",
           "static-options": "Static options ({{staticOptionsCount}})"

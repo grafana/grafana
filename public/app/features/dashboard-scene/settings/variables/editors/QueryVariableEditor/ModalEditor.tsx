@@ -12,7 +12,7 @@ import {
   type VariableValueOption,
   type VariableValueOptionProperties,
 } from '@grafana/scenes';
-import { Alert, Button, Modal, Spinner, Stack, Tab, TabsBar, useSplitter, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Modal, Spinner, Stack, Tab, TabsBar, Text, useSplitter, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
 import {
   type StaticOptionsOrderType,
@@ -42,11 +42,13 @@ export function ModalEditor(props: ModalEditorProps) {
     options,
     staticOptions,
     staticOptionsOrder,
+    hasRunQuery,
+    noValuesFound,
     isLoading,
     queryError,
     onStaticOptionsChange,
     onStaticOptionsOrderChange,
-    onShowValuesPreview,
+    onRunQuery,
     onCloseModal,
     onClickApply,
   } = useModalEditor(props);
@@ -73,18 +75,18 @@ export function ModalEditor(props: ModalEditorProps) {
               Preview of values ({'{{ optionsCount }}'})
             </Trans>
           </div>
-          {options.length > 0 && (
+          {hasRunQuery && (
             <Button
               variant={isLoading ? 'secondary' : 'primary'}
               fill="outline"
               size="sm"
-              onClick={onShowValuesPreview}
+              onClick={onRunQuery}
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
             >
               {isLoading ? (
                 <Spinner inline />
               ) : (
-                <Trans i18nKey="dashboard-scene.query-variable-editor.modal.refresh-preview">Refresh preview</Trans>
+                <Trans i18nKey="dashboard-scene.query-variable-editor.modal.run-query">Run query</Trans>
               )}
             </Button>
           )}
@@ -94,20 +96,39 @@ export function ModalEditor(props: ModalEditorProps) {
         <div {...containerProps}>
           <div {...primaryProps} style={{ ...primaryProps.style, minHeight: '16px' }}>
             <div className={styles.splitContainer}>
+              {queryError && <Alert title={queryError.message} severity="error" />}
               {!options.length ? (
                 <div className={styles.noOptions}>
-                  <Button
-                    variant="primary"
-                    fill="outline"
-                    onClick={onShowValuesPreview}
-                    data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-                  >
-                    {isLoading ? (
-                      <Spinner inline />
-                    ) : (
-                      <Trans i18nKey="dashboard-scene.query-variable-editor.modal.preview">Preview</Trans>
-                    )}
-                  </Button>
+                  {noValuesFound && (
+                    <Stack direction="column" alignItems="center" gap={0.5}>
+                      <Text weight="medium">
+                        <Trans i18nKey="dashboard-scene.query-variable-editor.modal.no-values-found">
+                          No values found
+                        </Trans>
+                      </Text>
+                      {staticOptions.length > 0 && (
+                        <Text color="secondary">
+                          <Trans i18nKey="dashboard-scene.query-variable-editor.modal.static-options-require-query">
+                            Static options only appear once a query is set.
+                          </Trans>
+                        </Text>
+                      )}
+                    </Stack>
+                  )}
+                  {!hasRunQuery && (
+                    <Button
+                      variant="primary"
+                      fill="outline"
+                      onClick={onRunQuery}
+                      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
+                    >
+                      {isLoading ? (
+                        <Spinner inline />
+                      ) : (
+                        <Trans i18nKey="dashboard-scene.query-variable-editor.modal.run-query">Run query</Trans>
+                      )}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <VariableValuesPreview options={options} staticOptions={staticOptions} pageSize={1000} hideTitle />
@@ -142,12 +163,7 @@ export function ModalEditor(props: ModalEditorProps) {
                 />
               </TabsBar>
               <div className={styles.tabContent}>
-                {activeTab === 'query' && (
-                  <>
-                    {queryError && <Alert title={queryError.message} severity="error" />}
-                    <Editor variable={draftVariable} hideRefresh hideStaticOptions hidePreview />
-                  </>
-                )}
+                {activeTab === 'query' && <Editor variable={draftVariable} hideRefresh hideStaticOptions hidePreview />}
                 {activeTab === 'staticOptions' && (
                   <VariableOptionsSpreadsheet
                     options={options}
@@ -201,6 +217,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const { options, staticOptions = [], staticOptionsOrder } = draftVariable.useState();
   const [queryError, setQueryError] = useState<Error>();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasRunQuery, setHasRunQuery] = useState(false);
 
   const updateVariable = async (targetVariable: QueryVariable, stateUpdate?: Partial<QueryVariable['state']>) => {
     if (stateUpdate) {
@@ -267,13 +284,16 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     options: options ?? [],
     staticOptions,
     staticOptionsOrder,
+    hasRunQuery,
+    noValuesFound: hasRunQuery && !isLoading && !queryError && (options ?? []).length === 0,
     isLoading,
     queryError,
     onStaticOptionsChange,
     onStaticOptionsOrderChange,
     onCloseModal: onClose,
-    onShowValuesPreview: () => {
-      updateVariable(draftVariable);
+    onRunQuery: async () => {
+      await updateVariable(draftVariable);
+      setHasRunQuery(true);
     },
     onClickApply,
   };
