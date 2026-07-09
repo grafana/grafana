@@ -424,7 +424,10 @@ func (r *githubClient) adoptExistingWebhook(ctx context.Context, cfg webhookConf
 	}
 
 	// GitHub said the hook exists but no hook matched our URL; surface it.
-	logging.FromContext(ctx).Error("GitHub said webhook exists but no hook with URL: %s exists when queried", cfg.URL)
+	logging.FromContext(ctx).Error(
+		"GitHub said webhook exists but no hook with URL exists when queried",
+		slog.String("url", cfg.URL),
+	)
 	return nil, ErrWebhookAlreadyExists
 }
 
