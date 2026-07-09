@@ -248,7 +248,8 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+	// CompareFiles lists changes between base and the first ref that resolves.
+	CompareFiles(ctx context.Context, base string, refs ...string) ([]VersionedFileChange, error)
 }
 
 // BranchHandler is a repository that supports making actions on branches.
@@ -265,6 +266,7 @@ type BranchHandler interface {
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+	PullRequestRef(prNumber int, headRef string) string
+	CompareFiles(ctx context.Context, base string, refs ...string) ([]VersionedFileChange, error)
 	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
 }

@@ -144,6 +144,15 @@ func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumb
 	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
 }
 
+// PullRequestRef returns GitHub's merge ref, which previews the result of
+// merging the pull request into the base branch.
+func (r *githubWebhookRepository) PullRequestRef(prNumber int, headRef string) string {
+	if prNumber <= 0 {
+		return headRef
+	}
+	return fmt.Sprintf("refs/pull/%d/merge", prNumber)
+}
+
 func normalizeGitHubAction(action string) repository.PullRequestAction {
 	if action == "synchronize" {
 		return repository.PullRequestActionUpdated

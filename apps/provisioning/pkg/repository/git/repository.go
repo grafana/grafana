@@ -739,15 +739,27 @@ func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	return branchRef.Hash.String(), nil
 }
 
-func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
-	if base == "" && ref == "" {
+// PullRequestRef returns headRef unchanged: plain git servers do not maintain
+// merged preview refs for pull requests.
+func (r *gitRepository) PullRequestRef(_ int, headRef string) string {
+	return headRef
+}
+
+func (r *gitRepository) CompareFiles(ctx context.Context, base string, refs ...string) ([]repository.VersionedFileChange, error) {
+	candidates := make([]string, 0, len(refs))
+	for _, candidate := range refs {
+		if candidate != "" {
+			candidates = append(candidates, candidate)
+		}
+	}
+	if base == "" && len(candidates) == 0 {
 		return nil, fmt.Errorf("base and ref cannot be empty")
 	}
-	if ref == "" {
+	if len(candidates) == 0 {
 		return nil, fmt.Errorf("ref cannot be empty")
 	}
 
-	ctx, logger := r.withGitContext(ctx, ref)
+	ctx, logger := r.withGitContext(ctx, candidates[0])
 	logger.Info("compare files")
 
 	// Resolve base ref to hash
@@ -760,10 +772,21 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		}
 	}
 
-	// Resolve ref to hash
-	refHash, err := r.resolveRefToHash(ctx, ref)
-	if err != nil {
-		return nil, fmt.Errorf("resolve ref: %w", err)
+	// Resolve the first ref that exists
+	var ref string
+	var refHash hash.Hash
+	for i, candidate := range candidates {
+		var err error
+		refHash, err = r.resolveRefToHash(ctx, candidate)
+		if err == nil {
+			ref = candidate
+			break
+		}
+		if !errors.Is(err, repository.ErrRefNotFound) || i == len(candidates)-1 {
+			return nil, fmt.Errorf("resolve ref: %w", err)
+		}
+
+		logger.Info("ref not found, trying next", "ref", candidate)
 	}
 
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
@@ -886,7 +909,7 @@ func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions)
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
-// resolveRefToHash resolves a ref (branch name or commit hash) to a commit hash
+// resolveRefToHash resolves a ref (branch name, fully qualified ref, or commit hash) to a commit hash
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
 	ctx, _ = r.withGitContext(ctx, ref)
 
@@ -902,8 +925,10 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		return refHash, nil
 	}
 
-	// Prefix ref with refs/heads/
-	ref = fmt.Sprintf("refs/heads/%s", ref)
+	// Bare names are assumed to be branches
+	if !strings.HasPrefix(ref, "refs/") {
+		ref = fmt.Sprintf("refs/heads/%s", ref)
+	}
 
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
