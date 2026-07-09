@@ -4258,9 +4258,6 @@
       "tip": "Hover over any item in the nav menu and click on the bookmark icon to add it here."
     }
   },
-  "bouncing-loader": {
-    "label": "Loading"
-  },
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
@@ -10418,6 +10415,9 @@
     "named-colors-palette": {
       "text-color-swatch": "Text color",
       "transparent-swatch": "Transparent"
+    },
+    "page-loader": {
+      "label": "Loading"
     },
     "page-toolbar": {
       "go-back": "Go back (Esc)",

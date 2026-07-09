@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { useBranding } from '../Branding/BrandingContext';
 
 import grafanaIconSvg from './grafana_icon.svg';
 
@@ -14,6 +15,11 @@ interface Props {
 
 export function PageLoader({ children }: Props) {
   const styles = useStyles2(getStyles);
+  const { AppLogo } = useBranding();
+
+  // Prefer an explicitly-passed logo, then the branded logo supplied by the host app, then the
+  // default Grafana icon. This lets the loader pick up custom branding without the caller knowing.
+  const logo = children ?? (AppLogo ? <AppLogo /> : <img src={grafanaIconSvg} alt="Grafana" />);
 
   return (
     <div className={styles.loadingPage}>
@@ -21,10 +27,10 @@ export function PageLoader({ children }: Props) {
         className={styles.container}
         aria-live="polite"
         role="status"
-        aria-label={t('bouncing-loader.label', 'Loading')}
+        aria-label={t('grafana-ui.page-loader.label', 'Loading')}
       >
         <div className={styles.bounce}>
-          <div className={styles.logo}>{children ?? <img src={grafanaIconSvg} alt="Grafana" />}</div>
+          <div className={styles.logo}>{logo}</div>
         </div>
       </div>
     </div>
