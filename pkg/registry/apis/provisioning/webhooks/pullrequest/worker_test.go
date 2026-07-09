@@ -145,7 +145,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(nil, errors.New("failed to list files"))
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(nil, errors.New("failed to list files"))
 			},
 			expectedError: "failed to list pull request files: failed to list files",
 		},
@@ -167,7 +168,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					},
 				})
 				progress.On("SetMessage", mock.Anything, "listing pull request files").Return()
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return([]repository.VersionedFileChange{}, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return([]repository.VersionedFileChange{}, nil)
 				progress.On("SetFinalMessage", mock.Anything, "no files to process").Return()
 			},
 			expectedError: "",
@@ -198,7 +200,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: "another.yaml"}, // Supported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 
 				// Only non-ignored files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -239,7 +242,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 					{Path: ".github/something"},    // Unsupported file
 				}
 
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 
 				// Only supported files should be passed to the evaluator
 				expectedFiles := []repository.VersionedFileChange{
@@ -273,7 +277,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, errors.New("evaluation failed"))
 			},
 			expectedError: "calculate changes: evaluation failed",
@@ -299,7 +304,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("comment failed"))
 			},
@@ -326,7 +332,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
@@ -353,7 +360,8 @@ func TestPullRequestWorker_Process(t *testing.T) {
 				files := []repository.VersionedFileChange{
 					{Path: "test.yaml"},
 				}
-				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "test-ref").Return(files, nil)
+				repo.MockPullRequestRepo.On("PullRequestRef", 123, "test-ref").Return("refs/pull/123/merge")
+				repo.MockPullRequestRepo.On("CompareFiles", mock.Anything, "main", "refs/pull/123/merge", "test-ref").Return(files, nil)
 				evaluator.On("Evaluate", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changeInfo{}, nil)
 				commenter.On("Comment", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},

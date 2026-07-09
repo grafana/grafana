@@ -535,6 +535,13 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 	}
 }
 
+func TestGitHubRepository_PullRequestRef(t *testing.T) {
+	repo := &githubWebhookRepository{}
+	require.Equal(t, "refs/pull/123/merge", repo.PullRequestRef(123, "feature"))
+	require.Equal(t, "feature", repo.PullRequestRef(0, "feature"))
+	require.Equal(t, "feature", repo.PullRequestRef(-1, "feature"))
+}
+
 func signedWebhookRequest(t *testing.T, eventType, secret, deliveryID, payload string) *http.Request {
 	t.Helper()
 	req, err := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
