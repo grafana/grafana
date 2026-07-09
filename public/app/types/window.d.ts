@@ -9,6 +9,14 @@ export declare global {
     __grafanaPublicDashboardAccessToken?: string;
 
     /**
+     * Controls legacy `/api/` requests are handled in the frontend, for development.
+     * - `off`: requests are left untouched
+     * - `log`: requests are allowed but logged with a warning
+     * - `block`: requests are rejected before they are sent
+     */
+    __grafanaLegacyAPIMode?: string;
+
+    /**
      * (Potential) wait for API call to fetch boot data and place it on `window.grafanaBootData`.
      * Required in new index.html to fetch necessary data before app init()
      **/

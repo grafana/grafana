@@ -52,9 +52,11 @@ func (c *namespaceCleaner) Clean(ctx context.Context, namespace string, progress
 				return nil // Continue with next resource
 			}
 
-			manager, _ := meta.GetManagerProperties()
-			// Skip if resource is managed by any provisioning system
-			if manager.Identity != "" {
+			_, managed := meta.GetManagerProperties()
+			// Skip if resource is managed by any provisioning system. Use the managed
+			// flag rather than a non-empty identity: classic shim kinds are reported as
+			// managed without an identity and would otherwise be deleted as orphans.
+			if managed {
 				resultBuilder.WithAction(repository.FileActionIgnored)
 				progress.Record(ctx, resultBuilder.Build())
 				return nil // Skip this resource

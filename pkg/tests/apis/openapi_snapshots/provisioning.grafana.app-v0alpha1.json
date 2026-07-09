@@ -4088,6 +4088,10 @@
             "description": "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
             "type": "string"
           },
+          "signerIsAuthor": {
+            "description": "When true, commits are authored by the signer identity (signerName/signerEmail).",
+            "type": "boolean"
+          },
           "signerName": {
             "description": "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
             "type": "string"
@@ -4377,6 +4381,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "token": {
+            "description": "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.TokenStatus"
+              }
+            ]
           }
         }
       },

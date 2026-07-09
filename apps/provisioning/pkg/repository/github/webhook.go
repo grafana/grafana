@@ -20,6 +20,10 @@ type GithubWebhookRepository interface {
 	repository.WebhookRepository
 }
 
+// The webhook repository is the only type that reaches PullRequest job
+// processing, so fail the build if it ever stops satisfying the full contract.
+var _ repository.PullRequestRepo = (*githubWebhookRepository)(nil)
+
 type githubWebhookRepository struct {
 	GithubRepository
 	webhookURL string

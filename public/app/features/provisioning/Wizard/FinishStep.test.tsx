@@ -102,8 +102,14 @@ describe('FinishStep', () => {
       expect(await screen.findByText('Webhook options')).toBeInTheDocument();
     });
 
-    it('does not show the webhook section for a non-GitHub repository', async () => {
+    it('shows the webhook section for a GitLab repository', async () => {
       setup('gitlab');
+
+      expect(await screen.findByText('Webhook options')).toBeInTheDocument();
+    });
+
+    it('does not show the webhook section for a git provider without webhooks', async () => {
+      setup('bitbucket');
 
       expect(await screen.findByText(PR_LABEL)).toBeInTheDocument();
       expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
