@@ -11,4 +11,4 @@ and 5 more files.
 All resources passed validation. ✅
 
 ---
-_Posted by [host](http://host/) · Repository: [**My Repo**](https://github.com/example/repo) (`my-repo`)_
+_🔄 Synced from [**My Repo**](https://github.com/example/repo) · Posted by [host](http://host/)_

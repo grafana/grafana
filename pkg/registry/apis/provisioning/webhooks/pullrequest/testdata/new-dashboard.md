@@ -6,4 +6,4 @@
 [**New Dashboard**](https://github.com/example/repo/blob/pr/file.json) — [preview changes](http://grafana/admin/preview)
 
 ---
-_Posted by [host](http://host/) · Repository: [**My Repo**](https://github.com/example/repo) (`my-repo`)_
+_🔄 Synced from [**My Repo**](https://github.com/example/repo) · Posted by [host](http://host/)_
