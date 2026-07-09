@@ -5602,7 +5602,8 @@
       "metadata": {
         "name": "unlimitedLayoutsNesting",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-10T12:15:54Z"
+        "creationTimestamp": "2025-10-10T12:15:54Z",
+        "deletionTimestamp": "2026-07-09T10:11:22Z"
       },
       "spec": {
         "description": "Enables unlimited dashboard panel grouping",

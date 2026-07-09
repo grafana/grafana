@@ -670,14 +670,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "unlimitedLayoutsNesting",
-			Description: "Enables unlimited dashboard panel grouping",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "perPanelNonApplicableDrilldowns",
 			Description: "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:       FeatureStageExperimental,

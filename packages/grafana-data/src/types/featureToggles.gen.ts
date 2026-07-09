@@ -329,11 +329,6 @@ export interface FeatureToggles {
   */
   dashboardUndoRedo?: boolean;
   /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
-  /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
   */
