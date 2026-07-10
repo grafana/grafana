@@ -2,6 +2,7 @@ import { PromVariableQueryType } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, type SceneDataQuery, type VariableValue } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -20,6 +21,7 @@ export type DisqualificationReason =
   | { code: 'unsupported-variable-syntax'; detail: string }
   | { code: 'unsafe-position'; detail: string }
   | { code: 'ambiguous-filter-key'; detail: string }
+  | { code: 'empty-current-value' }
   | { code: 'not-used-in-queries' }
   | { code: 'panel-repeat' }
   | { code: 'library-panel'; detail: string }
@@ -89,7 +91,9 @@ export function detectMigratableVariables(dashboard: DashboardScene): MigrationC
       labelQueryKind,
       filterOperators: [],
       queryCount: 0,
-      currentValue: variable.getValue(),
+      // Raw stored value, not getValue(): All must stay visible as $__all, not expand
+      // into the option values (or [] when options are not loaded yet).
+      currentValue: variable.state.value,
       disqualified: false,
       reasons: [],
     };
@@ -325,6 +329,33 @@ function classifyUsages(candidate: MigrationCandidate, panelQueries: PanelQueryI
   } else {
     candidate.reasons.push({ code: 'not-used-in-queries' });
   }
+
+  // An empty current value seeds no filter while its matcher would still be stripped,
+  // silently turning `{key=~""}` (match empty/absent label) into match-all. Only `$__all`
+  // sanctions that equivalence. GroupBy usages are unaffected: an empty grouping value
+  // renders `by()` which already equals the bare aggregation the rewrite produces.
+  if (
+    (candidate.kind === 'filter' || candidate.kind === 'both') &&
+    hasEmptyCurrentValue(candidate.currentValue) &&
+    !isAllValue(candidate.currentValue)
+  ) {
+    candidate.reasons.push({ code: 'empty-current-value' });
+  }
+}
+
+function hasEmptyCurrentValue(value: MigrationCandidate['currentValue']): boolean {
+  if (value == null) {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0 || value.some((entry) => String(entry) === '');
+  }
+  return String(value) === '';
+}
+
+function isAllValue(value: MigrationCandidate['currentValue']): boolean {
+  const values = Array.isArray(value) ? value : [value];
+  return values.some((entry) => String(entry) === ALL_VARIABLE_VALUE);
 }
 
 /**
@@ -354,7 +385,8 @@ function checkRepeatUsage(candidate: MigrationCandidate, dashboard: DashboardSce
 }
 
 interface ExprSkip {
-  remaining: number;
+  expr: string;
+  used: boolean;
 }
 
 /**
@@ -386,13 +418,13 @@ function sweepSaveModelReferences(candidate: MigrationCandidate, saveModel: unkn
       return undefined;
     }
     skipBudget.set(key, remaining - 1);
-    return { remaining: 1 };
+    return { expr, used: false };
   };
 
   const visit = (value: unknown, path: string, key: string, skip: ExprSkip | undefined) => {
     if (typeof value === 'string') {
-      if (key === 'expr' && skip !== undefined && skip.remaining > 0) {
-        skip.remaining--;
+      if (key === 'expr' && skip !== undefined && !skip.used && value === skip.expr) {
+        skip.used = true;
         return;
       }
       if (textReferencesVariable(value, candidate.variableName)) {

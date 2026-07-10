@@ -312,6 +312,33 @@ describe('detectMigratableVariables', () => {
     expect(dashboard.state.isDirty).toBeFalsy();
   });
 
+  it('disqualifies filter variables whose current value is empty', () => {
+    const dashboard = buildDashboard(
+      [promLabelVariable('instance', { value: '' })],
+      [{ queries: [{ expr: 'up{instance=~"$instance"}' }] }]
+    );
+
+    const [candidate] = detectMigratableVariables(dashboard);
+
+    expect(candidate.disqualified).toBe(true);
+    expect(candidate.reasons).toContainEqual(expect.objectContaining({ code: 'empty-current-value' }));
+  });
+
+  it('does not disqualify All-valued or groupBy variables for empty values', () => {
+    const dashboard = buildDashboard(
+      [
+        promLabelVariable('instance', { value: '$__all', text: 'All' }),
+        promLabelVariable('groupby', { query: 'label_names()', value: '' }),
+      ],
+      [{ queries: [{ expr: 'sum by($groupby) (up{instance=~"$instance"})' }] }]
+    );
+
+    const [instance, groupby] = detectMigratableVariables(dashboard);
+
+    expect(instance.disqualified).toBe(false);
+    expect(groupby.disqualified).toBe(false);
+  });
+
   it('disqualifies variables used in library panel queries', () => {
     const dashboard = buildDashboard(
       [promLabelVariable('instance')],
