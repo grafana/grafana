@@ -9,6 +9,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
@@ -158,6 +159,14 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function formatCsvOptionEntry(text: string, value: string) {
+  // Runtime CustomVariable CSV parsing requires spaces around `:` for label/value pairs.
+  if (text !== value) {
+    return `${escapeCsvValue(text)} : ${escapeCsvValue(value)}`;
+  }
+  return escapeCsvValue(value);
+}
+
 function customVariableQueryWithCurrent(variable: CustomVariableKind): string | undefined {
   const current = variable.spec.current;
   if (!current) {
@@ -166,6 +175,19 @@ function customVariableQueryWithCurrent(variable: CustomVariableKind): string | 
 
   const currentValues = (Array.isArray(current.value) ? current.value : [current.value]).map((v) => String(v));
   const currentTexts = (Array.isArray(current.text) ? current.text : [current.text]).map((t) => String(t));
+
+  // Skip the synthetic All token — it is injected at runtime when includeAll is enabled,
+  // and must not be persisted as a literal option in the query string.
+  const currentOptions = currentValues
+    .map((value, i) => ({
+      value,
+      text: currentTexts[i] ?? value,
+    }))
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE);
+
+  if (currentOptions.length === 0) {
+    return variable.spec.query;
+  }
 
   if (variable.spec.valuesFormat === 'json') {
     let existingOptions: Array<{ value: string; text: string }> = [];
@@ -179,17 +201,13 @@ function customVariableQueryWithCurrent(variable: CustomVariableKind): string | 
           }));
         }
       } catch {
-        existingOptions = [];
+        // Preserve broken-but-recoverable JSON rather than overwriting with just the current selection.
+        return variable.spec.query;
       }
     }
 
     const existingValues = new Set(existingOptions.map((o) => o.value));
-    const appendedOptions = currentValues
-      .map((value, i) => ({
-        value,
-        text: currentTexts[i] ?? value,
-      }))
-      .filter((option) => !existingValues.has(option.value));
+    const appendedOptions = currentOptions.filter((option) => !existingValues.has(option.value));
 
     const options = [...existingOptions, ...appendedOptions];
     return JSON.stringify(options);
@@ -198,14 +216,16 @@ function customVariableQueryWithCurrent(variable: CustomVariableKind): string | 
   const existingValues = new Set(
     (variable.spec.query.match(/(?:\\,|[^,])+/g) ?? []).map((entry) => {
       const unescaped = entry.replace(/\\,/g, ',');
+      // Same greedy regex as CustomVariable runtime parsing: for `a : b : c` the first
+      // capture takes `a : b` and the value is `c`. Keep this in sync with scenes/legacy.
       const keyValueMatch = /^\s*(.+)\s:\s(.+)$/.exec(unescaped);
       return keyValueMatch ? keyValueMatch[2].trim() : unescaped.trim();
     })
   );
 
-  const appendedValues = currentValues
-    .filter((value) => !existingValues.has(value))
-    .map(escapeCsvValue)
+  const appendedValues = currentOptions
+    .filter((option) => !existingValues.has(option.value))
+    .map((option) => formatCsvOptionEntry(option.text, option.value))
     .join(',');
   if (!variable.spec.query) {
     return appendedValues;
