@@ -33,6 +33,7 @@ import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBann
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
+import { PromQueryVarMigrationBanner } from '../variable-migration/PromQueryVarMigrationBanner';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
@@ -154,6 +155,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <PromQueryVarMigrationBanner dashboard={dashboard} />
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
