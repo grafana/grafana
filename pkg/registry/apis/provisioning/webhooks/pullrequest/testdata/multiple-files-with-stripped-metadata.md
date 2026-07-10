@@ -1,14 +1,13 @@
-Hey there! 👋
-Grafana spotted 2 changes.
+📋 Grafana detected **2** resource changes in this pull request.
 
-| Action | Kind | Resource | Preview | Status |
-|--------|------|----------|---------|--------|
-| create | Dashboard | Dashboard A | [preview](http://grafana/admin/preview) | ✅ |
-| update | Dashboard | [Dashboard B](http://grafana/d/bbb) | [preview](http://grafana/admin/preview) | ✅ |
+| Action | Kind | Resource | File | Preview | Status |
+|--------|------|----------|------|---------|--------|
+| ➕ Added | Dashboard | Dashboard A | [source](https://github.com/example/repo/blob/pr/good.json) | [preview](http://grafana/admin/preview) | ✅ |
+| ✏️ Updated | Dashboard | [Dashboard B](http://grafana/d/bbb) | [source](https://github.com/example/repo/blob/pr/stripped.json) | [preview](http://grafana/admin/preview) | ✅ |
 
 All resources passed validation. ✅
 
-> **Note:** Some metadata fields (such as `namespace`, `labels`, or `annotations`) were removed from the resource files. Git Sync normalizes resources to a minimal format. This is expected behavior and does not affect your dashboards in Grafana.
+> ℹ️ **Note:** Some metadata fields (such as `namespace`, `labels`, or `annotations`) were removed from the resource files. Git Sync normalizes resources to a minimal format. This is expected behavior and does not affect your dashboards in Grafana.
 
 ---
-_Posted by [host](http://host/) · Repository: **My Repo** (`my-repo`)_
+_🔄 Synced from [**My Repo**](https://github.com/example/repo) · Posted by [host](http://host/)_

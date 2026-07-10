@@ -9,7 +9,7 @@ require (
 	github.com/grafana/cog v0.1.22
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
-	golang.org/x/tools v0.46.0
+	golang.org/x/tools v0.47.0
 )
 
 require (
