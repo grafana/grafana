@@ -46,8 +46,10 @@ export class PromQueryVarMigrationDrawer extends SceneObjectBase<PromQueryVarMig
       (candidate) => !candidate.disqualified && this.state.selectedNames.includes(candidate.variableName)
     );
 
-    applyVariableMigration(dashboard, selected);
+    // Close before applying: applying enters edit mode, which snapshots the scene state
+    // for discard — the snapshot must not contain this drawer as the open overlay.
     dashboard.closeModal();
+    applyVariableMigration(dashboard, selected);
     this.state.onApplied?.();
 
     getAppEvents().publish({
@@ -93,6 +95,8 @@ function PromQueryVarMigrationDrawerRenderer({ model }: SceneComponentProps<Prom
                 label={t('dashboard-scene.variable-migration.candidate-label', '${{name}} — {{description}}', {
                   name: candidate.variableName,
                   description: getCandidateDescription(candidate),
+                  // rendered as a React string prop, so html-escaping only garbles quotes
+                  interpolation: { escapeValue: false },
                 })}
                 description={
                   candidate.disqualified ? getReasonsText(candidate.reasons) : getUsageText(candidate.queryCount)
