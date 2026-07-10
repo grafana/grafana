@@ -34,9 +34,9 @@ const (
 	parentIDLabel                 = "plugins.grafana.app/parent-id"
 	dependencyLabel               = "plugins.grafana.app/dependency"
 	appliedChildrenAnnotation     = "plugins.grafana.app/applied-children"
-	appliedDependenciesAnnotation = "plugins.grafana.app/applied-dependencies"
-	dependencyParentsAnnotation   = "plugins.grafana.app/dependency-parents"
-	dependencyPluginVersion       = "latest"
+	appliedDependenciesAnnotation = install.AppliedDependenciesAnnotation
+	dependencyParentsAnnotation   = install.DependencyParentsAnnotation
+	dependencyPluginVersion       = install.DependencyPluginVersion
 	pluginStorageHookTimeout      = 30 * time.Second
 	pluginAttributeID             = "grafana.plugin.id"
 	pluginAttributeVersion        = "grafana.plugin.version"

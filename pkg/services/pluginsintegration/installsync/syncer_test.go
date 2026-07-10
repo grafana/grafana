@@ -189,6 +189,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		expectedUnregCalls int
 		registeredIDs      []string
 		unregisteredIDs    []string
+		updatedIDs         []string
 	}{
 		{
 			name:               "no installed plugins, no API plugins",
@@ -274,6 +275,9 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			expectedRegCalls:   1,
 			expectedUnregCalls: 0,
 			registeredIDs:      []string{"dependency-panel"},
+			// the parent's applied-dependencies annotation is missing, so the
+			// sync updates the parent to trigger dependency reconciliation
+			updatedIDs: []string{"parent-datasource"},
 		},
 		{
 			name:             "API plugins only",
@@ -352,6 +356,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			// Track calls
 			var registeredIDs []string
 			var unregisteredIDs []string
+			var updatedIDs []string
 
 			// Setup fake client
 			fakeClient := &fakePluginInstallClient{
@@ -365,6 +370,10 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				},
 				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					registeredIDs = append(registeredIDs, obj.Spec.Id)
+					return obj, nil
+				},
+				updateFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					updatedIDs = append(updatedIDs, obj.Spec.Id)
 					return obj, nil
 				},
 				deleteFunc: func(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
@@ -424,6 +433,8 @@ func TestSyncer_syncNamespace(t *testing.T) {
 					require.ElementsMatch(t, tt.unregisteredIDs, unregisteredIDs)
 				}
 			}
+
+			require.ElementsMatch(t, tt.updatedIDs, updatedIDs)
 		})
 	}
 }
