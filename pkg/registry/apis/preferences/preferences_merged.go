@@ -147,13 +147,17 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		sources = append(sources, item.Name)
 	}
 
-	// Legacy home precedence (matches GetHomeDashboard): a preference-layer
-	// HomeDashboardUID suppresses home_page; otherwise a non-empty home_page
-	// overwrites the config-derived default HomeDashboardUID. Must run before
-	// the defaults merge so only preference-layer values are checked.
-	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != "" {
+	// Home precedence, highest first (matches legacy GetHomeDashboard):
+	//  1. HomeDashboardUID from preferences (user > team > org)
+	//  2. home_page from settings
+	//  3. custom home dashboard JSON from settings (home.DASHBOARD_NAME)
+	preferenceHome := p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != ""
+	homePage := defaults.HomeURL != nil && *defaults.HomeURL != ""
+	configHome := defaults.HomeDashboardUID != nil && *defaults.HomeDashboardUID == home.DASHBOARD_NAME
+	switch {
+	case preferenceHome:
 		defaults.HomeURL = nil
-	} else if defaults.HomeURL != nil && *defaults.HomeURL != "" {
+	case configHome && homePage:
 		defaults.HomeDashboardUID = nil
 	}
 

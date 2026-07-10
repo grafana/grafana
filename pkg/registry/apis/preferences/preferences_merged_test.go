@@ -10,6 +10,7 @@ import (
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 )
 
 func TestMergePreferences(t *testing.T) {
@@ -89,7 +90,7 @@ func TestMergePreferences(t *testing.T) {
 			name: "home_page suppresses config-derived custom home dashboard",
 			defaults: preferences.PreferencesSpec{
 				HomeURL:          new("/a/grafana-setupguide-app/home"),
-				HomeDashboardUID: new("default-home-dashboard"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
 			},
 			items: nil,
 			expect: preferences.PreferencesSpec{
@@ -100,19 +101,19 @@ func TestMergePreferences(t *testing.T) {
 			name: "config custom home dashboard applies when home_page unset",
 			defaults: preferences.PreferencesSpec{
 				HomeURL:          new(""),
-				HomeDashboardUID: new("default-home-dashboard"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
 			},
 			items: nil,
 			expect: preferences.PreferencesSpec{
 				HomeURL:          new(""),
-				HomeDashboardUID: new("default-home-dashboard"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
 			},
 		},
 		{
 			name: "home dashboard preference suppresses homeURL even with config custom home",
 			defaults: preferences.PreferencesSpec{
 				HomeURL:          new("/a/grafana-setupguide-app/home"),
-				HomeDashboardUID: new("default-home-dashboard"),
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
 			},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
@@ -136,6 +137,18 @@ func TestMergePreferences(t *testing.T) {
 			expect: preferences.PreferencesSpec{
 				Theme:   new("dark"),
 				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "home_page does not suppress a non-synthetic default home dashboard UID",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("operator-configured-dash"),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL:          new("/a/grafana-setupguide-app/home"),
+				HomeDashboardUID: new("operator-configured-dash"),
 			},
 		},
 	}
