@@ -6,15 +6,16 @@ import { Trans, t } from '@grafana/i18n';
 import {
   sceneGraph,
   type SceneComponentProps,
+  SceneDataTransformer,
+  type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
+  SceneQueryRunner,
   type VizPanel,
 } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
-
-import { transformSceneToSaveModel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../utils/utils';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
@@ -38,42 +39,36 @@ export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsStat
   }
 }
 
+// Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
+// DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
+function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
+  }
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(dataProvider);
+  }
+  return undefined;
+}
+
 function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
   const { onDismiss, panelRef } = model.useState();
-  const dashboard = getDashboardSceneFor(model);
   const styles = useStyles2(getStyles);
 
-  const [{ loading: isGenerating }, onDownload] = useAsyncFn(async () => {
+  const [{ loading: isGenerating, error }, onDownload] = useAsyncFn(async () => {
     const panel = panelRef?.resolve();
     if (!panel) {
       return;
     }
-    const queryRunner = getQueryRunnerFor(panel);
-    const queries = queryRunner?.state.queries ?? [];
+    const queries: DataQuery[] = getQueryRunnerFor(panel)?.state.queries ?? [];
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
-    // Panel/dashboard serialization is best-effort; on failure we still capture HAR + logs.
-    let panelJSON: unknown;
-    let dashboardJSON: unknown;
-    try {
-      panelJSON = vizPanelToPanel(panel);
-    } catch (err) {
-      console.warn('Diagnostics: failed to serialize panel JSON', err);
-    }
-    try {
-      dashboardJSON = transformSceneToSaveModel(dashboard);
-    } catch (err) {
-      console.warn('Diagnostics: failed to serialize dashboard JSON', err);
-    }
-
-    await downloadDiagnosticsForQueries(
-      queries,
-      String(timeRange.from.valueOf()),
-      String(timeRange.to.valueOf()),
-      panelJSON,
-      dashboardJSON
-    );
-  }, [dashboard, panelRef]);
+    await downloadDiagnosticsForQueries(queries, String(timeRange.from.valueOf()), String(timeRange.to.valueOf()));
+  }, [panelRef]);
 
   return (
     <main>
@@ -96,6 +91,13 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       </Alert>
 
       {/* Diagnostic options (artifact selection, time range, redaction toggles) will be added here. */}
+
+      {error && (
+        <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
+          {error.message}
+        </Alert>
+      )}
+
       <div
         className={styles.buttonRow}
         role="group"

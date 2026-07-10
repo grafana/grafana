@@ -1,35 +1,64 @@
 import { saveAs } from 'file-saver';
+import { of } from 'rxjs';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 import { downloadDiagnosticsForQueries } from './downloadDiagnostics';
 
 jest.mock('file-saver', () => ({ saveAs: jest.fn() }));
+jest.mock('@grafana/runtime', () => ({ getBackendSrv: jest.fn() }));
 
-// NOTE: this covers the temporary client-side placeholder. When bundle generation moves to
-// POST /api/ds/diagnostics, this test is replaced by one asserting the request/response handling.
-describe('downloadDiagnosticsForQueries (placeholder)', () => {
-  beforeEach(() => jest.mocked(saveAs).mockClear());
+function setupBackendSrv(response: unknown) {
+  const fetch = jest.fn().mockReturnValue(of(response));
+  jest.mocked(getBackendSrv).mockReturnValue({ fetch } as unknown as ReturnType<typeof getBackendSrv>);
+  return fetch;
+}
+
+describe('downloadDiagnosticsForQueries', () => {
+  beforeEach(() => {
+    jest.mocked(saveAs).mockClear();
+  });
 
   it('does nothing when there are no visible queries', async () => {
+    const fetch = setupBackendSrv({});
+
     await downloadDiagnosticsForQueries([{ refId: 'A', hide: true }], '1', '2');
 
+    expect(fetch).not.toHaveBeenCalled();
     expect(saveAs).not.toHaveBeenCalled();
   });
 
-  it('saves a PLACEHOLDER bundle containing only the visible queries', async () => {
+  it('POSTs the visible queries and saves the returned bundle', async () => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    const fetch = setupBackendSrv({
+      data: blob,
+      headers: new Headers({ 'Content-Disposition': 'attachment; filename="diagnostics-20260101-000000.tar.gz"' }),
+    });
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
     await downloadDiagnosticsForQueries(queries, '100', '200');
 
-    expect(saveAs).toHaveBeenCalledTimes(1);
-    const [blob, filename] = jest.mocked(saveAs).mock.calls[0];
-    expect(filename).toMatch(/^diagnostics-\d{8}-\d{6}-PLACEHOLDER\.json$/);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/ds/diagnostics',
+        method: 'POST',
+        responseType: 'blob',
+        // Only the visible query is forwarded.
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }] },
+      })
+    );
+    expect(saveAs).toHaveBeenCalledWith(blob, 'diagnostics-20260101-000000.tar.gz');
+  });
 
-    const parsed = JSON.parse(await (blob as Blob).text());
-    expect(parsed.queries).toEqual([{ refId: 'A' }]);
-    expect(parsed.from).toBe('100');
-    expect(parsed.to).toBe('200');
-    expect(parsed._placeholder).toEqual(expect.any(String));
+  it('falls back to a generated filename when no Content-Disposition is returned', async () => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    setupBackendSrv({ data: blob, headers: new Headers() });
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [, filename] = jest.mocked(saveAs).mock.calls[0];
+    expect(filename).toMatch(/^diagnostics-\d{8}-\d{6}\.tar\.gz$/);
   });
 });

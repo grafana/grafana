@@ -88,8 +88,8 @@ function setupScenario(onDismiss?: () => void) {
     overlay: tab,
   });
 
-  // Constructing the scene wires up parent pointers, which is all getDashboardSceneFor /
-  // getTimeRange / getQueryRunnerFor need here. We deliberately skip activation so the
-  // SceneQueryRunner does not try to execute (and fail) its queries against a real datasource.
+  // Constructing the scene wires up parent pointers, which is all sceneGraph.getTimeRange and the
+  // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunner does not
+  // try to execute (and fail) its queries against a real datasource.
   return { tab, dashboard };
 }

@@ -1,46 +1,50 @@
 import { saveAs } from 'file-saver';
+import { lastValueFrom } from 'rxjs';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-/** Builds a human-readable bundle filename stem, e.g. `diagnostics-20260623-172901` (local time). */
-function diagnosticsFileName(): string {
+const DIAGNOSTICS_ENDPOINT = '/api/ds/diagnostics';
+
+/** Fallback bundle filename, e.g. `diagnostics-20260623-172901.tar.gz` (local time), used when the
+ * response carries no Content-Disposition filename. */
+function fallbackFileName(): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  return `diagnostics-${stamp}`;
+  return `diagnostics-${stamp}.tar.gz`;
+}
+
+/** Extracts the filename from a Content-Disposition header, if present. */
+function fileNameFromContentDisposition(header: string | null): string | undefined {
+  return header?.match(/filename="?([^"]+)"?/i)?.[1];
 }
 
 /**
- * Downloads a diagnostic artifact for the given panel queries.
+ * Requests a diagnostic bundle for the given panel queries from the backend and downloads it.
  *
- * TEMPORARY / PLACEHOLDER: real bundle generation (HAR + logs + panel/dashboard JSON) is produced
- * by the backend endpoint `POST /api/ds/diagnostics`, which lands in a separate backend PR. Until
- * then, this generates a small dummy JSON artifact client-side so the panel action + drawer flow is
- * reviewable end-to-end. Replace this body with a POST to the endpoint once the backend is merged.
+ * The bundle is generated server-side by `POST /api/ds/diagnostics`. That endpoint is not available
+ * yet (it lands in a separate backend PR); until then this call fails and the drawer surfaces the
+ * error. The request/response contract and this download flow are final.
  */
-export async function downloadDiagnosticsForQueries(
-  queries: DataQuery[],
-  from: string,
-  to: string,
-  panel?: unknown,
-  dashboard?: unknown
-): Promise<void> {
+export async function downloadDiagnosticsForQueries(queries: DataQuery[], from: string, to: string): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
   if (visibleQueries.length === 0) {
     return;
   }
 
-  const placeholder = {
-    _placeholder: 'Dummy diagnostics artifact — backend generation is not wired up yet (see PR).',
-    generatedAt: new Date().toISOString(),
-    from,
-    to,
-    queries: visibleQueries,
-    panel,
-    dashboard,
-  };
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<Blob>({
+      url: DIAGNOSTICS_ENDPOINT,
+      method: 'POST',
+      responseType: 'blob',
+      data: { from, to, queries: visibleQueries },
+      // Surface failures in the drawer instead of a global toast.
+      showErrorAlert: false,
+    })
+  );
 
-  const blob = new Blob([JSON.stringify(placeholder, null, 2)], { type: 'application/json' });
-  saveAs(blob, `${diagnosticsFileName()}-PLACEHOLDER.json`);
+  const filename = fileNameFromContentDisposition(response.headers.get('Content-Disposition')) ?? fallbackFileName();
+  saveAs(response.data, filename);
 }

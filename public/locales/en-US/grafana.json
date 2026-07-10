@@ -5560,6 +5560,7 @@
       "actions": "Diagnostics actions",
       "cancel-button": "Cancel",
       "download-button": "Download diagnostics",
+      "error-title": "Failed to generate diagnostics",
       "generating-button": "Generating…",
       "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
       "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
