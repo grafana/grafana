@@ -8,14 +8,15 @@ const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
-  const { sql, StandardSQL, MySQL } = await import(
-    /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
-  );
+  const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([
+    import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'),
+    import(/* webpackChunkName: "codemirror-lang-sql" */ './folding'),
+  ]);
   const dialects: Record<CodeMirrorSqlDialect, SQLDialect> = {
     standardSql: StandardSQL,
     mySql: MySQL,
   };
-  return sql({ dialect: dialects[dialect] });
+  return [sql({ dialect: dialects[dialect] }), foldByIndentation];
 };
 
 interface LoadLanguageOptions {

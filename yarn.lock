@@ -3089,6 +3089,7 @@ __metadata:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/lang-json": "npm:^6.0.2"
     "@codemirror/lang-sql": "npm:^6.10.0"
+    "@codemirror/language": "npm:6.12.3"
     "@codemirror/state": "npm:^6.6.0"
     "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:^11.13.5"
