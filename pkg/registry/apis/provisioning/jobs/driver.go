@@ -393,7 +393,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
 
-	name, email := job.Annotations[appjobs.AnnoTriggeredBy], job.Annotations[appjobs.AnnoTriggeredByEmail]
+	name, email := job.Annotations[appjobs.AnnoAuthor], job.Annotations[appjobs.AnnoAuthorEmail]
 	if (name != "" || email != "") &&
 		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
 		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})

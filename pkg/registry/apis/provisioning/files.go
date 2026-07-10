@@ -89,8 +89,8 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if sig, ok := jobs.UserAttribution(ctx); ok {
-		ctx = repository.WithAuthorSignature(ctx, sig)
+	if author, ok := jobs.UserAttribution(ctx); ok {
+		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: author.Name, Email: author.Email})
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {

@@ -536,12 +536,15 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	}
 
 	annotations := map[string]string{}
-	if sig, ok := UserAttribution(ctx); ok {
-		if sig.Name != "" {
-			annotations[appjobs.AnnoTriggeredBy] = sig.Name
+	if author, ok := UserAttribution(ctx); ok {
+		if author.Name != "" {
+			annotations[appjobs.AnnoAuthor] = author.Name
 		}
-		if sig.Email != "" {
-			annotations[appjobs.AnnoTriggeredByEmail] = sig.Email
+		if author.Email != "" {
+			annotations[appjobs.AnnoAuthorEmail] = author.Email
+		}
+		if author.ID != "" {
+			annotations[appjobs.AnnoAuthorID] = author.ID
 		}
 	}
 

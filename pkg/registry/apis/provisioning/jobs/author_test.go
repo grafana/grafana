@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -19,17 +18,18 @@ func TestUserAttribution(t *testing.T) {
 		name      string
 		requester identity.Requester
 		flag      bool
-		expected  *repository.CommitSignature
+		expected  *Author
 	}{
 		{
 			name: "user identity returns signature",
 			requester: &identity.StaticRequester{
-				Type:  authlib.TypeUser,
-				Name:  "Test User",
-				Email: "test@example.com",
+				Type:    authlib.TypeUser,
+				Name:    "Test User",
+				Email:   "test@example.com",
+				UserUID: "abc123",
 			},
 			flag:     true,
-			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
+			expected: &Author{Name: "Test User", Email: "test@example.com", ID: "user:abc123"},
 		},
 		{
 			name: "flag disabled returns nothing",
@@ -66,12 +66,12 @@ func TestUserAttribution(t *testing.T) {
 			}
 			setUserAttributionFlag(t, tt.flag)
 
-			sig, ok := UserAttribution(ctx)
+			author, ok := UserAttribution(ctx)
 			if tt.expected == nil {
 				assert.False(t, ok)
 			} else {
 				require.True(t, ok)
-				assert.Equal(t, *tt.expected, sig)
+				assert.Equal(t, *tt.expected, author)
 			}
 		})
 	}
