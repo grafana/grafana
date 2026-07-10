@@ -15,6 +15,7 @@ import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { Indent } from '../../Indent/Indent';
 
 import { MegaMenuItemText } from './MegaMenuItemText';
+import { getDragHandleStyles } from './styles';
 import { hasChildMatch } from './utils';
 
 interface Props {
@@ -22,8 +23,11 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
-  /** Extra class for the row's root — e.g. to nudge the pinned Starred section into alignment. */
-  className?: string;
+  /** Tighten the icon→label gap (the pinned Starred section uses this to match the breadcrumb rows). */
+  tightLabelGap?: boolean;
+  /** Drop empty pin/hide control columns instead of reserving them. The pinned box has nothing
+   * hideable, so this keeps the unpin flush right, aligned with the breadcrumb rows' unpin. */
+  collapseEmptyControls?: boolean;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
   /** Menu is in customise mode: show visibility toggles instead of bookmark pins */
@@ -48,6 +52,8 @@ interface Props {
   loadingChildren?: boolean;
   /** Section-level only: fetching children failed, show an error instead of the empty message */
   childrenLoadError?: boolean;
+  /** Disable the pin/hide controls (e.g. while a save is in flight) so edits can't be made and lost. */
+  disabled?: boolean;
 }
 
 const MAX_DEPTH = 2;
@@ -56,7 +62,8 @@ export function MegaMenuItem({
   link,
   activeItem,
   level = 0,
-  className,
+  tightLabelGap,
+  collapseEmptyControls,
   onClick,
   onPin,
   isPinned,
@@ -71,6 +78,7 @@ export function MegaMenuItem({
   canCustomise,
   loadingChildren,
   childrenLoadError,
+  disabled,
 }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -103,6 +111,7 @@ export function MegaMenuItem({
   };
 
   const styles = useStyles2(getStyles);
+  const dragStyles = useStyles2(getDragHandleStyles);
 
   // expand parent sections if child is active
   useEffect(() => {
@@ -164,21 +173,21 @@ export function MegaMenuItem({
   const showPin = !canCustomise || (isPinnableTopLevel && isPinnableItem);
 
   return (
-    <li ref={setItemRef} className={cx(styles.listItem, className)} {...draggableProvided?.draggableProps}>
+    <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
       <div className={styles.menuItem}>
         {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
             the content columns line up between top-level sections and their children. */}
         {editMode && (
-          <div className={styles.dragColumn}>
+          <div className={dragStyles.column}>
             {draggableProvided && (
               <div
-                className={styles.dragHandle}
+                className={dragStyles.handle}
                 {...draggableProvided.dragHandleProps}
                 aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
                   itemName: link.text,
                 })}
               >
-                <Icon name="draggabledots" size="lg" />
+                <Icon name="draggabledots" size="md" />
               </div>
             )}
           </div>
@@ -204,12 +213,15 @@ export function MegaMenuItem({
             isHideable={isHideable?.(link) ?? false}
             isHidden={effectivelyHidden}
             onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
+            collapseEmptyControls={collapseEmptyControls}
+            disabled={disabled}
           >
             {/* labelWrapperWithIcon spacing is a top-level alignment concern; starred leaves are a
                 uniform indented group that already align among themselves, so they intentionally
                 render the icon without it. */}
             <div
-              className={cx('megamenu-item-label', styles.labelWrapper, {
+              className={cx(styles.labelWrapper, {
+                [styles.tightLabelGap]: tightLabelGap,
                 [styles.hasActiveChild]: hasActiveChild,
                 [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
@@ -265,6 +277,9 @@ export function MegaMenuItem({
                   onToggleHidden={onToggleHidden}
                   ancestorHidden={effectivelyHidden}
                   canCustomise={canCustomise}
+                  tightLabelGap={tightLabelGap}
+                  collapseEmptyControls={collapseEmptyControls}
+                  disabled={disabled}
                 />
               ))
           ) : loadingChildren ? (
@@ -309,27 +324,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     maxWidth: '100%',
   }),
-  // Fixed-width column that reserves the drag-handle slot even on non-draggable rows, so content
-  // lines up across top-level sections and children. Right-aligned + narrow so the handle sits close
-  // to the item icon.
-  dragColumn: css({
-    alignItems: 'center',
-    display: 'flex',
-    flexShrink: 0,
-    justifyContent: 'flex-end',
-    width: theme.spacing(2),
-    // Pull the following content closer so there's only ~4px between the handle and the item icon.
-    marginRight: theme.spacing(-0.5),
-  }),
-  dragHandle: css({
-    alignItems: 'center',
-    color: theme.colors.text.secondary,
-    cursor: 'grab',
-    display: 'flex',
-    '&:hover': {
-      color: theme.colors.text.primary,
-    },
-  }),
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
@@ -373,6 +367,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     paddingLeft: theme.spacing(1),
     minWidth: 0,
+  }),
+  // Tighten the icon→label gap so the pinned Starred section's label lines up with the breadcrumb rows.
+  tightLabelGap: css({
+    gap: theme.spacing(0.5),
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,

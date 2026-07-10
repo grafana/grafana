@@ -26,7 +26,7 @@ export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancel
             'Reset navigation - show all items, unpin all and reset order'
           )}
           onClick={onResetToDefault}
-          variant="secondary"
+          variant="destructive"
           disabled={saving}
         />
       )}

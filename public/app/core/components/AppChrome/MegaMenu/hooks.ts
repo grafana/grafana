@@ -68,6 +68,15 @@ const useHiddenItems = (): { data: string[]; isLoading: boolean; setHiddenItemId
 };
 
 /**
+ * Storage seam for the user's top-level section order. Backed by localStorage today (per-browser),
+ * but shaped like an RTK query hook so swapping in a preferences-API-backed impl later is a drop-in.
+ */
+const useSectionOrder = (): { data: string[]; isLoading: boolean; setSectionOrder: (ids: string[]) => void } => {
+  const [stored, setStored] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
+  return { data: stored ?? [], isLoading: false, setSectionOrder: setStored };
+};
+
+/**
  * Owns the mega-menu customisation behaviour (behind the `grafana.customizableMegaMenu` flag):
  * reordering top-level sections (localStorage), pinning any non-top-level item (surfaced as a
  * duplicate in the pinned box), and hiding top-level sections — plus the legacy (flag-off) bookmarks
@@ -87,8 +96,7 @@ export const useNavCustomization = () => {
   const { pinnedItems, isLoading: pinnedLoading } = usePinnedItems();
   const notifyApp = useAppNotification();
   const { data: hiddenItemIds, isLoading: hiddenLoading, setHiddenItemIds } = useHiddenItems();
-  // The user's custom order for the top-level sections (local-only, not on the API yet).
-  const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(SECTION_ORDER_STORAGE_KEY, []);
+  const { data: sectionOrder, isLoading: sectionLoading, setSectionOrder } = useSectionOrder();
 
   // Persist the bookmark urls via the app-platform preferences API when the new-preferences flag is
   // on, otherwise the legacy endpoint.
@@ -116,7 +124,7 @@ export const useNavCustomization = () => {
   const canCustomise = useBooleanFlagValue('grafana.customizableMegaMenu', false) && contextSrv.isSignedIn;
   // Render a skeleton until the customisation state has loaded on first visit, so the menu doesn't
   // render then reflow (pins appearing). Cached after that.
-  const isLoading = canCustomise && (pinnedLoading || hiddenLoading);
+  const isLoading = canCustomise && (pinnedLoading || hiddenLoading || sectionLoading);
 
   const [editMode, setEditMode] = useState(false);
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
@@ -124,7 +132,7 @@ export const useNavCustomization = () => {
 
   // Applied state + in-progress drafts (staged until the user saves).
   const [draftHiddenIds, setDraftHiddenIds] = useState<string[]>(hiddenItemIds);
-  const [draftSectionOrder, setDraftSectionOrder] = useState<string[]>(sectionOrder ?? []);
+  const [draftSectionOrder, setDraftSectionOrder] = useState<string[]>(sectionOrder);
 
   // Local copy of the pinned urls so pin/unpin updates the menu immediately (the patch mutation
   // doesn't invalidate the query); draftPinnedUrls mirrors it during edit mode so staged changes
@@ -165,7 +173,7 @@ export const useNavCustomization = () => {
 
   // Top-level nav in the user's order; hidden items (any depth) are dropped outside edit mode and
   // shown (greyed) while editing so they can be toggled back. Children are untouched by pinning.
-  const effectiveSectionOrder = editMode ? draftSectionOrder : (sectionOrder ?? []);
+  const effectiveSectionOrder = editMode ? draftSectionOrder : sectionOrder;
   const orderedTop = canCustomise ? orderTopLevelSections(baseItems, effectiveSectionOrder) : baseItems;
   const visibleTop = canCustomise && !editMode ? removeHiddenItems(orderedTop, new Set(hiddenItemIds)) : orderedTop;
   const navItems = visibleTop.map((item) => enrichWithInteractionTracking(item, docked));
@@ -212,7 +220,7 @@ export const useNavCustomization = () => {
     // Legacy bookmarks behaviour (flag off): single-url toggle + redux Bookmarks section update.
     if (!canCustomise) {
       const isSaved = isPinned(url);
-      const newItems = isSaved ? pinnedUrls.filter((u) => u !== url) : [...pinnedUrls, url];
+      const newItems = isSaved ? pinnedUrls.filter((i) => url !== i) : [...pinnedUrls, url];
       reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
       persistBookmarkUrls(newItems, () => {
         setPinnedUrls(newItems);
@@ -255,7 +263,7 @@ export const useNavCustomization = () => {
   const syncDraftsFromApplied = useCallback(() => {
     setDraftHiddenIds(hiddenItemIds);
     setDraftPinnedUrls(pinnedUrls);
-    setDraftSectionOrder(sectionOrder ?? []);
+    setDraftSectionOrder(sectionOrder);
   }, [hiddenItemIds, pinnedUrls, sectionOrder]);
 
   const onEnterEditMode = useCallback(() => {
@@ -269,10 +277,6 @@ export const useNavCustomization = () => {
   }, [syncDraftsFromApplied]);
 
   const onSaveEdit = useCallback(async () => {
-    reportInteraction('grafana_nav_customise_saved', {
-      hiddenCount: draftHiddenIds.length,
-      pinnedCount: draftPinnedUrls.length,
-    });
     // Pins persist to preferences (async) — keep editing and show the saving state until it lands.
     setIsSaving(true);
     const ok = await persistBookmarkUrls(draftPinnedUrls, () => setPinnedUrls(draftPinnedUrls));
@@ -284,6 +288,11 @@ export const useNavCustomization = () => {
     // Hidden state + section order persist to localStorage once the pins have saved.
     setHiddenItemIds(draftHiddenIds);
     setSectionOrder(draftSectionOrder);
+    // Report only after everything has persisted, so a failed save isn't recorded as a success.
+    reportInteraction('grafana_nav_customise_saved', {
+      hiddenCount: draftHiddenIds.length,
+      pinnedCount: draftPinnedUrls.length,
+    });
     setEditMode(false);
   }, [draftHiddenIds, draftPinnedUrls, draftSectionOrder, persistBookmarkUrls, setHiddenItemIds, setSectionOrder]);
 

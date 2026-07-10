@@ -62,7 +62,20 @@ export const MegaMenu = memo(
       }
     };
 
-    const renderNavItem = (link: NavModelItem, key: string = link.text, draggableProvided?: DraggableProvided) => (
+    // Renders a single nav row. The pinned Starred section reuses this (via `options`) so its child
+    // icons, colours and loading state match the nav exactly — it only differs in a few visual tweaks
+    // and an independent collapse-state key.
+    const renderNavItem = (
+      link: NavModelItem,
+      key: string = link.text,
+      draggableProvided?: DraggableProvided,
+      options?: {
+        tightLabelGap?: boolean;
+        collapseEmptyControls?: boolean;
+        expandKeyPrefix?: string;
+        defaultExpanded?: boolean;
+      }
+    ) => (
       <MegaMenuItem
         key={key}
         link={link}
@@ -77,8 +90,13 @@ export const MegaMenu = memo(
         ancestorHidden={false}
         canCustomise={canCustomise}
         draggableProvided={draggableProvided}
+        tightLabelGap={options?.tightLabelGap}
+        collapseEmptyControls={options?.collapseEmptyControls}
+        expandKeyPrefix={options?.expandKeyPrefix}
+        defaultExpanded={options?.defaultExpanded}
         loadingChildren={link.id === 'starred' && starredItemsLoading}
         childrenLoadError={link.id === 'starred' && starredItemsError}
+        disabled={isSaving}
       />
     );
 
@@ -101,31 +119,18 @@ export const MegaMenu = memo(
     const onUnpin = (url: string) => onPinItem({ text: '', url });
 
     const renderPinnedEntry = (entry: (typeof pinnedEntries)[number], draggableProvided?: DraggableProvided) =>
-      // A whole-section pin (Starred) renders through MegaMenuItem — the same component the nav uses —
-      // so its per-kind child icons, colours and loading state match the nav exactly. Its own header
-      // pin control is the (red) unpin. A `pinned/` expand key keeps its collapse state independent of
-      // the nav copy. Normal pins render as compact breadcrumbs.
+      // A whole-section pin (Starred) renders through the same MegaMenuItem the nav uses (via
+      // renderNavItem) so its per-kind child icons, colours and loading state match the nav exactly.
+      // The `pinned/` expand key keeps its collapse state independent of the nav copy, and the
+      // tighter label gap + collapsed empty control slot line it up with the breadcrumb rows beside it.
+      // Normal pins render as compact breadcrumbs.
       entry.section ? (
-        <MegaMenuItem
-          key={entry.url}
-          link={entry.section}
-          className={styles.pinnedSection}
-          isPinned={isPinned}
-          onClick={state.megaMenuDocked ? undefined : onClose}
-          activeItem={activeItem}
-          onPin={onPinItem}
-          editMode={editMode}
-          isHideable={isHideable}
-          isHidden={isHidden}
-          onToggleHidden={onToggleHidden}
-          ancestorHidden={false}
-          canCustomise={canCustomise}
-          draggableProvided={draggableProvided}
-          expandKeyPrefix="pinned/"
-          defaultExpanded
-          loadingChildren={entry.section.id === 'starred' && starredItemsLoading}
-          childrenLoadError={entry.section.id === 'starred' && starredItemsError}
-        />
+        renderNavItem(entry.section, entry.url, draggableProvided, {
+          tightLabelGap: true,
+          collapseEmptyControls: true,
+          expandKeyPrefix: 'pinned/',
+          defaultExpanded: true,
+        })
       ) : (
         <MegaMenuPinnedItem
           key={entry.url}
@@ -135,6 +140,7 @@ export const MegaMenu = memo(
           onUnpin={() => onUnpin(entry.url)}
           onClick={state.megaMenuDocked ? undefined : onClose}
           draggableProvided={draggableProvided}
+          disabled={isSaving}
         />
       );
 
@@ -161,7 +167,12 @@ export const MegaMenu = memo(
                       {...dropProvided.droppableProps}
                     >
                       {pinnedEntries.map((entry, index) => (
-                        <Draggable key={entry.url} draggableId={`pinned-${entry.url}`} index={index}>
+                        <Draggable
+                          key={entry.url}
+                          draggableId={`pinned-${entry.url}`}
+                          index={index}
+                          isDragDisabled={isSaving}
+                        >
                           {(dragProvided) => renderPinnedEntry(entry, dragProvided)}
                         </Draggable>
                       ))}
@@ -193,7 +204,12 @@ export const MegaMenu = memo(
                 {...dropProvided.droppableProps}
               >
                 {navItems.map((link, index) => (
-                  <Draggable key={sectionKey(link)} draggableId={sectionKey(link)} index={index}>
+                  <Draggable
+                    key={sectionKey(link)}
+                    draggableId={sectionKey(link)}
+                    index={index}
+                    isDragDisabled={isSaving}
+                  >
                     {(dragProvided) => renderNavItem(link, sectionKey(link), dragProvided)}
                   </Draggable>
                 ))}
@@ -300,41 +316,27 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: theme.spacing(1, 1, 0, 1),
       padding: theme.spacing(1),
     }),
-    // "Pinned" heading row — a small uppercase section label so it reads as a heading, distinct from
-    // the pinned item rows below. The icon column matches the item rows so it still lines up.
+    // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
+    // a heading, distinct from the pinned item rows). The icon column matches the item rows so it
+    // still lines up.
     pinnedHeading: css({
       alignItems: 'center',
       color: theme.colors.text.secondary,
       display: 'flex',
       gap: theme.spacing(0.5),
       height: theme.spacing(3.5),
-      letterSpacing: '0.06em',
       // Matches the item rows' label inset so the heading icon lines up with the pinned item icons.
       paddingLeft: theme.spacing(0.5),
-      textTransform: 'uppercase',
     }),
     pinnedHeadingIcon: css({
       flexShrink: 0,
       width: theme.spacing(3),
     }),
-    // The pinned Starred section renders via MegaMenuItem; tighten its label's icon→text gap so its
-    // label text lines up with the breadcrumb rows (which give their icon the matching inset below).
-    // Nothing in the pinned box is hideable, so collapse the empty hide slot the nav reserves — that
-    // keeps the unpin control close to the right edge, aligned with the breadcrumb rows' unpin.
-    pinnedSection: css({
-      '& .megamenu-item-label': {
-        gap: theme.spacing(0.5),
-      },
-      '& .megamenu-control-slot:empty': {
-        display: 'none',
-      },
-    }),
-    // Divider separating the pinned box from the rest of the nav. Its top margin matches the nav
-    // list's top padding so the line sits with equal spacing above and below.
+    // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
     pinnedDivider: css({
       border: 'none',
       borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(1, 2, 0, 2),
+      margin: theme.spacing(2, 2, 0, 2),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({

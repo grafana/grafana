@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
@@ -24,6 +24,10 @@ export interface Props {
   isHideable?: boolean;
   isHidden?: boolean;
   onToggleHidden?: () => void;
+  /** Drop empty pin/hide control columns instead of reserving them (so a lone pin sits flush right). */
+  collapseEmptyControls?: boolean;
+  /** Disable the pin/hide controls (e.g. while a save is in flight) so edits can't be made and lost. */
+  disabled?: boolean;
 }
 
 export function MegaMenuItemText({
@@ -41,6 +45,8 @@ export function MegaMenuItemText({
   isHideable,
   isHidden,
   onToggleHidden,
+  collapseEmptyControls,
+  disabled,
 }: Props) {
   const theme = useTheme2();
 
@@ -72,15 +78,22 @@ export function MegaMenuItemText({
     </div>
   );
 
+  // When customising, a filled pin marks a pinned item and an outline pin an unpinned one; with
+  // customisation off it's the legacy bookmark glyph.
+  let pinIcon: IconName = 'bookmark';
+  if (canCustomise) {
+    pinIcon = isPinned ? 'gf-pin-filled' : 'gf-pin-unfilled';
+  }
+
   const pinButton = (
     <IconButton
-      // When customising, a filled pin marks a pinned item and an outline pin an unpinned one.
-      name={canCustomise ? (isPinned ? 'gf-pin-filled' : 'gf-pin-unfilled') : 'bookmark'}
+      name={pinIcon}
       // Always-visible in edit mode; hover-only (the `pin-icon` treatment) for the legacy control.
       className={canCustomise ? 'customise-icon' : 'pin-icon'}
       iconType={isPinned ? 'solid' : 'default'}
       onClick={() => onPin(url)}
       aria-pressed={isPinned}
+      disabled={disabled}
       tooltip={pinTooltip}
     />
   );
@@ -91,6 +104,7 @@ export function MegaMenuItemText({
       className={'visibility-icon'}
       onClick={onToggleHidden}
       aria-pressed={isHidden}
+      disabled={disabled}
       tooltip={
         isHidden
           ? t('navigation.item.show.tooltip', 'Show {{itemName}}', { itemName })
@@ -121,11 +135,16 @@ export function MegaMenuItemText({
       </LinkComponent>
       {canCustomise
         ? (showPinControl || showHideControl) && (
-            // Fixed-width slots so the pin and hide controls line up in columns across every row
-            // (a pin-only row keeps the pin in the pin column, leaving the hide column empty).
+            // Fixed-width slots so the pin and hide controls line up in columns across every row (a
+            // pin-only row keeps the pin in the pin column, leaving the hide column empty). When
+            // collapseEmptyControls is set, empty columns are dropped so a lone control sits flush right.
             <div className={styles.controls}>
-              <span className={cx('megamenu-control-slot', styles.controlSlot)}>{showPinControl && pinButton}</span>
-              <span className={cx('megamenu-control-slot', styles.controlSlot)}>{showHideControl && hideButton}</span>
+              {(showPinControl || !collapseEmptyControls) && (
+                <span className={styles.controlSlot}>{showPinControl && pinButton}</span>
+              )}
+              {(showHideControl || !collapseEmptyControls) && (
+                <span className={styles.controlSlot}>{showHideControl && hideButton}</span>
+              )}
             </div>
           )
         : showPinControl && (
@@ -171,6 +190,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     display: 'flex',
     flexShrink: 0,
   }),
+  // One fixed-width, centred column per control (pin, hide) so each control type lines up vertically
+  // across rows regardless of which controls a given row shows.
   controlSlot: css({
     alignItems: 'center',
     display: 'flex',

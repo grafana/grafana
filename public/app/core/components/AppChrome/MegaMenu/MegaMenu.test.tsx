@@ -3,7 +3,7 @@ import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -30,6 +30,12 @@ jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
 
 // The searcher resolves starred UIDs to nav rows but has no MSW path, so stub it.
 jest.mock('app/features/search/service/searcher');
+
+// Spy on analytics so we can assert a failed save isn't recorded as a successful save.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 // The starred dashboard the tests use: the stars fixture is seeded with its UID and the searcher
 // resolves that UID to this row, so the synced Starred section is populated deterministically.
@@ -477,6 +483,15 @@ describe('MegaMenu', () => {
         const saving = await screen.findByRole('button', { name: 'Saving…' });
         expect(saving).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+
+        // All editing controls are disabled while the save is in flight, so edits made against the
+        // in-flight snapshot can't be silently overwritten when it resolves. Playlists is now pinned,
+        // so it has an unpin control in both the pinned box and the nav — both must be disabled.
+        const unpins = screen
+          .getAllByRole('button', { hidden: true })
+          .filter((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
+        expect(unpins.length).toBeGreaterThanOrEqual(2);
+        unpins.forEach((button) => expect(button).toBeDisabled());
       });
 
       it('stays in edit mode and persists nothing when the save fails', async () => {
@@ -496,6 +511,25 @@ describe('MegaMenu', () => {
         expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
         expect(mockUserPreferences.navbar?.bookmarkUrls ?? []).toEqual([]);
+        // A failed save must not be recorded as a successful one.
+        expect(reportInteraction).not.toHaveBeenCalledWith('grafana_nav_customise_saved', expect.anything());
+      });
+
+      it('reports a successful save only once the pins have persisted', async () => {
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
+        expect(reportInteraction).toHaveBeenCalledWith('grafana_nav_customise_saved', {
+          hiddenCount: 0,
+          pinnedCount: 1,
+        });
       });
     });
   });

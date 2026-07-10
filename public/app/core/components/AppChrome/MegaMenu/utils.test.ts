@@ -333,6 +333,20 @@ describe('pinning helpers', () => {
       expect(entries[0].section?.text).toBe('Starred');
       expect(entries[0].lines.map((l) => l.item.text)).toEqual(['First', 'Second']);
     });
+
+    it('treats an empty Starred section as a section, not a breadcrumb', () => {
+      // The backend serves Starred with no children until the stars have loaded. It must still be a
+      // section so it keeps its layout + empty/loading state instead of flipping from breadcrumb to
+      // section once children arrive.
+      const emptyStarred: NavModelItem[] = [
+        ...tree,
+        { text: 'Starred', id: 'starred', url: '/dashboards?starred', children: [] },
+      ];
+      const entries = getPinnedEntries(emptyStarred, ['/dashboards?starred']);
+      expect(entries).toHaveLength(1);
+      expect(entries[0].section?.text).toBe('Starred');
+      expect(entries[0].lines).toEqual([]);
+    });
   });
 
   describe('moveItem', () => {
