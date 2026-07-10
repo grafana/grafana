@@ -817,7 +817,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
-	// Jobs validator (no mutator needed)
+	// Jobs mutator and validator. The mutator attributes each job to the acting
+	// user at creation time (gated by the provisioning.userAttribution flag) and
+	// the validator enforces that the recorded author is immutable.
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
@@ -826,6 +828,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), jobs.NewAdmissionMutator())
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
