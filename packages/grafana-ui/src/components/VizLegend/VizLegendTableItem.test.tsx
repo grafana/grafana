@@ -10,7 +10,7 @@ function makeItem(overrides: Partial<VizLegendItem> = {}): VizLegendItem {
 
 function renderInTable(overrides: Partial<Props> = {}) {
   return render(
-    <table>
+    <table style={{ width: '100px' }}>
       <tbody>
         <LegendTableItem item={makeItem()} {...overrides} />
       </tbody>
@@ -84,6 +84,12 @@ describe('LegendTableItem', () => {
     it('allows the label to wrap (normal) when overflow is "wrap"', () => {
       renderInTable({ overflow: 'wrap' });
       expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'normal' });
+    });
+
+    it('allows the label to wrap without word breaks', () => {
+      renderInTable();
+      expect(screen.getByRole('button')).toHaveStyle({ wordWrap: 'break-word' });
+      expect(screen.getByRole('button')).toHaveStyle({ textOverflow: 'ellipsis' });
     });
   });
 });
