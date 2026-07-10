@@ -12,12 +12,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,14 +32,16 @@ const kvSection = "secret/securevalues"
 
 // TODO: add tracing
 type kvSecureValueMetadataStorage struct {
-	kv    resource.KV
-	clock contracts.Clock
+	kv     resource.KV
+	clock  contracts.Clock
+	tracer trace.Tracer
 }
 
-func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock) contracts.SecureValueMetadataStorage {
+func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer) contracts.SecureValueMetadataStorage {
 	return &kvSecureValueMetadataStorage{
-		kv:    kv,
-		clock: clock,
+		kv:     kv,
+		clock:  clock,
+		tracer: tracer,
 	}
 }
 
@@ -294,7 +300,41 @@ func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, nam
 	return latestVersion, createdAt, nil
 }
 
-func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *v1beta1.SecureValue, actorUID string) (*v1beta1.SecureValue, error) {
+func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *v1beta1.SecureValue, actorUID string) (_ *v1beta1.SecureValue, svmCreateErr error) {
+	// start := s.clock.Now()
+	name := sv.GetName()
+	namespace := sv.GetNamespace()
+
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace),
+		attribute.String("keeper", keeper),
+		attribute.String("actorUID", actorUID),
+	))
+	defer span.End()
+
+	defer func() {
+		success := svmCreateErr == nil
+
+		args := []any{
+			"name", name,
+			"namespace", namespace,
+			"keeper", keeper,
+			"actorUID", actorUID,
+		}
+
+		args = append(args, "success", success)
+		if !success {
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
+			span.RecordError(svmCreateErr)
+			args = append(args, "error", svmCreateErr)
+		}
+
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
+
+		// s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	latestVersion, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest version: %w", err)
@@ -303,10 +343,6 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	newVersion := latestVersion + 1
 	sv.Status.Version = newVersion
 
-	// now, err := s.kv.UnixTimestamp(ctx)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to get unix timestamp: %w", err)
-	// }
 	now := s.clock.Now().UTC().Unix()
 
 	// Preserve creation time if this is an update
@@ -335,6 +371,10 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 }
 
 func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contracts.SecureValueIdentifier) error {
+	if len(in) == 0 {
+		return nil
+	}
+
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
 		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
