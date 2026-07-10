@@ -363,6 +363,9 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServerEnabled bool) func(
 			if s.cfg.NATS.NotifierShadow && s.natsSubscriber != nil {
 				opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{s.natsSubscriber}))
 			}
+			if s.cfg.NATS.Notifier && s.natsSubscriber != nil {
+				opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{s.natsSubscriber}))
+			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
 				return nil, err

@@ -69,8 +69,28 @@ func translateGitHubError(err error) error {
 
 	default:
 		// Other errors - return with GitHub message context
+		if details := formatGitHubErrorDetails(ghErr.Errors); details != "" {
+			return fmt.Errorf("GitHub API error (HTTP %d: %s: %s)", statusCode, ghMessage, details)
+		}
 		return fmt.Errorf("GitHub API error (HTTP %d: %s)", statusCode, ghMessage)
 	}
+}
+
+// formatGitHubErrorDetails renders the per-field error details GitHub returns
+// alongside a validation error into a single readable string.
+func formatGitHubErrorDetails(errs []github.Error) string {
+	details := make([]string, 0, len(errs))
+	for _, e := range errs {
+		switch {
+		case e.Message != "":
+			details = append(details, e.Message)
+		case e.Field != "" && e.Code != "":
+			details = append(details, fmt.Sprintf("%s %s", e.Field, e.Code))
+		case e.Code != "":
+			details = append(details, e.Code)
+		}
+	}
+	return strings.Join(details, "; ")
 }
 
 const (

@@ -16,20 +16,12 @@ import (
 )
 
 func TestBadgerKV(t *testing.T) {
-	RunKVTest(t, func(ctx context.Context) resource.KV {
-		opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
-		db, err := badger.Open(opts)
-		require.NoError(t, err)
+	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
+	bdb, err := badger.Open(opts)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, bdb.Close()) })
 
-		t.Cleanup(func() {
-			err := db.Close()
-			require.NoError(t, err)
-		})
-
-		return resource.NewBadgerKV(db)
-	}, &KVTestOptions{
-		NSPrefix: "badger-kv-test",
-	})
+	RunKVTest(t, resource.NewBadgerKV(bdb), &KVTestOptions{NSPrefix: "badger-kv-test"})
 }
 
 func TestMain(m *testing.M) {
@@ -37,16 +29,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestSQLKV(t *testing.T) {
-	RunKVTest(t, func(ctx context.Context) resource.KV {
-		dbstore := db.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		dbConn, err := eDB.Init(ctx)
-		require.NoError(t, err)
-		kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-		require.NoError(t, err)
-		return kv
-	}, &KVTestOptions{
-		NSPrefix: "sql-kv-test",
-	})
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	sqlKV, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	require.NoError(t, err)
+
+	RunKVTest(t, sqlKV, &KVTestOptions{NSPrefix: "sql-kv-test"})
 }
