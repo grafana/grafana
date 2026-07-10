@@ -92,13 +92,19 @@ export const SpanDetailLinkButtons = (props: Props) => {
         }
         if (link.type === SpanLinkType.Profiles && link.title === RelatedProfilesTitle) {
           linkToProfiles = link;
-          return createLinkModel(link, SpanLinkType.Profiles, 'Profiles for this span', 'link', datasourceType);
+          return createLinkModel(
+            link,
+            SpanLinkType.Profiles,
+            t('explore.span-detail-link-buttons.profiles-for-this-span', 'Profiles for this span'),
+            'link',
+            datasourceType
+          );
         }
         if (link.type === SpanLinkType.Session) {
           return createLinkModel(
             link,
             SpanLinkType.Session,
-            'Session for this span',
+            t('explore.span-detail-link-buttons.session-for-this-span', 'Session for this span'),
             'frontend-observability',
             datasourceType
           );
@@ -116,7 +122,7 @@ export const SpanDetailLinkButtons = (props: Props) => {
         pluginLinks && pluginLinks.length > 0
           ? pluginLinks.find((link) => link.pluginId === profilesDrilldownPluginId)
           : null;
-      const label = 'Open in Profiles Drilldown';
+      const label = t('explore.span-detail-link-buttons.open-in-profiles-drilldown', 'Open in Profiles Drilldown');
       const appLink: SpanLinkDef = {
         ...linkToProfiles,
         href: '',
@@ -166,7 +172,7 @@ const styles = {
 };
 
 function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
-  const defaultCTA = 'Related logs';
+  const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
   if (!settings) {
     return defaultCTA;
   }
@@ -175,10 +181,10 @@ function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonDat
   // migrates the legacy `tracesToLogs` shape to the v2 shape.
   const options = getTraceToLogsOptions(settings.jsonData);
   if (options?.filterBySpanID) {
-    return 'Logs for this span';
+    return t('explore.span-detail-link-buttons.logs-for-this-span', 'Logs for this span');
   }
   if (options?.filterByTraceID) {
-    return 'Logs for this trace';
+    return t('explore.span-detail-link-buttons.logs-for-this-trace', 'Logs for this trace');
   }
 
   return defaultCTA;
