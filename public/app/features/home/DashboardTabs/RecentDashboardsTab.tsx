@@ -102,8 +102,8 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
         ))}
       </ul>
       <div className={styles.clearButton}>
-        <Button size="sm" fill="text" onClick={handleClearHistory}>
-          <Trans i18nKey="home.recent-dashboards-tab.clear">Reset recent dashboards</Trans>
+        <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
+          <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
         </Button>
       </div>
     </Stack>

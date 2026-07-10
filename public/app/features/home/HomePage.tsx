@@ -14,6 +14,7 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { RedesignedDashboardTabs } from './DashboardTabs/RedesignedDashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
@@ -83,28 +84,47 @@ export default function HomePage() {
         ) : (
           <Suspense fallback={skeleton}>
             <Stack direction="column" gap={2}>
-              {/* Assistant injects an Assistant-based prompt input when available */}
-              {renderLimitedComponents({
-                props: {},
-                limit: 1,
-                components: assistantComponents,
-                pluginId: ASSISTANT_PLUGIN_ID,
-                wrapper: ({ children }) => (
-                  <div className={styles.extra}>
-                    <HomeSection>{children}</HomeSection>
-                  </div>
-                ),
-              })}
+              {redesignEnabled ? (
+                <>
+                  {renderLimitedComponents({
+                    props: {},
+                    limit: 1,
+                    components: assistantComponents,
+                    pluginId: ASSISTANT_PLUGIN_ID,
+                    wrapper: ({ children }) => (
+                      <div className={styles.extra}>
+                        <HomeSection>{children}</HomeSection>
+                      </div>
+                    ),
+                  })}
 
-              {redesignEnabled && <Recommendations />}
+                  <Recommendations />
 
-              <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                <DashboardTabs extensionComponents={tabComponents} />
-                {/* TODO: Alerts and incidents will combine into one card */}
-                <FiringAlertsCard />
-                <IncidentsCard />
-              </Grid>
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    <RedesignedDashboardTabs extensionComponents={tabComponents} />
+                    {/* TODO: Alerts and incidents will combine into one card */}
+                    <FiringAlertsCard />
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <HomeSection direction="column" display="flex" gap={2}>
+                    {/* Assistant injects an Assistant-based prompt input when available */}
+                    {renderLimitedComponents({
+                      props: {},
+                      limit: 1,
+                      components: assistantComponents,
+                      pluginId: ASSISTANT_PLUGIN_ID,
+                    })}
+                    <DashboardTabs extensionComponents={tabComponents} />
+                  </HomeSection>
 
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    <FiringAlertsCard />
+                    <IncidentsCard />
+                  </Grid>
+                </>
+              )}
               {extraContent}
             </Stack>
           </Suspense>

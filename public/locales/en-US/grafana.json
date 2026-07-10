@@ -10734,13 +10734,17 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "most-viewed": "Most viewed",
       "most-viewed-active": "Most viewed",
       "recent": "Recent",
-      "recent-active": "Recent",
+      "recent-active": "Recent dashboards",
+      "recent-tab-active": "Recent",
       "retry": "Retry",
       "starred": "Starred",
-      "starred-active": "Starred"
+      "starred-active": "Starred dashboards",
+      "starred-tab-active": "Starred"
     },
     "dashboards": {
       "title": "Dashboards",
@@ -10792,7 +10796,7 @@
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
-      "clear": "Reset recent dashboards",
+      "clear": "Clear history",
       "create": "Create your first dashboard",
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
