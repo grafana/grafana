@@ -10,7 +10,7 @@ function makeItem(overrides: Partial<VizLegendItem> = {}): VizLegendItem {
 
 function renderInTable(overrides: Partial<Props> = {}) {
   return render(
-    <table style={{ width: '100px' }}>
+    <table>
       <tbody>
         <LegendTableItem item={makeItem()} {...overrides} />
       </tbody>
