@@ -15,22 +15,28 @@ export interface KubernetesOverview {
   notReadyNodes: number | null; // null = metric absent (hide the row); 0 = all Ready
 }
 
+// How far back the inventory queries and the namespace probe look. Inventory counts are
+// "seen recently", not "alive right now" — last_over_time tolerates scrape gaps and seeded/demo
+// data at the cost of counting resources deleted within the window.
 const KUBE_STATE_LOOKBACK = '24h';
 
 // refId -> portable kube-state-metrics PromQL. No recording rules: works on any Prometheus scraping
-// kube-state-metrics. Instant vectors are the source of truth for live clusters — Prometheus
-// staleness markers drop deleted pods/nodes, so churn does not inflate counts or pin stale
-// Pending/Failed/NotReady states. The `or last_over_time[24h]` arm fires only when the instant
-// vector is empty (seeded/demo samples not continuously scraped, past the 5m instant lookback),
-// keeping that data rendering. `group by (...)` dedupes series across replicas before count().
+// kube-state-metrics. Every query is single-sided so each stat reads one timeline:
+// - Inventory counts (clusters, pods) use last_over_time[24h]: "seen in the last day".
+// - Health stats (unhealthyPods, notReadyNodes, alertsFiring) are instant vectors: present-tense
+//   claims where staleness markers must drop deleted pods/nodes and resolved alerts immediately —
+//   last_over_time would pin them for the whole window (ALERTS series vanish on resolve).
+// - restarts1h is an explicit 1h increase window ("in the last hour" in the copy).
+// `group by (...)` dedupes series across replicas before count().
 const OVERVIEW_QUERIES: Record<string, string> = {
-  clusters: `count(group by (cluster) (kube_node_info)) or count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
-  pods: `count(group by (cluster, namespace, pod) (kube_pod_info)) or count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
-  unhealthyPods: `sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"}) or sum(last_over_time(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"}[${KUBE_STATE_LOOKBACK}]))`,
+  clusters: `count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
+  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
+  unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
-  notReadyNodes: `sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"}) or sum(last_over_time(kube_node_status_condition{condition="Ready",status=~"false|unknown"}[${KUBE_STATE_LOOKBACK}]))`,
+  notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
   // ALERTS = datasource-managed rules; GRAFANA_ALERTS = Grafana-managed state (Prometheus state
-  // historian, same alertstate="firing"). Watchdog/InfoInhibitor are kube-prometheus-stack's
+  // historian, same alertstate="firing"). The `or` here unions the two SOURCES at the same
+  // instant — not a timeline mix. Watchdog/InfoInhibitor are kube-prometheus-stack's
   // always-firing heartbeats — excluded (ALERTS-only). count() over no matches is empty → null.
   alertsFiring:
     'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor"} or GRAFANA_ALERTS{alertstate="firing"})',
@@ -44,10 +50,11 @@ const MAX_PROBED_DATASOURCES = 10;
 const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data';
 
 // Mirrors how the k8s app detects namespaces (kube_namespace_status_phase behind its
-// "No namespaces detected" empty state), with the same lookback tolerance as OVERVIEW_QUERIES.
+// "No namespaces detected" empty state), with the same lookback as the inventory queries —
+// the probe asks "has this datasource seen Kubernetes data recently", not "is it live now".
 // A bare count() suffices for a has-data probe; grouping by namespace would only add evaluation
 // cost across up to MAX_PROBED_DATASOURCES datasources.
-const NAMESPACE_PROBE = `count(kube_namespace_status_phase) or count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
+const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
 
 /**
  * True when the available health signals show a problem, false when they are all clear, null when

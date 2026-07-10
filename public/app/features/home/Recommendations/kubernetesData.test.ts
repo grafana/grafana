@@ -37,7 +37,7 @@ let dataByUid: Record<string, number>;
 // Probe queries against these uids emit LoadingState.Error (unreachable/erroring datasource).
 let probeErrorUids: Set<string>;
 
-type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string }> };
+type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
 
 function numberFrame(refId: string, values: number[]): DataFrame {
   return createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values }] });
@@ -103,6 +103,27 @@ describe('Kubernetes Prometheus resolution', () => {
 
     expect(overviewCalls()[0][0].datasource.uid).toBe('k8s-uid');
     expect(overview.clusters).toBeGreaterThan(0);
+  });
+
+  it('runs single-sided overview queries: 24h lookback inventory, instant health', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+
+    await fetchKubernetesOverview();
+
+    const [overview] = overviewCalls();
+    const exprs = Object.fromEntries(overview[0].queries.map((q) => [q.refId, q.expr]));
+    expect(exprs).toEqual({
+      clusters: 'count(group by (cluster) (last_over_time(kube_node_info[24h])))',
+      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[24h])))',
+      unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
+      restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
+      notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
+      alertsFiring:
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor"} or GRAFANA_ALERTS{alertstate="firing"})',
+    });
+    const [probe] = probeCalls();
+    expect(probe[0].queries[0].expr).toBe('count(last_over_time(kube_namespace_status_phase[24h]))');
   });
 
   it('skips a default datasource without namespace data for a sibling that has it', async () => {
