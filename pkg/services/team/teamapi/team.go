@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 var ofClient = openfeature.NewDefaultClient()
@@ -170,6 +171,9 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	if err := tapi.teamService.DeleteTeam(ctx, &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete Team. ID not found", nil)
+		}
+		if apierrors.IsConflict(err) {
+			return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
