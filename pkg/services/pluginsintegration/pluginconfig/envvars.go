@@ -90,6 +90,9 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] || p.cfg.MarketplaceLicenseDirectory == "" {
 		return nil
 	}
+	if p.license == nil || !p.license.HasValidLicense() {
+		return nil
+	}
 
 	licensePath, ok := marketplaceLicenseFilePath(p.cfg.MarketplaceLicenseDirectory, pluginID)
 	if !ok {
