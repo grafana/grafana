@@ -37,10 +37,9 @@ const mockListFiles = jest.fn((folder: string) => {
   return subject;
 });
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    get: () => Promise.resolve({ listFiles: mockListFiles }),
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: () => Promise.resolve({ listFiles: mockListFiles }),
 }));
 
 interface FileLike {
