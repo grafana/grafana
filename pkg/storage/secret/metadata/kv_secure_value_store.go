@@ -31,8 +31,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// kvSection is the KV store section for secure value metadata
-const kvSection = "secret/securevalues"
+const (
+	kvSectionSecureValues = "secret/securevalues"
+)
 
 type kvSecureValueMetadataStorage struct {
 	kv           resource.KV
@@ -88,11 +89,6 @@ type secureValueKV struct {
 	LeaseCreated  int64  `json:"lease_created,omitempty"`
 	LeaseDuration int64  `json:"lease_duration"`
 	GCAttempts    int    `json:"gc_atttempts"`
-}
-
-// makeKey creates a KV key for a secure value
-func makeKey(namespace, name string, version int64) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
 }
 
 // makePrefix creates a prefix for listing all versions of a resource
@@ -241,7 +237,7 @@ func (s *kvSecureValueMetadataStorage) readValue(ctx context.Context, key string
 		attribute.String("key", key),
 	))
 	defer span.End()
-	reader, err := s.kv.Get(ctx, kvSection, key)
+	reader, err := s.kv.Get(ctx, kvSectionSecureValues, key)
 	if err != nil {
 		if errors.Is(err, resource.ErrNotFound) {
 			return nil, contracts.ErrSecureValueNotFound
@@ -267,7 +263,7 @@ func (s *kvSecureValueMetadataStorage) writeValue(ctx context.Context, key strin
 		return fmt.Errorf("failed to marshal value: %w", err)
 	}
 
-	writer, err := s.kv.Save(ctx, kvSection, key)
+	writer, err := s.kv.Save(ctx, kvSectionSecureValues, key)
 	if err != nil {
 		return fmt.Errorf("failed to save value: %w", err)
 	}
@@ -292,7 +288,7 @@ func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, nam
 
 	prefix := makePrefix(namespace, name)
 
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 		Sort:     resource.SortOrderDesc,
@@ -380,8 +376,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	}
 
 	// Save the new version (it starts as inactive)
-	key := makeKey(sv.Namespace, sv.Name, newVersion)
-
+	key := contracts.MakeKey(sv.Namespace, sv.Name, sv.Status.Version)
 	if err := s.writeValue(ctx, key, value); err != nil {
 		return nil, fmt.Errorf("failed to write value: %w", err)
 	}
@@ -420,10 +415,10 @@ func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contract
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, contracts.MakeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
-	if err := s.kv.BatchDelete(ctx, kvSection, keys); err != nil {
+	if err := s.kv.BatchDelete(ctx, kvSectionSecureValues, keys); err != nil {
 		return fmt.Errorf("batch deleting secure values from kv store: %+v", err)
 	}
 
@@ -468,14 +463,14 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 	keys := make([]string, 0)
 
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{}) {
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{}) {
 		if err != nil {
 			return nil, fmt.Errorf("listing keys in the kv store: %w", err)
 		}
 		keys = append(keys, key)
 	}
 
-	for keyValue, err := range s.kv.BatchGet(ctx, kvSection, keys) {
+	for keyValue, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
 		if err != nil {
 			return nil, fmt.Errorf("fetching batch from kv store: %w", err)
 		}
@@ -557,7 +552,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 			}
 			result = append(result, *k8s)
 		}
-		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+		if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
 			return nil, fmt.Errorf("sending batch query to kv store: %w", err)
 		}
 	}
@@ -597,7 +592,7 @@ func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube
 
 	seen := make(map[string]struct{}, 0)
 
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 		Sort:     resource.SortOrderDesc,
@@ -663,7 +658,7 @@ func (s *kvSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube
 	prefix := makePrefix(namespace.String(), name)
 
 	// List all versions in descending order to find the active one, which might not be the latest inserted
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 		Sort:     resource.SortOrderDesc,
@@ -716,7 +711,7 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 		s.metrics.KVSecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	key := makeKey(namespace.String(), name, version)
+	key := contracts.MakeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
 	if err != nil {
@@ -737,10 +732,10 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 	defer span.End()
 
 	prefix := makePrefix(namespace.String(), name)
-	targetKey := makeKey(namespace.String(), name, version)
+	targetKey := contracts.MakeKey(namespace.String(), name, version)
 
 	// First, deactivate all versions, this mimics the SQL behavior which happens in a single update query
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 	}) {
@@ -775,7 +770,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	))
 	defer span.End()
 
-	key := makeKey(namespace.String(), name, version)
+	key := contracts.MakeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
 	if err != nil {
@@ -809,52 +804,46 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, contracts.MakeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
-	toUpdate := make([]secureValueKV, 0, len(keys))
-
 	count := make(map[string]int, len(keys))
+	toUpdate := make(map[string]secureValueKV, len(keys))
 
-	for kvValue, err := range s.kv.BatchGet(ctx, kvSection, keys) {
+	for kvValue, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
 		if err != nil {
-			return nil, fmt.Errorf("BatchGet returned error: %w", err)
+			return nil, fmt.Errorf("batch getting gc metadata: %w", err)
 		}
-
-		lease, err := s.leaseManager.Acquire(ctx, kvValue.Key)
-		if err != nil {
-			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
-		}
-		defer func() {
-			if err := s.leaseManager.Release(ctx, lease); err != nil {
-				logging.FromContext(ctx).Error("releasing kv store lease", "err", err.Error())
-			}
-		}()
-
 		parsed, err := parseSecureValue(kvValue.Value)
 		if err != nil {
-			return nil, fmt.Errorf("parsing secure value: %w", err)
+			return nil, fmt.Errorf("parsing secure value gc metadata: %w", err)
+		}
+
+		if parsed.Active {
+			count[kvValue.Key] = parsed.GCAttempts
+			continue
 		}
 
 		parsed.GCAttempts += 1
-		toUpdate = append(toUpdate, parsed)
-		count[parsed.GUID] = parsed.GCAttempts
+		toUpdate[kvValue.Key] = parsed
+		count[kvValue.Key] = parsed.GCAttempts
 	}
 
 	if len(toUpdate) > 0 {
 		ops := make([]kv.BatchOp, 0, len(toUpdate))
-		for _, sv := range toUpdate {
-			value, err := json.Marshal(sv)
+		for key, metadata := range toUpdate {
+			value, err := json.Marshal(metadata)
 			if err != nil {
-				return nil, fmt.Errorf("failed to marshal value: %w", err)
+				return nil, fmt.Errorf("failed to marshal gc metadata: %w", err)
 			}
 			ops = append(ops, kv.BatchOp{
-				Mode:  kv.BatchOpPut,
-				Key:   makeKey(sv.Namespace, sv.Name, sv.Version),
+				Mode:  kv.BatchOpUpdate,
+				Key:   key,
 				Value: value,
 			})
 		}
-		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+		// Will fail if a secure value has been deleted in the meantime
+		if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
 			return nil, fmt.Errorf("batch updating secure values: %w", err)
 		}
 	}
@@ -917,7 +906,7 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 	}
 	toUpdate := make([]entry, 0)
 
-	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
+	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
 		Sort:     resource.SortOrderDesc,
@@ -950,7 +939,7 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 				Value: value,
 			})
 		}
-		if err := s.kv.Batch(ctx, kvSection, ops); err != nil {
+		if err := s.kv.Batch(ctx, kvSectionSecureValues, ops); err != nil {
 			return fmt.Errorf("batch updating secure values: %w", err)
 		}
 	}

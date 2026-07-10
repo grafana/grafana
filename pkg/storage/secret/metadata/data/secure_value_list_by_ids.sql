@@ -1,6 +1,9 @@
 SELECT
   {{ .Ident "guid" }},
-  {{ .Ident "gc_attempts" }}
+  {{ .Ident "gc_attempts" }},
+  {{ .Ident "namespace" }},
+  {{ .Ident "name" }},
+  {{ .Ident "version" }}
 FROM
   {{ .Ident "secret_secure_value" }}
 WHERE

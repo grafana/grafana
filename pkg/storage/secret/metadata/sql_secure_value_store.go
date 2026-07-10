@@ -795,7 +795,8 @@ func (s *secureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in [
 
 	count = make(map[string]int, len(secureValues))
 	for _, sv := range secureValues {
-		count[sv.GUID] = sv.GCAttempts
+		key := contracts.MakeKey(sv.Namespace, sv.Name, sv.Version)
+		count[key] = sv.GCAttempts
 	}
 
 	span.AddEvent("updated count", trace.WithAttributes(attribute.String("count", fmt.Sprintf("%+v", count))))
@@ -838,7 +839,7 @@ func (s *secureValueMetadataStorage) fetchByIdentifiers(ctx context.Context, sec
 	for rows.Next() {
 		row := secureValueDB{}
 
-		err = rows.Scan(&row.GUID, &row.GCAttempts)
+		err = rows.Scan(&row.GUID, &row.GCAttempts, &row.Namespace, &row.Name, &row.Version)
 
 		if err != nil {
 			return nil, fmt.Errorf("error reading secure value row: %w", err)

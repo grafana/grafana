@@ -77,7 +77,7 @@ func runModelStateMachineTests(t *testing.T, opts ...func(*testutils.SetupConfig
 			},
 			"update": func(t *rapid.T) {
 				sv := testutils.UpdateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, _, modelErr := model.Update(sut.Clock.Now(), sv.DeepCopy())
+				modelCreatedSv, _, modelErr := model.Update(t.Context(), sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -523,7 +523,7 @@ func TestModelExampleBased(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create a new version of a secure value by updating it
-		sv2, _, err := m.Update(now, sv1.DeepCopy())
+		sv2, _, err := m.Update(t.Context(), now, sv1.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
@@ -533,14 +533,14 @@ func TestModelExampleBased(t *testing.T) {
 		sv3 := sv2.DeepCopy()
 		sv3.Name = "i_dont_exist"
 		sv3.Spec.Value = nil
-		_, _, err = m.Update(now, sv3)
+		_, _, err = m.Update(t.Context(), now, sv3)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 
 		// Updating a value that doesn't exist creates a new version
 		sv4 := sv3.DeepCopy()
 		sv4.Name = "i_dont_exist"
 		sv4.Spec.Value = new(secretv1beta1.NewExposedSecureValue("sv4"))
-		_, _, err = m.Update(now, sv4)
+		_, _, err = m.Update(t.Context(), now, sv4)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 	})
 

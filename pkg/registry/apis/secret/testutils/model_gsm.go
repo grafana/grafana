@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -170,10 +171,15 @@ func (m *ModelGsm) SetKeeperAsActive(namespace, keeperName string) error {
 	return nil
 }
 
-func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
+func (m *ModelGsm) Update(ctx context.Context, now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
 	sv := m.ReadActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
 	if sv == nil {
 		return nil, false, contracts.ErrSecureValueNotFound
+	}
+
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok || authInfo.GetIdentityType() != claims.TypeAccessPolicy {
+		newSecureValue.OwnerReferences = sv.OwnerReferences
 	}
 
 	// If the keeper doesn't exist, return an error

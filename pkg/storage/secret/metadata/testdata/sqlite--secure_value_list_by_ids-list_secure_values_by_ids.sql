@@ -1,6 +1,9 @@
 SELECT
   "guid",
-  "gc_attempts"
+  "gc_attempts",
+  "namespace",
+  "name",
+  "version"
 FROM
   "secret_secure_value"
 WHERE
