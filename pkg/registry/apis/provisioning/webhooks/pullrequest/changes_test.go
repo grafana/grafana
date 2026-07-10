@@ -1603,8 +1603,10 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 	reader.On("Config").Return(&provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "ghes-repo", Namespace: "x"},
 		Spec: provisioning.RepositorySpec{
-			Type:             provisioning.GitHubEnterpriseRepositoryType,
-			GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+			Type: provisioning.GitHubEnterpriseRepositoryType,
+			PullRequest: &provisioning.PullRequestOptions{
+				GenerateDashboardPreviews: true,
+			},
 		},
 	})
 	reader.On("Read", mock.Anything, "playlist.json", "ref").Return(finfo, nil)
