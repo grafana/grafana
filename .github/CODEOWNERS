@@ -844,6 +844,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Page/ @grafana/grafana-frontend-navigation
 /public/app/core/components/PageActionBar/ @grafana/grafana-frontend-navigation
 /public/app/core/components/PageInfo/ @grafana/grafana-frontend-navigation
+/public/app/core/components/PageLoader/ @grafana/grafana-frontend-navigation
 /public/app/core/components/PageNotFound/ @grafana/grafana-frontend-navigation
 /public/app/core/components/PanelTypeFilter/ @grafana/sharing-squad
 /public/app/core/components/PasswordField/ @grafana/grafana-frontend-platform

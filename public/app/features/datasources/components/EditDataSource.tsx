@@ -12,8 +12,8 @@ import {
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
 import { getDataSourceSrv, usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
-import { PageLoader } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { useDispatch } from 'app/types/store';
 

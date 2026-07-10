@@ -65,7 +65,7 @@ describe('<EditDataSource>', () => {
         dataSourceSettings: getMockDataSourceSettingsState({ loadError: 'Some weird error.' }),
       });
 
-      expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
       expect(screen.queryByText('My Datasource')).not.toBeInTheDocument();
       expect(screen.queryByText('Back')).toBeVisible();
     });
@@ -125,14 +125,14 @@ describe('<EditDataSource>', () => {
         dataSourceSettings: getMockDataSourceSettingsState({ loading: true }),
       });
 
-      expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+      expect(screen.queryByText('Loading ...')).toBeVisible();
       expect(screen.queryByText('My Datasource')).not.toBeInTheDocument();
     });
 
     it('should not render loading when data is already available', () => {
       setup();
 
-      expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
     });
   });
 

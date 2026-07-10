@@ -5,8 +5,9 @@ import { usePrevious } from 'react-use';
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, PageLoader } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   DashboardBrandingFooter,
