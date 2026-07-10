@@ -13643,7 +13643,7 @@
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs",
-      "triggered-by-webhook": "Webhook"
+      "triggered-by-system": "System"
     },
     "repository-actions": {
       "connection": "Connection",
