@@ -897,14 +897,17 @@ Silent interactions:
 
 Use silent mode for interactions added specifically for journey tracking that have no standalone analytics value:
 
-| Interaction                           | Why silent                                              |
-| ------------------------------------- | ------------------------------------------------------- |
-| `command_palette_closed`              | Only needed to detect palette dismiss vs navigation     |
-| `grafana_browse_dashboards_page_view` | Only needed to detect folder load and journey start     |
-| `panel_edit_closed`                   | Only needed to detect panel editor deactivation         |
-| `panel_edit_discarded`                | Only needed to distinguish discard vs save before close |
-| `explore_to_dashboard_panel_applied`  | Only needed to detect panel applied on dashboard side   |
-| `e_2_d_discarded`                     | Only needed to detect form dismiss without submit       |
+| Interaction                            | Why silent                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| `command_palette_closed`               | Only needed to detect palette dismiss vs navigation                               |
+| `grafana_browse_dashboards_page_view`  | Only needed to detect folder load and journey start                               |
+| `panel_edit_closed`                    | Only needed to detect panel editor deactivation                                   |
+| `panel_edit_discarded`                 | Only needed to distinguish discard vs save before close                           |
+| `explore_to_dashboard_panel_applied`   | Only needed to detect panel applied on dashboard side                             |
+| `e_2_d_discarded`                      | Only needed to detect form dismiss without submit                                 |
+| `grafana_alerting_rule_viewer_loaded`  | Only needed to detect the rule detail view settling for `home_to_alert_insight`   |
+| `grafana_alerting_alert_groups_loaded` | Only needed to detect the alert groups query settling for `home_to_alert_insight` |
+| `grafana_alerting_rule_editor_loaded`  | Only needed to detect the rule editor rendering for `home_to_alert_insight`       |
 
 Existing interactions like `command_palette_opened`, `command_palette_action_selected`, and `dashboards_init_dashboard_completed` are NOT silent - they have independent analytics value.
 

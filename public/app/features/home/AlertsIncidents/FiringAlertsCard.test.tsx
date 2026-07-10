@@ -432,5 +432,29 @@ describe('FiringAlertsCard', () => {
         ms_since_load: expect.any(Number),
       });
     });
+
+    it('anchors ms_since_load to the successful response, not an earlier error screen', async () => {
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1000);
+      const alertsUrl = '/api/alertmanager/:datasourceUid/api/v2/alerts';
+      // Initial fetch errors; the error state renders only a Retry button (no card-click control).
+      server.use(http.get(alertsUrl, () => HttpResponse.json({}, { status: 500 })));
+
+      const { user } = render(<FiringAlertsCard />);
+      const retry = await screen.findByRole('button', { name: /retry/i });
+
+      // User lingered on the error screen; the retry succeeds and data becomes visible at t=5000.
+      nowSpy.mockReturnValue(5000);
+      server.use(http.get(alertsUrl, () => HttpResponse.json([criticalAlert])));
+      await user.click(retry);
+
+      const viewAll = await screen.findByRole('link', { name: /view all firing alerts/i });
+      nowSpy.mockReturnValue(5010);
+      await user.click(viewAll);
+
+      // 5010 - 5000 = 10 (measured from data-visible), NOT 5010 - 1000 = 4010 (the error-screen time).
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'view_all_alerts', ms_since_load: 10 })
+      );
+    });
   });
 });

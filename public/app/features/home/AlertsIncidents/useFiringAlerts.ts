@@ -78,14 +78,16 @@ export function useFiringAlerts() {
   // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
   const loading = enabled && (teamsLoading || alertsLoading);
 
-  // The card finishes loading at roughly homepage load, so its own load moment anchors the dwell
-  // window for the home_to_alert_insight journey. Record it once, when loading first flips false.
+  // Anchor the dwell window (card data visible -> click) for the home_to_alert_insight journey.
+  // Record it once, and only after a *successful* alerts response: `loading` also flips false on an
+  // initial error, so anchoring on `loading` alone would fold a later error -> retry interval into
+  // ms_since_load instead of measuring time since the data actually became visible.
   const loadedAtRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (!loading && loadedAtRef.current === undefined) {
+    if (!loading && !error && loadedAtRef.current === undefined) {
       loadedAtRef.current = Date.now();
     }
-  }, [loading]);
+  }, [loading, error]);
 
   // Route every card click through here so each action carries the dwell attribute.
   const trackClick = (props: Pick<CtaClicked, 'action' | 'placement' | 'severity'>) => {
