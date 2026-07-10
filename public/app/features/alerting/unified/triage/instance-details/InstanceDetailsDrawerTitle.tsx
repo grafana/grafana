@@ -89,7 +89,6 @@ export function InstanceDetailsDrawerTitle({
   const canAccessIncident = settings
     ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare'))
     : false;
-  const canSilence = canCreateSilence;
 
   return (
     <Stack direction="column" gap={2}>
@@ -124,12 +123,12 @@ export function InstanceDetailsDrawerTitle({
             <Stack direction="row" gap={1} alignItems="center">
               {silenceLink && (
                 <>
-                  {canSilence && onOpenSilence && (
+                  {canCreateSilence && onOpenSilence && (
                     <Button icon="bell-slash" variant="secondary" size="sm" onClick={onOpenSilence}>
                       <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
                     </Button>
                   )}
-                  {canSilence && !onOpenSilence && (
+                  {canCreateSilence && !onOpenSilence && (
                     <LinkButton
                       href={silenceLink}
                       icon="bell-slash"
@@ -141,7 +140,7 @@ export function InstanceDetailsDrawerTitle({
                       <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
                     </LinkButton>
                   )}
-                  {!canSilence && (
+                  {!canCreateSilence && (
                     <Tooltip
                       content={t(
                         'alerting.triage.instance-details-drawer.silence-no-permission',
