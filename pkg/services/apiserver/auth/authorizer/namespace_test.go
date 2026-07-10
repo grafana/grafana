@@ -152,13 +152,27 @@ func TestNamespaceAuthorizer(t *testing.T) {
 			wantReason:   "invalid org",
 		},
 		{
-			name: "anonymous user defers to next authorizer",
+			name: "anonymous user with org-1 namespace is denied without error",
 			requester: &identity.StaticRequester{
 				Type: types.TypeAnonymous,
 			},
 			attr: authorizer.AttributesRecord{
 				ResourceRequest: true,
 				Namespace:       "org-1",
+			},
+			wantDecision: authorizer.DecisionDeny,
+			wantReason:   "invalid namespace",
+		},
+		{
+			name: "anonymous user with valid namespace defers to next authorizer",
+			requester: &identity.StaticRequester{
+				Type:      types.TypeAnonymous,
+				OrgID:     1,
+				Namespace: "default",
+			},
+			attr: authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Namespace:       "default",
 			},
 			wantDecision: authorizer.DecisionNoOpinion,
 		},

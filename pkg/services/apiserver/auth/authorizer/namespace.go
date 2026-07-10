@@ -26,11 +26,6 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	// If we have an anonymous user, let the next authorizers decide.
-	if types.IsIdentityType(ident.GetIdentityType(), types.TypeAnonymous) {
-		return authorizer.DecisionNoOpinion, "", nil
-	}
-
 	ns, err := types.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		// Do not propagate parse errors: the apiserver treats authorizer errors as 500s.
@@ -42,7 +37,11 @@ func (auth namespaceAuthorizer) Authorize(ctx context.Context, a authorizer.Attr
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
-	// Grafana Admins can access any valid namespace; skip org scoping.
+	// Anonymous users and Grafana Admins can access any valid namespace; skip org scoping.
+	if types.IsIdentityType(ident.GetIdentityType(), types.TypeAnonymous) {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	if ident.GetIsGrafanaAdmin() {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
