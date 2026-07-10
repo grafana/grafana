@@ -147,13 +147,13 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		sources = append(sources, item.Name)
 	}
 
-	// [users] home_page is a fallback for requesters without a home dashboard
-	// preference, never an override (matches GetHomeDashboard and navtree).
-	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != "" {
-		defaults.HomeURL = nil
-	}
 	if err := mergo.Merge(&p.Spec, defaults); err != nil {
 		return nil, err
+	}
+
+	// [users] home_page is a fallback, superseded by any home dashboard (matches GetHomeDashboard).
+	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != "" {
+		p.Spec.HomeURL = nil
 	}
 
 	// Where did the preferences come from
