@@ -30,7 +30,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            <Stack gap={0.5} direction="column">
+            <Stack gap={0.5} direction="column" minWidth={0}>
               {onEditTitle ? (
                 <EditableTitle value={navItem.text} onEdit={onEditTitle} />
               ) : renderTitle ? (
