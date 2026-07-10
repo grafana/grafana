@@ -74,13 +74,10 @@ export function MegaMenuItemText({
 
   const pinButton = (
     <IconButton
-      // When customising, show a struck-through pin (gf-unpin) for pinned items so the unpin action
-      // reads clearly; unpinned items show gf-pin. iconType is a no-op for the custom gf- icons.
-      name={canCustomise ? (isPinned ? 'gf-unpin' : 'gf-pin') : 'bookmark'}
+      // When customising, a filled pin marks a pinned item and an outline pin an unpinned one.
+      name={canCustomise ? (isPinned ? 'gf-pin-filled' : 'gf-pin-unfilled') : 'bookmark'}
       // Always-visible in edit mode; hover-only (the `pin-icon` treatment) for the legacy control.
       className={canCustomise ? 'customise-icon' : 'pin-icon'}
-      // Highlight the unpin action in red so it clearly reads as "remove".
-      variant={canCustomise && isPinned ? 'destructive' : 'secondary'}
       iconType={isPinned ? 'solid' : 'default'}
       onClick={() => onPin(url)}
       aria-pressed={isPinned}
@@ -103,7 +100,15 @@ export function MegaMenuItemText({
   );
 
   return (
-    <div className={cx(styles.wrapper, isActive && styles.wrapperActive, editMode && isHidden && styles.hiddenInEdit)}>
+    <div
+      className={cx(
+        styles.wrapper,
+        // A subtle hover/focus highlight on every row (the active row keeps its selected background).
+        !isActive && styles.hoverable,
+        isActive && styles.wrapperActive,
+        editMode && isHidden && styles.hiddenInEdit
+      )}
+    >
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
         className={styles.container}
@@ -119,8 +124,8 @@ export function MegaMenuItemText({
             // Fixed-width slots so the pin and hide controls line up in columns across every row
             // (a pin-only row keeps the pin in the pin column, leaving the hide column empty).
             <div className={styles.controls}>
-              <span className={styles.controlSlot}>{showPinControl && pinButton}</span>
-              <span className={styles.controlSlot}>{showHideControl && hideButton}</span>
+              <span className={cx('megamenu-control-slot', styles.controlSlot)}>{showPinControl && pinButton}</span>
+              <span className={cx('megamenu-control-slot', styles.controlSlot)}>{showHideControl && hideButton}</span>
             </div>
           )
         : showPinControl && (
@@ -152,6 +157,13 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       '.pin-icon': {
         visibility: 'visible',
       },
+    },
+  }),
+  // Subtle hover/focus highlight for normal browsing (not while customising).
+  hoverable: css({
+    borderRadius: theme.shape.radius.default,
+    '&:hover, &:focus-within': {
+      backgroundColor: theme.colors.action.hover,
     },
   }),
   // Fixed control columns (pin, hide) so each control type lines up vertically across rows.

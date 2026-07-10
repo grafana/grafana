@@ -22,6 +22,8 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
+  /** Extra class for the row's root — e.g. to nudge the pinned Starred section into alignment. */
+  className?: string;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
   /** Menu is in customise mode: show visibility toggles instead of bookmark pins */
@@ -35,6 +37,11 @@ interface Props {
   ancestorHidden?: boolean;
   /** When set (top-level rows in edit mode), makes the row draggable and shows a drag handle */
   draggableProvided?: DraggableProvided;
+  /** Prefix for the collapse-state localStorage key, so a section shown both in the pinned box and
+   * the nav (e.g. Starred) doesn't share — and fight over — the same expand state. */
+  expandKeyPrefix?: string;
+  /** Initial collapse state when nothing is stored yet (defaults to "expanded if a child is active"). */
+  defaultExpanded?: boolean;
   /** Customisation is enabled — gates the new pin/hide behaviour; off restores the legacy bookmarks UI */
   canCustomise?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
@@ -49,6 +56,7 @@ export function MegaMenuItem({
   link,
   activeItem,
   level = 0,
+  className,
   onClick,
   onPin,
   isPinned,
@@ -58,6 +66,8 @@ export function MegaMenuItem({
   onToggleHidden,
   ancestorHidden,
   draggableProvided,
+  expandKeyPrefix = '',
+  defaultExpanded,
   canCustomise,
   loadingChildren,
   childrenLoadError,
@@ -75,8 +85,8 @@ export function MegaMenuItem({
   // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
   const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
-    `grafana.navigation.expanded[${link.text}]`,
-    Boolean(hasActiveChild)
+    `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
+    defaultExpanded ?? Boolean(hasActiveChild)
   );
   // Only count children that actually render (create actions are filtered out below), so a section
   // whose visible children are all hidden doesn't keep an expand button that opens to nothing.
@@ -146,15 +156,33 @@ export function MegaMenuItem({
   }
 
   // Whether to render the bookmark/pin control. With customisation off it's the legacy behaviour:
-  // every item shows it (gating lives in MegaMenuItemText). With it on: only **non-top-level** items
-  // are pinnable — top-level sections aren't, except Starred (a special case).
+  // every item shows it (gating lives in MegaMenuItemText). With it on: non-top-level items are
+  // pinnable, and a top-level section is pinnable when it has no children of its own (a leaf section
+  // like Explore) or is Starred (a special case) — but not a parent section (you pin its children).
   const isPinnableItem = link.id !== 'home' && !link.id?.startsWith(ID_PREFIX);
-  const isPinnableTopLevel = level > 0 || link.id === 'starred';
+  const isPinnableTopLevel = level > 0 || link.id === 'starred' || !linkHasChildren(link);
   const showPin = !canCustomise || (isPinnableTopLevel && isPinnableItem);
 
   return (
-    <li ref={setItemRef} className={styles.listItem} {...draggableProvided?.draggableProps}>
+    <li ref={setItemRef} className={cx(styles.listItem, className)} {...draggableProvided?.draggableProps}>
       <div className={styles.menuItem}>
+        {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
+            the content columns line up between top-level sections and their children. */}
+        {editMode && (
+          <div className={styles.dragColumn}>
+            {draggableProvided && (
+              <div
+                className={styles.dragHandle}
+                {...draggableProvided.dragHandleProps}
+                aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
+                  itemName: link.text,
+                })}
+              >
+                <Icon name="draggabledots" size="lg" />
+              </div>
+            )}
+          </div>
+        )}
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
@@ -181,7 +209,7 @@ export function MegaMenuItem({
                 uniform indented group that already align among themselves, so they intentionally
                 render the icon without it. */}
             <div
-              className={cx(styles.labelWrapper, {
+              className={cx('megamenu-item-label', styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
                 [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
@@ -216,23 +244,6 @@ export function MegaMenuItem({
             />
           )}
         </div>
-        {/* Reserve the drag column on every row while editing (only top-level rows are draggable) so
-            the pin/hide/chevron columns line up between top-level sections and their children. */}
-        {editMode && (
-          <div className={styles.dragColumn}>
-            {draggableProvided && (
-              <div
-                className={styles.dragHandle}
-                {...draggableProvided.dragHandleProps}
-                aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', {
-                  itemName: link.text,
-                })}
-              >
-                <Icon name="draggabledots" size="lg" />
-              </div>
-            )}
-          </div>
-        )}
       </div>
       {childrenVisible && (
         <ul className={styles.children}>
@@ -298,14 +309,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
     maxWidth: '100%',
   }),
-  // Fixed-width column that reserves the drag-handle slot even on non-draggable rows, so control
-  // columns line up across top-level sections and children.
+  // Fixed-width column that reserves the drag-handle slot even on non-draggable rows, so content
+  // lines up across top-level sections and children. Right-aligned + narrow so the handle sits close
+  // to the item icon.
   dragColumn: css({
     alignItems: 'center',
     display: 'flex',
     flexShrink: 0,
-    justifyContent: 'center',
-    width: theme.spacing(3),
+    justifyContent: 'flex-end',
+    width: theme.spacing(2),
+    // Pull the following content closer so there's only ~4px between the handle and the item icon.
+    marginRight: theme.spacing(-0.5),
   }),
   dragHandle: css({
     alignItems: 'center',

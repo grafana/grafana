@@ -306,14 +306,17 @@ describe('MegaMenu', () => {
         expect(labels.some((l) => l?.startsWith('Pin '))).toBe(false);
       });
 
-      it('does not offer a pin control on top-level sections', async () => {
+      it('offers a pin control on childless top-level sections but not on parent sections', async () => {
         const { user } = renderMegaMenu();
 
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await screen.findByRole('link', { name: 'Dashboards' });
         const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        // Parent sections (with children) aren't pinnable — you pin their children instead.
         expect(labels).not.toContain('Pin Dashboards');
-        expect(labels).not.toContain('Pin Explore');
+        expect(labels).not.toContain('Pin Administration');
+        // A childless top-level section (Explore) is pinnable.
+        expect(labels).toContain('Pin Explore');
       });
 
       it('offers a pin control on the Starred section (special case) but not its dashboards', async () => {

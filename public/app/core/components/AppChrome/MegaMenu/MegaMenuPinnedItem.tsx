@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { useLocalStorage } from 'react-use';
 
 import { type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -19,145 +18,69 @@ interface Props {
 }
 
 /**
- * A single pinned entry in the pinned box. A normal pin renders as a compact horizontal breadcrumb
- * ("… › Parent › Item") — the leaf (pinned item) always stays visible while the ancestor crumbs
- * truncate first. A whole-section pin (Starred) renders as a collapsible section listing its
- * children. The entry maps to one pinned url, with a single unpin control and drag handle.
+ * A normal pinned entry, rendered as a compact horizontal breadcrumb ("… › Parent › Item") with the
+ * top-level parent's icon leading. The leaf (the pinned item) always stays visible; the ancestor
+ * crumbs truncate first. Whole-section pins (Starred) are rendered by MegaMenuItem instead.
  */
 export function MegaMenuPinnedItem({ entry, activeItem, editMode, onUnpin, onClick, draggableProvided }: Props) {
   const styles = useStyles2(getStyles);
-  const { section } = entry;
-  // Expand state is only used for section pins; the hook is still called unconditionally.
-  const [expanded, setExpanded] = useLocalStorage(
-    `grafana.navigation.expanded[pinned/${section?.text ?? entry.url}]`,
-    true
-  );
+  const line = entry.lines[0];
+  const { item, ancestors, icon } = line;
+  const label = item.text;
 
-  const label = section ? section.text : entry.lines[0].item.text;
-  const isActiveUrl = (item: NavModelItem) => Boolean(item.url) && item.url === activeItem?.url;
-  const handleClick = (item: NavModelItem) => () => {
-    item.onClick?.();
-    onClick?.();
-  };
-  const iconFor = (item: NavModelItem) => (item.icon ? (toIconName(item.icon) ?? 'apps') : 'apps');
-  const linkComponentFor = (item: NavModelItem) => (item.url && !item.target && item.url.startsWith('/') ? Link : 'a');
-
-  const unpinButton = editMode && (
-    <IconButton
-      name="gf-unpin"
-      variant="destructive"
-      onClick={onUnpin}
-      aria-pressed
-      tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
-    />
-  );
-
-  const dragHandle = draggableProvided && (
-    <div
-      className={styles.dragHandle}
-      {...draggableProvided.dragHandleProps}
-      aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', { itemName: label })}
-    >
-      <Icon name="draggabledots" size="lg" />
-    </div>
-  );
-
-  const renderBreadcrumb = (line: PinnedEntry['lines'][number]) => {
-    const { item, ancestors, icon } = line;
-    const nearestAncestor = ancestors.at(-1);
-    const fullPath = [...ancestors, item.text].join(' › ');
-    const LinkComponent = linkComponentFor(item);
-
-    return (
-      <Tooltip content={fullPath} placement="top">
-        <LinkComponent
-          href={item.url ?? ''}
-          target={item.target}
-          onClick={handleClick(item)}
-          className={cx(styles.link, isActiveUrl(item) && styles.active)}
-          {...(isActiveUrl(item) && { 'aria-current': 'page' })}
-        >
-          {/* The leading icon is the top-level parent section's icon, not the leaf's own. */}
-          <Icon className={styles.leafIcon} name={icon ? (toIconName(icon) ?? 'apps') : 'apps'} size="lg" />
-          {ancestors.length > 1 && <span className={styles.fixed}>…</span>}
-          {nearestAncestor && (
-            <>
-              <span className={styles.crumb}>{nearestAncestor}</span>
-              <Icon className={styles.sep} name="angle-right" size="sm" />
-            </>
-          )}
-          <span className={styles.leaf}>{item.text}</span>
-        </LinkComponent>
-      </Tooltip>
-    );
-  };
-
-  // Whole-section pin (Starred): a collapsible section header with its children listed underneath.
-  if (section) {
-    const SectionLink = linkComponentFor(section);
-    const children = (section.children ?? []).filter((child) => !child.isCreateAction);
-
-    return (
-      <li ref={draggableProvided?.innerRef} className={styles.entry} {...draggableProvided?.draggableProps}>
-        <div className={styles.row}>
-          <SectionLink
-            href={section.url ?? ''}
-            target={section.target}
-            onClick={handleClick(section)}
-            className={cx(styles.link, isActiveUrl(section) && styles.active)}
-            {...(isActiveUrl(section) && { 'aria-current': 'page' })}
-          >
-            <Icon className={styles.leafIcon} name={iconFor(section)} size="lg" />
-            <span className={styles.leaf}>{section.text}</span>
-          </SectionLink>
-          <IconButton
-            name={expanded ? 'angle-up' : 'angle-down'}
-            aria-expanded={expanded}
-            onClick={() => setExpanded(!expanded)}
-            aria-label={
-              expanded
-                ? t('navigation.megamenu-item.collapse-aria-label', 'Collapse section: {{sectionName}}', {
-                    sectionName: section.text,
-                  })
-                : t('navigation.megamenu-item.expand-aria-label', 'Expand section: {{sectionName}}', {
-                    sectionName: section.text,
-                  })
-            }
-          />
-          {unpinButton}
-          {dragHandle}
-        </div>
-        {expanded && (
-          <ul className={styles.children}>
-            {children.map((child) => {
-              const ChildLink = linkComponentFor(child);
-              return (
-                <li key={child.id ?? child.url} className={styles.childRow}>
-                  <ChildLink
-                    href={child.url ?? ''}
-                    target={child.target}
-                    onClick={handleClick(child)}
-                    className={cx(styles.link, styles.childLink, isActiveUrl(child) && styles.active)}
-                    {...(isActiveUrl(child) && { 'aria-current': 'page' })}
-                  >
-                    {/* Children sit under the section header (like the nav), so no leading icon. */}
-                    <span className={styles.leaf}>{child.text}</span>
-                  </ChildLink>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </li>
-    );
-  }
+  const isActive = Boolean(item.url) && item.url === activeItem?.url;
+  const nearestAncestor = ancestors.at(-1);
+  const fullPath = [...ancestors, item.text].join(' › ');
+  const LinkComponent = item.url && !item.target && item.url.startsWith('/') ? Link : 'a';
 
   return (
     <li ref={draggableProvided?.innerRef} className={styles.entry} {...draggableProvided?.draggableProps}>
       <div className={styles.row}>
-        {renderBreadcrumb(entry.lines[0])}
-        {unpinButton}
-        {dragHandle}
+        {draggableProvided && (
+          <div
+            className={styles.dragHandle}
+            {...draggableProvided.dragHandleProps}
+            aria-label={t('navigation.megamenu-item.reorder-aria-label', 'Reorder {{itemName}}', { itemName: label })}
+          >
+            <Icon name="draggabledots" size="lg" />
+          </div>
+        )}
+        <Tooltip content={fullPath} placement="top">
+          <LinkComponent
+            href={item.url ?? ''}
+            target={item.target}
+            onClick={() => {
+              item.onClick?.();
+              onClick?.();
+            }}
+            className={cx(styles.link, isActive && styles.active)}
+            {...(isActive && { 'aria-current': 'page' })}
+          >
+            {/* The leading icon is the top-level parent section's icon, not the leaf's own. */}
+            <Icon className={styles.leafIcon} name={icon ? (toIconName(icon) ?? 'apps') : 'apps'} size="lg" />
+            {ancestors.length > 1 && <span className={styles.fixed}>…</span>}
+            {nearestAncestor && (
+              <>
+                <span className={styles.crumb}>{nearestAncestor}</span>
+                <Icon className={styles.sep} name="angle-right" size="sm" />
+              </>
+            )}
+            <span className={styles.leaf}>{item.text}</span>
+          </LinkComponent>
+        </Tooltip>
+        {editMode && (
+          <>
+            <IconButton
+              name="gf-pin-filled"
+              onClick={onUnpin}
+              aria-pressed
+              tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
+            />
+            {/* Reserve the trailing chevron column the nav rows have but breadcrumb rows don't, so the
+                unpin icon lines up with the nav rows' control icons rather than sitting flush right. */}
+            <span className={styles.trailingSpacer} />
+          </>
+        )}
       </div>
     </li>
   );
@@ -174,11 +97,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(4),
     minWidth: 0,
   }),
+  // Match MegaMenuItem's dragColumn (fixed width, right-aligned) so the breadcrumb rows indent the
+  // same amount as the Starred section beside them.
   dragHandle: css({
     alignItems: 'center',
     color: theme.colors.text.secondary,
     cursor: 'grab',
     display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'flex-end',
+    width: theme.spacing(2),
+    // Pull the following content closer so there's only ~4px between the handle and the item icon.
+    marginRight: theme.spacing(-0.5),
     '&:hover': {
       color: theme.colors.text.primary,
     },
@@ -191,28 +121,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(0.5),
     minWidth: 0,
     overflow: 'hidden',
+    // Matches MegaMenuItem's labelWrapper inset so breadcrumb icons line up with the Starred section.
+    paddingLeft: theme.spacing(0.5),
     '&:hover': {
       color: theme.colors.text.primary,
     },
   }),
-  children: css({
-    display: 'flex',
-    flexDirection: 'column',
-    listStyleType: 'none',
-    margin: 0,
-    padding: 0,
-  }),
-  childRow: css({
-    display: 'flex',
-    height: theme.spacing(4),
-  }),
-  // Indent the section's children so they sit under the section label, past the icon column.
-  childLink: css({
-    paddingLeft: theme.spacing(3),
-  }),
   leafIcon: css({
     flexShrink: 0,
     width: theme.spacing(3),
+  }),
+  // Reserves the chevron column the Starred section has after its unpin, so the breadcrumb rows'
+  // unpin icon lines up with the Starred section's (which keeps its collapse chevron on the right).
+  trailingSpacer: css({
+    flexShrink: 0,
+    width: theme.spacing(2),
   }),
   // The nearest-ancestor crumb shrinks/ellipsizes first so the leaf label stays visible.
   crumb: css({
@@ -222,9 +145,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   }),
-  // The pinned item itself: brighter than the crumbs and never shrinks, so it stays readable.
+  // The pinned item itself never shrinks so it stays readable (secondary, like the rest of the row).
   leaf: css({
-    color: theme.colors.text.primary,
+    color: theme.colors.text.secondary,
     flexShrink: 0,
     whiteSpace: 'nowrap',
   }),
