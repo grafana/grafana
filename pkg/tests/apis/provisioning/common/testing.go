@@ -1435,13 +1435,6 @@ func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	}
 }
 
-// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
-func WithFolderAPIVersion(version string) GrafanaOption {
-	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningFolderAPIVersion = version
-	}
-}
-
 // WithProvisioningMaxIncrementalChanges overrides the controller-side
 // incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
 // when they need to exercise the full-sync fallback; 0 disables the check.

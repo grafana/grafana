@@ -36,7 +36,8 @@
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T12:01:31Z"
+        "creationTimestamp": "2024-03-05T12:01:31Z",
+        "deletionTimestamp": "2026-07-07T09:06:03Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
@@ -1435,6 +1436,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebooks",
+        "resourceVersion": "1783509818865",
+        "creationTimestamp": "2026-07-08T11:23:38Z"
+      },
+      "spec": {
+        "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -1554,6 +1568,7 @@
         "name": "dashboardNotebookLayout",
         "resourceVersion": "1781098889122",
         "creationTimestamp": "2026-06-10T13:08:25Z",
+        "deletionTimestamp": "2026-07-08T11:23:38Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
         }
@@ -5601,7 +5616,8 @@
       "metadata": {
         "name": "unlimitedLayoutsNesting",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-10T12:15:54Z"
+        "creationTimestamp": "2025-10-10T12:15:54Z",
+        "deletionTimestamp": "2026-07-09T10:11:22Z"
       },
       "spec": {
         "description": "Enables unlimited dashboard panel grouping",

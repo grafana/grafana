@@ -2822,7 +2822,8 @@
       "label-data-source": "Data source"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "View alert rule"
+      "go-to-detail-view": "View alert rule",
+      "silence-button": "Silence"
     },
     "rule-details-expression": {
       "label-expression": "Expression"
@@ -12195,7 +12196,9 @@
       "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
-      "loading-aria-label": "Loading {{sectionName}}"
+      "loading-aria-label": "Loading {{sectionName}}",
+      "starred-dashboard-icon": "Dashboard",
+      "starred-folder-icon": "Folder"
     },
     "org-switcher": {
       "aria-label": "Change organization"
