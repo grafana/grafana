@@ -171,7 +171,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
 2024-11-22,alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
-2024-12-12,elasticsearchCrossClusterSearch,GA,@grafana/data-sources-plugins,false,false,false
 2024-12-13,lokiLabelNamesQueryApi,GA,@grafana/data-sources-plugins,false,false,false
 2025-01-09,improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false

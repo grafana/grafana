@@ -2074,7 +2074,8 @@
       "metadata": {
         "name": "elasticsearchCrossClusterSearch",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-12-12T22:20:04Z"
+        "creationTimestamp": "2024-12-12T22:20:04Z",
+        "deletionTimestamp": "2026-07-10T20:51:17Z"
       },
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
