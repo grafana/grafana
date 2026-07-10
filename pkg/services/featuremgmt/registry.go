@@ -284,7 +284,7 @@ var (
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
