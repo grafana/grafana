@@ -86,15 +86,41 @@ func TestMergePreferences(t *testing.T) {
 			},
 		},
 		{
-			name: "no items keeps both homeURL and custom home dashboard",
+			name: "home_page suppresses config-derived custom home dashboard",
 			defaults: preferences.PreferencesSpec{
 				HomeURL:          new("/a/grafana-setupguide-app/home"),
 				HomeDashboardUID: new("default-home-dashboard"),
 			},
 			items: nil,
 			expect: preferences.PreferencesSpec{
+				HomeURL: new("/a/grafana-setupguide-app/home"),
+			},
+		},
+		{
+			name: "config custom home dashboard applies when home_page unset",
+			defaults: preferences.PreferencesSpec{
+				HomeURL:          new(""),
+				HomeDashboardUID: new("default-home-dashboard"),
+			},
+			items: nil,
+			expect: preferences.PreferencesSpec{
+				HomeURL:          new(""),
+				HomeDashboardUID: new("default-home-dashboard"),
+			},
+		},
+		{
+			name: "home dashboard preference suppresses homeURL even with config custom home",
+			defaults: preferences.PreferencesSpec{
 				HomeURL:          new("/a/grafana-setupguide-app/home"),
 				HomeDashboardUID: new("default-home-dashboard"),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("my-dash"),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("my-dash"),
 			},
 		},
 		{

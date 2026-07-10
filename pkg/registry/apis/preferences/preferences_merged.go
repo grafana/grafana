@@ -147,13 +147,18 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		sources = append(sources, item.Name)
 	}
 
-	if err := mergo.Merge(&p.Spec, defaults); err != nil {
-		return nil, err
+	// Legacy home precedence (matches GetHomeDashboard): a preference-layer
+	// HomeDashboardUID suppresses home_page; otherwise a non-empty home_page
+	// overwrites the config-derived default HomeDashboardUID. Must run before
+	// the defaults merge so only preference-layer values are checked.
+	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != "" {
+		defaults.HomeURL = nil
+	} else if defaults.HomeURL != nil && *defaults.HomeURL != "" {
+		defaults.HomeDashboardUID = nil
 	}
 
-	// [users] home_page is a fallback, superseded by any home dashboard (matches GetHomeDashboard).
-	if p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != "" {
-		p.Spec.HomeURL = nil
+	if err := mergo.Merge(&p.Spec, defaults); err != nil {
+		return nil, err
 	}
 
 	// Where did the preferences come from
