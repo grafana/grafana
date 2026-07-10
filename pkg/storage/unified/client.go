@@ -202,6 +202,9 @@ func newClient(opts options.StorageOptions,
 		if cfg.NATS.NotifierShadow && eventSubscriber != nil {
 			storageOpts = append(storageOpts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: eventSubscriber}))
 		}
+		if cfg.NATS.Notifier && eventSubscriber != nil {
+			storageOpts = append(storageOpts, sql.WithNatsNotifier(natsEventSubscriber{sub: eventSubscriber}))
+		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err

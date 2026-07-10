@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -334,6 +335,32 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	require.NotEmpty(t, name, "expecting name to be set")
 
 	return h.AwaitJob(t, t.Context(), unstruct)
+}
+
+// CreatePullJob creates a pull Job resource directly, bypassing the
+// repositories/{name}/jobs subresource, and returns the created object. The
+// repository name need not refer to an existing repository — this lets tests
+// drive the job pipeline (pickup, processing, archival) without standing up a
+// repository. A job against a missing repository fails fast and is archived.
+func (h *ProvisioningTestHelper) CreatePullJob(t *testing.T, jobName, repository string) *unstructured.Unstructured {
+	t.Helper()
+	job := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Job",
+		"metadata": map[string]any{
+			"name":      jobName,
+			"namespace": h.Namespace,
+			"labels":    map[string]any{jobs.LabelRepository: repository},
+		},
+		"spec": map[string]any{
+			"action":     string(provisioning.JobActionPull),
+			"repository": repository,
+			"pull":       map[string]any{},
+		},
+	}}
+	created, err := h.Jobs.Resource.Create(t.Context(), job, metav1.CreateOptions{})
+	require.NoError(t, err, "should create job %s directly", jobName)
+	return created
 }
 
 // AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
@@ -892,6 +919,25 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 	return createdName
 }
 
+// CreateRepositoryNoWait renders and creates a local repository from the spec
+// but does NOT wait for it to become healthy (unlike CreateLocalRepo). Use it
+// when the test needs to assert the controller's reconcile explicitly — e.g.
+// WaitForHealthyRepository — rather than have that wait hidden inside creation.
+func (h *ProvisioningTestHelper) CreateRepositoryNoWait(t *testing.T, repo TestRepo) {
+	t.Helper()
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	obj := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+	_, err := h.Repositories.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository %q", repo.Name)
+}
+
 func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 	if repo.SyncTarget == "" {
 		repo.SyncTarget = "instance"
@@ -1193,6 +1239,56 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForHealthyConnection polls until the connection controller has reconciled
+// the connection: its ObservedGeneration has caught up to the object
+// generation, a health check has run, it is healthy, and the Ready condition is
+// True. This is the connection analogue of WaitForHealthyRepository.
+func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get connection %s", name) {
+			return
+		}
+		conn := MustFromUnstructured[provisioning.Connection](t, obj)
+		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
+			"controller should reconcile the observed generation")
+		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+			"connection %s health check has not run yet", name)
+		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
+		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
+			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "connection %s should be reconciled and healthy", name)
+}
+
+// RequireRepositoryReReconciles ages the repository's health timestamp and
+// asserts the controller re-runs the health check (status.health.checked
+// advances), proving it reacts to update/resync events. Pairs with a create
+// that first brings the repository to healthy.
+func (h *ProvisioningTestHelper) RequireRepositoryReReconciles(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	obj, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get repository %s", name)
+	before, found := mustNestedInt64(obj.Object, "status", "health", "checked")
+	require.True(t, found, "repository %s should already have a health checked timestamp", name)
+
+	h.TriggerRepositoryReconciliation(t, name)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		cur, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		after, found := mustNestedInt64(cur.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s should have a health checked timestamp", name)
+		assert.Greater(collect, after, before, "controller should re-check health after the update")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s health should be re-checked", name)
+}
+
 // WaitForRepositoryDeleted polls until the named repository reports NotFound.
 // Repository deletion is finalizer-driven (cleanup → release/remove orphan
 // resources); on loaded CI runners the chain routinely exceeds short bounds.
@@ -1339,13 +1435,6 @@ func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	}
 }
 
-// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
-func WithFolderAPIVersion(version string) GrafanaOption {
-	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningFolderAPIVersion = version
-	}
-}
-
 // WithProvisioningMaxIncrementalChanges overrides the controller-side
 // incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
 // when they need to exercise the full-sync fallback; 0 disables the check.
@@ -1365,6 +1454,73 @@ func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
 func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningMaxFileSize = &n
+	}
+}
+
+// WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
+// the provisioning controllers reconcile off NATS-delivered resource-change
+// notifications instead of the apiserver watch. The KV backend is what publishes
+// those notifications, so both must be on together. Two free TCP ports are
+// allocated for the embedded server's client and cluster listeners so parallel
+// test binaries don't collide on the conventional 4222/6222.
+func WithNATS() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.EnableSQLKVBackend = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+		// Push the informer re-list and the job driver's fallback poll far out so
+		// any reconcile/job pickup observed within a test's wait budget can only
+		// have come from a live NATS notification, not the periodic LIST/poll.
+		// Tests that specifically exercise the re-list path (e.g. historic-job
+		// cleanup) override the relevant interval.
+		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
+		opts.ProvisioningJobPollInterval = 10 * time.Minute
+	}
+}
+
+// WithNATSReListOnly enables the embedded NATS bus but deliberately leaves the
+// SQL KV backend off, so no component ever publishes a watch notification. The
+// provisioning informers still run on the NATS path (they subscribe and
+// re-list) but receive no live events, so reconciliation is driven purely by
+// the periodic re-list, whose interval is set to resync. This isolates the
+// re-list fallback that guarantees eventual reconciliation when live
+// notifications are missed (round-robined to another replica, a startup or
+// reconnect gap). Keep resync short so the re-list fires within a test budget.
+func WithNATSReListOnly(resync time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+		// EnableSQLKVBackend stays false: only the KV backend publishes watch
+		// notifications, so leaving it off means the informers never receive a
+		// live event and the re-list is the sole reconcile driver.
+		opts.ProvisioningControllerResyncInterval = resync
+	}
+}
+
+// freePort asks the kernel for an available TCP port on the loopback interface
+// and returns it after closing the listener. There is an inherent (small) race
+// between closing and the embedded NATS server binding, but it is the same
+// approach used by the unified-storage NATS round-trip test and is adequate for
+// test isolation.
+func freePort() int {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(fmt.Sprintf("failed to allocate a free port for NATS: %v", err))
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
+// which is both the HistoricJob retention and the historic-job informer's
+// resync. A short value lets tests exercise the re-list-driven cleanup quickly.
+func WithProvisioningHistoryExpiration(d time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningHistoryExpiration = d
 	}
 }
 
@@ -3550,6 +3706,15 @@ func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) str
 	_, err := local.Git("fetch", "origin", ref)
 	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
 	out, err := local.Git("log", "-1", "--format=%s", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
+}
+
+func LatestCommitAuthor(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%an <%ae>", fmt.Sprintf("origin/%s", ref))
 	require.NoError(t, err, "git log should succeed")
 	return strings.TrimSpace(out)
 }

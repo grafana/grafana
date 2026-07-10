@@ -297,12 +297,12 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.Len(t, capturedComments, 1, "expected one pull request comment")
 
 	comment := capturedComments[0]
-	require.Contains(t, comment, "Grafana spotted some changes to your dashboard")
+	require.Contains(t, comment, "Grafana detected dashboard changes in this pull request")
 	require.Contains(t, comment, dashboardPath)
 
 	// Verify the dashboard and preview links the PR worker posted are
 	// well-formed and carry the context needed by the reviewer UI.
-	originalMarker := "[original]("
+	originalMarker := "[view current]("
 	originalStart := strings.Index(comment, originalMarker)
 	require.NotEqualf(t, -1, originalStart, "comment should contain original link:\n%s", comment)
 	originalRemainder := comment[originalStart+len(originalMarker):]
@@ -312,7 +312,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.NoError(t, err, "comment should contain a valid original URL")
 	require.Equal(t, "/d/gh-pr-comment-dash/github-pr-comment-dashboard-updated", originalURL.Path)
 
-	previewMarker := "[preview]("
+	previewMarker := "[preview changes]("
 	previewStart := strings.Index(comment, previewMarker)
 	require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
 	previewRemainder := comment[previewStart+len(previewMarker):]

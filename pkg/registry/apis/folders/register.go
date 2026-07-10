@@ -80,6 +80,10 @@ type FolderAPIBuilder struct {
 	cascadeConfigProvider apiserver.RestConfigProvider
 	dashboardSvc          *dynamic.NamespaceableResourceInterface
 	dashboardSvcMu        sync.Mutex
+
+	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
+	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	contentsDeleter FolderContentsDeleter
 }
 
 // dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
@@ -118,6 +122,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
 	restConfigProvider apiserver.RestConfigProvider,
+	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
 		accessClient:         accessClient,
@@ -126,6 +131,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
+		contentsDeleter:      contentsDeleter,
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -247,7 +253,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient)
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.contentsDeleter)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage

@@ -78,6 +78,24 @@ const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 // timeout used by the provisioning files write API.
 const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
 
+// ProvisioningControllerResyncIntervalDefault is the default value for the
+// [provisioning] resync_interval key. It sets how often the
+// provisioning controllers' informers re-list (repository, connection, job) as
+// a fallback to the live watch/NATS notifications. A shorter value reconciles
+// stale state sooner at the cost of more full LISTs.
+const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
+
+// ProvisioningHistoryExpirationDefault is the default value for the
+// [provisioning] history_expiration key. It is both how long a HistoricJob is
+// retained before the resync-driven cleanup removes it and the resync interval
+// of the historic-job informer that feeds that cleanup.
+const ProvisioningHistoryExpirationDefault = 10 * time.Minute
+
+// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
+// job_poll_interval key. It is how often the job driver polls for new jobs as a
+// fallback to the live watch/NATS notification that wakes it on job creation.
+const ProvisioningJobPollIntervalDefault = 30 * time.Second
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -178,11 +196,13 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for repo/connection/job controllers; default 60s; <=0 = default
+	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // job driver poll interval (fallback to the live job-create notification); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
@@ -796,6 +816,8 @@ type Cfg struct {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
 	EnableKVLeases                    bool
+	KVLeaseTTL                        time.Duration
+	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -2524,11 +2546,13 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration

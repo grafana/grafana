@@ -36,7 +36,8 @@
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T12:01:31Z"
+        "creationTimestamp": "2024-03-05T12:01:31Z",
+        "deletionTimestamp": "2026-07-07T09:06:03Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
@@ -1246,6 +1247,7 @@
         "name": "clearPreviousFieldValues",
         "resourceVersion": "1779387149898",
         "creationTimestamp": "2026-04-01T19:07:25Z",
+        "deletionTimestamp": "2026-07-07T16:17:13Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:12:29.898776 +0000 UTC"
         }
@@ -1448,6 +1450,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebooks",
+        "resourceVersion": "1783509818865",
+        "creationTimestamp": "2026-07-08T11:23:38Z"
+      },
+      "spec": {
+        "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -1567,6 +1582,7 @@
         "name": "dashboardNotebookLayout",
         "resourceVersion": "1781098889122",
         "creationTimestamp": "2026-06-10T13:08:25Z",
+        "deletionTimestamp": "2026-07-08T11:23:38Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
         }
@@ -1999,7 +2015,8 @@
       "metadata": {
         "name": "elasticsearchESQLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
@@ -2025,7 +2042,8 @@
       "metadata": {
         "name": "elasticsearchRawDSLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-15T19:11:05Z"
+        "creationTimestamp": "2025-12-15T19:11:05Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",
@@ -3002,6 +3020,7 @@
         "name": "groupToNestedTableV2",
         "resourceVersion": "1779387430820",
         "creationTimestamp": "2026-03-27T20:18:08Z",
+        "deletionTimestamp": "2026-07-07T16:17:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:17:10.820324 +0000 UTC"
         }
@@ -4133,6 +4152,7 @@
         "name": "panelStyleActions",
         "resourceVersion": "1779296829158",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-07-07T16:17:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 17:07:09.158003 +0000 UTC"
         }
@@ -4576,6 +4596,22 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioning.userAttribution",
+        "resourceVersion": "1783531000298",
+        "creationTimestamp": "2026-07-08T13:32:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-08 17:16:40.298205 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Author Git Sync commits as the acting Grafana user",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-app-platform-squad",
         "expression": "true"
       }
     },
@@ -5065,7 +5101,8 @@
       "metadata": {
         "name": "rudderstackUpgrade",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-19T16:48:23Z"
+        "creationTimestamp": "2025-11-19T16:48:23Z",
+        "deletionTimestamp": "2026-06-10T21:28:05Z"
       },
       "spec": {
         "description": "Enables the new version of rudderstack",
@@ -5612,7 +5649,8 @@
       "metadata": {
         "name": "unlimitedLayoutsNesting",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-10T12:15:54Z"
+        "creationTimestamp": "2025-10-10T12:15:54Z",
+        "deletionTimestamp": "2026-07-09T10:11:22Z"
       },
       "spec": {
         "description": "Enables unlimited dashboard panel grouping",

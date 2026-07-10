@@ -29,6 +29,8 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
+	// RepositoryURL links to the git repository (empty for local repositories)
+	RepositoryURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -57,6 +59,10 @@ type fileChangeInfo struct {
 
 	// The title from inside the resource (or name if not found)
 	Title string
+
+	// SourceURL links to the file in the git repository (empty when the
+	// repository does not expose web URLs, e.g. non-GitHub backends)
+	SourceURL string
 
 	// The URL where this will appear (target)
 	GrafanaURL           string
@@ -114,11 +120,17 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	// GenerateDashboardPreviews lives on the type-specific config, which is nil
+	// for the other provider(s) — guard against a nil dereference (e.g. a GitHub
+	// Enterprise repo has Spec.GitHubEnterprise set, not Spec.GitHub).
+	generatePreviews := (cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews) ||
+		(cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews)
+	shouldRender := rendererAvailable && len(changes) == 1 && generatePreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
+		RepositoryURL:        stripUserinfo(cfg.URL()),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
@@ -144,6 +156,22 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
+// stripUserinfo removes any embedded credentials (userinfo) from a URL so a
+// repository configured with an HTTPS URL like https://user:token@host/org/repo
+// never renders that token into a public PR comment. Returns "" when the URL
+// cannot be parsed, to avoid leaking a malformed credential-bearing string.
+func stripUserinfo(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	u.User = nil
+	return u.String()
+}
+
 // orgIDForLinks returns the org to pin on PR-comment links when the repo lives
 // in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
 // (stacks-N) and unresolved namespaces return 0, leaving links unscoped since
@@ -167,6 +195,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
 		return info
+	}
+
+	// Best-effort link back to the file in the git repository. Computed before
+	// parsing so that parse/validation failures still link reviewers to the
+	// source file. Repositories that don't expose web URLs (e.g. non-GitHub
+	// backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = stripUserinfo(urls.SourceURL)
+		}
 	}
 
 	// Read the file as a resource

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -28,11 +27,11 @@ const keepFileName = ".keep"
 // It also removes legacy .keep files from folders that have (or receive)
 // a _folder.json, since the metadata file supersedes the keep marker.
 type Worker struct {
-	folderGVK schema.GroupVersionKind
+	clientFactory resources.ClientFactory
 }
 
-func NewWorker(folderGVK schema.GroupVersionKind) *Worker {
-	return &Worker{folderGVK: folderGVK}
+func NewWorker(clientFactory resources.ClientFactory) *Worker {
+	return &Worker{clientFactory: clientFactory}
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
@@ -74,6 +73,17 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 			job,
 			fmt.Sprintf("Add folder metadata files\n\nTriggered by job %s at %s", job.Name, time.Now().UTC().Format(time.RFC3339)),
 		),
+	}
+
+	// Resolve the folder GVK via discovery (the server's preferred version) so the
+	// _folder.json manifests are written with whatever folder version the instance serves.
+	clients, err := w.clientFactory.Clients(ctx, repo.Config().Namespace)
+	if err != nil {
+		return fmt.Errorf("create clients: %w", err)
+	}
+	_, folderGVK, err := clients.Folder(ctx)
+	if err != nil {
+		return fmt.Errorf("resolve folder client: %w", err)
 	}
 
 	fn := func(stagedRepo repository.Repository, staged bool) error {
@@ -121,7 +131,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 				continue
 			}
 
-			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), w.folderGVK)
+			manifest := resources.NewFolderManifest(util.GenerateShortUID(), safepath.Base(folder.Path), folderGVK)
 			_, writeErr := resources.WriteFolderMetadata(ctx, rw, folder.Path, manifest, ref,
 				fmt.Sprintf("Add folder metadata for %s", folder.Path))
 
