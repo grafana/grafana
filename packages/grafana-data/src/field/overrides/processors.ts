@@ -4,8 +4,9 @@ import { type DataLink } from '../../types/dataLink';
 import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
-import { type ThresholdsConfig } from '../../types/thresholds';
+import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
 import { type ValueMapping } from '../../types/valueMapping';
+import { sortThresholds } from '../thresholds';
 
 export const identityOverrideProcessor = <T>(value: T) => {
   return value;
@@ -17,6 +18,45 @@ export interface NumberFieldConfigSettings {
   min?: number;
   max?: number;
   step?: number;
+  /**
+   * Allow variable expressions (e.g. `$myVar`) in addition to numbers.
+   * Values containing `$` are stored as strings and resolved at render time.
+   */
+  allowVariables?: boolean;
+}
+
+/**
+ * Resolves a numeric field-config value that may be a string containing a variable
+ * expression (e.g. `$myVar`). Returns undefined when the value does not resolve to a
+ * finite number: unknown variable, non-numeric value, missing interpolation support,
+ * or a multi-value variable with more than one value currently selected.
+ *
+ * @internal
+ */
+export function interpolateNumericValue(value: number | string, context: FieldOverrideContext): number | undefined {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (!context.replaceVariables) {
+    return undefined;
+  }
+
+  let multiInvalid = false;
+  const interpolated = context.replaceVariables(value, context.field?.state?.scopedVars, (v: unknown) => {
+    // Multi-value variables arrive as arrays; only a single current selection is valid
+    if (Array.isArray(v)) {
+      if (v.length > 1) {
+        multiInvalid = true;
+        return '';
+      }
+      return String(v[0]);
+    }
+    return String(v);
+  });
+
+  const num = parseFloat(interpolated);
+  return multiInvalid || !Number.isFinite(num) ? undefined : num;
 }
 
 export const numberOverrideProcessor = (
@@ -26,6 +66,12 @@ export const numberOverrideProcessor = (
 ) => {
   if (value === undefined || value === null) {
     return undefined;
+  }
+
+  // Strings may contain a variable expression; anything that does not resolve
+  // to a finite number leaves the option unset
+  if (typeof value === 'string' && value.includes('$')) {
+    return interpolateNumericValue(value, context);
   }
 
   return parseFloat(String(value));
@@ -129,10 +175,44 @@ export interface ThresholdsFieldConfigSettings {
 
 export const thresholdsOverrideProcessor = (
   value: any,
-  _context: FieldOverrideContext,
+  context: FieldOverrideContext,
   _settings?: ThresholdsFieldConfigSettings
 ): ThresholdsConfig => {
-  return value; // !!!! likely not !!!!
+  if (!value || !Array.isArray(value.steps)) {
+    return value;
+  }
+
+  let hasVariableSteps = false;
+  const steps: Threshold[] = [];
+
+  for (let i = 0; i < value.steps.length; i++) {
+    const step: Threshold = value.steps[i];
+
+    // The base step (index 0) is always -Infinity and passes through untouched
+    if (i === 0 || typeof step.value !== 'string') {
+      steps.push(step);
+      continue;
+    }
+
+    hasVariableSteps = true;
+    const interpolated = interpolateNumericValue(step.value, context);
+
+    // Steps that don't resolve to a finite number are dropped
+    if (interpolated !== undefined) {
+      steps.push({ ...step, value: interpolated });
+    }
+  }
+
+  if (!hasVariableSteps) {
+    return value;
+  }
+
+  // Edit-time sorting cannot know variable values, so re-sort after interpolation,
+  // keeping the base step first
+  const [base, ...rest] = steps;
+  sortThresholds(rest);
+
+  return { ...value, steps: [base, ...rest] };
 };
 
 export interface UnitFieldConfigSettings {

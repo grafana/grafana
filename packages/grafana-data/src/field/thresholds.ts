@@ -14,7 +14,8 @@ export function getActiveThreshold(value: number, thresholds: Threshold[] | unde
   for (const threshold of thresholds) {
     // Processed field configs only contain numeric step values; a string (unresolved
     // variable expression) is treated like any non-matching value and ends the walk.
-    if (typeof threshold.value === 'number' && value >= threshold.value) {
+    // Raw base steps may still be null (the JSON form of -Infinity) and match via coercion.
+    if (typeof threshold.value !== 'string' && value >= threshold.value) {
       active = threshold;
     } else {
       break;
@@ -35,17 +36,23 @@ export function getActiveThresholdForValue(field: Field, value: number, percent:
 }
 
 /**
- * Sorts the thresholds in place, numeric values ascending. String values (unresolved variable
- * expressions) cannot be ordered at edit time, so they keep their relative order at the end.
+ * Sorts the thresholds in place, numeric values ascending. Values that cannot be ordered
+ * (strings with unresolved variable expressions) keep their relative order at the end.
  */
 export function sortThresholds(thresholds: Threshold[]) {
   return thresholds.sort((t1, t2) => {
-    if (typeof t1.value === 'string' || typeof t2.value === 'string') {
-      if (typeof t1.value === typeof t2.value) {
+    // Coercing strings keeps legacy ordering for empty/numeric strings ('' sorts as 0);
+    // variable expressions produce NaN and cannot be ordered until render time
+    const v1 = typeof t1.value === 'string' ? Number(t1.value) : t1.value;
+    const v2 = typeof t2.value === 'string' ? Number(t2.value) : t2.value;
+
+    if (Number.isNaN(v1) || Number.isNaN(v2)) {
+      if (Number.isNaN(v1) === Number.isNaN(v2)) {
         return 0;
       }
-      return typeof t1.value === 'string' ? 1 : -1;
+      return Number.isNaN(v1) ? 1 : -1;
     }
-    return t1.value - t2.value;
+
+    return v1 - v2;
   });
 }

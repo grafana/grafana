@@ -296,12 +296,15 @@ function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field | undef
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
     const { min, max } = getFieldConfigWithMinMax(field);
-    const delta = max! - min!;
+    // getFieldConfigWithMinMax always computes numeric min/max for processed configs
+    const numericMin = typeof min === 'number' ? min : 0;
+    const numericMax = typeof max === 'number' ? max : 100;
+    const delta = numericMax - numericMin;
     input = input.map((v) => {
       if (v == null) {
         return v;
       }
-      return ((v - min!) / delta) * 100;
+      return ((v - numericMin) / delta) * 100;
     });
   }
 
@@ -527,6 +530,11 @@ export function getThresholdItems(
       pre = '< ';
     } else {
       suf = '+';
+    }
+
+    // Processed threshold steps are numeric; skip unresolved variable expressions
+    if (typeof value !== 'number') {
+      continue;
     }
 
     items.push({

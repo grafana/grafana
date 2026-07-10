@@ -44,6 +44,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     // Ignore the base -Infinity threshold by always starting on index 1
     for (let idx = 1; idx < steps.length; idx++) {
       const step = steps[idx];
+      // Processed threshold steps are numeric; skip unresolved variable expressions
+      if (typeof step.value !== 'number') {
+        continue;
+      }
       let color: tinycolor.Instance;
 
       // if we are below a transparent index treat this a less then threshold, use previous thresholds color
@@ -81,15 +85,17 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     let grd = scaleGradient(
       u,
       yScaleKey,
-      steps.map((step) => {
-        let color = tinycolor(theme.visualization.getColorByName(step.color));
+      steps
+        .filter((step): step is Threshold & { value: number } => typeof step.value === 'number')
+        .map((step) => {
+          let color = tinycolor(theme.visualization.getColorByName(step.color));
 
-        if (color.getAlpha() === 1) {
-          color.setAlpha(0.15);
-        }
+          if (color.getAlpha() === 1) {
+            color.setAlpha(0.15);
+          }
 
-        return [step.value, color.toString()];
-      }),
+          return [step.value, color.toString()];
+        }),
       true
     );
 
@@ -116,7 +122,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
       steps = steps.map((step) => ({
         ...step,
-        value: min + range * (step.value / 100),
+        value: typeof step.value === 'number' ? min + range * (step.value / 100) : step.value,
       }));
     }
 

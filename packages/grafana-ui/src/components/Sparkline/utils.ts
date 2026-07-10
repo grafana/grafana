@@ -76,8 +76,8 @@ export function getYRange(alignedFrame: DataFrame): Range.MinMax {
   let { min, max } = field.state?.range!;
 
   // enure that the min/max from the field config are respected.
-  min = Math.min(min!, field.config.min ?? Infinity);
-  max = Math.max(max!, field.config.max ?? -Infinity);
+  min = Math.min(min!, typeof field.config.min === 'number' ? field.config.min : Infinity);
+  max = Math.max(max!, typeof field.config.max === 'number' ? field.config.max : -Infinity);
 
   // if noValue is set, ensure that it is included in the range as well
   const noValue = +field.config?.noValue!;

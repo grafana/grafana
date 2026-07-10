@@ -251,8 +251,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       distribution: scaleDistr?.type,
       log: scaleDistr?.log,
       linearThreshold: scaleDistr?.linearThreshold,
-      min: xField.config.min,
-      max: xField.config.max,
+      // Processed field configs contain only numeric min/max; unresolved variable expressions are treated as unset
+      min: typeof xField.config.min === 'string' ? undefined : xField.config.min,
+      max: typeof xField.config.max === 'string' ? undefined : xField.config.max,
       softMin: custom?.axisSoftMin,
       softMax: custom?.axisSoftMax,
       centeredZero: custom?.axisCenteredZero,
@@ -296,6 +297,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       continue;
     }
 
+    // Processed field configs contain only numeric min/max; unresolved variable expressions are treated as unset
+    const hardMin = typeof field.config.min === 'string' ? undefined : field.config.min;
+    const hardMax = typeof field.config.max === 'string' ? undefined : field.config.max;
+
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
       fmt = getDisplayProcessor({
@@ -324,8 +329,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
           linearThreshold: customConfig.scaleDistribution?.linearThreshold,
-          min: field.config.min,
-          max: field.config.max,
+          min: hardMin,
+          max: hardMax,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
@@ -601,8 +606,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
-      hardMin: field.config.min,
-      hardMax: field.config.max,
+      hardMin,
+      hardMax,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
@@ -621,8 +626,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           thresholds: config.thresholds,
           scaleKey,
           theme,
-          hardMin: field.config.min,
-          hardMax: field.config.max,
+          hardMin,
+          hardMax,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
         });

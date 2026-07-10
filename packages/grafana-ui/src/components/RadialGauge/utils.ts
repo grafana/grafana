@@ -34,8 +34,8 @@ export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
 }
 
 export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
-  let min = fieldDisplay.field.min ?? 0;
-  let max = fieldDisplay.field.max ?? 100;
+  let min = typeof fieldDisplay.field.min === 'number' ? fieldDisplay.field.min : 0;
+  let max = typeof fieldDisplay.field.max === 'number' ? fieldDisplay.field.max : 100;
 
   // If min and max are equal (can happen for single value fields or if all values are the same)
   // Then we need to adjust them a bit to avoid division by zero
@@ -277,11 +277,13 @@ export function getThresholdPercentageValue(
   thresholdsMode: ThresholdsMode,
   fieldDisplay: FieldDisplay
 ): number {
+  // Processed threshold steps are numeric; unresolved variable expressions fall back to 0
+  const thresholdValue = typeof threshold.value === 'number' ? threshold.value : 0;
   if (thresholdsMode === ThresholdsMode.Percentage) {
-    return threshold.value / 100;
+    return thresholdValue / 100;
   }
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
-  return (threshold.value - min) / (max - min);
+  return (thresholdValue - min) / (max - min);
 }
 
 export function getFormattedThresholds(
@@ -294,8 +296,8 @@ export function getFormattedThresholds(
   const isPercent = thresholds.mode === ThresholdsMode.Percentage;
   const steps = thresholds.steps;
 
-  let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
-  let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+  let min = typeof field.min === 'number' ? field.min : GAUGE_DEFAULT_MINIMUM;
+  let max = typeof field.max === 'number' ? field.max : GAUGE_DEFAULT_MAXIMUM;
 
   if (isPercent) {
     min = 0;
@@ -324,14 +326,14 @@ export function getFormattedThresholds(
     }
     const prev = steps[i - 1];
     formatted.push({
-      value: isFinite(step.value) ? step.value : 0,
+      value: typeof step.value === 'number' && isFinite(step.value) ? step.value : 0,
       color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
     });
     if (step === last) {
       break;
     }
   }
-  if (max > last.value) {
+  if (typeof last.value === 'number' && max > last.value) {
     formatted.push({ value: parseFloat(max.toFixed(decimals)), color: theme.visualization.getColorByName(last.color) });
   }
   return formatted;

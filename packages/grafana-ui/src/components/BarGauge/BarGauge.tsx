@@ -110,8 +110,8 @@ export const BarGauge = memo(function BarGauge(props: Props) {
 
   const renderRetroBars = () => {
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperHeight } = calculateBarAndValueDimensions(props);
-    const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
-    const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+    const minValue = typeof field.min === 'number' ? field.min : GAUGE_DEFAULT_MINIMUM;
+    const maxValue = typeof field.max === 'number' ? field.max : GAUGE_DEFAULT_MAXIMUM;
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -510,8 +510,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const { displayMode, field, value, alignmentFactors, orientation, theme, text, isOverflow = false } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
-  const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
+  const minValue = typeof field.min === 'number' ? field.min : GAUGE_DEFAULT_MINIMUM;
+  const maxValue = typeof field.max === 'number' ? field.max : GAUGE_DEFAULT_MAXIMUM;
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const textColor = getTextValueColor(props);
   const barColor = value.color ?? FALLBACK_COLOR;
@@ -613,8 +613,10 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 export function getBarGradient(props: Props, maxSize: number): string {
   const { field, value, orientation, theme } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
-  const minValue = field.min!;
-  const maxValue = field.max!;
+  // Processed field configs contain only numeric min/max (variable expressions are
+  // resolved or unset during applyFieldOverrides)
+  const minValue = typeof field.min === 'number' ? field.min : GAUGE_DEFAULT_MINIMUM;
+  const maxValue = typeof field.max === 'number' ? field.max : GAUGE_DEFAULT_MAXIMUM;
 
   let gradient = '';
   let lastpos = 0;
@@ -625,6 +627,10 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
+      // Processed threshold steps are numeric; skip unresolved variable expressions
+      if (typeof threshold.value !== 'number') {
+        continue;
+      }
       const color = props.theme.visualization.getColorByName(threshold.color);
       const valuePercent =
         thresholds.mode === ThresholdsMode.Percentage

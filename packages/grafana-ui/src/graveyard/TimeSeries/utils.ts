@@ -171,7 +171,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
-      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
+      range: (u, dataMin, dataMax) => [
+        typeof xField.config.min === 'number' ? xField.config.min : dataMin,
+        typeof xField.config.max === 'number' ? xField.config.max : dataMax,
+      ],
     });
 
     builder.addAxis({
@@ -207,6 +210,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       continue;
     }
 
+    // Processed field configs contain only numeric min/max; unresolved variable expressions are treated as unset
+    const hardMin = typeof field.config.min === 'string' ? undefined : field.config.min;
+    const hardMax = typeof field.config.max === 'string' ? undefined : field.config.max;
+
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
       fmt = getDisplayProcessor({
@@ -235,8 +242,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
           linearThreshold: customConfig.scaleDistribution?.linearThreshold,
-          min: field.config.min,
-          max: field.config.max,
+          min: hardMin,
+          max: hardMax,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
@@ -498,8 +505,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
-      hardMin: field.config.min,
-      hardMax: field.config.max,
+      hardMin,
+      hardMax,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
@@ -515,8 +522,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           thresholds: config.thresholds,
           scaleKey,
           theme,
-          hardMin: field.config.min,
-          hardMax: field.config.max,
+          hardMin,
+          hardMax,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
         });

@@ -352,8 +352,8 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 		Filterable:        in.Filterable,
 		Unit:              in.Unit,
 		Decimals:          in.Decimals,
-		Min:               in.Min,
-		Max:               in.Max,
+		Min:               (*dashv2alpha1.DashboardFloat64OrString)(in.Min),
+		Max:               (*dashv2alpha1.DashboardFloat64OrString)(in.Max),
 		Links:             in.Links,
 		NoValue:           in.NoValue,
 		Custom:            in.Custom,
@@ -368,7 +368,7 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 		for i, step := range in.Thresholds.Steps {
 			// Preserve null values from v2beta1
 			out.Thresholds.Steps[i] = dashv2alpha1.DashboardThreshold{
-				Value: step.Value,
+				Value: (*dashv2alpha1.DashboardFloat64OrStringOrNull)(step.Value),
 				Color: step.Color,
 			}
 		}

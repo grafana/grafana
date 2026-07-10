@@ -231,9 +231,11 @@ FieldConfig: {
 	decimals?: number
 
 	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	min?: number
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	min?: number | string
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	max?: number
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	max?: number | string
 
 	// Convert input values into a display string
 	mappings?: [...ValueMapping]
@@ -288,7 +290,8 @@ MatcherConfig: {
 
 Threshold: {
 	// Value null means -Infinity
-	value: number | null
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	value: number | string | null
 	color: string
 }
 

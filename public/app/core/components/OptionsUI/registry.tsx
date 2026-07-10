@@ -55,7 +55,7 @@ import { UnitValueEditor } from './units';
  * Returns collection of standard option editors definitions
  */
 export const getAllOptionEditors = () => {
-  const number: StandardEditorsRegistryItem<number> = {
+  const number: StandardEditorsRegistryItem<number | string> = {
     id: 'number',
     name: 'Number',
     description: 'Allows numeric values input',
@@ -281,13 +281,13 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const min: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
+  const min: FieldConfigPropertyItem<FieldConfig, number | string, NumberFieldConfigSettings> = {
     id: 'min',
     path: 'min',
     name: t('options-ui.registry.standard-field-configs.name-min', 'Min'),
     description: t(
       'options-ui.registry.standard-field-configs.description-min',
-      'Leave empty to calculate based on all values'
+      'Leave empty to calculate based on all values. You can use a variable, e.g. $myVar'
     ),
 
     editor: standardEditorsRegistry.get('number').editor,
@@ -296,18 +296,19 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
+      allowVariables: true,
     },
     shouldApply: (field) => field.type === FieldType.number,
     category,
   };
 
-  const max: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
+  const max: FieldConfigPropertyItem<FieldConfig, number | string, NumberFieldConfigSettings> = {
     id: 'max',
     path: 'max',
     name: t('options-ui.registry.standard-field-configs.name-max', 'Max'),
     description: t(
       'options-ui.registry.standard-field-configs.description-max',
-      'Leave empty to calculate based on all values'
+      'Leave empty to calculate based on all values. You can use a variable, e.g. $myVar'
     ),
 
     editor: standardEditorsRegistry.get('number').editor,
@@ -316,6 +317,7 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
+      allowVariables: true,
     },
 
     shouldApply: (field) => field.type === FieldType.number,

@@ -349,6 +349,10 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
     const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
+    // Processed field configs contain only numeric min/max; unresolved variable expressions are treated as unset
+    const hardMin = typeof field.config.min === 'string' ? undefined : field.config.min;
+    const hardMax = typeof field.config.max === 'string' ? undefined : field.config.max;
+
     const scaleKey = field.config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
@@ -375,8 +379,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
           thresholds: field.config.thresholds,
           scaleKey,
           theme,
-          hardMin: field.config.min,
-          hardMax: field.config.max,
+          hardMin,
+          hardMax,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
         });
@@ -395,8 +399,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
-      hardMin: field.config.min,
-      hardMax: field.config.max,
+      hardMin,
+      hardMax,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
 
@@ -415,8 +419,8 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     // The builder will manage unique scaleKeys and combine where appropriate
     builder.addScale({
       scaleKey,
-      min: field.config.min,
-      max: field.config.max,
+      min: hardMin,
+      max: hardMax,
       softMin,
       softMax,
       centeredZero: customConfig.axisCenteredZero,

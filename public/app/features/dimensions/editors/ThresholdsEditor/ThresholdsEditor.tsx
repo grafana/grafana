@@ -61,8 +61,12 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   function onAddThreshold() {
     let nextValue = 0;
 
-    if (steps.length > 1) {
-      nextValue = steps[steps.length - 1].value + 10;
+    // Variable-valued steps are strings whose value is unknown at edit time, so only
+    // numeric steps participate in picking the next value
+    const numericValues = steps.map((t) => t.value).filter((v): v is number => isNumber(v) && isFinite(v));
+
+    if (numericValues.length > 0) {
+      nextValue = Math.max(...numericValues) + 10;
     }
 
     let color = colors.filter((c) => !steps.some((t) => t.color === c))[1];
@@ -101,13 +105,21 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
   }
 
   function onChangeThresholdValue(event: ChangeEvent<HTMLInputElement>, threshold: ThresholdWithKey) {
-    const cleanValue = event.target.value.replace(/,/g, '.');
-    const parsedValue = parseFloat(cleanValue);
-    const value = isNaN(parsedValue) ? '' : parsedValue;
+    const rawValue = event.target.value;
+    let value: number | string;
+
+    if (rawValue.includes('$')) {
+      // Variable expressions are stored as-is and resolved at render time
+      value = rawValue;
+    } else {
+      const cleanValue = rawValue.replace(/,/g, '.');
+      const parsedValue = parseFloat(cleanValue);
+      value = isNaN(parsedValue) ? '' : parsedValue;
+    }
 
     const newSteps = steps.map((t) => {
       if (t.key === threshold.key) {
-        t = { ...t, value: value as number };
+        t = { ...t, value };
       }
       return t;
     });
@@ -154,7 +166,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     const ariaLabel = t('dimensions.thresholds-editor.aria-label-threshold', 'Threshold {{thresholdNumber}}', {
       thresholdNumber,
     });
-    if (!isFinite(threshold.value)) {
+    if (isNumber(threshold.value) && !isFinite(threshold.value)) {
       return (
         <Input
           type="text"
@@ -176,8 +188,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
 
     return (
       <Input
-        type="number"
-        step="0.0001"
+        type="text"
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChangeThresholdValue(event, threshold)}
         value={threshold.value}
@@ -272,7 +283,7 @@ function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
   }
 
   return steps
-    .filter((t, i) => isNumber(t.value) || i === 0)
+    .filter((t, i) => isNumber(t.value) || typeof t.value === 'string' || i === 0)
     .map((t) => {
       return {
         color: t.color,
