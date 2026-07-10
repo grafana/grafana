@@ -207,10 +207,6 @@ export const useNavCustomization = () => {
     [pinnedUrlsToDisplay]
   );
 
-  const persistPinned = (newItems: string[]) => {
-    persistBookmarkUrls(newItems, () => setPinnedUrls(newItems));
-  };
-
   const onPinItem = (item: NavModelItem) => {
     const { url } = item;
     if (!url) {
@@ -229,22 +225,15 @@ export const useNavCustomization = () => {
       return;
     }
 
-    // Customisation on: a plain toggle of the single url (pins stay in the nav and are duplicated
-    // into the box). Staged as a draft while editing, otherwise persisted immediately.
+    // Customisation on: a plain toggle of the single url, staged as a draft (pins stay in the nav and
+    // are duplicated into the box). The pin controls only render in edit mode, so this always stages.
     const willPin = !pinnedUrlsToDisplay.includes(url);
     reportInteraction(willPin ? 'grafana_nav_item_pinned' : 'grafana_nav_item_unpinned', { path: url });
-    const toggle = (current: string[]) =>
-      current.includes(url) ? current.filter((u) => u !== url) : [...current, url];
-    if (editMode) {
-      setDraftPinnedUrls(toggle);
-    } else {
-      persistPinned(toggle(pinnedUrls));
-    }
+    setDraftPinnedUrls((current) => (current.includes(url) ? current.filter((u) => u !== url) : [...current, url]));
   };
 
   // Hiding works at any depth. Hide adds the item's id (no collapse to the parent); reveal "breaks
   // apart" a hidden ancestor so only this item's path is shown and the rest of the subtree stays hidden.
-  const isItemHideable = useCallback((item: NavModelItem) => isHideable(item), []);
   const isHidden = useCallback((item: NavModelItem) => draftHiddenIds.includes(hiddenKey(item)), [draftHiddenIds]);
   const onToggleHidden = useCallback(
     (item: NavModelItem, effectivelyHidden: boolean) => {
@@ -331,7 +320,7 @@ export const useNavCustomization = () => {
     activeItem,
     isPinned,
     onPinItem,
-    isHideable: isItemHideable,
+    isHideable,
     isHidden,
     onToggleHidden,
     editMode,

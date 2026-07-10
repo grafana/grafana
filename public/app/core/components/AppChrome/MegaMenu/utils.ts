@@ -369,13 +369,10 @@ export function reorderSections(
   toIndex: number
 ): string[] {
   const ordered = orderTopLevelSections(items, currentOrder).map((item) => item.id ?? '');
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= ordered.length || toIndex >= ordered.length) {
-    return currentOrder;
-  }
-  const next = [...ordered];
-  const [moved] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, moved);
-  return next;
+  const next = moveItem(ordered, fromIndex, toIndex);
+  // moveItem returns the same array for out-of-range indices; keep the stored order untouched then
+  // rather than persisting the fully-expanded `ordered` list.
+  return next === ordered ? currentOrder : next;
 }
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
