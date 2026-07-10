@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Text, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
@@ -262,7 +262,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   tabContent: css({
     padding: 0,
   }),
