@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -828,7 +829,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
-	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), jobs.NewAdmissionMutator())
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator(userAttributionEnabled))
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
@@ -914,6 +915,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
+}
+
+// userAttributionEnabled reports whether Git Sync commits should be attributed
+// to the acting user. It lives here (rather than in apps/provisioning) because
+// the feature flag machinery is only available in the main Grafana module.
+func userAttributionEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx))
 }
 
 // Mutate delegates to the admission handler for resource-specific mutation

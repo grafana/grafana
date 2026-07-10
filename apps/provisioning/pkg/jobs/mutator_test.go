@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"context"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -11,7 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -27,39 +27,39 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 		name        string
 		operation   admission.Operation
 		requester   identity.Requester
-		flag        bool
+		enabled     bool
 		annotations map[string]string
 		expected    map[string]string
 	}{
 		{
-			name:      "user with flag enabled sets author annotations",
+			name:      "user with attribution enabled sets author annotations",
 			operation: admission.Create,
 			requester: userRequester,
-			flag:      true,
+			enabled:   true,
 			expected: map[string]string{
-				appjobs.AnnoAuthor:      "Test User",
-				appjobs.AnnoAuthorEmail: "test@example.com",
-				appjobs.AnnoAuthorID:    "user:abc123",
+				AnnoAuthor:      "Test User",
+				AnnoAuthorEmail: "test@example.com",
+				AnnoAuthorID:    "user:abc123",
 			},
 		},
 		{
 			name:        "client-supplied annotations are overwritten by the requester",
 			operation:   admission.Create,
 			requester:   userRequester,
-			flag:        true,
-			annotations: map[string]string{appjobs.AnnoAuthor: "Spoofed", appjobs.AnnoAuthorEmail: "spoof@evil.com"},
+			enabled:     true,
+			annotations: map[string]string{AnnoAuthor: "Spoofed", AnnoAuthorEmail: "spoof@evil.com"},
 			expected: map[string]string{
-				appjobs.AnnoAuthor:      "Test User",
-				appjobs.AnnoAuthorEmail: "test@example.com",
-				appjobs.AnnoAuthorID:    "user:abc123",
+				AnnoAuthor:      "Test User",
+				AnnoAuthorEmail: "test@example.com",
+				AnnoAuthorID:    "user:abc123",
 			},
 		},
 		{
-			name:        "flag disabled strips client-supplied annotations",
+			name:        "attribution disabled strips client-supplied annotations",
 			operation:   admission.Create,
 			requester:   userRequester,
-			flag:        false,
-			annotations: map[string]string{appjobs.AnnoAuthor: "Spoofed", appjobs.AnnoAuthorEmail: "spoof@evil.com"},
+			enabled:     false,
+			annotations: map[string]string{AnnoAuthor: "Spoofed", AnnoAuthorEmail: "spoof@evil.com"},
 			expected:    map[string]string{},
 		},
 		{
@@ -69,27 +69,26 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				Type: authlib.TypeAccessPolicy,
 				Name: "provisioning",
 			},
-			flag:        true,
-			annotations: map[string]string{appjobs.AnnoAuthor: "Spoofed"},
+			enabled:     true,
+			annotations: map[string]string{AnnoAuthor: "Spoofed"},
 			expected:    map[string]string{},
 		},
 		{
 			name:        "non-create operation is left untouched",
 			operation:   admission.Update,
 			requester:   userRequester,
-			flag:        true,
-			annotations: map[string]string{appjobs.AnnoAuthor: "Existing"},
-			expected:    map[string]string{appjobs.AnnoAuthor: "Existing"},
+			enabled:     true,
+			annotations: map[string]string{AnnoAuthor: "Existing"},
+			expected:    map[string]string{AnnoAuthor: "Existing"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := t.Context()
+			ctx := context.Background()
 			if tt.requester != nil {
 				ctx = identity.WithRequester(ctx, tt.requester)
 			}
-			setUserAttributionFlag(t, tt.flag)
 
 			job := &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations},
@@ -102,13 +101,13 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				"", tt.operation, nil, false, nil,
 			)
 
-			err := NewAdmissionMutator().Mutate(ctx, attrs, nil)
-			require.NoError(t, err)
+			mutator := NewAdmissionMutator(func(context.Context) bool { return tt.enabled })
+			require.NoError(t, mutator.Mutate(ctx, attrs, nil))
 
 			// The mutator only ever touches the author annotations; assert on
 			// exactly those to confirm none are left stray.
 			got := map[string]string{}
-			for _, k := range []string{appjobs.AnnoAuthor, appjobs.AnnoAuthorEmail, appjobs.AnnoAuthorID} {
+			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail, AnnoAuthorID} {
 				if v, ok := job.Annotations[k]; ok {
 					got[k] = v
 				}
@@ -126,6 +125,6 @@ func TestAdmissionMutator_Mutate_RejectsNonJob(t *testing.T) {
 		provisioning.JobResourceInfo.GroupVersionResource(),
 		"", admission.Create, nil, false, nil,
 	)
-	err := NewAdmissionMutator().Mutate(t.Context(), attrs, nil)
-	require.Error(t, err)
+	mutator := NewAdmissionMutator(func(context.Context) bool { return true })
+	require.Error(t, mutator.Mutate(context.Background(), attrs, nil))
 }

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -89,8 +88,10 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
-	if author, ok := jobs.UserAttribution(ctx); ok {
-		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: author.Name, Email: author.Email})
+	if userAttributionEnabled(ctx) {
+		if author, ok := auth.GetAuthorFromRequester(ctx); ok {
+			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: author.Name, Email: author.Email})
+		}
 	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
