@@ -3,6 +3,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
+/** Kubernetes Monitoring app plugin ID. @lintignore */
 export const KUBERNETES_APP_ID = 'grafana-k8s-app';
 
 export interface KubernetesOverview {
@@ -48,8 +49,11 @@ const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data'
 // cost across up to MAX_PROBED_DATASOURCES datasources.
 const NAMESPACE_PROBE = `count(kube_namespace_status_phase) or count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
 
-// True when the available health signals show a problem, false when they are all clear, null when
-// NONE are available (e.g. Prometheus scrapes only inventory metrics) — absence of data is not health.
+/**
+ * True when the available health signals show a problem, false when they are all clear, null when
+ * NONE are available (e.g. Prometheus scrapes only inventory metrics) — absence of data is not health.
+ * @lintignore
+ */
 export function hasHealthProblems(o: KubernetesOverview): boolean | null {
   if (o.alertsFiring === null && o.unhealthyPods === null && o.notReadyNodes === null && o.restarts1h === null) {
     return null;
