@@ -266,27 +266,27 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "githubEnterprise with previews enabled",
+			name: "githubEnterprise with previews enabled via pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
-					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: true},
+					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
 				},
 			},
 			want: true,
 		},
 		{
-			name: "githubEnterprise with previews disabled",
+			name: "githubEnterprise with previews disabled via pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
-					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
-					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{GenerateDashboardPreviews: false},
+					Type:        v0alpha1.GitHubEnterpriseRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: false},
 				},
 			},
 			want: false,
 		},
 		{
-			name: "githubEnterprise type with nil config",
+			name: "githubEnterprise type with nil pull request options",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type: v0alpha1.GitHubEnterpriseRepositoryType,
@@ -295,7 +295,17 @@ func TestRepository_ShouldGenerateDashboardPreviews(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "non-github type returns false",
+			name: "gitlab with previews enabled via pull request options",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type:        v0alpha1.GitLabRepositoryType,
+					PullRequest: &v0alpha1.PullRequestOptions{GenerateDashboardPreviews: true},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "non-github type with nil pull request options returns false",
 			repo: v0alpha1.Repository{
 				Spec: v0alpha1.RepositorySpec{
 					Type: v0alpha1.GitLabRepositoryType,
