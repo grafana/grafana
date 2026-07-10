@@ -1,7 +1,7 @@
 import { FRENCH_FRANCE } from '@grafana/i18n';
 import { expect, test } from '@grafana/plugin-e2e';
 
-// TODO remove this once newPreferencesPage is enabled by default
+// TODO remove this once the newPreferencesPage flag is removed
 test.use({ userPreferences: { language: FRENCH_FRANCE } });
 
 // mock out the k8s preferences (needed when newPreferencesPage is enabled)

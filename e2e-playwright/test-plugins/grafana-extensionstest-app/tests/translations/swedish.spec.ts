@@ -3,7 +3,7 @@ import { expect, test } from '@grafana/plugin-e2e';
 import pluginJson from '../../plugin.json';
 import { ROUTES } from '../../constants';
 
-// TODO remove this once newPreferencesPage is enabled by default
+// TODO remove this once newPreferencesPage flag is removed
 test.use({ userPreferences: { language: SWEDISH_SWEDEN } });
 
 // mock out the k8s preferences (needed when newPreferencesPage is enabled)
