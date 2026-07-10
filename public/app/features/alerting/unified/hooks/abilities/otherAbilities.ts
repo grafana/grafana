@@ -19,6 +19,10 @@ import {
 
 // ── Folder abilities ──────────────────────────────────────────────────────────
 
+/**
+ * This hooks fetches all computed folder abilities for the logged in user
+ * @lintignore
+ */
 export function useFolderAbilities(): Abilities<FolderAction> {
   const canCreate = ctx.hasPermission(AccessControlAction.FoldersCreate);
   return useMemo(
