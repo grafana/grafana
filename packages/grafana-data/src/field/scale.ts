@@ -76,9 +76,10 @@ export function getMinMaxAndDelta(field: Field): NumericRange {
     return { min: 0, max: 100, delta: 100 };
   }
 
-  // Calculate min/max if required
-  let min = field.config.min;
-  let max = field.config.max;
+  // Calculate min/max if required (string values are unresolved variable expressions
+  // that only exist pre-processing; treat them as unset)
+  let min = isNumber(field.config.min) ? field.config.min : null;
+  let max = isNumber(field.config.max) ? field.config.max : null;
 
   if (!isNumber(min) || !isNumber(max)) {
     if (field.values && field.values.length) {

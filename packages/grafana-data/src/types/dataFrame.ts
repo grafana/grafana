@@ -79,8 +79,11 @@ export interface FieldConfig<TOptions = any> {
   // Numeric Options
   unit?: string;
   decimals?: DecimalCount; // Significant digits (for display)
-  min?: number | null;
-  max?: number | null;
+  // min/max may be strings containing variable expressions (e.g. `$myVar`) in raw/persisted
+  // configs; they are resolved to numbers during `applyFieldOverrides` (unset when they don't
+  // resolve to a finite number). Processed field configs contain only numbers.
+  min?: number | string | null;
+  max?: number | string | null;
 
   // Interval indicates the expected regular step between values in the series.
   // When an interval exists, consumers can identify "missing" values when the expected value is not present.

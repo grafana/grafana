@@ -320,15 +320,15 @@ function calculateRange(
   // Calculate the min/max from the field.
   if (config.fieldMinMax) {
     const localRange = getMinMaxAndDelta(field);
-    const min = config.min ?? localRange.min;
-    const max = config.max ?? localRange.max;
+    const min = isNumber(config.min) ? config.min : localRange.min;
+    const max = isNumber(config.max) ? config.max : localRange.max;
     return { range: { min, max, delta: max! - min! }, newGlobalRange: globalRange };
   }
 
   // We use the global range if supplied, otherwise we calculate it.
   const newGlobalRange = globalRange ?? findNumericFieldMinMax(data);
-  const min = config.min ?? newGlobalRange!.min;
-  const max = config.max ?? newGlobalRange!.max;
+  const min = isNumber(config.min) ? config.min : newGlobalRange!.min;
+  const max = isNumber(config.max) ? config.max : newGlobalRange!.max;
   return { range: { min, max, delta: max! - min! }, newGlobalRange };
 }
 

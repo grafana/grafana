@@ -456,9 +456,11 @@ type FieldConfig struct {
 	// To display all decimals, set the unit to `String`.
 	Decimals *float64 `json:"decimals,omitempty"`
 	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Min *float64 `json:"min,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Min *Float64OrString `json:"min,omitempty"`
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Max *float64 `json:"max,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Max *Float64OrString `json:"max,omitempty"`
 	// Convert input values into a display string
 	Mappings []ValueMapping `json:"mappings,omitempty"`
 	// Map numeric values to states
@@ -624,14 +626,17 @@ const (
 type Threshold struct {
 	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 	// Nulls currently appear here when serializing -Infinity to JSON.
-	Value *float64 `json:"value"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Value *Float64OrStringOrNull `json:"value"`
 	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 }
 
 // NewThreshold creates a new Threshold object.
 func NewThreshold() *Threshold {
-	return &Threshold{}
+	return &Threshold{
+		Value: NewFloat64OrStringOrNull(),
+	}
 }
 
 // Map a field to a color.
@@ -1247,6 +1252,60 @@ const (
 	VariableModelStaticOptionsOrderSorted VariableModelStaticOptionsOrder = "sorted"
 )
 
+type Float64OrString struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewFloat64OrString creates a new Float64OrString object.
+func NewFloat64OrString() *Float64OrString {
+	return &Float64OrString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `Float64OrString` as JSON.
+func (resource Float64OrString) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `Float64OrString` from JSON.
+func (resource *Float64OrString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
 	ValueMap        *ValueMap        `json:"ValueMap,omitempty"`
 	RangeMap        *RangeMap        `json:"RangeMap,omitempty"`
@@ -1330,6 +1389,60 @@ func (resource *ValueMapOrRangeMapOrRegexMapOrSpecialValueMap) UnmarshalJSON(raw
 	}
 
 	return nil
+}
+
+type Float64OrStringOrNull struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewFloat64OrStringOrNull creates a new Float64OrStringOrNull object.
+func NewFloat64OrStringOrNull() *Float64OrStringOrNull {
+	return &Float64OrStringOrNull{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `Float64OrStringOrNull` as JSON.
+func (resource Float64OrStringOrNull) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `Float64OrStringOrNull` from JSON.
+func (resource *Float64OrStringOrNull) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
 }
 
 type StringOrMap struct {
