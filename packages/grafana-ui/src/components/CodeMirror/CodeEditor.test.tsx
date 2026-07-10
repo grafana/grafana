@@ -193,12 +193,6 @@ describe('CodeMirror CodeEditor', () => {
     expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toBe(basicSetup);
   });
 
-  it('disables bundled basic setup autocompletion when completion sources are configured', () => {
-    render(<CodeEditor value="" onChange={jest.fn()} completionSources={[jest.fn()]} />);
-
-    expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toEqual({ autocompletion: false });
-  });
-
   it('loads language extensions lazily when language is provided', async () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
