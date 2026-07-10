@@ -2779,6 +2779,15 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 <hr>
 
+### `[marketplace]`
+
+#### `license_directory`
+
+Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
+Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+<hr>
+
 ### `[live]`
 
 #### `max_connections`
