@@ -165,15 +165,9 @@ const styles = {
   }),
 };
 
-/**
- * Data source types that expose a trace-to-logs configuration and can therefore
- * produce a span/trace specific logs CTA.
- */
-const TRACE_TO_LOGS_DATASOURCE_TYPES = ['tempo', 'jaeger', 'zipkin'];
-
 function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
   const defaultCTA = 'Related logs';
-  if (!settings || !TRACE_TO_LOGS_DATASOURCE_TYPES.includes(settings.type)) {
+  if (!settings) {
     return defaultCTA;
   }
 
