@@ -159,7 +159,6 @@ Return to Grafana and fill in the following fields:
 1. Paste the **Repository URL** for your Bitbucket repository into the text box.
 
    Use the Git clone URL for the repository, not the URL that appears in your browser's address bar when you view the repository. To find it, select **Clone** in Bitbucket and copy the HTTPS URL. The clone URL ends in `.git`, and its format depends on your Bitbucket deployment:
-
    - Bitbucket Cloud: `https://bitbucket.org/<workspace>/<repository>.git`
    - Bitbucket Data Center and Server: `https://<bitbucket-host>/scm/<PROJECT>/<repository>.git`
 
