@@ -1770,7 +1770,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
 	marketplace := iniFile.Section("marketplace")
-	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", "")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")

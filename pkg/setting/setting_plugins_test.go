@@ -51,8 +51,7 @@ func TestMarketplaceLicenseDirectory(t *testing.T) {
 		want string
 	}{
 		{
-			name: "defaults to empty",
-			want: "",
+			name: "defaults to data path",
 		},
 		{
 			name: "parses configured directory",
@@ -66,7 +65,11 @@ license_directory = /var/lib/grafana/marketplace-licenses
 		t.Run(tc.name, func(t *testing.T) {
 			cfg, err := NewCfgFromBytes([]byte(tc.ini))
 			require.NoError(t, err)
-			require.Equal(t, tc.want, cfg.MarketplaceLicenseDirectory)
+			want := tc.want
+			if want == "" {
+				want = cfg.DataPath
+			}
+			require.Equal(t, want, cfg.MarketplaceLicenseDirectory)
 		})
 	}
 }
