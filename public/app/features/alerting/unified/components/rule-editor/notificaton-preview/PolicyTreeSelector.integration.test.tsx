@@ -119,37 +119,8 @@ const grantAllPermissions = () => {
   ]);
 };
 
-describe('PolicyTreeSelector - feature toggle OFF', () => {
+describe('PolicyTreeSelector', () => {
   testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
-
-  beforeEach(() => {
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
-    setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
-    grantAllPermissions();
-  });
-
-  it('does not show policy tree selector when feature toggle is disabled', async () => {
-    const { user } = renderRuleEditor();
-
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
-
-    // Wait for the form to be fully loaded
-    await waitFor(() => {
-      expect(ui.buttons.save.get()).toBeEnabled();
-    });
-
-    // Should NOT show any policy selector elements
-    expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
-    expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
-    expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
-  });
-});
-
-describe('PolicyTreeSelector - feature toggle ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alerting.rulesAPIV2'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -543,7 +514,7 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
   testWithFeatureToggles({
-    enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
+    enable: ['alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
   });
 
   beforeEach(() => {
