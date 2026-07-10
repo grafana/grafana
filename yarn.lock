@@ -683,21 +683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/language@npm:6.12.3":
-  version: 6.12.3
-  resolution: "@codemirror/language@npm:6.12.3"
-  dependencies:
-    "@codemirror/state": "npm:^6.0.0"
-    "@codemirror/view": "npm:^6.23.0"
-    "@lezer/common": "npm:^1.5.0"
-    "@lezer/highlight": "npm:^1.0.0"
-    "@lezer/lr": "npm:^1.0.0"
-    style-mod: "npm:^4.0.0"
-  checksum: 10/d33f2736138e549e1db268b6539c13bd082c3f96e24384a492db939942ca11ac1da546ef7553e6ea4ee13dcaa6593f64f42b5e5a413d00eba3e996ffe50fe8e7
-  languageName: node
-  linkType: hard
-
-"@codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.12.3":
+"@codemirror/language@npm:6.12.4, @codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.12.3":
   version: 6.12.4
   resolution: "@codemirror/language@npm:6.12.4"
   dependencies:
@@ -18599,7 +18585,7 @@ __metadata:
     "@bsull/augurs": "npm:^0.10.0"
     "@codemirror/autocomplete": "npm:6.20.1"
     "@codemirror/lang-sql": "npm:6.10.0"
-    "@codemirror/language": "npm:6.12.3"
+    "@codemirror/language": "npm:6.12.4"
     "@codemirror/state": "npm:6.6.0"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"

@@ -258,7 +258,7 @@
     "@bsull/augurs": "^0.10.0",
     "@codemirror/autocomplete": "6.20.1",
     "@codemirror/lang-sql": "6.10.0",
-    "@codemirror/language": "6.12.3",
+    "@codemirror/language": "6.12.4",
     "@codemirror/state": "6.6.0",
     "@emotion/css": "11.13.5",
     "@emotion/react": "11.14.0",
