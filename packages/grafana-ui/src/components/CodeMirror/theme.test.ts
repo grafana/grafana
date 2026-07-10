@@ -1,6 +1,6 @@
 import { sql } from '@codemirror/lang-sql';
 import { EditorState } from '@codemirror/state';
-import { EditorView, highlightActiveLine } from '@codemirror/view';
+import { EditorView, highlightActiveLine, lineNumbers } from '@codemirror/view';
 
 import { colorManipulator, createTheme, type GrafanaTheme2 } from '@grafana/data';
 
@@ -20,7 +20,7 @@ function createEditor(theme: GrafanaTheme2): EditorView {
     parent: document.body,
     state: EditorState.create({
       doc: 'SELECT value_with_underscores FROM metrics',
-      extensions: [sql(), highlightActiveLine(), createCodeEditorTheme(theme)],
+      extensions: [sql(), lineNumbers(), highlightActiveLine(), createCodeEditorTheme(theme)],
     }),
   });
 }
@@ -30,8 +30,12 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
     const theme = createTheme({ colors: { mode } });
     const editor = createEditor(theme);
 
-    expect(getComputedStyle(editor.dom).backgroundColor).toBe(normalizeColor(theme.colors.background.canvas));
+    expect(getComputedStyle(editor.dom).backgroundColor).toBe(normalizeColor(theme.components.input.background));
+    expect(getComputedStyle(editor.dom).color).toBe(normalizeColor(theme.components.input.text));
     expect(getComputedStyle(editor.scrollDOM).fontFamily).toContain('Roboto Mono');
+    expect(getComputedStyle(editor.dom.querySelector('.cm-gutters')!).borderRightColor).toBe(
+      normalizeColor(theme.components.input.borderColor)
+    );
     expect(getComputedStyle(editor.contentDOM.querySelector('.cm-activeLine')!).backgroundColor).toBe(
       normalizeColor(theme.colors.background.secondary)
     );
@@ -79,7 +83,7 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
       theme.colors.text.link,
     ];
     const syntaxBackgrounds = [
-      theme.colors.background.canvas,
+      theme.components.input.background,
       theme.colors.background.primary,
       theme.colors.background.secondary,
     ];

@@ -11,8 +11,8 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
   const editorTheme = EditorView.theme(
     {
       '&': {
-        color: theme.colors.text.primary,
-        backgroundColor: theme.colors.background.canvas,
+        color: theme.components.input.text,
+        backgroundColor: theme.components.input.background,
         fontFamily: theme.typography.fontFamilyMonospace,
         fontSize: theme.typography.code.fontSize,
       },
@@ -24,21 +24,21 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
         lineHeight: `${theme.typography.code.lineHeight}`,
       },
       '.cm-content': {
-        caretColor: theme.colors.text.primary,
+        caretColor: theme.components.input.text,
       },
       '.cm-cursor, .cm-dropCursor': {
-        borderLeftColor: theme.colors.text.primary,
+        borderLeftColor: theme.components.input.text,
       },
       '.cm-gutters': {
         color: theme.colors.text.secondary,
-        backgroundColor: theme.colors.background.canvas,
-        borderRightColor: theme.colors.border.weak,
+        backgroundColor: theme.components.input.background,
+        borderRightColor: theme.components.input.borderColor,
       },
       '.cm-activeLine, .cm-activeLineGutter': {
         backgroundColor: theme.colors.background.secondary,
       },
       '.cm-activeLineGutter': {
-        color: theme.colors.text.primary,
+        color: theme.components.input.text,
       },
       '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
         backgroundColor: `${theme.colors.action.selected} !important`,
