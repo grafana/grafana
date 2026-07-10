@@ -70,14 +70,16 @@ export function MegaMenuPinnedItem({ entry, activeItem, editMode, onUnpin, onCli
         </Tooltip>
         {editMode && (
           <>
-            <IconButton
-              name="gf-pin-filled"
-              onClick={onUnpin}
-              aria-pressed
-              tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
-            />
-            {/* Reserve the trailing chevron column the nav rows have but breadcrumb rows don't, so the
-                unpin icon lines up with the nav rows' control icons rather than sitting flush right. */}
+            {/* Centre the unpin in a fixed slot matching the Starred section's control slot so the
+                unpin icons line up exactly, then reserve the trailing chevron column the nav rows have. */}
+            <span className={styles.unpinSlot}>
+              <IconButton
+                name="gf-pin-filled"
+                onClick={onUnpin}
+                aria-pressed
+                tooltip={t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName: label })}
+              />
+            </span>
             <span className={styles.trailingSpacer} />
           </>
         )}
@@ -92,10 +94,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   row: css({
     alignItems: 'center',
+    borderRadius: theme.shape.radius.default,
     display: 'flex',
     gap: theme.spacing(1),
     height: theme.spacing(4),
     minWidth: 0,
+    '&:hover': {
+      backgroundColor: theme.colors.action.hover,
+    },
   }),
   // Match MegaMenuItem's dragColumn (fixed width, right-aligned) so the breadcrumb rows indent the
   // same amount as the Starred section beside them.
@@ -129,6 +135,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   leafIcon: css({
     flexShrink: 0,
+    width: theme.spacing(3),
+  }),
+  // Fixed slot that centres the unpin control, matching the Starred section's control slot width.
+  unpinSlot: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'center',
     width: theme.spacing(3),
   }),
   // Reserves the chevron column the Starred section has after its unpin, so the breadcrumb rows'

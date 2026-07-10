@@ -145,7 +145,7 @@ export const MegaMenu = memo(
         <>
           <div className={styles.pinnedBox}>
             <div className={styles.pinnedHeading}>
-              <Icon className={styles.pinnedHeadingIcon} name="gf-pin" size="md" />
+              <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
               </Text>
