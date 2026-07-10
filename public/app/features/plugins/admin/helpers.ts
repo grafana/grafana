@@ -232,7 +232,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     large: `/public/build/img/icn-${type}.svg`,
   };
 
-  const matchedViaAlias = remote && local && remote.slug !== local.id;
+  const matchedViaAlias = remote && local && local.aliasIDs?.includes(remote.slug);
   if (matchedViaAlias && local.info.logos) {
     logos = local.info.logos;
   } else if (remote) {
