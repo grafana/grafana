@@ -218,18 +218,6 @@ export function useCanViewContactPoints(): boolean {
 }
 
 /**
- * UI-only permission helper for actions that create silences.
- */
-export function useCanCreateSilences(): boolean {
-  return useMemo(
-    () =>
-      ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
-      ctx.hasPermission(AccessControlAction.AlertingSilenceCreate),
-    []
-  );
-}
-
-/**
  * This one will check for enrichment abilities
  */
 export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
