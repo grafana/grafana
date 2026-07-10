@@ -618,8 +618,9 @@ export interface Threshold {
   /**
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * Nulls currently appear here when serializing -Infinity to JSON.
+   * Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
    */
-  value: (number | null);
+  value: (number | string | null);
 }
 
 /**
@@ -1115,12 +1116,14 @@ export interface FieldConfig {
   mappings?: Array<ValueMapping>;
   /**
    * The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+   * Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
    */
-  max?: number;
+  max?: (number | string);
   /**
    * The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+   * Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
    */
-  min?: number;
+  min?: (number | string);
   /**
    * Alternative to empty string
    */

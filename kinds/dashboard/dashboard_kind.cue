@@ -441,7 +441,8 @@ lineage: schemas: [{
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// Nulls currently appear here when serializing -Infinity to JSON.
-			value: number | null @grafanamaturity(NeedsExpertReview)
+			// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+			value: number | string | null @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
@@ -802,9 +803,11 @@ lineage: schemas: [{
 			decimals?: number @grafanamaturity(NeedsExpertReview)
 
 			// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-			min?: number @grafanamaturity(NeedsExpertReview)
+			// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+			min?: number | string @grafanamaturity(NeedsExpertReview)
 			// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-			max?: number @grafanamaturity(NeedsExpertReview)
+			// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+			max?: number | string @grafanamaturity(NeedsExpertReview)
 
 			// Convert input values into a display string
 			mappings?: [...#ValueMapping] @grafanamaturity(NeedsExpertReview)
