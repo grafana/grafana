@@ -61,6 +61,8 @@ export const FlagKeys = {
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Offer migrating Prometheus label query variables to the unified drilldown controls */
+  GrafanaPrometheusQueryVariableMigration: "grafana.prometheusQueryVariableMigration",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -387,6 +389,17 @@ export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOp
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Offer migrating Prometheus label query variables to the unified drilldown controls
+ *
+ * **Details:**
+ * - flag key: `grafana.prometheusQueryVariableMigration`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPrometheusQueryVariableMigration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.prometheusQueryVariableMigration", false, options).value;
 };
 
 /**

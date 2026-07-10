@@ -64,7 +64,8 @@ declare module "@openfeature/core" {
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
-    | "grafana.growthHomepage";
+    | "grafana.growthHomepage"
+    | "grafana.prometheusQueryVariableMigration";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

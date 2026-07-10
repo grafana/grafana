@@ -2701,6 +2701,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.prometheusQueryVariableMigration",
+        "resourceVersion": "1783682492615",
+        "creationTimestamp": "2026-07-10T11:21:32Z"
+      },
+      "spec": {
+        "description": "Offer migrating Prometheus label query variables to the unified drilldown controls",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
