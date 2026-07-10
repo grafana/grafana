@@ -2,6 +2,7 @@ import { type ReplaySubject } from 'rxjs';
 
 import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
 
+import { GRAFANA_CORE_PLUGIN_ID } from '../constants';
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isExposedComponentMetaInfoMissing } from '../validators';
@@ -64,7 +65,7 @@ export class ExposedComponentsRegistry extends Registry<
       }
 
       if (
-        pluginId !== 'grafana' &&
+        pluginId !== GRAFANA_CORE_PLUGIN_ID &&
         isGrafanaDevMode() &&
         isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog, this.apps)
       ) {

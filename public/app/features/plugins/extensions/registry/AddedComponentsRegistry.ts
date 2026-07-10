@@ -2,6 +2,7 @@ import { type ReplaySubject } from 'rxjs';
 
 import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
 
+import { GRAFANA_CORE_PLUGIN_ID } from '../constants';
 import * as errors from '../errors';
 import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
 import { isAddedComponentMetaInfoMissing } from '../validators';
@@ -50,7 +51,7 @@ export class AddedComponentsRegistry extends Registry<
       }
 
       if (
-        pluginId !== 'grafana' &&
+        pluginId !== GRAFANA_CORE_PLUGIN_ID &&
         isGrafanaDevMode() &&
         isAddedComponentMetaInfoMissing(pluginId, config, configLog, this.apps)
       ) {

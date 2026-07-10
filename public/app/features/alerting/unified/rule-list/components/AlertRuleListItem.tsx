@@ -56,6 +56,8 @@ export interface AlertRuleListItemProps {
   // used for alert rules that use simplified routing
   contactPoint?: string;
   actions?: ReactNode;
+  // rendered before `actions`; extension point for per-rule indicators (renders nothing by default)
+  actionsPrefix?: ReactNode;
   origin?: RulePluginOrigin;
   operation?: 'creating' | 'deleting';
   // the grouped view doesn't need to show the location again – it's redundant
@@ -91,6 +93,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     labels,
     origin,
     actions = null,
+    actionsPrefix = null,
     operation,
     showLocation = true,
     querySourceUIDs = [],
@@ -182,7 +185,16 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       icon={
         <StateIcon type="alerting" state={ruleState} health={ruleHealth} isPaused={isPaused} operation={operation} />
       }
-      actions={actions}
+      actions={
+        actionsPrefix ? (
+          <>
+            {actionsPrefix}
+            {actions}
+          </>
+        ) : (
+          actions
+        )
+      }
       meta={metadata}
       metaRight={
         evalIntervalSeconds !== undefined

@@ -15,6 +15,8 @@ import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../ut
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
+import { NotificationPreviewExtensionPoint } from '../extensions/RuleExtensionPoints';
+
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
@@ -141,6 +143,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <ManualAndAutomaticRouting alertUid={alertUid} />
       )}
       {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
+      {shouldRenderpreview && <NotificationPreviewExtensionPoint />}
     </RuleEditorSection>
   );
 };

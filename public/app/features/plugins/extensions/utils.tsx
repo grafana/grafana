@@ -40,6 +40,7 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
+import { GRAFANA_CORE_PLUGIN_ID } from './constants';
 import { type ExtensionsLog, log as baseLog } from './logs/log';
 import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
@@ -107,6 +108,17 @@ export const wrapWithPluginContext = <T,>({
   // least one commit, which makes extension content pop in after the host page has painted.
   if (pluginMeta) {
     return (props: T & React.JSX.IntrinsicAttributes) => renderWithContext(props, pluginMeta);
+  }
+
+  // Extensions registered by core Grafana (or code bundled with it) have no app plugin to fetch
+  // meta for, so they render without a plugin context.
+  if (pluginId === GRAFANA_CORE_PLUGIN_ID) {
+    const CoreExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => (
+      <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+        <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+      </ExtensionErrorBoundary>
+    );
+    return CoreExtensionComponent;
   }
 
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {

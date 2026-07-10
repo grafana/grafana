@@ -13,6 +13,7 @@ import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
+import { AnnotationsAssistantExtensionPoint } from '../extensions/RuleExtensionPoints';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -138,6 +139,7 @@ const AnnotationsStep = () => {
     >
       <Stack direction="column" gap={1}>
         {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
+        {isGrafanaManagedRuleByType(type) && <AnnotationsAssistantExtensionPoint />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;

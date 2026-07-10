@@ -2,6 +2,7 @@ import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifi
 import { alertingApi } from 'app/features/alerting/unified/api/alertingApi';
 import { type Template } from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { parseTemplates } from '../components/receivers/form/fields/utils';
 
@@ -25,14 +26,10 @@ export interface KeyValueField {
   key: string;
   value: string;
 }
-export interface AlertField {
-  annotations: KeyValueField[];
-  labels: KeyValueField[];
-}
 
 export type TemplatesTestPayload = {
   template: string;
-  alerts: AlertField[];
+  alerts: TestTemplateAlert[];
   name: string;
   kind?: TemplateGroupTemplateKind;
 };
