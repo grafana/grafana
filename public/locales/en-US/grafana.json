@@ -10676,6 +10676,7 @@
     "shortcuts-description": {
       "change-theme": "Change theme",
       "collapse-all-rows": "Collapse all rows",
+      "copy-share-link": "Copy panel share link",
       "copy-time-range": "Copy time range",
       "dashboard-settings": "Dashboard settings",
       "duplicate-panel": "Duplicate Panel",
@@ -10694,7 +10695,6 @@
       "open-assistant": "Open Assistant",
       "open-search": "Open search",
       "open-share-embed-drawer": "Share panel embed",
-      "open-share-link-drawer": "Share panel link",
       "open-shared-modal": "Share panel snapshot",
       "paste-time-range": "Paste time range",
       "refresh-all-panels": "Refresh all panels",

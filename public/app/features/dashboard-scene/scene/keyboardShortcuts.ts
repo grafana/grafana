@@ -9,6 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
@@ -63,16 +64,11 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
-  // Panel share
+  // Panel share link (copy to clipboard)
   keybindings.addBinding({
     key: 'p u',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      const drawer = new ShareDrawer({
-        shareView: shareDashboardType.link,
-        panelRef: vizPanel.getRef(),
-      });
-
-      scene.showModal(drawer);
+      await buildShareUrl(scene, vizPanel);
     }),
   });
   keybindings.addBinding({
