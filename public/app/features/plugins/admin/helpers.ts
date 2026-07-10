@@ -222,7 +222,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 // TODO: change the signature by removing the optionals for local and remote.
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
-  const id = local?.id || remote?.slug || '';
+  const matchedViaAlias = remote && local && local.aliasIDs?.includes(remote.slug);
+  const id = matchedViaAlias ? local.id : remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
@@ -231,8 +232,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     small: `/public/build/img/icn-${type}.svg`,
     large: `/public/build/img/icn-${type}.svg`,
   };
-
-  const matchedViaAlias = remote && local && local.aliasIDs?.includes(remote.slug);
   if (matchedViaAlias && local.info.logos) {
     logos = local.info.logos;
   } else if (remote) {
