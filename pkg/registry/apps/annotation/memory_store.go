@@ -42,17 +42,17 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	filter := opts.Deleted
+	if filter != DeletedExclude && filter != DeletedInclude && filter != DeletedOnly {
+		filter = DeletedExclude
+	}
+
 	//nolint:prealloc
 	var result []annotationV0.Annotation // no, we can't pre-alloc it, we don't know the size yet
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
 			continue
-		}
-
-		filter := opts.Deleted
-		if filter != DeletedExclude && filter != DeletedInclude && filter != DeletedOnly {
-			filter = DeletedExclude
 		}
 		deleted := anno.DeletionTimestamp != nil
 		if deleted && filter == DeletedExclude {
