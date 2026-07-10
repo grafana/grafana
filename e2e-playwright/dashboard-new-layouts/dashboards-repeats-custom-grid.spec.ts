@@ -516,6 +516,7 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getTitleInRepeatRow(2, 2)))
       ).not.toBeVisible();
     });
+
     test.skip('can view single panel in a repeated row inside snapshot', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,

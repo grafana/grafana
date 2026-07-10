@@ -43,41 +43,6 @@ test.describe(
 
       expect(panel2Position?.y).toBeLessThan(panel3PositionAfter?.y || 0);
     });
-
-    // Note, moving a panel from a nested row to a parent row currently just deletes the panel
-    // This test will need to be updated once the correct behavior is implemented.
-    test.skip('can move panel from nested row to parent row', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-
-      await groupIntoRow(page, dashboardPage, selectors);
-      await groupIntoRow(page, dashboardPage, selectors);
-
-      const firstRowElement = dashboardPage
-        .getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
-        .first();
-      const rowBoundingBox = await firstRowElement.boundingBox();
-
-      if (!rowBoundingBox) {
-        throw new Error('Row element not found');
-      }
-
-      const panel1Element = dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-        .filter({ hasText: /^Panel one$/ });
-
-      await panel1Element.hover();
-      await page.mouse.down();
-      await page.mouse.move(rowBoundingBox.x, rowBoundingBox.y);
-      await page.mouse.up();
-
-      await expect(
-        dashboardPage
-          .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-          .filter({ hasText: /^Panel one$/ })
-      ).toBeHidden();
-    });
   }
 );
 
