@@ -1,0 +1,63 @@
+{
+  "uid": "fixture-two-datasources",
+  "title": "Two Prometheus datasources, one candidate each",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, instance)",
+        "definition": "label_values(up, instance)",
+        "current": { "text": "server-1", "value": "server-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      },
+      {
+        "name": "cluster",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-b" },
+        "query": "label_values(up, cluster)",
+        "definition": "label_values(up, cluster)",
+        "current": { "text": "cluster-1", "value": "cluster-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Prod",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up{instance=~\"$instance\"}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Staging",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-b" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-b" },
+          "expr": "up{cluster=~\"$cluster\"}"
+        }
+      ]
+    }
+  ]
+}

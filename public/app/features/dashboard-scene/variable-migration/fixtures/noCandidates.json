@@ -1,0 +1,44 @@
+{
+  "uid": "fixture-no-candidates",
+  "title": "No candidates: Prometheus queries but no label-type query variables",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "metric",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "metrics(.*)",
+        "definition": "metrics(.*)",
+        "current": { "text": "up", "value": "up" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      },
+      {
+        "name": "env",
+        "type": "custom",
+        "query": "prod,staging",
+        "current": { "text": "prod", "value": "prod" },
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Up",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up"
+        }
+      ]
+    }
+  ]
+}

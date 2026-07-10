@@ -1,0 +1,66 @@
+{
+  "uid": "fixture-happy-path",
+  "title": "Happy path: two label_values variables used as matchers",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, instance)",
+        "definition": "label_values(up, instance)",
+        "current": { "text": "server-1", "value": "server-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      },
+      {
+        "name": "job",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": {
+          "refId": "PrometheusVariableQueryEditor-VariableQuery",
+          "qryType": 1,
+          "label": "job"
+        },
+        "current": { "text": "grafana", "value": "grafana" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Requests",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "sum(rate(up{instance=~\"$instance\", job=\"$job\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Up",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up{instance=~\"$instance\"}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "uid": "fixture-group-by",
+  "title": "GroupBy path: variable used in by(...)",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "groupby",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_names()",
+        "definition": "label_names()",
+        "current": { "text": "pod", "value": "pod" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Grouped rate",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "sum by($groupby) (rate(up[5m]))"
+        }
+      ]
+    }
+  ]
+}

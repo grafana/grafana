@@ -1,0 +1,39 @@
+{
+  "uid": "fixture-repeat",
+  "title": "Repeat disqualifier: variable used as panel repeat",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "pod",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, pod)",
+        "definition": "label_values(up, pod)",
+        "current": { "text": "pod-1", "value": "pod-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Per pod",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "repeat": "pod",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up{pod=~\"$pod\"}"
+        }
+      ]
+    }
+  ]
+}

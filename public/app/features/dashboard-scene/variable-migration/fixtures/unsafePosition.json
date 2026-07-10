@@ -1,0 +1,37 @@
+{
+  "uid": "fixture-unsafe-position",
+  "title": "Unsafe position disqualifier: variable used as metric name",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "metric",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(__name__)",
+        "definition": "label_values(__name__)",
+        "current": { "text": "up", "value": "up" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Dynamic metric",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "rate($metric[5m])"
+        }
+      ]
+    }
+  ]
+}

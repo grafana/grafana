@@ -1,0 +1,37 @@
+{
+  "uid": "fixture-ambiguous-key",
+  "title": "Ambiguous label key: same variable under instance= and host=",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "target",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, instance)",
+        "definition": "label_values(up, instance)",
+        "current": { "text": "server-1", "value": "server-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Mixed keys",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up{instance=~\"$target\"} and up{host=~\"$target\"}"
+        }
+      ]
+    }
+  ]
+}

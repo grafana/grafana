@@ -1,0 +1,37 @@
+{
+  "uid": "fixture-cross-datasource",
+  "title": "Cross-datasource disqualifier: variable on DS A used in a DS B query",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, instance)",
+        "definition": "label_values(up, instance)",
+        "current": { "text": "server-1", "value": "server-1" },
+        "options": [],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Up on the other Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-b" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-b" },
+          "expr": "up{instance=~\"$instance\"}"
+        }
+      ]
+    }
+  ]
+}

@@ -95,7 +95,7 @@ function PromQueryVarMigrationDrawerRenderer({ model }: SceneComponentProps<Prom
                   description: getCandidateDescription(candidate),
                 })}
                 description={
-                  candidate.disqualified ? getReasonText(candidate.reasons[0]) : getUsageText(candidate.queryCount)
+                  candidate.disqualified ? getReasonsText(candidate.reasons) : getUsageText(candidate.queryCount)
                 }
                 disabled={candidate.disqualified}
                 value={selectedNames.includes(candidate.variableName)}
@@ -154,6 +154,10 @@ function getUsageText(queryCount: number): string {
     defaultValue_one: 'Used in {{count}} query',
     defaultValue_other: 'Used in {{count}} queries',
   });
+}
+
+function getReasonsText(reasons: DisqualificationReason[]): string {
+  return [...new Set(reasons.map(getReasonText))].join('; ');
 }
 
 function getReasonText(reason: DisqualificationReason | undefined): string {

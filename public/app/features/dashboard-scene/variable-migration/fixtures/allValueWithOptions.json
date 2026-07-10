@@ -1,0 +1,43 @@
+{
+  "uid": "fixture-all-value",
+  "title": "All value with loaded options seeds no filter",
+  "schemaVersion": 42,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prom-a" },
+        "query": "label_values(up, instance)",
+        "definition": "label_values(up, instance)",
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": ["All"], "value": ["$__all"] },
+        "options": [
+          { "text": "All", "value": "$__all", "selected": true },
+          { "text": "server-1", "value": "server-1", "selected": false },
+          { "text": "server-2", "value": "server-2", "selected": false }
+        ],
+        "refresh": 1,
+        "regex": "",
+        "sort": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Up",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prom-a" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prom-a" },
+          "expr": "up{instance=~\"$instance\"}"
+        }
+      ]
+    }
+  ]
+}
