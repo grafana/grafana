@@ -31,6 +31,8 @@ import {
   PluginStatus,
 } from '../types';
 
+import { selectByIdOrAlias } from './selectors';
+
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -163,11 +165,9 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   async (id, thunkApi) => {
     try {
       const details = await getPluginDetails(id);
-      const state = thunkApi.getState();
-      const allPlugins = Object.values(state.plugins.items.entities);
-      const canonical = allPlugins.find((p) => p?.aliasIDs?.includes(id));
+      const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
       return {
-        id: canonical?.id ?? id,
+        id: canonicalId,
         changes: { details },
       };
     } catch (e) {
