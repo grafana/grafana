@@ -65,6 +65,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Promotes selected dashboard filter fields to always-visible, value-only filter controls */
+  GrafanaPinnedFilters: "grafana.pinnedFilters",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
@@ -417,6 +419,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Promotes selected dashboard filter fields to always-visible, value-only filter controls
+ *
+ * **Details:**
+ * - flag key: `grafana.pinnedFilters`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPinnedFilters = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pinnedFilters", false, options).value;
 };
 
 /**

@@ -2753,6 +2753,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.pinnedFilters",
+        "resourceVersion": "1783718638808",
+        "creationTimestamp": "2026-07-10T21:23:58Z"
+      },
+      "spec": {
+        "description": "Promotes selected dashboard filter fields to always-visible, value-only filter controls",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
