@@ -964,7 +964,10 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
+	// Read once at startup to decide storage registration, so it is intentionally not on the
+	// per-request OpenFeature client: there is no request-scoped namespace at startup. The flag
+	// is marked RequiresRestart so changing it takes effect on the next restart.
+	//nolint:staticcheck // startup-time read, intentionally kept on IsEnabledGlobally
 	if b.features.IsEnabledGlobally(featuremgmt.FlagDashboardNotebooks) {
 		opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport: true,

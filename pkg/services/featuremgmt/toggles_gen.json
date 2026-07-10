@@ -1437,13 +1437,17 @@
     {
       "metadata": {
         "name": "dashboard.notebooks",
-        "resourceVersion": "1783509818865",
-        "creationTimestamp": "2026-07-08T11:23:38Z"
+        "resourceVersion": "1783675243549",
+        "creationTimestamp": "2026-07-08T11:23:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 09:20:43.549702713 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

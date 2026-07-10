@@ -646,12 +646,13 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "dashboard.notebooks",
-			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{Go: true, React: true},
-			Owner:       grafanaSharingSquad,
-			Expression:  "false",
+			Name:            "dashboard.notebooks",
+			Description:     "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true, React: true},
+			Owner:           grafanaSharingSquad,
+			Expression:      "false",
+			RequiresRestart: true, // storage is registered once at startup
 		},
 		{
 			Name:        "dashboardDefaultLayoutSelector",
