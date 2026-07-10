@@ -283,7 +283,7 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "8.9.5",
+    "@grafana/scenes": "patch:@grafana/scenes@npm%3A8.9.5#~/.yarn/patches/@grafana-scenes-npm-8.9.5-8f1ac4c45f.patch",
     "@grafana/scenes-react": "8.9.5",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
@@ -450,7 +450,8 @@
     "@opentelemetry/core": "2.8.0",
     "shell-quote": "1.9.0",
     "tmp": "0.2.7",
-    "yaml@npm:^1.10.0": "1.10.3"
+    "yaml@npm:^1.10.0": "1.10.3",
+    "@grafana/scenes@npm:8.9.5": "patch:@grafana/scenes@npm%3A8.9.5#~/.yarn/patches/@grafana-scenes-npm-8.9.5-8f1ac4c45f.patch"
   },
   "workspaces": {
     "packages": [

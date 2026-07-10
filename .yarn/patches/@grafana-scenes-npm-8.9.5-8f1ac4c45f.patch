@@ -1,0 +1,148 @@
+diff --git a/dist/esm/querying/SceneQueryRunner.js b/dist/esm/querying/SceneQueryRunner.js
+index 6821d378d048162e2d071209e1e6aabc4258e8e6..82e5ec33e7d9b522619789925bd3c1e44e6f8eb0 100644
+--- a/dist/esm/querying/SceneQueryRunner.js
++++ b/dist/esm/querying/SceneQueryRunner.js
+@@ -85,6 +85,135 @@ function shouldUseMixedRuntimeDatasource(sceneObject, datasource, queries) {
+   }
+   return false;
+ }
++function parseRefsFromMathExpression(input) {
++  const bracket = /\$\{([A-Za-z0-9_ ]+?)\}/gm;
++  const simple = /\$([A-Za-z0-9_]+)/gm;
++  const found = /* @__PURE__ */ new Set();
++  let m;
++  while ((m = bracket.exec(input)) !== null) {
++    found.add(m[1]);
++  }
++  while ((m = simple.exec(input)) !== null) {
++    found.add(m[1]);
++  }
++  return Array.from(found);
++}
++function getExpressionReferences(query) {
++  const type = query.type;
++  if (type === "math" || type === "sql") {
++    return parseRefsFromMathExpression(query.expression || "");
++  }
++  if (type === "classic_conditions") {
++    return (query.conditions || [])
++      .map((c) => {
++        var _a, _b;
++        return (_b = (_a = c.query) == null ? void 0 : _a.params) == null ? void 0 : _b[0];
++      })
++      .filter(Boolean);
++  }
++  return query.expression ? [query.expression] : [];
++}
++function rewriteExpressionReferences(query, renameMap) {
++  const type = query.type;
++  if (type === "math" || type === "sql") {
++    let expr = query.expression || "";
++    for (const oldRef of Object.keys(renameMap)) {
++      const re = new RegExp("(\\$" + oldRef + "\\b)|(\\$\\{" + oldRef + "\\})", "gm");
++      expr = expr.replace(re, "${" + renameMap[oldRef] + "}");
++    }
++    query.expression = expr;
++  } else if (type === "classic_conditions") {
++    (query.conditions || []).forEach((c) => {
++      var _a;
++      const params = (_a = c.query) == null ? void 0 : _a.params;
++      if (params && params[0] && renameMap[params[0]]) {
++        params[0] = renameMap[params[0]];
++      }
++    });
++  } else if (query.expression && renameMap[query.expression]) {
++    query.expression = renameMap[query.expression];
++  }
++}
++function expandExpressionFanOut(sceneObject, targets) {
++  const hasExpression = targets.some((t) => isExpressionReference && isExpressionReference(t.datasource));
++  if (!hasExpression) {
++    return targets;
++  }
++  let variableName;
++  let uids;
++  for (const t of targets) {
++    if (isExpressionReference && isExpressionReference(t.datasource)) {
++      continue;
++    }
++    const vn = getSimpleVariableNameFromDatasourceUid(t.datasource == null ? void 0 : t.datasource.uid);
++    if (!vn) {
++      continue;
++    }
++    const variable = sceneGraph.lookupVariable(vn, sceneObject);
++    const value = variable == null ? void 0 : variable.getValue();
++    if (Array.isArray(value)) {
++      const selected = value.filter((v) => v !== "default");
++      if (selected.length > 1) {
++        variableName = vn;
++        uids = selected;
++        break;
++      }
++    }
++  }
++  if (!variableName || !uids) {
++    return targets;
++  }
++  const fannedRootRefIds = /* @__PURE__ */ new Set();
++  for (const t of targets) {
++    if (isExpressionReference && isExpressionReference(t.datasource)) {
++      continue;
++    }
++    if (getSimpleVariableNameFromDatasourceUid(t.datasource == null ? void 0 : t.datasource.uid) === variableName) {
++      fannedRootRefIds.add(t.refId);
++    }
++  }
++  const dependentRefIds = new Set(fannedRootRefIds);
++  let changed = true;
++  while (changed) {
++    changed = false;
++    for (const t of targets) {
++      if (!(isExpressionReference && isExpressionReference(t.datasource))) {
++        continue;
++      }
++      if (dependentRefIds.has(t.refId)) {
++        continue;
++      }
++      if (getExpressionReferences(t).some((r) => dependentRefIds.has(r))) {
++        dependentRefIds.add(t.refId);
++        changed = true;
++      }
++    }
++  }
++  const expanded = [];
++  for (const t of targets) {
++    if (!dependentRefIds.has(t.refId)) {
++      expanded.push(t);
++    }
++  }
++  const toFan = targets.filter((t) => dependentRefIds.has(t.refId));
++  uids.forEach((uid, i) => {
++    const renameMap = {};
++    for (const t of toFan) {
++      renameMap[t.refId] = t.refId + "_" + i;
++    }
++    for (const t of toFan) {
++      const clone = cloneDeep(t);
++      clone.refId = renameMap[t.refId];
++      if (fannedRootRefIds.has(t.refId)) {
++        clone.datasource = { ...clone.datasource, uid };
++      } else {
++        rewriteExpressionReferences(clone, renameMap);
++      }
++      expanded.push(clone);
++    }
++  });
++  return expanded;
++}
+ class SceneQueryRunner extends SceneObjectBase {
+   constructor(initialState) {
+     super(initialState);
+@@ -479,6 +608,7 @@ class SceneQueryRunner extends SceneObjectBase {
+       }
+       return query;
+     });
++    request.targets = expandExpressionFanOut(this, request.targets);
+     const lowerIntervalLimit = minInterval ? interpolate(this, minInterval) : ds.interval;
+     const norm = rangeUtil.calculateInterval(timeRange.state.value, request.maxDataPoints, lowerIntervalLimit);
+     request.scopedVars = Object.assign({}, request.scopedVars, {
