@@ -236,9 +236,6 @@ const useHiddenSections = ({
   const onToggleHidden = useCallback(
     (item: NavModelItem, effectivelyHidden: boolean) => {
       const key = hiddenKey(item);
-      if (!key) {
-        return;
-      }
       setDraftHiddenIds((current) =>
         effectivelyHidden ? revealItem(current, baseItems, key) : hideItem(current, baseItems, key)
       );
