@@ -51,9 +51,7 @@ describe('useAlertRulesNav', () => {
     const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
 
     expect(result.current.navId).toBe('alert-rules');
-    // A single tab means no tab bar is rendered
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(result.current.pageNav?.children).toBeUndefined();
+    expect(result.current.pageNav).toEqual(expect.objectContaining({ children: undefined }));
   });
 
   it('should include tabs registered via addAlertRulesTab', () => {
@@ -75,22 +73,25 @@ describe('useAlertRulesNav', () => {
     const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
 
     expect(result.current.navId).toBe('alert-rules');
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(result.current.pageNav?.children).toEqual([
+    expect(result.current.pageNav).toEqual(
       expect.objectContaining({
-        id: 'alert-rules-list',
-        url: '/alerting/list',
-        active: false,
-      }),
-      expect.objectContaining({
-        id: 'alert-rules-custom',
-        text: 'Custom tab',
-        url: '/alerting/list/custom',
-        active: true,
-        tabSuffix: TabSuffix,
-        parentItem: mockNavIndex['alert-rules'],
-      }),
-    ]);
+        children: [
+          expect.objectContaining({
+            id: 'alert-rules-list',
+            url: '/alerting/list',
+            active: false,
+          }),
+          expect.objectContaining({
+            id: 'alert-rules-custom',
+            text: 'Custom tab',
+            url: '/alerting/list/custom',
+            active: true,
+            tabSuffix: TabSuffix,
+            parentItem: mockNavIndex['alert-rules'],
+          }),
+        ],
+      })
+    );
   });
 
   it('should remove a registered tab when its unregister function is called', () => {
@@ -111,7 +112,7 @@ describe('useAlertRulesNav', () => {
 
     const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
 
-    expect(result.current.pageNav?.children).toBeUndefined();
+    expect(result.current.pageNav).toEqual(expect.objectContaining({ children: undefined }));
   });
 
   it('should ignore registrations with a duplicate url', () => {
@@ -128,10 +129,14 @@ describe('useAlertRulesNav', () => {
 
     const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
 
-    // eslint-disable-next-line testing-library/no-node-access
-    const children = result.current.pageNav?.children ?? [];
-    expect(children).toHaveLength(2);
-    expect(children[1]).toEqual(expect.objectContaining({ id: 'first', text: 'First' }));
+    expect(result.current.pageNav).toEqual(
+      expect.objectContaining({
+        children: [
+          expect.objectContaining({ id: 'alert-rules-list' }),
+          expect.objectContaining({ id: 'first', text: 'First' }),
+        ],
+      })
+    );
   });
 
   it('should return the legacy nav when alertingNavigationV2 is disabled', () => {
