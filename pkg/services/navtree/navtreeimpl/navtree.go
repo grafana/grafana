@@ -207,28 +207,13 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		}
 	}
 
-	homeNode := &navtree.NavLink{
+	return &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
-		ctx := c.Req.Context()
-		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
-			children := make([]*navtree.NavLink, 0, 1)
-			// setup guide (a submenu item under Home)
-			children = append(children, &navtree.NavLink{
-				Id:         "home-setup-guide",
-				Text:       "Getting started guide",
-				Url:        "/a/grafana-setupguide-app/getting-started",
-				SortWeight: navtree.WeightHome,
-			})
-			homeNode.Children = children
-		}
-	}
-	return homeNode
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {

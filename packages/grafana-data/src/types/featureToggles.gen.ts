@@ -1181,16 +1181,6 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enables the raw DSL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchRawDSLQuery?: boolean;
-  /**
-  * Enables the ES|QL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchESQLQuery?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1210,11 +1200,6 @@ export interface FeatureToggles {
   * @default false
   */
   lokiQueryLimitsContext?: boolean;
-  /**
-  * Enables the new version of rudderstack
-  * @default false
-  */
-  rudderstackUpgrade?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
   * @default false
