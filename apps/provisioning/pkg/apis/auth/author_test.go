@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -14,7 +15,7 @@ func TestGetAuthorFromRequester(t *testing.T) {
 	tests := []struct {
 		name      string
 		requester identity.Requester
-		expected  *Author
+		expected  *repository.CommitSignature
 	}{
 		{
 			name: "user identity returns author",
@@ -24,7 +25,7 @@ func TestGetAuthorFromRequester(t *testing.T) {
 				Email:   "test@example.com",
 				UserUID: "abc123",
 			},
-			expected: &Author{Name: "Test User", Email: "test@example.com"},
+			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
 		},
 		{
 			name: "service identity returns nothing",
