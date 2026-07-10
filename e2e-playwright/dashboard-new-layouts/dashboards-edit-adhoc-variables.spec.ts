@@ -39,7 +39,7 @@ test.describe(
       await sidebar.variableOptions.adhoc.selectDatasource('gdev-loki');
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.variables.getVariableLabel(variable.label!);
+      const variableLabel = controls.variables.getLabel(variable.label!);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label!);
 

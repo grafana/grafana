@@ -38,7 +38,7 @@ test.describe(
       await sidebar.variableOptions.groupby.selectDatasource('gdev-loki');
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.variables.getVariableLabel(variable.label!);
+      const variableLabel = controls.variables.getLabel(variable.label!);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label!);
 
@@ -56,7 +56,7 @@ test.describe(
       });
 
       // choose the label, then close the dropdown
-      await controls.variables.selectVariableOption(variable.label!, labels[1]);
+      await controls.variables.selectOption(variable.label!, labels[1]);
       await page.locator('body').click();
 
       // assert the panel is visible and has the correct value

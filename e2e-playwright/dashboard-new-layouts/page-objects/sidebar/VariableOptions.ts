@@ -36,7 +36,7 @@ export class VariableOptions extends PageObject {
   }
 
   readonly datasource = {
-    selectDatasourceType: async (dsType: string) => {
+    selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
         await this.dashboardPage
           .getByGrafanaSelector(
@@ -46,7 +46,7 @@ export class VariableOptions extends PageObject {
         await this.page.getByRole('option', { name: dsType, exact: true }).click();
       });
     },
-    setDatasourceNameFilter: async (filter: string) => {
+    setNameFilter: async (filter: string) => {
       await test.step(`Set data source name filter "${filter}"`, async () => {
         await this.dashboardPage
           .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
