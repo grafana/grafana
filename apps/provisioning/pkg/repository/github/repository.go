@@ -280,7 +280,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 		ref = r.config.Branch()
 	}
 
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Path(), path)
 	commits, err := r.gh.Commits(ctx, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
