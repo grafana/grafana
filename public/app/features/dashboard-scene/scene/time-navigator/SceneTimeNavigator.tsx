@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
 import { type DataFrame, type DataSourceRef, dateTime, outerJoinDataFrames, store } from '@grafana/data';
@@ -263,6 +263,9 @@ function SceneTimeNavigatorRenderer({ model }: SceneComponentProps<SceneTimeNavi
 
   const spark = useMemo(() => extractSparklines(data?.series), [data]);
   const onContextWindowChange = useMemo(() => debounce((r: TimeRangeMs) => model.setContextRange(r), 350), [model]);
+  // Cancel any pending debounced update on unmount so it can't call setContextRange after the navigator is
+  // hidden or the dashboard navigates away.
+  useEffect(() => () => onContextWindowChange.cancel(), [onContextWindowChange]);
 
   const dashboard = getDashboardSceneFor(model);
   const panelOptions = dashboardSceneGraph.getVizPanels(dashboard).map((p) => ({

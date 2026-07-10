@@ -226,11 +226,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   const timeNavigatorEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaTimeNavigator, false);
 
-  // Show/hide preference for the time navigator. Only read/write localStorage when the feature is on, so a
-  // disabled instance never touches it (react-use's useLocalStorage would persist the default on mount).
-  const [showTimebar, setShowTimebar] = useState(() =>
-    timeNavigatorEnabled ? store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true) : true
-  );
+  // Show/hide preference for the time navigator. Read the saved value unconditionally (a harmless read, and
+  // it means enabling the flag mid-session still honours a previously hidden state); only the toggle writes
+  // it, and the toggle renders only when the feature is enabled, so a disabled instance never persists.
+  const [showTimebar, setShowTimebar] = useState(() => store.getBool(TIME_NAVIGATOR_VISIBLE_KEY, true));
   const toggleTimebar = () => {
     const next = !showTimebar;
     setShowTimebar(next);

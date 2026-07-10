@@ -17,12 +17,14 @@ interface Props {
   onClose: () => void;
 }
 
+// The presets extend the current selection by the given duration on EACH side (see extendedContext), so
+// they are labelled as "± <duration>" rather than as absolute "Last N" windows, which they are not.
 const PRESETS = [
-  { label: 'Same as timepicker', value: '0h' },
-  { label: 'Last 24 hours', value: '24h' },
-  { label: 'Last 1 week', value: '7d' },
-  { label: 'Last 2 weeks', value: '14d' },
-  { label: 'Last 30 days', value: '30d' },
+  { label: 'Same as time picker', value: '0h' },
+  { label: '± 24 hours', value: '24h' },
+  { label: '± 1 week', value: '7d' },
+  { label: '± 2 weeks', value: '14d' },
+  { label: '± 30 days', value: '30d' },
 ];
 
 export const ContextWindowSelector: React.FC<Props> = ({
