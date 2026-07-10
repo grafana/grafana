@@ -2001,7 +2001,8 @@
       "metadata": {
         "name": "elasticsearchESQLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
@@ -2027,7 +2028,8 @@
       "metadata": {
         "name": "elasticsearchRawDSLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-15T19:11:05Z"
+        "creationTimestamp": "2025-12-15T19:11:05Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",

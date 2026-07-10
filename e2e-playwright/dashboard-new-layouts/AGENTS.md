@@ -62,12 +62,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { Controls, Sidebar } from './page-objects';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 test.describe(
   'Feature name',
   {

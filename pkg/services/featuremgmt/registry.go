@@ -285,7 +285,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "true",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
@@ -2207,22 +2207,6 @@ var (
 			RequiresRestart: false,
 			HideFromDocs:    false,
 			Expression:      "false",
-		},
-		{
-			Name:        "elasticsearchRawDSLQuery",
-			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "elasticsearchESQLQuery",
-			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",
