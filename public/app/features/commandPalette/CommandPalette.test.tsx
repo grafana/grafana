@@ -1,7 +1,7 @@
 import { KBarProvider } from 'kbar';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
-import { useAssistant } from '@grafana/assistant';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
@@ -33,7 +33,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
-  OpenAssistantButton: jest.fn().mockImplementation(({ title }) => <button>{title}</button>),
+  OpenAssistantButton: jest.fn().mockImplementation(({ title, onClick }) => <button onClick={onClick}>{title}</button>),
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -411,7 +411,8 @@ describe('CommandPalette', () => {
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
       await user.click(screen.getByRole('button', { name: /ask Assistant/ }));
 
-      expect(openAssistant).toHaveBeenCalledWith({
+      // The real OpenAssistantButton opens the assistant itself (mocked here), so assert it got the right props
+      expect((OpenAssistantButton as jest.Mock).mock.lastCall?.[0]).toMatchObject({
         origin: 'grafana/command-palette',
         prompt: 'Search for latency',
       });
