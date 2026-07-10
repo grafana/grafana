@@ -35,47 +35,23 @@ describe('RuleViewer loaded CUJ signal', () => {
     jest.clearAllMocks();
   });
 
-  it('emits a silent success event exactly once when the rule loads', async () => {
-    mockUseCombinedRule.mockReturnValue({ loading: false, result: {} as CombinedRule });
+  it.each([
+    { status: 'success', hookResult: { loading: false, result: {} as CombinedRule } },
+    { status: 'error', hookResult: { loading: false, error: new Error('boom') } },
+    { status: 'not_found', hookResult: { loading: false } },
+  ])('emits a silent $status event exactly once when the rule settles', async ({ status, hookResult }) => {
+    mockUseCombinedRule.mockReturnValue(hookResult);
 
     render(<RuleViewer />);
 
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
         'grafana_alerting_rule_viewer_loaded',
-        { status: 'success' },
+        { status },
         { silent: true }
       )
     );
     expect(mockReportInteraction).toHaveBeenCalledTimes(1);
-  });
-
-  it('emits an error event when the rule fetch fails', async () => {
-    mockUseCombinedRule.mockReturnValue({ loading: false, error: new Error('boom') });
-
-    render(<RuleViewer />);
-
-    await waitFor(() =>
-      expect(mockReportInteraction).toHaveBeenCalledWith(
-        'grafana_alerting_rule_viewer_loaded',
-        { status: 'error' },
-        { silent: true }
-      )
-    );
-  });
-
-  it('emits a not_found event when the rule is missing', async () => {
-    mockUseCombinedRule.mockReturnValue({ loading: false });
-
-    render(<RuleViewer />);
-
-    await waitFor(() =>
-      expect(mockReportInteraction).toHaveBeenCalledWith(
-        'grafana_alerting_rule_viewer_loaded',
-        { status: 'not_found' },
-        { silent: true }
-      )
-    );
   });
 
   it('does not emit while the rule is still loading', async () => {

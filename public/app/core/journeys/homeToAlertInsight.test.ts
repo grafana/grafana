@@ -105,22 +105,68 @@ describe('homeToAlertInsight journey wiring', () => {
     expect(mockTracker.startJourney).not.toHaveBeenCalled();
   });
 
-  it('ends the alert_detail leg with success on rule_viewer_loaded success', () => {
+  it.each([
+    {
+      name: 'alert_detail -> success',
+      action: 'alert_detail',
+      placement: 'list',
+      event: 'grafana_alerting_rule_viewer_loaded',
+      props: { status: 'success' },
+      outcome: 'success',
+      attributes: { endEvent: 'rule_viewer_loaded' },
+    },
+    {
+      name: 'alert_detail -> error (not_found)',
+      action: 'alert_detail',
+      placement: 'list',
+      event: 'grafana_alerting_rule_viewer_loaded',
+      props: { status: 'not_found' },
+      outcome: 'error',
+      attributes: { endEvent: 'rule_viewer_loaded', status: 'not_found' },
+    },
+    {
+      name: 'view_all_rules -> success (view)',
+      action: 'view_all_rules',
+      placement: 'footer',
+      event: 'grafana_alerting_rule_list_page_view',
+      props: { view: 'v2' },
+      outcome: 'success',
+      attributes: { endEvent: 'rule_list_page_view', view: 'v2' },
+    },
+    {
+      name: 'view_all_alerts -> error',
+      action: 'view_all_alerts',
+      placement: 'footer',
+      event: 'grafana_alerting_alert_groups_loaded',
+      props: { status: 'error' },
+      outcome: 'error',
+      attributes: { endEvent: 'alert_groups_loaded', status: 'error' },
+    },
+    {
+      name: 'create_rule -> success',
+      action: 'create_rule',
+      placement: 'footer',
+      event: 'grafana_alerting_rule_editor_loaded',
+      props: { status: 'success' },
+      outcome: 'success',
+      attributes: { endEvent: 'rule_editor_loaded' },
+    },
+    {
+      name: 'create_rule -> error (denied)',
+      action: 'create_rule',
+      placement: 'empty_state',
+      event: 'grafana_alerting_rule_editor_loaded',
+      props: { status: 'denied' },
+      outcome: 'error',
+      attributes: { endEvent: 'rule_editor_loaded', status: 'denied' },
+    },
+  ])('ends the journey: $name', ({ action, placement, event, props, outcome, attributes }) => {
     loadWiring();
 
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'alert_detail', placement: 'list' });
-    simulateInteraction('grafana_alerting_rule_viewer_loaded', { status: 'success' });
+    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action, placement });
+    simulateInteraction(event, props);
 
-    expect(mockHandle.end).toHaveBeenCalledWith('success', { endEvent: 'rule_viewer_loaded' });
-  });
-
-  it('ends the alert_detail leg with error on rule_viewer_loaded not_found', () => {
-    loadWiring();
-
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'alert_detail', placement: 'list' });
-    simulateInteraction('grafana_alerting_rule_viewer_loaded', { status: 'not_found' });
-
-    expect(mockHandle.end).toHaveBeenCalledWith('error', { endEvent: 'rule_viewer_loaded', status: 'not_found' });
+    expect(mockHandle.end).toHaveBeenCalledWith(outcome, attributes);
   });
 
   it('does not end the alert_detail leg when a different destination loads', () => {
@@ -133,41 +179,6 @@ describe('homeToAlertInsight journey wiring', () => {
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
 
-  it('ends the view_all_rules leg with success and the view attribute on rule_list_page_view', () => {
-    loadWiring();
-
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'view_all_rules', placement: 'footer' });
-    simulateInteraction('grafana_alerting_rule_list_page_view', { view: 'v2' });
-
-    expect(mockHandle.end).toHaveBeenCalledWith('success', { endEvent: 'rule_list_page_view', view: 'v2' });
-  });
-
-  it('ends the view_all_alerts leg with error on alert_groups_loaded error', () => {
-    loadWiring();
-
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'view_all_alerts', placement: 'footer' });
-    simulateInteraction('grafana_alerting_alert_groups_loaded', { status: 'error' });
-
-    expect(mockHandle.end).toHaveBeenCalledWith('error', { endEvent: 'alert_groups_loaded', status: 'error' });
-  });
-
-  it('ends the create_rule leg with success on rule_editor_loaded success', () => {
-    loadWiring();
-
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'create_rule', placement: 'footer' });
-    simulateInteraction('grafana_alerting_rule_editor_loaded', { status: 'success' });
-
-    expect(mockHandle.end).toHaveBeenCalledWith('success', { endEvent: 'rule_editor_loaded' });
-  });
-
-  it('ends the create_rule leg with error on rule_editor_loaded denied', () => {
-    loadWiring();
-
-    simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' });
-    simulateInteraction('grafana_alerting_rule_editor_loaded', { status: 'denied' });
-
-    expect(mockHandle.end).toHaveBeenCalledWith('error', { endEvent: 'rule_editor_loaded', status: 'denied' });
-  });
 
   it('starts a fresh journey on a second qualifying click (cancelOnRestart is tracker-side)', () => {
     loadWiring();
