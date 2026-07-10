@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { type FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -24,7 +24,7 @@ describe.each([
 
   it('shows load error but keeps selector interactive', async () => {
     const { getByRole, findByText } = render(
-      <OwnerReferenceSelector onChange={jest.fn()} defaultTeamUid="team-non-existent" />
+      <OwnerReferenceSelector onChange={jest.fn()} defaultTeamUids={['team-non-existent']} />
     );
 
     expect(getByRole('combobox')).toBeInTheDocument();
@@ -41,28 +41,49 @@ describe.each([
 
     await user.click(await screen.findByRole('option', { name: 'Test Team' }));
 
-    expect(onChange).toHaveBeenCalledWith(
+    expect(onChange).toHaveBeenLastCalledWith([
       expect.objectContaining({
         apiVersion: 'iam.grafana.app/v0alpha1',
         kind: 'Team',
         name: expect.any(String),
         uid: expect.any(String),
-      })
-    );
+      }),
+    ]);
   });
 
-  it('allows clearing an already selected owner team and saving null owner reference', async () => {
+  it('allows selecting multiple teams as owners', async () => {
     const onChange = jest.fn();
-    const { user } = render(<OwnerReferenceSelector onChange={onChange} defaultTeamUid="team-a" />);
+    const { user } = render(<OwnerReferenceSelector onChange={onChange} />);
+
     const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+    await user.type(combobox, 'Test');
+    await user.click(await screen.findByRole('option', { name: 'Test Team' }));
 
-    await waitFor(() => expect(combobox).toHaveValue('Team A'));
+    await user.clear(combobox);
+    await user.type(combobox, 'Team A');
+    await user.click(await screen.findByRole('option', { name: 'Team A' }));
 
-    const selectorContainer = combobox.closest('div');
-    expect(selectorContainer).not.toBeNull();
-    await user.click(within(selectorContainer!).getByTitle('Clear value'));
+    const lastArg = onChange.mock.calls.at(-1)?.[0];
+    expect(lastArg).toHaveLength(2);
+    expect(lastArg).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'Team', uid: 'team-a' })]));
+  });
 
-    expect(onChange).toHaveBeenCalledWith(null);
+  it('seeds the selector with the provided default teams', async () => {
+    render(<OwnerReferenceSelector onChange={jest.fn()} defaultTeamUids={['team-a']} />);
+
+    expect(await screen.findByText('Team A')).toBeInTheDocument();
+  });
+
+  it('allows clearing all selected owner teams and emits an empty list', async () => {
+    const onChange = jest.fn();
+    const { user } = render(<OwnerReferenceSelector onChange={onChange} defaultTeamUids={['team-a']} />);
+
+    expect(await screen.findByText('Team A')).toBeInTheDocument();
+
+    await user.click(await screen.findByTitle('Clear all'));
+
+    expect(onChange).toHaveBeenLastCalledWith([]);
   });
 
   it('remains interactive when no teams exist', async () => {

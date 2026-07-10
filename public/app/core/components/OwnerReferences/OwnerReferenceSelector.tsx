@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Box, Combobox, type ComboboxOption, Label } from '@grafana/ui';
+import { Alert, Box, type ComboboxOption, Label, MultiCombobox } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { API_GROUP as IAM_API_GROUP, API_VERSION as IAM_API_VERSION } from 'app/api/clients/iam/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
@@ -12,41 +12,58 @@ import { useLazyGetTeamByUidQuery, useLazySearchTeamsQuery } from 'app/features/
 const OWNER_REFERENCE_API_VERSION = `${IAM_API_GROUP}/${IAM_API_VERSION}` as const;
 const OWNER_REFERENCE_KIND = 'Team' as const;
 
+function toOwnerReference(teamUid: string): OwnerReference {
+  return {
+    apiVersion: OWNER_REFERENCE_API_VERSION,
+    kind: OWNER_REFERENCE_KIND,
+    name: teamUid,
+    uid: teamUid,
+  };
+}
+
 /**
- * Component to allow selecting an owner to use as an owner reference.
+ * Component to select one or more teams to use as owner references.
  *
- * At this time, only supports a single team
+ * A folder can be owned by multiple teams; each selected team becomes an owner reference.
  */
 export const OwnerReferenceSelector = ({
   onChange,
-  defaultTeamUid,
+  defaultTeamUids,
 }: {
-  onChange: (ownerRef: OwnerReference | null) => void;
-  defaultTeamUid?: string;
+  onChange: (ownerRefs: OwnerReference[]) => void;
+  defaultTeamUids?: string[];
 }) => {
-  const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | string | null>(defaultTeamUid || null);
+  const [selectedTeams, setSelectedTeams] = useState<Array<ComboboxOption<string>>>([]);
   const [searchTeams, { isLoading }] = useLazySearchTeamsQuery();
   const [getTeam, { isLoading: isSelectedTeamLoading, error: selectedTeamError }] = useLazyGetTeamByUidQuery();
 
   useEffect(() => {
-    if (defaultTeamUid) {
-      getTeam({ name: defaultTeamUid }, true).then(({ data, status }) => {
-        if (status === QueryStatus.fulfilled && data) {
-          setSelectedTeam({
-            label: data.spec.title,
-            value: data.metadata.name!,
-          });
-        }
-        if (status === QueryStatus.rejected) {
-          setSelectedTeam({
-            label: t('manage-owner-references.team-not-found', '[Unknown team]'),
-            value: defaultTeamUid,
-          });
-        }
-        // We ignore errors here as we handle them with the useLazyGetTeamQuery call
-      });
+    if (!defaultTeamUids?.length) {
+      return;
     }
-  }, [defaultTeamUid, getTeam]);
+
+    let cancelled = false;
+    // Resolve each seeded team UID to a display label. Unresolved teams (deleted or
+    // forbidden) are still shown by UID so the owner isn't silently dropped on save.
+    Promise.all(
+      defaultTeamUids.map((uid) =>
+        getTeam({ name: uid }, true).then(({ data, status }) => {
+          if (status === QueryStatus.fulfilled && data) {
+            return { label: data.spec.title, value: data.metadata.name! };
+          }
+          return { label: t('manage-owner-references.team-not-found', '[Unknown team]'), value: uid };
+        })
+      )
+    ).then((options) => {
+      if (!cancelled) {
+        setSelectedTeams(options);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [defaultTeamUids, getTeam]);
 
   const loadOptions = async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
     const { data } = await searchTeams({ query: inputValue }, true);
@@ -77,32 +94,20 @@ export const OwnerReferenceSelector = ({
         </Alert>
       )}
       <Label htmlFor="owner-reference-selector">
-        <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team</Trans>
+        <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Teams</Trans>
       </Label>
 
-      <Combobox
+      <MultiCombobox<string>
         id="owner-reference-selector"
         isClearable
         prefixIcon="users-alt"
-        value={selectedTeam}
+        value={selectedTeams}
         loading={isLoading || isSelectedTeamLoading}
-        disabled={isLoading || isSelectedTeamLoading}
         options={loadOptions}
-        placeholder={t('manage-owner-references.select-owner', 'Select an owner')}
-        onChange={(team) => {
-          setSelectedTeam(team);
-
-          if (!team) {
-            onChange(null);
-            return;
-          }
-
-          onChange({
-            apiVersion: OWNER_REFERENCE_API_VERSION,
-            kind: OWNER_REFERENCE_KIND,
-            name: team.value,
-            uid: team.value,
-          });
+        placeholder={t('manage-owner-references.select-owners', 'Select owners')}
+        onChange={(teams) => {
+          setSelectedTeams(teams);
+          onChange(teams.map((team) => toOwnerReference(team.value)));
         }}
       />
     </Box>

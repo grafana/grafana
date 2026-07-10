@@ -218,16 +218,16 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
 
         await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
-        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owner' }));
+        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owners' }));
 
-        expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
+        expect(await screen.findByRole('dialog', { name: 'Manage folder owners' })).toBeInTheDocument();
 
         await user.click(screen.getByRole('combobox', { name: /team/i }));
         await user.click(await screen.findByText(/test team/i));
 
-        await user.click(screen.getByRole('button', { name: 'Save owner' }));
+        await user.click(screen.getByRole('button', { name: 'Save owners' }));
         await waitFor(() => {
-          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owners' })).not.toBeInTheDocument();
         });
       });
 
@@ -238,15 +238,15 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         await screen.findByText(/owned by/i);
 
         await user.click(await screen.findByRole('button', { name: 'Folder actions' }));
-        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owner' }));
+        await user.click(await screen.findByRole('menuitem', { name: 'Manage folder owners' }));
 
-        expect(await screen.findByRole('dialog', { name: 'Manage folder owner' })).toBeInTheDocument();
+        expect(await screen.findByRole('dialog', { name: 'Manage folder owners' })).toBeInTheDocument();
 
-        await user.click(await screen.findByTitle(/clear value/i));
+        await user.click(await screen.findByTitle(/clear all/i));
 
-        await user.click(screen.getByRole('button', { name: 'Save owner' }));
+        await user.click(screen.getByRole('button', { name: 'Save owners' }));
         await waitFor(() => {
-          expect(screen.queryByRole('dialog', { name: 'Manage folder owner' })).not.toBeInTheDocument();
+          expect(screen.queryByRole('dialog', { name: 'Manage folder owners' })).not.toBeInTheDocument();
         });
       });
     });

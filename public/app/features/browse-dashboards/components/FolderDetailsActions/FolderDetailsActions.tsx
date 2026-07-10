@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 
 import { type OwnerReference as OwnerReferenceType } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -81,11 +80,9 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
 const FolderOwners = ({ ownerReferences }: { ownerReferences?: OwnerReferenceType[] }) => {
   const styles = useStyles2(getStyles);
-  const teamOwnerReferences = ownerReferences?.filter((ref) => ref.kind === 'Team');
-  const teamUid = teamOwnerReferences?.at(0)?.uid;
-  const { data: team, isLoading: isLoadingTeam } = useGetTeamByUidQuery(teamUid ? { name: teamUid } : skipToken);
+  const teamOwnerReferences = ownerReferences?.filter((ref) => ref.kind === 'Team') ?? [];
 
-  if (!teamOwnerReferences || teamOwnerReferences.length === 0 || isLoadingTeam || !team) {
+  if (teamOwnerReferences.length === 0) {
     return null;
   }
 
@@ -94,18 +91,32 @@ const FolderOwners = ({ ownerReferences }: { ownerReferences?: OwnerReferenceTyp
       <Text>
         <Trans i18nKey="browse-dashboards.folder-owners.owned-by">Owned by:</Trans>
       </Text>
-      <OwnerReference team={team} />
+      <Stack direction="row" gap={1} wrap="wrap" alignItems="center">
+        {teamOwnerReferences.map((ref) => (
+          <FolderOwnerLink key={ref.uid} teamUid={ref.uid} />
+        ))}
+      </Stack>
     </div>
   );
+};
+
+const FolderOwnerLink = ({ teamUid }: { teamUid: string }) => {
+  const { data: team, isLoading } = useGetTeamByUidQuery({ name: teamUid });
+
+  if (isLoading || !team) {
+    return null;
+  }
+
+  return <OwnerReference team={team} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   folderOwnersContainer: css({
     display: 'flex',
     flexDirection: 'row',
-    height: theme.spacing(4),
-    lineHeight: theme.spacing(4),
-    padding: `0 ${theme.spacing(2)}`,
+    alignItems: 'center',
+    minHeight: theme.spacing(4),
+    padding: `${theme.spacing(0.5)} ${theme.spacing(2)}`,
     gap: theme.spacing(1),
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.strong}`,
