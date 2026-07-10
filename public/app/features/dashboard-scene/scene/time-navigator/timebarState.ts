@@ -24,6 +24,19 @@ import {
   panRange,
 } from './timeModel';
 
+/**
+ * A dashboard time change is treated as a zoom (vs a pan) when the selection's span changes by more than
+ * this fraction. The zoom button doubles the span (+100%) while pans and autorefresh keep it, so the two
+ * are easy to tell apart: a zoom leaves the context put whereas a pan makes it follow the selection.
+ */
+const SPAN_CHANGE_EPS = 0.1;
+/**
+ * On a pan/slide, how far (as a fraction of the context span) the selection may drift past a context edge
+ * before the context shifts to follow it. Small, so a real pan re-frames promptly and the selection never
+ * clips, but non-zero so autorefresh's tiny forward drift doesn't redraw the view every tick.
+ */
+const SYNC_PAN_TOLERANCE = 0.05;
+
 type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
 
 export interface TimebarState {
@@ -42,7 +55,7 @@ type Action =
   | { type: 'setSelection'; range: TimeRangeMs }
   | { type: 'setContextWindow'; range: TimeRangeMs; now: number }
   | { type: 'applyRelativeContext'; duration: string; now: number }
-  | { type: 'syncFromDashboard'; range: TimeRangeMs; now: number };
+  | { type: 'syncFromDashboard'; range: TimeRangeMs; now: number; factor: number };
 
 /**
  * Shift a proposed context window so it fully contains the selection — the selection (blue bar) must stay
@@ -107,12 +120,38 @@ function reducer(state: TimebarState, action: Action): TimebarState {
             ? clampRange(extendedContext(selection, ms, action.now), { maxTo: action.now })
             : state.contextWindow;
       } else {
-        // Follow the selection by the same delta so it stays framed, preserving the user's zoom level.
-        const delta = midOf(selection) - midOf(state.selection);
-        contextWindow = clampRange(
-          { from: state.contextWindow.from + delta, to: state.contextWindow.to + delta },
-          { maxTo: action.now }
-        );
+        const selSpan = selection.to - selection.from;
+        const oldSelSpan = state.selection.to - state.selection.from;
+        const ctxSpan = state.contextWindow.to - state.contextWindow.from;
+        const { from: cFrom, to: cTo } = state.contextWindow;
+        const mid = midOf(selection);
+        const maxTo = Math.max(action.now, selection.to);
+        const spanChanged = Math.abs(selSpan - oldSelSpan) > oldSelSpan * SPAN_CHANGE_EPS;
+
+        // A zoom (span changed, e.g. the dashboard zoom button) keeps the context put while the selection
+        // still fits it and stays centred within it — the widened edges may poke past `now`, but that is
+        // empty future space and clips harmlessly, so we don't redraw. A pan/slide (span unchanged) keeps
+        // the context only while the selection stays inside it (a small tolerance absorbs autorefresh's
+        // forward drift). Otherwise we act below.
+        const panTol = ctxSpan * SYNC_PAN_TOLERANCE;
+        const keep = spanChanged
+          ? selSpan < ctxSpan && mid > cFrom && mid < cTo
+          : selection.from >= cFrom - panTol && selection.to <= cTo + panTol;
+
+        if (keep) {
+          contextWindow = state.contextWindow;
+        } else if (!spanChanged && selSpan < ctxSpan) {
+          // A pan pushed the selection past an edge — shift the context by the same delta to follow it, so
+          // it stays framed at the current zoom level and never clips.
+          const delta = mid - midOf(state.selection);
+          contextWindow = clampRange({ from: cFrom + delta, to: cTo + delta }, { maxTo });
+        } else {
+          // The selection outgrew the context, or a zoom moved its centre out of view — reframe around it,
+          // growing back to the full initial framing (selSpan * factor) so subsequent zoom-outs keep their
+          // headroom and don't re-trigger a redraw.
+          const reSpan = Math.max(ctxSpan, selSpan * action.factor);
+          contextWindow = clampRange({ from: mid - reSpan / 2, to: mid + reSpan / 2 }, { maxTo });
+        }
       }
       return { ...state, selection, contextWindow };
     }
@@ -194,7 +233,7 @@ export function useTimebar({
     if (approxEqual(incoming, s.selection)) {
       return; // already in sync (this also swallows our own echo)
     }
-    dispatch({ type: 'syncFromDashboard', range: incoming, now: nowRef.current });
+    dispatch({ type: 'syncFromDashboard', range: incoming, now: nowRef.current, factor: factorRef.current });
   }, [vFrom, vTo]);
 
   const setSelection = useCallback(
@@ -272,7 +311,12 @@ export function useTimebar({
     if (wasContextGesture) {
       const v = valueRef.current;
       if (!approxEqual(v, stateRef.current.selection)) {
-        dispatch({ type: 'syncFromDashboard', range: { from: v.from, to: v.to }, now: nowRef.current });
+        dispatch({
+          type: 'syncFromDashboard',
+          range: { from: v.from, to: v.to },
+          now: nowRef.current,
+          factor: factorRef.current,
+        });
       }
     }
   }, []);
