@@ -1448,8 +1448,8 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingRuleQualityAssist",
-			Description:  "Enable assisted generation and review of alert rule annotations.",
+			Name:         "alertingRuleQuality",
+			Description:  "Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
