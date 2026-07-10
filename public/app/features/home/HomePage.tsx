@@ -14,7 +14,6 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
-import { RedesignedDashboardTabs } from './DashboardTabs/RedesignedDashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
@@ -101,7 +100,7 @@ export default function HomePage() {
                   <Recommendations />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <RedesignedDashboardTabs extensionComponents={tabComponents} />
+                    <DashboardTabs extensionComponents={tabComponents} />
                     {/* TODO: Alerts and incidents will combine into one card */}
                     <FiringAlertsCard />
                   </Grid>
