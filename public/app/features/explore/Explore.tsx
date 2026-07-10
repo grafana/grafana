@@ -20,7 +20,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import {
   type AdHocFilterItem,
@@ -49,6 +49,9 @@ import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
+import { ExploreQueryFlow } from './QueryFlow/ExploreQueryFlow';
+import { QueryFlowContext, type QueryFlowContextValue } from './QueryFlow/QueryFlowContext';
+import { registerQueryFlowRowAction } from './QueryFlow/registerQueryFlowRowAction';
 import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
@@ -70,6 +73,8 @@ import {
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
 
+registerQueryFlowRowAction();
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     exploreMain: css({
@@ -84,6 +89,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     queryContainer: css({
       label: 'queryContainer',
       padding: theme.spacing(1),
+    }),
+    queryFlowInline: css({
+      label: 'queryFlowInline',
+      height: 360,
+      marginTop: theme.spacing(1),
+      // Match the dark background of the query editor.
+      background: theme.colors.background.canvas,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
     }),
     exploreContainer: css({
       label: 'exploreContainer',
@@ -109,6 +124,8 @@ interface ExploreProps extends Themeable2 {
   eventBus: EventBus;
   setShowQueryInspector: (value: boolean) => void;
   showQueryInspector: boolean;
+  setQueryFlowRefIds: (refIds: string[]) => void;
+  queryFlowRefIds: string[];
 }
 
 interface ExploreState {
@@ -146,6 +163,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  // Cached QueryFlowContext value, keyed by the inputs that actually change its shape. Explore
+  // re-renders on every query/result/time-range update; without this cache every render would hand
+  // context consumers (one per query row) a brand-new object and closures, forcing them to re-render
+  // too even though nothing about the query flow state changed.
+  private queryFlowContextCache?: { key: string; value: QueryFlowContextValue };
 
   constructor(props: Props) {
     super(props);
@@ -154,6 +176,28 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+  }
+
+  private getQueryFlowContextValue(
+    queryFlowRefIds: string[],
+    setQueryFlowRefIds: (refIds: string[]) => void
+  ): QueryFlowContextValue {
+    const enabled = Boolean(config.featureToggles.exploreQueryFlow);
+    const key = `${enabled}:${queryFlowRefIds.join(',')}`;
+    if (this.queryFlowContextCache?.key === key) {
+      return this.queryFlowContextCache.value;
+    }
+    const value: QueryFlowContextValue = {
+      enabled,
+      isOpen: (refId: string) => queryFlowRefIds.includes(refId),
+      toggle: (refId: string) =>
+        setQueryFlowRefIds(
+          queryFlowRefIds.includes(refId) ? queryFlowRefIds.filter((id) => id !== refId) : [...queryFlowRefIds, refId]
+        ),
+      close: (refId: string) => setQueryFlowRefIds(queryFlowRefIds.filter((id) => id !== refId)),
+    };
+    this.queryFlowContextCache = { key, value };
+    return value;
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -593,6 +637,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationEditorHelperData,
       showQueryInspector,
       setShowQueryInspector,
+      queryFlowRefIds,
+      setQueryFlowRefIds,
       compact,
       queryLibraryRef,
     } = this.props;
@@ -668,6 +714,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
       setQueries(exploreId, selectedQueries);
     };
 
+    const queryFlowContextValue = this.getQueryFlowContextValue(queryFlowRefIds, setQueryFlowRefIds);
+
+    // Render panels in query-row order rather than the order they were opened, so they read
+    // top-to-bottom alongside the rows they belong to. Also drops refIds for queries that were
+    // removed — ExplorePaneContainer prunes `queryFlowRefIds` itself, but this keeps a render from
+    // showing a stale panel for a single tick while that prune is in flight.
+    const orderedQueryFlowRefIds = this.props.queries
+      .map((q) => q.refId)
+      .filter((refId) => queryFlowRefIds.includes(refId));
+
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
@@ -695,7 +751,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
             >
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
-                  <>
+                  <QueryFlowContext.Provider value={queryFlowContextValue}>
                     <ContentOutlineItem
                       panelId="Queries"
                       title={t('explore.explore.title-queries', 'Queries')}
@@ -730,6 +786,18 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           onSelectQueriesFromLibrary={selectQueriesFromLibrary}
                           onReplaceQueriesFromLibrary={replaceQueriesFromLibrary}
                         />
+                        {queryFlowContextValue.enabled &&
+                          orderedQueryFlowRefIds.map((refId) => (
+                            <div key={refId} className={styles.queryFlowInline}>
+                              <ErrorBoundaryAlert boundaryName="explore-query-flow">
+                                <ExploreQueryFlow
+                                  exploreId={exploreId}
+                                  refId={refId}
+                                  onClose={() => queryFlowContextValue.close(refId)}
+                                />
+                              </ErrorBoundaryAlert>
+                            </div>
+                          ))}
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
                     </ContentOutlineItem>
@@ -801,7 +869,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         );
                       }}
                     </AutoSizer>
-                  </>
+                  </QueryFlowContext.Provider>
                 ) : (
                   this.renderEmptyState(styles.exploreContainer)
                 )}

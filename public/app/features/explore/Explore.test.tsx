@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -8,12 +8,13 @@ import {
   createTheme,
   type DataSourceApi,
   EventBusSrv,
+  getDefaultTimeRange,
   LoadingState,
   PluginExtensionTypes,
   store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinks } from '@grafana/runtime';
+import { config, usePluginLinks } from '@grafana/runtime';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
@@ -63,6 +64,8 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
 const dummyProps: Props = {
   setShowQueryInspector: (value: boolean) => {},
   showQueryInspector: false,
+  queryFlowRefIds: [],
+  setQueryFlowRefIds: (refIds: string[]) => {},
   logsResult: undefined,
   changeSize: jest.fn(),
   datasourceInstance: {
@@ -130,6 +133,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => {},
   }),
   usePluginLinks: jest.fn(() => ({ links: [] })),
+}));
+
+// `QueryRows` resolves each query row's datasource plugin via the (unmocked) plugin datasource
+// registry, which isn't set up in this test file — stubbing it out keeps these tests focused on
+// QueryFlow panel behavior instead of the full query-editor-row rendering pipeline (covered by
+// QueryRows.test.tsx). SecondaryActions (Add query, Add from library) is a separate sibling
+// component and renders normally.
+jest.mock('./QueryRows', () => ({
+  QueryRows: () => null,
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -308,6 +320,73 @@ describe('Explore', () => {
 
       expect(addQueryButton).toBeDisabled();
       expect(addFromLibraryButton).toBeDisabled();
+    });
+  });
+
+  describe('Query flow', () => {
+    const originalToggle = config.featureToggles.exploreQueryFlow;
+
+    afterEach(() => {
+      config.featureToggles.exploreQueryFlow = originalToggle;
+    });
+
+    const setupWithQueries = (queries: Array<{ refId: string; expr: string }>, overrideProps?: Partial<Props>) => {
+      const dataQueries = queries.map((q) => ({ ...q, datasource: { type: 'prometheus', uid: 'prom' } }));
+      const queryFlowStore = configureStore({
+        explore: {
+          ...initialExploreState,
+          panes: {
+            left: makeExplorePaneState({ queries: dataQueries, range: getDefaultTimeRange() }),
+          },
+        },
+      });
+      // `Explore` itself isn't connected in this test (imported un-wrapped), so its own `queries` prop
+      // — which drives query-flow panel ordering — must be set explicitly, matching the store's.
+      const exploreProps = { ...dummyProps, queries: dataQueries, ...overrideProps };
+      return render(
+        <TestProvider store={queryFlowStore}>
+          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+            <ContentOutlineContextProvider>
+              <Explore {...exploreProps} />
+            </ContentOutlineContextProvider>
+          </OpenFeatureProvider>
+        </TestProvider>
+      );
+    };
+
+    it('does not render the query flow panel when the feature toggle is disabled, even with open refIds', async () => {
+      config.featureToggles.exploreQueryFlow = false;
+      setupWithQueries([{ refId: 'A', expr: 'rate(alpha_metric[5m])' }], { queryFlowRefIds: ['A'] });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByTestId('query-flow')).not.toBeInTheDocument();
+    });
+
+    it('mounts the query flow panel for an open refId once the feature toggle is enabled', async () => {
+      config.featureToggles.exploreQueryFlow = true;
+      setupWithQueries([{ refId: 'A', expr: 'rate(alpha_metric[5m])' }], { queryFlowRefIds: ['A'] });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      const panel = await screen.findByTestId('query-flow');
+      expect(within(panel).getByText('A')).toBeInTheDocument();
+    });
+
+    it('renders open panels in query-row order rather than the order refIds were opened', async () => {
+      config.featureToggles.exploreQueryFlow = true;
+      setupWithQueries(
+        [
+          { refId: 'A', expr: 'rate(alpha_metric[5m])' },
+          { refId: 'B', expr: 'rate(beta_metric[5m])' },
+        ],
+        // Opened in reverse (B before A) — panels should still read top-to-bottom in row order.
+        { queryFlowRefIds: ['B', 'A'] }
+      );
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      const panels = await screen.findAllByTestId('query-flow');
+      expect(panels).toHaveLength(2);
+      expect(within(panels[0]).getByText('A')).toBeInTheDocument();
+      expect(within(panels[1]).getByText('B')).toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 
 import { EventBusSrv, getTimeZone } from '@grafana/data';
@@ -37,11 +37,14 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   const eventBus = useRef(new EventBusSrv());
   const ref = useRef(null);
   const [showQueryInspector, setShowQueryInspector] = useState(false);
+  const [queryFlowRefIds, setQueryFlowRefIds] = useState<string[]>([]);
 
   useEffect(() => {
     const bus = eventBus.current;
     return () => bus.removeAllListeners();
   }, []);
+
+  usePruneQueryFlowRefIds(exploreId, setQueryFlowRefIds);
 
   return (
     <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
@@ -50,6 +53,8 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
         eventBus={eventBus.current}
         showQueryInspector={showQueryInspector}
         setShowQueryInspector={setShowQueryInspector}
+        queryFlowRefIds={queryFlowRefIds}
+        setQueryFlowRefIds={setQueryFlowRefIds}
       />
       {showQueryInspector && (
         <ExploreQueryInspector
@@ -82,4 +87,26 @@ function useStopQueries(exploreId: string) {
       stopQueryState(paneRef.current?.querySubscription);
     };
   }, []);
+}
+
+/**
+ * Drops open QueryFlow panels whose query row was removed. Without this, deleting a query row (or
+ * removing the pane) left a `queryFlowRefIds` entry with nothing to render for, so the panel stuck
+ * around empty until the pane itself unmounted.
+ */
+export function usePruneQueryFlowRefIds(exploreId: string, setQueryFlowRefIds: Dispatch<SetStateAction<string[]>>) {
+  // Joined into a stable string so the effect doesn't re-run on every render from a fresh array
+  // reference — only when the actual set of refIds changes.
+  const currentRefIdsKey = useSelector(
+    (state: StoreState) => state.explore.panes[exploreId]?.queries?.map((q) => q.refId).join(',') ?? ''
+  );
+
+  useEffect(() => {
+    const currentRefIds = new Set(currentRefIdsKey ? currentRefIdsKey.split(',') : []);
+    setQueryFlowRefIds((prev) => {
+      const next = prev.filter((refId) => currentRefIds.has(refId));
+      return next.length === prev.length ? prev : next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRefIdsKey]);
 }

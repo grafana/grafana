@@ -2183,6 +2183,20 @@
     },
     {
       "metadata": {
+        "name": "exploreQueryFlow",
+        "resourceVersion": "1782729735669",
+        "creationTimestamp": "2026-06-29T10:42:15Z"
+      },
+      "spec": {
+        "description": "Show a node-based query flow graph in Explore that breaks a query into its constituent parts",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "externalServiceAccounts",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-09-28T07:26:37Z"
