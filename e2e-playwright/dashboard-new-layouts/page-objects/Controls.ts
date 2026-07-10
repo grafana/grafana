@@ -32,5 +32,15 @@ export class Controls extends PageObject {
         await this.page.getByRole('option', { name: optionLabel, exact: true }).click();
       });
     },
+    addFilter: async (variableLabel: string, filter: [string, string, string]) => {
+      await test.step(`Add filter "${filter[0]}${filter[1]}\"${filter[2]}\"" to variable "${variableLabel}"`, async () => {
+        // The variable value control is the next sibling of its label
+        await this.variables.getVariableLabel(variableLabel).locator('+ *').click();
+
+        await this.page.getByRole('option', { name: filter[0], exact: true }).click();
+        await this.page.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
+        await this.page.getByRole('option', { name: filter[2], exact: true }).click();
+      });
+    },
   };
 }

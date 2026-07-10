@@ -57,11 +57,32 @@ export class VariableOptions extends PageObject {
 
   readonly groupby = {
     selectDatasource: async (dataSource: string) => {
-      await test.step(`Select group-by datasource "${dataSource}"`, async () => {
+      await test.step(`Select group by datasource "${dataSource}"`, async () => {
         await this.dashboardPage
           .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect)
           .click();
-        await this.page.getByText(dataSource).click();
+
+        await this.page.keyboard.type(dataSource);
+        await this.page.getByRole('button', { name: dataSource }).click();
+      });
+    },
+  };
+
+  readonly adhoc = {
+    selectDatasource: async (dataSource: string) => {
+      await test.step(`Select ad hoc datasource "${dataSource}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
+          )
+          .click();
+
+        await this.page.keyboard.type(dataSource);
+        await this.page.getByRole('button', { name: dataSource }).click();
+
+        await this.page
+          .getByRole('alert', { name: /this data source does not support filters/ })
+          .waitFor({ state: 'detached' });
       });
     },
   };
