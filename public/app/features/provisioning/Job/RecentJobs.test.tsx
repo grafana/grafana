@@ -53,6 +53,20 @@ describe('RecentJobs', () => {
       expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
     });
 
+    it('falls back to the author email when the name is missing', async () => {
+      setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: { 'provisioning.grafana.app/authorEmail': 'ada@example.com' },
+          },
+        }),
+      ]);
+
+      expect(await screen.findByText('ada@example.com')).toBeInTheDocument();
+    });
+
     it('shows Webhook when no user triggered the job', async () => {
       setup([createJob()]);
 

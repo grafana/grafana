@@ -21,6 +21,7 @@ interface Props {
 }
 
 const AnnoAuthor = 'provisioning.grafana.app/author';
+const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
 
 type JobCell = {
   row: {
@@ -70,8 +71,11 @@ const getJobColumns = (showAuthor: boolean) => [
         {
           id: 'triggeredBy',
           header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
-          cell: ({ row: { original: job } }: JobCell) =>
-            job.metadata?.annotations?.[AnnoAuthor] ?? t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook'),
+          cell: ({ row: { original: job } }: JobCell) => {
+            const annotations = job.metadata?.annotations;
+            const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
+            return author || t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook');
+          },
         },
       ]
     : []),
