@@ -70,7 +70,9 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
+| `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
 ## Public preview feature toggles

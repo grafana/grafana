@@ -2688,17 +2688,17 @@
     {
       "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1781704114797",
+        "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4427,14 +4427,17 @@
     {
       "metadata": {
         "name": "preferences.rerouteLegacyAPIs",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1783676521307",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use K8s client implementation for legacy preferences API",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
