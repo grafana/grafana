@@ -1,6 +1,6 @@
 import { sql } from '@codemirror/lang-sql';
-import { EditorState } from '@codemirror/state';
-import { EditorView, highlightActiveLine, lineNumbers } from '@codemirror/view';
+import { EditorSelection, EditorState } from '@codemirror/state';
+import { EditorView, highlightActiveLine, highlightActiveLineGutter, lineNumbers } from '@codemirror/view';
 
 import { colorManipulator, createTheme, type GrafanaTheme2 } from '@grafana/data';
 
@@ -20,7 +20,13 @@ function createEditor(theme: GrafanaTheme2): EditorView {
     parent: document.body,
     state: EditorState.create({
       doc: 'SELECT value_with_underscores FROM metrics',
-      extensions: [sql(), lineNumbers(), highlightActiveLine(), createCodeEditorTheme(theme)],
+      extensions: [
+        sql(),
+        lineNumbers(),
+        highlightActiveLine(),
+        highlightActiveLineGutter(),
+        createCodeEditorTheme(theme),
+      ],
     }),
   });
 }
@@ -53,6 +59,25 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
     expect(focusRule?.cssText).toContain('outline: 2px dotted transparent');
     expect(focusRule?.cssText).toContain('box-shadow');
+
+    editor.destroy();
+    editor.dom.remove();
+  });
+
+  it('removes the active-line treatment while text is selected', () => {
+    const theme = createTheme({ colors: { mode } });
+    const editor = createEditor(theme);
+    const activeLine = editor.contentDOM.querySelector('.cm-activeLine')!;
+
+    editor.dispatch({ selection: EditorSelection.range(0, 6) });
+
+    expect(editor.dom).toHaveClass('cm-hasSelection');
+    expect(getComputedStyle(activeLine).backgroundColor).toBe('transparent');
+
+    editor.dispatch({ selection: EditorSelection.cursor(0) });
+
+    expect(editor.dom).not.toHaveClass('cm-hasSelection');
+    expect(getComputedStyle(activeLine).backgroundColor).toBe(normalizeColor(theme.colors.background.secondary));
 
     editor.destroy();
     editor.dom.remove();

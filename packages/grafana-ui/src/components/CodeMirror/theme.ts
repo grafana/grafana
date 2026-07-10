@@ -8,6 +8,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles } from '../../themes/mixins';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
+  const selectionState = EditorView.editorAttributes.compute(['selection'], (state): Record<string, string> =>
+    state.selection.main.empty ? {} : { class: 'cm-hasSelection' }
+  );
   const editorTheme = EditorView.theme(
     {
       '&': {
@@ -39,6 +42,9 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
       },
       '.cm-activeLineGutter': {
         color: theme.components.input.text,
+      },
+      '&.cm-hasSelection .cm-activeLine, &.cm-hasSelection .cm-activeLineGutter': {
+        backgroundColor: 'transparent',
       },
       '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
         backgroundColor: `${theme.colors.action.selected} !important`,
@@ -122,5 +128,5 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
     { tag: [tags.invalid, tags.deleted], color: theme.colors.error.text },
   ]);
 
-  return [editorTheme, syntaxHighlighting(syntaxTheme)];
+  return [selectionState, editorTheme, syntaxHighlighting(syntaxTheme)];
 }
