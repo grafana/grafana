@@ -64,7 +64,7 @@ export const ProviderConfigPage = () => {
       renderTitle={(title) => (
         <Stack gap={2} alignItems="center">
           <Text
-            element={'h1'}
+            element="h1"
             variant={visualRefreshEnabled ? 'h4' : 'h1'}
             weight={visualRefreshEnabled ? 'bold' : 'regular'}
           >

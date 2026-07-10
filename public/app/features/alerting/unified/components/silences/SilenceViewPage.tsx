@@ -19,7 +19,11 @@ function Title({ title }: { title: string }) {
 
   return (
     <Stack direction="row" gap={1} alignItems="center">
-      <Text variant={visualRefreshEnabled ? 'h4' : 'h1'} weight={visualRefreshEnabled ? 'bold' : 'regular'}>
+      <Text
+        element="h1"
+        variant={visualRefreshEnabled ? 'h4' : 'h1'}
+        weight={visualRefreshEnabled ? 'bold' : 'regular'}
+      >
         {title}
       </Text>
       {silenceState && <SilenceStateTag state={silenceState} />}
