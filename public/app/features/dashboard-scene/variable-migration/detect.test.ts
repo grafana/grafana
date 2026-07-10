@@ -1,14 +1,11 @@
 import { PromVariableQueryType } from '@grafana/prometheus';
-import {
-  QueryVariable,
-  SceneQueryRunner,
-  SceneVariableSet,
-  type SceneVariable,
-  VizPanel,
-} from '@grafana/scenes';
+import { QueryVariable, SceneQueryRunner, SceneVariableSet, type SceneVariable, VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
@@ -34,18 +31,29 @@ interface PanelSpec {
   queries: Array<Record<string, unknown>>;
   datasourceUid?: string;
   title?: string;
+  isLibraryPanel?: boolean;
 }
 
-function buildDashboard(variables: SceneVariable[], panels: PanelSpec[]): DashboardScene {
+interface DashboardSpec {
+  annotationQueries?: Array<Record<string, unknown>>;
+}
+
+function buildDashboard(variables: SceneVariable[], panels: PanelSpec[], spec: DashboardSpec = {}): DashboardScene {
   const vizPanels = panels.map(
     (panel, index) =>
       new VizPanel({
         key: `panel-${index + 1}`,
         title: panel.title ?? `Panel ${index + 1}`,
         pluginId: 'timeseries',
+        ...(panel.isLibraryPanel
+          ? { $behaviors: [new LibraryPanelBehavior({ uid: `lib-${index}`, name: `Library panel ${index}` })] }
+          : {}),
         $data: new SceneQueryRunner({
           datasource: { uid: panel.datasourceUid ?? 'prom-a' },
-          queries: panel.queries.map((query, queryIndex) => ({ refId: String.fromCharCode(65 + queryIndex), ...query })),
+          queries: panel.queries.map((query, queryIndex) => ({
+            refId: String.fromCharCode(65 + queryIndex),
+            ...query,
+          })),
         }),
       })
   );
@@ -54,6 +62,20 @@ function buildDashboard(variables: SceneVariable[], panels: PanelSpec[]): Dashbo
     title: 'Detection test dashboard',
     uid: 'detection-test',
     $variables: new SceneVariableSet({ variables }),
+    ...(spec.annotationQueries
+      ? {
+          $data: new DashboardDataLayerSet({
+            annotationLayers: spec.annotationQueries.map(
+              (query, index) =>
+                new DashboardAnnotationsDataLayer({
+                  key: `annotation-${index}`,
+                  name: `Annotation ${index}`,
+                  query: { enable: true, iconColor: 'red', name: `Annotation ${index}`, ...query },
+                })
+            ),
+          }),
+        }
+      : {}),
     body: DefaultGridLayoutManager.fromVizPanels(vizPanels),
   });
 }
@@ -197,10 +219,7 @@ describe('detectMigratableVariables', () => {
   });
 
   it('disqualifies variables used for panel repeat', () => {
-    const dashboard = buildDashboard(
-      [promLabelVariable('pod')],
-      [{ queries: [{ expr: 'up{pod=~"$pod"}' }] }]
-    );
+    const dashboard = buildDashboard([promLabelVariable('pod')], [{ queries: [{ expr: 'up{pod=~"$pod"}' }] }]);
 
     const layout = dashboard.state.body;
     if (!(layout instanceof DefaultGridLayoutManager)) {
@@ -291,5 +310,131 @@ describe('detectMigratableVariables', () => {
     detectMigratableVariables(dashboard);
 
     expect(dashboard.state.isDirty).toBeFalsy();
+  });
+
+  it('disqualifies variables used in library panel queries', () => {
+    const dashboard = buildDashboard(
+      [promLabelVariable('instance')],
+      [
+        { queries: [{ expr: 'up{instance=~"$instance"}' }] },
+        { isLibraryPanel: true, queries: [{ expr: 'process_cpu{instance=~"$instance"}' }] },
+      ]
+    );
+
+    const [candidate] = detectMigratableVariables(dashboard);
+
+    expect(candidate.disqualified).toBe(true);
+    expect(candidate.reasons).toContainEqual(expect.objectContaining({ code: 'library-panel' }));
+  });
+
+  it('disqualifies variables in exprs with unsupported variable syntax', () => {
+    const dashboard = buildDashboard(
+      [promLabelVariable('instance')],
+      [{ queries: [{ expr: 'up{instance=~"$instance", other="${obj.field}"}' }] }]
+    );
+
+    const [candidate] = detectMigratableVariables(dashboard);
+
+    expect(candidate.disqualified).toBe(true);
+    expect(candidate.reasons).toContainEqual(expect.objectContaining({ code: 'unsupported-variable-syntax' }));
+  });
+
+  describe('format specifiers', () => {
+    it('allows :regex and :pipe under a regex matcher', () => {
+      const dashboard = buildDashboard(
+        [promLabelVariable('instance'), promLabelVariable('job')],
+        [{ queries: [{ expr: 'up{instance=~"${instance:regex}", job=~"${job:pipe}"}' }] }]
+      );
+
+      const [instance, job] = detectMigratableVariables(dashboard);
+
+      expect(instance.disqualified).toBe(false);
+      expect(job.disqualified).toBe(false);
+    });
+
+    it('disqualifies other formats in matcher values', () => {
+      const dashboard = buildDashboard([promLabelVariable('job')], [{ queries: [{ expr: 'up{job="${job:csv}"}' }] }]);
+
+      const [candidate] = detectMigratableVariables(dashboard);
+
+      expect(candidate.disqualified).toBe(true);
+      expect(candidate.reasons).toContainEqual(
+        expect.objectContaining({ code: 'unsafe-position', detail: expect.stringContaining(':csv') })
+      );
+    });
+
+    it('allows :csv in by(...) but rejects other formats', () => {
+      const dashboard = buildDashboard(
+        [
+          promLabelVariable('groupby', { query: 'label_names()' }),
+          promLabelVariable('other', { query: 'label_names()' }),
+        ],
+        [{ queries: [{ expr: 'sum by(${groupby:csv}) (up)' }] }, { queries: [{ expr: 'sum by(${other:text}) (up)' }] }]
+      );
+
+      const [groupby, other] = detectMigratableVariables(dashboard);
+
+      expect(groupby.disqualified).toBe(false);
+      expect(groupby.kind).toBe('groupBy');
+      expect(other.disqualified).toBe(true);
+      expect(other.reasons).toContainEqual(
+        expect.objectContaining({ code: 'unsafe-position', detail: expect.stringContaining(':text') })
+      );
+    });
+  });
+
+  describe('save-model sweep positional skipping', () => {
+    it('flags an annotation query with an expr identical to a panel query', () => {
+      const expr = 'up{instance=~"$instance"}';
+      const dashboard = buildDashboard([promLabelVariable('instance')], [{ queries: [{ expr }] }], {
+        annotationQueries: [{ expr, datasource: { uid: 'prom-a' } }],
+      });
+
+      const [candidate] = detectMigratableVariables(dashboard);
+
+      expect(candidate.disqualified).toBe(true);
+      expect(candidate.reasons).toContainEqual(
+        expect.objectContaining({ code: 'referenced-outside-queries', detail: expect.stringContaining('annotations') })
+      );
+    });
+
+    it('flags annotation queries regardless of panel exprs', () => {
+      const dashboard = buildDashboard(
+        [promLabelVariable('instance')],
+        [{ queries: [{ expr: 'up{instance=~"$instance"}' }] }],
+        { annotationQueries: [{ expr: 'process_start{instance=~"$instance"}', datasource: { uid: 'prom-a' } }] }
+      );
+
+      const [candidate] = detectMigratableVariables(dashboard);
+
+      expect(candidate.disqualified).toBe(true);
+      expect(candidate.reasons).toContainEqual(expect.objectContaining({ code: 'referenced-outside-queries' }));
+    });
+
+    it('does not flag panels whose queries share a byte-identical expr', () => {
+      const expr = 'up{instance=~"$instance"}';
+      const dashboard = buildDashboard(
+        [promLabelVariable('instance')],
+        [{ queries: [{ expr }] }, { queries: [{ expr }] }]
+      );
+
+      const [candidate] = detectMigratableVariables(dashboard);
+
+      expect(candidate.disqualified).toBe(false);
+      expect(candidate.reasons).toEqual([]);
+    });
+
+    it('flags another variable whose query matches a panel expr byte for byte', () => {
+      const expr = 'up{instance=~"$instance"}';
+      const dashboard = buildDashboard(
+        [promLabelVariable('instance'), promLabelVariable('other', { query: { refId: 'x', query: expr } })],
+        [{ queries: [{ expr }] }]
+      );
+
+      const [instance] = detectMigratableVariables(dashboard);
+
+      expect(instance.disqualified).toBe(true);
+      expect(instance.reasons).toContainEqual(expect.objectContaining({ code: 'referenced-outside-queries' }));
+    });
   });
 });

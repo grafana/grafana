@@ -4,6 +4,7 @@ import { QueryVariable, sceneGraph, type SceneDataQuery, type VariableValue } fr
 import { type DataSourceRef } from '@grafana/schema';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -16,10 +17,12 @@ export type DisqualificationReason =
   | { code: 'datasource-not-found' }
   | { code: 'cross-datasource-usage'; detail: string }
   | { code: 'query-parse-error'; detail: string }
+  | { code: 'unsupported-variable-syntax'; detail: string }
   | { code: 'unsafe-position'; detail: string }
   | { code: 'ambiguous-filter-key'; detail: string }
   | { code: 'not-used-in-queries' }
   | { code: 'panel-repeat' }
+  | { code: 'library-panel'; detail: string }
   | { code: 'referenced-outside-queries'; detail: string }
   | { code: 'save-model-serialization-failed' };
 
@@ -169,6 +172,8 @@ interface PanelQueryInfo {
   json: string;
   dsUid?: string;
   dsIsVariableRef: boolean;
+  /** Queries of library panels are shared content and must never be migrated. */
+  isLibraryPanel: boolean;
 }
 
 function collectPanelQueries(dashboard: DashboardScene): PanelQueryInfo[] {
@@ -180,6 +185,8 @@ function collectPanelQueries(dashboard: DashboardScene): PanelQueryInfo[] {
       continue;
     }
 
+    const isLibraryPanel = panel.state.$behaviors?.some((b) => b instanceof LibraryPanelBehavior) ?? false;
+
     for (const query of queryRunner.state.queries ?? []) {
       const ds = resolveDatasource(query.datasource ?? queryRunner.state.datasource ?? null);
 
@@ -189,6 +196,7 @@ function collectPanelQueries(dashboard: DashboardScene): PanelQueryInfo[] {
         json: JSON.stringify(query),
         dsUid: ds.uid,
         dsIsVariableRef: ds.isVariableRef,
+        isLibraryPanel,
       });
     }
   }
@@ -225,6 +233,14 @@ function classifyUsages(candidate: MigrationCandidate, panelQueries: PanelQueryI
 
     candidate.queryCount++;
 
+    if (query.isLibraryPanel) {
+      candidate.reasons.push({
+        code: 'library-panel',
+        detail: `query ${query.refId ?? ''} belongs to a library panel`.trim(),
+      });
+      continue;
+    }
+
     if (query.dsIsVariableRef || query.dsUid === undefined || query.dsUid !== candidate.datasourceUid) {
       candidate.reasons.push({
         code: 'cross-datasource-usage',
@@ -239,7 +255,10 @@ function classifyUsages(candidate: MigrationCandidate, panelQueries: PanelQueryI
       continue;
     }
 
-    const { usages, hasParseError } = classifyVariableUsagesInExpr(query.expr, candidate.variableName);
+    const { usages, hasParseError, hasUnsupportedSyntax } = classifyVariableUsagesInExpr(
+      query.expr,
+      candidate.variableName
+    );
 
     if (hasParseError) {
       candidate.reasons.push({
@@ -249,12 +268,36 @@ function classifyUsages(candidate: MigrationCandidate, panelQueries: PanelQueryI
       continue;
     }
 
+    if (hasUnsupportedSyntax) {
+      // Field paths / exotic formats anywhere in the expr defeat the rewriter (see
+      // hasUnsupportedVariableSyntax), so nothing in this expr can be migrated.
+      candidate.reasons.push({
+        code: 'unsupported-variable-syntax',
+        detail: `query ${query.refId ?? ''} uses variable syntax the rewriter does not support`.trim(),
+      });
+      continue;
+    }
+
     for (const usage of usages) {
       if (usage.position === 'filterValue') {
+        if (!isSupportedFilterFormat(usage.format, usage.operator)) {
+          candidate.reasons.push({
+            code: 'unsafe-position',
+            detail: `unsupported format specifier ":${usage.format}" in a label matcher`,
+          });
+          continue;
+        }
         filterCount++;
         filterKeys.add(usage.labelKey);
         operators.add(usage.operator);
       } else if (usage.position === 'groupByLabel') {
+        if (usage.format !== undefined && usage.format !== 'csv') {
+          candidate.reasons.push({
+            code: 'unsafe-position',
+            detail: `unsupported format specifier ":${usage.format}" in by(...)`,
+          });
+          continue;
+        }
         groupByCount++;
       } else {
         candidate.reasons.push({ code: 'unsafe-position', detail: usage.context });
@@ -284,6 +327,19 @@ function classifyUsages(candidate: MigrationCandidate, panelQueries: PanelQueryI
   }
 }
 
+/**
+ * Format specifiers that a seeded adhoc filter can reproduce: none at all, or the
+ * multi-value joins (`:regex`, `:pipe`) under a regex matcher — those become the one-of
+ * (`=|`) / regex operators. Everything else (csv, json, raw, ...) changes the rendered
+ * text in ways a filter control cannot express.
+ */
+function isSupportedFilterFormat(format: string | undefined, operator: string): boolean {
+  if (format === undefined) {
+    return true;
+  }
+  return operator === '=~' && (format === 'regex' || format === 'pipe');
+}
+
 function checkRepeatUsage(candidate: MigrationCandidate, dashboard: DashboardScene) {
   // Panel/row/tab repeats all keep the repeated variable in a `variableName` state field
   // (DashboardGridItem, AutoGridItem, RowRepeaterBehavior, RowItemRepeatBehavior, ...).
@@ -297,22 +353,46 @@ function checkRepeatUsage(candidate: MigrationCandidate, dashboard: DashboardSce
   }
 }
 
+interface ExprSkip {
+  remaining: number;
+}
+
 /**
  * Conservative sweep for references to the variable anywhere in the serialized dashboard
  * outside the already-classified panel query exprs: titles, text panels, data links,
  * annotation queries, other variables' definitions, etc.
+ *
+ * Panel query exprs are skipped positionally, not by string equality: only the serialized
+ * panel-query containers (v1 `panels[].targets[]` entries, v2 `PanelQuery` kinds) may skip
+ * their expr, each budgeted against the queries collected from the scene, so an annotation
+ * or another variable carrying a byte-identical expr is still flagged.
  */
 function sweepSaveModelReferences(candidate: MigrationCandidate, saveModel: unknown, panelQueries: PanelQueryInfo[]) {
-  const classifiedExprs = new Set<string>();
+  const skipBudget = new Map<string, number>();
   for (const query of panelQueries) {
     if (query.expr !== undefined) {
-      classifiedExprs.add(query.expr);
+      const key = budgetKey(query.refId, query.expr);
+      skipBudget.set(key, (skipBudget.get(key) ?? 0) + 1);
     }
   }
 
-  const visit = (value: unknown, path: string, key: string) => {
+  const tryConsumeSkip = (refId: unknown, expr: unknown): ExprSkip | undefined => {
+    if (typeof expr !== 'string') {
+      return undefined;
+    }
+    const key = budgetKey(typeof refId === 'string' ? refId : undefined, expr);
+    const remaining = skipBudget.get(key) ?? 0;
+    if (remaining <= 0) {
+      return undefined;
+    }
+    skipBudget.set(key, remaining - 1);
+    return { remaining: 1 };
+  };
+
+  const visit = (value: unknown, path: string, key: string, skip: ExprSkip | undefined) => {
     if (typeof value === 'string') {
-      if (key === 'expr' && classifiedExprs.has(value)) {
+      if (key === 'expr' && skip !== undefined && skip.remaining > 0) {
+        skip.remaining--;
         return;
       }
       if (textReferencesVariable(value, candidate.variableName)) {
@@ -322,7 +402,14 @@ function sweepSaveModelReferences(candidate: MigrationCandidate, saveModel: unkn
     }
 
     if (Array.isArray(value)) {
-      value.forEach((item, index) => visit(item, `${path}[${index}]`, key));
+      if (key === 'targets') {
+        // v1 panel query containers: refId and expr sit side by side on each target
+        value.forEach((item, index) =>
+          visit(item, `${path}[${index}]`, key, tryConsumeSkip(getProp(item, 'refId'), getProp(item, 'expr')))
+        );
+        return;
+      }
+      value.forEach((item, index) => visit(item, `${path}[${index}]`, key, skip));
       return;
     }
 
@@ -330,13 +417,32 @@ function sweepSaveModelReferences(candidate: MigrationCandidate, saveModel: unkn
       if (isOwnVariableDefinition(value, candidate.variableName)) {
         return;
       }
+
+      let ownSkip = skip;
+      if (ownSkip === undefined && getProp(value, 'kind') === 'PanelQuery') {
+        // v2 panel query containers: { kind: 'PanelQuery', spec: { refId, query: { spec: { expr } } } }
+        const spec = getProp(value, 'spec');
+        ownSkip = tryConsumeSkip(getProp(spec, 'refId'), getProp(getProp(getProp(spec, 'query'), 'spec'), 'expr'));
+      }
+
       for (const [childKey, childValue] of Object.entries(value)) {
-        visit(childValue, path ? `${path}.${childKey}` : childKey, childKey);
+        visit(childValue, path ? `${path}.${childKey}` : childKey, childKey, ownSkip);
       }
     }
   };
 
-  visit(saveModel, '', '');
+  visit(saveModel, '', '', undefined);
+}
+
+function budgetKey(refId: string | undefined, expr: string): string {
+  return `${refId ?? ''}\u0000${expr}`;
+}
+
+function getProp(value: unknown, key: string): unknown {
+  if (value === null || typeof value !== 'object') {
+    return undefined;
+  }
+  return Object.entries(value).find(([entryKey]) => entryKey === key)?.[1];
 }
 
 function isOwnVariableDefinition(value: object, variableName: string): boolean {

@@ -1,4 +1,9 @@
-import { classifyVariableUsagesInExpr, textReferencesVariable } from './promqlVariableUsage';
+import {
+  classifyVariableUsagesInExpr,
+  hasUnsupportedVariableSyntax,
+  removeVariableUsagesFromExpr,
+  textReferencesVariable,
+} from './promqlVariableUsage';
 
 describe('textReferencesVariable', () => {
   it.each([
@@ -18,7 +23,10 @@ describe('textReferencesVariable', () => {
 describe('classifyVariableUsagesInExpr', () => {
   describe('filter positions', () => {
     it('classifies a variable as full regex matcher value', () => {
-      const result = classifyVariableUsagesInExpr('sum(rate(up{instance=~"$instance", job="grafana"}[5m]))', 'instance');
+      const result = classifyVariableUsagesInExpr(
+        'sum(rate(up{instance=~"$instance", job="grafana"}[5m]))',
+        'instance'
+      );
 
       expect(result.hasParseError).toBe(false);
       expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'instance', operator: '=~' }]);
@@ -30,15 +38,30 @@ describe('classifyVariableUsagesInExpr', () => {
       expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'job', operator: '=' }]);
     });
 
-    it.each([['up{job="${job}"}'], ['up{job="[[job]]"}'], ['up{job="${job:regex}"}']])(
-      'handles the %s interpolation syntax',
-      (expr) => {
-        const result = classifyVariableUsagesInExpr(expr, 'job');
+    it.each([['up{job="${job}"}'], ['up{job="[[job]]"}']])('handles the %s interpolation syntax', (expr) => {
+      const result = classifyVariableUsagesInExpr(expr, 'job');
 
-        expect(result.hasParseError).toBe(false);
-        expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'job', operator: '=' }]);
-      }
-    );
+      expect(result.hasParseError).toBe(false);
+      expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'job', operator: '=' }]);
+    });
+
+    it('captures the format specifier of a matcher value', () => {
+      const result = classifyVariableUsagesInExpr('up{job=~"${job:regex}"}', 'job');
+
+      expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'job', operator: '=~', format: 'regex' }]);
+    });
+
+    it('rejects a matcher on a selector without a metric name', () => {
+      const result = classifyVariableUsagesInExpr('{job="$job"}', 'job');
+
+      expect(result.usages).toEqual([{ position: 'other', context: 'selector without metric name' }]);
+    });
+
+    it('accepts a matcher on a selector with a quoted utf8 metric name', () => {
+      const result = classifyVariableUsagesInExpr('{"my.metric", job="$job"}', 'job');
+
+      expect(result.usages).toEqual([{ position: 'filterValue', labelKey: 'job', operator: '=' }]);
+    });
 
     it('classifies a quoted (utf8) label matcher', () => {
       const result = classifyVariableUsagesInExpr('up{"my label"=~"$val"}', 'val');
@@ -157,5 +180,88 @@ describe('classifyVariableUsagesInExpr', () => {
 
       expect(result.hasParseError).toBe(true);
     });
+  });
+
+  describe('unsupported variable syntax', () => {
+    it('flags field-path references anywhere in the expr', () => {
+      const result = classifyVariableUsagesInExpr('up{job="$job", other="${obj.field}"}', 'job');
+
+      expect(result.hasUnsupportedSyntax).toBe(true);
+    });
+
+    it('flags format specifiers with non-word characters', () => {
+      expect(hasUnsupportedVariableSyntax('up{job="${job:date:iso}"}')).toBe(true);
+      expect(hasUnsupportedVariableSyntax('up{job="${job:regex}"}')).toBe(false);
+      expect(hasUnsupportedVariableSyntax('up{job="$job"}')).toBe(false);
+    });
+  });
+});
+
+describe('removeVariableUsagesFromExpr', () => {
+  it('removes a matcher and keeps the rest of the selector', () => {
+    expect(removeVariableUsagesFromExpr('up{instance=~"$instance", job="grafana"}', ['instance'])).toBe(
+      'up{job="grafana"}'
+    );
+  });
+
+  it('removes a matcher in first, middle, and last position', () => {
+    const expr = 'up{a="1", b=~"$v", c="3"}';
+    expect(removeVariableUsagesFromExpr(expr, ['v'])).toBe('up{a="1", c="3"}');
+    expect(removeVariableUsagesFromExpr('up{b=~"$v", a="1"}', ['v'])).toBe('up{a="1"}');
+    expect(removeVariableUsagesFromExpr('up{a="1", b=~"$v"}', ['v'])).toBe('up{a="1"}');
+  });
+
+  it('drops the braces when no matcher remains', () => {
+    expect(removeVariableUsagesFromExpr('sum(rate(up{instance=~"$instance"}[5m]))', ['instance'])).toBe(
+      'sum(rate(up[5m]))'
+    );
+  });
+
+  it('removes a grouping label from by(...) and keeps the others', () => {
+    expect(removeVariableUsagesFromExpr('sum by($groupby, job) (up)', ['groupby'])).toBe('sum by(job) (up)');
+  });
+
+  it('drops the whole by(...) modifier when it becomes empty', () => {
+    expect(removeVariableUsagesFromExpr('sum by($groupby) (up)', ['groupby'])).toBe('sum (up)');
+    expect(removeVariableUsagesFromExpr('sum(up) by($groupby)', ['groupby'])).toBe('sum(up)');
+  });
+
+  it('removes several variables in one pass', () => {
+    expect(
+      removeVariableUsagesFromExpr('sum by($groupby) (rate(up{instance=~"$instance", job="x"}[5m]))', [
+        'groupby',
+        'instance',
+      ])
+    ).toBe('sum (rate(up{job="x"}[5m]))');
+  });
+
+  it('preserves other variables and their formats', () => {
+    expect(removeVariableUsagesFromExpr('up{a=~"$v", b=~"${other:regex}"} / up{c="$third"}', ['v'])).toBe(
+      'up{b=~"${other:regex}"} / up{c="$third"}'
+    );
+  });
+
+  it('preserves built-in range variables', () => {
+    expect(removeVariableUsagesFromExpr('rate(up{a=~"$v"}[$__rate_interval])', ['v'])).toBe(
+      'rate(up[$__rate_interval])'
+    );
+  });
+
+  it('returns the expr unchanged when the variables are not used', () => {
+    expect(removeVariableUsagesFromExpr('up{a="1"}', ['missing'])).toBe('up{a="1"}');
+  });
+
+  it('refuses unsafe usage positions', () => {
+    expect(removeVariableUsagesFromExpr('rate($metric[5m])', ['metric'])).toBeUndefined();
+    expect(removeVariableUsagesFromExpr('sum without($v) (up)', ['v'])).toBeUndefined();
+    expect(removeVariableUsagesFromExpr('{a=~"$v"}', ['v'])).toBeUndefined();
+  });
+
+  it('refuses unparsable expressions', () => {
+    expect(removeVariableUsagesFromExpr('sum(up{a=~"$v"}', ['v'])).toBeUndefined();
+  });
+
+  it('refuses expressions with unsupported variable syntax', () => {
+    expect(removeVariableUsagesFromExpr('up{a=~"$v", b="${obj.field}"}', ['v'])).toBeUndefined();
   });
 });
