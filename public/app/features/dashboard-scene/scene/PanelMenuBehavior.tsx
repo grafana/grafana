@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -265,6 +266,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
+        },
+      });
+    }
+
+    if (
+      contextSrv.isGrafanaAdmin &&
+      plugin &&
+      !plugin.meta.skipDataQuery &&
+      getFeatureFlagClient().getBooleanValue('grafana.onDemandDiagnostics', false)
+    ) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.download-diagnostics', 'Download diagnostics'),
+        iconClassName: 'download-alt',
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          dashboard.showModal(new ShareDrawer({ shareView: 'download-diagnostics', panelRef: panel.getRef() }));
         },
       });
     }

@@ -5556,6 +5556,17 @@
     "description": {
       "action": "Change dashboard description"
     },
+    "diagnostics": {
+      "actions": "Diagnostics actions",
+      "cancel-button": "Cancel",
+      "download-button": "Download diagnostics",
+      "generating-button": "Generating…",
+      "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
+      "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
+      "sensitive-warning-title": "May contain sensitive data",
+      "subtitle-panel": "Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.",
+      "title": "Download diagnostics"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -12458,6 +12469,7 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
+      "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
