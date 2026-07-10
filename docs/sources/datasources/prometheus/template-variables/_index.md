@@ -202,7 +202,7 @@ If **Multi-value** or **Include All** is enabled, the variable value becomes a r
 Prometheus supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type (formerly called "ad hoc filters"), which lets dashboard viewers dynamically add label filters without editing queries.
 
 {{< admonition type="note" >}}
-The **Filter and Group by** feature extends the Filters variable by adding grouping support for Prometheus and Loki data sources. For more information, refer to [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
+The **Filter and Group by** feature extends the Filters variable by adding grouping support for Prometheus and Loki data sources. For more information, refer to [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-a-filter-and-group-by).
 {{< /admonition >}}
 
 To set up a Filters variable:
