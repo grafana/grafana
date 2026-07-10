@@ -2822,7 +2822,8 @@
       "label-data-source": "Data source"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "View alert rule"
+      "go-to-detail-view": "View alert rule",
+      "silence-button": "Silence"
     },
     "rule-details-expression": {
       "label-expression": "Expression"
@@ -3375,9 +3376,6 @@
       },
       "continue-in-alerting": "Continue in Alerting",
       "create": "Create",
-      "evaluation": {
-        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
-      },
       "notification": {
         "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
         "description": {
@@ -4994,6 +4992,7 @@
       "selected-scopes-label": "Scopes: "
     },
     "search-box": {
+      "ask-assistant": "Shift + Enter to ask Assistant",
       "placeholder": "Search or jump to..."
     },
     "section": {
@@ -9310,6 +9309,16 @@
       "complete": "complete"
     }
   },
+  "global-variables": {
+    "details": {
+      "create-error": "Failed to create global variable",
+      "create-success": "Global variable successfully created",
+      "delete-error": "Failed to delete global variable",
+      "delete-success": "Global variable successfully deleted",
+      "update-error": "Failed to update global variable",
+      "update-success": "Global variable successfully updated"
+    }
+  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Loading configuration...."
@@ -10438,8 +10447,7 @@
     "tags-input": {
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
-      "remove": "Remove tag: {{name}}",
-      "tag-too-long": "Tag too long, max 50 characters"
+      "remove": "Remove tag: {{name}}"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
@@ -12188,7 +12196,9 @@
       "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
-      "loading-aria-label": "Loading {{sectionName}}"
+      "loading-aria-label": "Loading {{sectionName}}",
+      "starred-dashboard-icon": "Dashboard",
+      "starred-folder-icon": "Folder"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13488,7 +13498,6 @@
       "loading": "Loading stats...",
       "loading-resources": "Loading resources...",
       "migrate-button": "Migrate everything",
-      "migrate-button-blocked-tooltip": "This repository can’t push to its configured branch",
       "migrate-button-disabled-tooltip": "Select a target repository first",
       "migrate-button-empty-tooltip": "Select at least one resource to migrate",
       "migrate-button-selected": "Migrate selected",
@@ -13498,8 +13507,8 @@
       "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
-      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
-      "repo-no-push-title": "This repository can’t be used for migration",
+      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch. Repositories that aren’t set up to allow that are disabled above. To migrate into one, enable pushing to the configured branch in the repository’s settings — you may also need to temporarily allow pushes to that branch in your Git provider.",
+      "repo-no-push-title": "Some repositories can’t be used for migration",
       "repo-placeholder": "Select a repository",
       "resources-collapse": "Collapse {{folder}}",
       "resources-expand": "Expand {{folder}}",
@@ -13514,8 +13523,8 @@
       "resources-sort-title-desc": "Name (Z–A)",
       "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
-      "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
-      "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
+      "resources-to-migrate-footer_one": "Showing {{from}}–{{to}} of {{count}} folder",
+      "resources-to-migrate-footer_other": "Showing {{from}}–{{to}} of {{count}} folders",
       "resources-to-migrate-heading": "Resources to migrate",
       "resources-to-migrate-migrate-all_one": "Migrate all ({{count}})",
       "resources-to-migrate-migrate-all_other": "Migrate all ({{count}})",
@@ -13630,9 +13639,11 @@
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
+      "column-triggered-by": "Triggered by",
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
-      "jobs": "Jobs"
+      "jobs": "Jobs",
+      "triggered-by-webhook": "Webhook"
     },
     "repository-actions": {
       "connection": "Connection",
@@ -13804,6 +13815,8 @@
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signer-is-author-description": "Author commits as the signer.",
+      "signer-is-author-label": "Use signer as commit author",
       "signing-key-description": "Private key used to sign commits. No passphrase.",
       "signing-key-label": "Signing key",
       "signing-method-description": "Sign commits so their author can be cryptographically verified.",

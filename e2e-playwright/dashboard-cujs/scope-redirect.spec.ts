@@ -9,7 +9,6 @@ test.use({
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
     useScopesNavigationEndpoint: true,
-    dashboardNewLayouts: false,
   },
 });
 
@@ -308,11 +307,11 @@ test.describe('Scope Redirect Functionality', () => {
     await test.step('Exit edit mode', async () => {
       // Click the "Exit edit" button — the dashboard is not dirty (only scopes changed,
       // not the dashboard itself), so no confirmation dialog will appear.
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.exitButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // Verify we are no longer in edit mode: the edit button should be visible again
-      const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
-      await expect(editButton).toBeVisible();
+      // Verify we are no longer in edit mode: the save button should not be visible
+      const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
+      await expect(saveButton).not.toBeVisible();
     });
 
     await test.step('Clear scope and re-apply to verify redirect is re-enabled', async () => {

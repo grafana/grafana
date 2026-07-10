@@ -3,7 +3,6 @@ import { capitalize } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { type CoreApp, type GrafanaTheme2, getNextRefId } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
 
@@ -46,7 +45,7 @@ const keepOperations = operationDefinitions
   .map((operation) => operation.id);
 
 export const QueryPatternsModal = (props: Props) => {
-  const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
+  const { isOpen, onClose, onChange, onAddQuery, query, queries } = props;
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [selectedPatternName, setSelectedPatternName] = useState<string | null>(null);
 
@@ -59,16 +58,6 @@ export const QueryPatternsModal = (props: Props) => {
 
   const onPatternSelect = (pattern: LokiQueryPattern, selectAsNewQuery = false) => {
     const visualQuery = buildVisualQueryFromString(selectAsNewQuery ? '' : query.expr);
-    reportInteraction('grafana_loki_query_patterns_selected', {
-      version: 'v2',
-      app: app ?? '',
-      editorMode: query.editorMode,
-      selectedPattern: pattern.name,
-      preSelectedOperationsCount: visualQuery.query.operations.length,
-      preSelectedLabelsCount: visualQuery.query.labels.length,
-      createNewQuery: hasNewQueryOption && selectAsNewQuery,
-    });
-
     // Filter operations in the original query except those we configured to keep
     visualQuery.query.operations = visualQuery.query.operations.filter((op) => keepOperations.includes(op.id));
     // Filter operations in the pattern that are present in the original query
