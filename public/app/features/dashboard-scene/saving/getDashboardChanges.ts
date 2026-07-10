@@ -209,8 +209,13 @@ function customVariableQueryWithCurrent(variable: CustomVariableKind): string | 
     const existingValues = new Set(existingOptions.map((o) => o.value));
     const appendedOptions = currentOptions.filter((option) => !existingValues.has(option.value));
 
-    const options = [...existingOptions, ...appendedOptions];
-    return JSON.stringify(options);
+    // Match CSV: when the selection is already represented in query, keep the original
+    // string so property order, spacing, and fields dropped during parse/map are preserved.
+    if (!appendedOptions.length) {
+      return variable.spec.query;
+    }
+
+    return JSON.stringify([...existingOptions, ...appendedOptions]);
   }
 
   const existingValues = new Set(
@@ -236,7 +241,7 @@ function customVariableQueryWithCurrent(variable: CustomVariableKind): string | 
   return `${variable.spec.query},${appendedValues}`;
 }
 
-export function applyVariableChangesV2(
+function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
   saveVariables?: boolean

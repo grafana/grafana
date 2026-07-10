@@ -823,6 +823,55 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
     }
   });
 
+  it('does not rewrite a JSON query when the current value is already present', () => {
+    // Non-canonical formatting + an extra field that parse/map would drop.
+    const formattedQuery = '[\n  { "text": "Foo", "value": "foo", "selected": true }\n]';
+    const initial = makeV2Dashboard({
+      query: formattedQuery,
+      currentValue: 'bar',
+      valuesFormat: 'json',
+    });
+    const changed = makeV2Dashboard({
+      query: formattedQuery,
+      currentValue: 'foo',
+      currentText: 'Foo',
+      valuesFormat: 'json',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('foo');
+      expect(variable.spec.query).toBe(formattedQuery);
+    }
+  });
+
+  it('appends current value to a JSON CustomVariable query when saving variable defaults', () => {
+    const query = '[{"text":"Foo","value":"foo"}]';
+    const initial = makeV2Dashboard({
+      query,
+      currentValue: 'foo',
+      valuesFormat: 'json',
+    });
+    const changed = makeV2Dashboard({
+      query,
+      currentValue: 'bar',
+      currentText: 'Bar',
+      valuesFormat: 'json',
+    });
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const variable = result.changedSaveModel.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('bar');
+      expect(variable.spec.query).toBe('[{"value":"foo","text":"Foo"},{"value":"bar","text":"Bar"}]');
+    }
+  });
+
   it('does not append $__all as a literal option when All is selected', () => {
     const initial = makeV2Dashboard({
       query: 'foo,bar',
