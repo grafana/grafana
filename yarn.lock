@@ -3089,6 +3089,7 @@ __metadata:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/lang-json": "npm:^6.0.2"
     "@codemirror/lang-sql": "npm:^6.10.0"
+    "@codemirror/language": "npm:6.12.3"
     "@codemirror/state": "npm:^6.6.0"
     "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:^11.13.5"
@@ -3104,6 +3105,7 @@ __metadata:
     "@grafana/schema": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
+    "@lezer/highlight": "npm:1.2.3"
     "@monaco-editor/react": "npm:^4.7.0"
     "@popperjs/core": "npm:^2.11.8"
     "@rc-component/cascader": "npm:^1.9.0"
@@ -3146,7 +3148,6 @@ __metadata:
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
-    "@uiw/codemirror-theme-vscode": "npm:^4.25.9"
     "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:^1.1.1"
     chance: "npm:^1.1.13"
@@ -11127,30 +11128,6 @@ __metadata:
     "@codemirror/state": ">=6.0.0"
     "@codemirror/view": ">=6.0.0"
   checksum: 10/bab06a40bdd8fb99a0af5115511cdb812c93aac2b93ccd8a02bdf8ea06098d6be2ce1302efc560a3b577171a5cd87d34c3215e523f21450ba100b147dfcb975c
-  languageName: node
-  linkType: hard
-
-"@uiw/codemirror-theme-vscode@npm:^4.25.9":
-  version: 4.25.9
-  resolution: "@uiw/codemirror-theme-vscode@npm:4.25.9"
-  dependencies:
-    "@uiw/codemirror-themes": "npm:4.25.9"
-  checksum: 10/aaee13250bcba9d4aede26316747e9a9227a42a7c07eed1751cf7830c4a118228b632119be6ed86e08445fe27132d35089141d0e749704018c8dadcf3018b946
-  languageName: node
-  linkType: hard
-
-"@uiw/codemirror-themes@npm:4.25.9":
-  version: 4.25.9
-  resolution: "@uiw/codemirror-themes@npm:4.25.9"
-  dependencies:
-    "@codemirror/language": "npm:^6.0.0"
-    "@codemirror/state": "npm:^6.0.0"
-    "@codemirror/view": "npm:^6.0.0"
-  peerDependencies:
-    "@codemirror/language": ">=6.0.0"
-    "@codemirror/state": ">=6.0.0"
-    "@codemirror/view": ">=6.0.0"
-  checksum: 10/4a4fe7ae5f6c2bd37170b46c75ccabb67b47b7d3cee0de45c63fafe4f2b7569461b009e0ff5386480574e651627ed03c077833d53b6d3391102b79107ae39d15
   languageName: node
   linkType: hard
 

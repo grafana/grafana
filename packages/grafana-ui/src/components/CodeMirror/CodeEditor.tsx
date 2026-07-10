@@ -1,7 +1,6 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import CodeMirror, { EditorView } from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
@@ -10,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
@@ -99,6 +99,7 @@ export const CodeEditor = memo(function CodeEditor({
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
 
   const extensions = useMemo(
     () => [
@@ -121,7 +122,7 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={themeOverride ?? (theme.isDark ? vscodeDark : vscodeLight)}
+        theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}

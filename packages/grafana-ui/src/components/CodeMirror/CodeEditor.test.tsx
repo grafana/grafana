@@ -2,7 +2,6 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@uiw/react-codemirror';
 
 import { faro } from '@grafana/faro-web-sdk';
@@ -171,13 +170,13 @@ describe('CodeMirror CodeEditor', () => {
     );
   });
 
-  it('defaults to the baked-in vscode theme when no theme prop is provided', () => {
+  it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {
     render(<CodeEditor value="" onChange={jest.fn()} />);
 
-    expect([vscodeLight, vscodeDark]).toContain(capturedProps?.theme);
+    expect(capturedProps?.theme).toEqual(expect.any(Array));
   });
 
-  it('passes a provided theme through to CodeMirror, replacing the default vscode theme', () => {
+  it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
     const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
 
     render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
