@@ -451,17 +451,21 @@ describe('SqlExpr', () => {
         />
       );
 
-      const language = SQLEditorMock.mock.calls[0][0].language;
-      if (!language.completionProvider) {
+      const getCompletionProvider = SQLEditorMock.mock.calls[0][0].language?.completionProvider;
+
+      if (typeof getCompletionProvider === 'undefined') {
         throw new Error('Expected legacy completion provider');
       }
 
-      const completionProvider = language.completionProvider({}, {});
-      if (!completionProvider.columns?.resolve) {
+      const monaco = {} as Parameters<typeof getCompletionProvider>[0];
+      const sqlLanguage = {} as Parameters<typeof getCompletionProvider>[1];
+      const completionProvider = getCompletionProvider(monaco, sqlLanguage);
+      const resolveColumns = completionProvider.columns?.resolve;
+      if (!resolveColumns) {
         throw new Error('Expected legacy column completion resolver');
       }
 
-      await expect(completionProvider.columns.resolve({ table: 'A' })).resolves.toEqual([
+      await expect(resolveColumns({ table: 'A' })).resolves.toEqual([
         { name: 'metric value', completion: '`metric value`', kind: 'Field' },
       ]);
       expect(runMetaSQLExprQuery).toHaveBeenCalled();
