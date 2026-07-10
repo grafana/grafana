@@ -400,15 +400,27 @@ func TestGRPCStore_List(t *testing.T) {
 			return nil
 		}
 
+		findLive := func(items []annotationV0.Annotation, name string) *annotationV0.Annotation {
+			for i := range items {
+				if items[i].Name == name && items[i].DeletionTimestamp == nil {
+					return &items[i]
+				}
+			}
+			return nil
+		}
+
 		excluded, err := store.List(ctx, namespace, ListOptions{})
 		require.NoError(t, err)
 		assert.Nil(t, findTombstone(excluded.Items), "tombstone must be hidden by default")
 
 		included, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedInclude})
 		require.NoError(t, err)
+		assert.Len(t, included.Items, 3, "DeletedInclude must return live annotations plus the tombstone")
 		tombstone := findTombstone(included.Items)
 		require.NotNil(t, tombstone, "DeletedInclude must surface the tombstone")
 		require.NotNil(t, tombstone.DeletionTimestamp, "tombstone must carry a deletionTimestamp over the wire")
+		assert.NotNil(t, findLive(included.Items, "anno-1"), "DeletedInclude must also return live annotations")
+		assert.NotNil(t, findLive(included.Items, "anno-2"), "DeletedInclude must also return live annotations")
 
 		only, err := store.List(ctx, namespace, ListOptions{Deleted: DeletedOnly})
 		require.NoError(t, err)
