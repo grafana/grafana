@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { CoreApp, type TimeRange } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
@@ -69,6 +70,56 @@ describe('SpanDetailLinkButtons', () => {
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByText('Related logs')).toBeInTheDocument();
+  });
+
+  describe('logs link CTA copy', () => {
+    it.each([
+      {
+        name: 'shows "Related logs" when the datasource has no settings',
+        settings: undefined,
+        expectedCTA: 'Related logs',
+      },
+      {
+        name: 'shows "Related logs" when neither filterBySpanID nor filterByTraceID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false } } },
+        expectedCTA: 'Related logs',
+      },
+      {
+        name: 'shows "Logs for this trace" when filterByTraceID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
+        expectedCTA: 'Logs for this trace',
+      },
+      {
+        name: 'shows "Logs for this span" when filterBySpanID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
+        expectedCTA: 'Logs for this span',
+      },
+      {
+        name: 'prefers "Logs for this span" when both filterBySpanID and filterByTraceID are set',
+        settings: {
+          jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true, filterByTraceID: true } },
+        },
+        expectedCTA: 'Logs for this span',
+      },
+    ])('$name', ({ settings, expectedCTA }) => {
+      (useDataSourceInstanceSettings as jest.Mock).mockReturnValue({ isLoading: false, settings });
+      createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
+
+      render(
+        <SpanDetailLinkButtons
+          span={span}
+          createSpanLink={createSpanLink}
+          datasourceType="test"
+          datasourceUid="test-datasource-uid"
+          traceToProfilesOptions={undefined}
+          timeRange={timeRange}
+          app={CoreApp.Explore}
+        />
+      );
+
+      expect(screen.getAllByRole('button')).toHaveLength(1);
+      expect(screen.getByText(expectedCTA)).toBeInTheDocument();
+    });
   });
 
   it('should render profile link button when profiles link exists', () => {
