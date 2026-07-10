@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -15,8 +16,11 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Store is an abstraction for the storage API.
@@ -294,9 +298,20 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 			if err != nil {
 				consecutiveFailures++
-				if apierrors.IsNotFound(err) ||
-					strings.Contains(err.Error(), "job no longer exists") {
-					logger.Error("job no longer exists - lease expired", "error", err)
+				// Both cases below are terminal: continuing to run would mean two workers
+				// process the same job. Abort immediately rather than retrying, which would
+				// only stomp the new owner's claim.
+
+				// Another worker now owns the claim (job reaped and re-claimed on the same name).
+				if errors.Is(err, ErrLeaseLost) {
+					logger.Error("lease taken over by another worker - aborting job", "error", err)
+					close(leaseExpired)
+					return
+				}
+
+				// The job no longer exists in the store (deleted or reaped before renewal).
+				if apierrors.IsNotFound(err) || strings.Contains(err.Error(), "job no longer exists") {
+					logger.Error("job no longer exists - aborting job", "error", err)
 					close(leaseExpired)
 					return
 				}
@@ -321,16 +336,33 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 
 // processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
 func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
+	// Derive a cancellable context for the worker so that losing the lease actively
+	// stops the in-flight work, rather than leaving the goroutine running until the
+	// caller's deferred cancel fires much later. Otherwise two pods could execute the
+	// same job concurrently once another worker takes over the reaped claim.
+	workerCtx, cancelWorker := context.WithCancel(ctx)
+	defer cancelWorker()
+
 	// Run the job processing in a goroutine so we can monitor lease expiry
 	resultChan := make(chan error, 1)
 	go func() {
-		resultChan <- d.processJob(ctx, recorder)
+		resultChan <- d.processJob(workerCtx, recorder)
 	}()
 
 	select {
 	case err := <-resultChan:
 		return err
 	case <-leaseExpired:
+		// Another worker now owns the job. Cancel our worker and wait for it to
+		// return so we don't keep running (and later complete) a job we no longer own.
+		// Also observe ctx.Done() so a worker that ignores cancellation can't pin this
+		// goroutine forever: on job timeout or shutdown we stop waiting and let the
+		// caller run its cleanup.
+		cancelWorker()
+		select {
+		case <-resultChan:
+		case <-ctx.Done():
+		}
 		return apifmt.Errorf("job aborted due to lease expiry")
 	case <-ctx.Done():
 		// Return context error directly - caller will determine if this is due to graceful shutdown
@@ -360,6 +392,12 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		attribute.String("job.repository", repoName),
 		attribute.String("job.action", string(job.Spec.Action)),
 	)
+
+	name, email := job.Annotations[appjobs.AnnoAuthor], job.Annotations[appjobs.AnnoAuthorEmail]
+	if (name != "" || email != "") &&
+		openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx)) {
+		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
+	}
 
 	for _, worker := range d.workers {
 		if !worker.IsSupported(ctx, *job) {

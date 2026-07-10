@@ -2602,6 +2602,120 @@ func (x *QuotaUsageResponse) GetLimit() int64 {
 	return 0
 }
 
+// Discovery filter for ListStoredResources.
+type ListStoredResourcesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Namespace (tenant) to discover resources in. Required: discovery across
+	// all namespaces is not supported. An empty namespace is rejected with
+	// InvalidArgument.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Optional group filter. Empty means no filter on group.
+	Group string `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
+	// Optional resource filter. Empty means no filter on resource.
+	Resource      string `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListStoredResourcesRequest) Reset() {
+	*x = ListStoredResourcesRequest{}
+	mi := &file_resource_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListStoredResourcesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListStoredResourcesRequest) ProtoMessage() {}
+
+func (x *ListStoredResourcesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListStoredResourcesRequest.ProtoReflect.Descriptor instead.
+func (*ListStoredResourcesRequest) Descriptor() ([]byte, []int) {
+	return file_resource_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *ListStoredResourcesRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *ListStoredResourcesRequest) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *ListStoredResourcesRequest) GetResource() string {
+	if x != nil {
+		return x.Resource
+	}
+	return ""
+}
+
+type ListStoredResourcesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource identities that exist in live storage. This is discovery-only:
+	// it may include false positives (a returned identity may have no live
+	// objects by the time the caller queries it). Errors are returned as gRPC
+	// errors, not embedded in this response.
+	Items         []*ListStoredResourcesResponse_StoredResource `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListStoredResourcesResponse) Reset() {
+	*x = ListStoredResourcesResponse{}
+	mi := &file_resource_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListStoredResourcesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListStoredResourcesResponse) ProtoMessage() {}
+
+func (x *ListStoredResourcesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListStoredResourcesResponse.ProtoReflect.Descriptor instead.
+func (*ListStoredResourcesResponse) Descriptor() ([]byte, []int) {
+	return file_resource_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ListStoredResourcesResponse) GetItems() []*ListStoredResourcesResponse_StoredResource {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 type WatchEvent_Resource struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Version       int64                  `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
@@ -2612,7 +2726,7 @@ type WatchEvent_Resource struct {
 
 func (x *WatchEvent_Resource) Reset() {
 	*x = WatchEvent_Resource{}
-	mi := &file_resource_proto_msgTypes[32]
+	mi := &file_resource_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2624,7 +2738,7 @@ func (x *WatchEvent_Resource) String() string {
 func (*WatchEvent_Resource) ProtoMessage() {}
 
 func (x *WatchEvent_Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[32]
+	mi := &file_resource_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2671,7 +2785,7 @@ type BulkResponse_Summary struct {
 
 func (x *BulkResponse_Summary) Reset() {
 	*x = BulkResponse_Summary{}
-	mi := &file_resource_proto_msgTypes[33]
+	mi := &file_resource_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2683,7 +2797,7 @@ func (x *BulkResponse_Summary) String() string {
 func (*BulkResponse_Summary) ProtoMessage() {}
 
 func (x *BulkResponse_Summary) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[33]
+	mi := &file_resource_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2767,7 +2881,7 @@ type BulkResponse_Rejected struct {
 
 func (x *BulkResponse_Rejected) Reset() {
 	*x = BulkResponse_Rejected{}
-	mi := &file_resource_proto_msgTypes[34]
+	mi := &file_resource_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2779,7 +2893,7 @@ func (x *BulkResponse_Rejected) String() string {
 func (*BulkResponse_Rejected) ProtoMessage() {}
 
 func (x *BulkResponse_Rejected) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[34]
+	mi := &file_resource_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2836,7 +2950,7 @@ type ListManagedObjectsResponse_Item struct {
 
 func (x *ListManagedObjectsResponse_Item) Reset() {
 	*x = ListManagedObjectsResponse_Item{}
-	mi := &file_resource_proto_msgTypes[35]
+	mi := &file_resource_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2848,7 +2962,7 @@ func (x *ListManagedObjectsResponse_Item) String() string {
 func (*ListManagedObjectsResponse_Item) ProtoMessage() {}
 
 func (x *ListManagedObjectsResponse_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[35]
+	mi := &file_resource_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2919,7 +3033,7 @@ type CountManagedObjectsResponse_ResourceCount struct {
 
 func (x *CountManagedObjectsResponse_ResourceCount) Reset() {
 	*x = CountManagedObjectsResponse_ResourceCount{}
-	mi := &file_resource_proto_msgTypes[36]
+	mi := &file_resource_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2931,7 +3045,7 @@ func (x *CountManagedObjectsResponse_ResourceCount) String() string {
 func (*CountManagedObjectsResponse_ResourceCount) ProtoMessage() {}
 
 func (x *CountManagedObjectsResponse_ResourceCount) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[36]
+	mi := &file_resource_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3004,7 +3118,7 @@ type ResourceTableColumnDefinition_Properties struct {
 
 func (x *ResourceTableColumnDefinition_Properties) Reset() {
 	*x = ResourceTableColumnDefinition_Properties{}
-	mi := &file_resource_proto_msgTypes[37]
+	mi := &file_resource_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3016,7 +3130,7 @@ func (x *ResourceTableColumnDefinition_Properties) String() string {
 func (*ResourceTableColumnDefinition_Properties) ProtoMessage() {}
 
 func (x *ResourceTableColumnDefinition_Properties) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_proto_msgTypes[37]
+	mi := &file_resource_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3065,6 +3179,66 @@ func (x *ResourceTableColumnDefinition_Properties) GetDefaultValue() []byte {
 		return x.DefaultValue
 	}
 	return nil
+}
+
+type ListStoredResourcesResponse_StoredResource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Namespace     string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Group         string                 `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
+	Resource      string                 `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListStoredResourcesResponse_StoredResource) Reset() {
+	*x = ListStoredResourcesResponse_StoredResource{}
+	mi := &file_resource_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListStoredResourcesResponse_StoredResource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListStoredResourcesResponse_StoredResource) ProtoMessage() {}
+
+func (x *ListStoredResourcesResponse_StoredResource) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListStoredResourcesResponse_StoredResource.ProtoReflect.Descriptor instead.
+func (*ListStoredResourcesResponse_StoredResource) Descriptor() ([]byte, []int) {
+	return file_resource_proto_rawDescGZIP(), []int{33, 0}
+}
+
+func (x *ListStoredResourcesResponse_StoredResource) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *ListStoredResourcesResponse_StoredResource) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *ListStoredResourcesResponse_StoredResource) GetResource() string {
+	if x != nil {
+		return x.Resource
+	}
+	return ""
 }
 
 var File_resource_proto protoreflect.FileDescriptor
@@ -3451,40 +3625,66 @@ var file_resource_proto_rawDesc = string([]byte{
 	0x72, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72,
 	0x12, 0x14, 0x0a, 0x05, 0x75, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52,
 	0x05, 0x75, 0x73, 0x61, 0x67, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x2a, 0x49, 0x0a, 0x14,
-	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x4d,
-	0x61, 0x74, 0x63, 0x68, 0x12, 0x1b, 0x0a, 0x17, 0x44, 0x45, 0x50, 0x52, 0x45, 0x43, 0x41, 0x54,
-	0x45, 0x44, 0x5f, 0x4e, 0x6f, 0x74, 0x4f, 0x6c, 0x64, 0x65, 0x72, 0x54, 0x68, 0x61, 0x6e, 0x10,
-	0x00, 0x12, 0x14, 0x0a, 0x10, 0x44, 0x45, 0x50, 0x52, 0x45, 0x43, 0x41, 0x54, 0x45, 0x44, 0x5f,
-	0x45, 0x78, 0x61, 0x63, 0x74, 0x10, 0x01, 0x2a, 0x4d, 0x0a, 0x16, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x56,
-	0x32, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x09,
-	0x0a, 0x05, 0x55, 0x6e, 0x73, 0x65, 0x74, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x78, 0x61,
-	0x63, 0x74, 0x10, 0x02, 0x12, 0x10, 0x0a, 0x0c, 0x4e, 0x6f, 0x74, 0x4f, 0x6c, 0x64, 0x65, 0x72,
-	0x54, 0x68, 0x61, 0x6e, 0x10, 0x03, 0x32, 0xed, 0x02, 0x0a, 0x0d, 0x52, 0x65, 0x73, 0x6f, 0x75,
-	0x72, 0x63, 0x65, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x12, 0x35, 0x0a, 0x04, 0x52, 0x65, 0x61, 0x64,
-	0x12, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x61, 0x64,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x2e, 0x52, 0x65, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x3b, 0x0a, 0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x06,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x06, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x15,
-	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x37, 0x0a,
-	0x05, 0x57, 0x61, 0x74, 0x63, 0x68, 0x12, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2e, 0x57, 0x61, 0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14,
-	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x57, 0x61, 0x74, 0x63, 0x68, 0x45,
-	0x76, 0x65, 0x6e, 0x74, 0x30, 0x01, 0x32, 0x4b, 0x0a, 0x09, 0x42, 0x75, 0x6c, 0x6b, 0x53, 0x74,
+	0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x6c, 0x0a, 0x1a,
+	0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61,
+	0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e,
+	0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75,
+	0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1a,
+	0x0a, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x22, 0xcb, 0x01, 0x0a, 0x1b, 0x4c,
+	0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4a, 0x0a, 0x05, 0x69, 0x74,
+	0x65, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x34, 0x2e, 0x72, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x2e, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x52,
+	0x05, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x1a, 0x60, 0x0a, 0x0e, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d,
+	0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1a, 0x0a, 0x08,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2a, 0x49, 0x0a, 0x14, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x74, 0x63, 0x68,
+	0x12, 0x1b, 0x0a, 0x17, 0x44, 0x45, 0x50, 0x52, 0x45, 0x43, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x4e,
+	0x6f, 0x74, 0x4f, 0x6c, 0x64, 0x65, 0x72, 0x54, 0x68, 0x61, 0x6e, 0x10, 0x00, 0x12, 0x14, 0x0a,
+	0x10, 0x44, 0x45, 0x50, 0x52, 0x45, 0x43, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x45, 0x78, 0x61, 0x63,
+	0x74, 0x10, 0x01, 0x2a, 0x4d, 0x0a, 0x16, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x56,
+	0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x56, 0x32, 0x12, 0x0b, 0x0a,
+	0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00, 0x12, 0x09, 0x0a, 0x05, 0x55, 0x6e,
+	0x73, 0x65, 0x74, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x78, 0x61, 0x63, 0x74, 0x10, 0x02,
+	0x12, 0x10, 0x0a, 0x0c, 0x4e, 0x6f, 0x74, 0x4f, 0x6c, 0x64, 0x65, 0x72, 0x54, 0x68, 0x61, 0x6e,
+	0x10, 0x03, 0x32, 0xd1, 0x03, 0x0a, 0x0d, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53,
+	0x74, 0x6f, 0x72, 0x65, 0x12, 0x35, 0x0a, 0x04, 0x52, 0x65, 0x61, 0x64, 0x12, 0x15, 0x2e, 0x72,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x61, 0x64, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52,
+	0x65, 0x61, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x06, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18,
+	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x06, 0x55, 0x70, 0x64, 0x61,
+	0x74, 0x65, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12,
+	0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x35, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74, 0x12, 0x15, 0x2e, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x37, 0x0a, 0x05, 0x57, 0x61, 0x74,
+	0x63, 0x68, 0x12, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x57, 0x61,
+	0x74, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x14, 0x2e, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x57, 0x61, 0x74, 0x63, 0x68, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x30, 0x01, 0x12, 0x62, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x12, 0x24, 0x2e, 0x72, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x64, 0x52,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x25, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x53,
+	0x74, 0x6f, 0x72, 0x65, 0x64, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x4b, 0x0a, 0x09, 0x42, 0x75, 0x6c, 0x6b, 0x53, 0x74,
 	0x6f, 0x72, 0x65, 0x12, 0x3e, 0x0a, 0x0b, 0x42, 0x75, 0x6c, 0x6b, 0x50, 0x72, 0x6f, 0x63, 0x65,
 	0x73, 0x73, 0x12, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x42, 0x75,
 	0x6c, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x72, 0x65, 0x73, 0x6f,
@@ -3534,53 +3734,56 @@ func file_resource_proto_rawDescGZIP() []byte {
 }
 
 var file_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_resource_proto_goTypes = []any{
-	(ResourceVersionMatch)(0),                         // 0: resource.ResourceVersionMatch
-	(ResourceVersionMatchV2)(0),                       // 1: resource.ResourceVersionMatchV2
-	(ListRequest_Source)(0),                           // 2: resource.ListRequest.Source
-	(WatchEvent_Type)(0),                              // 3: resource.WatchEvent.Type
-	(BulkRequest_Action)(0),                           // 4: resource.BulkRequest.Action
-	(HealthCheckResponse_ServingStatus)(0),            // 5: resource.HealthCheckResponse.ServingStatus
-	(ResourceTableColumnDefinition_ColumnType)(0),     // 6: resource.ResourceTableColumnDefinition.ColumnType
-	(*ResourceKey)(nil),                               // 7: resource.ResourceKey
-	(*ResourceWrapper)(nil),                           // 8: resource.ResourceWrapper
-	(*ErrorResult)(nil),                               // 9: resource.ErrorResult
-	(*ErrorDetails)(nil),                              // 10: resource.ErrorDetails
-	(*ErrorCause)(nil),                                // 11: resource.ErrorCause
-	(*CreateRequest)(nil),                             // 12: resource.CreateRequest
-	(*CreateResponse)(nil),                            // 13: resource.CreateResponse
-	(*UpdateRequest)(nil),                             // 14: resource.UpdateRequest
-	(*UpdateResponse)(nil),                            // 15: resource.UpdateResponse
-	(*DeleteRequest)(nil),                             // 16: resource.DeleteRequest
-	(*DeleteResponse)(nil),                            // 17: resource.DeleteResponse
-	(*ReadRequest)(nil),                               // 18: resource.ReadRequest
-	(*ReadResponse)(nil),                              // 19: resource.ReadResponse
-	(*Requirement)(nil),                               // 20: resource.Requirement
-	(*ListOptions)(nil),                               // 21: resource.ListOptions
-	(*ListRequest)(nil),                               // 22: resource.ListRequest
-	(*ListResponse)(nil),                              // 23: resource.ListResponse
-	(*WatchRequest)(nil),                              // 24: resource.WatchRequest
-	(*WatchEvent)(nil),                                // 25: resource.WatchEvent
-	(*BulkRequest)(nil),                               // 26: resource.BulkRequest
-	(*BulkResponse)(nil),                              // 27: resource.BulkResponse
-	(*ListManagedObjectsRequest)(nil),                 // 28: resource.ListManagedObjectsRequest
-	(*ListManagedObjectsResponse)(nil),                // 29: resource.ListManagedObjectsResponse
-	(*CountManagedObjectsRequest)(nil),                // 30: resource.CountManagedObjectsRequest
-	(*CountManagedObjectsResponse)(nil),               // 31: resource.CountManagedObjectsResponse
-	(*HealthCheckRequest)(nil),                        // 32: resource.HealthCheckRequest
-	(*HealthCheckResponse)(nil),                       // 33: resource.HealthCheckResponse
-	(*ResourceTable)(nil),                             // 34: resource.ResourceTable
-	(*ResourceTableColumnDefinition)(nil),             // 35: resource.ResourceTableColumnDefinition
-	(*ResourceTableRow)(nil),                          // 36: resource.ResourceTableRow
-	(*QuotaUsageRequest)(nil),                         // 37: resource.QuotaUsageRequest
-	(*QuotaUsageResponse)(nil),                        // 38: resource.QuotaUsageResponse
-	(*WatchEvent_Resource)(nil),                       // 39: resource.WatchEvent.Resource
-	(*BulkResponse_Summary)(nil),                      // 40: resource.BulkResponse.Summary
-	(*BulkResponse_Rejected)(nil),                     // 41: resource.BulkResponse.Rejected
-	(*ListManagedObjectsResponse_Item)(nil),           // 42: resource.ListManagedObjectsResponse.Item
-	(*CountManagedObjectsResponse_ResourceCount)(nil), // 43: resource.CountManagedObjectsResponse.ResourceCount
-	(*ResourceTableColumnDefinition_Properties)(nil),  // 44: resource.ResourceTableColumnDefinition.Properties
+	(ResourceVersionMatch)(0),                          // 0: resource.ResourceVersionMatch
+	(ResourceVersionMatchV2)(0),                        // 1: resource.ResourceVersionMatchV2
+	(ListRequest_Source)(0),                            // 2: resource.ListRequest.Source
+	(WatchEvent_Type)(0),                               // 3: resource.WatchEvent.Type
+	(BulkRequest_Action)(0),                            // 4: resource.BulkRequest.Action
+	(HealthCheckResponse_ServingStatus)(0),             // 5: resource.HealthCheckResponse.ServingStatus
+	(ResourceTableColumnDefinition_ColumnType)(0),      // 6: resource.ResourceTableColumnDefinition.ColumnType
+	(*ResourceKey)(nil),                                // 7: resource.ResourceKey
+	(*ResourceWrapper)(nil),                            // 8: resource.ResourceWrapper
+	(*ErrorResult)(nil),                                // 9: resource.ErrorResult
+	(*ErrorDetails)(nil),                               // 10: resource.ErrorDetails
+	(*ErrorCause)(nil),                                 // 11: resource.ErrorCause
+	(*CreateRequest)(nil),                              // 12: resource.CreateRequest
+	(*CreateResponse)(nil),                             // 13: resource.CreateResponse
+	(*UpdateRequest)(nil),                              // 14: resource.UpdateRequest
+	(*UpdateResponse)(nil),                             // 15: resource.UpdateResponse
+	(*DeleteRequest)(nil),                              // 16: resource.DeleteRequest
+	(*DeleteResponse)(nil),                             // 17: resource.DeleteResponse
+	(*ReadRequest)(nil),                                // 18: resource.ReadRequest
+	(*ReadResponse)(nil),                               // 19: resource.ReadResponse
+	(*Requirement)(nil),                                // 20: resource.Requirement
+	(*ListOptions)(nil),                                // 21: resource.ListOptions
+	(*ListRequest)(nil),                                // 22: resource.ListRequest
+	(*ListResponse)(nil),                               // 23: resource.ListResponse
+	(*WatchRequest)(nil),                               // 24: resource.WatchRequest
+	(*WatchEvent)(nil),                                 // 25: resource.WatchEvent
+	(*BulkRequest)(nil),                                // 26: resource.BulkRequest
+	(*BulkResponse)(nil),                               // 27: resource.BulkResponse
+	(*ListManagedObjectsRequest)(nil),                  // 28: resource.ListManagedObjectsRequest
+	(*ListManagedObjectsResponse)(nil),                 // 29: resource.ListManagedObjectsResponse
+	(*CountManagedObjectsRequest)(nil),                 // 30: resource.CountManagedObjectsRequest
+	(*CountManagedObjectsResponse)(nil),                // 31: resource.CountManagedObjectsResponse
+	(*HealthCheckRequest)(nil),                         // 32: resource.HealthCheckRequest
+	(*HealthCheckResponse)(nil),                        // 33: resource.HealthCheckResponse
+	(*ResourceTable)(nil),                              // 34: resource.ResourceTable
+	(*ResourceTableColumnDefinition)(nil),              // 35: resource.ResourceTableColumnDefinition
+	(*ResourceTableRow)(nil),                           // 36: resource.ResourceTableRow
+	(*QuotaUsageRequest)(nil),                          // 37: resource.QuotaUsageRequest
+	(*QuotaUsageResponse)(nil),                         // 38: resource.QuotaUsageResponse
+	(*ListStoredResourcesRequest)(nil),                 // 39: resource.ListStoredResourcesRequest
+	(*ListStoredResourcesResponse)(nil),                // 40: resource.ListStoredResourcesResponse
+	(*WatchEvent_Resource)(nil),                        // 41: resource.WatchEvent.Resource
+	(*BulkResponse_Summary)(nil),                       // 42: resource.BulkResponse.Summary
+	(*BulkResponse_Rejected)(nil),                      // 43: resource.BulkResponse.Rejected
+	(*ListManagedObjectsResponse_Item)(nil),            // 44: resource.ListManagedObjectsResponse.Item
+	(*CountManagedObjectsResponse_ResourceCount)(nil),  // 45: resource.CountManagedObjectsResponse.ResourceCount
+	(*ResourceTableColumnDefinition_Properties)(nil),   // 46: resource.ResourceTableColumnDefinition.Properties
+	(*ListStoredResourcesResponse_StoredResource)(nil), // 47: resource.ListStoredResourcesResponse.StoredResource
 }
 var file_resource_proto_depIdxs = []int32{
 	10, // 0: resource.ErrorResult.details:type_name -> resource.ErrorDetails
@@ -3604,55 +3807,58 @@ var file_resource_proto_depIdxs = []int32{
 	9,  // 18: resource.ListResponse.error:type_name -> resource.ErrorResult
 	21, // 19: resource.WatchRequest.options:type_name -> resource.ListOptions
 	3,  // 20: resource.WatchEvent.type:type_name -> resource.WatchEvent.Type
-	39, // 21: resource.WatchEvent.resource:type_name -> resource.WatchEvent.Resource
-	39, // 22: resource.WatchEvent.previous:type_name -> resource.WatchEvent.Resource
+	41, // 21: resource.WatchEvent.resource:type_name -> resource.WatchEvent.Resource
+	41, // 22: resource.WatchEvent.previous:type_name -> resource.WatchEvent.Resource
 	7,  // 23: resource.BulkRequest.key:type_name -> resource.ResourceKey
 	4,  // 24: resource.BulkRequest.action:type_name -> resource.BulkRequest.Action
 	9,  // 25: resource.BulkResponse.error:type_name -> resource.ErrorResult
-	40, // 26: resource.BulkResponse.summary:type_name -> resource.BulkResponse.Summary
-	41, // 27: resource.BulkResponse.rejected:type_name -> resource.BulkResponse.Rejected
-	42, // 28: resource.ListManagedObjectsResponse.items:type_name -> resource.ListManagedObjectsResponse.Item
+	42, // 26: resource.BulkResponse.summary:type_name -> resource.BulkResponse.Summary
+	43, // 27: resource.BulkResponse.rejected:type_name -> resource.BulkResponse.Rejected
+	44, // 28: resource.ListManagedObjectsResponse.items:type_name -> resource.ListManagedObjectsResponse.Item
 	9,  // 29: resource.ListManagedObjectsResponse.error:type_name -> resource.ErrorResult
-	43, // 30: resource.CountManagedObjectsResponse.items:type_name -> resource.CountManagedObjectsResponse.ResourceCount
+	45, // 30: resource.CountManagedObjectsResponse.items:type_name -> resource.CountManagedObjectsResponse.ResourceCount
 	9,  // 31: resource.CountManagedObjectsResponse.error:type_name -> resource.ErrorResult
 	5,  // 32: resource.HealthCheckResponse.status:type_name -> resource.HealthCheckResponse.ServingStatus
 	35, // 33: resource.ResourceTable.columns:type_name -> resource.ResourceTableColumnDefinition
 	36, // 34: resource.ResourceTable.rows:type_name -> resource.ResourceTableRow
 	6,  // 35: resource.ResourceTableColumnDefinition.type:type_name -> resource.ResourceTableColumnDefinition.ColumnType
-	44, // 36: resource.ResourceTableColumnDefinition.properties:type_name -> resource.ResourceTableColumnDefinition.Properties
+	46, // 36: resource.ResourceTableColumnDefinition.properties:type_name -> resource.ResourceTableColumnDefinition.Properties
 	7,  // 37: resource.ResourceTableRow.key:type_name -> resource.ResourceKey
 	7,  // 38: resource.QuotaUsageRequest.key:type_name -> resource.ResourceKey
 	9,  // 39: resource.QuotaUsageResponse.error:type_name -> resource.ErrorResult
-	7,  // 40: resource.BulkResponse.Rejected.key:type_name -> resource.ResourceKey
-	4,  // 41: resource.BulkResponse.Rejected.action:type_name -> resource.BulkRequest.Action
-	7,  // 42: resource.ListManagedObjectsResponse.Item.object:type_name -> resource.ResourceKey
-	18, // 43: resource.ResourceStore.Read:input_type -> resource.ReadRequest
-	12, // 44: resource.ResourceStore.Create:input_type -> resource.CreateRequest
-	14, // 45: resource.ResourceStore.Update:input_type -> resource.UpdateRequest
-	16, // 46: resource.ResourceStore.Delete:input_type -> resource.DeleteRequest
-	22, // 47: resource.ResourceStore.List:input_type -> resource.ListRequest
-	24, // 48: resource.ResourceStore.Watch:input_type -> resource.WatchRequest
-	26, // 49: resource.BulkStore.BulkProcess:input_type -> resource.BulkRequest
-	30, // 50: resource.ManagedObjectIndex.CountManagedObjects:input_type -> resource.CountManagedObjectsRequest
-	28, // 51: resource.ManagedObjectIndex.ListManagedObjects:input_type -> resource.ListManagedObjectsRequest
-	32, // 52: resource.Diagnostics.IsHealthy:input_type -> resource.HealthCheckRequest
-	37, // 53: resource.Quotas.GetQuotaUsage:input_type -> resource.QuotaUsageRequest
-	19, // 54: resource.ResourceStore.Read:output_type -> resource.ReadResponse
-	13, // 55: resource.ResourceStore.Create:output_type -> resource.CreateResponse
-	15, // 56: resource.ResourceStore.Update:output_type -> resource.UpdateResponse
-	17, // 57: resource.ResourceStore.Delete:output_type -> resource.DeleteResponse
-	23, // 58: resource.ResourceStore.List:output_type -> resource.ListResponse
-	25, // 59: resource.ResourceStore.Watch:output_type -> resource.WatchEvent
-	27, // 60: resource.BulkStore.BulkProcess:output_type -> resource.BulkResponse
-	31, // 61: resource.ManagedObjectIndex.CountManagedObjects:output_type -> resource.CountManagedObjectsResponse
-	29, // 62: resource.ManagedObjectIndex.ListManagedObjects:output_type -> resource.ListManagedObjectsResponse
-	33, // 63: resource.Diagnostics.IsHealthy:output_type -> resource.HealthCheckResponse
-	38, // 64: resource.Quotas.GetQuotaUsage:output_type -> resource.QuotaUsageResponse
-	54, // [54:65] is the sub-list for method output_type
-	43, // [43:54] is the sub-list for method input_type
-	43, // [43:43] is the sub-list for extension type_name
-	43, // [43:43] is the sub-list for extension extendee
-	0,  // [0:43] is the sub-list for field type_name
+	47, // 40: resource.ListStoredResourcesResponse.items:type_name -> resource.ListStoredResourcesResponse.StoredResource
+	7,  // 41: resource.BulkResponse.Rejected.key:type_name -> resource.ResourceKey
+	4,  // 42: resource.BulkResponse.Rejected.action:type_name -> resource.BulkRequest.Action
+	7,  // 43: resource.ListManagedObjectsResponse.Item.object:type_name -> resource.ResourceKey
+	18, // 44: resource.ResourceStore.Read:input_type -> resource.ReadRequest
+	12, // 45: resource.ResourceStore.Create:input_type -> resource.CreateRequest
+	14, // 46: resource.ResourceStore.Update:input_type -> resource.UpdateRequest
+	16, // 47: resource.ResourceStore.Delete:input_type -> resource.DeleteRequest
+	22, // 48: resource.ResourceStore.List:input_type -> resource.ListRequest
+	24, // 49: resource.ResourceStore.Watch:input_type -> resource.WatchRequest
+	39, // 50: resource.ResourceStore.ListStoredResources:input_type -> resource.ListStoredResourcesRequest
+	26, // 51: resource.BulkStore.BulkProcess:input_type -> resource.BulkRequest
+	30, // 52: resource.ManagedObjectIndex.CountManagedObjects:input_type -> resource.CountManagedObjectsRequest
+	28, // 53: resource.ManagedObjectIndex.ListManagedObjects:input_type -> resource.ListManagedObjectsRequest
+	32, // 54: resource.Diagnostics.IsHealthy:input_type -> resource.HealthCheckRequest
+	37, // 55: resource.Quotas.GetQuotaUsage:input_type -> resource.QuotaUsageRequest
+	19, // 56: resource.ResourceStore.Read:output_type -> resource.ReadResponse
+	13, // 57: resource.ResourceStore.Create:output_type -> resource.CreateResponse
+	15, // 58: resource.ResourceStore.Update:output_type -> resource.UpdateResponse
+	17, // 59: resource.ResourceStore.Delete:output_type -> resource.DeleteResponse
+	23, // 60: resource.ResourceStore.List:output_type -> resource.ListResponse
+	25, // 61: resource.ResourceStore.Watch:output_type -> resource.WatchEvent
+	40, // 62: resource.ResourceStore.ListStoredResources:output_type -> resource.ListStoredResourcesResponse
+	27, // 63: resource.BulkStore.BulkProcess:output_type -> resource.BulkResponse
+	31, // 64: resource.ManagedObjectIndex.CountManagedObjects:output_type -> resource.CountManagedObjectsResponse
+	29, // 65: resource.ManagedObjectIndex.ListManagedObjects:output_type -> resource.ListManagedObjectsResponse
+	33, // 66: resource.Diagnostics.IsHealthy:output_type -> resource.HealthCheckResponse
+	38, // 67: resource.Quotas.GetQuotaUsage:output_type -> resource.QuotaUsageResponse
+	56, // [56:68] is the sub-list for method output_type
+	44, // [44:56] is the sub-list for method input_type
+	44, // [44:44] is the sub-list for extension type_name
+	44, // [44:44] is the sub-list for extension extendee
+	0,  // [0:44] is the sub-list for field type_name
 }
 
 func init() { file_resource_proto_init() }
@@ -3667,7 +3873,7 @@ func file_resource_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_proto_rawDesc), len(file_resource_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   38,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

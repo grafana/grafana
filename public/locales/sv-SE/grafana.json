@@ -9898,10 +9898,16 @@
         },
         "name-limit": "Gräns",
         "name-mode": "Läge",
+        "name-overflow": "",
         "name-placement": "Placering",
         "name-values": "Värden",
         "name-visibility": "Synlighet",
         "name-width": "Bredd",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Underst",
           "label-right": "Höger"
@@ -11226,6 +11232,8 @@
         }
       },
       "fields-section": "Fält",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Dölj loggrad",
       "inline-mode": "Visa inline",
       "inline-no-scrolls": "",
@@ -11971,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Hantera mappningar av identitetsleverantörsgrupper till Grafana-roller"
     },
     "help": {
       "title": "Hjälp"
@@ -14263,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Det gick inte att ladda datakälla för denna fråga",
     "loading-datasource": "Laddar datakälla",
     "no-query-editor-component": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"

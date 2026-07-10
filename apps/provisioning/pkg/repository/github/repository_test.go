@@ -36,6 +36,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -51,6 +52,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -64,6 +66,7 @@ func TestNewGitHub(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana.git",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			token:         "token123",
@@ -79,6 +82,7 @@ func TestNewGitHub(t *testing.T) {
 			factory.Client = http.DefaultClient
 
 			gitRepo := git.NewMockGitRepository(t)
+			gitRepo.EXPECT().URL().Return(tt.config.Spec.GitHub.URL).Maybe()
 
 			// Call the function under test
 			repo, err := NewRepository(
@@ -176,6 +180,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -202,6 +207,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 						URL:    "invalid-url",
 						Branch: "main",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 				Secure: provisioning.SecureValues{
 					Token: common.InlineSecureValue{
@@ -349,6 +355,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 						Branch: "main",
 						Path:   "dashboards",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			},
 			path: "dashboard.json",
@@ -629,6 +636,49 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 			},
 		},
 		{
+			name: "scoped repo includes configured path",
+			file: &repo.FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/grafana/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
+			name: "path with URL-reserved characters is encoded",
+			file: &repo.FileInfo{
+				Path: "dashboards/a #b?.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.RepositoryURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/a%20%23b%3F.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+		},
+		{
 			name: "file without ref uses default branch",
 			file: &repo.FileInfo{
 				Path: "dashboards/test.json",
@@ -680,6 +730,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -766,6 +817,7 @@ func TestGitHubRepositoryRefURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.config.Spec.Type = provisioning.GitHubRepositoryType
 			repo := &githubRepository{
 				config: tt.config,
 				owner:  "grafana",
@@ -795,6 +847,7 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 		Secure: provisioning.SecureValues{
 			Token: common.InlineSecureValue{
@@ -1016,6 +1069,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 				URL:    "https://github.com/grafana/grafana",
 				Branch: "main",
 			},
+			Type: provisioning.GitHubRepositoryType,
 		},
 	}
 
@@ -1073,6 +1127,7 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 					URL:    "https://github.com/grafana/grafana",
 					Branch: "",
 				},
+				Type: provisioning.GitHubRepositoryType,
 			},
 		}
 
@@ -1394,6 +1449,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1613,6 +1669,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1768,6 +1825,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 						URL:    "https://github.com/grafana/grafana",
 						Branch: tt.branch,
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
@@ -1954,6 +2012,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 						Branch: tt.initialBranch,
 						Path:   "grafana/",
 					},
+					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 

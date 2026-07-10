@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -125,7 +126,8 @@ type ProvisioningTestHelper struct {
 
 // WithNamespace returns a new ProvisioningTestHelper scoped to the specified namespace and user.
 // This is useful for multi-org testing where you need separate helpers for different organizations.
-func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User) *ProvisioningTestHelper {
+func (h *ProvisioningTestHelper) WithNamespace(t *testing.T, namespace string, user apis.User) *ProvisioningTestHelper {
+	t.Helper()
 	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
 
 	return &ProvisioningTestHelper{
@@ -178,9 +180,9 @@ func (h *ProvisioningTestHelper) WithNamespace(namespace string, user apis.User)
 			Namespace: namespace,
 			GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 		}),
-		AdminREST:  user.RESTClient(nil, gv),
-		EditorREST: user.RESTClient(nil, gv),
-		ViewerREST: user.RESTClient(nil, gv),
+		AdminREST:  user.RESTClient(t, gv),
+		EditorREST: user.RESTClient(t, gv),
+		ViewerREST: user.RESTClient(t, gv),
 	}
 }
 
@@ -335,6 +337,32 @@ func (h *ProvisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	return h.AwaitJob(t, t.Context(), unstruct)
 }
 
+// CreatePullJob creates a pull Job resource directly, bypassing the
+// repositories/{name}/jobs subresource, and returns the created object. The
+// repository name need not refer to an existing repository — this lets tests
+// drive the job pipeline (pickup, processing, archival) without standing up a
+// repository. A job against a missing repository fails fast and is archived.
+func (h *ProvisioningTestHelper) CreatePullJob(t *testing.T, jobName, repository string) *unstructured.Unstructured {
+	t.Helper()
+	job := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Job",
+		"metadata": map[string]any{
+			"name":      jobName,
+			"namespace": h.Namespace,
+			"labels":    map[string]any{jobs.LabelRepository: repository},
+		},
+		"spec": map[string]any{
+			"action":     string(provisioning.JobActionPull),
+			"repository": repository,
+			"pull":       map[string]any{},
+		},
+	}}
+	created, err := h.Jobs.Resource.Create(t.Context(), job, metav1.CreateOptions{})
+	require.NoError(t, err, "should create job %s directly", jobName)
+	return created
+}
+
 // AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
 func (h *ProvisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo string) *unstructured.Unstructured {
 	t.Helper()
@@ -377,17 +405,23 @@ func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
 	lastState := MustNestedString(job.Object, "status", "state")
+	// A worker that returns an error records it in status.message, not
+	// status.errors, so surface it explicitly — otherwise a failed job only
+	// reports state=error with no reason.
+	lastMessage := MustNestedString(job.Object, "status", "message")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 
 	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		t.Logf("job '%s' did not succeed: state=%q message=%q errors=%v",
+			job.GetName(), lastState, lastMessage, lastErrors)
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
 
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
+		"historic job '%s' was not successful (message: %q)", job.GetName(), lastMessage)
 }
 
 func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
@@ -802,6 +836,7 @@ type TestRepo struct {
 	TokenUser                 string
 	WebhookSecret             string
 	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -859,6 +894,8 @@ type GitHubRepositorySpec struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateDashboardPreviews bool
 	Workflows                 []string
 	WorkflowsJSON             string
@@ -880,6 +917,25 @@ func (h *ProvisioningTestHelper) CreateGitHubRepository(t *testing.T, repo GitHu
 
 	h.WaitForHealthyRepository(t, createdName)
 	return createdName
+}
+
+// CreateRepositoryNoWait renders and creates a local repository from the spec
+// but does NOT wait for it to become healthy (unlike CreateLocalRepo). Use it
+// when the test needs to assert the controller's reconcile explicitly — e.g.
+// WaitForHealthyRepository — rather than have that wait hidden inside creation.
+func (h *ProvisioningTestHelper) CreateRepositoryNoWait(t *testing.T, repo TestRepo) {
+	t.Helper()
+	if repo.SyncTarget == "" {
+		repo.SyncTarget = "instance"
+	}
+	repo.SyncEnabled = !repo.SkipSync
+	repo.WorkflowsJSON = marshalWorkflows(t, repo.Workflows)
+	if repo.Path == "" {
+		repo.Path = h.ProvisioningPath
+	}
+	obj := h.RenderObject(t, TestdataPath("local.json.tmpl"), repo)
+	_, err := h.Repositories.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
+	require.NoError(t, err, "failed to create repository %q", repo.Name)
 }
 
 func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
@@ -1159,7 +1215,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 			return
 		}
 		errType := MustNestedString(repoStatus.Object, "status", "health", "error")
-		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
+		assert.Empty(collect, errType, "repository %s has health error: %s - %v", name, errType, repoStatus.Object)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
 		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
@@ -1181,6 +1237,56 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.False(collect, status, "repository %s should be unhealthy", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
+}
+
+// WaitForHealthyConnection polls until the connection controller has reconciled
+// the connection: its ObservedGeneration has caught up to the object
+// generation, a health check has run, it is healthy, and the Ready condition is
+// True. This is the connection analogue of WaitForHealthyRepository.
+func (h *ProvisioningTestHelper) WaitForHealthyConnection(t *testing.T, name string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Connections.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get connection %s", name) {
+			return
+		}
+		conn := MustFromUnstructured[provisioning.Connection](t, obj)
+		assert.Equal(collect, conn.Generation, conn.Status.ObservedGeneration,
+			"controller should reconcile the observed generation")
+		assert.Greater(collect, conn.Status.Health.Checked, int64(0),
+			"connection %s health check has not run yet", name)
+		assert.True(collect, conn.Status.Health.Healthy, "connection %s is not healthy yet", name)
+		ready := FindCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(collect, ready, "connection %s should have a Ready condition", name) {
+			assert.Equal(collect, metav1.ConditionTrue, ready.Status, "connection %s Ready condition should be true", name)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "connection %s should be reconciled and healthy", name)
+}
+
+// RequireRepositoryReReconciles ages the repository's health timestamp and
+// asserts the controller re-runs the health check (status.health.checked
+// advances), proving it reacts to update/resync events. Pairs with a create
+// that first brings the repository to healthy.
+func (h *ProvisioningTestHelper) RequireRepositoryReReconciles(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	obj, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get repository %s", name)
+	before, found := mustNestedInt64(obj.Object, "status", "health", "checked")
+	require.True(t, found, "repository %s should already have a health checked timestamp", name)
+
+	h.TriggerRepositoryReconciliation(t, name)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		cur, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		after, found := mustNestedInt64(cur.Object, "status", "health", "checked")
+		assert.True(collect, found, "repository %s should have a health checked timestamp", name)
+		assert.Greater(collect, after, before, "controller should re-check health after the update")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s health should be re-checked", name)
 }
 
 // WaitForRepositoryDeleted polls until the named repository reports NotFound.
@@ -1323,10 +1429,9 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
-// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
-func WithFolderAPIVersion(version string) GrafanaOption {
+func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningFolderAPIVersion = version
+		opts.ProvisioningPublicRootURL = url
 	}
 }
 
@@ -1349,6 +1454,73 @@ func WithProvisioningMaxIncrementalChanges(n int) GrafanaOption {
 func WithProvisioningMaxFileSize(n int64) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningMaxFileSize = &n
+	}
+}
+
+// WithNATS enables the embedded Core NATS bus and the SQL KV storage backend so
+// the provisioning controllers reconcile off NATS-delivered resource-change
+// notifications instead of the apiserver watch. The KV backend is what publishes
+// those notifications, so both must be on together. Two free TCP ports are
+// allocated for the embedded server's client and cluster listeners so parallel
+// test binaries don't collide on the conventional 4222/6222.
+func WithNATS() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.EnableSQLKVBackend = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+		// Push the informer re-list and the job driver's fallback poll far out so
+		// any reconcile/job pickup observed within a test's wait budget can only
+		// have come from a live NATS notification, not the periodic LIST/poll.
+		// Tests that specifically exercise the re-list path (e.g. historic-job
+		// cleanup) override the relevant interval.
+		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
+		opts.ProvisioningJobPollInterval = 10 * time.Minute
+	}
+}
+
+// WithNATSReListOnly enables the embedded NATS bus but deliberately leaves the
+// SQL KV backend off, so no component ever publishes a watch notification. The
+// provisioning informers still run on the NATS path (they subscribe and
+// re-list) but receive no live events, so reconciliation is driven purely by
+// the periodic re-list, whose interval is set to resync. This isolates the
+// re-list fallback that guarantees eventual reconciliation when live
+// notifications are missed (round-robined to another replica, a startup or
+// reconnect gap). Keep resync short so the re-list fires within a test budget.
+func WithNATSReListOnly(resync time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.NATSEnabled = true
+		opts.NATSListenAddress = "127.0.0.1"
+		opts.NATSClientPort = freePort()
+		opts.NATSClusterPort = freePort()
+		// EnableSQLKVBackend stays false: only the KV backend publishes watch
+		// notifications, so leaving it off means the informers never receive a
+		// live event and the re-list is the sole reconcile driver.
+		opts.ProvisioningControllerResyncInterval = resync
+	}
+}
+
+// freePort asks the kernel for an available TCP port on the loopback interface
+// and returns it after closing the listener. There is an inherent (small) race
+// between closing and the embedded NATS server binding, but it is the same
+// approach used by the unified-storage NATS round-trip test and is adequate for
+// test isolation.
+func freePort() int {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(fmt.Sprintf("failed to allocate a free port for NATS: %v", err))
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
+// which is both the HistoricJob retention and the historic-job informer's
+// resync. A short value lets tests exercise the re-list-driven cleanup quickly.
+func WithProvisioningHistoryExpiration(d time.Duration) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningHistoryExpiration = d
 	}
 }
 
@@ -2858,11 +3030,26 @@ type GitTestHelper struct {
 	*ProvisioningTestHelper
 	gitServer       *gittest.Server
 	exportRepoInfos map[string]*exportRepoInfo
+	githubUserOnce  sync.Once
+	githubUser      *gittest.User
+	githubUserErr   error
 }
 
 // GitServer returns the underlying gittest.Server.
 func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
+}
+
+func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+	t.Helper()
+
+	h.githubUserOnce.Do(func() {
+		h.githubUser, h.githubUserErr = h.gitServer.CreateUser(context.Background(), gittest.WithUsername("git"))
+	})
+	require.NoError(t, h.githubUserErr, "failed to create github transport user")
+	require.NotNil(t, h.githubUser, "github transport user should be created")
+
+	return h.githubUser
 }
 
 // SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
@@ -3031,9 +3218,6 @@ func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, 
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.
-// The repo will NOT become healthy (git auth uses default "git" user which doesn't
-// exist on gittest), but webhooks are created before the health check runs, so
-// Status.Webhook will be populated if the GitHub API mock is configured.
 // workflows is optional; defaults to ["write"].
 // webhookBaseURL is optional; pass it to enable webhook creation on the repo.
 func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
@@ -3042,10 +3226,23 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		extraValues["WebhookBaseURL"] = webhookBaseURL
 	}
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
-		waitForReady:      false,
+		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
 		workflows:         workflows,
+	})
+}
+
+func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"WebhookDisabled": true,
+		},
+		user:      h.githubTransportUser(t),
+		workflows: workflows,
 	})
 }
 
@@ -3064,6 +3261,7 @@ type createRepoOpts struct {
 	exportRepo        bool
 	initialFiles      map[string][]byte
 	templateVariables map[string]any
+	user              *gittest.User
 	workflows         []string
 }
 
@@ -3078,8 +3276,12 @@ func (h *GitTestHelper) createRepo(
 
 	ctx := context.Background()
 
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create user")
+	user := opts.user
+	if user == nil {
+		var err error
+		user, err = h.gitServer.CreateUser(ctx)
+		require.NoError(t, err, "failed to create user")
+	}
 
 	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
 	require.NoError(t, err, "failed to create remote repository")
@@ -3504,6 +3706,15 @@ func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) str
 	_, err := local.Git("fetch", "origin", ref)
 	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
 	out, err := local.Git("log", "-1", "--format=%s", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
+}
+
+func LatestCommitAuthor(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%an <%ae>", fmt.Sprintf("origin/%s", ref))
 	require.NoError(t, err, "git log should succeed")
 	return strings.TrimSpace(out)
 }

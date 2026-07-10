@@ -9,15 +9,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
+
+// jobClaimExpiry is how long a job claim is considered valid before the cleanup
+// controller treats it as abandoned. The lease renewal interval must stay well
+// below this so a worker renews several times before its claim goes stale;
+// otherwise a single delayed renewal can let a running job be reaped and
+// re-run by another worker.
+const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -40,19 +46,19 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications
-	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		provisioningClient,
-		controllerCfg.ResyncInterval(),
-	)
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
-	jobController, err := controller.NewJobController(jobInformer)
+	// Jobs informer and controller for insert notifications. Under the NATS watch
+	// the source is a NATS-backed informer; otherwise an apiserver-backed one. Both
+	// satisfy DeltaSource, so the rest of the wiring is identical.
+	jobController := controller.NewJobController()
+
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
 	if err != nil {
-		return fmt.Errorf("failed to create job controller: %w", err)
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -68,7 +74,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			folderAPIVersion:     controllerCfg.folderAPIVersion,
 		},
 		jobStore,
 		jobHistoryWriter,
@@ -90,10 +95,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		logger.Info("job driver stopped")
 	}()
 
-	// Start informers
-	go jobInformerFactory.Start(ctx.Done())
+	// Start the informer and wait for its cache to sync.
+	go jobInformer.Run(ctx.Done())
 
-	if !cache.WaitForCacheSync(ctx.Done(), jobInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		return fmt.Errorf("failed to sync job informer cache")
 	}
 
@@ -128,7 +133,6 @@ type jobQueueControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
-	folderAPIVersion     string
 }
 
 func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
@@ -138,7 +142,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
 
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
@@ -146,7 +149,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
-		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
-		folderAPIVersion:     folderAPIVersion,
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }

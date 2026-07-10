@@ -710,11 +710,12 @@ func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
 
 // swagger:model
 type PostableUserConfig struct {
-	TemplateFiles          map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig     PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs           []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
-	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
+	TemplateFiles          map[string]string                         `yaml:"template_files,omitempty" json:"template_files,omitempty"`
+	ManagedTemplates       map[string]definition.PostableApiTemplate `yaml:"managed_templates,omitempty" json:"managed_templates,omitempty"`
+	AlertmanagerConfig     PostableApiAlertingConfig                 `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs           []ExtraConfiguration                      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes          ManagedRoutes                             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
+	ManagedInhibitionRules ManagedInhibitionRules                    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {

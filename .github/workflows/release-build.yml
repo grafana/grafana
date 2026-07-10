@@ -143,6 +143,10 @@ jobs:
             // pro/nightly build from main where the stamped commit is already the HEAD.
             if (workflow === 'release-build-enterprise.yml') {
               inputs["grafana-public-commit"] = PUBLIC_COMMIT;
+              // Supply run ID separately in case we ever change what BUILD_ID is.
+              // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
+              // fail together.
+              inputs["upstream-run-id"] = String(BUILD_ID);
             }
 
             await github.rest.actions.createWorkflowDispatch({
@@ -958,24 +962,21 @@ jobs:
             --field version_type="canary"
 
   notify-pr:
+    # Only run in grafana/grafana itself. In the security mirror (a private repo) this job would
+    # both leak that a build is happening and fail (nothing depends on it, but it fails the run).
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
-      id-token: write
+      pull-requests: write
     needs:
       - setup
     steps:
-      - name: Get GitHub App token
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-releases-oss
-          permission_set: notify-pr
       - name: Find PR
         continue-on-error: true
         id: find-pr
         env:
-          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
         run: |
@@ -989,14 +990,14 @@ jobs:
         continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-author: 'grafana-releases-oss[bot]'
+          comment-author: 'github-actions[bot]'
           body-includes: GitHub Actions Build
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         if: ${{ steps.find-pr.outcome == 'success' }}
         with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ env.ISSUE_NUMBER }}
           body: |

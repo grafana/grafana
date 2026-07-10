@@ -13,7 +13,17 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
+
+// AnnoAuthor, AnnoAuthorEmail and AnnoAuthorID carry the display name, email
+// and stable identity of the user that triggered the job. They are set by the
+// server at creation time and are immutable.
+const (
+	AnnoAuthor      = "provisioning.grafana.app/author"
+	AnnoAuthorEmail = "provisioning.grafana.app/authorEmail"
+	AnnoAuthorID    = "provisioning.grafana.app/authorID"
 )
 
 // ValidateJob performs validation on the Job specification and returns an error if validation fails.
@@ -136,11 +146,23 @@ func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedRe
 	return list
 }
 
+// MaxSelectiveExportResources caps how many resources a single export-style job
+// (push or migrate) may explicitly request. Selective export fetches each resource
+// individually, so an unbounded list would translate into an unbounded number of
+// per-resource lookups; this bound keeps a single job's work predictable.
+const MaxSelectiveExportResources = 100
+
 // validateExportResourceRefs enforces the rules shared by export-style resource
 // lists (push and migrate): name + kind are required, and each kind/group must
 // match an active entry in the configured supported-resource set.
 func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
+
+	if len(refs) > MaxSelectiveExportResources {
+		list = append(list, field.TooMany(base, len(refs), MaxSelectiveExportResources))
+		return list
+	}
+
 	supported := activeExportResources(supportedResources)
 	for i, r := range refs {
 		path := base.Index(i)
@@ -304,7 +326,54 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return fmt.Errorf("expected job, got %T", obj)
 	}
 
+	if err := validateAuthor(ctx, a, job); err != nil {
+		return err
+	}
+
 	return ValidateJob(job, v.supportedResources)
+}
+
+func validateAuthor(ctx context.Context, a admission.Attributes, job *provisioning.Job) error {
+	name := job.Annotations[AnnoAuthor]
+	email := job.Annotations[AnnoAuthorEmail]
+	authorID := job.Annotations[AnnoAuthorID]
+
+	switch a.GetOperation() {
+	case admission.Create:
+		if (name == "" && email == "" && authorID == "") || identity.IsServiceIdentity(ctx) {
+			return nil
+		}
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return apierrors.NewBadRequest("job author annotations must match the requesting user")
+		}
+		if name != "" && name != id.GetName() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthor))
+		}
+		if email != "" && email != id.GetEmail() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorEmail))
+		}
+		if authorID != "" && authorID != id.GetUID() {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s must match the requesting user", AnnoAuthorID))
+		}
+	case admission.Update:
+		old, ok := a.GetOldObject().(*provisioning.Job)
+		if !ok {
+			return nil
+		}
+		if old.Annotations[AnnoAuthor] != name {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthor))
+		}
+		if old.Annotations[AnnoAuthorEmail] != email {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorEmail))
+		}
+		if old.Annotations[AnnoAuthorID] != authorID {
+			return apierrors.NewBadRequest(fmt.Sprintf("annotation %s is immutable", AnnoAuthorID))
+		}
+	case admission.Delete, admission.Connect:
+	}
+
+	return nil
 }
 
 // HistoricJobAdmissionValidator handles validation for HistoricJob resources during admission.

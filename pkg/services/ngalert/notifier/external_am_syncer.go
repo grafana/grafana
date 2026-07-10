@@ -56,13 +56,13 @@ type mimirConfigResponse struct {
 // status.conditions[] without collision.
 const conditionTypeExternalAlertmanagerSynced = "ExternalAlertmanagerSynced"
 
-// conditionReasonSyncSucceeded is the success-branch reason. Failure
-// reasons come from SyncReason.ConditionReason().
-const conditionReasonSyncSucceeded = "SyncSucceeded"
-
-// conditionReasonMergeCommitted is the terminal reason once the config was
-// imported as a managed route: sync stops and the admin owns it from here.
-const conditionReasonMergeCommitted = "MergeCommitted"
+// ExternalAlertmanagerSynced condition reasons (failure reasons come from
+// SyncReason.ConditionReason()).
+const (
+	conditionReasonSyncSucceeded  = "SyncSucceeded"  // a sync attempt succeeded
+	conditionReasonMergeCommitted = "MergeCommitted" // imported as a managed route; sync stops
+	conditionReasonNotConfigured  = "NotConfigured"  // flag on, but no UID configured → Synced=Unknown
+)
 
 const mergeCommittedMessage = "The external Alertmanager configuration has already been merged into Grafana; automatic sync from the datasource has stopped."
 
@@ -296,6 +296,10 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		return nil, 0
 	}
 	if uid == "" {
+		// Flag on but sync isn't configured here (no ini override, no spec UID):
+		// record Unknown/NotConfigured, which also seeds the singleton (writeStatus
+		// creates on missing) so it reliably exists without a manual create.
+		s.recordNotConfigured(ctx, orgID)
 		return nil, 0
 	}
 
@@ -412,6 +416,15 @@ func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64
 	})
 }
 
+// recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
+// the singleton if absent (writeStatus creates on missing). Best-effort.
+func (s *ExternalAMSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+		return computeNotConfiguredStatus(prev, now)
+	})
+}
+
 // writeStatus upserts the org's Config.status using compute(prev), creating the
 // resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
 // logged). Unchanged status produces no physical write (unified storage dedup).
@@ -471,6 +484,40 @@ func computeSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, ori
 // stays True (so the synced-at timestamp is kept), reason flips to MergeCommitted.
 func computeCommittedStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingnotifv0alpha1.ConfigStatus {
 	return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusTrue, conditionReasonMergeCommitted, mergeCommittedMessage, now)
+}
+
+// computeNotConfiguredStatus returns prev with only the ExternalAlertmanagerSynced
+// condition updated to Unknown/NotConfigured (used when the flag is on but no UID
+// is configured). Everything else rides through unchanged: observedGeneration,
+// externalAlertmanagerSync (kept as the last-attempt context, its documented
+// meaning) and any sibling conditions. The Synced condition is a current-state
+// snapshot — no preserved MergeCommitted/SyncSucceeded — and its lastTransitionTime
+// advances only on a flip to Unknown, so consecutive not-configured ticks produce
+// an identical status that dedups to no write.
+func computeNotConfiguredStatus(prev *alertingnotifv0alpha1.ConfigStatus, now time.Time) alertingnotifv0alpha1.ConfigStatus {
+	st := alertingnotifv0alpha1.ConfigStatus{}
+	if prev != nil {
+		st = *prev
+		st.Conditions = append([]alertingnotifv0alpha1.ConfigCondition(nil), prev.Conditions...)
+	}
+
+	synced := alertingnotifv0alpha1.ConfigCondition{
+		Type:               conditionTypeExternalAlertmanagerSynced,
+		Status:             alertingnotifv0alpha1.ConfigConditionStatusUnknown,
+		LastTransitionTime: now.UTC().Format(time.RFC3339),
+		Reason:             conditionReasonNotConfigured,
+	}
+	for i, c := range st.Conditions {
+		if c.Type == conditionTypeExternalAlertmanagerSynced {
+			if c.Status == alertingnotifv0alpha1.ConfigConditionStatusUnknown {
+				synced.LastTransitionTime = c.LastTransitionTime // no flip → keep the timestamp
+			}
+			st.Conditions[i] = synced
+			return st
+		}
+	}
+	st.Conditions = append(st.Conditions, synced)
+	return st
 }
 
 // buildSyncStatus folds an ExternalAlertmanagerSynced condition into prev. k8s

@@ -110,14 +110,11 @@ datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
-datasource/OpenTSDB
-datasource/Parca
 datasource/Phlare
 datasource/Postgres
 datasource/Prometheus
 datasource/SiteWIse
 datasource/Splunk
-datasource/Tempo
 datasource/TestDataDB
 datasource/Timestream
 datasource/X-Ray

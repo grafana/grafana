@@ -224,17 +224,19 @@ func exportItem(ctx context.Context,
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
-		resultBuilder.WithAction(repository.FileActionIgnored).WithError(metaError)
+		// Keep the default (created) action so the failure is counted rather
+		// than silently discarded as an ignored result.
+		resultBuilder.WithError(metaError)
 		progress.Record(ctx, resultBuilder.Build())
-		return nil
+		return progress.TooManyErrors()
 	}
 
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity != "" {
+	manager, managed := meta.GetManagerProperties()
+	if managed {
 		if explicitlyRequested {
 			// Leave the default action in place: the recorder discards errors
 			// on FileActionIgnored results, and we want this failure to count.
-			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Kind))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}
@@ -264,8 +266,10 @@ func exportItem(ctx context.Context,
 	if errors.Is(err, resources.ErrAlreadyInRepository) {
 		resultBuilder.WithAction(repository.FileActionIgnored)
 	} else if err != nil {
-		resultBuilder.WithAction(repository.FileActionIgnored).
-			WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
+		// Keep the default (created) action so the error is counted: recording a
+		// genuine write failure as FileActionIgnored would let the recorder
+		// discard the error and pass the export off as successful.
+		resultBuilder.WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
 	}
 
 	progress.Record(ctx, resultBuilder.Build())

@@ -4,7 +4,7 @@ import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type StepStatusInfo } from '../types';
 
-import { useCreateSyncJob } from './useCreateSyncJob';
+import { useCreateSyncJob, type SyncJobOptions } from './useCreateSyncJob';
 
 export interface UseSyncJobParams {
   repoName: string;
@@ -22,8 +22,8 @@ export function useSyncJob({ repoName, setStepStatusInfo }: UseSyncJobParams) {
   const [job, setJob] = useState<Job>();
 
   const startJob = useCallback(
-    async (requiresMigration: boolean) => {
-      const response = await createSyncJob(requiresMigration);
+    async (requiresMigration: boolean, options?: SyncJobOptions) => {
+      const response = await createSyncJob(requiresMigration, options);
       if (response) {
         setJob(response);
       }

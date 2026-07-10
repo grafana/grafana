@@ -3,7 +3,10 @@ package acimpl
 import (
 	"context"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,6 +59,64 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	}
 
 	return ac
+}
+
+func TestService_getCachedPermissions_CoalescesConcurrentMisses(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		// Hold the computation long enough for the other workers to block on the lock.
+		time.Sleep(20 * time.Millisecond)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	const numWorkers = 20
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	results := make([][]accesscontrol.Permission, numWorkers)
+	errs := make([]error, numWorkers)
+	for i := range numWorkers {
+		wg.Go(func() {
+			<-start
+			results[i], errs[i] = s.getCachedPermissions(context.Background(), "test-key", fn, accesscontrol.Options{})
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	require.Equal(t, int64(1), calls.Load(), "getPermissionsFn should run once for concurrent cache misses")
+	for i := range numWorkers {
+		require.NoError(t, errs[i])
+		require.Len(t, results[i], 1)
+		require.Equal(t, "test:action", results[i][0].Action)
+	}
+}
+
+func TestService_getCachedPermissions_ReloadCacheRecomputes(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+	ctx := context.Background()
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	_, err := s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// A subsequent read is served from cache without recomputing.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// ReloadCache forces a fresh computation.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{ReloadCache: true})
+	require.NoError(t, err)
+	require.Equal(t, int64(2), calls.Load())
 }
 
 func TestIntegrationUsageMetrics(t *testing.T) {

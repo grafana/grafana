@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -172,15 +171,15 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
-// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// getFolderFullpaths fetches fullpaths for multiple folders using the Grafana service identity.
 // Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
 func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
 	if st.FolderService == nil {
 		return nil, fmt.Errorf("folder service is not configured")
 	}
-	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
-	})
+	// Use the Grafana service identity so the call is authenticated as the system when the
+	// folder service is a (multi-tenant) app server reached through the aggregation layer.
+	ctx, bgUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("ngalert"))
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
 		UIDs:         folderUIDs,
@@ -1611,14 +1610,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				om[r.NamespaceUID] = struct{}{}
 			}
 			for orgID, uids := range uids {
-				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
-					[]accesscontrol.Permission{
-						{
-							Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll,
-						},
-					})
+				// Use the Grafana service identity so the call is authenticated as the system when the
+				// folder service is a (multi-tenant) app server reached through the aggregation layer.
+				svcCtx, schedulerUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("grafana_scheduler"))
 
-				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+				folders, err := st.FolderService.GetFolders(svcCtx, folder.GetFoldersQuery{
 					OrgID:        orgID,
 					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,

@@ -85,6 +85,7 @@ const autocompleteSpaceKeymap = Prec.highest(
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
+  sqlDialect,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
@@ -92,9 +93,12 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
+  theme: themeOverride,
+  basicSetup,
+  indentWithTab = true,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
 
   const extensions = useMemo(
     () => [
@@ -117,11 +121,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? (theme.isDark ? vscodeDark : vscodeLight)}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
+        basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
       />
     </>
   );

@@ -30,6 +30,11 @@ const (
 	parentIDLabel             = "plugins.grafana.app/parent-id"
 	appliedChildrenAnnotation = "plugins.grafana.app/applied-children"
 	pluginStorageHookTimeout  = 30 * time.Second
+
+	// appPluginIDSuffix is the suffix used by app plugins. Only app
+	// plugins can own child plugins, so the storage hooks treat the suffix as a
+	// fast path.
+	appPluginIDSuffix = "-app"
 )
 
 var pluginStorageTracer = otel.Tracer("github.com/grafana/grafana/apps/plugins/pkg/app/plugin-storage")
@@ -208,7 +213,9 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 func (h *pluginStorageHookProvider) BeginCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, _ *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
 	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
-		h.stampDesiredChildren(ctx, plugin, nil)
+		if isAppPlugin(plugin) {
+			h.stampDesiredChildren(ctx, plugin, nil)
+		}
 	}
 
 	return finishNoOp, nil
@@ -222,13 +229,18 @@ func (h *pluginStorageHookProvider) AfterCreate(ctx context.Context, plugin *plu
 		return nil
 	}
 	normalizePluginID(plugin)
+	if !isAppPlugin(plugin) {
+		return nil
+	}
 	return h.applyChildren(ctx, plugin)
 }
 
 func (h *pluginStorageHookProvider) BeginUpdate(ctx context.Context, plugin, oldPlugin *pluginsv0alpha1.Plugin, _ *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
 	if !IsChildPlugin(plugin) {
 		normalizePluginID(plugin)
-		h.stampDesiredChildren(ctx, plugin, oldPlugin)
+		if isAppPlugin(plugin) {
+			h.stampDesiredChildren(ctx, plugin, oldPlugin)
+		}
 	}
 
 	return finishNoOp, nil
@@ -242,6 +254,9 @@ func (h *pluginStorageHookProvider) AfterUpdate(ctx context.Context, plugin *plu
 		return nil
 	}
 	normalizePluginID(plugin)
+	if !isAppPlugin(plugin) {
+		return nil
+	}
 	return h.applyChildren(ctx, plugin)
 }
 
@@ -250,6 +265,9 @@ func (h *pluginStorageHookProvider) AfterDelete(ctx context.Context, plugin *plu
 		return nil
 	}
 	if IsChildPlugin(plugin) {
+		return nil
+	}
+	if !isAppPlugin(plugin) {
 		return nil
 	}
 	return h.deleteChildren(ctx, plugin.Annotations)
@@ -480,6 +498,14 @@ func parseAppliedChildren(annotations map[string]string) []string {
 // definition of "child".
 func IsChildPlugin(plugin *pluginsv0alpha1.Plugin) bool {
 	return plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != ""
+}
+
+func isAppPlugin(plugin *pluginsv0alpha1.Plugin) bool {
+	id := plugin.Spec.Id
+	if id == "" {
+		id = plugin.Name
+	}
+	return strings.HasSuffix(id, appPluginIDSuffix)
 }
 
 func normalizePluginID(plugin *pluginsv0alpha1.Plugin) {

@@ -13,7 +13,29 @@ import { useSyncJob } from './useSyncJob';
 setupProvisioningMswServer();
 
 describe('useSyncJob', () => {
-  it('starts a migrate job and exposes the created job', async () => {
+  it.each(['folder', 'folderless'] as const)(
+    'sets generateNewFolderIDs on a %s-target migrate job so folders are recreated',
+    async (syncTarget) => {
+      let body: unknown;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json(createJob());
+        })
+      );
+
+      const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
+
+      await act(() => result.current.startJob(true, { syncTarget }));
+
+      await waitFor(() => {
+        expect(result.current.job).toBeDefined();
+        expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: true } }));
+      });
+    }
+  );
+
+  it('does not set generateNewFolderIDs for instance sync so the originals are taken over', async () => {
     let body: unknown;
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
@@ -24,11 +46,11 @@ describe('useSyncJob', () => {
 
     const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
 
-    await act(() => result.current.startJob(true));
+    await act(() => result.current.startJob(true, { syncTarget: 'instance' }));
 
     await waitFor(() => {
       expect(result.current.job).toBeDefined();
-      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: {} }));
+      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: false } }));
     });
   });
 
@@ -55,6 +77,29 @@ describe('useSyncJob', () => {
 
   it('does not set a job when no repository is selected', async () => {
     const { result } = renderHook(() => useSyncJob({ repoName: '' }), { wrapper: getWrapper({}) });
+
+    await act(() => result.current.startJob(true));
+
+    expect(result.current.job).toBeUndefined();
+  });
+
+  it('does not set a job when the response has no job name', async () => {
+    // A 2xx response without metadata.name is treated as a failure to start.
+    server.use(http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json({})));
+
+    const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
+
+    await act(() => result.current.startJob(true));
+
+    expect(result.current.job).toBeUndefined();
+  });
+
+  it('does not set a job when job creation errors', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
+    );
+
+    const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
 
     await act(() => result.current.startJob(true));
 

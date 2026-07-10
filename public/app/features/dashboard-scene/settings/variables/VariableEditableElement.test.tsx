@@ -19,6 +19,7 @@ import { VariableTypeChangePane } from './VariableTypeSelectionPane';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },
 }));
@@ -163,11 +164,9 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
-  const editPane = dashboard.state.editPane;
-
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+      <DashboardEditPaneRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
