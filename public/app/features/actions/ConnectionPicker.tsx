@@ -71,12 +71,7 @@ export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: Co
     if (selectedValue === DIRECT_OPTION_VALUE) {
       onChange(DIRECT_OPTION_VALUE);
     } else {
-      const selectedDatasource = supportedDataSources.find((ds) => ds.uid === selectedValue);
-      if (selectedDatasource) {
-        onChange(selectedDatasource);
-      } else {
-        console.error('ConnectionPicker: Could not find datasource with UID:', selectedValue);
-      }
+      onChange(supportedDataSources.find((ds) => ds.uid === selectedValue)!);
     }
   };
 
