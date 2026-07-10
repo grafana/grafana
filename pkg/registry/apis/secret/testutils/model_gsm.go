@@ -82,7 +82,7 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 
 func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	if len(sv.OwnerReferences) > 1 {
-		return nil, fmt.Errorf("only one owner reference is supported, found %d: %w", len(sv.OwnerReferences), contracts.ErrTooManyOwnerReferences)
+		return nil, contracts.ErrTooManyOwnerReferences
 	}
 
 	keeper := m.getActiveKeeper(sv.Namespace)

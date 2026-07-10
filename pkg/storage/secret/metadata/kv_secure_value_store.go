@@ -540,7 +540,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 
 	if len(toUpdate) > 0 {
 		ops := make([]kv.BatchOp, 0, len(toUpdate))
-		for _, entry := range eligible {
+		for _, entry := range toUpdate {
 			buffer, err := json.Marshal(entry.value)
 			if err != nil {
 				return nil, fmt.Errorf("json marshaling secure value")

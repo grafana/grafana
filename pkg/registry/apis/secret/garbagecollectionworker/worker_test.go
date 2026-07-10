@@ -246,10 +246,10 @@ func TestProperty(t *testing.T) {
 		runPropertyTests(t)
 	})
 
-	// t.Run("KV backend", func(t *testing.T) {
-	// 	t.Parallel()
-	// 	runPropertyTests(t, testutils.WithKVStorage())
-	// })
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+		runPropertyTests(t, testutils.WithKVStorage())
+	})
 }
 
 func runPropertyTests(t *testing.T, opts ...func(*testutils.SetupConfig)) {
