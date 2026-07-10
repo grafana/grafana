@@ -25,7 +25,7 @@ import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor } from '../.
 import { DashboardAnnotationsDataLayer } from '../DashboardAnnotationsDataLayer';
 
 import { TimeBar } from './TimeBar';
-import { CONTEXT_ZOOM_FACTOR, type TimeRangeMs } from './timeModel';
+import { approxEqual, computeContextWindow, CONTEXT_ZOOM_FACTOR, type TimeRangeMs } from './timeModel';
 
 const EMPTY_TIME: number[] = [];
 const EMPTY_SERIES: number[][] = [];
@@ -99,6 +99,17 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
         this.setState({ annotationNames: saved });
       }
     }
+    // Seed the context window from the dashboard's current range before the first sparkline/annotation
+    // query runs. Otherwise they query the placeholder now-6h/now window set in the constructor (the
+    // dashboard range isn't known there), then re-query the real ~factor×-wider window once TimeBar's
+    // debounced context update lands ~350ms later — a wrong first query plus a wasted second one. Because
+    // $data/_contextRange aren't subscribed until after this handler returns, seeding here doesn't itself
+    // schedule an extra query.
+    const dashRange = sceneGraph.getTimeRange(this).state.value;
+    const factor = this.state.contextZoomFactor ?? CONTEXT_ZOOM_FACTOR;
+    this.setContextRange(
+      computeContextWindow({ from: dashRange.from.valueOf(), to: dashRange.to.valueOf() }, Date.now(), factor)
+    );
     this._applySources();
     this._applyAnnotations();
     return () => {
@@ -209,6 +220,13 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
 
   /** Update the range the sparklines and annotations are queried over (the context window). Caller debounces. */
   public setContextRange({ from, to }: TimeRangeMs) {
+    // Ignore no-op updates so the debounced first emit that just echoes the activation seed (and
+    // autorefresh echoes) doesn't trigger a redundant re-query. approxEqual's 1s tolerance is far below
+    // the hour-scale context window, so it never swallows a real pan/zoom.
+    const cur = this._contextRange.state.value;
+    if (approxEqual({ from, to }, { from: cur.from.valueOf(), to: cur.to.valueOf() })) {
+      return;
+    }
     const f = dateTime(from);
     const to2 = dateTime(to);
     const range = { from: f, to: to2, raw: { from: f, to: to2 } };
