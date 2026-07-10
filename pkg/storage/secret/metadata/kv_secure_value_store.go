@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,9 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -36,14 +39,16 @@ type kvSecureValueMetadataStorage struct {
 	clock        contracts.Clock
 	tracer       trace.Tracer
 	leaseManager *lease.Manager
+	metrics      *metrics.StorageMetrics
 }
 
-func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer) contracts.SecureValueMetadataStorage {
+func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer, reg prometheus.Registerer) contracts.SecureValueMetadataStorage {
 	return &kvSecureValueMetadataStorage{
 		kv:           kv,
 		clock:        clock,
 		tracer:       tracer,
 		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_metadata_storage", nil),
+		metrics:      metrics.NewStorageMetrics(reg),
 	}
 }
 
@@ -232,6 +237,10 @@ func fromKubernetes(createdAt, updatedAt int64, keeper string, sv *v1beta1.Secur
 
 // readValue reads and unmarshals a secure value from KV store
 func (s *kvSecureValueMetadataStorage) readValue(ctx context.Context, key string) (*secureValueKV, error) {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.readValue", trace.WithAttributes(
+		attribute.String("key", key),
+	))
+	defer span.End()
 	reader, err := s.kv.Get(ctx, kvSection, key)
 	if err != nil {
 		if errors.Is(err, resource.ErrNotFound) {
@@ -250,6 +259,9 @@ func (s *kvSecureValueMetadataStorage) readValue(ctx context.Context, key string
 
 // writeValue marshals and writes a secure value to KV store
 func (s *kvSecureValueMetadataStorage) writeValue(ctx context.Context, key string, value *secureValueKV) error {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.writeValue", trace.WithAttributes(attribute.String("key", key)))
+	defer span.End()
+
 	data, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("failed to marshal value: %w", err)
@@ -273,6 +285,11 @@ func (s *kvSecureValueMetadataStorage) writeValue(ctx context.Context, key strin
 }
 
 func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, namespace, name string) (latestVersion int64, createdAt int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.getLatestVersion", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", namespace)))
+	defer span.End()
+
 	prefix := makePrefix(namespace, name)
 
 	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
@@ -303,11 +320,11 @@ func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, nam
 }
 
 func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *v1beta1.SecureValue, actorUID string) (_ *v1beta1.SecureValue, svmCreateErr error) {
-	// start := s.clock.Now()
+	start := s.clock.Now()
 	name := sv.GetName()
 	namespace := sv.GetNamespace()
 
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.Create", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace),
 		attribute.String("keeper", keeper),
@@ -327,14 +344,14 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 
 		args = append(args, "success", success)
 		if !success {
-			span.SetStatus(codes.Error, "SecureValueMetadataStorage.Create failed")
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.Create failed")
 			span.RecordError(svmCreateErr)
 			args = append(args, "error", svmCreateErr)
 		}
 
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.Create", args...)
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.Create", args...)
 
-		// s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.KVSecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	latestVersion, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
@@ -372,7 +389,31 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	return value.toKubernetes()
 }
 
-func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contracts.SecureValueIdentifier) error {
+func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contracts.SecureValueIdentifier) (err error) {
+	start := s.clock.Now()
+	inputStr := fmt.Sprintf("%+v", in)
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.Delete", trace.WithAttributes(
+		attribute.String("input", inputStr),
+	))
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+		args := []any{
+			"input", inputStr,
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.Delete failed")
+			span.RecordError(err)
+			args = append(args, "error", err)
+		}
+
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.Delete", args...)
+		s.metrics.KVSecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	if len(in) == 0 {
 		return nil
 	}
@@ -389,7 +430,25 @@ func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contract
 	return nil
 }
 
-func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]v1beta1.SecureValue, error) {
+func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) (_ []v1beta1.SecureValue, err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.LeaseInactiveSecureValues", trace.WithAttributes(
+		attribute.Int("maxBatchSize", int(maxBatchSize)),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.LeaseInactiveSecureValues failed")
+			span.RecordError(err)
+		}
+
+		s.metrics.KVSecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	// TODO: make it configurable
 	const (
 		minAge   = 10 * time.Minute
@@ -502,7 +561,33 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	return result, nil
 }
 
-func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]v1beta1.SecureValue, error) {
+func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []v1beta1.SecureValue, listErr error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.List", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	defer func() {
+		success := listErr == nil
+		span.SetAttributes(attribute.Int("returnedList.count", len(svList)))
+
+		args := []any{
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.List failed")
+			span.RecordError(listErr)
+			args = append(args, "error", listErr)
+		}
+
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.List", args...)
+
+		s.metrics.KVSecureValueMetadataListDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	prefix := makeNamespacePrefix(namespace.String())
 	result := make([]v1beta1.SecureValue, 0)
 
@@ -543,7 +628,34 @@ func (s *kvSecureValueMetadataStorage) List(ctx context.Context, namespace xkube
 	return result, nil
 }
 
-func (s *kvSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*v1beta1.SecureValue, error) {
+func (s *kvSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *v1beta1.SecureValue, readErr error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.Read", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.Bool("isForUpdate", opts.ForUpdate),
+	))
+	defer span.End()
+
+	defer func() {
+		success := readErr == nil
+
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.Read failed")
+			span.RecordError(readErr)
+			args = append(args, "error", readErr)
+		}
+
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.Read", args...)
+		s.metrics.KVSecureValueMetadataGetDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	prefix := makePrefix(namespace.String(), name)
 
 	// List all versions in descending order to find the active one, which might not be the latest inserted
@@ -569,7 +681,37 @@ func (s *kvSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube
 	return nil, contracts.ErrSecureValueNotFound
 }
 
-func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) error {
+func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) (setExtIDErr error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.SetExternalID", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.String("externalID", externalID.String()),
+		attribute.Int64("version", version),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := setExtIDErr == nil
+		args := []any{
+			"name", name,
+			"namespace", namespace.String(),
+			"success", success,
+			"version", strconv.FormatInt(version, 10),
+			"externalID", externalID.String(),
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.SetExternalID failed")
+			span.RecordError(setExtIDErr)
+			args = append(args, "error", setExtIDErr)
+		}
+
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.SetExternalID", args...)
+		s.metrics.KVSecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	key := makeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
@@ -583,6 +725,13 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 }
 
 func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.SetVersionToActive", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.Int64("version", version),
+	))
+	defer span.End()
+
 	prefix := makePrefix(namespace.String(), name)
 	targetKey := makeKey(namespace.String(), name, version)
 
@@ -615,6 +764,13 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 }
 
 func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.SetVersionToInactive", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.Int64("version", version),
+	))
+	defer span.End()
+
 	key := makeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
@@ -627,7 +783,26 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	return s.writeValue(ctx, key, value)
 }
 
-func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in []contracts.SecureValueIdentifier) (map[string]int, error) {
+func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in []contracts.SecureValueIdentifier) (_ map[string]int, err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.IncGCAttemptCount", trace.WithAttributes(
+		attribute.String("input", fmt.Sprintf("%+v", in)),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.IncGCAttemptCount failed")
+			span.RecordError(err)
+		}
+
+		logging.FromContext(ctx).Info("KVSecureValueMetadataStorage.IncGCAttemptCount", "input", in, "err", err)
+		s.metrics.KVSecureValueIncGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
 		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
@@ -699,7 +874,33 @@ func parseSecureValue(reader io.ReadCloser) (secureValueKV, error) {
 	return value, nil
 }
 
-func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error {
+func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) (err error) {
+	start := s.clock.Now()
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.SetInactiveAllFromGroup", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.String("apiGroup", apiGroup),
+	))
+
+	defer span.End()
+
+	defer func() {
+		success := err == nil
+		args := []any{
+			"namespace", namespace.String(),
+			"apiGroup", apiGroup,
+			"success", success,
+		}
+
+		if !success {
+			span.SetStatus(codes.Error, "KVSecureValueMetadataStorage.SetInactiveAllFromGroup failed")
+			span.RecordError(err)
+			args = append(args, "error", err)
+		}
+
+		logging.FromContext(ctx).Debug("KVSecureValueMetadataStorage.SetInactiveAllFromGroup", args...)
+		s.metrics.KVSecureValueSetInactiveAllFromGroupDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+	}()
+
 	prefix := makeNamespacePrefix(namespace.String())
 
 	type entry struct {
