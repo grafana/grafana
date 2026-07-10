@@ -16,7 +16,7 @@ import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
-import { useScrollReflowLimit } from './useScrollReflowLimit';
+import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
 // v1 panel editor. PanelEditNext/PanelEditorRendererNext.tsx is the v2 version and renders the same
 // PanelEditor scene, so anything the user can see here (modals, panes, toolbar actions) needs to
@@ -139,6 +139,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 }
 
 function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
+  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
+
   return {
     pageContainer: css({
       display: 'flex',
@@ -161,6 +163,17 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
       flexGrow: 1,
       [theme.breakpoints.down('sm')]: {
         overflow: 'unset',
+      },
+      [scrollReflowMediaQuery]: {
+        // Short screens reflow into a scrolling grid (useScrollReflowLimit disables the splitters
+        // and sizes the viz/data panes to match), so the content must be allowed to grow and
+        // overflow instead of being clipped.
+        height: 'auto',
+        overflow: 'unset',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
+        gridTemplateRows: '1fr',
+        gap: theme.spacing(1),
       },
     }),
     body: css({
