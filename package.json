@@ -96,7 +96,7 @@
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/levitate": "0.17.2",
-    "@grafana/plugin-e2e": "3.7.2",
+    "@grafana/plugin-e2e": "https://pkg.pr.new/grafana/plugin-tools/@grafana/plugin-e2e@342e694",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
