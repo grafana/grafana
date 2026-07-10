@@ -24,7 +24,7 @@ func TestGetAuthorFromRequester(t *testing.T) {
 				Email:   "test@example.com",
 				UserUID: "abc123",
 			},
-			expected: &Author{Name: "Test User", Email: "test@example.com", ID: "user:abc123"},
+			expected: &Author{Name: "Test User", Email: "test@example.com"},
 		},
 		{
 			name: "service identity returns nothing",

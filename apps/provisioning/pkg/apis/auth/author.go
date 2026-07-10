@@ -12,7 +12,6 @@ import (
 type Author struct {
 	Name  string
 	Email string
-	ID    string
 }
 
 // GetAuthorFromRequester returns the Author for the user in ctx. It returns
@@ -24,5 +23,5 @@ func GetAuthorFromRequester(ctx context.Context) (Author, bool) {
 	if err != nil || !id.IsIdentityType(authlib.TypeUser) {
 		return Author{}, false
 	}
-	return Author{Name: id.GetName(), Email: id.GetEmail(), ID: id.GetUID()}, true
+	return Author{Name: id.GetName(), Email: id.GetEmail()}, true
 }
