@@ -137,7 +137,6 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     case 'githubEnterprise':
       spec.githubEnterprise = {
         ...baseConfig,
-        generateDashboardPreviews: data.generateDashboardPreviews,
       };
       break;
     case 'gitlab':
@@ -205,8 +204,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
-    generateDashboardPreviews:
-      spec.github?.generateDashboardPreviews || spec.githubEnterprise?.generateDashboardPreviews || false,
+    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
