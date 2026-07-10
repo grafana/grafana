@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaVariable = resource.NewSimpleSchema("dashboard.grafana.app", "v2beta1", NewVariable(), &VariableList{}, resource.WithKind("Variable"),
-		resource.WithPlural("variables"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+		resource.WithPlural("variables"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
 			FieldSelector: "spec.spec.name",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*Variable)

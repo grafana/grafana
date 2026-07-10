@@ -528,9 +528,11 @@ type DashboardFieldConfig struct {
 	// To display all decimals, set the unit to `String`.
 	Decimals *float64 `json:"decimals,omitempty"`
 	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Min *float64 `json:"min,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Min *DashboardFloat64OrString `json:"min,omitempty"`
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Max *float64 `json:"max,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Max *DashboardFloat64OrString `json:"max,omitempty"`
 	// Convert input values into a display string
 	Mappings []DashboardValueMapping `json:"mappings,omitempty"`
 	// Map numeric values to states
@@ -754,13 +756,16 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
 	// Value null means -Infinity
-	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Value *DashboardFloat64OrStringOrNull `json:"value"`
+	Color string                          `json:"color"`
 }
 
 // NewDashboardThreshold creates a new DashboardThreshold object.
 func NewDashboardThreshold() *DashboardThreshold {
-	return &DashboardThreshold{}
+	return &DashboardThreshold{
+		Value: NewDashboardFloat64OrStringOrNull(),
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardThreshold.
@@ -2913,6 +2918,66 @@ func (DashboardPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type DashboardFloat64OrString struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewDashboardFloat64OrString creates a new DashboardFloat64OrString object.
+func NewDashboardFloat64OrString() *DashboardFloat64OrString {
+	return &DashboardFloat64OrString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardFloat64OrString` as JSON.
+func (resource DashboardFloat64OrString) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardFloat64OrString` from JSON.
+func (resource *DashboardFloat64OrString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFloat64OrString.
+func (DashboardFloat64OrString) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardFloat64OrString"
+}
+
+// +k8s:openapi-gen=true
 type DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
 	ValueMap        *DashboardValueMap        `json:"ValueMap,omitempty"`
 	RangeMap        *DashboardRangeMap        `json:"RangeMap,omitempty"`
@@ -3001,6 +3066,66 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 // OpenAPIModelName returns the OpenAPI model name for DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap.
 func (DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
+}
+
+// +k8s:openapi-gen=true
+type DashboardFloat64OrStringOrNull struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewDashboardFloat64OrStringOrNull creates a new DashboardFloat64OrStringOrNull object.
+func NewDashboardFloat64OrStringOrNull() *DashboardFloat64OrStringOrNull {
+	return &DashboardFloat64OrStringOrNull{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardFloat64OrStringOrNull` as JSON.
+func (resource DashboardFloat64OrStringOrNull) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardFloat64OrStringOrNull` from JSON.
+func (resource *DashboardFloat64OrStringOrNull) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardFloat64OrStringOrNull.
+func (DashboardFloat64OrStringOrNull) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardFloat64OrStringOrNull"
 }
 
 // +k8s:openapi-gen=true

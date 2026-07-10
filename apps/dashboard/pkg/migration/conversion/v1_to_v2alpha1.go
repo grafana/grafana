@@ -2617,12 +2617,19 @@ func extractFieldConfigDefaults(defaults map[string]interface{}) dashv2alpha1.Da
 		fieldConfigDefaults.Decimals = val
 		hasDefaults = true
 	}
+	// min/max are number-or-string unions: strings are variable expressions (e.g. `$myVar`)
 	if val, ok := extractFloat64Field(defaults, "max"); ok {
-		fieldConfigDefaults.Max = val
+		fieldConfigDefaults.Max = &dashv2alpha1.DashboardFloat64OrString{Float64: val}
+		hasDefaults = true
+	} else if val, ok := extractStringField(defaults, "max"); ok {
+		fieldConfigDefaults.Max = &dashv2alpha1.DashboardFloat64OrString{String: val}
 		hasDefaults = true
 	}
 	if val, ok := extractFloat64Field(defaults, "min"); ok {
-		fieldConfigDefaults.Min = val
+		fieldConfigDefaults.Min = &dashv2alpha1.DashboardFloat64OrString{Float64: val}
+		hasDefaults = true
+	} else if val, ok := extractStringField(defaults, "min"); ok {
+		fieldConfigDefaults.Min = &dashv2alpha1.DashboardFloat64OrString{String: val}
 		hasDefaults = true
 	}
 
@@ -2919,7 +2926,10 @@ func buildThresholdsConfig(thresholdsMap map[string]interface{}) *dashv2alpha1.D
 						// null means -Infinity
 						threshold.Value = nil
 					} else if floatVal, ok := value.(float64); ok {
-						threshold.Value = &floatVal
+						threshold.Value = &dashv2alpha1.DashboardFloat64OrStringOrNull{Float64: &floatVal}
+					} else if strVal, ok := value.(string); ok {
+						// strings are variable expressions (e.g. `$myVar`)
+						threshold.Value = &dashv2alpha1.DashboardFloat64OrStringOrNull{String: &strVal}
 					}
 				} else {
 					// Value not present, leave as nil (represents -Infinity)

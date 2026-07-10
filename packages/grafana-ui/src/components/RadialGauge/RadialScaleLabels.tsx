@@ -48,7 +48,9 @@ export const RadialScaleLabels = memo(
     const { centerX, centerY, scaleLabelsFontSize, scaleLabelsRadius, barWidth } = dimensions;
     const [min, max] = getFieldConfigMinMax(fieldDisplay);
     const thresholds = rawThresholds.filter(
-      (threshold) =>
+      // Processed threshold steps are numeric; drop unresolved variable expressions
+      (threshold): threshold is Threshold & { value: number } =>
+        typeof threshold.value === 'number' &&
         resolvedThresholdValue(threshold.value, thresholdsMode, min, max) >= min &&
         resolvedThresholdValue(threshold.value, thresholdsMode, min, max) <= max
     );

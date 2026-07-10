@@ -35,8 +35,9 @@ export function GaugePanel({
       for (let field of frame.fields) {
         // Set the Min/Max value automatically for percent and percentunit
         if (field.config.unit === 'percent' || field.config.unit === 'percentunit') {
-          const min = field.config.min ?? 0;
-          const max = field.config.max ?? (field.config.unit === 'percent' ? 100 : 1);
+          const min = typeof field.config.min === 'number' ? field.config.min : 0;
+          const max =
+            typeof field.config.max === 'number' ? field.config.max : field.config.unit === 'percent' ? 100 : 1;
           field.state = field.state ?? {};
           field.state.range = { min, max, delta: max - min };
           field.display = getDisplayProcessor({ field, theme: config.theme2 });

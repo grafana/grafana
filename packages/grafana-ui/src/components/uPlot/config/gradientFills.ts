@@ -6,6 +6,7 @@ import {
   type FieldColorMode,
   FieldColorModeId,
   type GrafanaTheme2,
+  type Threshold,
   type ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
@@ -258,8 +259,12 @@ export function getScaleGradientFn(
     let gradient: CanvasGradient | string = '';
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
+      // Processed threshold steps are numeric; drop unresolved variable expressions
+      const numericSteps = thresholds.steps.filter(
+        (step): step is Threshold & { value: number } => typeof step.value === 'number'
+      );
       if (thresholds.mode === ThresholdsMode.Absolute) {
-        const valueStops: ValueStop[] = thresholds.steps.map((step) => [
+        const valueStops: ValueStop[] = numericSteps.map((step) => [
           step.value,
           isStepTransparent(step.color)
             ? '#0000'
@@ -269,7 +274,7 @@ export function getScaleGradientFn(
       } else {
         const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
         const range = max - min;
-        const valueStops: ValueStop[] = thresholds.steps.map((step) => [
+        const valueStops: ValueStop[] = numericSteps.map((step) => [
           min + range * (step.value / 100),
           colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
         ]);

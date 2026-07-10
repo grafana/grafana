@@ -72,7 +72,10 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   // since this is x axis range, this should ideally come from xMin or xMax fields, not a count field
   // though both methods are probably hacks, and we should just accept explicit opts into this prepConfig
-  let { min: xScaleMin, max: xScaleMax } = frame.fields[2].config;
+  let { min: rawXScaleMin, max: rawXScaleMax } = frame.fields[2].config;
+  // Processed field configs contain only numeric min/max; unresolved variable expressions are treated as unset
+  let xScaleMin = typeof rawXScaleMin === 'string' ? undefined : rawXScaleMin;
+  let xScaleMax = typeof rawXScaleMax === 'string' ? undefined : rawXScaleMax;
 
   let builder = new UPlotConfigBuilder();
 
@@ -276,8 +279,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
-      hardMin: field.config.min,
-      hardMax: field.config.max,
+      hardMin: typeof field.config.min === 'string' ? undefined : field.config.min,
+      hardMax: typeof field.config.max === 'string' ? undefined : field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
 

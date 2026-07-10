@@ -112,8 +112,8 @@ export const StatPanel = memo(
             if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
               globalRange = findNumericFieldMinMax(data.series);
             }
-            const min = config.min ?? globalRange!.min;
-            const max = config.max ?? globalRange!.max;
+            const min = isNumber(config.min) ? config.min : globalRange!.min;
+            const max = isNumber(config.max) ? config.max : globalRange!.max;
             field.state = field.state ?? {};
             field.state.range = { min, max, delta: max! - min! };
           }

@@ -4,6 +4,7 @@ package v2beta1
 
 import (
 	json "encoding/json"
+	errors "errors"
 )
 
 // Time configuration
@@ -603,9 +604,11 @@ type NotebookFieldConfig struct {
 	// To display all decimals, set the unit to `String`.
 	Decimals *float64 `json:"decimals,omitempty"`
 	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Min *float64 `json:"min,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Min *NotebookFloat64OrString `json:"min,omitempty"`
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
-	Max *float64 `json:"max,omitempty"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Max *NotebookFloat64OrString `json:"max,omitempty"`
 	// Convert input values into a display string
 	Mappings []NotebookValueMapping `json:"mappings,omitempty"`
 	// Map numeric values to states
@@ -829,13 +832,16 @@ func (NotebookThresholdsMode) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type NotebookThreshold struct {
 	// Value null means -Infinity
-	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Strings are dashboard variable expressions (e.g. `$myVar`) resolved to numbers at render time.
+	Value *NotebookFloat64OrStringOrNull `json:"value"`
+	Color string                         `json:"color"`
 }
 
 // NewNotebookThreshold creates a new NotebookThreshold object.
 func NewNotebookThreshold() *NotebookThreshold {
-	return &NotebookThreshold{}
+	return &NotebookThreshold{
+		Value: NewNotebookFloat64OrStringOrNull(),
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for NotebookThreshold.
@@ -1565,6 +1571,66 @@ func (NotebookMarkdownCellContentKindOrCodeCellContentKind) OpenAPIModelName() s
 }
 
 // +k8s:openapi-gen=true
+type NotebookFloat64OrString struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewNotebookFloat64OrString creates a new NotebookFloat64OrString object.
+func NewNotebookFloat64OrString() *NotebookFloat64OrString {
+	return &NotebookFloat64OrString{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `NotebookFloat64OrString` as JSON.
+func (resource NotebookFloat64OrString) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `NotebookFloat64OrString` from JSON.
+func (resource *NotebookFloat64OrString) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookFloat64OrString.
+func (NotebookFloat64OrString) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookFloat64OrString"
+}
+
+// +k8s:openapi-gen=true
 type NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {
 	ValueMap        *NotebookValueMap        `json:"ValueMap,omitempty"`
 	RangeMap        *NotebookRangeMap        `json:"RangeMap,omitempty"`
@@ -1653,4 +1719,64 @@ func (resource *NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarshal
 // OpenAPIModelName returns the OpenAPI model name for NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap.
 func (NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
+}
+
+// +k8s:openapi-gen=true
+type NotebookFloat64OrStringOrNull struct {
+	Float64 *float64 `json:"Float64,omitempty"`
+	String  *string  `json:"String,omitempty"`
+}
+
+// NewNotebookFloat64OrStringOrNull creates a new NotebookFloat64OrStringOrNull object.
+func NewNotebookFloat64OrStringOrNull() *NotebookFloat64OrStringOrNull {
+	return &NotebookFloat64OrStringOrNull{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `NotebookFloat64OrStringOrNull` as JSON.
+func (resource NotebookFloat64OrStringOrNull) MarshalJSON() ([]byte, error) {
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `NotebookFloat64OrStringOrNull` from JSON.
+func (resource *NotebookFloat64OrStringOrNull) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Float64
+	var Float64 float64
+	if err := json.Unmarshal(raw, &Float64); err != nil {
+		errList = append(errList, err)
+		resource.Float64 = nil
+	} else {
+		resource.Float64 = &Float64
+		return nil
+	}
+
+	// String
+	var String string
+	if err := json.Unmarshal(raw, &String); err != nil {
+		errList = append(errList, err)
+		resource.String = nil
+	} else {
+		resource.String = &String
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookFloat64OrStringOrNull.
+func (NotebookFloat64OrStringOrNull) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookFloat64OrStringOrNull"
 }

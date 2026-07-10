@@ -49,6 +49,8 @@ interface StyleEditorOptions {
 
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
+const numberOrUndefined = (value: number | string | undefined) => (typeof value === 'number' ? value : undefined);
+
 export const StyleEditor = (props: Props) => {
   const { value, onChange, item } = props;
   const context = useMemo(() => {
@@ -85,16 +87,17 @@ export const StyleEditor = (props: Props) => {
     onChange({ ...value, text: textValue });
   };
 
-  const onTextFontSizeChange = (fontSize: number | undefined) => {
-    onChange({ ...value, textConfig: { ...value.textConfig, fontSize } });
+  // NumberValueEditor only emits strings when allowVariables is set, which these editors don't use
+  const onTextFontSizeChange = (fontSize: number | string | undefined) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, fontSize: numberOrUndefined(fontSize) } });
   };
 
-  const onTextOffsetXChange = (offsetX: number | undefined) => {
-    onChange({ ...value, textConfig: { ...value.textConfig, offsetX } });
+  const onTextOffsetXChange = (offsetX: number | string | undefined) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, offsetX: numberOrUndefined(offsetX) } });
   };
 
-  const onTextOffsetYChange = (offsetY: number | undefined) => {
-    onChange({ ...value, textConfig: { ...value.textConfig, offsetY } });
+  const onTextOffsetYChange = (offsetY: number | string | undefined) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, offsetY: numberOrUndefined(offsetY) } });
   };
 
   const onTextAlignChange = (textAlign: TextAlignment) => {
