@@ -29,11 +29,11 @@ func TestIntegrationBackfill(t *testing.T) {
 			Namespace: ns, Name: "legacy-1", Time: historical, TimeEnd: &end,
 			DashboardUID: &dashUID, PanelID: &panelID,
 			Text: "deploy", Tags: []string{"team:ops", "prod"},
-			CreatedBy: "user-uid", CreatedAt: historical - 1000, LegacyID: 1, LegacyData: &data,
+			CreatedBy: "user-uid", CreatedAt: time.UnixMilli(historical - 1000).UTC(), LegacyID: 1, LegacyData: &data,
 		},
 		{
 			Namespace: ns, Name: "legacy-2", Time: historical + 1000,
-			Text: "point event", CreatedAt: historical, LegacyID: 2,
+			Text: "point event", CreatedAt: time.UnixMilli(historical).UTC(), LegacyID: 2,
 		},
 	}
 
@@ -58,7 +58,7 @@ func TestIntegrationBackfill(t *testing.T) {
 	_, err = store.pool.Exec(ctx,
 		`INSERT INTO annotations (namespace, name, time, text, created_at, legacy_id)
 		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		ns, "a-native", historical+2000, "native", historical, int64(1),
+		ns, "a-native", historical+2000, "native", time.UnixMilli(historical).UTC(), int64(1),
 	)
 	require.NoError(t, err)
 	migrated, err = store.CountMigrated(ctx, ns)
@@ -81,7 +81,7 @@ func TestIntegrationBackfill(t *testing.T) {
 	movedTime := time.Date(2022, 1, 10, 12, 0, 0, 0, time.UTC).UnixMilli()
 	_, err = store.UpsertBatch(ctx, []BackfillRecord{{
 		Namespace: ns, Name: "legacy-1", Time: movedTime,
-		Text: "deploy-edited", CreatedAt: historical - 1000, LegacyID: 1,
+		Text: "deploy-edited", CreatedAt: time.UnixMilli(historical - 1000).UTC(), LegacyID: 1,
 	}})
 	require.NoError(t, err)
 

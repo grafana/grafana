@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,7 @@ func TestToBackfillRecord(t *testing.T) {
 		require.Equal(t, "deploy", rec.Text)
 		require.Equal(t, []string{"a", "team:ops"}, rec.Tags)
 		require.Equal(t, "user:user-uid", rec.CreatedBy)
-		require.Equal(t, int64(500), rec.CreatedAt)
+		require.Equal(t, time.UnixMilli(500).UTC(), rec.CreatedAt)
 		require.NotNil(t, rec.LegacyData)
 		require.Equal(t, `{"foo":"bar"}`, *rec.LegacyData)
 	})
@@ -72,7 +73,7 @@ func TestToBackfillRecord(t *testing.T) {
 
 	t.Run("created_at falls back to time when unset", func(t *testing.T) {
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1234, Created: 0})
-		require.Equal(t, int64(1234), rec.CreatedAt)
+		require.Equal(t, time.UnixMilli(1234).UTC(), rec.CreatedAt)
 	})
 
 	t.Run("anonymous creator yields empty created_by", func(t *testing.T) {

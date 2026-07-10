@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
@@ -23,7 +24,7 @@ type BackfillRecord struct {
 	Tags         []string
 	Scopes       []string
 	CreatedBy    string
-	CreatedAt    int64
+	CreatedAt    time.Time
 	LegacyID     int64
 	LegacyData   *string
 }

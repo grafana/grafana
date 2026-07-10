@@ -3,6 +3,7 @@ package migrator
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -70,10 +71,11 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) annotation.BackfillR
 		rec.PanelID = &pid
 	}
 
-	rec.CreatedAt = a.Created
-	if rec.CreatedAt == 0 {
-		rec.CreatedAt = a.Epoch
+	createdAtMs := a.Created
+	if createdAtMs == 0 {
+		createdAtMs = a.Epoch
 	}
+	rec.CreatedAt = time.UnixMilli(createdAtMs).UTC()
 
 	if data := cleanLegacyData(a.Data); data != "" {
 		rec.LegacyData = &data
