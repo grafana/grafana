@@ -132,6 +132,22 @@ func TestFolderTree(t *testing.T) {
 		}
 	})
 
+	t.Run("a parent missing from the tree is not prepended as a UID segment", func(t *testing.T) {
+		// The child points at a parent that was never added to the tree (e.g. a
+		// managed-folder boundary skipped during a partial export). The child must
+		// root at its own segment, not under the missing parent's UID.
+		tree := &folderTree{
+			tree:    map[string]string{"child": "missing-parent"},
+			folders: map[string]Folder{"child": newFid("child", "Child")},
+		}
+
+		id, ok := tree.DirPath("child", "")
+		if assert.True(t, ok, "child should have DirPath with empty base") {
+			assert.Equal(t, "Child", id.Path, "missing parent must not contribute a UID segment")
+			require.NoError(t, safepath.IsSafe(id.Path))
+		}
+	})
+
 	t.Run("add new folder increments count", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
 		assert.Equal(t, 0, tree.Count())

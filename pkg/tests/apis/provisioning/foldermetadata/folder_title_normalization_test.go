@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -142,10 +144,12 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 
 	// 3) The /files endpoint serves a space-containing path correctly (the path is
 	// URL-encoded on the wire and decoded server-side before IsSafe validation).
+	// The /files endpoint always uses forward slashes; ToSlash keeps the path
+	// correct if filepath.Join produced OS-specific separators (e.g. on Windows).
 	files := helper.NewFilesClient(repo)
-	require.Equal(t, betaTitle, files.ReadFolderTitle(t, ctx, betaPath+"/_folder.json"),
+	require.Equal(t, betaTitle, files.ReadFolderTitle(t, ctx, filepath.ToSlash(betaPath)+"/_folder.json"),
 		"reading a _folder.json at a path with a space through the /files endpoint should work")
-	require.Equal(t, deltaUID, files.ReadFolderUID(t, ctx, deltaPath+"/_folder.json"))
+	require.Equal(t, deltaUID, files.ReadFolderUID(t, ctx, filepath.ToSlash(deltaPath)+"/_folder.json"))
 
 	// 4) The pull half of the migrate consumed the normalized/space paths: the
 	// deepest folder and the dashboard end up managed by the repository.
@@ -169,13 +173,14 @@ func TestIntegrationProvisioning_MigrateFolderTitleNormalization(t *testing.T) {
 	// space works, and a subsequent pull reconciles the new file into Grafana
 	// under the space-named folder.
 	const writtenUID = "written-sample-dash"
-	writePath := betaPath + "/written-dashboard.json" // AB/My Group/written-dashboard.json
-	resp := files.Post(t, writePath, common.DashboardJSON(writtenUID, "Written Sample", 1))
+	// Repo/HTTP path uses forward slashes; the on-disk path uses filepath.Join.
+	writeRepoPath := filepath.ToSlash(betaPath) + "/written-dashboard.json" // AB/My Group/written-dashboard.json
+	resp := files.Post(t, writeRepoPath, common.DashboardJSON(writtenUID, "Written Sample", 1))
 	require.Equal(t, http.StatusOK, resp.StatusCode,
 		"writing a dashboard under a folder path with a space should succeed: %s", resp.BodyString())
 
-	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, writePath))
-	require.NoError(t, err, "written dashboard should exist on disk at the space path %s", writePath)
+	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, betaPath, "written-dashboard.json"))
+	require.NoError(t, err, "written dashboard should exist on disk at the space path %s", writeRepoPath)
 
 	// A pull must read the space path back out of the repo tree and reconcile it.
 	helper.SyncAndWait(t, repo, nil)
@@ -271,4 +276,38 @@ func TestIntegrationProvisioning_PullFoldersWithSpaces(t *testing.T) {
 		assert.Equal(collect, childUID, d.GetAnnotations()[utils.AnnoKeyFolder],
 			"dashboard should be parented under the deepest space folder")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "pull should reconcile the space-named folder tree into Grafana")
+}
+
+// TestIntegrationProvisioning_MigrateFolderTitleCollisionFails verifies that when
+// two sibling folders have titles that normalize to the same repository path
+// (here "» Reports" and "Reports" both → "Reports"), the migrate fails loudly
+// instead of silently letting one folder's metadata represent the other. This is
+// the integration counterpart to the export-layer collision guard.
+func TestIntegrationProvisioning_MigrateFolderTitleCollisionFails(t *testing.T) {
+	helper := sharedHelper(t)
+
+	createUnmanagedFolder(t, helper, "collision-a", "» Reports")
+	createUnmanagedFolder(t, helper, "collision-b", "Reports")
+
+	const repo = "folder-title-collision-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "folder",
+		Workflows:              []string{"write"},
+		SkipResourceAssertions: true,
+	})
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action:  provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{Message: "Migrate colliding folder titles"},
+	})
+
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"migrate should fail when two folder titles normalize to the same path")
+
+	combined := jobObj.Status.Message + " " + strings.Join(jobObj.Status.Errors, " ")
+	require.Contains(t, combined, "both export to path",
+		"failure should explain the path collision; message=%q errors=%v", jobObj.Status.Message, jobObj.Status.Errors)
 }

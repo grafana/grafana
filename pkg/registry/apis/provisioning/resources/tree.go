@@ -120,8 +120,13 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
-		// FIXME: missing slash here
-		fid.Path = safepath.Join(safepath.SanitizeSegment(t.folders[parent].Title, parent), fid.Path)
+		// Only prepend ancestors that are actually part of the tree. A parent that
+		// was skipped (e.g. a managed-folder boundary during a partial export) is
+		// absent from t.folders; using its UID as a segment here would wrongly root
+		// the child under that UID instead of at the highest exported ancestor.
+		if pf, found := t.folders[parent]; found {
+			fid.Path = safepath.Join(safepath.SanitizeSegment(pf.Title, parent), fid.Path)
+		}
 		parent = t.tree[parent]
 	}
 	return fid, ok
