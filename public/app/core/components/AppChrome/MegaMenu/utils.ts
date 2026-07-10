@@ -59,10 +59,13 @@ export const enrichWithInteractionTracking = (
   }
 
   newItem.onClick = () => {
+    const itemIsStarred = newItem?.parentItem?.id === 'starred';
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
       itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
+      itemIsStarred,
+      itemKind: itemIsStarred ? (newItem.url?.includes('/dashboards/f/') ? 'folder' : 'dashboard') : undefined,
       isNew,
     });
     onClick?.();

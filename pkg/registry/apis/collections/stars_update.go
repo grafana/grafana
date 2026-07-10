@@ -9,10 +9,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 )
@@ -54,17 +54,15 @@ func (r *starsREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true means you can use the trailing path as a variable
 }
 
+// NOTE: the authorizer has already verified that the user is allowed to modify this resource
 func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("must be logged in")
+	namespace, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("stars must belong to a namespace")
 	}
 	parsed, found := utils.ParseOwnerFromName(name)
 	if !found || parsed.Owner != utils.UserResourceOwner {
 		return nil, fmt.Errorf("only works with user stars")
-	}
-	if user.GetIdentifier() != parsed.Identifier {
-		return nil, fmt.Errorf("must request as the given user")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -97,7 +95,7 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 				current = &collections.Stars{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      name,
-						Namespace: user.GetNamespace(),
+						Namespace: namespace,
 					},
 				}
 			}

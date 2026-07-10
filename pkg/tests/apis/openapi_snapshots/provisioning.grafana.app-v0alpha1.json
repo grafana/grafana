@@ -4088,6 +4088,10 @@
             "description": "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
             "type": "string"
           },
+          "signerIsAuthor": {
+            "description": "When true, commits are authored by the signer identity (signerName/signerEmail).",
+            "type": "boolean"
+          },
           "signerName": {
             "description": "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
             "type": "string"
@@ -4377,6 +4381,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "token": {
+            "description": "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.TokenStatus"
+              }
+            ]
           }
         }
       },
@@ -4669,10 +4682,6 @@
             "description": "The branch to use in the repository.",
             "type": "string",
             "default": ""
-          },
-          "generateDashboardPreviews": {
-            "description": "Whether we should show dashboard previews for pull requests.",
-            "type": "boolean"
           },
           "path": {
             "description": "Path is the subdirectory for the Grafana data inside the repository.",
@@ -5367,6 +5376,10 @@
         "properties": {
           "enforceTemplate": {
             "description": "When true, the PR title field in Save drawers is read-only.",
+            "type": "boolean"
+          },
+          "generateDashboardPreviews": {
+            "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
             "type": "boolean"
           },
           "titleTemplate": {

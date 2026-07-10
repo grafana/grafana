@@ -42,6 +42,9 @@ type ListOptions struct {
 
 	// LegacyID filters by the legacy numeric ID
 	LegacyID int64
+
+	// IncludeDeleted includes soft-deleted annotations in the results
+	IncludeDeleted bool
 }
 
 type AnnotationList struct {

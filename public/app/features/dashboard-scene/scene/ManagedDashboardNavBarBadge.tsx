@@ -5,7 +5,6 @@ import { Stack } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { ViewRepositoryButton } from 'app/features/provisioning/components/ViewRepositoryButton';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -29,7 +28,6 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   return (
     <Stack direction="row" alignItems="stretch">
       <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />
-      <ViewRepositoryButton repositoryName={kind === ManagerKind.Repo ? id : undefined} isOrphaned={isOrphaned} />
     </Stack>
   );
 };
