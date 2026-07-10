@@ -15,9 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // Test names for the KV test suite
@@ -39,9 +37,6 @@ const (
 	testSection = "unified/events"
 )
 
-// NewKVFunc is a function that creates a new KV instance for testing
-type NewKVFunc func(ctx context.Context) resource.KV
-
 // KVTestOptions configures which tests to run
 type KVTestOptions struct {
 	SkipTests map[string]bool
@@ -53,8 +48,15 @@ func GenerateRandomKVPrefix() string {
 	return fmt.Sprintf("kvtest-%d", time.Now().UnixNano())
 }
 
-// RunKVTest runs the KV test suite
-func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
+func nsRange(nsPrefix string) (start, end string) {
+	p := nsPrefix + "/"
+	return p, kvpkg.PrefixRangeEnd(p)
+}
+
+// RunKVTest runs the KV test suite against a single shared KV instance. Cases
+// isolate themselves using key prefixes (see nsPrefix). The passed store is
+// expected to be empty.
+func RunKVTest(t *testing.T, kv kvpkg.KV, opts *KVTestOptions) {
 	if opts == nil {
 		opts = &KVTestOptions{}
 	}
@@ -67,7 +69,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 
 	cases := []struct {
 		name string
-		fn   func(*testing.T, resource.KV, string)
+		fn   func(*testing.T, kvpkg.KV, string)
 	}{
 		{TestKVGet, runTestKVGet},
 		{TestKVSave, runTestKVSave},
@@ -89,7 +91,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			tc.fn(t, newKV(context.Background()), opts.NSPrefix)
+			tc.fn(t, kv, opts.NSPrefix)
 		})
 	}
 }
@@ -107,8 +109,9 @@ func namespacedKey(nsPrefix, key string) string {
 	return namespacedKeys(nsPrefix, []string{key})[0]
 }
 
-func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-get"
 
 	t.Run("get existing key", func(t *testing.T) {
@@ -134,7 +137,7 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("get non-existent key", func(t *testing.T) {
 		_, err := kv.Get(ctx, testSection, namespacedKey(nsPrefix, "non-existent-key"))
 		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
 
 	t.Run("get with empty section", func(t *testing.T) {
@@ -150,8 +153,9 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-save"
 
 	t.Run("save new key", func(t *testing.T) {
@@ -249,12 +253,13 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Verify it was NOT saved
 		_, err = kv.Get(ctx, testSection, emptyKey)
 		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
 }
 
-func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-delete"
 
 	t.Run("delete existing key", func(t *testing.T) {
@@ -273,7 +278,7 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Verify it's gone
 		_, err = kv.Get(ctx, testSection, deleteKey)
 		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
 
 	t.Run("delete non-existent key", func(t *testing.T) {
@@ -294,8 +299,9 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVKeys(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-keys"
 
 	// Setup test data
@@ -305,8 +311,9 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -316,7 +323,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("list keys with empty section", func(t *testing.T) {
 		var keys []string
 		var errors []error
-		for k, err := range kv.Keys(ctx, "", resource.ListOptions{}) {
+		for k, err := range kv.Keys(ctx, "", kvpkg.ListOptions{}) {
 			if err != nil {
 				errors = append(errors, err)
 				continue
@@ -329,10 +336,13 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("invalid sort option, defaults to asc", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string
 		var errors []error
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
-			Sort: resource.SortOrder(100),
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
+			StartKey: start,
+			EndKey:   end,
+			Sort:     kvpkg.SortOrder(100),
 		}) {
 			if err != nil {
 				errors = append(errors, err)
@@ -347,7 +357,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("list keys with end key < start key", func(t *testing.T) {
 		var keys []string
 		var errors []error
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "c"),
 			EndKey:   namespacedKey(nsPrefix, "a"),
 		}) {
@@ -364,10 +374,10 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("list keys returns 0 keys", func(t *testing.T) {
 		// Use a key range with no keys.
-		startKey, endKey := "aaaaa", "aaaaz"
+		startKey, endKey := namespacedKey(nsPrefix, "aaaaa"), namespacedKey(nsPrefix, "aaaaz")
 
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
 		}) {
@@ -379,8 +389,9 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("interrupting the iterator", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 
@@ -393,8 +404,9 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVKeysWithLimits(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-keys-with-limits"
 
 	// Setup test data
@@ -404,8 +416,9 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Limit: 3}) {
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end, Limit: 3}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -414,7 +427,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("keys with range", func(t *testing.T) {
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "b"),
 			EndKey:   namespacedKey(nsPrefix, "d"),
 		}) {
@@ -426,9 +439,9 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("keys with prefix", func(t *testing.T) {
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "c"),
-			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("c")),
+			EndKey:   namespacedKey(nsPrefix, kvpkg.PrefixRangeEnd("c")),
 		}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -438,7 +451,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("keys with limit and range", func(t *testing.T) {
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
 			EndKey:   namespacedKey(nsPrefix, "c"),
 			Limit:    2,
@@ -450,8 +463,9 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVKeysWithSort(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-keys-with-sort"
 
 	// Setup test data
@@ -461,8 +475,9 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderAsc}) {
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end, Sort: kvpkg.SortOrderAsc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -470,8 +485,9 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys in descending order", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{Sort: resource.SortOrderDesc}) {
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end, Sort: kvpkg.SortOrderDesc}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
 		}
@@ -480,10 +496,10 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("keys descending with prefix", func(t *testing.T) {
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a"),
-			EndKey:   namespacedKey(nsPrefix, resource.PrefixRangeEnd("a")),
-			Sort:     resource.SortOrderDesc,
+			EndKey:   namespacedKey(nsPrefix, kvpkg.PrefixRangeEnd("a")),
+			Sort:     kvpkg.SortOrderDesc,
 		}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -493,10 +509,10 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("keys descending with range keeps end key exclusive", func(t *testing.T) {
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
 			StartKey: namespacedKey(nsPrefix, "a2"),
 			EndKey:   namespacedKey(nsPrefix, "b2"),
-			Sort:     resource.SortOrderDesc,
+			Sort:     kvpkg.SortOrderDesc,
 		}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -505,10 +521,13 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("keys descending with limit", func(t *testing.T) {
+		start, end := nsRange(nsPrefix)
 		var keys []string //nolint:prealloc
-		for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{
-			Sort:  resource.SortOrderDesc,
-			Limit: 3,
+		for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{
+			StartKey: start,
+			EndKey:   end,
+			Sort:     kvpkg.SortOrderDesc,
+			Limit:    3,
 		}) {
 			require.NoError(t, err)
 			keys = append(keys, k)
@@ -517,8 +536,9 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(60*time.Second))
+func runTestKVConcurrent(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 60*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-concurrent"
 
 	// Test concurrent operations for both sections, as they have different behaviours
@@ -612,7 +632,8 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 
 						// List to verify it exists
 						found := false
-						for k, err := range kv.Keys(ctx, testSection, resource.ListOptions{}) {
+						start, end := nsRange(nsPrefix)
+						for k, err := range kv.Keys(ctx, testSection, kvpkg.ListOptions{StartKey: start, EndKey: end}) {
 							if err != nil {
 								return
 							}
@@ -634,7 +655,7 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 
 						// Verify it's deleted
 						_, err = kv.Get(ctx, testSection, key)
-						require.ErrorIs(t, resource.ErrNotFound, err)
+						require.ErrorIs(t, kvpkg.ErrNotFound, err)
 						err = nil // Expected error, so clear it
 					}(i)
 				}
@@ -649,8 +670,9 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 	}
 }
 
-func runTestKVUnixTimestamp(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVUnixTimestamp(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 
 	t.Run("unix timestamp returns reasonable value", func(t *testing.T) {
 		timestamp, err := kv.UnixTimestamp(ctx)
@@ -673,8 +695,9 @@ func runTestKVUnixTimestamp(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVBatchGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-batchget"
 
 	t.Run("batch get existing keys", func(t *testing.T) {
@@ -724,7 +747,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch get with empty section", func(t *testing.T) {
-		var kvs []resource.KeyValue
+		var kvs []kvpkg.KeyValue
 		var errs []error
 		keys := namespacedKeys(nsPrefix, []string{"key1", "key2", "key3"})
 		for kv, err := range kv.BatchGet(ctx, "", keys) {
@@ -769,7 +792,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with all non-existent keys", func(t *testing.T) {
 		keys := namespacedKeys(nsPrefix, []string{"non-existent-1", "non-existent-2", "non-existent-3"})
-		var results []resource.KeyValue //nolint:prealloc
+		var results []kvpkg.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -781,7 +804,7 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("batch get with empty keys list", func(t *testing.T) {
 		keys := []string{}
-		var results []resource.KeyValue //nolint:prealloc
+		var results []kvpkg.KeyValue //nolint:prealloc
 		for kv, err := range kv.BatchGet(ctx, testSection, keys) {
 			require.NoError(t, err)
 			results = append(results, kv)
@@ -835,8 +858,9 @@ func runTestKVBatchGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 }
 
-func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVBatchDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-batchdelete"
 
 	t.Run("batch delete existing keys", func(t *testing.T) {
@@ -867,7 +891,7 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 		for _, key := range keys {
 			_, err := kv.Get(ctx, testSection, key)
 			assert.Error(t, err)
-			assert.Equal(t, resource.ErrNotFound, err)
+			assert.Equal(t, kvpkg.ErrNotFound, err)
 		}
 	})
 
@@ -885,11 +909,11 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Verify existing keys are deleted
 		_, err = kv.Get(ctx, testSection, key1)
 		require.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 
 		_, err = kv.Get(ctx, testSection, key2)
 		require.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 	})
 
 	t.Run("batch delete with all non-existent keys", func(t *testing.T) {
@@ -927,11 +951,11 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Verify deleted keys are gone
 		_, err = kv.Get(ctx, testSection, namespacedKey(nsPrefix, "delete-key-1"))
 		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 
 		_, err = kv.Get(ctx, testSection, namespacedKey(nsPrefix, "delete-key-2"))
 		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.Equal(t, kvpkg.ErrNotFound, err)
 
 		// Verify kept keys still exist
 		reader, err := kv.Get(ctx, testSection, namespacedKey(nsPrefix, "keep-key-1"))
@@ -953,7 +977,7 @@ func runTestKVBatchDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 }
 
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
-func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, key string, value io.Reader) {
+func saveKVHelper(t *testing.T, kv kvpkg.KV, ctx context.Context, section, key string, value io.Reader) {
 	t.Helper()
 
 	writer, err := kv.Save(ctx, section, key)
@@ -964,8 +988,9 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 	require.NoError(t, err)
 }
 
-func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+func runTestKVBatch(t *testing.T, kv kvpkg.KV, nsPrefix string) {
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	t.Cleanup(cancel)
 	nsPrefix += "-batch"
 	section := testSection
 	nk := func(k string) string { return namespacedKey(nsPrefix, k) }
@@ -982,7 +1007,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch put creates new key", func(t *testing.T) {
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpPut, Key: nk("put-key"), Value: []byte("put-value")},
 		}
 
@@ -1003,7 +1028,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		// First create a key
 		saveKVHelper(t, kv, ctx, section, nk("put-update-key"), strings.NewReader("original-value"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpPut, Key: nk("put-update-key"), Value: []byte("updated-value")},
 		}
 
@@ -1021,7 +1046,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch create succeeds for new key", func(t *testing.T) {
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpCreate, Key: nk("create-new-key"), Value: []byte("new-value")},
 		}
 
@@ -1042,7 +1067,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		// First create a key
 		saveKVHelper(t, kv, ctx, section, nk("create-exists-key"), strings.NewReader("existing-value"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpCreate, Key: nk("create-exists-key"), Value: []byte("new-value")},
 		}
 
@@ -1063,7 +1088,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		// First create a key
 		saveKVHelper(t, kv, ctx, section, nk("update-exists-key"), strings.NewReader("original-value"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-exists-key"), Value: []byte("updated-value")},
 		}
 
@@ -1083,7 +1108,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("batch update succeeds for existing key with same value", func(t *testing.T) {
 		saveKVHelper(t, kv, ctx, section, nk("update-same-value-key"), strings.NewReader("same-value"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-same-value-key"), Value: []byte("same-value")},
 		}
 
@@ -1100,23 +1125,23 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch update fails for non-existent key", func(t *testing.T) {
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("update-nonexistent-key"), Value: []byte("new-value")},
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 
 		// Verify the key was not created
 		_, err = kv.Get(ctx, section, nk("update-nonexistent-key"))
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 	})
 
 	t.Run("batch delete removes existing key", func(t *testing.T) {
 		// First create a key
 		saveKVHelper(t, kv, ctx, section, nk("delete-exists-key"), strings.NewReader("to-be-deleted"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpDelete, Key: nk("delete-exists-key")},
 		}
 
@@ -1125,11 +1150,11 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Verify the key was deleted
 		_, err = kv.Get(ctx, section, nk("delete-exists-key"))
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 	})
 
 	t.Run("batch delete is idempotent for non-existent key", func(t *testing.T) {
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpDelete, Key: nk("delete-nonexistent-key")},
 		}
 
@@ -1138,7 +1163,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("batch multiple operations atomic success", func(t *testing.T) {
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key1"), Value: []byte("value1")},
 			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key2"), Value: []byte("value2")},
 			{Mode: kvpkg.BatchOpPut, Key: nk("multi-key3"), Value: []byte("value3")},
@@ -1164,7 +1189,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		// First create a key that will cause the batch to fail
 		saveKVHelper(t, kv, ctx, section, nk("rollback-exists"), strings.NewReader("existing"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpPut, Key: nk("rollback-new1"), Value: []byte("value1")},
 			{Mode: kvpkg.BatchOpCreate, Key: nk("rollback-exists"), Value: []byte("should-fail")}, // This will fail
 			{Mode: kvpkg.BatchOpPut, Key: nk("rollback-new2"), Value: []byte("value2")},
@@ -1175,11 +1200,11 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Verify rollback: the first operation should NOT have persisted
 		_, err = kv.Get(ctx, section, nk("rollback-new1"))
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 
 		// Verify the third operation was not executed
 		_, err = kv.Get(ctx, section, nk("rollback-new2"))
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 	})
 
 	t.Run("batch mixed operations", func(t *testing.T) {
@@ -1187,7 +1212,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		saveKVHelper(t, kv, ctx, section, nk("mixed-update"), strings.NewReader("original"))
 		saveKVHelper(t, kv, ctx, section, nk("mixed-delete"), strings.NewReader("to-delete"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpCreate, Key: nk("mixed-create"), Value: []byte("created")},
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("mixed-update"), Value: []byte("updated")},
 			{Mode: kvpkg.BatchOpDelete, Key: nk("mixed-delete")},
@@ -1217,7 +1242,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 
 		// Verify delete
 		_, err = kv.Get(ctx, section, nk("mixed-delete"))
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 
 		// Verify put
 		reader, err = kv.Get(ctx, section, nk("mixed-put"))
@@ -1250,7 +1275,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		for i := range 2 {
 			wg.Go(func() {
 				<-start
-				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+				errs[i] = kv.Batch(ctx, section, []kvpkg.BatchOp{
 					{Mode: kvpkg.BatchOpCreate, Key: key, Value: values[i]},
 				})
 			})
@@ -1289,7 +1314,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		for i := range 2 {
 			wg.Go(func() {
 				<-start
-				errs[i] = kv.Batch(ctx, section, []resource.BatchOp{
+				errs[i] = kv.Batch(ctx, section, []kvpkg.BatchOp{
 					{Mode: kvpkg.BatchOpPut, Key: key, Value: values[i]},
 				})
 			})
@@ -1313,7 +1338,7 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Create some keys first
 		saveKVHelper(t, kv, ctx, section, nk("error-context-key2"), strings.NewReader("existing"))
 
-		ops := []resource.BatchOp{
+		ops := []kvpkg.BatchOp{
 			{Mode: kvpkg.BatchOpPut, Key: nk("error-context-key0"), Value: []byte("value0")},
 			{Mode: kvpkg.BatchOpPut, Key: nk("error-context-key1"), Value: []byte("value1")},
 			{Mode: kvpkg.BatchOpUpdate, Key: nk("error-context-nonexistent"), Value: []byte("should-fail")}, // This will fail at index 2
@@ -1321,16 +1346,16 @@ func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
 		}
 
 		err := kv.Batch(ctx, section, ops)
-		assert.ErrorIs(t, err, resource.ErrNotFound)
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound)
 
 		// Verify atomic rollback - no keys should have been created
 		_, err = kv.Get(ctx, section, nk("error-context-key0"))
-		assert.ErrorIs(t, err, resource.ErrNotFound, "first operation should have been rolled back")
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound, "first operation should have been rolled back")
 
 		_, err = kv.Get(ctx, section, nk("error-context-key1"))
-		assert.ErrorIs(t, err, resource.ErrNotFound, "second operation should have been rolled back")
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound, "second operation should have been rolled back")
 
 		_, err = kv.Get(ctx, section, nk("error-context-key3"))
-		assert.ErrorIs(t, err, resource.ErrNotFound, "fourth operation should not have been executed")
+		assert.ErrorIs(t, err, kvpkg.ErrNotFound, "fourth operation should not have been executed")
 	})
 }

@@ -280,6 +280,14 @@ var (
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
+			Name:        "provisioning.userAttribution",
+			Description: "Author Git Sync commits as the acting Grafana user",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -2247,16 +2255,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "rudderstackUpgrade",
-			Description:     "Enables the new version of rudderstack",
-			Generate:        Generate{LegacyFrontend: true},
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaFrontendPlatformSquad,
-			Expression:      "false",
-			RequiresRestart: false,
-			HideFromDocs:    false,
 		},
 		{
 			Name:            "kubernetesAlertingHistorian",
