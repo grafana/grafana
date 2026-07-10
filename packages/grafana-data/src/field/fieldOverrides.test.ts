@@ -27,6 +27,7 @@ import {
   setFieldConfigDefaults,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
+import { numberOverrideProcessor, thresholdsOverrideProcessor } from './overrides/processors';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -1572,5 +1573,114 @@ describe('applyRawFieldOverrides', () => {
       expectFormattedDataDisplayValue(data, 0);
       expectFormattedDataDisplayValue(data, 1);
     });
+  });
+});
+
+describe('variable interpolation in thresholds and min/max', () => {
+  const registry = new FieldConfigOptionsRegistry(() => [
+    {
+      id: 'min',
+      path: 'min',
+      name: 'Min',
+      editor: () => null,
+      override: () => null,
+      process: numberOverrideProcessor,
+      shouldApply: () => true,
+    },
+    {
+      id: 'max',
+      path: 'max',
+      name: 'Max',
+      editor: () => null,
+      override: () => null,
+      process: numberOverrideProcessor,
+      shouldApply: () => true,
+    },
+    {
+      id: 'thresholds',
+      path: 'thresholds',
+      name: 'Thresholds',
+      editor: () => null,
+      override: () => null,
+      process: thresholdsOverrideProcessor,
+      shouldApply: () => true,
+    },
+  ] as FieldConfigPropertyItem[]);
+
+  // Emulates the function-format calling convention shared by sceneGraph.interpolate and
+  // templateSrv.replace: the custom format function receives the raw variable value,
+  // which is an array for multi-value variables. Unknown variables are left as-is.
+  const variables: Record<string, unknown> = { warn: '80', minVar: '10', multi: ['1', '2'] };
+  const replaceVariables: InterpolateFunction = (value, _scopedVars, format) => {
+    return value.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, plain) => {
+      const name = braced ?? plain;
+      if (!(name in variables)) {
+        return match;
+      }
+      const raw = variables[name];
+      if (typeof format === 'function') {
+        if (Array.isArray(raw)) {
+          return raw.length > 1 ? format(raw) : format(String(raw[0]));
+        }
+        return format(raw);
+      }
+      return String(raw);
+    });
+  };
+
+  const process = (defaults: FieldConfig) => {
+    const frame = toDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+    });
+
+    const processed = applyFieldOverrides({
+      data: [frame],
+      fieldConfig: { defaults, overrides: [] },
+      replaceVariables,
+      theme: createTheme(),
+      fieldConfigRegistry: registry,
+    });
+
+    return processed[0].fields[0].config;
+  };
+
+  it('interpolates variable expressions in threshold steps and min/max, sorted ascending', () => {
+    const config = process({
+      min: '$minVar',
+      max: '$doesNotExist',
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 90, color: 'red' },
+          { value: '$warn', color: 'orange' },
+        ],
+      },
+    });
+
+    expect(config.min).toBe(10);
+    // unknown variable leaves max unset (auto)
+    expect(config.max).toBeUndefined();
+    expect(config.thresholds!.steps).toEqual([
+      { value: -Infinity, color: 'green' },
+      { value: 80, color: 'orange' },
+      { value: 90, color: 'red' },
+    ]);
+  });
+
+  it('drops steps and unsets min/max for multi-value variables with several selections', () => {
+    const config = process({
+      min: '$multi',
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: '$multi', color: 'red' },
+        ],
+      },
+    });
+
+    expect(config.min).toBeUndefined();
+    expect(config.thresholds!.steps).toEqual([{ value: -Infinity, color: 'green' }]);
   });
 });
