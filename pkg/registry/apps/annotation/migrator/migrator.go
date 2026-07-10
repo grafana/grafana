@@ -17,9 +17,12 @@ type BackfillWriter interface {
 	// BulkInsert writes a batch idempotently and returns the number of rows
 	// actually inserted (skips on conflicts)
 	BulkInsert(ctx context.Context, recs []annotation.BackfillRecord) (int64, error)
-	// CountMigratedUpTo counts migrated rows whose legacy ID is within the legacy
-	// ID space (<= maxLegacyID), used for the convergence check
-	CountMigratedUpTo(ctx context.Context, namespace string, maxLegacyID int64) (int64, error)
+	// UpsertBatch re-applies a batch of changed rows (delete-by-name then
+	// insert), reconciling edits that may have moved the annotation's time
+	UpsertBatch(ctx context.Context, recs []annotation.BackfillRecord) (int64, error)
+	// CountMigrated counts backfilled rows in the namespace by the
+	// legacy_migrated flag, used for the convergence check
+	CountMigrated(ctx context.Context, namespace string) (int64, error)
 }
 
 type Request struct {
@@ -111,6 +114,68 @@ func (m *Migrator) Migrate(ctx context.Context, req Request) (Result, error) {
 	return result, nil
 }
 
+// UpdateCursor marks progress through the legacy `updated` timeline. It is a
+// keyset over (updated, id). The caller persists it between cycles and passes
+// it back to resume where the previous SyncUpdates left off.
+type UpdateCursor struct {
+	Updated int64
+	ID      int64
+}
+
+// SyncUpdates re-applies legacy annotations changed since the given cursor, so
+// edits made after the initial backfill converge in the destination. It scans forward by
+// (updated, id), upserts each batch, and returns the advanced cursor.
+func (m *Migrator) SyncUpdates(ctx context.Context, req Request, since UpdateCursor) (Result, UpdateCursor, error) {
+	batchSize := req.BatchSize
+	if batchSize <= 0 {
+		batchSize = defaultBatchSize
+	}
+
+	logger := m.logger.New("namespace", req.Namespace, "org_id", req.OrgID, "dry_run", req.DryRun)
+	logger.Info("starting annotation update sync", "batch_size", batchSize, "since_updated", since.Updated, "since_id", since.ID)
+
+	var result Result
+	cursor := since
+	for {
+		if err := ctx.Err(); err != nil {
+			logger.Info("update sync interrupted, will resume next cycle", "updated", cursor.Updated, "id", cursor.ID, "scanned", result.Scanned, "applied", result.Inserted)
+			return result, cursor, err
+		}
+
+		batch, err := m.source.ReadChangedBatch(ctx, req.OrgID, cursor.Updated, cursor.ID, batchSize)
+		if err != nil {
+			return result, cursor, fmt.Errorf("reading changed batch after (updated %d, id %d): %w", cursor.Updated, cursor.ID, err)
+		}
+		if len(batch) == 0 {
+			break
+		}
+		result.Scanned += int64(len(batch))
+		last := batch[len(batch)-1]
+
+		if !req.DryRun {
+			recs := make([]annotation.BackfillRecord, len(batch))
+			for i, a := range batch {
+				recs[i] = toBackfillRecord(req.Namespace, a)
+			}
+			applied, err := m.dest.UpsertBatch(ctx, recs)
+			if err != nil {
+				return result, cursor, fmt.Errorf("upserting batch ending at (updated %d, id %d): %w", last.Updated, last.ID, err)
+			}
+			result.Inserted += applied
+		}
+
+		cursor = UpdateCursor{Updated: last.Updated, ID: last.ID}
+		logger.Debug("update sync progress", "updated", cursor.Updated, "id", cursor.ID, "scanned", result.Scanned, "applied", result.Inserted)
+
+		if len(batch) < batchSize {
+			break
+		}
+	}
+
+	logger.Info("annotation update sync complete", "scanned", result.Scanned, "applied", result.Inserted, "updated", cursor.Updated, "id", cursor.ID)
+	return result, cursor, nil
+}
+
 // VerifyCounts reports the legacy user-annotation count and the number of those
 // already migrated. It's fully backfilled when the two are equal.
 func (m *Migrator) VerifyCounts(ctx context.Context, req Request) (legacy, migrated int64, err error) {
@@ -119,15 +184,7 @@ func (m *Migrator) VerifyCounts(ctx context.Context, req Request) (legacy, migra
 		return 0, 0, err
 	}
 
-	maxID, err := m.source.MaxID(ctx, req.OrgID)
-	if err != nil {
-		return 0, 0, err
-	}
-	if maxID == 0 {
-		return legacy, 0, nil
-	}
-
-	migrated, err = m.dest.CountMigratedUpTo(ctx, req.Namespace, maxID)
+	migrated, err = m.dest.CountMigrated(ctx, req.Namespace)
 	if err != nil {
 		return 0, 0, err
 	}

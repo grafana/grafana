@@ -4,22 +4,26 @@ import (
 	"fmt"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
+
 	annotation "github.com/grafana/grafana/pkg/registry/apps/annotation"
 )
 
 const legacyNamePrefix = "legacy-"
 
 type LegacyAnnotation struct {
-	ID           int64
-	Epoch        int64
-	EpochEnd     int64
-	DashboardUID string
-	PanelID      int64
-	Text         string
-	Data         string
-	Created      int64
-	UserUID      string
-	Tags         []string
+	ID                   int64
+	Epoch                int64
+	EpochEnd             int64
+	DashboardUID         string
+	PanelID              int64
+	Text                 string
+	Data                 string
+	Created              int64
+	Updated              int64
+	UserUID              string
+	UserIsServiceAccount bool
+	Tags                 []string
 }
 
 // legacyNamePrefix is prepended to the legacy numeric ID
@@ -38,13 +42,22 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) annotation.BackfillR
 		Time:      a.Epoch,
 		Text:      a.Text,
 		Tags:      a.Tags,
-		CreatedBy: a.UserUID,
 		LegacyID:  a.ID,
 	}
 
-	if a.EpochEnd > 0 && a.EpochEnd >= a.Epoch {
+	if a.EpochEnd > a.Epoch {
 		end := a.EpochEnd
 		rec.TimeEnd = &end
+	}
+
+	// Match the live write path, which stores the typed identifier
+	// (e.g. "user:<uid>" or "service-account:<uid>") via Requester.GetUID().
+	if a.UserUID != "" {
+		idType := claims.TypeUser
+		if a.UserIsServiceAccount {
+			idType = claims.TypeServiceAccount
+		}
+		rec.CreatedBy = claims.NewTypeID(idType, a.UserUID)
 	}
 
 	if a.DashboardUID != "" {

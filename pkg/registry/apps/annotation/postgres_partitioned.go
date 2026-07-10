@@ -25,9 +25,10 @@ const (
 	defaultTagCacheSize    = 1000
 )
 
-// annotationColumns is the canonical column order for an annotation row. It is
-// the single source of truth for every INSERT (single-row Create and bulk
-// backfill), so the column list and its count cannot drift apart.
+// annotationColumns is the column order for the bound columns of an
+// annotation row. It is the single source of truth for every INSERT (single-row
+// Create and bulk backfill), so the column list and its count cannot drift
+// apart.
 var annotationColumns = []string{
 	"namespace", "name", "time", "time_end", "dashboard_uid", "panel_id",
 	"text", "tags", "scopes", "created_by", "created_at", "legacy_id", "legacy_data",

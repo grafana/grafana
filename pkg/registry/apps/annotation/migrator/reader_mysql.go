@@ -12,12 +12,14 @@ import (
 type LegacyReader interface {
 	// CountUserAnnotations returns the number of user-created annotations
 	CountUserAnnotations(ctx context.Context, orgID int64) (int64, error)
-	// MaxID returns the largest annotation ID in the org
-	MaxID(ctx context.Context, orgID int64) (int64, error)
 	// ReadBatch returns up to limit user-created annotations for the org with
 	// id > afterID, ordered by id ascending. Tags are resolved from the
 	// normalized annotation_tag/tag tables.
 	ReadBatch(ctx context.Context, orgID, afterID int64, limit int) ([]LegacyAnnotation, error)
+	// ReadChangedBatch returns up to limit user-created annotations changed
+	// since the (sinceUpdated, afterID) cursor, ordered by (updated, id).
+	// Used for incremental resync of edits made after the initial backfill.
+	ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error)
 }
 
 type MySQLReader struct {
@@ -44,32 +46,36 @@ func (r *MySQLReader) CountUserAnnotations(ctx context.Context, orgID int64) (in
 	return count, nil
 }
 
-func (r *MySQLReader) MaxID(ctx context.Context, orgID int64) (int64, error) {
-	var maxID sql.NullInt64
-	err := r.db.QueryRowContext(ctx,
-		"SELECT MAX(id) FROM annotation WHERE org_id = ?",
-		orgID,
-	).Scan(&maxID)
-	if err != nil {
-		return 0, fmt.Errorf("reading max legacy annotation id: %w", err)
-	}
-	if !maxID.Valid {
-		return 0, nil
-	}
-	return maxID.Int64, nil
-}
+// legacySelectFrom is the shared column list + source for reading legacy
+// annotations. Column order must match the scan order in queryBatch.
+const legacySelectFrom = "SELECT a.id, a.epoch, COALESCE(a.epoch_end, 0), " +
+	"COALESCE(a.dashboard_uid, ''), COALESCE(a.panel_id, 0), a.text, " +
+	"COALESCE(a.data, ''), COALESCE(a.created, 0), COALESCE(a.updated, 0), " +
+	"COALESCE(u.uid, ''), COALESCE(u.is_service_account, 0) " +
+	"FROM annotation a " +
+	"LEFT JOIN `user` u ON u.id = a.user_id "
 
 func (r *MySQLReader) ReadBatch(ctx context.Context, orgID, afterID int64, limit int) ([]LegacyAnnotation, error) {
-	const query = "SELECT a.id, a.epoch, COALESCE(a.epoch_end, 0), " +
-		"COALESCE(a.dashboard_uid, ''), COALESCE(a.panel_id, 0), a.text, " +
-		"COALESCE(a.data, ''), COALESCE(a.created, 0), COALESCE(u.uid, '') " +
-		"FROM annotation a " +
-		"LEFT JOIN `user` u ON u.id = a.user_id " +
+	const query = legacySelectFrom +
 		"WHERE a.org_id = ? AND a.alert_id = 0 AND a.id > ? " +
 		"ORDER BY a.id ASC " +
 		"LIMIT ?"
 
-	rows, err := r.db.QueryContext(ctx, query, orgID, afterID, limit)
+	return r.queryBatch(ctx, query, orgID, afterID, limit)
+}
+
+func (r *MySQLReader) ReadChangedBatch(ctx context.Context, orgID, sinceUpdated, afterID int64, limit int) ([]LegacyAnnotation, error) {
+	const query = legacySelectFrom +
+		"WHERE a.org_id = ? AND a.alert_id = 0 " +
+		"AND (a.updated > ? OR (a.updated = ? AND a.id > ?)) " +
+		"ORDER BY a.updated ASC, a.id ASC " +
+		"LIMIT ?"
+
+	return r.queryBatch(ctx, query, orgID, sinceUpdated, sinceUpdated, afterID, limit)
+}
+
+func (r *MySQLReader) queryBatch(ctx context.Context, query string, args ...any) ([]LegacyAnnotation, error) {
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("reading legacy annotation batch: %w", err)
 	}
@@ -81,10 +87,12 @@ func (r *MySQLReader) ReadBatch(ctx context.Context, orgID, afterID int64, limit
 	)
 	for rows.Next() {
 		var a LegacyAnnotation
+		var isServiceAccount int64
 		if err := rows.Scan(&a.ID, &a.Epoch, &a.EpochEnd, &a.DashboardUID,
-			&a.PanelID, &a.Text, &a.Data, &a.Created, &a.UserUID); err != nil {
+			&a.PanelID, &a.Text, &a.Data, &a.Created, &a.Updated, &a.UserUID, &isServiceAccount); err != nil {
 			return nil, fmt.Errorf("scanning legacy annotation: %w", err)
 		}
+		a.UserIsServiceAccount = isServiceAccount != 0
 		batch = append(batch, a)
 		ids = append(ids, a.ID)
 	}

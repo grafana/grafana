@@ -35,7 +35,7 @@ func TestToBackfillRecord(t *testing.T) {
 		require.Equal(t, int64(7), *rec.PanelID)
 		require.Equal(t, "deploy", rec.Text)
 		require.Equal(t, []string{"a", "team:ops"}, rec.Tags)
-		require.Equal(t, "user-uid", rec.CreatedBy)
+		require.Equal(t, "user:user-uid", rec.CreatedBy)
 		require.Equal(t, int64(500), rec.CreatedAt)
 		require.NotNil(t, rec.LegacyData)
 		require.Equal(t, `{"foo":"bar"}`, *rec.LegacyData)
@@ -51,10 +51,17 @@ func TestToBackfillRecord(t *testing.T) {
 		require.Nil(t, rec.TimeEnd)
 	})
 
-	t.Run("time_end kept when equal to time", func(t *testing.T) {
+	t.Run("time_end dropped when equal to time (point annotation)", func(t *testing.T) {
+		// Legacy stores epoch_end == epoch for points; these must map to a nil
+		// TimeEnd so migrated points match natively-created ones.
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, EpochEnd: 1000})
+		require.Nil(t, rec.TimeEnd)
+	})
+
+	t.Run("time_end kept when after time (region annotation)", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, EpochEnd: 2000})
 		require.NotNil(t, rec.TimeEnd)
-		require.Equal(t, int64(1000), *rec.TimeEnd)
+		require.Equal(t, int64(2000), *rec.TimeEnd)
 	})
 
 	t.Run("empty dashboard uid and zero panel id become nil", func(t *testing.T) {
@@ -71,6 +78,16 @@ func TestToBackfillRecord(t *testing.T) {
 	t.Run("anonymous creator yields empty created_by", func(t *testing.T) {
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, UserUID: ""})
 		require.Equal(t, "", rec.CreatedBy)
+	})
+
+	t.Run("user creator gets user-typed created_by", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, UserUID: "abc"})
+		require.Equal(t, "user:abc", rec.CreatedBy)
+	})
+
+	t.Run("service-account creator gets service-account-typed created_by", func(t *testing.T) {
+		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, UserUID: "sa-1", UserIsServiceAccount: true})
+		require.Equal(t, "service-account:sa-1", rec.CreatedBy)
 	})
 
 	t.Run("trivial legacy data is dropped", func(t *testing.T) {

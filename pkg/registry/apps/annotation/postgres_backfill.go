@@ -36,26 +36,81 @@ func (s *PostgreSQLStore) BulkInsert(ctx context.Context, recs []BackfillRecord)
 	if len(recs) == 0 {
 		return 0, nil
 	}
-
-	// Ensure a partition exists for every distinct week spanned by the batch
-	// before inserting. ensurePartition is idempotent (CREATE ... IF NOT EXISTS)
-	// and commits its own transaction, so it is safe to call up-front.
-	seenPartitions := make(map[string]struct{}, len(recs))
-	for _, rec := range recs {
-		key := getPartitionName(rec.Time)
-		if _, ok := seenPartitions[key]; ok {
-			continue
-		}
-		seenPartitions[key] = struct{}{}
-		if err := ensurePartition(ctx, s.pool, s.logger, rec.Time); err != nil {
-			return 0, fmt.Errorf("failed to ensure partition for time %d: %w", rec.Time, err)
-		}
+	if err := s.ensureBatchPartitions(ctx, recs); err != nil {
+		return 0, err
 	}
 
+	query, args := buildInsertSQL(recs)
+	query += " ON CONFLICT DO NOTHING"
+
+	return s.execInTx(ctx, func(tx pgx.Tx) (int64, error) {
+		tag, err := tx.Exec(ctx, query, args...)
+		if err != nil {
+			return 0, fmt.Errorf("failed to bulk insert annotations: %w", err)
+		}
+		return tag.RowsAffected(), nil
+	})
+}
+
+// UpsertBatch reconciles a batch of changed legacy annotations: for each record
+// it removes any existing rows with the same name and re-inserts the current
+// version, all in one transaction. Returns the number of rows written.
+func (s *PostgreSQLStore) UpsertBatch(ctx context.Context, recs []BackfillRecord) (int64, error) {
+	if len(recs) == 0 {
+		return 0, nil
+	}
+	if err := s.ensureBatchPartitions(ctx, recs); err != nil {
+		return 0, err
+	}
+
+	namesByNamespace := make(map[string][]string, 1)
+	for _, rec := range recs {
+		namesByNamespace[rec.Namespace] = append(namesByNamespace[rec.Namespace], rec.Name)
+	}
+
+	query, args := buildInsertSQL(recs)
+
+	return s.execInTx(ctx, func(tx pgx.Tx) (int64, error) {
+		for namespace, names := range namesByNamespace {
+			if _, err := tx.Exec(ctx,
+				`DELETE FROM annotations WHERE namespace = $1 AND name = ANY($2::text[])`,
+				namespace, pq.Array(names),
+			); err != nil {
+				return 0, fmt.Errorf("failed to clear annotations for resync: %w", err)
+			}
+		}
+		tag, err := tx.Exec(ctx, query, args...)
+		if err != nil {
+			return 0, fmt.Errorf("failed to upsert annotations: %w", err)
+		}
+		return tag.RowsAffected(), nil
+	})
+}
+
+// ensureBatchPartitions creates the partition for every distinct week spanned
+// by the batch. ensurePartition is idempotent (CREATE ... IF NOT EXISTS) and
+// commits its own transaction, so it is safe to call up-front.
+func (s *PostgreSQLStore) ensureBatchPartitions(ctx context.Context, recs []BackfillRecord) error {
+	seen := make(map[string]struct{}, len(recs))
+	for _, rec := range recs {
+		key := getPartitionName(rec.Time)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		if err := ensurePartition(ctx, s.pool, s.logger, rec.Time); err != nil {
+			return fmt.Errorf("failed to ensure partition for time %d: %w", rec.Time, err)
+		}
+	}
+	return nil
+}
+
+// buildInsertSQL builds a multi-row INSERT
+func buildInsertSQL(recs []BackfillRecord) (string, []any) {
 	var sb strings.Builder
 	sb.WriteString("INSERT INTO annotations (")
 	sb.WriteString(annotationColumnsSQL)
-	sb.WriteString(") VALUES ")
+	sb.WriteString(", legacy_migrated) VALUES ")
 
 	args := make([]any, 0, len(recs)*annotationColumnCount)
 	for i, rec := range recs {
@@ -70,7 +125,8 @@ func (s *PostgreSQLStore) BulkInsert(ctx context.Context, recs []BackfillRecord)
 			}
 			fmt.Fprintf(&sb, "$%d", base+c+1)
 		}
-		sb.WriteString(")")
+		// legacy_migrated is always true on the backfill path
+		sb.WriteString(", true)")
 
 		var createdBy *string
 		if rec.CreatedBy != "" {
@@ -88,52 +144,38 @@ func (s *PostgreSQLStore) BulkInsert(ctx context.Context, recs []BackfillRecord)
 			rec.Text, pq.Array(rec.Tags), pq.Array(rec.Scopes), createdBy, rec.CreatedAt, legacyID, rec.LegacyData,
 		)
 	}
-	sb.WriteString(" ON CONFLICT DO NOTHING")
+	return sb.String(), args
+}
 
+func (s *PostgreSQLStore) execInTx(ctx context.Context, fn func(tx pgx.Tx) (int64, error)) (int64, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin backfill transaction: %w", err)
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
 		// Rollback is a no-op once the tx has been committed.
 		if rbErr := tx.Rollback(ctx); rbErr != nil && !errors.Is(rbErr, pgx.ErrTxClosed) {
-			s.logger.Error("failed to rollback backfill transaction", "error", rbErr)
+			s.logger.Error("failed to rollback transaction", "error", rbErr)
 		}
 	}()
 
-	tag, err := tx.Exec(ctx, sb.String(), args...)
+	n, err := fn(tx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to bulk insert annotations: %w", err)
+		return 0, err
 	}
-
 	if err := tx.Commit(ctx); err != nil {
-		return 0, fmt.Errorf("failed to commit backfill transaction: %w", err)
+		return 0, fmt.Errorf("failed to commit transaction: %w", err)
 	}
-
-	return tag.RowsAffected(), nil
+	return n, nil
 }
 
-// CountBackfilled returns the number of rows in the namespace that carry any
-// legacy ID.
-func (s *PostgreSQLStore) CountBackfilled(ctx context.Context, namespace string) (int64, error) {
+// CountMigrated returns the number of backfilled annotations in the namespace,
+// identified by the legacy_migrated flag
+func (s *PostgreSQLStore) CountMigrated(ctx context.Context, namespace string) (int64, error) {
 	var count int64
 	err := s.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM annotations WHERE namespace = $1 AND legacy_id IS NOT NULL`,
+		`SELECT COUNT(*) FROM annotations WHERE namespace = $1 AND legacy_migrated`,
 		namespace,
-	).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("failed to count backfilled annotations: %w", err)
-	}
-	return count, nil
-}
-
-// CountMigratedUpTo returns the number of migrated annotations in the namespace
-// whose legacy ID is within the legacy ID space (legacy_id <= maxLegacyID).
-func (s *PostgreSQLStore) CountMigratedUpTo(ctx context.Context, namespace string, maxLegacyID int64) (int64, error) {
-	var count int64
-	err := s.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM annotations WHERE namespace = $1 AND legacy_id IS NOT NULL AND legacy_id <= $2`,
-		namespace, maxLegacyID,
 	).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count migrated annotations: %w", err)

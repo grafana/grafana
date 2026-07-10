@@ -1,36 +1,21 @@
 package annotation
 
 import (
-	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-// TestBulkInsert_Integration exercises the backfill write path against a real
-// Postgres. It is gated on ANNOTATION_TEST_POSTGRES_DSN
-//
-// The store runs its own migrations on construction, so the target database
-// only needs to exist and be reachable.
-func TestBulkInsert_Integration(t *testing.T) {
-	dsn := os.Getenv("ANNOTATION_TEST_POSTGRES_DSN")
-	if dsn == "" {
-		t.Skip("set ANNOTATION_TEST_POSTGRES_DSN to run the annotation backfill integration test")
-	}
-
-	ctx := context.Background()
-	store, err := NewPostgreSQLStore(ctx, PostgreSQLStoreConfig{
-		ConnectionString: dsn,
-	}, ProvideMetrics(nil))
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = store.Close() })
+// TestIntegrationBackfill exercises the backfill write path against a real
+// Postgres. It runs in the Postgres integration job (GRAFANA_TEST_DB=postgres)
+// via newTestPostgresStore, which provisions an isolated database and runs the
+// store's migrations on construction.
+func TestIntegrationBackfill(t *testing.T) {
+	store := newTestPostgresStore(t)
+	ctx := t.Context()
 
 	const ns = "stacks-itest-backfill"
-	// Clean any leftovers from a previous run so the test is repeatable.
-	_, err = store.pool.Exec(ctx, "DELETE FROM annotations WHERE namespace = $1", ns)
-	require.NoError(t, err)
 
 	// A historical timestamp (years ago) to prove on-demand partition creation.
 	historical := time.Date(2021, 6, 15, 12, 0, 0, 0, time.UTC).UnixMilli()
@@ -61,13 +46,24 @@ func TestBulkInsert_Integration(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(0), inserted)
 
-	// Convergence count is bounded by the legacy ID space.
-	migrated, err := store.CountMigratedUpTo(ctx, ns, 2)
+	// The convergence count identifies migrated rows by the legacy_migrated
+	// provenance flag, not by legacy_id value.
+	migrated, err := store.CountMigrated(ctx, ns)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), migrated)
-	migrated, err = store.CountMigratedUpTo(ctx, ns, 1)
+
+	// Simulate a proxied/native write (not through the backfill path, so
+	// legacy_migrated stays false) whose masked snowflake legacy_id collides
+	// with the legacy autoincrement range. It must not be counted as migrated.
+	_, err = store.pool.Exec(ctx,
+		`INSERT INTO annotations (namespace, name, time, text, created_at, legacy_id)
+		 VALUES ($1, $2, $3, $4, $5, $6)`,
+		ns, "a-native", historical+2000, "native", historical, int64(1),
+	)
 	require.NoError(t, err)
-	require.Equal(t, int64(1), migrated)
+	migrated, err = store.CountMigrated(ctx, ns)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), migrated, "native row must not inflate the migrated count")
 
 	// Fields are preserved faithfully on read-back.
 	got, err := store.Get(ctx, ns, "legacy-1")
@@ -79,4 +75,25 @@ func TestBulkInsert_Integration(t *testing.T) {
 	require.Equal(t, "user-uid", got.GetCreatedBy())
 	require.Equal(t, historical-1000, got.CreationTimestamp.UnixMilli(), "created_at preserved from legacy")
 	require.ElementsMatch(t, []string{"team:ops", "prod"}, got.Spec.Tags)
+
+	// UpsertBatch reconciles an edit that moves the annotation's time into a
+	// different (here, new) weekly partition without leaving a duplicate behind.
+	movedTime := time.Date(2022, 1, 10, 12, 0, 0, 0, time.UTC).UnixMilli()
+	_, err = store.UpsertBatch(ctx, []BackfillRecord{{
+		Namespace: ns, Name: "legacy-1", Time: movedTime,
+		Text: "deploy-edited", CreatedAt: historical - 1000, LegacyID: 1,
+	}})
+	require.NoError(t, err)
+
+	got, err = store.Get(ctx, ns, "legacy-1")
+	require.NoError(t, err)
+	require.Equal(t, movedTime, got.Spec.Time, "time moved to the edited value")
+	require.Equal(t, "deploy-edited", got.Spec.Text)
+	require.Nil(t, got.Spec.TimeEnd, "edit cleared the region end")
+
+	// Still exactly the two migrated rows — the old-time row was removed, not
+	// duplicated — and the native row is still excluded.
+	migrated, err = store.CountMigrated(ctx, ns)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), migrated, "upsert must not create a duplicate")
 }
