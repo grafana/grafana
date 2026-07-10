@@ -142,6 +142,8 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		opts.Deleted = DeletedInclude
 	case "only":
 		opts.Deleted = DeletedOnly
+	default:
+		opts.Deleted = DeletedExclude
 	}
 
 	return opts
