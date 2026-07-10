@@ -24,11 +24,11 @@ export class Sidebar extends PageObject {
   constructor(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     super(page, dashboardPage, selectors);
     this.toolbar = new Toolbar(page, dashboardPage, selectors);
+    this.contentOutline = new ContentOutline(page, dashboardPage, selectors);
     this.addOptions = new AddOptions(page, dashboardPage, selectors);
     this.dashboardOptions = new DashboardOptions(page, dashboardPage, selectors);
-    this.panelOptions = new PanelOptions(page, dashboardPage, selectors);
-    this.contentOutline = new ContentOutline(page, dashboardPage, selectors);
     this.variableOptions = new VariableOptions(page, dashboardPage, selectors);
+    this.panelOptions = new PanelOptions(page, dashboardPage, selectors);
   }
 
   getContainer() {

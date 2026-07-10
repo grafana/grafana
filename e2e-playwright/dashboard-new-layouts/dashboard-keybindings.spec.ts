@@ -54,6 +54,6 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     // Press Escape to close inspector
     await page.keyboard.press('Escape');
 
-    await expect(page.getByTestId(selectors.components.PanelInspector.Json.content)).toBeHidden();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
   });
 });

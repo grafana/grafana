@@ -27,17 +27,16 @@ test.describe(
       const controls = new Controls(page, dashboardPage, selectors);
       const sidebar = new Sidebar(page, dashboardPage, selectors);
 
-      const dsType = 'cloudwatch';
       const variable: Variable = {
         type: 'datasource',
         name: 'VariableUnderTest',
         label: 'VariableUnderTest',
-        value: `gdev-${dsType}`,
+        value: 'gdev-cloudwatch',
       };
 
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
-      await sidebar.variableOptions.selectDatasource(dsType);
+      await sidebar.variableOptions.selectDatasourceType('CloudWatch');
 
       const regexFilter = 'cloud';
       await sidebar.variableOptions.setDatasourceNameFilter(regexFilter);

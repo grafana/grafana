@@ -35,14 +35,14 @@ export class VariableOptions extends PageObject {
     });
   }
 
-  async selectDatasource(dsType: string) {
-    await test.step(`Select variable datasource "${dsType}"`, async () => {
+  async selectDatasourceType(dsType: string) {
+    await test.step(`Select datasource type "${dsType}"`, async () => {
       await this.dashboardPage
         .getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
         )
         .click();
-      await this.page.getByText(dsType).click();
+      await this.page.getByRole('option', { name: dsType, exact: true }).click();
     });
   }
 
