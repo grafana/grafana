@@ -50,6 +50,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { invalidateFieldConfigCacheOnVariableChange } from '../scene/invalidateFieldConfigCacheOnVariableChange';
 import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -370,6 +371,7 @@ export function createDashboardSceneFromDashboardModel(
     queryController,
     interactionTracker,
     registerDashboardMacro,
+    invalidateFieldConfigCacheOnVariableChange,
     registerPanelInteractionsReporter,
     new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     addPanelsOnLoadBehavior,

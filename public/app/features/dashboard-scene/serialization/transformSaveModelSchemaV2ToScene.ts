@@ -79,6 +79,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
+import { invalidateFieldConfigCacheOnVariableChange } from '../scene/invalidateFieldConfigCacheOnVariableChange';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -249,6 +250,7 @@ export function transformSaveModelSchemaV2ToScene(
         queryController,
         interactionTracker,
         registerDashboardMacro,
+        invalidateFieldConfigCacheOnVariableChange,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
         addPanelsOnLoadBehavior,
