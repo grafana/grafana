@@ -274,6 +274,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       contextSrv.isGrafanaAdmin &&
       plugin &&
       !plugin.meta.skipDataQuery &&
+      !isReadOnlyRepeat &&
       getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOnDemandDiagnostics, false)
     ) {
       moreSubMenu.push({

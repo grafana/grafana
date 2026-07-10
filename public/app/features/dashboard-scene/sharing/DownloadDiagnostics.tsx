@@ -57,10 +57,14 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     let dashboardJSON: unknown;
     try {
       panelJSON = vizPanelToPanel(panel);
-    } catch {}
+    } catch (err) {
+      console.warn('Diagnostics: failed to serialize panel JSON', err);
+    }
     try {
       dashboardJSON = transformSceneToSaveModel(dashboard);
-    } catch {}
+    } catch (err) {
+      console.warn('Diagnostics: failed to serialize dashboard JSON', err);
+    }
 
     await downloadDiagnosticsForQueries(
       queries,
