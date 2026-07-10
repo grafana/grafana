@@ -35,22 +35,34 @@ export class VariableOptions extends PageObject {
     });
   }
 
-  async selectDatasourceType(dsType: string) {
-    await test.step(`Select datasource type "${dsType}"`, async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(
-          this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
-        )
-        .click();
-      await this.page.getByRole('option', { name: dsType, exact: true }).click();
-    });
-  }
+  readonly datasource = {
+    selectDatasourceType: async (dsType: string) => {
+      await test.step(`Select variable datasource type "${dsType}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
+          )
+          .click();
+        await this.page.getByRole('option', { name: dsType, exact: true }).click();
+      });
+    },
+    setDatasourceNameFilter: async (filter: string) => {
+      await test.step(`Set data source name filter "${filter}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
+          .fill(filter);
+      });
+    },
+  };
 
-  async setDatasourceNameFilter(filter: string) {
-    await test.step(`Set data source name filter "${filter}"`, async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
-        .fill(filter);
-    });
-  }
+  readonly groupby = {
+    selectDatasource: async (dataSource: string) => {
+      await test.step(`Select group-by datasource "${dataSource}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect)
+          .click();
+        await this.page.getByText(dataSource).click();
+      });
+    },
+  };
 }

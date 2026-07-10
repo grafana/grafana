@@ -21,7 +21,16 @@ export class Controls extends PageObject {
     });
   }
 
-  getVariableLabel(label: string) {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(label));
-  }
+  readonly variables = {
+    getVariableLabel: (label: string) => {
+      return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(label));
+    },
+    selectVariableOption: async (variableLabel: string, optionLabel: string) => {
+      await test.step(`Select option "${optionLabel}" of variable "${variableLabel}"`, async () => {
+        // The variable value control is the next sibling of its label
+        await this.variables.getVariableLabel(variableLabel).locator('+ *').click();
+        await this.page.getByRole('option', { name: optionLabel, exact: true }).click();
+      });
+    },
+  };
 }

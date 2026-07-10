@@ -36,13 +36,11 @@ test.describe(
 
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
-      await sidebar.variableOptions.selectDatasourceType('CloudWatch');
-
-      const regexFilter = 'cloud';
-      await sidebar.variableOptions.setDatasourceNameFilter(regexFilter);
+      await sidebar.variableOptions.datasource.selectDatasourceType('CloudWatch');
+      await sidebar.variableOptions.datasource.setDatasourceNameFilter('cloud');
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.getVariableLabel(variable.label!);
+      const variableLabel = controls.variables.getVariableLabel(variable.label!);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label!);
 
