@@ -13,8 +13,3 @@ export const addAlertRulesTab = alertRulesTabs.addTab;
  * Returns the navigation configuration for all registered alert rules tab extensions.
  */
 export const useAlertRulesExtensionTabs = alertRulesTabs.useExtensionTabs;
-
-/**
- * ONLY USE FOR TESTING. Clears all alert rules tab extensions.
- */
-export const clearAlertRulesTabExtensions = alertRulesTabs.clearTabs;

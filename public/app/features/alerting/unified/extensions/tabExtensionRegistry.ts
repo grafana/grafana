@@ -20,13 +20,18 @@ export function createTabExtensionRegistry<Url extends string>(parentNavId: stri
 
   /**
    * Registers a new tab. The tab nav must have a unique url.
+   * Returns a function that unregisters the tab.
    */
   function addTab(tabNav: TabExtensionNav<Url>) {
     if (tabExtensions.has(tabNav.url)) {
       logWarning('Unable to add tab extension, tab must have a unique url', { parentNavId, url: tabNav.url });
-      return;
+      return () => undefined;
     }
     tabExtensions.set(tabNav.url, { nav: tabNav });
+
+    return () => {
+      tabExtensions.delete(tabNav.url);
+    };
   }
 
   /**
@@ -46,12 +51,5 @@ export function createTabExtensionRegistry<Url extends string>(parentNavId: stri
     }));
   }
 
-  /**
-   * ONLY USE FOR TESTING. Clears all registered tabs.
-   */
-  function clearTabs() {
-    tabExtensions.clear();
-  }
-
-  return { addTab, useExtensionTabs, clearTabs };
+  return { addTab, useExtensionTabs };
 }

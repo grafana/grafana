@@ -4,7 +4,7 @@ import { getWrapper } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { addAlertRulesTab, clearAlertRulesTabExtensions } from './extensions';
+import { addAlertRulesTab } from './extensions';
 import { useAlertRulesNav } from './useAlertRulesNav';
 
 const TabSuffix = () => null;
@@ -19,6 +19,13 @@ describe('useAlertRulesNav', () => {
       url: '/alerting/list',
     },
   };
+  const unregisterTabs: Array<() => void> = [];
+
+  function registerAlertRulesTab(tab: Parameters<typeof addAlertRulesTab>[0]) {
+    const unregisterTab = addAlertRulesTab(tab);
+    unregisterTabs.push(unregisterTab);
+    return unregisterTab;
+  }
 
   // getWrapper only reads `store`, not `preloadedState`
   const getStore = () => configureStore({ navIndex: mockNavIndex });
@@ -29,7 +36,7 @@ describe('useAlertRulesNav', () => {
 
   afterEach(() => {
     config.featureToggles = originalFeatureToggles;
-    clearAlertRulesTabExtensions();
+    unregisterTabs.splice(0).forEach((unregisterTab) => unregisterTab());
   });
 
   it('should not show a tab bar when no extension tabs are registered', () => {
@@ -50,7 +57,7 @@ describe('useAlertRulesNav', () => {
   });
 
   it('should include tabs registered via addAlertRulesTab', () => {
-    addAlertRulesTab({
+    registerAlertRulesTab({
       id: 'alert-rules-custom',
       text: 'Custom tab',
       url: '/alerting/list/custom',
@@ -86,9 +93,30 @@ describe('useAlertRulesNav', () => {
     ]);
   });
 
+  it('should remove a registered tab when its unregister function is called', () => {
+    const unregisterTab = registerAlertRulesTab({
+      id: 'alert-rules-custom',
+      text: 'Custom tab',
+      url: '/alerting/list/custom',
+    });
+    unregisterTab();
+
+    const wrapper = getWrapper({
+      store: getStore(),
+      renderWithRouter: true,
+      historyOptions: {
+        initialEntries: ['/alerting/list'],
+      },
+    });
+
+    const { result } = renderHook(() => useAlertRulesNav(), { wrapper });
+
+    expect(result.current.pageNav?.children).toBeUndefined();
+  });
+
   it('should ignore registrations with a duplicate url', () => {
-    addAlertRulesTab({ id: 'first', text: 'First', url: '/alerting/list/custom' });
-    addAlertRulesTab({ id: 'second', text: 'Second', url: '/alerting/list/custom' });
+    registerAlertRulesTab({ id: 'first', text: 'First', url: '/alerting/list/custom' });
+    registerAlertRulesTab({ id: 'second', text: 'Second', url: '/alerting/list/custom' });
 
     const wrapper = getWrapper({
       store: getStore(),
@@ -109,7 +137,7 @@ describe('useAlertRulesNav', () => {
   it('should return the legacy nav when alertingNavigationV2 is disabled', () => {
     config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
 
-    addAlertRulesTab({ id: 'alert-rules-custom', text: 'Custom tab', url: '/alerting/list/custom' });
+    registerAlertRulesTab({ id: 'alert-rules-custom', text: 'Custom tab', url: '/alerting/list/custom' });
 
     const wrapper = getWrapper({
       store: getStore(),

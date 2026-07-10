@@ -12,8 +12,3 @@ export const addSettingsSection = settingsSections.addTab;
  * Returns the navigation configuration for all settings extensions.
  */
 export const useSettingsExtensionsNav = settingsSections.useExtensionTabs;
-
-/**
- * ONLY USE FOR TESTING. Clears all settings extensions.
- */
-export const clearSettingsExtensions = settingsSections.clearTabs;
