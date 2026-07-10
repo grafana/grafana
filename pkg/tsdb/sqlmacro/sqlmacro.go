@@ -32,7 +32,9 @@ var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='(?:\\.|[^'
 // boundary in either direction.
 func SplitTrailingSQLCommenter(sql string) (string, string) {
 	trimmed := strings.TrimRight(sql, " \t\r\n")
-	trimmed = strings.TrimRight(strings.TrimSuffix(trimmed, ";"), " \t\r\n")
+	for strings.HasSuffix(trimmed, ";") {
+		trimmed = strings.TrimRight(strings.TrimSuffix(trimmed, ";"), " \t\r\n")
+	}
 	if !strings.HasSuffix(trimmed, "*/") {
 		return sql, ""
 	}
@@ -50,6 +52,15 @@ func SplitTrailingSQLCommenter(sql string) (string, string) {
 		return sql, ""
 	}
 	if !sqlCommenterRegExp.MatchString(comment) {
+		return sql, ""
+	}
+	// A tag-shaped block inside a trailing line comment is not executable SQL and
+	// must not be revived: if the text before the tag on its own line contains a
+	// line-comment marker (-- or MySQL's #), leave the query untouched. This is
+	// conservative - a marker inside a string literal on that line also prevents
+	// splitting, which just falls back to the tag being stripped like any comment.
+	lineStart := strings.LastIndexByte(trimmed[:open], '\n') + 1
+	if strings.Contains(trimmed[lineStart:open], "--") || strings.Contains(trimmed[lineStart:open], "#") {
 		return sql, ""
 	}
 	return sql[:open], sql[open:]

@@ -56,6 +56,30 @@ func TestSplitTrailingSQLCommenter(t *testing.T) {
 			wantTag:  "",
 		},
 		{
+			name:     "repeated trailing semicolons",
+			sql:      "SELECT 1 /*app='grafana'*/;;",
+			wantBody: "SELECT 1 ",
+			wantTag:  "/*app='grafana'*/;;",
+		},
+		{
+			name:     "tag inside a trailing line comment is not revived",
+			sql:      "SELECT 1\n-- note /*k='v'*/",
+			wantBody: "SELECT 1\n-- note /*k='v'*/",
+			wantTag:  "",
+		},
+		{
+			name:     "tag inside a trailing hash comment is not revived",
+			sql:      "SELECT 1 # /*k='v'*/",
+			wantBody: "SELECT 1 # /*k='v'*/",
+			wantTag:  "",
+		},
+		{
+			name:     "tag on its own line after a line comment is still split",
+			sql:      "SELECT 1 -- note\n/*app='grafana'*/",
+			wantBody: "SELECT 1 -- note\n",
+			wantTag:  "/*app='grafana'*/",
+		},
+		{
 			name:     "inline (non-trailing) tag is left in place",
 			sql:      "SELECT 1 /*k='v'*/ WHERE x = 1",
 			wantBody: "SELECT 1 /*k='v'*/ WHERE x = 1",
