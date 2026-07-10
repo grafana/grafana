@@ -372,6 +372,7 @@
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/data-sources-plugins
+/pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
 /pkg/tsdb/jaeger/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code

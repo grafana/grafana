@@ -1,3 +1,4 @@
+import { VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
   defaultPanelSpec,
@@ -9,6 +10,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 
 import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
 
@@ -437,6 +439,24 @@ describe('buildVizPanel', () => {
       hideTimeOverride: true,
       compareWith: '1d',
     });
+  });
+
+  it('preserves timeCompare through v2 save and load', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      $timeRange: new PanelTimeRange({ compareWith: '1w' }),
+    });
+
+    const saved = vizPanelToSchemaV2(panel, undefined, false);
+    expect(saved.kind).toBe('Panel');
+
+    const panelKind = saved as PanelKind;
+    expect(panelKind.spec.data.spec.queryOptions.timeCompare).toBe('1w');
+
+    const reloaded = getPanelTimeRange(panelKind);
+    expect(reloaded.state.compareWith).toBe('1w');
   });
 
   it('does not create $timeRange when only hideTimeOverride is set', () => {

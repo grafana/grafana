@@ -871,11 +871,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 4
-    }
-  },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -994,15 +989,7 @@
       "count": 2
     }
   },
-  "public/app/features/actions/ActionVariablesEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/actions/ParamsEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -1249,16 +1236,6 @@
       "count": 4
     }
   },
-  "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RulesTable.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 2
@@ -1302,11 +1279,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/hooks/useCombinedRuleNamespaces.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1347,11 +1319,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/utils/datasource.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/utils/misc.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -1371,11 +1338,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/utils/rule-id.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/utils/rules.ts": {
@@ -2044,11 +2006,6 @@
   },
   "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/utils/sort.ts": {
-    "@grafana/no-locale-compare": {
       "count": 1
     }
   },
