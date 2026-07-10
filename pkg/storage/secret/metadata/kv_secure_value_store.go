@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -30,18 +31,19 @@ import (
 // kvSection is the KV store section for secure value metadata
 const kvSection = "secret/securevalues"
 
-// TODO: add tracing
 type kvSecureValueMetadataStorage struct {
-	kv     resource.KV
-	clock  contracts.Clock
-	tracer trace.Tracer
+	kv           resource.KV
+	clock        contracts.Clock
+	tracer       trace.Tracer
+	leaseManager *lease.Manager
 }
 
 func NewkvSecureValueMetadataStorage(kv resource.KV, clock contracts.Clock, tracer trace.Tracer) contracts.SecureValueMetadataStorage {
 	return &kvSecureValueMetadataStorage{
-		kv:     kv,
-		clock:  clock,
-		tracer: tracer,
+		kv:           kv,
+		clock:        clock,
+		tracer:       tracer,
+		leaseManager: lease.NewManager(kv, "secrets_kv_secure_value_metadata_storage", nil),
 	}
 }
 
@@ -406,7 +408,7 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	eligible := make([]eligibleItem, 0)
 
 	keys := make([]string, 0)
-	// TODO: unbounded list
+
 	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{}) {
 		if err != nil {
 			return nil, fmt.Errorf("listing keys in the kv store: %w", err)
@@ -458,8 +460,12 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 	for i := 0; i < len(eligible) && i < int(maxBatchSize); i++ {
 		item := eligible[i]
 
-		// Acquire the lease
-		// TODO: lost updates
+		lease, err := s.leaseManager.Acquire(ctx, item.key)
+		if err != nil {
+			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
+		}
+		defer s.leaseManager.Release(ctx, lease)
+
 		item.value.LeaseToken = leaseToken
 		item.value.LeaseCreated = now
 		item.value.LeaseDuration = int64(leaseTTL.Seconds() * math.Pow(2, float64(item.value.GCAttempts)))
@@ -630,11 +636,17 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 	toUpdate := make([]secureValueKV, 0, len(keys))
 
 	count := make(map[string]int, len(keys))
-	// TODO: this is racy, lost updates are possible
+
 	for kvValue, err := range s.kv.BatchGet(ctx, kvSection, keys) {
 		if err != nil {
 			return nil, fmt.Errorf("BatchGet returned error: %w", err)
 		}
+
+		lease, err := s.leaseManager.Acquire(ctx, kvValue.Key)
+		if err != nil {
+			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
+		}
+		defer s.leaseManager.Release(ctx, lease)
 
 		parsed, err := parseSecureValue(kvValue.Value)
 		if err != nil {
@@ -647,7 +659,6 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 	}
 
 	if len(toUpdate) > 0 {
-		// TODO: lost updates
 		ops := make([]kv.BatchOp, 0, len(toUpdate))
 		for _, sv := range toUpdate {
 			value, err := json.Marshal(sv)
@@ -697,7 +708,6 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 	}
 	toUpdate := make([]entry, 0)
 
-	// TODO: unbounded list
 	for key, err := range s.kv.Keys(ctx, kvSection, resource.ListOptions{
 		StartKey: prefix,
 		EndKey:   resource.PrefixRangeEnd(prefix),
