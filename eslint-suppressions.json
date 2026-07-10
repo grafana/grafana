@@ -871,11 +871,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 4
-    }
-  },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
