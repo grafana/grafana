@@ -26,6 +26,7 @@ import { dispatch } from 'app/store/store';
 import { recreateVariable } from './api';
 import {
   buildVariableResource,
+  getNextAvailableVariableName,
   getVariableFolderUid,
   getVariableKind,
   getVariableSpecName,
@@ -35,6 +36,8 @@ import {
 export interface VariableEditorViewProps {
   /** The variable resource being edited; undefined when creating a new variable. */
   source?: Variable;
+  /** Logical names of existing variables — used to pick a non-colliding default for new ones. */
+  existingNames?: string[];
   onBack: () => void;
 }
 
@@ -45,7 +48,7 @@ export interface VariableEditorViewProps {
  * (variable set + time range so query editors can resolve context), and serialized
  * back to a VariableKind on save.
  */
-export function VariableEditorView({ source, onBack }: VariableEditorViewProps) {
+export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
   // '' represents the root Dashboards folder (global scope), matching the
@@ -55,7 +58,7 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : getVariableScene('query', { name: 'query0' })
+      : getVariableScene('query', { name: getNextAvailableVariableName('query', existingNames) })
   );
 
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
@@ -78,7 +81,10 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
     [sceneVariable]
   );
 
-  useEffect(() => scene.activate(), [scene]);
+  useEffect(() => {
+    const deactivate = scene.activate();
+    return deactivate;
+  }, [scene]);
 
   const onTypeChange = (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;

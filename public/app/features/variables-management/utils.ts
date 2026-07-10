@@ -38,6 +38,20 @@ export function getVariableSpecName(variable: Variable): string {
   return getVariableKind(variable).spec.name;
 }
 
+/**
+ * Next unused name with the given prefix among existing logical variable names
+ * (e.g. query0, query1, …) — same scheme as dashboard settings' getNextAvailableId.
+ */
+export function getNextAvailableVariableName(prefix: string, existingNames: string[]): string {
+  let counter = 0;
+  let nextId = `${prefix}${counter}`;
+  const taken = new Set(existingNames);
+  while (taken.has(nextId)) {
+    nextId = `${prefix}${++counter}`;
+  }
+  return nextId;
+}
+
 /** Folder UID from the folder annotation; undefined means the variable is global (org-wide). */
 export function getVariableFolderUid(variable: Variable): string | undefined {
   return variable.metadata.annotations?.[AnnoKeyFolder] || undefined;
