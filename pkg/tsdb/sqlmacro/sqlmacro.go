@@ -30,7 +30,13 @@ var sqlCommenterRegExp = regexp.MustCompile(`^/\*\s*[a-zA-Z0-9%_.-]+='(?:\\.|[^'
 // there is none. Callers re-append the tag verbatim after interpolation, so it
 // reaches the database unchanged and no macro can complete across the comment
 // boundary in either direction.
-func SplitTrailingSQLCommenter(sql string) (string, string) {
+//
+// lineCommentMarkers holds the engine's line-comment introducers ("--" for all
+// three engines, plus "#" for MySQL). Only markers the engine actually treats
+// as comments should be passed: "#" is ordinary syntax in T-SQL (#temp tables)
+// and PostgreSQL (#> JSON operators), and checking it there would drop valid
+// tags.
+func SplitTrailingSQLCommenter(sql string, lineCommentMarkers ...string) (string, string) {
 	trimmed := strings.TrimRight(sql, " \t\r\n")
 	for strings.HasSuffix(trimmed, ";") {
 		trimmed = strings.TrimRight(strings.TrimSuffix(trimmed, ";"), " \t\r\n")
@@ -56,12 +62,14 @@ func SplitTrailingSQLCommenter(sql string) (string, string) {
 	}
 	// A tag-shaped block inside a trailing line comment is not executable SQL and
 	// must not be revived: if the text before the tag on its own line contains a
-	// line-comment marker (-- or MySQL's #), leave the query untouched. This is
-	// conservative - a marker inside a string literal on that line also prevents
-	// splitting, which just falls back to the tag being stripped like any comment.
+	// line-comment marker, leave the query untouched. This is conservative - a
+	// marker inside a string literal on that line also prevents splitting, which
+	// just falls back to the tag being stripped like any comment.
 	lineStart := strings.LastIndexByte(trimmed[:open], '\n') + 1
-	if strings.Contains(trimmed[lineStart:open], "--") || strings.Contains(trimmed[lineStart:open], "#") {
-		return sql, ""
+	for _, marker := range lineCommentMarkers {
+		if strings.Contains(trimmed[lineStart:open], marker) {
+			return sql, ""
+		}
 	}
 	return sql[:open], sql[open:]
 }

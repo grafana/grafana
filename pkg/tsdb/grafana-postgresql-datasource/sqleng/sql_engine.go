@@ -232,7 +232,7 @@ func (e *DataSourceHandler) executeQuery(queryContext context.Context, query bac
 	// so split it off before interpolation and re-append it afterwards. This
 	// keeps it out of comment stripping and macro substitution, and prevents a
 	// macro from completing across the comment boundary in either direction.
-	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJSON.RawSql)
+	rawSQL, sqlCommenterTag := sqlmacro.SplitTrailingSQLCommenter(queryJSON.RawSql, "--")
 
 	// global substitutions
 	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, rawSQL)
