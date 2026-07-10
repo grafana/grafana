@@ -11,7 +11,8 @@ type OverrideStage int
 const (
 	// OverrideStageFlagged: migration gated by a feature flag; core suppressed when on, external blocked when off.
 	OverrideStageFlagged OverrideStage = iota
-	// OverrideStagePermanent: flag retired, core deleted; alias injected unconditionally for dashboard backwards compat.
+	// OverrideStagePermanent: flag retired, core deleted; alias injected and plugin preinstalled unconditionally.
+	// FeatureFlag should be left empty ("").
 	OverrideStagePermanent
 )
 

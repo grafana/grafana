@@ -162,7 +162,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
 		}
 		for _, o := range externaloverrides.Overrides {
-			if cfg.IsFeatureToggleEnabled(string(o.FeatureFlag)) { // Use literal string to avoid circular dependency
+			// FeatureFlagName cast to string; featuremgmt cannot be imported here due to import cycle.
+			// OverrideStagePermanent entries always preinstall — the core plugin is gone and there is no fallback.
+			if o.Stage == externaloverrides.OverrideStagePermanent || cfg.IsFeatureToggleEnabled(string(o.FeatureFlag)) {
 				preinstallPluginsAsync[o.ExternalPluginID] = InstallPlugin{o.ExternalPluginID, "", ""}
 			}
 		}
