@@ -19,7 +19,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const pageId = pageIdParam || params.get('page');
 
   const { plugin, loadError, loading } = useDataSourceSettings();
-  const alertingSupported = useIsAlertingSupported(datasource.type);
+  const { isSupported: alertingSupported, isLoading: alertingLoading } = useIsAlertingSupported(datasource.type);
 
   const navIndex = useSelector((state) => state.navIndex);
   const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
@@ -86,6 +86,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     pageNav: connectionsPageNav,
     dataSourceHeader: {
       alertingSupported,
+      alertingLoading,
     },
   };
 }
