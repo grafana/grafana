@@ -1,5 +1,3 @@
-import { type Page } from 'playwright-core';
-
 import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
@@ -45,12 +43,6 @@ test.describe(
     });
   }
 );
-
-// Helper functions
-async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await page.getByText('Group into row').click();
-}
 
 async function getPanelPosition(
   dashboardPage: DashboardPage,
