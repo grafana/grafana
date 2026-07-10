@@ -190,6 +190,7 @@ func runModelStateMachineTests(t *testing.T, opts ...func(*testutils.SetupConfig
 	})
 }
 
+//nolint:gocyclo
 func runSutStateMachineTests(t *testing.T) {
 	tt := t
 	rapid.Check(t, func(t *rapid.T) {
