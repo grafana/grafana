@@ -83,6 +83,7 @@ export function PinnedFilterControl({ variable, filter, labelClassName }: Pinned
           createCustomValue={allowCustomValue ?? true}
           isClearable
           disabled={disabled}
+          width="auto"
           minWidth={16}
           maxWidth={60}
         />
@@ -97,6 +98,7 @@ export function PinnedFilterControl({ variable, filter, labelClassName }: Pinned
           createCustomValue={allowCustomValue ?? true}
           isClearable
           disabled={disabled}
+          width="auto"
           minWidth={16}
           maxWidth={60}
         />

@@ -9,7 +9,6 @@ import { Button, Combobox, type ComboboxOption, Field, IconButton, Input, MultiC
 import {
   createMatchAllFilter,
   getPinnedFilterSelectedValues,
-  isMatchAllFilter,
   MULTI_VALUE_OPERATOR,
   PINNED_FILTER_ORIGIN,
   SINGLE_VALUE_OPERATOR,
@@ -125,12 +124,13 @@ export function PinnedFiltersEditor({
               onBlur={(event) => onLabelChange(index, event.currentTarget.value.trim())}
             />
             <MultiCombobox
+              width="auto"
               minWidth={25}
               maxWidth={50}
               data-testid={`pinned-filters-editor-values-${filter.key}`}
               placeholder={t('dashboard-scene.pinned-filters-editor.values-placeholder', 'Default values (optional)')}
               options={(inputValue) => loadValueOptions(getValueOptions, filter, inputValue)}
-              value={isMatchAllFilter(filter) ? [] : getPinnedFilterSelectedValues(filter)}
+              value={getPinnedFilterSelectedValues(filter)}
               onChange={(items) => onDefaultValuesChange(index, items)}
               createCustomValue={allowCustomValue}
               isClearable

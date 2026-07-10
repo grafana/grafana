@@ -1,6 +1,7 @@
 import { type SelectableValue } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFiltersVariable, type AdHocFilterWithLabels, isGroupByFilter } from '@grafana/scenes';
+import { type ComboboxOption } from '@grafana/ui';
 
 export const MATCH_ALL_OPERATOR = '=~';
 export const MATCH_ALL_VALUE = '.*';
@@ -43,7 +44,7 @@ export function createMatchAllFilter(key: string, keyLabel?: string): AdHocFilte
   };
 }
 
-export function getPinnedFilterSelectedValues(filter: AdHocFilterWithLabels): Array<SelectableValue<string>> {
+export function getPinnedFilterSelectedValues(filter: AdHocFilterWithLabels): Array<ComboboxOption<string>> {
   if (isMatchAllFilter(filter)) {
     return [];
   }
