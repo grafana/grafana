@@ -149,7 +149,10 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	}
 
 	ctx := c.Req.Context()
-	if !ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+	txCtx := openfeature.TransactionContext(ctx)
+	redirectsToK8s := ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	if !redirectsToK8s {
 		teamUID, errResp := tapi.resolveTeamUID(c, teamID)
 		if errResp != nil {
 			return errResp

@@ -8,11 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -250,6 +253,23 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
+	t.Run("Prevents deleting a team that owns folders when only the teams redirect is enabled", func(t *testing.T) {
+		setTeamRedirectFlags(t, true, false)
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusConflict, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
 	t.Run("Fails closed when checking folder ownership fails", func(t *testing.T) {
 		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
 			tapi.folderSearcher = &teamFolderSearchClient{err: errors.New("search unavailable")}
@@ -277,6 +297,26 @@ type teamFolderSearchClient struct {
 func (s *teamFolderSearchClient) Search(_ context.Context, request *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	s.request = request
 	return s.response, s.err
+}
+
+func setTeamRedirectFlags(t *testing.T, teamsRedirect, usersAPI bool) {
+	t.Helper()
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesTeamsRedirect: {
+			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": teamsRedirect},
+		},
+		featuremgmt.FlagKubernetesUsersApi: {
+			Key:            featuremgmt.FlagKubernetesUsersApi,
+			DefaultVariant: "default",
+			Variants:       map[string]any{"default": usersAPI},
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	})
 }
 
 // Given a team with a user, when the user is granted X permission,
