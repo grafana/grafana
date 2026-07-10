@@ -23,13 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
-// RunLeaseTest runs the lease contract suite against any kv.KV produced by
-// newKV. The suite is shared between unit tests (using an in-memory map KV)
-// and integration tests (Badger and sqlkv).
-func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
+// RunLeaseTest runs the lease contract suite against a single shared kv.KV. The
+// suite is shared between unit tests (using an in-memory map KV) and integration
+// tests (Badger and sqlkv), and isolates cases from one another via lease names.
+func RunLeaseTest(t *testing.T, store kv.KV) {
 	t.Helper()
 
-	store := newKV(t.Context())
 	t.Cleanup(func() { validateLeaseStore(t, store) })
 
 	t.Run("happy path", func(t *testing.T) { runLeaseHappyPath(t, store) })
@@ -294,7 +293,10 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 }
 
 func runLeaseAutoRenew(t *testing.T, store kv.KV) {
-	const ttl = 500 * time.Millisecond
+	// A generous TTL keeps the renewal loop's per-attempt budget (ttl/3 * 3/4)
+	// and expiry window wide enough to absorb scheduling jitter and slow DB ops
+	// on loaded CI runners, where a shorter TTL flakes.
+	const ttl = 2 * time.Second
 	ctx := t.Context()
 
 	t.Run("keeps lease alive past TTL", func(t *testing.T) {

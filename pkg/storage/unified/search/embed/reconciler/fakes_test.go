@@ -18,6 +18,7 @@ import (
 // and a latestRv equal to the highest RV in the slice. Empty namespace
 // on the request runs cross-namespace, mirroring the real backends.
 type fakeStorage struct {
+	resource.UnimplementedStorageBackend
 	mu       sync.Mutex
 	changes  []*resource.ModifiedResource
 	listErr  error
@@ -101,6 +102,7 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	}
 	return out, nil
 }
+
 func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	panic("not implemented")
 }

@@ -1,6 +1,6 @@
 import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
-import { type LanguageChanged, type SaveButtonClicked, type ThemeChanged } from './types';
+import { type HomeDashboardChanged, type LanguageChanged, type SaveButtonClicked, type ThemeChanged } from './types';
 
 /** @owner grafana-frontend-platform */
 const createSharedPreferencesEvents = defineFeatureEvents('grafana', 'preferences');
@@ -13,3 +13,6 @@ export const themeChanged = createSharedPreferencesEvents<ThemeChanged>('theme_c
 
 /** Fired immediately when the user selects a new language from the language picker, before saving. */
 export const languageChanged = createSharedPreferencesEvents<LanguageChanged>('language_changed');
+
+/** Fired after preferences save succeeds with a changed home dashboard — the user switched to/from a custom homepage. */
+export const homeDashboardChanged = createSharedPreferencesEvents<HomeDashboardChanged>('home_dashboard_changed');
