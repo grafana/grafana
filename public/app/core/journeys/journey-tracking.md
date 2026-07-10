@@ -14,6 +14,7 @@ This documentation describes the Critical User Journey tracking framework in Gra
   - [Journeys](#journeys)
   - [Phase 1 Journeys](#phase-1-journeys)
     - [search_to_resource](#search_to_resource)
+    - [home_to_alert_insight](#home_to_alert_insight)
     - [browse_to_resource](#browse_to_resource)
     - [dashboard_edit](#dashboard_edit)
     - [panel_edit](#panel_edit)
@@ -184,7 +185,7 @@ handle.end('success', { dashboardUid })
 
 ## Journeys
 
-> # **Status:** only `search_to_resource` ships in this PR. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
+> **Status:** `search_to_resource` and `home_to_alert_insight` ship today. The other five entries below are forward-looking specs for the squads that will own them — wirings land in a follow-up PR.
 
 ## Phase 1 Journeys
 
@@ -209,6 +210,37 @@ User searches for a resource via command palette and navigates to it.
 - Resource type detection uses action ID prefixes: `go/dashboard` -> dashboard, `go/folder` -> folder, anything else -> other (nav action).
 - Nav actions (Explore, Alerting, etc.) end as `success` when the palette closes after selection, since the close IS the navigation.
 - `command_palette_closed` is a silent interaction - fires `onInteraction` subscribers but is not sent to analytics backends.
+
+### home_to_alert_insight
+
+**File:** `public/app/core/journeys/homeToAlertInsight.ts`
+
+User clicks a control on the homepage "Firing alerts" card and reaches the destination value moment. Measures time-to-value (MTTV) from the homepage widget to the alerting page requested. All four card controls start the journey; `action` selects which destination load event ends it.
+
+| Event                 | Trigger                                                          | Action                                                     |
+| --------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| Start                 | `grafana_homepage_cta_clicked` (surface `alerts_card`, any of the four actions) | Journey starts; `action` selects the end leg               |
+| End (alert_detail)    | `grafana_alerting_rule_viewer_loaded`                            | Rule detail settled — success, or error on not_found/error |
+| End (view_all_alerts) | `grafana_alerting_alert_groups_loaded`                           | Alert groups query settled — success or error              |
+| End (create_rule)     | `grafana_alerting_rule_editor_loaded`                            | Editor rendered — success, or error when permission denied |
+| End (view_all_rules)  | `grafana_alerting_rule_list_page_view`                           | Rule list mounted — success (fires before data; weak leg)  |
+
+**Silent interactions added by this journey:** `grafana_alerting_rule_viewer_loaded`, `grafana_alerting_alert_groups_loaded`, `grafana_alerting_rule_editor_loaded` — emitted once per mount on RuleViewer, AlertGroups, and RuleEditor respectively. `grafana_alerting_rule_list_page_view` is the rule list's existing mount-time event, reused here.
+
+**Attributes:**
+
+- `action` — which card control was clicked (`alert_detail`, `view_all_alerts`, `view_all_rules`, `create_rule`); slices the insight legs from the creation leg.
+- `placement` — where on the card the control lives (`list`, `empty_state`, `footer`).
+- `severity` — canonical severity of the clicked alert (`alert_detail` only; empty otherwise).
+- `msSinceLoad` — dwell: milliseconds between the card's data becoming visible and the click. Carried as an additive prop on the loud `grafana_homepage_cta_clicked` event and mirrored onto the journey.
+
+**Key behaviors:**
+
+- Per-leg end matching: a journey only ends on ITS destination's load event, so a user who bails to a different alerting page never records a false success.
+- `cancelOnRestart` (registry default): a second qualifying click cancels the in-flight journey and starts a fresh one — correct MTTV semantics for a retried click. The wiring does not guard with `getActiveJourney`.
+- No discard condition: nothing emits a "navigated elsewhere" interaction, so an abandoned journey ends via the 60s timeout, not `discarded`.
+- Weak `view_all_rules` leg: `grafana_alerting_rule_list_page_view` fires at mount, before the rule list data loads — it is the only signal the rule list emits today, so this leg over-reports "fast".
+- The three `*_loaded` events are silent (`reportInteraction(..., { silent: true })`): they reach `onInteraction` subscribers (the journey) but never analytics backends.
 
 ### browse_to_resource
 

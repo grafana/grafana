@@ -361,6 +361,8 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'alert_detail',
         placement: 'list',
+        severity: 'critical',
+        ms_since_load: expect.any(Number),
       });
     });
 
@@ -382,6 +384,7 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'create_rule',
         placement: 'empty_state',
+        ms_since_load: expect.any(Number),
       });
     });
 
@@ -402,6 +405,7 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'create_rule',
         placement: 'footer',
+        ms_since_load: expect.any(Number),
       });
 
       await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
@@ -409,6 +413,7 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'view_all_alerts',
         placement: 'footer',
+        ms_since_load: expect.any(Number),
       });
     });
 
@@ -424,6 +429,7 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'view_all_rules',
         placement: 'footer',
+        ms_since_load: expect.any(Number),
       });
     });
   });

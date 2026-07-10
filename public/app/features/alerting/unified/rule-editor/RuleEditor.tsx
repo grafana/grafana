@@ -1,9 +1,11 @@
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 
 import { AlertWarning } from '../AlertWarning';
+import { trackRuleEditorLoaded } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
@@ -29,6 +31,22 @@ const RuleEditor = () => {
   const isManualRestore = useManualRestore();
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
+
+  // CUJ signal: emit once on mount when the editor resolves to a rendered form or a permission
+  // denial, so the home_to_alert_insight journey can measure time-to-value for the create_rule
+  // leg. Fires for existing-rule edits too; harmless since the event is silent and the journey
+  // only consumes it on the create_rule leg. `denied` mirrors the two permission-warning branches.
+  const editorTracked = useRef(false);
+  const denied =
+    (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) ||
+    (!!identifier && !canEditRules(identifier.ruleSourceName));
+  useEffect(() => {
+    if (editorTracked.current) {
+      return;
+    }
+    editorTracked.current = true;
+    trackRuleEditorLoaded({ status: denied ? 'denied' : 'success' });
+  }, [denied]);
 
   if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
     return (
