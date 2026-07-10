@@ -211,8 +211,8 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
     generateDashboardPreviews: spec.github
-      ? spec.github?.generateDashboardPreviews
-      : spec.pullRequest?.generateDashboardPreviews || false,
+      ? (spec.github?.generateDashboardPreviews ?? false)
+      : (spec.pullRequest?.generateDashboardPreviews ?? false),
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
