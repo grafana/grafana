@@ -82,6 +82,7 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
+    | "grafana.pinnedFilters"
     | "grafana.thresholdsInterpolation";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

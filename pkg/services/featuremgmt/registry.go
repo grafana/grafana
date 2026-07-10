@@ -3127,6 +3127,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.pinnedFilters",
+			Description: "Promotes selected dashboard filter fields to always-visible, value-only filter controls",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageExperimental,
