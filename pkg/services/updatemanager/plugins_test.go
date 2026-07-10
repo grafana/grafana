@@ -243,6 +243,41 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 
 		require.Empty(t, svc.availableUpdates["test-core-panel"])
 	})
+
+	t.Run("sends the grafana.com token when configured", func(t *testing.T) {
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+		client := &fakeHTTPClient{fakeResp: "[]"}
+		svc := PluginsService{
+			availableUpdates: map[string]availableUpdate{},
+			pluginStore:      &pluginstore.FakePluginStore{},
+			httpClient:       client,
+			log:              log.NewNopLogger(),
+			tracer:           tracing.InitializeTracerForTest(),
+			updateCheckURL:   updateCheckURL,
+			updateCheckToken: "token",
+		}
+
+		err := svc.checkForUpdates(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "Bearer token", client.authHeader)
+	})
+
+	t.Run("does not send an authorization header without a token", func(t *testing.T) {
+		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
+		client := &fakeHTTPClient{fakeResp: "[]"}
+		svc := PluginsService{
+			availableUpdates: map[string]availableUpdate{},
+			pluginStore:      &pluginstore.FakePluginStore{},
+			httpClient:       client,
+			log:              log.NewNopLogger(),
+			tracer:           tracing.InitializeTracerForTest(),
+			updateCheckURL:   updateCheckURL,
+		}
+
+		err := svc.checkForUpdates(context.Background())
+		require.NoError(t, err)
+		require.Empty(t, client.authHeader)
+	})
 }
 
 func TestPluginUpdateChecker_updateAll(t *testing.T) {
@@ -294,10 +329,12 @@ type fakeHTTPClient struct {
 	fakeResp string
 
 	requestURL string
+	authHeader string
 }
 
 func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	c.requestURL = req.URL.String()
+	c.authHeader = req.Header.Get("Authorization")
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
