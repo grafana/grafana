@@ -302,6 +302,7 @@
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@popperjs/core": "2.11.8",
+    "@prometheus-io/lezer-promql": "0.307.3",
     "@rc-component/tree": "1.1.0",
     "@react-aria/dialog": "3.5.31",
     "@react-aria/focus": "3.21.2",
