@@ -173,6 +173,9 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
       </Field>
 
       <VariableEditorForm
+        // Remount on type change (new scene key) so the form's name-error state and
+        // uncontrolled inputs reset with the committed name — same as dashboard settings.
+        key={sceneVariable.state.key}
         variable={sceneVariable}
         onTypeChange={onTypeChange}
         onGoBack={onBack}

@@ -163,7 +163,9 @@ export default function VariablesManagementPage() {
       <Page navId="dashboards/variables" pageNav={pageNav}>
         <Page.Contents isLoading={!isNew && isLoading}>
           {isNew || editVariable ? (
-            <VariableEditorView source={editVariable} onBack={backToList} />
+            // Key by route identity so local editor state resets when navigating
+            // between /edit/:name URLs (or to /new) without unmounting the page.
+            <VariableEditorView key={editName ?? 'new'} source={editVariable} onBack={backToList} />
           ) : isError ? (
             // Don't claim "not found" when the list simply failed to load.
             <LoadVariablesError error={error} onBack={backToList} />
