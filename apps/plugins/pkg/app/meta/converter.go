@@ -788,10 +788,9 @@ func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafana
 }
 
 // placeholderVersion and placeholderUpdated are the unsubstituted plugin.json
-// placeholders that the build system leaves in place when it does not replace them.
-// They are treated as "unset", mirroring the loader's TemplateDecorateFunc, so that
-// downstream version handling (e.g. inheriting a nested plugin's version from its
-// parent) is not defeated by a literal "%VERSION%".
+// placeholders that the build system leaves in place for nested plugins.
+// We need to blank them out so that downstream version handling
+// is not defeated by a literal "%VERSION%".
 const (
 	placeholderVersion = "%VERSION%"
 	placeholderUpdated = "%TODAY%"
