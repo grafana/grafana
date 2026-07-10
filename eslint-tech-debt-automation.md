@@ -101,9 +101,10 @@ Only if Steps 1–4 fully succeeded:
 2. `git push` the branch.
 3. Open the pull request:
    - Title: `Chore: fix eslint suppressions — <rule> in <file/area>`. The `Chore: fix eslint suppressions —` prefix is mandatory — Step 0 uses it to detect this PR on the next run.
-   - Body: which rule(s) and file(s) were addressed, the count of suppressions removed, how they were fixed, and confirmation that typecheck, lint, and tests passed. Note the PR was opened by the ESLint tech-debt automation, and any questions should be directed to the Grafana Frontend Platform team.
+   - Body: which rule(s) and file(s) were addressed, the count of suppressions removed, how they were fixed, and confirmation that typecheck, lint, and tests passed.
+   - Include a disclaimer at the bottom, seperated by a horizontal rule, that the PR was opened by the ESLint tech-debt automation, anyone can review the pull request if they're confident in it, and any questions should be directed towards the Grafana Frontend Platform team.
 4. Mark the pull request as ready for review (not draft)
-5. Request review from the `grafana-frontend-platform` team
+5. Request review from the `grafana/grafana-frontend-platform` team
 6. Brag about the PR in the `#grafana-frontend-cursor-spam` Slack channel with the link and a brief summary of what was fixed, and tag `@grafana-frontend-platform-triage`.
 7. Stop. (The system surfaces the PR link; you do not need to print it.)
 
