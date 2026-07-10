@@ -1,28 +1,38 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type default as uPlot, type AlignedData } from 'uplot';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type default as uPlot } from 'uplot';
 
-import { colorManipulator, type DataFrame, dateTimeFormat, FeatureState, type GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  type DataFrame,
+  dateTime,
+  type Field,
+  FeatureState,
+  FieldColorModeId,
+  FieldType,
+  getDisplayProcessor,
+  getTimeZone,
+  type GrafanaTheme2,
+  type TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { GraphDrawStyle, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import {
   AxisPlacement,
-  DEFAULT_ANNOTATION_COLOR,
-  FeatureBadge,
-  IconButton,
-  Popover,
-  Tooltip,
-  UPlotChart,
-  UPlotConfigBuilder,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+  GraphDrawStyle,
+  type VizAnnotations,
+  type VizLegendOptions,
+  VisibilityMode,
+} from '@grafana/schema';
+import { FeatureBadge, IconButton, Popover, useStyles2, useTheme2 } from '@grafana/ui';
+import { type UPlotConfigBuilder } from '@grafana/ui/internal';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { AnnotationsPlugin } from 'app/plugins/panel/timeseries/plugins/AnnotationsPlugin';
 
 import { ContextWindowSelector } from './ContextWindowSelector';
 import { WHEEL_ZOOM_BASE, type TimeRangeMs } from './timeModel';
-import { type TimebarActions, useTimebar } from './timebarState';
+import { type TimebarActions, type TimebarState, useTimebar } from './timebarState';
 
-/** Fixed height of the uPlot time ruler, in px. */
+/** Fixed height of the time ruler, in px. */
 const CHART_HEIGHT = 50;
 /** Width of a selection resize handle, in px. */
 const HANDLE_WIDTH = 6;
@@ -72,12 +82,21 @@ const overPxToVal = (over: HTMLElement, overPx: number, ctx: TimeRangeMs): numbe
 const containerPxToVal = (over: HTMLElement, containerPx: number, ctx: TimeRangeMs): number =>
   overPxToVal(over, containerPx - over.offsetLeft, ctx);
 
-/** Read a named annotation-frame column, or undefined if the frame lacks it. */
-const fieldValues = (frame: DataFrame, name: string): unknown[] | undefined =>
-  frame.fields.find((f) => f.name === name)?.values;
-
 // Per-instance teardown for the imperative listeners attached in the uPlot `ready` hook.
 const timebarCleanups = new WeakMap<uPlot, () => void>();
+
+// AnnotationsPlugin requires an interpolate function and a WIP-range setter; the timebar creates neither
+// (it never edits annotations), so both are inert.
+const noopInterpolate = (value: string) => value;
+const noopSetNewRange = () => {};
+
+// The timebar never shows a legend; a stable module-level object keeps TimeSeries from reconfiguring the
+// plot every render (its `legend` prop is compared by reference).
+const HIDDEN_LEGEND: VizLegendOptions = { showLegend: false, calcs: [], placement: 'bottom' };
+
+// Thin, low-weight annotation lines (the plugin default width is 2) — this is a compact background ruler,
+// so keep the markings light.
+const ANNOTATION_OPTIONS: VizAnnotations = { lines: { width: 1 } };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
@@ -118,206 +137,43 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.primary.shade,
     },
   }),
-  // Small marker at the bottom (axis baseline) — the hover target. Sits below the selection box so
-  // annotations under the selection are still hoverable, and it doesn't block dragging the selection body.
-  annotationMarker: css({
-    position: 'absolute',
-    width: 12,
-    height: 10,
-    marginLeft: -6,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    cursor: 'pointer',
-    zIndex: 12,
-  }),
-  // Upward-pointing triangle (colour set inline per annotation).
-  annotationTriangle: css({
-    width: 0,
-    height: 0,
-    borderLeft: '4px solid transparent',
-    borderRight: '4px solid transparent',
-    borderBottomWidth: 6,
-    borderBottomStyle: 'solid',
-  }),
-  tooltipTime: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    marginBottom: theme.spacing(0.5),
-  }),
-  tooltipTags: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
-    marginTop: theme.spacing(0.5),
-  }),
 });
 
-export const TimeBar: React.FC<TimeBarProps> = ({
-  value,
-  now,
-  width,
-  height,
-  time,
-  values,
-  annotations,
-  contextZoomFactor,
-  onChangeTimeRange,
-  onContextWindowChange,
-  extraControls,
-}) => {
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+interface InteractionPluginProps {
+  config: UPlotConfigBuilder;
+  uplotRef: React.MutableRefObject<uPlot | null>;
+  stateRef: React.MutableRefObject<TimebarState>;
+  actionsRef: React.MutableRefObject<TimebarActions>;
+  dragCleanup: React.MutableRefObject<(() => void) | null>;
+  updateOverlay: () => void;
+}
 
-  const { state, actions } = useTimebar({ value, now, contextZoomFactor, onChangeTimeRange });
-
-  // Latest state/actions in refs so listeners attached once (in the uPlot `ready` hook) stay current.
-  const uplotRef = useRef<uPlot | null>(null);
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  const actionsRef = useRef<TimebarActions>(actions);
-  actionsRef.current = actions;
-  // Annotation frames read live inside the uPlot `draw` hook (built once); ref keeps it current.
-  const annotationsRef = useRef(annotations);
-  annotationsRef.current = annotations;
-
-  const [overlay, setOverlay] = useState<OverlayGeom | null>(null);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  // Removes any in-flight window drag/pan listeners (no commit) so a mid-gesture unmount can't leak them.
-  const dragCleanup = useRef<(() => void) | null>(null);
-
-  const chartWidth = Math.max(0, width);
-  const seriesCount = values.length;
-
-  // One aligned uPlot table: [time, ...series]. Stable identity so setData only fires on real data changes
-  // (UPlotChart's check is by reference); combined with the pinned scale below this stops auto-ranging.
-  const data = useMemo<AlignedData>(() => [time, ...values], [time, values]);
-
-  const updateOverlay = useCallback(() => {
-    const u = uplotRef.current;
-    if (!u) {
-      return;
-    }
-    const over = u.over;
-    const ctx = stateRef.current.contextWindow;
-    const sel = stateRef.current.selection;
-    // Clamp to the plot area so a selection outside the context window renders at the edge rather than
-    // overflowing the container (which would grow the page / show scrollbars).
-    const minPx = over.offsetLeft;
-    const maxPx = over.offsetLeft + over.clientWidth;
-    const clampPx = (px: number) => Math.max(minPx, Math.min(maxPx, px));
-    setOverlay({
-      left: clampPx(valToContainerPx(over, sel.from, ctx)),
-      right: clampPx(valToContainerPx(over, sel.to, ctx)),
-      top: over.offsetTop,
-      height: over.clientHeight,
-      overLeft: over.offsetLeft,
-      overWidth: over.clientWidth,
-    });
-  }, []);
-
-  // Build the uPlot config ONCE (keyed on theme). The x-scale is pinned to the context window via a range
-  // function (so uPlot.setData can never auto-range over it) and pushed on change via setScale below.
-  const builder = useMemo(() => {
-    const b = new UPlotConfigBuilder();
-
-    b.setCursor({ x: true, y: false, drag: { x: true, y: false, setScale: false } });
-    b.addScale({
-      scaleKey: 'x',
-      isTime: true,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
-      range: () => {
-        const c = stateRef.current.contextWindow;
-        return [c.from, c.to];
-      },
-    });
-    b.addAxis({ placement: AxisPlacement.Bottom, scaleKey: 'x', isTime: true, theme });
-
-    // Faint background sparkline(s) — one per referenced series. Each gets its OWN auto-ranging y-scale so
-    // series of different magnitudes each fill the height (normalized to their own min/max over the context
-    // window) rather than sharing one scale. Distinct theme-palette colors, kept faint, so overlapping
-    // series stay distinguishable without competing with the selection overlay.
-    const palette = theme.visualization.palette;
-    const seriesColor = (i: number) =>
-      colorManipulator.alpha(theme.visualization.getColorByName(palette[i % palette.length]), 0.5);
-    for (let i = 0; i < seriesCount; i++) {
-      const scaleKey = `spark-y-${i}`;
-      b.addScale({ scaleKey, orientation: ScaleOrientation.Vertical, direction: ScaleDirection.Up });
-      b.addSeries({
-        scaleKey,
-        theme,
-        pxAlign: false,
-        drawStyle: GraphDrawStyle.Line,
-        lineColor: seriesColor(i),
-        lineWidth: 1,
-        showPoints: VisibilityMode.Never,
-        pointSize: 0,
-        spanNulls: true,
-      });
-    }
-
-    // Annotation markers, drawn on top of the sparklines: a vertical line per event, plus a faint filled
-    // rectangle for regions (timeEnd present). Frames are read live via a ref; a redraw is forced on change.
-    const resolveColor = (name?: string) => {
-      try {
-        return theme.visualization.getColorByName(name ?? DEFAULT_ANNOTATION_COLOR);
-      } catch {
-        return theme.visualization.getColorByName(DEFAULT_ANNOTATION_COLOR);
-      }
-    };
-    b.addHook('draw', (u: uPlot) => {
-      const frames = annotationsRef.current;
-      if (!frames?.length) {
-        return;
-      }
-      const ctx = u.ctx;
-      const top = u.bbox.top;
-      const h = u.bbox.height;
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(u.bbox.left, top, u.bbox.width, h);
-      ctx.clip();
-      ctx.lineWidth = window.devicePixelRatio || 1;
-      for (const frame of frames) {
-        const times = fieldValues(frame, 'time');
-        if (!times) {
-          continue;
-        }
-        const ends = fieldValues(frame, 'timeEnd');
-        const colors = fieldValues(frame, 'color');
-        const regions = fieldValues(frame, 'isRegion');
-        for (let i = 0; i < times.length; i++) {
-          const at = times[i];
-          if (typeof at !== 'number') {
-            continue;
-          }
-          const rawColor = colors?.[i];
-          const color = resolveColor(typeof rawColor === 'string' ? rawColor : undefined);
-          const x0 = Math.round(u.valToPos(at, 'x', true));
-          const end = ends?.[i];
-          if (regions?.[i] && typeof end === 'number') {
-            const x1 = Math.round(u.valToPos(end, 'x', true));
-            try {
-              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            } catch {
-              ctx.fillStyle = colorManipulator.alpha(DEFAULT_ANNOTATION_COLOR, 0.1);
-            }
-            ctx.fillRect(x0, top, x1 - x0, h);
-          }
-          ctx.strokeStyle = color;
-          ctx.beginPath();
-          ctx.moveTo(x0, top);
-          ctx.lineTo(x0, top + h);
-          ctx.stroke();
-        }
-      }
-      ctx.restore();
-    });
+/**
+ * Registers the timebar's own interactions on the shared TimeSeries uPlot config: drag-to-create selection
+ * (via `setSelect`), wheel-zoom of the context window, and x-axis drag-pan of the context window. It also
+ * captures the uPlot instance in the `ready` hook so the persistent selection overlay (rendered in TimeBar)
+ * can position itself with context math. We deliberately do NOT mount TooltipPlugin2 / XAxisInteractionArea
+ * from the panel — those would re-enable drag-to-zoom of the dashboard; our brush owns the drag instead
+ * (`drag.setScale=false`).
+ */
+const TimeBarInteraction = ({
+  config,
+  uplotRef,
+  stateRef,
+  actionsRef,
+  dragCleanup,
+  updateOverlay,
+}: InteractionPluginProps) => {
+  useLayoutEffect(() => {
+    // A vertical cursor line but no y cursor; the brush drags on x only and never commits a scale change
+    // (our brush reads the range and commits a selection instead). Disable cursor "points" — the dot that
+    // snaps to each series at the mouse x — since this is a background ruler, not a data-inspection chart.
+    config.setCursor({ x: true, y: false, points: { show: false }, drag: { x: true, y: false, setScale: false } });
 
     // uPlot native drag-select is used only to CREATE a new selection: read the range, commit it, then
     // clear uPlot's transient box (our overlay renders the persistent selection). We never call setSelect
     // programmatically, so this hook only ever fires from a genuine user brush.
-    b.addHook('setSelect', (u: uPlot) => {
+    config.addHook('setSelect', (u: uPlot) => {
       if (stateRef.current.interaction !== 'idle') {
         return;
       }
@@ -334,7 +190,7 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
     });
 
-    b.addHook('ready', (u: uPlot) => {
+    config.addHook('ready', (u: uPlot) => {
       uplotRef.current = u;
       const ctx = stateRef.current.contextWindow;
       u.setScale('x', { min: ctx.from, max: ctx.to });
@@ -384,16 +240,136 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       requestAnimationFrame(updateOverlay);
     });
 
-    b.addHook('destroy', (u: uPlot) => {
+    config.addHook('destroy', (u: uPlot) => {
       timebarCleanups.get(u)?.();
       timebarCleanups.delete(u);
       if (uplotRef.current === u) {
         uplotRef.current = null;
       }
     });
+  }, [config, uplotRef, stateRef, actionsRef, dragCleanup, updateOverlay]);
 
-    return b;
-  }, [theme, updateOverlay, seriesCount]);
+  return null;
+};
+
+export const TimeBar: React.FC<TimeBarProps> = ({
+  value,
+  now,
+  width,
+  height,
+  time,
+  values,
+  annotations,
+  contextZoomFactor,
+  onChangeTimeRange,
+  onContextWindowChange,
+  extraControls,
+}) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  const { state, actions } = useTimebar({ value, now, contextZoomFactor, onChangeTimeRange });
+
+  // Latest state/actions in refs so listeners attached once (in the uPlot `ready` hook) stay current.
+  const uplotRef = useRef<uPlot | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const actionsRef = useRef<TimebarActions>(actions);
+  actionsRef.current = actions;
+
+  const [overlay, setOverlay] = useState<OverlayGeom | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  // Removes any in-flight window drag/pan listeners (no commit) so a mid-gesture unmount can't leak them.
+  const dragCleanup = useRef<(() => void) | null>(null);
+
+  const chartWidth = Math.max(0, width);
+  const seriesCount = values.length;
+
+  // Faint background sparkline(s) as a single DataFrame: one time field + one number field per series. Each
+  // series is drawn faint (distinct theme-palette colors at half alpha) so overlapping series stay
+  // distinguishable without competing with the selection overlay.
+  const frame = useMemo<DataFrame>(() => {
+    const palette = theme.visualization.palette;
+    const seriesColor = (i: number) =>
+      colorManipulator.alpha(theme.visualization.getColorByName(palette[i % palette.length]), 0.5);
+
+    const timeField: Field = { name: 'time', type: FieldType.time, config: {}, values: time };
+    const seriesFields: Field[] = values.map((vals, i) => {
+      const field: Field = {
+        // Unique name so tweakScale can give each series its own auto-ranging y-scale (see below).
+        name: `series-${i}`,
+        type: FieldType.number,
+        values: vals,
+        config: {
+          color: { mode: FieldColorModeId.Fixed, fixedColor: seriesColor(i) },
+          custom: {
+            drawStyle: GraphDrawStyle.Line,
+            lineWidth: 1,
+            fillOpacity: 0,
+            showPoints: VisibilityMode.Never,
+            spanNulls: true,
+            axisPlacement: AxisPlacement.Hidden,
+            // A unique axis label per series makes buildScaleKey produce a distinct y-scale for each, so every
+            // sparkline auto-ranges to its own min/max over the context window instead of sharing one scale.
+            // The axis is Hidden, so the label text never renders.
+            axisLabel: `series-${i}`,
+          },
+        },
+      };
+      field.display = getDisplayProcessor({ field, theme });
+      return field;
+    });
+
+    return { name: 'timebar', fields: [timeField, ...seriesFields], length: time.length };
+  }, [time, values, theme]);
+
+  // Stable array identity so GraphNG doesn't re-align + re-setData on every render (it re-aligns whenever
+  // the `frames` reference changes) — e.g. during a selection drag. Only changes when `frame` does.
+  const frames = useMemo(() => [frame], [frame]);
+
+  // Bump only when the frame structure (series count) changes, so TimeSeries re-inits the plot/config then
+  // but NOT on every background-data update (which would reset the plot).
+  const structureRevRef = useRef(0);
+  const prevSeriesCount = useRef(seriesCount);
+  if (prevSeriesCount.current !== seriesCount) {
+    prevSeriesCount.current = seriesCount;
+    structureRevRef.current += 1;
+  }
+  const structureRev = structureRevRef.current;
+
+  // Drive the x-scale from the CONTEXT WINDOW (not the dashboard range). TimeSeries reads this via
+  // getTimeRange for its x-scale range fn; we additionally push it imperatively (see effect below) because
+  // TimeSeries only re-reads the range on data/size/config changes, and the context window can move alone.
+  const contextTimeRange = useMemo<TimeRange>(() => {
+    const from = dateTime(state.contextWindow.from);
+    const to = dateTime(state.contextWindow.to);
+    return { from, to, raw: { from, to } };
+  }, [state.contextWindow.from, state.contextWindow.to]);
+
+  const tz = getTimeZone();
+
+  const updateOverlay = useCallback(() => {
+    const u = uplotRef.current;
+    if (!u) {
+      return;
+    }
+    const over = u.over;
+    const ctx = stateRef.current.contextWindow;
+    const sel = stateRef.current.selection;
+    // Clamp to the plot area so a selection outside the context window renders at the edge rather than
+    // overflowing the container (which would grow the page / show scrollbars).
+    const minPx = over.offsetLeft;
+    const maxPx = over.offsetLeft + over.clientWidth;
+    const clampPx = (px: number) => Math.max(minPx, Math.min(maxPx, px));
+    setOverlay({
+      left: clampPx(valToContainerPx(over, sel.from, ctx)),
+      right: clampPx(valToContainerPx(over, sel.to, ctx)),
+      top: over.offsetTop,
+      height: over.clientHeight,
+      overLeft: over.offsetLeft,
+      overWidth: over.clientWidth,
+    });
+  }, []);
 
   // Push the context window to the x-scale (triggers a redraw) and reposition the overlay when either
   // range or the size changes. updateOverlay uses context math, so it's independent of setScale's timing.
@@ -415,11 +391,6 @@ export const TimeBar: React.FC<TimeBarProps> = ({
 
   // Remove any dangling window listeners if we unmount mid-drag (without committing).
   useEffect(() => () => dragCleanup.current?.(), []);
-
-  // uPlot won't re-run its draw hooks just because the annotations ref changed — force a redraw.
-  useEffect(() => {
-    uplotRef.current?.redraw();
-  }, [annotations]);
 
   // Report context-window changes so a host can fetch background data for the visible range.
   const onContextWindowChangeRef = useRef(onContextWindowChange);
@@ -492,50 +463,6 @@ export const TimeBar: React.FC<TimeBarProps> = ({
     actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
   }, []);
 
-  // Interactive hover targets for annotations: thin transparent strips over each canvas-drawn line, mapped
-  // with the same context->pixel convention as the selection overlay (so they line up with the lines).
-  const annotationMarkers = useMemo(() => {
-    if (!overlay || !annotations?.length) {
-      return [];
-    }
-    const ctx = state.contextWindow;
-    const span = ctx.to - ctx.from || 1;
-    const resolveColor = (name?: string) => {
-      try {
-        return theme.visualization.getColorByName(name ?? DEFAULT_ANNOTATION_COLOR);
-      } catch {
-        return theme.visualization.getColorByName(DEFAULT_ANNOTATION_COLOR);
-      }
-    };
-    const markers: Array<{ x: number; when: string; text: string; tags: string[]; color: string }> = [];
-    for (const frame of annotations) {
-      const times = fieldValues(frame, 'time');
-      if (!times) {
-        continue;
-      }
-      const texts = fieldValues(frame, 'text');
-      const tagsCol = fieldValues(frame, 'tags');
-      const colors = fieldValues(frame, 'color');
-      for (let i = 0; i < times.length; i++) {
-        const at = times[i];
-        if (typeof at !== 'number' || at < ctx.from || at > ctx.to) {
-          continue;
-        }
-        const rawText = texts?.[i];
-        const rawTags = tagsCol?.[i];
-        const rawColor = colors?.[i];
-        markers.push({
-          x: overlay.overLeft + ((at - ctx.from) / span) * overlay.overWidth,
-          when: dateTimeFormat(at),
-          text: typeof rawText === 'string' ? rawText.replace(/<[^>]*>/g, '').trim() : '',
-          tags: Array.isArray(rawTags) ? rawTags.filter((x): x is string => typeof x === 'string') : [],
-          color: resolveColor(typeof rawColor === 'string' ? rawColor : undefined),
-        });
-      }
-    }
-    return markers;
-  }, [annotations, overlay, state.contextWindow, theme]);
-
   const handleHeight = overlay ? overlay.height * 0.6 : 0;
   const handleTop = overlay ? overlay.top + (overlay.height - handleHeight) / 2 : 0;
 
@@ -599,25 +526,40 @@ export const TimeBar: React.FC<TimeBarProps> = ({
       </div>
 
       <div className={styles.plotArea} style={{ width: chartWidth, height: CHART_HEIGHT }}>
-        {chartWidth > 0 && <UPlotChart data={data} width={chartWidth} height={CHART_HEIGHT} config={builder} />}
-        {overlay &&
-          annotationMarkers.map((m, idx) => (
-            <Tooltip
-              key={idx}
-              placement="top"
-              content={
-                <div>
-                  {m.when && <div className={styles.tooltipTime}>{m.when}</div>}
-                  {m.text && <div>{m.text}</div>}
-                  {m.tags.length > 0 && <div className={styles.tooltipTags}>{m.tags.join(', ')}</div>}
-                </div>
-              }
-            >
-              <div className={styles.annotationMarker} style={{ left: m.x, top: overlay.top + overlay.height - 1 }}>
-                <span className={styles.annotationTriangle} style={{ borderBottomColor: m.color }} />
-              </div>
-            </Tooltip>
-          ))}
+        {chartWidth > 0 && (
+          <TimeSeries
+            frames={frames}
+            timeRange={contextTimeRange}
+            timeZone={tz}
+            width={chartWidth}
+            height={CHART_HEIGHT}
+            legend={HIDDEN_LEGEND}
+            structureRev={structureRev}
+            replaceVariables={noopInterpolate}
+          >
+            {(config) => (
+              <>
+                <TimeBarInteraction
+                  config={config}
+                  uplotRef={uplotRef}
+                  stateRef={stateRef}
+                  actionsRef={actionsRef}
+                  dragCleanup={dragCleanup}
+                  updateOverlay={updateOverlay}
+                />
+                <AnnotationsPlugin
+                  config={config}
+                  annotations={annotations}
+                  timeZone={tz}
+                  newRange={null}
+                  setNewRange={noopSetNewRange}
+                  options={undefined}
+                  replaceVariables={noopInterpolate}
+                />
+              </>
+            )}
+          </TimeSeries>
+        )}
         {overlay && (
           <>
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- mouse-only supplementary control; the time picker is the accessible path */}
