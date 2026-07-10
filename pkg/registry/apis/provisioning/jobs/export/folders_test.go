@@ -546,3 +546,37 @@ func (m *mockDynamicInterface) Get(ctx context.Context, name string, opts metav1
 	}
 	return &m.items[0], nil
 }
+
+// TestWriteFolderTree_PathCollisionFails verifies that two distinct folders whose
+// titles normalize to the same repository path fail the export loudly, instead of
+// silently letting one folder's _folder.json represent the wrong UID/title.
+func TestWriteFolderTree_PathCollisionFails(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	// Two distinct root folders whose titles both sanitize to "Reports".
+	tree.Add(resources.Folder{ID: "uid-a", Title: "» Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Reports"}, "")
+
+	// Leaving both mocks without expectations asserts EnsureFolderTreeExists (and
+	// therefore any per-folder Record) is never reached once a collision is found.
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "both export to path")
+}
+
+// TestWriteFolderTree_NoCollisionProceeds verifies that folders with distinct
+// normalized paths pass the collision check and reach EnsureFolderTreeExists.
+func TestWriteFolderTree_NoCollisionProceeds(t *testing.T) {
+	tree := resources.NewEmptyFolderTree()
+	tree.Add(resources.Folder{ID: "uid-a", Title: "Reports"}, "")
+	tree.Add(resources.Folder{ID: "uid-b", Title: "Metrics"}, "")
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := writeFolderTree(context.Background(), v0alpha1.ExportJobOptions{}, repoResources, tree, progress)
+	require.NoError(t, err)
+}
