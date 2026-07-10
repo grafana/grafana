@@ -172,6 +172,33 @@ describe('Query Response parser', () => {
     `);
   });
 
+  test('uses the result key as the frame refId even when the backend labels the frame with a different (source) refId', () => {
+    // e.g. a server-side expression `B = $A` whose passed-through frame is stamped with the source refId "A".
+    // Downstream logic (runRequest hiding results for hidden queries) keys off frame.refId, so a mislabeled
+    // frame must still be attributed to its result key ("B"), not the source ("A").
+    const expressionResp = {
+      data: {
+        results: {
+          B: {
+            frames: [
+              {
+                schema: {
+                  refId: 'A',
+                  fields: [{ name: 'Value', type: 'number', typeInfo: { frame: 'float64', nullable: true } }],
+                },
+                data: { values: [[1]] },
+              },
+            ],
+          },
+        },
+      },
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+
+    const frames = toDataQueryResponse(expressionResp, [{ refId: 'B' }]).data as DataFrame[];
+    expect(frames).toHaveLength(1);
+    expect(frames[0].refId).toEqual('B');
+  });
+
   test('should parse output with dataframe in order of queries', () => {
     const queries: DataQuery[] = [{ refId: 'B' }, { refId: 'A' }];
     const res = toDataQueryResponse(resp, queries);

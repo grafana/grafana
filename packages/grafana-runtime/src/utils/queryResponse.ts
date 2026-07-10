@@ -116,9 +116,12 @@ export function toDataQueryResponse(
             js = addCacheNotice(js);
           }
           const df = dataFrameFromJSON(js);
-          if (!df.refId) {
-            df.refId = dr.refId;
-          }
+          // The result key is authoritative for which query/refId a frame answers. Some backends
+          // (notably server-side expressions that pass an input through, e.g. `$A`) stamp the frame
+          // with the *source* query's refId rather than the expression's. Downstream logic keys off
+          // frame.refId — e.g. runRequest hides results whose refId matches a hidden query — so a
+          // mislabeled frame gets dropped. Always trust the result key.
+          df.refId = dr.refId;
           rsp.data.push(df);
         }
         continue; // the other tests are legacy
