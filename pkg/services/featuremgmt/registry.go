@@ -285,7 +285,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "true",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",

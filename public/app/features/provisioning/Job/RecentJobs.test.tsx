@@ -1,8 +1,9 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { createJob, createRepository } from '../mocks/factories';
@@ -27,23 +28,57 @@ function setup(jobs: Job[]) {
 }
 
 describe('RecentJobs', () => {
-  it('shows the triggering user', async () => {
-    setup([
-      createJob({
-        metadata: {
-          name: 'job-1',
-          uid: 'uid-1',
-          annotations: { 'provisioning.grafana.app/triggeredBy': 'Ada Lovelace' },
-        },
-      }),
-    ]);
-
-    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
-  it('shows Webhook when no user triggered the job', async () => {
-    setup([createJob()]);
+  describe('with the userAttribution flag enabled', () => {
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.userAttribution': true });
+    });
 
-    expect(await screen.findByText('Webhook')).toBeInTheDocument();
+    it('shows the triggering user', async () => {
+      setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: { 'provisioning.grafana.app/author': 'Ada Lovelace' },
+          },
+        }),
+      ]);
+
+      expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+    });
+
+    it('shows Webhook when no user triggered the job', async () => {
+      setup([createJob()]);
+
+      expect(await screen.findByText('Webhook')).toBeInTheDocument();
+    });
+  });
+
+  describe('with the userAttribution flag disabled', () => {
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.userAttribution': false });
+    });
+
+    it('hides the triggered by column', async () => {
+      setup([
+        createJob({
+          metadata: {
+            name: 'job-1',
+            uid: 'uid-1',
+            annotations: { 'provisioning.grafana.app/author': 'Ada Lovelace' },
+          },
+        }),
+      ]);
+
+      expect(await screen.findByText('job-1')).toBeInTheDocument();
+      expect(screen.queryByText('Triggered by')).not.toBeInTheDocument();
+      expect(screen.queryByText('Ada Lovelace')).not.toBeInTheDocument();
+    });
   });
 });
