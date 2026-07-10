@@ -49,8 +49,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       return;
     }
     const queryRunner = getQueryRunnerFor(panel);
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const queries = (queryRunner?.state.queries ?? []) as Array<Record<string, unknown>>;
+    const queries = queryRunner?.state.queries ?? [];
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
     // Panel/dashboard serialization is best-effort; on failure we still capture HAR + logs.

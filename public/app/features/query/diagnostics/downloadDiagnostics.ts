@@ -1,5 +1,7 @@
 import { saveAs } from 'file-saver';
 
+import { type DataQuery } from '@grafana/schema';
+
 /** Builds a human-readable bundle filename stem, e.g. `diagnostics-20260623-172901` (local time). */
 function diagnosticsFileName(): string {
   const now = new Date();
@@ -17,7 +19,7 @@ function diagnosticsFileName(): string {
  * reviewable end-to-end. Replace this body with a POST to the endpoint once the backend is merged.
  */
 export async function downloadDiagnosticsForQueries(
-  queries: Array<Record<string, unknown>>,
+  queries: DataQuery[],
   from: string,
   to: string,
   panel?: unknown,
