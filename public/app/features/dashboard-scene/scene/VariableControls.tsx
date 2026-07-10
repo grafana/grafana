@@ -18,7 +18,9 @@ import {
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../edit-pane/shared';
+import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { isVariableEditable } from '../settings/variables/utils';
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
@@ -191,12 +193,15 @@ function VariableLabel({
 
   const labelOrName = state.label || state.name;
   const controlsLayout = layout ?? 'horizontal';
-  const descriptionSuffix =
-    state.description != null && state.description !== '' ? (
-      <VariableDescriptionTooltip
-        description={state.description}
-        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
-      />
+  const placement = controlsLayout === 'vertical' ? 'top' : 'bottom';
+  const hasDescription = state.description != null && state.description !== '';
+  const predefinedOrigin = getPredefinedOrigin(state.origin);
+  const suffix =
+    hasDescription || predefinedOrigin ? (
+      <>
+        {predefinedOrigin && <SourceIcon origin={state.origin} />}
+        {hasDescription && <VariableDescriptionTooltip description={state.description!} placement={placement} />}
+      </>
     ) : undefined;
 
   return (
@@ -208,7 +213,7 @@ function VariableLabel({
       error={state.error}
       layout={controlsLayout}
       description={undefined}
-      suffix={descriptionSuffix}
+      suffix={suffix}
       className={className}
     />
   );

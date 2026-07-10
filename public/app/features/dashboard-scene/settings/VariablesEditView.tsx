@@ -13,6 +13,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
@@ -234,7 +235,10 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
-  const defaultVariables = useMemo(() => variables.filter((v) => !isVariableEditable(v)), [variables]);
+  const defaultVariables = useMemo(
+    () => variables.filter((v) => !isVariableEditable(v) && !isPredefinedOrigin(v.state.origin)),
+    [variables]
+  );
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
   const saveModel = model.getSaveModel();

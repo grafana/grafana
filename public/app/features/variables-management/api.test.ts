@@ -6,6 +6,7 @@ import { bulkDeleteVariables, bulkMoveVariables, recreateVariable } from './api'
 
 const postMock = jest.fn();
 const deleteMock = jest.fn();
+const invalidatePredefinedVariableCachesMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -18,6 +19,14 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
+
+jest.mock('app/api/clients/dashboard/v2beta1', () => {
+  const actual = jest.requireActual('app/api/clients/dashboard/v2beta1');
+  return {
+    ...actual,
+    invalidatePredefinedVariableCaches: (...args: unknown[]) => invalidatePredefinedVariableCachesMock(...args),
+  };
+});
 
 function makeVariable(specName: string, folderUid?: string): Variable {
   return {
@@ -36,6 +45,7 @@ function makeVariable(specName: string, folderUid?: string): Variable {
 beforeEach(() => {
   postMock.mockReset().mockResolvedValue({});
   deleteMock.mockReset().mockResolvedValue({});
+  invalidatePredefinedVariableCachesMock.mockReset();
 });
 
 describe('bulkDeleteVariables', () => {
@@ -46,6 +56,7 @@ describe('bulkDeleteVariables', () => {
     expect(deleteMock.mock.calls[0][0]).toContain('/variables/a');
     expect(deleteMock.mock.calls[1][0]).toContain('/variables/b--folder-1');
     expect(result).toEqual({ succeeded: 2, skipped: 0, failed: [] });
+    expect(invalidatePredefinedVariableCachesMock).toHaveBeenCalledTimes(1);
   });
 
   it('reports partial failures and continues', async () => {

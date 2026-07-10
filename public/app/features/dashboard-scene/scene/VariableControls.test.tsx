@@ -123,6 +123,40 @@ describe('VariableControls', () => {
     expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
   });
 
+  it('should show an origin icon for global predefined variables without a description', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('globalVar')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Global variable, managed centrally under Dashboards > Variables')
+    ).toBeInTheDocument();
+  });
+
+  it('should show an origin icon for folder predefined variables without a description', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'folderVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('folderVar')).toBeInTheDocument();
+    expect(screen.getByLabelText("Folder variable, inherited from this dashboard's folder")).toBeInTheDocument();
+  });
+
   it('should prefer variablesOverride over dashboard variables', async () => {
     const dashboard = buildScene([new TextBoxVariable({ name: 'DashboardVar' })]);
     dashboard.activate();

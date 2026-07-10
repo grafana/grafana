@@ -92,7 +92,7 @@ export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined })
 
     return (
       <Tooltip content={content}>
-        <Icon name={isGlobal ? 'globe' : 'folder'} className={styles.iconMuted} aria-hidden />
+        <Icon name={isGlobal ? 'globe' : 'folder'} className={styles.iconMuted} aria-label={content} />
       </Tooltip>
     );
   }

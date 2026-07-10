@@ -17,6 +17,7 @@ import {
   isVariableEditable,
 } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DraggableList } from './DraggableList';
@@ -51,7 +52,9 @@ export function DashboardVariablesList({
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const { editable, readOnly } = useMemo(() => {
     const { editable, nonEditable } = partitionVariablesByEditability(listVariables);
-    const readOnly = nonEditable.filter((v) => isEditableVariableType(v.state.type));
+    const readOnly = nonEditable.filter(
+      (v) => isEditableVariableType(v.state.type) && !isPredefinedOrigin(v.state.origin)
+    );
     let editableVariables = editable;
     if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
       editableVariables = editable;

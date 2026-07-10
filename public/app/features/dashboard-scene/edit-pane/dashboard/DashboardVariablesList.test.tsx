@@ -299,3 +299,13 @@ describe('partitionVariablesByEditability()', () => {
     expect(nonEditable).toEqual([predefinedVar1]);
   });
 });
+
+describe('predefined variables in the edit-pane list', () => {
+  test('does not render a predefined variables section', () => {
+    const { visibleVar1, predefinedVar1 } = buildTestVariables();
+    const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);
+
+    expect(queryByText('Predefined variables')).not.toBeInTheDocument();
+    expect(queryByText('globalVar')).not.toBeInTheDocument();
+  });
+});

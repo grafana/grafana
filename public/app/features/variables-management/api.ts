@@ -4,7 +4,12 @@ import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { dashboardAPIv2beta1, type Variable, type VariableList } from 'app/api/clients/dashboard/v2beta1';
+import {
+  dashboardAPIv2beta1,
+  invalidatePredefinedVariableCaches,
+  type Variable,
+  type VariableList,
+} from 'app/api/clients/dashboard/v2beta1';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { createWarningNotification } from 'app/core/copy/appNotification';
@@ -16,6 +21,11 @@ import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariab
 const LIST_PAGE_SIZE = 500;
 
 export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+
+function invalidateAfterVariableMutation() {
+  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
+  invalidatePredefinedVariableCaches();
+}
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
@@ -107,10 +117,6 @@ export interface BulkOperationResult {
   failed: Array<{ name: string; metadataName: string; error: unknown }>;
 }
 
-function invalidateVariablesList() {
-  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
-}
-
 export interface RecreateVariableResult {
   /** False when the copy was created but the original could not be removed. */
   deletedOriginal: boolean;
@@ -150,10 +156,10 @@ export async function recreateVariable(
         )
       )
     );
-    invalidateVariablesList();
+    invalidateAfterVariableMutation();
     return { deletedOriginal: false };
   }
-  invalidateVariablesList();
+  invalidateAfterVariableMutation();
   return { deletedOriginal: true };
 }
 
@@ -180,7 +186,7 @@ export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOp
     }
   }
 
-  invalidateVariablesList();
+  invalidateAfterVariableMutation();
   return result;
 }
 
@@ -215,6 +221,6 @@ export async function bulkMoveVariables(variables: Variable[], targetFolderUid?:
     }
   }
 
-  invalidateVariablesList();
+  invalidateAfterVariableMutation();
   return result;
 }

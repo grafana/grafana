@@ -3,8 +3,16 @@ import { t } from '@grafana/i18n';
 import { handleError } from 'app/api/utils';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
 
 const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+
+/** Clears caches so dashboards pick up variable CRUD without a hard refresh. */
+export function invalidatePredefinedVariableCaches() {
+  clearPredefinedVariablesCache();
+  getDashboardScenePageStateManager().clearSceneCache();
+}
 
 export const dashboardAPIv2beta1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -32,6 +40,7 @@ export const dashboardAPIv2beta1 = generatedAPI.enhanceEndpoints({
               list.items = [...(list.items || []), data];
             })
           );
+          invalidatePredefinedVariableCaches();
           dispatch(
             notifyApp(
               createSuccessNotification(
@@ -59,6 +68,7 @@ export const dashboardAPIv2beta1 = generatedAPI.enhanceEndpoints({
       endpointDefinition.onQueryStarted = async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
+          invalidatePredefinedVariableCaches();
           dispatch(
             notifyApp(
               createSuccessNotification(
@@ -79,6 +89,7 @@ export const dashboardAPIv2beta1 = generatedAPI.enhanceEndpoints({
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
+          invalidatePredefinedVariableCaches();
           dispatch(
             notifyApp(
               createSuccessNotification(

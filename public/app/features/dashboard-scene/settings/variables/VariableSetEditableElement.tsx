@@ -20,6 +20,7 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
+import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
@@ -116,7 +117,10 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const readOnlyVariables = useMemo(() => {
     return filterSectionRepeatLocalVariables(variables, set).filter(
-      (variable) => !isVariableEditable(variable) && isEditableVariableType(variable.state.type)
+      (variable) =>
+        !isVariableEditable(variable) &&
+        isEditableVariableType(variable.state.type) &&
+        !isPredefinedOrigin(variable.state.origin)
     );
   }, [variables, set]);
 
