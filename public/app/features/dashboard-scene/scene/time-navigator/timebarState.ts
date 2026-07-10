@@ -24,18 +24,22 @@ import {
   panRange,
 } from './timeModel';
 
+// On external time changes the context window is treated as a stable "stage": we only reframe it when the
+// selection runs off the stage or grows to crowd it, and then we make one generous move so the next is far
+// off. These three knobs tune that (see syncFromDashboard).
+/** Reframe once the selection occupies more than this fraction of the context width (crowding the stage). */
+const REFRAME_FILL = 0.6;
 /**
- * A dashboard time change is treated as a zoom (vs a pan) when the selection's span changes by more than
- * this fraction. The zoom button doubles the span (+100%) while pans and autorefresh keep it, so the two
- * are easy to tell apart: a zoom leaves the context put whereas a pan makes it follow the selection.
+ * How far the selection may run past a context edge (as a fraction of the context span) before we reframe.
+ * Non-zero so autorefresh's small forward drift doesn't reframe every tick.
  */
-const SPAN_CHANGE_EPS = 0.1;
+const REFRAME_EDGE_TOLERANCE = 0.05;
 /**
- * On a pan/slide, how far (as a fraction of the context span) the selection may drift past a context edge
- * before the context shifts to follow it. Small, so a real pan re-frames promptly and the selection never
- * clips, but non-zero so autorefresh's tiny forward drift doesn't redraw the view every tick.
+ * When a reframe leaves the selection extending into the future, how much extra future room (as a fraction
+ * of the reframed span) to leave beyond it, so subsequent zoom-outs are absorbed rather than re-reframing.
+ * Set to 0 to show no empty future — at the cost of a reframe on every future-crossing zoom-out.
  */
-const SYNC_PAN_TOLERANCE = 0.05;
+const FUTURE_CUSHION = 0.25;
 
 type Interaction = 'idle' | 'brushing' | 'moving' | 'resizingLeft' | 'resizingRight' | 'panning';
 
@@ -121,36 +125,31 @@ function reducer(state: TimebarState, action: Action): TimebarState {
             : state.contextWindow;
       } else {
         const selSpan = selection.to - selection.from;
-        const oldSelSpan = state.selection.to - state.selection.from;
         const ctxSpan = state.contextWindow.to - state.contextWindow.from;
         const { from: cFrom, to: cTo } = state.contextWindow;
         const mid = midOf(selection);
-        const maxTo = Math.max(action.now, selection.to);
-        const spanChanged = Math.abs(selSpan - oldSelSpan) > oldSelSpan * SPAN_CHANGE_EPS;
 
-        // A zoom (span changed, e.g. the dashboard zoom button) keeps the context put while the selection
-        // still fits it and stays centred within it — the widened edges may poke past `now`, but that is
-        // empty future space and clips harmlessly, so we don't redraw. A pan/slide (span unchanged) keeps
-        // the context only while the selection stays inside it (a small tolerance absorbs autorefresh's
-        // forward drift). Otherwise we act below.
-        const panTol = ctxSpan * SYNC_PAN_TOLERANCE;
-        const keep = spanChanged
-          ? selSpan < ctxSpan && mid > cFrom && mid < cTo
-          : selection.from >= cFrom - panTol && selection.to <= cTo + panTol;
+        // Treat the context window as a stable stage: leave it untouched while the selection is on it
+        // (within a small edge tolerance that absorbs autorefresh drift) and isn't crowding it. Only when
+        // the selection runs off an edge or grows to fill too much of the stage do we act — and then we
+        // make ONE decisive, generous move so the next is far off (a stable stage the user can read and grab
+        // beats frequent small nudges). Internal gestures never reach here: they clamp the selection to the
+        // stage (move/resize) or drive the stage directly (pan/zoom).
+        const edgeTol = ctxSpan * REFRAME_EDGE_TOLERANCE;
+        const onStage = selection.from >= cFrom - edgeTol && selection.to <= cTo + edgeTol;
+        const crowding = selSpan > ctxSpan * REFRAME_FILL;
 
-        if (keep) {
+        if (onStage && !crowding) {
           contextWindow = state.contextWindow;
-        } else if (!spanChanged && selSpan < ctxSpan) {
-          // A pan pushed the selection past an edge — shift the context by the same delta to follow it, so
-          // it stays framed at the current zoom level and never clips.
-          const delta = mid - midOf(state.selection);
-          contextWindow = clampRange({ from: cFrom + delta, to: cTo + delta }, { maxTo });
         } else {
-          // The selection outgrew the context, or a zoom moved its centre out of view — reframe around it,
-          // growing back to the full initial framing (selSpan * factor) so subsequent zoom-outs keep their
-          // headroom and don't re-trigger a redraw.
+          // Reframe with a big runway (never smaller than the current stage, and >= selSpan * factor), so
+          // the selection lands mid-stage with room to spare. The right edge is capped at `now` unless the
+          // selection itself is in the future, where a small cushion beyond it (FUTURE_CUSHION) absorbs the
+          // next few zoom-outs; the past side extends freely.
           const reSpan = Math.max(ctxSpan, selSpan * action.factor);
-          contextWindow = clampRange({ from: mid - reSpan / 2, to: mid + reSpan / 2 }, { maxTo });
+          const rightCap = selection.to > action.now ? selection.to + reSpan * FUTURE_CUSHION : action.now;
+          const to = Math.min(mid + reSpan / 2, rightCap);
+          contextWindow = { from: to - reSpan, to };
         }
       }
       return { ...state, selection, contextWindow };
