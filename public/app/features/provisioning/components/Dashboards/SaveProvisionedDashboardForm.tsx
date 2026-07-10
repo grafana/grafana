@@ -268,7 +268,7 @@ export function SaveProvisionedDashboardForm({
     }
     setFolderError(undefined);
     const folderName = newFolderName.trim();
-    if (!folderName || !repository?.name) {
+    if (!repository?.name) {
       return;
     }
     const validationResult = validateProvisionedFolderName(folderName);
@@ -547,7 +547,9 @@ export function SaveProvisionedDashboardForm({
             <Button
               variant="primary"
               type="submit"
-              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+              disabled={
+                request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating || isCreatingFolder
+              }
             >
               {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')

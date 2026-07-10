@@ -156,6 +156,35 @@ function setup(props: Partial<Props> = {}) {
   };
 }
 
+function setupFolderless(
+  overrides: {
+    repository?: Partial<NonNullable<Props['repository']>>;
+    defaultValues?: Partial<Props['defaultValues']>;
+  } = {}
+) {
+  return setup({
+    repository: {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['write'],
+      target: 'folderless',
+      ...overrides.repository,
+    },
+    defaultValues: {
+      ref: 'main',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: { uid: '', title: '' },
+      title: 'Test Dashboard',
+      description: '',
+      workflow: 'write',
+      ...overrides.defaultValues,
+    },
+  });
+}
+
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
   expect(capturedRequest).not.toBeNull();
   return capturedRequest as { url: URL; body: unknown };
@@ -1152,25 +1181,7 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('shows New folder button for folderless repos in write mode', async () => {
-    setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    setupFolderless();
 
     expect(await screen.findByRole('button', { name: /new folder/i })).toBeInTheDocument();
   });
@@ -1185,50 +1196,14 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('does not show New folder button when workflow is branch', async () => {
-    setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['branch'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'branch',
-      },
-    });
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
   it('does not show New folder button for read-only repos (no workflow)', async () => {
-    setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: [],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: undefined,
-      },
-    });
+    setupFolderless({ repository: { workflows: [] }, defaultValues: { workflow: undefined } });
 
     await screen.findByRole('form');
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
@@ -1257,25 +1232,7 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user, props } = setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    const { user, props } = setupFolderless();
     props.dashboard.getSaveResource = jest.fn().mockReturnValue({
       apiVersion: 'dashboard.grafana.app/v1alpha1',
       kind: 'Dashboard',
@@ -1301,14 +1258,17 @@ describe('SaveProvisionedDashboardForm', () => {
 
   it('creates the folder once on Enter without submitting the dashboard form', async () => {
     let folderPostCount = 0;
+    let releaseFolderPost: () => void = () => {};
     let dashboardRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const body = await request.json();
         if ((body as Record<string, unknown>).type === 'folder') {
           folderPostCount++;
-          // keep the request in flight long enough for a second Enter to hit the guard
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          // hold the request in flight so a second Enter hits the guard deterministically
+          await new Promise<void>((resolve) => {
+            releaseFolderPost = resolve;
+          });
           return HttpResponse.json({
             resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
           });
@@ -1318,32 +1278,37 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user } = setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    const { user } = setupFolderless();
 
     await user.click(await screen.findByRole('button', { name: /new folder/i }));
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team{Enter}{Enter}');
 
+    // while the folder POST is in flight, a dashboard save must not race the path update
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    releaseFolderPost();
+
     await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
     expect(folderPostCount).toBe(1);
     expect(dashboardRequest).toBeNull();
+  });
+
+  it('shows a required error for whitespace-only folder names without sending a request', async () => {
+    let folderRequest = false;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        folderRequest = true;
+        return HttpResponse.json({});
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), '   ');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText(/folder name is required/i)).toBeInTheDocument();
+    expect(folderRequest).toBe(false);
   });
 
   it('nests the new folder under the selected target folder', async () => {
@@ -1369,24 +1334,8 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user, props } = setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'dashboards/test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: 'dashboards-uid', title: 'dashboards' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
+    const { user, props } = setupFolderless({
+      defaultValues: { path: 'dashboards/test-dashboard.json', folder: { uid: 'dashboards-uid', title: 'dashboards' } },
     });
     props.dashboard.getSaveResource = jest.fn().mockReturnValue({
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -1428,24 +1377,8 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user, props, rerender } = setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'dashboards/test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: 'dashboards-uid', title: 'dashboards' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
+    const { user, props, rerender } = setupFolderless({
+      defaultValues: { path: 'dashboards/test-dashboard.json', folder: { uid: 'dashboards-uid', title: 'dashboards' } },
     });
     props.dashboard.getSaveResource = jest.fn().mockReturnValue({
       apiVersion: 'dashboard.grafana.app/v1alpha1',
@@ -1501,25 +1434,7 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user, props } = setup({
-      repository: {
-        type: 'github',
-        name: 'test-repo',
-        title: 'Test Repo',
-        workflows: ['write'],
-        target: 'folderless',
-      },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    const { user, props } = setupFolderless();
     props.dashboard.getSaveResource = jest.fn().mockReturnValue({
       apiVersion: 'dashboard.grafana.app/v1alpha1',
       kind: 'Dashboard',
@@ -1552,19 +1467,7 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user } = setup({
-      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: '',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    const { user } = setupFolderless();
 
     await user.click(await screen.findByRole('button', { name: /new folder/i }));
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'team/a');
@@ -1587,19 +1490,7 @@ describe('SaveProvisionedDashboardForm', () => {
       })
     );
 
-    const { user } = setup({
-      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
-      defaultValues: {
-        ref: 'main',
-        path: 'test-dashboard.json',
-        repo: 'test-repo',
-        comment: 'my commit',
-        folder: { uid: '', title: '' },
-        title: 'Test Dashboard',
-        description: '',
-        workflow: 'write',
-      },
-    });
+    const { user } = setupFolderless({ defaultValues: { comment: 'my commit' } });
 
     await user.click(await screen.findByRole('button', { name: /new folder/i }));
     await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'Team A');
