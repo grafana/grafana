@@ -31,8 +31,7 @@ export const TRACKING_URLS = [
 ];
 
 export class GrafanaJavascriptAgentBackend
-  implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
-{
+  implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions> {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
@@ -103,7 +102,8 @@ export class GrafanaJavascriptAgentBackend
         persistent: true,
       },
       batching: {
-        sendTimeout: 1000,
+        sendTimeout: 2000,
+        itemLimit: 250,
       },
       beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
@@ -160,11 +160,11 @@ export class GrafanaJavascriptAgentBackend
   }
 
   // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API
-  addEvent = (e: EchoEvent) => {};
+  addEvent = (e: EchoEvent) => { };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
   // ingested into Loki. Due to Loki limitations logs cannot be backdated,
   // so not using buffering for this backend to make sure that events are logged as close
   // to their context as possible
-  flush = () => {};
+  flush = () => { };
 }
