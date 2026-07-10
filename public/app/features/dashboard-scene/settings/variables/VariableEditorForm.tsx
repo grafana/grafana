@@ -41,6 +41,11 @@ interface VariableEditorFormProps {
   standalone?: boolean;
   /** Notifies the host when the name field enters or leaves an invalid state, so it can gate its own save action. */
   onNameErrorChange?: (hasError: boolean) => void;
+  /**
+   * Host-owned name error (e.g. API collision check in the standalone editor).
+   * Shown when local format validation has not already failed.
+   */
+  externalNameError?: string;
 }
 export function VariableEditorForm({
   variable,
@@ -49,6 +54,7 @@ export function VariableEditorForm({
   onDelete,
   standalone,
   onNameErrorChange,
+  externalNameError,
 }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
@@ -122,8 +128,8 @@ export function VariableEditorForm({
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required
-        invalid={!!nameError}
-        error={nameError}
+        invalid={!!(nameError || externalNameError)}
+        error={nameError || externalNameError}
       />
       {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
       <VariableTextField

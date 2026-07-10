@@ -24,6 +24,7 @@ import { type EditableVariableType, getVariableScene } from 'app/features/dashbo
 import { dispatch } from 'app/store/store';
 
 import { recreateVariable } from './api';
+import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
   getNextAvailableVariableName,
@@ -70,6 +71,15 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   // Keep delete out of isSaving so the Save button doesn't flash "Saving..." mid-delete.
   const isSaving = isCreating || isUpdating || isRecreating;
   const isBusy = isSaving || isDeleting;
+
+  const { name: logicalName } = sceneVariable.useState();
+  const { isChecking: isCheckingName, collisionError } = useVariableNameCollisionCheck(
+    logicalName,
+    folderUid,
+    source?.metadata.name,
+    hasNameError
+  );
+  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName;
 
   const scene = useMemo(
     () =>
@@ -187,11 +197,12 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         onGoBack={onBack}
         onDelete={onDelete}
         onNameErrorChange={setHasNameError}
+        externalNameError={collisionError}
         standalone
       />
 
       <Stack gap={2}>
-        <Button variant="primary" onClick={onSave} disabled={isBusy || hasNameError}>
+        <Button variant="primary" onClick={onSave} disabled={!canSave}>
           {isSaving
             ? t('variables-management.editor.saving', 'Saving...')
             : t('variables-management.editor.save', 'Save')}

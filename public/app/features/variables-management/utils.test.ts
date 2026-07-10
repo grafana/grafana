@@ -34,6 +34,9 @@ describe('getNextAvailableVariableName', () => {
   });
 });
 
+// deriveVariableMetadataName coverage lives in useVariableNameCollisionCheck.test.ts
+// alongside the collision evaluator (same naming contract as the server).
+
 describe('getVariableSpecName', () => {
   it('returns the logical name from the union spec', () => {
     expect(getVariableSpecName(makeVariable('region'))).toBe('region');

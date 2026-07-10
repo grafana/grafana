@@ -39,6 +39,19 @@ export function getVariableSpecName(variable: Variable): string {
 }
 
 /**
+ * Server-derived Variable metadata.name — mirrors deriveVariableMetadataName in
+ * pkg/registry/apis/dashboard/variable.go:
+ *   global → specName
+ *   folder → specName + "--" + folderUID
+ */
+export function deriveVariableMetadataName(specName: string, folderUid?: string): string {
+  if (!folderUid) {
+    return specName;
+  }
+  return `${specName}--${folderUid}`;
+}
+
+/**
  * Next unused name with the given prefix among existing logical variable names
  * (e.g. query0, query1, …) — same scheme as dashboard settings' getNextAvailableId.
  */
