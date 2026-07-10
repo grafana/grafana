@@ -46,6 +46,16 @@ WHERE one > 0`;
     expect(getFoldableRange(doc, 1)).toEqual({ from: 4, to: 15 });
   });
 
+  it('compares mixed tab and space indentation by column', () => {
+    const doc = `FROM
+\t table_a
+  table_b
+WHERE one > 0`;
+
+    expect(getFoldableRange(doc, 1)).toEqual({ from: 4, to: 24 });
+    expect(getFoldableRange(doc, 2)).toBeNull();
+  });
+
   it('does not fold a line without indented content', () => {
     const doc = `SELECT one
 FROM table_a
