@@ -45,35 +45,35 @@ export const routeNames = {
   resourceGraph: 'resourcegraph',
 };
 
-// Upper bound on the number of ARM result pages followed when aggregating a paginated
-// list. Guards against a pathological nextLink loop; sits well above realistic counts
-// (e.g. an account with hundreds of subscriptions still fits within a handful of pages).
 export const MAX_ARM_PAGES = 50;
 
-// Follows Azure ARM `nextLink` pagination, concatenating the `value` array from every page
-// into a single list. `fetchPage` issues the resource request for a relative path (the
-// caller supplies the datasource's `getResource`/`fetch`). Each subsequent page's relative
-// path is rebuilt from the absolute `nextLink` so the request is routed back through the
-// backend resource proxy rather than hitting management.azure.com directly.
+export function nextLinkToPath(prefix: string, nextLink: string): string {
+  const { pathname, search } = new URL(nextLink);
+  return `${prefix}${pathname}${search}`;
+}
+
 export async function fetchAllArmPages<T>(
-  fetchPage: (path: string) => Promise<AzureAPIResponse<T>>,
-  resourcePath: string,
+  prefix: string,
   initialPath: string,
+  fetchPage: (path: string) => Promise<AzureAPIResponse<T> | undefined>,
   maxPages: number = MAX_ARM_PAGES
 ): Promise<T[]> {
-  let results: T[] = [];
+  const results: T[] = [];
   let path: string | undefined = initialPath;
   let pages = 0;
-  while (path && pages < maxPages) {
+  for (; path && pages < maxPages; pages++) {
     const page = await fetchPage(path);
-    results = results.concat(page.value ?? []);
-    if (page.nextLink) {
-      const { pathname, search } = new URL(page.nextLink);
-      path = `${resourcePath}${pathname}${search}`;
-    } else {
-      path = undefined;
+    if (!page) {
+      // eslint-disable-next-line no-console
+      console.warn('[azuremonitor] ARM page request returned no result; stopping pagination.');
+      break;
     }
-    pages++;
+    results.push(...(page.value ?? []));
+    path = page.nextLink ? nextLinkToPath(prefix, page.nextLink) : undefined;
+  }
+  if (path) {
+    // eslint-disable-next-line no-console
+    console.warn(`[azuremonitor] ARM listing stopped after ${maxPages} pages; some results may be omitted.`);
   }
   return results;
 }

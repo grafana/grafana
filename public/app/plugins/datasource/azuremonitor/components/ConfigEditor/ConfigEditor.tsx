@@ -66,16 +66,12 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
     const query = `?api-version=2019-03-01`;
     const resourcePath = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}`;
     try {
-      const value = await fetchAllArmPages<Subscription>(
-        async (path) => {
-          const response = await getBackendSrv()
-            .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
-            .toPromise();
-          return response?.data ?? { value: [] };
-        },
-        resourcePath,
-        baseURL + query
-      );
+      const value = await fetchAllArmPages<Subscription>(resourcePath, baseURL + query, async (path) => {
+        const response = await getBackendSrv()
+          .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
+          .toPromise();
+        return response?.data;
+      });
 
       setError(undefined);
       return ResponseParser.parseSubscriptionsForSelect({ value });

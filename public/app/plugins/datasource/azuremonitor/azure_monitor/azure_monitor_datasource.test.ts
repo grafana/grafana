@@ -775,7 +775,6 @@ describe('AzureMonitorDatasource', () => {
 
         expect(results.map((r: { value: string }) => r.value)).toEqual(['sub-1', 'sub-2', 'sub-3']);
         expect(getResource).toHaveBeenCalledTimes(2);
-        // The second request is rebuilt from nextLink and routed through the resource proxy.
         expect(getResource).toHaveBeenNthCalledWith(
           2,
           'azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN123'

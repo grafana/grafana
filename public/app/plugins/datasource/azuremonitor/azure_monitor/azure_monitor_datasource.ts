@@ -172,9 +172,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     }
 
     const value = await fetchAllArmPages<Subscription>(
-      (path) => this.getResource<AzureAPIResponse<Subscription>>(path),
       this.resourcePath,
-      `${this.resourcePath}/subscriptions?api-version=2019-03-01`
+      `${this.resourcePath}/subscriptions?api-version=2019-03-01`,
+      (path) => this.getResource<AzureAPIResponse<Subscription>>(path)
     );
     return ResponseParser.parseSubscriptions({ value });
   }

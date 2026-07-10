@@ -1,6 +1,6 @@
 import { initialCustomVariableModelState } from '../mocks/variables';
 
-import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES } from './common';
+import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES, nextLinkToPath } from './common';
 
 describe('AzureMonitor: hasOption', () => {
   it('can find an option in flat array', () => {
@@ -43,11 +43,27 @@ describe('AzureMonitor: hasOption', () => {
   });
 });
 
+describe('AzureMonitor: nextLinkToPath', () => {
+  it('drops the ARM host and joins pathname + query onto the prefix', () => {
+    const nextLink = 'https://management.azure.com/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN';
+    expect(nextLinkToPath('azuremonitor', nextLink)).toBe(
+      'azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN'
+    );
+  });
+
+  it('works for a full resources base URL prefix and sovereign clouds', () => {
+    const nextLink = 'https://management.usgovcloudapi.net/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN';
+    expect(nextLinkToPath('/api/datasources/uid/abc/resources/azuremonitor', nextLink)).toBe(
+      '/api/datasources/uid/abc/resources/azuremonitor/subscriptions?api-version=2019-03-01&$skiptoken=TOKEN'
+    );
+  });
+});
+
 describe('AzureMonitor: fetchAllArmPages', () => {
   it('returns the single page when there is no nextLink', async () => {
     const fetchPage = jest.fn().mockResolvedValue({ value: [{ id: 1 }, { id: 2 }] });
 
-    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(results).toEqual([{ id: 1 }, { id: 2 }]);
     expect(fetchPage).toHaveBeenCalledTimes(1);
@@ -63,22 +79,37 @@ describe('AzureMonitor: fetchAllArmPages', () => {
       })
       .mockResolvedValueOnce({ value: [{ id: 2 }] });
 
-    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(results).toEqual([{ id: 1 }, { id: 2 }]);
     expect(fetchPage).toHaveBeenNthCalledWith(2, 'azuremonitor/subscriptions?api-version=x&$skiptoken=abc');
   });
 
-  it('stops after MAX_ARM_PAGES even if nextLink never clears', async () => {
+  it('stops early and warns when a page returns no result', async () => {
+    const fetchPage = jest.fn().mockResolvedValue(undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
+
+    expect(results).toEqual([]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('stops after MAX_ARM_PAGES even if nextLink never clears, and warns', async () => {
     const fetchPage = jest.fn().mockResolvedValue({
       value: [{ id: 1 }],
       nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=loop',
     });
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const results = await fetchAllArmPages(fetchPage, 'azuremonitor', 'azuremonitor/subscriptions?api-version=x');
+    const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(fetchPage).toHaveBeenCalledTimes(MAX_ARM_PAGES);
     expect(results).toHaveLength(MAX_ARM_PAGES);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 
