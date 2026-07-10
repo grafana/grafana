@@ -156,7 +156,7 @@ export function RedesignedDashboardTabs({ extensionComponents }: Props) {
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
-      activeLabel: t('home.dashboard-tabs.recent-tab-active', 'Recent'),
+      activeLabel: t('home.dashboard-tabs.recent-tab-active', 'Recent dashboards'),
       counter: recentDashboards?.length,
     },
     ...(mostUsedAvailable
@@ -164,7 +164,7 @@ export function RedesignedDashboardTabs({ extensionComponents }: Props) {
           {
             id: MOST_USED_TAB_ID,
             label: t('home.dashboard-tabs.most-viewed', 'Most viewed'),
-            activeLabel: t('home.dashboard-tabs.most-viewed-active', 'Most viewed'),
+            activeLabel: t('home.dashboard-tabs.most-viewed-active', 'Most viewed dashboards'),
             counter: mostUsedDashboards?.length,
           },
         ]
@@ -172,7 +172,7 @@ export function RedesignedDashboardTabs({ extensionComponents }: Props) {
     {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
-      activeLabel: t('home.dashboard-tabs.starred-tab-active', 'Starred'),
+      activeLabel: t('home.dashboard-tabs.starred-tab-active', 'Starred dashboards'),
       counter: starredDashboards?.length,
     },
   ];
