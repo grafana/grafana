@@ -103,6 +103,8 @@ export const FlagKeys = {
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
+  /** Author Git Sync commits as the acting Grafana user */
+  ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
@@ -624,6 +626,17 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.readmes", true, options).value;
+};
+
+/**
+ * Author Git Sync commits as the acting Grafana user
+ *
+ * **Details:**
+ * - flag key: `provisioning.userAttribution`
+ * - default value: `true`
+ */
+export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.userAttribution", true, options).value;
 };
 
 /**

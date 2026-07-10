@@ -10446,8 +10446,7 @@
     "tags-input": {
       "add": "Add",
       "placeholder-new-tag": "New tag (enter key to add)",
-      "remove": "Remove tag: {{name}}",
-      "tag-too-long": "Tag too long, max 50 characters"
+      "remove": "Remove tag: {{name}}"
     },
     "time-sync-button": {
       "aria-label-sync": "Sync times",
@@ -13523,8 +13522,8 @@
       "resources-sort-title-desc": "Name (Z–A)",
       "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
-      "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
-      "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
+      "resources-to-migrate-footer_one": "Showing {{from}}–{{to}} of {{count}} folder",
+      "resources-to-migrate-footer_other": "Showing {{from}}–{{to}} of {{count}} folders",
       "resources-to-migrate-heading": "Resources to migrate",
       "resources-to-migrate-migrate-all_one": "Migrate all ({{count}})",
       "resources-to-migrate-migrate-all_other": "Migrate all ({{count}})",
@@ -13639,9 +13638,11 @@
       "column-message": "Message",
       "column-started": "Started",
       "column-status": "Status",
+      "column-triggered-by": "Triggered by",
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
-      "jobs": "Jobs"
+      "jobs": "Jobs",
+      "triggered-by-webhook": "Webhook"
     },
     "repository-actions": {
       "connection": "Connection",
