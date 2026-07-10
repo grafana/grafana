@@ -23,13 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
-// RunLeaseTest runs the lease contract suite against any kv.KV produced by
-// newKV. The suite is shared between unit tests (using an in-memory map KV)
-// and integration tests (Badger and sqlkv).
-func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
+// RunLeaseTest runs the lease contract suite against a single shared kv.KV. The
+// suite is shared between unit tests (using an in-memory map KV) and integration
+// tests (Badger and sqlkv), and isolates cases from one another via lease names.
+func RunLeaseTest(t *testing.T, store kv.KV) {
 	t.Helper()
 
-	store := newKV(t.Context())
 	t.Cleanup(func() { validateLeaseStore(t, store) })
 
 	t.Run("happy path", func(t *testing.T) { runLeaseHappyPath(t, store) })

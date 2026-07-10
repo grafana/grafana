@@ -280,6 +280,14 @@ var (
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
+			Name:        "provisioning.userAttribution",
+			Description: "Author Git Sync commits as the acting Grafana user",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "true",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -664,14 +672,6 @@ var (
 		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "unlimitedLayoutsNesting",
-			Description: "Enables unlimited dashboard panel grouping",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,

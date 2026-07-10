@@ -12196,7 +12196,9 @@
       "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
       "expand-aria-label": "Expand section: {{sectionName}}",
-      "loading-aria-label": "Loading {{sectionName}}"
+      "loading-aria-label": "Loading {{sectionName}}",
+      "starred-dashboard-icon": "Dashboard",
+      "starred-folder-icon": "Folder"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13521,8 +13523,8 @@
       "resources-sort-title-desc": "Name (Z–A)",
       "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
-      "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
-      "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
+      "resources-to-migrate-footer_one": "Showing {{from}}–{{to}} of {{count}} folder",
+      "resources-to-migrate-footer_other": "Showing {{from}}–{{to}} of {{count}} folders",
       "resources-to-migrate-heading": "Resources to migrate",
       "resources-to-migrate-migrate-all_one": "Migrate all ({{count}})",
       "resources-to-migrate-migrate-all_other": "Migrate all ({{count}})",

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -534,6 +535,19 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
+	annotations := map[string]string{}
+	if author, ok := UserAttribution(ctx); ok {
+		if author.Name != "" {
+			annotations[appjobs.AnnoAuthor] = author.Name
+		}
+		if author.Email != "" {
+			annotations[appjobs.AnnoAuthorEmail] = author.Email
+		}
+		if author.ID != "" {
+			annotations[appjobs.AnnoAuthorID] = author.ID
+		}
+	}
+
 	// Set up the provisioning identity for this namespace
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
@@ -547,6 +561,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
+			Annotations: annotations,
 		},
 		Spec: spec,
 	}
