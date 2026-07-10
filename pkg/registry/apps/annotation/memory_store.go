@@ -50,11 +50,15 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 			continue
 		}
 
+		filter := opts.Deleted
+		if filter != DeletedExclude && filter != DeletedInclude && filter != DeletedOnly {
+			filter = DeletedExclude
+		}
 		deleted := anno.DeletionTimestamp != nil
-		if deleted && opts.Deleted == DeletedExclude {
+		if deleted && filter == DeletedExclude {
 			continue
 		}
-		if !deleted && opts.Deleted == DeletedOnly {
+		if !deleted && filter == DeletedOnly {
 			continue
 		}
 

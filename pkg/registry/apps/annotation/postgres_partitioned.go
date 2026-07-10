@@ -348,12 +348,13 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 
 	// Filter on soft-delete state.
 	switch opts.Deleted {
-	case DeletedExclude:
-		conditions = append(conditions, "deleted_at IS NULL")
 	case DeletedOnly:
 		conditions = append(conditions, "deleted_at IS NOT NULL")
 	case DeletedInclude:
 		// no filter, including both live and tombstoned rows
+	default:
+		// default to live rows only
+		conditions = append(conditions, "deleted_at IS NULL")
 	}
 
 	// Time range filters
