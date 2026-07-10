@@ -149,11 +149,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features for dashboards to auto-summary changes when saving
-  * @default false
-  */
-  aiGeneratedDashboardChanges?: boolean;
-  /**
   * Enables configuration of PDF report settings
   * @default false
   */
@@ -314,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
-  * @default false
-  */
-  dashboardNotebookLayout?: boolean;
-  /**
   * Enables default layout selector in dashboard settings
   * @default true
   */
@@ -333,11 +323,6 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardUndoRedo?: boolean;
-  /**
-  * Enables unlimited dashboard panel grouping
-  * @default false
-  */
-  unlimitedLayoutsNesting?: boolean;
   /**
   * Enables viewing non-applicable drilldowns on a panel level
   * @default false
@@ -1151,10 +1136,10 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable style actions (copy/paste) in the panel editor
+  * Enable visualization presets
   * @default true
   */
-  panelStyleActions?: boolean;
+  vizPresets?: boolean;
   /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
@@ -1196,16 +1181,6 @@ export interface FeatureToggles {
   */
   panelTimeSettings?: boolean;
   /**
-  * Enables the raw DSL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchRawDSLQuery?: boolean;
-  /**
-  * Enables the ES|QL query editor in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchESQLQuery?: boolean;
-  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1225,11 +1200,6 @@ export interface FeatureToggles {
   * @default false
   */
   lokiQueryLimitsContext?: boolean;
-  /**
-  * Enables the new version of rudderstack
-  * @default false
-  */
-  rudderstackUpgrade?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
   * @default false

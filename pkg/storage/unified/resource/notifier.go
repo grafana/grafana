@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/backoff"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"time"
@@ -39,6 +41,10 @@ type pollingNotifier struct {
 type notifierOptions struct {
 	log                log.Logger
 	useChannelNotifier bool
+
+	useNatsNotifier bool
+	eventSubscriber EventSubscriber
+	natsDropped     *prometheus.CounterVec
 }
 
 type WatchOptions struct {
@@ -65,6 +71,13 @@ func (opts WatchOptions) normalize() WatchOptions {
 }
 
 func newNotifier(eventStore *eventStore, opts notifierOptions) notifier {
+	if opts.useNatsNotifier {
+		if opts.eventSubscriber != nil && opts.eventSubscriber.Enabled() {
+			return newNatsNotifier(opts.eventSubscriber, opts.natsDropped, opts.log.New("notifier", "natsNotifier"))
+		}
+		opts.log.Warn("nats notifier requested but subscriber unavailable, falling back to polling")
+	}
+
 	if opts.useChannelNotifier {
 		return newChannelNotifier(opts.log.New("notifier", "channelNotifier"))
 	}

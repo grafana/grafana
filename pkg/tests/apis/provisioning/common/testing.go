@@ -1435,13 +1435,6 @@ func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	}
 }
 
-// WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
-func WithFolderAPIVersion(version string) GrafanaOption {
-	return func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningFolderAPIVersion = version
-	}
-}
-
 // WithProvisioningMaxIncrementalChanges overrides the controller-side
 // incremental-sync size threshold. A small value (e.g. 5) keeps tests fast
 // when they need to exercise the full-sync fallback; 0 disables the check.
@@ -3713,6 +3706,15 @@ func LatestCommitSubject(t *testing.T, local *gittest.LocalRepo, ref string) str
 	_, err := local.Git("fetch", "origin", ref)
 	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
 	out, err := local.Git("log", "-1", "--format=%s", fmt.Sprintf("origin/%s", ref))
+	require.NoError(t, err, "git log should succeed")
+	return strings.TrimSpace(out)
+}
+
+func LatestCommitAuthor(t *testing.T, local *gittest.LocalRepo, ref string) string {
+	t.Helper()
+	_, err := local.Git("fetch", "origin", ref)
+	require.NoError(t, err, fmt.Sprintf("git fetch origin %s should succeed", ref))
+	out, err := local.Git("log", "-1", "--format=%an <%ae>", fmt.Sprintf("origin/%s", ref))
 	require.NoError(t, err, "git log should succeed")
 	return strings.TrimSpace(out)
 }
