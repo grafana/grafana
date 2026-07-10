@@ -42,8 +42,8 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			Small: jsonData.Info.Logos.Small,
 			Large: jsonData.Info.Logos.Large,
 		},
-		Updated: jsonData.Info.Updated,
-		Version: jsonData.Info.Version,
+		Updated: blankPluginPlaceholder(jsonData.Info.Updated, placeholderUpdated),
+		Version: blankPluginPlaceholder(jsonData.Info.Version, placeholderVersion),
 	}
 
 	if jsonData.Info.Description != "" {
@@ -787,12 +787,35 @@ func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafana
 	return grafanaComPluginVersionMetaToMetaSpec(logger, childMeta, child.Path)
 }
 
+// placeholderVersion and placeholderUpdated are the unsubstituted plugin.json
+// placeholders that the build system leaves in place when it does not replace them.
+// They are treated as "unset", mirroring the loader's TemplateDecorateFunc, so that
+// downstream version handling (e.g. inheriting a nested plugin's version from its
+// parent) is not defeated by a literal "%VERSION%".
+const (
+	placeholderVersion = "%VERSION%"
+	placeholderUpdated = "%TODAY%"
+)
+
+// blankPluginPlaceholder returns "" when v is the given unsubstituted placeholder.
+func blankPluginPlaceholder(v, placeholder string) string {
+	if v == placeholder {
+		return ""
+	}
+	return v
+}
+
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
 func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafanaComPluginVersionMeta, pluginRelBasePath string) (pluginsv0alpha1.MetaSpec, error) {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: gcomMeta.JSON.MetaJSONData,
 		Class:      pluginsv0alpha1.MetaSpecClassExternal,
 	}
+
+	// This path uses the embedded plugin.json verbatim, so normalise the version/updated
+	// placeholders here (jsonDataToMetaJSONData handles the other provider paths).
+	metaSpec.PluginJson.Info.Version = blankPluginPlaceholder(metaSpec.PluginJson.Info.Version, placeholderVersion)
+	metaSpec.PluginJson.Info.Updated = blankPluginPlaceholder(metaSpec.PluginJson.Info.Updated, placeholderUpdated)
 
 	// The plugin.json embedded in the grafana.com response often omits the version
 	// (especially for nested/child plugins, which inherit it from the parent). Fall
