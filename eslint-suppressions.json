@@ -989,15 +989,7 @@
       "count": 2
     }
   },
-  "public/app/features/actions/ActionVariablesEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/actions/ParamsEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
