@@ -49,6 +49,7 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 		nil, // preferenceK8sHandler not needed for these tests
 		dashboards.NewFakeDashboardService(t),
 		featuremgmt.WithFeatures(),
+		nil, // resource client not needed by default; deletion tests inject a folder searcher
 		nil, // teamBindingClient not needed for these tests
 	)
 	for _, o := range opts {
@@ -428,6 +429,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				nil, // preferenceK8sHandler not needed for these tests
 				dashboards.NewFakeDashboardService(t),
 				featuremgmt.WithFeatures(),
+				nil, // resource client not needed for this test
 				nil, // teamBindingClient not needed for these tests
 			)
 

@@ -1043,6 +1043,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 
 func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
 	switch oldObj := a.GetOldObject().(type) {
+	case *iamv0.Team:
+		return team.ValidateOnDelete(ctx, b.unified, oldObj)
 	case *iamv0.Role:
 		return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
 	case *iamv0.GlobalRole:

@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -10,6 +11,8 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/team/folderownership"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
@@ -75,6 +78,18 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legac
 	}
 
 	return nil
+}
+
+func ValidateOnDelete(ctx context.Context, searcher resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team) error {
+	err := folderownership.ValidateNoOwnedFolders(ctx, searcher, obj.Namespace, obj.Name)
+	if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
+		return apierrors.NewConflict(
+			iamv0alpha1.TeamResourceInfo.GroupResource(),
+			obj.Name,
+			err,
+		)
+	}
+	return err
 }
 
 // validateExternalGroups rejects empty entries and dup-after-normalize without

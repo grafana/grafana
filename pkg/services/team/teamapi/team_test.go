@@ -1,6 +1,8 @@
 package teamapi
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -15,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -189,7 +193,10 @@ func TestTeamAPIEndpoint_UpdateTeam(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
-	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
+	searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+		tapi.folderSearcher = searcher
+	})
 
 	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, teamID), http.NoBody)
@@ -213,6 +220,9 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
+		require.NotNil(t, searcher.request)
+		assert.Equal(t, "default", searcher.request.Options.Key.Namespace)
+		assert.Equal(t, []string{"iam.grafana.app/Team/a00001"}, searcher.request.Options.Fields[0].Values)
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions by UID", func(t *testing.T) {
@@ -223,6 +233,50 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("Prevents deleting a team that owns folders", func(t *testing.T) {
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusConflict, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("Fails closed when checking folder ownership fails", func(t *testing.T) {
+		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
+			tapi.folderSearcher = &teamFolderSearchClient{err: errors.New("search unavailable")}
+		})
+		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+			{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+		}))
+
+		res, err := server.Send(req)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+}
+
+type teamFolderSearchClient struct {
+	resourcepb.ResourceIndexClient
+	request  *resourcepb.ResourceSearchRequest
+	response *resourcepb.ResourceSearchResponse
+	err      error
+}
+
+func (s *teamFolderSearchClient) Search(_ context.Context, request *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	s.request = request
+	return s.response, s.err
 }
 
 // Given a team with a user, when the user is granted X permission,

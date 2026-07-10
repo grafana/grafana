@@ -10,11 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/folderownership"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -132,6 +134,7 @@ func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
+// 409: conflictError
 // 500: internalServerError
 func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Response {
 	orgID := c.GetOrgID()
@@ -145,7 +148,23 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		return resp
 	}
 
-	if err := tapi.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
+	ctx := c.Req.Context()
+	if !ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+		teamUID, errResp := tapi.resolveTeamUID(c, teamID)
+		if errResp != nil {
+			return errResp
+		}
+
+		namespace := apirequest.GetNamespaceMapper(tapi.cfg)(orgID)
+		if err := folderownership.ValidateNoOwnedFolders(ctx, tapi.folderSearcher, namespace, teamUID); err != nil {
+			if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
+				return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+			}
+			return response.Error(http.StatusInternalServerError, "Failed to check if team owns folders", err)
+		}
+	}
+
+	if err := tapi.teamService.DeleteTeam(ctx, &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
 		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete Team. ID not found", nil)
 		}
