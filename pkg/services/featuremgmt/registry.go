@@ -2115,14 +2115,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "vizPresets",
-			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
