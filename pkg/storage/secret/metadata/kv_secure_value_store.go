@@ -523,7 +523,11 @@ func (s *kvSecureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Con
 		if err != nil {
 			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
 		}
-		defer s.leaseManager.Release(ctx, lease)
+		defer func() {
+			if err := s.leaseManager.Release(ctx, lease); err != nil {
+				logging.FromContext(ctx).Error("releasing kv store lease", "err", err.Error())
+			}
+		}()
 
 		item.value.LeaseToken = leaseToken
 		item.value.LeaseCreated = now
@@ -821,7 +825,11 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 		if err != nil {
 			return nil, fmt.Errorf("acquiring kv store lease: %w", err)
 		}
-		defer s.leaseManager.Release(ctx, lease)
+		defer func() {
+			if err := s.leaseManager.Release(ctx, lease); err != nil {
+				logging.FromContext(ctx).Error("releasing kv store lease", "err", err.Error())
+			}
+		}()
 
 		parsed, err := parseSecureValue(kvValue.Value)
 		if err != nil {
