@@ -249,7 +249,9 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          {canCustomise && !editMode && (
+          {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
+              pinned list and pressing Done before the pins arrive would overwrite them with []. */}
+          {canCustomise && !editMode && !isLoading && (
             <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
               <Icon name="sliders-v-alt" size="lg" />
               <Text color="secondary">{t('navigation.megamenu.customise', 'Customise navigation')}</Text>

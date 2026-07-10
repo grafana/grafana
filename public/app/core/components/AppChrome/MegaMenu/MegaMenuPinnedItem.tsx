@@ -40,7 +40,12 @@ export function MegaMenuPinnedItem({
   const { item, ancestors, icon } = line;
   const label = item.text;
 
-  const isActive = Boolean(item.url) && item.url === activeItem?.url;
+  // Highlight the row whenever it points at the current route, but only claim aria-current when this
+  // pinned copy is the canonical active item. getActiveItem resolves the nav copy first, so an item
+  // that's both pinned and still in the nav keeps aria-current on its nav row; without this guard
+  // both links would carry aria-current="page" for the same route.
+  const isActiveRoute = Boolean(item.url) && item.url === activeItem?.url;
+  const isCurrentPage = item === activeItem;
   const nearestAncestor = ancestors.at(-1);
   const fullPath = [...ancestors, item.text].join(' › ');
   const LinkComponent = item.url && !item.target && item.url.startsWith('/') ? Link : 'a';
@@ -66,8 +71,8 @@ export function MegaMenuPinnedItem({
               item.onClick?.();
               onClick?.();
             }}
-            className={cx(styles.link, isActive && styles.active)}
-            {...(isActive && { 'aria-current': 'page' })}
+            className={cx(styles.link, isActiveRoute && styles.active)}
+            {...(isCurrentPage && { 'aria-current': 'page' })}
           >
             {/* The leading icon is the top-level parent section's icon, not the leaf's own. */}
             <Icon className={styles.leafIcon} name={icon ? (toIconName(icon) ?? 'apps') : 'apps'} size="lg" />

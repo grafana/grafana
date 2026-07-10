@@ -174,6 +174,19 @@ describe('MegaMenu', () => {
       expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
     });
 
+    it('hides the customise entry point until preferences have loaded, so pins are not cleared', async () => {
+      // Hold the preferences GET pending. Entering edit mode now would start from an empty pinned
+      // list, and pressing Done before preferences arrive would overwrite the user's saved pins with
+      // []. The entry point must stay hidden until loading finishes.
+      server.use(customGetUserPreferencesHandler(() => new Promise(() => {})));
+
+      renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+
+      // The nav still renders (skeleton), but there's no way into edit mode while preferences load.
+      await screen.findByRole('list', { name: 'Navigation' });
+      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
+    });
+
     describe('reordering top-level sections', () => {
       it('renders the top-level sections in the stored order', async () => {
         renderMegaMenu({ sectionOrder: ['cfg', 'explore'] });
