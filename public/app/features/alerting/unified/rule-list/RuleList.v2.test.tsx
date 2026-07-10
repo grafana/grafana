@@ -1,4 +1,4 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
@@ -66,7 +66,7 @@ setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
-setupMswServer();
+const server = setupMswServer();
 
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
@@ -438,6 +438,84 @@ describe('RuleListActions', () => {
       const menu = await ui.moreMenu.find();
 
       expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+    });
+  });
+
+  describe('Auto-sync Mimir Alertmanager — disables import menu items', () => {
+    testWithFeatureToggles({
+      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
+    });
+
+    function mockAdminConfig(uid?: string) {
+      server.use(
+        http.get('/api/v1/ngalert/admin_config', () =>
+          HttpResponse.json({ alertmanagersChoice: 'internal', ...(uid ? { external_alertmanager_uid: uid } : {}) })
+        )
+      );
+    }
+
+    async function findDisabledItem(menu: HTMLElement, role: 'importAlertRules' | 'importToGma') {
+      // The menu item renders the disabled reason in its `description` slot, so the accessible
+      // name expands beyond the original label — match via a name regex that ignores the suffix.
+      return await byRole('menuitem', {
+        name: role === 'importAlertRules' ? /import alert rules/i : /import to grafana alerting/i,
+      }).find(menu);
+    }
+
+    it('disables "Import alert rules" with a reason when sync is configured for the org', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]);
+      mockAdminConfig('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const item = await findDisabledItem(menu, 'importAlertRules');
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(item).not.toHaveAttribute('href');
+      expect(item).toHaveTextContent(/auto-sync/i);
+    });
+
+    it('disables "Import to Grafana Alerting" with a reason when sync is configured for the org', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+      mockAdminConfig('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const item = await findDisabledItem(menu, 'importToGma');
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(item).not.toHaveAttribute('href');
+      expect(item).toHaveTextContent(/auto-sync/i);
+    });
+
+    it('leaves import items enabled when sync is not configured', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+      mockAdminConfig();
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const importItem = ui.menuOptions.importAlertRules.get(menu);
+      const wizardItem = ui.menuOptions.importToGma.get(menu);
+      expect(importItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+      expect(importItem).not.toHaveAttribute('aria-disabled', 'true');
+      expect(wizardItem).toHaveAttribute('href', '/alerting/import-to-gma');
+      expect(wizardItem).not.toHaveAttribute('aria-disabled', 'true');
     });
   });
 

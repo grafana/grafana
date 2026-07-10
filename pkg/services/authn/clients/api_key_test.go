@@ -60,7 +60,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:               1,
 				OrgID:            1,
 				Key:              hash,
-				ServiceAccountId: intPtr(1),
+				ServiceAccountId: new(int64(1)),
 			},
 			expectedIdentity: &authn.Identity{
 				ID:    "1",
@@ -78,7 +78,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			req:  &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
 			expectedKey: &apikey.APIKey{
 				Key:     hash,
-				Expires: intPtr(0),
+				Expires: new(int64),
 			},
 			expectedErr: errAPIKeyExpired,
 		},
@@ -98,7 +98,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:               1,
 				OrgID:            2,
 				Key:              hash,
-				ServiceAccountId: intPtr(1),
+				ServiceAccountId: new(int64(1)),
 			},
 			expectedErr: errAPIKeyOrgMismatch,
 		},
@@ -177,10 +177,6 @@ func TestAPIKey_Test(t *testing.T) {
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
-}
-
-func intPtr(n int64) *int64 {
-	return &n
 }
 
 func genApiKey() (string, string) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,15 +16,12 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-)
-
-const (
-	// Files endpoint max size for dashboards etc (5MB)
-	filesMaxBodySize = 5 * 1024 * 1024
 )
 
 type filesConnector struct {
@@ -34,17 +30,19 @@ type filesConnector struct {
 	parsers               resources.ParserFactory
 	clients               resources.ClientFactory
 	folderMetadataEnabled bool
-	folderAPIVersion      string
+	// maxFileSize caps the size in bytes of files read from or written to the
+	// repository through this connector. <=0 disables the check.
+	maxFileSize int64
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, folderAPIVersion string) *filesConnector {
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access auth.AccessChecker, folderMetadataEnabled bool, maxFileSize int64) *filesConnector {
 	return &filesConnector{
 		getter:                getter,
 		parsers:               parsers,
 		clients:               clients,
 		access:                access,
 		folderMetadataEnabled: folderMetadataEnabled,
-		folderAPIVersion:      folderAPIVersion,
+		maxFileSize:           maxFileSize,
 	}
 }
 
@@ -83,16 +81,17 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.handleRequest(ctx, name, r, responder, logger)
-	}), 30*time.Second), nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+		c.handleRequest(logging.Context(ctx, logger), name, r, responder, logger)
+	}), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
 func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http.Request, responder rest.Responder, logger logging.Logger) {
+	if author, ok := jobs.UserAttribution(ctx); ok {
+		ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: author.Name, Email: author.Email})
+	}
 	repo, err := c.getRepo(ctx, r.Method, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
@@ -104,6 +103,11 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	if !ok {
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
+	}
+	if c.maxFileSize > 0 {
+		if m, ok := readWriter.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(c.maxFileSize)
+		}
 	}
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
@@ -119,7 +123,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	}
 
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
-	ctx = logging.Context(r.Context(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)
@@ -173,13 +177,13 @@ func (c *filesConnector) createDualReadWriter(ctx context.Context, repo reposito
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	folderClient, folderGVK, err := clients.Folder(ctx, c.folderAPIVersion)
+	folderClient, folderGVK, err := clients.Folder(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, c.folderMetadataEnabled)
+	authorizer := resources.NewAuthorizer(repo.Config(), readWriter, c.access, clients, c.folderMetadataEnabled)
 	return resources.NewDualReadWriter(readWriter, parser, folders, authorizer, c.folderMetadataEnabled), authorizer, nil
 }
 
@@ -192,6 +196,12 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 		SkipDryRun:   query.Get("skipDryRun") == "true",
 		OriginalPath: query.Get("originalPath"),
 		Branch:       repo.Config().Branch(),
+	}
+
+	// Reject unvalidated refs before they reach any backend. Empty is allowed and
+	// is defaulted to the configured branch downstream.
+	if !git.IsValidRef(opts.Ref) {
+		return opts, repository.ErrInvalidRef
 	}
 
 	path, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
@@ -218,13 +228,13 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 // handleDirectoryListing handles GET requests for directory listing.
 func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, responder rest.Responder) {
 	if err := c.authorizeListFiles(ctx, name); err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
 	files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 	if err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
@@ -310,7 +320,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 		return dualReadWriter.CreateFolder(ctx, opts)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +336,7 @@ func (c *filesConnector) handlePost(ctx context.Context, r *http.Request, opts r
 func (c *filesConnector) handleMove(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, isDir bool, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
 	// For move operations, only read body for file moves (not directory moves)
 	if !isDir {
-		data, err := readBody(r, filesMaxBodySize)
+		data, err := readBody(r, c.maxFileSize)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +358,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 		return nil, apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 	}
 
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +372,7 @@ func (c *filesConnector) handlePut(ctx context.Context, r *http.Request, opts re
 }
 
 func (c *filesConnector) handleFolderMetadataUpdate(ctx context.Context, r *http.Request, opts resources.DualWriteOptions, dualReadWriter *resources.DualReadWriter) (*provisioning.ResourceWrapper, error) {
-	data, err := readBody(r, filesMaxBodySize)
+	data, err := readBody(r, c.maxFileSize)
 	if err != nil {
 		return nil, err
 	}

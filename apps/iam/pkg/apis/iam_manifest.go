@@ -72,6 +72,45 @@ var appManifestData = app.ManifestData{
 						"spec.email",
 						"spec.login",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The email address of the user",
+						},
+						{
+							Name:         "login",
+							Path:         "spec.login",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The login of the user",
+						},
+						{
+							Name:             "lastSeenAt",
+							Path:             "status.lastSeenAt",
+							Type:             "int64",
+							Capabilities:     []string{"sort", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "The last seen timestamp of the user",
+						},
+						{
+							Name:         "role",
+							Path:         "spec.role",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The role of the user",
+						},
+						{
+							Name:             "disabled",
+							Path:             "spec.disabled",
+							Type:             "boolean",
+							Capabilities:     []string{"filter", "retrieve"},
+							EmitZeroIfAbsent: true,
+							Description:      "Whether the user is disabled",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
 							Get: &spec3.Operation{
@@ -171,6 +210,45 @@ var appManifestData = app.ManifestData{
 					Plural:     "Teams",
 					Scope:      "Namespaced",
 					Conversion: false,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "email",
+							Path:         "spec.email",
+							Type:         "string",
+							Capabilities: []string{"sort", "retrieve"},
+							Description:  "Email of the team",
+						},
+						{
+							Name:         "provisioned",
+							Path:         "spec.provisioned",
+							Type:         "boolean",
+							Capabilities: []string{"retrieve"},
+							Description:  "Whether the team is provisioned",
+						},
+						{
+							Name:         "externalUID",
+							Path:         "spec.externalUID",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "External UID of the team",
+						},
+						{
+							Name:         "members",
+							Path:         "spec.members[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of users that are members of the team",
+						},
+						{
+							Name:         "externalGroups",
+							Path:         "spec.externalGroups",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "External group identifiers mapped to the team",
+						},
+					},
 					Routes: map[string]spec3.PathProps{
 						"/addmember": {
 							Post: &spec3.Operation{
@@ -302,14 +380,13 @@ var appManifestData = app.ManifestData{
 																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																				},
 																			},
-																			"items": {
+																			"externalGroups": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"array"},
 																					Items: &spec.SchemaOrArray{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
-
-																								Ref: spec.MustCreateRef("#/components/schemas/getTeamGroupsExternalGroupMapping"),
+																								Type: []string{"string"},
 																							}},
 																					},
 																				},
@@ -322,7 +399,7 @@ var appManifestData = app.ManifestData{
 																			},
 																		},
 																		Required: []string{
-																			"items",
+																			"externalGroups",
 																			"apiVersion",
 																			"kind",
 																		},
@@ -484,6 +561,33 @@ var appManifestData = app.ManifestData{
 						"spec.teamRef.name",
 						"spec.subject.name",
 						"spec.external",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "subject",
+							Path:         "spec.subject.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+						},
+						{
+							Name:         "permission",
+							Path:         "spec.permission",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+						},
+						{
+							Name:             "external",
+							Path:             "spec.external",
+							Type:             "boolean",
+							Capabilities:     []string{"retrieve"},
+							EmitZeroIfAbsent: true,
+						},
 					},
 				},
 
@@ -791,10 +895,148 @@ var appManifestData = app.ManifestData{
 						"spec.teamRef.name",
 						"spec.externalGroupId",
 					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "team",
+							Path:         "spec.teamRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The team name associated with the external group mapping",
+						},
+						{
+							Name:         "external_group",
+							Path:         "spec.externalGroupId",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The external group name/id associated with the external group mapping",
+						},
+					},
 				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/searchExternalGroupMappings": {
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "createSearchExternalGroupMappings",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "limit",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "offset",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "page",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+								},
+								RequestBody: &spec3.RequestBody{
+									RequestBodyProps: spec3.RequestBodyProps{
+
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Type: []string{"object"},
+															Properties: map[string]spec.Schema{
+																"externalGroups": {
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"array"},
+																		Items: &spec.SchemaOrArray{
+																			Schema: &spec.Schema{
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				}},
+																		},
+																	},
+																},
+															},
+														}},
+												}},
+										},
+									}},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																		"teams": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"array"},
+																				Description: "Deduplicated team UIDs whose spec.externalGroups intersect the request set.",
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"string"},
+																						}},
+																				},
+																			},
+																		},
+																		"totalHits": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"integer"},
+																				Description: "Raw match count; may exceed len(teams) in legacy storage mode where one team can match through multiple group rows. Use to drive pagination, not as a team count.",
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"teams",
+																		"totalHits",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/searchTeams": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -1062,6 +1304,11 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"internalId": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
 								"memberCount": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"integer"},
@@ -1108,9 +1355,26 @@ var appManifestData = app.ManifestData{
 										},
 									},
 								},
+								"created": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Creation timestamp, in epoch milliseconds.",
+									},
+								},
+								"disabled": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"internalId": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"integer"},
+										Description: "Deprecated internal (legacy SQL) id of the user.",
 									},
 								},
 								"lastSeenAt": {
@@ -1163,6 +1427,9 @@ var appManifestData = app.ManifestData{
 								"lastSeenAt",
 								"lastSeenAtAge",
 								"provisioned",
+								"disabled",
+								"internalId",
+								"created",
 								"score",
 							},
 						},
@@ -1219,8 +1486,9 @@ var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|ServiceAccount|tokens/{tokenName}|GET":    v0alpha1.GetServiceAccountTokenResponse{},
 	"v0alpha1|ServiceAccount|tokens/{tokenName}|DELETE": v0alpha1.DeleteServiceAccountTokenResponse{},
 
-	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
-	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},
+	"v0alpha1||<namespace>/searchExternalGroupMappings|POST": v0alpha1.CreateSearchExternalGroupMappingsResponse{},
+	"v0alpha1||<namespace>/searchTeams|GET":                  v0alpha1.GetSearchTeamsResponse{},
+	"v0alpha1||<namespace>/searchUsers|GET":                  v0alpha1.GetSearchUsersResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -1255,6 +1523,8 @@ var customRouteToGoRequestBodyType = map[string]any{
 	"v0alpha1|Team|removemember|POST": &v0alpha1.DeleteTeamMemberRequestBody{},
 
 	"v0alpha1|ServiceAccount|tokens|POST": &v0alpha1.CreateServiceAccountTokenRequestBody{},
+
+	"v0alpha1||<namespace>/searchExternalGroupMappings|POST": v0alpha1.CreateSearchExternalGroupMappingsRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

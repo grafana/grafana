@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
   type DataQueryError,
-  type DataSourceApi,
+  DataSourceApi,
   type DataSourceJsonData,
+  type DataQueryResponse,
   getDefaultTimeRange,
   LoadingState,
+  type TestDataSourceResponse,
 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -21,6 +23,7 @@ import {
   mockQueryOptionsState,
   mockTransformToggles,
   mockTypeConfig,
+  mockUIStateBase,
   renderWithQueryEditorProvider,
 } from './testUtils';
 
@@ -36,19 +39,34 @@ interface TestQuery extends DataQuery {
   legendFormat?: string;
 }
 
+function getLegendFormat(query: DataQuery): string {
+  return 'legendFormat' in query && typeof query.legendFormat === 'string' ? query.legendFormat : '';
+}
+
 // Fake query editor that simulates an uncontrolled input — it initialises its
 // display value from props.query on mount and never syncs again.
-function UncontrolledQueryEditor({ query }: { query: TestQuery }) {
-  const [legend] = useState(query.legendFormat ?? '');
+function UncontrolledQueryEditor({ query }: { query: DataQuery }) {
+  const [legend] = useState(getLegendFormat(query));
   return <div data-testid="query-editor-legend">{legend}</div>;
 }
 
-const mockDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
-  components: { QueryEditor: UncontrolledQueryEditor },
-};
+class MockDataSourceApi extends DataSourceApi<DataQuery, DataSourceJsonData> {
+  constructor(components: DataSourceApi<DataQuery, DataSourceJsonData>['components']) {
+    super(ds1SettingsMock);
+    this.components = components;
+  }
+
+  query(): Promise<DataQueryResponse> {
+    return Promise.resolve({ data: [] });
+  }
+
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ status: 'success', message: 'OK' });
+  }
+}
 
 const selectedQueryDsData = {
-  datasource: mockDatasource as DataSourceApi,
+  datasource: new MockDataSourceApi({ QueryEditor: UncontrolledQueryEditor }),
   dsSettings: ds1SettingsMock,
 };
 
@@ -77,14 +95,37 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByText(/loading datasource/i)).toBeInTheDocument();
   });
 
-  it('shows an error when the datasource fails to load', () => {
+  it('shows an actionable error when the datasource fails to load', () => {
     renderRenderer(queryA, { selectedQueryDsData: null });
     expect(screen.getByText(/failed to load datasource for this query/i)).toBeInTheDocument();
+    expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
   });
 
   it('renders the query editor for the selected query', () => {
     renderRenderer(queryA);
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+  });
+
+  it('contains errors thrown by the datasource query editor', () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    function ThrowingQueryEditor(): never {
+      throw new Error('Query editor crashed');
+    }
+
+    try {
+      renderRenderer(queryA, {
+        selectedQueryDsData: {
+          datasource: new MockDataSourceApi({ QueryEditor: ThrowingQueryEditor }),
+          dsSettings: ds1SettingsMock,
+        },
+      });
+
+      expect(screen.getByText('An unexpected error happened')).toBeInTheDocument();
+      expect(screen.getByText(/Query editor crashed/)).toBeInTheDocument();
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('remounts the query editor when switching queries, resetting uncontrolled input state', () => {
@@ -135,6 +176,9 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}
@@ -157,8 +201,8 @@ describe('QueryEditorRenderer', () => {
     const updateSelectedQuery = jest.fn();
 
     // Editor that flushes a pending edit via onChange in its unmount cleanup.
-    function CleanupOnChangeEditor({ query, onChange }: { query: TestQuery; onChange: (q: DataQuery) => void }) {
-      const pendingEdit = { ...query, legendFormat: `${query.legendFormat}-edited` };
+    function CleanupOnChangeEditor({ query, onChange }: { query: DataQuery; onChange: (q: DataQuery) => void }) {
+      const pendingEdit = { ...query, legendFormat: `${getLegendFormat(query)}-edited` };
       const pendingEditRef = useRef(pendingEdit);
       pendingEditRef.current = pendingEdit;
       const onChangeRef = useRef(onChange);
@@ -168,12 +212,10 @@ describe('QueryEditorRenderer', () => {
         return () => onChangeRef.current(pendingEditRef.current);
       }, []);
 
-      return <div data-testid="cleanup-editor">{query.legendFormat}</div>;
+      return <div data-testid="cleanup-editor">{getLegendFormat(query)}</div>;
     }
 
-    const mockDatasourceWithCleanup: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
-      components: { QueryEditor: CleanupOnChangeEditor },
-    };
+    const mockDatasourceWithCleanup = new MockDataSourceApi({ QueryEditor: CleanupOnChangeEditor });
 
     function buildJsx(selectedQuery: DataQuery) {
       return (
@@ -191,7 +233,7 @@ describe('QueryEditorRenderer', () => {
             setSelectedAlert: jest.fn(),
             queryOptions: mockQueryOptionsState,
             selectedQueryDsData: {
-              datasource: mockDatasourceWithCleanup as DataSourceApi,
+              datasource: mockDatasourceWithCleanup,
               dsSettings: ds1SettingsMock,
             },
             selectedQueryDsLoading: false,
@@ -215,6 +257,9 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={{ ...mockActions, updateSelectedQuery }}
           typeConfig={mockTypeConfig}

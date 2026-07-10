@@ -14,7 +14,7 @@ import { getElements } from '../../serialization/layoutSerializers/utils';
 import { payloads } from './schemas';
 import { requiresNewDashboardLayoutsReadOnly, type MutationCommand } from './types';
 
-export const getLayoutPayloadSchema = payloads.getLayout;
+const getLayoutPayloadSchema = payloads.getLayout;
 
 export type GetLayoutPayload = z.infer<typeof getLayoutPayloadSchema>;
 

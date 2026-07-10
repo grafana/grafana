@@ -74,7 +74,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmButtonVariant={!error ? 'destructive' : 'primary'}
+      confirmVariant={!error ? 'destructive' : 'primary'}
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.restore-modal.body">
@@ -132,7 +132,7 @@ const getStyles = () => ({
   }),
 });
 
-export function useRestoreDeletedRule() {
+function useRestoreDeletedRule() {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
 
   return useAsync(async (deletedRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {

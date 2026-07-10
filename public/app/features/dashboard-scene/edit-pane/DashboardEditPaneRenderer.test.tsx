@@ -27,6 +27,7 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     dashboardOutlineClicked: jest.fn(),
     outlineItemClicked: jest.fn(),
   },
@@ -76,10 +77,14 @@ export function buildTestScene() {
 describe('DashboardEditPaneRenderer', () => {
   beforeEach(() => {
     config.featureToggles.dashboardNewLayouts = true;
+    // Sidebar state is persisted to localStorage — clear between tests so each test
+    // starts with the default visibility/dock state.
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    window.localStorage.clear();
   });
 
   it('Should render sidebar', async () => {
@@ -123,6 +128,74 @@ describe('DashboardEditPaneRenderer', () => {
       const outlineButton = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
       await user.click(outlineButton);
       expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
+    });
+  });
+
+  describe('hide button', () => {
+    it('renders the hide button in view mode', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+      const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
+      expect(hideButton).toBeInTheDocument();
+    });
+
+    it('renders the hide button in edit mode', async () => {
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+
+      const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
+      expect(hideButton).toBeInTheDocument();
+    });
+
+    it('hides the sidebar and clears any open pane on click', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+
+      // Open the outline pane first
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+      expect(scene.state.editPane.state.openPane).toBeDefined();
+
+      // Click hide
+      await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));
+
+      // Pane should be cleared
+      expect(scene.state.editPane.state.openPane).toBeUndefined();
+      // The sidebar container should no longer be rendered (only the show toggle remains)
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+    });
+
+    it('temporarily shows the sidebar undocked when selecting a panel while hidden', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+
+      // Hide the sidebar
+      await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+
+      // Select the panel programmatically (clicking a panel in real UX)
+      const panel = scene.state.body.getVizPanels()[0];
+      act(() => scene.state.editPane.selectObject(panel));
+
+      // Sidebar pops up — effective isDocked is false during temp-show
+      expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
+      expect(scene.state.editPane.state.isDocked).toBe(false);
+
+      // De-selecting closes the pane and re-hides the sidebar
+      act(() => scene.state.editPane.clearSelection(true));
+
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
     });
   });
 });

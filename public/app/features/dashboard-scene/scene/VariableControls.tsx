@@ -24,11 +24,19 @@ import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopov
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
-export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
-  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+export function VariableControls({
+  dashboard,
+  variablesOverride,
+}: {
+  dashboard: DashboardScene;
+  variablesOverride?: SceneVariable[];
+}) {
+  const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
@@ -62,6 +70,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
@@ -102,6 +111,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          onPointerDown={markUserInitiated}
         >
           <div className={styles.switchControl}>
             <variable.Component model={variable} />
@@ -126,6 +136,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          onPointerDown={markUserInitiated}
         >
           <VariableLabel
             variable={variable}
@@ -147,6 +158,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        onPointerDown={markUserInitiated}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
         <variable.Component model={variable} />

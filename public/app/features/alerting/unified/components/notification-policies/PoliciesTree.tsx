@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { AlertGroupAction, ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -17,6 +17,8 @@ import {
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type ContactPointsState } from '../../types/alerting';
@@ -44,7 +46,7 @@ import {
 import { getAlertGroupsKey } from './utils';
 
 /** Async function that computes route-to-alert-group mapping off the main thread. */
-export type GetRouteGroupsMapFn = (
+type GetRouteGroupsMapFn = (
   rootRoute: RouteWithID,
   alertGroups: AlertmanagerGroup[],
   options?: { unquoteMatchers?: boolean }
@@ -80,12 +82,11 @@ export const PoliciesTree = ({
   getRouteGroupsMap,
 }: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: shouldFetchContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   const { selectedAlertmanager, isGrafanaAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
-  const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
   const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
     skip: !shouldFetchContactPoints,
     pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,

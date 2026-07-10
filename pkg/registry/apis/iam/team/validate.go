@@ -2,15 +2,17 @@ package team
 
 import (
 	"context"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 )
 
-func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
+func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -32,10 +34,14 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.Team) error {
 		return err
 	}
 
+	if err := validateExternalGroups(obj.Spec.ExternalGroups, egr); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
+func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -64,7 +70,28 @@ func ValidateOnUpdate(ctx context.Context, obj, old *iamv0alpha1.Team) error {
 		return err
 	}
 
+	if err := validateExternalGroups(obj.Spec.ExternalGroups, egr); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// validateExternalGroups rejects empty entries and dup-after-normalize without
+// mutating groups; impl-specific constraints (length, charset) live on egr.
+func validateExternalGroups(groups []string, egr legacy.ExternalGroupReconciler) error {
+	seen := make(map[string]struct{}, len(groups))
+	for _, g := range groups {
+		key := strings.ToLower(strings.TrimSpace(g))
+		if key == "" {
+			return apierrors.NewBadRequest("externalGroups entries must be non-empty")
+		}
+		if _, dup := seen[key]; dup {
+			return apierrors.NewBadRequest("duplicate externalGroups entry " + key)
+		}
+		seen[key] = struct{}{}
+	}
+	return egr.Validate(groups)
 }
 
 func validateNoDuplicateMembers(members []iamv0alpha1.TeamTeamMember) error {

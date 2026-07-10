@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -27,6 +29,8 @@ type changeInfo struct {
 	// Attribution: identifies which provisioning repository posted this comment
 	RepositoryName  string
 	RepositoryTitle string
+	// RepositoryURL links to the git repository (empty for local repositories)
+	RepositoryURL string
 
 	// Files we tried to read
 	Changes []fileChangeInfo
@@ -55,6 +59,10 @@ type fileChangeInfo struct {
 
 	// The title from inside the resource (or name if not found)
 	Title string
+
+	// SourceURL links to the file in the git repository (empty when the
+	// repository does not expose web URLs, e.g. non-GitHub backends)
+	SourceURL string
 
 	// The URL where this will appear (target)
 	GrafanaURL           string
@@ -112,14 +120,21 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 	}
 
 	rendererAvailable := e.render.IsAvailable(ctx)
-	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	// GenerateDashboardPreviews lives on the type-specific config, which is nil
+	// for the other provider(s) — guard against a nil dereference (e.g. a GitHub
+	// Enterprise repo has Spec.GitHubEnterprise set, not Spec.GitHub).
+	generatePreviews := (cfg.Spec.GitHub != nil && cfg.Spec.GitHub.GenerateDashboardPreviews) ||
+		(cfg.Spec.GitHubEnterprise != nil && cfg.Spec.GitHubEnterprise.GenerateDashboardPreviews)
+	shouldRender := rendererAvailable && len(changes) == 1 && generatePreviews
 	info := changeInfo{
 		GrafanaBaseURL:       e.urls.Internal(ctx, cfg.Namespace),
 		RepositoryName:       cfg.Name,
 		RepositoryTitle:      cfg.Spec.Title,
+		RepositoryURL:        stripUserinfo(cfg.URL()),
 		MissingImageRenderer: !rendererAvailable,
 	}
 	screenshotBaseURL := e.urls.Public(ctx, cfg.Namespace)
+	orgID := orgIDForLinks(cfg.Namespace)
 
 	logger := logging.FromContext(ctx)
 
@@ -133,7 +148,7 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, change, opts, parser, shouldRender))
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, screenshotBaseURL, orgID, change, opts, parser, shouldRender))
 	}
 
 	return info, nil
@@ -141,9 +156,37 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
+// stripUserinfo removes any embedded credentials (userinfo) from a URL so a
+// repository configured with an HTTPS URL like https://user:token@host/org/repo
+// never renders that token into a public PR comment. Returns "" when the URL
+// cannot be parsed, to avoid leaking a malformed credential-bearing string.
+func stripUserinfo(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	u.User = nil
+	return u.String()
+}
+
+// orgIDForLinks returns the org to pin on PR-comment links when the repo lives
+// in a non-primary org (on-prem org-N, N>=2). Main org (default), Cloud
+// (stacks-N) and unresolved namespaces return 0, leaving links unscoped since
+// the viewer's default org already resolves them.
+func orgIDForLinks(namespace string) int64 {
+	ns, err := authlib.ParseNamespace(namespace)
+	if err != nil || ns.OrgID <= 1 {
+		return 0
+	}
+	return ns.OrgID
+}
+
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, orgID int64, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		return e.evaluateDeletedFile(ctx, repo, baseURL, change, parser)
+		return e.evaluateDeletedFile(ctx, repo, baseURL, orgID, change, parser)
 	}
 
 	info := fileChangeInfo{Change: change}
@@ -152,6 +195,16 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
 		return info
+	}
+
+	// Best-effort link back to the file in the git repository. Computed before
+	// parsing so that parse/validation failures still link reviewers to the
+	// source file. Repositories that don't expose web URLs (e.g. non-GitHub
+	// backends) leave this empty.
+	if urlsRepo, ok := repo.(repository.RepositoryWithURLs); ok {
+		if urls, urlErr := urlsRepo.ResourceURLs(ctx, fileInfo); urlErr == nil && urls != nil {
+			info.SourceURL = stripUserinfo(urls.SourceURL)
+		}
 	}
 
 	// Read the file as a resource
@@ -198,6 +251,11 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 
@@ -209,6 +267,9 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		query.Set("ref", info.Parsed.Info.Ref)
 		if opts.URL != "" {
 			query.Set("pull_request_url", url.QueryEscape(opts.URL))
+		}
+		if orgID > 0 {
+			query.Set("orgId", strconv.FormatInt(orgID, 10))
 		}
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
@@ -233,7 +294,7 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 // evaluateDeletedFile is best-effort: it tries to read and parse the file at
 // the previous ref to extract metadata (kind, title, GrafanaURL)
-func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
+func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Reader, baseURL string, orgID int64, change repository.VersionedFileChange, parser resources.Parser) fileChangeInfo {
 	info := fileChangeInfo{Change: change}
 
 	fileInfo, err := repo.Read(ctx, change.Path, change.PreviousRef)
@@ -256,6 +317,11 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 		}
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 	}
@@ -280,7 +346,13 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 		logging.FromContext(ctx).Warn("invalid", "url", grafanaURL, "err", err)
 		return "", err
 	}
-	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
+	// orgId belongs only on the human-facing comment link, where OrgRedirect
+	// switches the viewer's org on click. The render callback already
+	// authenticates in the repository's org via the render-service identity, so
+	// an orgId here would make OrgRedirect try to switch the render user instead.
+	query := parsed.Query()
+	query.Del("orgId")
+	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), query)
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot: %w", err)

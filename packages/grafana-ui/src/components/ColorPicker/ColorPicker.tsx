@@ -34,7 +34,7 @@ type ColorPickerTriggerRenderer = (props: {
   isOpen: boolean;
 }) => ReactNode;
 
-export const colorPickerFactory = <T extends ColorPickerProps>(
+const colorPickerFactory = <T extends ColorPickerProps>(
   popover: ComponentType<PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {

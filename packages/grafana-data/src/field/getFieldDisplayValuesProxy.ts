@@ -3,7 +3,7 @@ import { toNumber } from 'lodash';
 import { type DataFrame } from '../types/dataFrame';
 import { type DisplayValue } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
-import { formattedValueToString } from '../valueFormats/valueFormats';
+import { formattedValueToString } from '../valueFormats/baseFormatters';
 
 import { getDisplayProcessor } from './displayProcessor';
 

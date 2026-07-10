@@ -14,7 +14,6 @@ import {
   type MapLayerOptions,
   type PanelData,
   type GrafanaTheme2,
-  FrameGeometrySourceMode,
   type EventBus,
   type DataFrame,
   type Field,
@@ -46,17 +45,7 @@ const defaultOptions: NetworkConfig = {
   arrow: 0,
 };
 
-export const NETWORK_LAYER_ID = 'network';
-
-// Used by default when nothing is configured
-export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
-  type: NETWORK_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-};
+const NETWORK_LAYER_ID = 'network';
 
 /**
  * Map layer configuration for network overlay

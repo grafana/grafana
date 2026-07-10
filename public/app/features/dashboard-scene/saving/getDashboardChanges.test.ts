@@ -50,23 +50,19 @@ describe('adHocVariableFiltersEqual', () => {
     ).toBeFalsy();
   });
 
-  describe('when filter property is undefined', () => {
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
-
+  describe('when filter property is undefined or empty', () => {
     it('should compare two adhoc variables where both are missing the filter property and return true', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
       expect(adHocVariableFiltersEqual(undefined, undefined)).toBeTruthy();
-
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
     });
 
-    it('should compare two adhoc variables where one is undefined and return false', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+    it('should compare undefined filters with empty array and return true', () => {
+      expect(adHocVariableFiltersEqual(undefined, [])).toBeTruthy();
+      expect(adHocVariableFiltersEqual([], undefined)).toBeTruthy();
+    });
 
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    it('should compare two adhoc variables where one is undefined and the other has filters and return false', () => {
+      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+      expect(adHocVariableFiltersEqual([], [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
     });
   });
 });
@@ -439,7 +435,7 @@ describe('getDashboardChanges', () => {
   });
 });
 
-describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+describe('getDashboardChanges with dashboardUnifiedDrilldownControls', () => {
   const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
     return {
       id: 1,
@@ -455,12 +451,12 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
   };
 
   afterEach(() => {
-    config.featureToggles.adHocFilterDefaultValues = false;
+    config.featureToggles.dashboardUnifiedDrilldownControls = false;
   });
 
   describe('when feature flag is enabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = true;
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {
@@ -536,7 +532,7 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
 
   describe('when feature flag is disabled', () => {
     beforeEach(() => {
-      config.featureToggles.adHocFilterDefaultValues = false;
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
     it('should not report variable value changes when only origin filters differ', () => {

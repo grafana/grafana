@@ -14,15 +14,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestReceiverInUse(t *testing.T) {
-	result := isReceiverInUse("test", []*definitions.Route{
+	result := isReceiverInUse("test", []*v1.Route{
 		{
 			Receiver: "not-test",
-			Routes: []*definitions.Route{
+			Routes: []*v1.Route{
 				{
 					Receiver: "not-test",
 				},
@@ -33,10 +33,10 @@ func TestReceiverInUse(t *testing.T) {
 		},
 	})
 	require.True(t, result)
-	result = isReceiverInUse("test", []*definitions.Route{
+	result = isReceiverInUse("test", []*v1.Route{
 		{
 			Receiver: "not-test",
-			Routes: []*definitions.Route{
+			Routes: []*v1.Route{
 				{
 					Receiver: "not-test",
 				},
@@ -59,7 +59,7 @@ func TestDeleteReceiver(t *testing.T) {
 			name:        "should remove receiver if exists",
 			receiverUID: NameToUid("receiver1"),
 			assert: func(t *testing.T, rev *ConfigRevision) {
-				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *definition.PostableApiReceiver) bool {
+				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *v1.PostableApiReceiver) bool {
 					return receiver.Name == "receiver1"
 				}))
 			},
@@ -75,7 +75,7 @@ func TestDeleteReceiver(t *testing.T) {
 			name:        "should remove all receivers with the same name",
 			receiverUID: NameToUid("dupe-receiver"),
 			assert: func(t *testing.T, rev *ConfigRevision) {
-				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *definition.PostableApiReceiver) bool {
+				require.False(t, slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(receiver *v1.PostableApiReceiver) bool {
 					return receiver.Name == "dupe-receiver"
 				}))
 			},
@@ -165,7 +165,7 @@ func TestCreateReceiver(t *testing.T) {
 			expectedError: nil,
 			assertResponse: func(t *testing.T, rev *ConfigRevision, receiver *models.Receiver) {
 				t.Helper()
-				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definition.PostableApiReceiver) bool {
+				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
 					return r.Name == "receiver2"
 				})
 				assert.Greaterf(t, idx, -1, "receiver was not added to the configuration")
@@ -262,7 +262,7 @@ func TestUpdateReceiver(t *testing.T) {
 			expectedError: nil,
 			assertResponse: func(t *testing.T, rev *ConfigRevision, receiver *models.Receiver) {
 				t.Helper()
-				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definition.PostableApiReceiver) bool {
+				idx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
 					return r.Name == "receiver-new"
 				})
 				assert.Greaterf(t, idx, -1, "receiver was not found to the configuration")
@@ -418,8 +418,8 @@ func TestReceiverNameUsedByRoutes(t *testing.T) {
 func TestReceiverUseByName(t *testing.T) {
 	rev := getConfigRevisionForTest()
 	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes,
-		&definitions.Route{
-			Routes: []*definitions.Route{
+		&v1.Route{
+			Routes: []*v1.Route{
 				{
 					Receiver: "receiver1",
 				},
@@ -447,13 +447,13 @@ func TestReceiverUseByName(t *testing.T) {
 }
 
 func TestRenameReceiverInRoutes(t *testing.T) {
-	routeGen := func() *definitions.Route {
-		return &definitions.Route{
+	routeGen := func() *v1.Route {
+		return &v1.Route{
 			Receiver: "receiver1",
-			Routes: []*definitions.Route{
+			Routes: []*v1.Route{
 				{
 					Receiver: "receiver1",
-					Routes: []*definitions.Route{
+					Routes: []*v1.Route{
 						{
 							Receiver: "missing-receiver",
 						},
@@ -461,7 +461,7 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 				},
 				{
 					Receiver: "dupe-receiver",
-					Routes: []*definitions.Route{
+					Routes: []*v1.Route{
 						{
 							Receiver: "receiver1",
 						},
@@ -472,7 +472,7 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 	}
 	rev := getConfigRevisionForTest()
 	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
-	rev.Config.ManagedRoutes = map[string]*definitions.Route{
+	rev.Config.ManagedRoutes = map[string]*v1.Route{
 		"named_route": routeGen(),
 	}
 
@@ -501,7 +501,7 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 	t.Run("managedRoutesSupported=true", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
 		rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
-		rev.Config.ManagedRoutes = map[string]*definitions.Route{
+		rev.Config.ManagedRoutes = map[string]*v1.Route{
 			"named_route": routeGen(),
 		}
 		t.Run("should do nothing if receiver is not used by routes ", func(t *testing.T) {
@@ -533,59 +533,59 @@ type opt func(*ConfigRevision)
 
 func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 	r := &ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "receiver1"},
-					TimeIntervals: []definitions.TimeInterval{
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "receiver1"},
+					TimeIntervals: []v1.TimeInterval{
 						{Name: "time-interval-1"},
 					},
-					MuteTimeIntervals: []definitions.AmMuteTimeInterval{
+					MuteTimeIntervals: []v1.MuteTimeInterval{
 						{Name: "mute-interval-1"},
 					},
 				},
-				Receivers: []*definition.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
+						Receiver: definition.Receiver{
 							Name: "receiver1",
 						},
-						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 								{
 									UID:      "integration-uid-1",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
+									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
+						Receiver: definition.Receiver{Name: "dupe-receiver"},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 								{
 									UID:      "integration-uid-2",
 									Type:     "webhook",
-									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
+									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 								},
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
+						Receiver: definition.Receiver{Name: "dupe-receiver"},
+						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
 								{
 									UID:      "integration-uid-3",
 									Type:     "email",
-									Settings: definitions.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
+									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
 								},
 							},
 						},
 					},
 				},
 			},
-			ManagedRoutes: map[string]*definitions.Route{
+			ManagedRoutes: map[string]*v1.Route{
 				"named_route": {Receiver: "receiver1"},
 				"other_route": {Receiver: "receiver2"},
 			},

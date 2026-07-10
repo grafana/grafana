@@ -5,23 +5,29 @@
  * The DashboardMutationClient iterates over ALL_COMMANDS generically.
  */
 
+import { addAnnotationCommand } from './addAnnotation';
 import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
+import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getSpecCommand } from './getSpec';
+import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { removeAnnotationCommand } from './removeAnnotation';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
+import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 import { updateLayoutCommand } from './updateLayout';
 import { updatePanelCommand } from './updatePanel';
@@ -35,6 +41,10 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   removeVariableCommand,
   updateVariableCommand,
   listVariablesCommand,
+  addAnnotationCommand,
+  updateAnnotationCommand,
+  removeAnnotationCommand,
+  listAnnotationsCommand,
   enterEditModeCommand,
   getLayoutCommand,
   addRowCommand,
@@ -53,10 +63,9 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
+  getSpecCommand,
+  applySpecCommand,
 ];
-
-/** All valid command names. */
-export const MUTATION_TYPES = ALL_COMMANDS.map((cmd) => cmd.name);
 
 /** Lookup command by name (case-insensitive). */
 function findCommand(command: string): MutationCommand | undefined {

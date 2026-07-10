@@ -86,7 +86,7 @@ func TestAddPostStartHooks(t *testing.T) {
 func TestRedirection(t *testing.T) {
 	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte(r.URL.Path))
+		_, err := w.Write([]byte(r.URL.Path)) // #nosec G705 -- test handler echoing controlled input
 		require.NoError(t, err)
 	})
 	handler := filters.WithPathRewriters(mockHandler, builder.PathRewriters)

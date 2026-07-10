@@ -20,24 +20,32 @@ import { Stack } from '../Layout/Stack/Stack';
 import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 import { type AdHocFilterItem } from '../Table/TableNG/types';
 
+/** @alpha */
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
 }
 
+/** @alpha */
 export interface FilterByGroupedLabelsModel {
   onFilterForGroupedLabels?: () => void;
   onFilterOutGroupedLabels?: () => void;
 }
 
-interface VizTooltipFooterProps {
-  dataLinks: Array<LinkModel<Field>>;
+/** @alpha */
+export interface VizTooltipFooterProps {
+  /** Data links to render as clickable buttons. Defaults to an empty array. */
+  dataLinks?: Array<LinkModel<Field>>;
+  /** Actions to render as clickable buttons. */
   actions?: Array<ActionModel<Field>>;
+  /** Ad hoc filter buttons, typically used to filter dashboards by a label/value pair. */
   adHocFilters?: AdHocFilterModel[];
+  /** Controls rendering of grouped label filter buttons (filter for / filter out). */
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
+  /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
 }
 
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
+const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 type RenderOneClickTrans = (title: string) => React.ReactNode;
 type RenderItem<T extends LinkModel | ActionModel> = (
@@ -98,8 +106,9 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
+/** @alpha */
 export const VizTooltipFooter = ({
-  dataLinks,
+  dataLinks = [],
   actions = [],
   annotate,
   adHocFilters = [],

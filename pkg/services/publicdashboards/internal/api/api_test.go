@@ -470,7 +470,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 
 			//check the result if it's a 200
 			if response.Code == http.StatusOK {
-				val, err := json.Marshal(test.publicDashboard)
+				val, err := json.Marshal(test.publicDashboard) // #nosec G117 -- test marshal of dashboard fixture
 				require.NoError(t, err)
 				assert.Equal(t, string(val), response.Body.String())
 			}
@@ -599,7 +599,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 
 			// check response when expected response is 200
 			if test.ExpectedHttpResponse == http.StatusOK {
-				val, err := json.Marshal(test.ExpectedResponse)
+				val, err := json.Marshal(test.ExpectedResponse) // #nosec G117 -- test marshal of response fixture
 				require.NoError(t, err)
 				assert.Equal(t, string(val), response.Body.String())
 			}

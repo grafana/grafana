@@ -40,7 +40,9 @@ export interface PluginImportInfo {
   path: string;
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
+  pluginName: string;
   version?: string;
+  hasUpdate?: boolean;
   moduleHash?: string;
   translations?: Record<string, string>;
 }

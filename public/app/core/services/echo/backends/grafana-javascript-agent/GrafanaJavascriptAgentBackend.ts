@@ -14,6 +14,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
+import { setupFaroPageMeta } from './faroPageMeta';
 import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
 
 function isCrossOriginIframe() {
@@ -54,11 +55,22 @@ export class GrafanaJavascriptAgentBackend
       ignoreUrls.unshift(new RegExp(`.*${escapeRegex(options.customEndpoint)}.*`));
     }
 
+    const sessionReplayEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false);
+
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
-      transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
+      transports.push(
+        new FetchTransport({
+          url: options.customEndpoint,
+          apiKey: options.apiKey,
+          // When session replay is enabled, gzip-compress request bodies via the browser's
+          // CompressionStream — session replay produces the large payloads that benefit most.
+          // Falls back to uncompressed when CompressionStream is unavailable.
+          ...(sessionReplayEnabled ? { requestCompression: true } : {}),
+        })
+      );
     }
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
@@ -98,8 +110,13 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false)) {
-      this.initReplayAfterDomRendered(faro);
+    if (faro) {
+      // Attach navigation context (referrer, previousUrl) to the meta of every emitted signal.
+      setupFaroPageMeta(faro);
+
+      if (sessionReplayEnabled) {
+        this.initReplayAfterDomRendered(faro);
+      }
     }
   }
 

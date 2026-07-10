@@ -11,9 +11,11 @@ import (
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,12 +78,12 @@ func TestIntegrationSQLKVConcurrentCreateNoAlreadyExists(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-no-already-exists")
 	})
 
 	t.Run("With RvManager", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		runConcurrentCreateNoAlreadyExists(t, backend, "sqlkv-rvmanager-no-already-exists")
 	})
 }
@@ -167,25 +169,25 @@ func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
 	})
 
 	t.Run("Without RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
 	})
 
 	t.Run("With RvManager/Local", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newLocalClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
 	})
 
 	t.Run("With RvManager/Remote", func(t *testing.T) {
-		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
+		backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeRVManager)
 		client := newRemoteClient(t, backend)
 		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
 	})
@@ -209,7 +211,7 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test"), prometheus.NewPedanticRegistry(), "test")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, log.NewNopLogger(), reg, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)
@@ -269,10 +271,23 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		success       bool
 	}
 	results := make([]result, concurrency)
+
+	// The local client (pkg/storage/unified/resource/client.go) and the remote
+	// gRPC connection (pkg/storage/unified/client.go) both wire a retry
+	// interceptor with WithMax(3) and a 1s exponential backoff. With
+	// concurrency=10 that budget is too small: lease.Acquire returns
+	// ErrLeaseAlreadyHeld without waiting, so callers contend in waves and only
+	// ~1 caller can drain per wave. Override the retry budget per call so all 9
+	// losers can observe AlreadyExists. This does not change production behavior.
+	retryOpts := []grpc.CallOption{
+		grpc_retry.WithMax(uint(concurrency * 2)),
+		grpc_retry.WithBackoff(grpc_retry.BackoffLinearWithJitter(500*time.Millisecond, 0.5)),
+	}
+
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
 			if err != nil {
 				results[i] = result{err: err}
 				return
@@ -319,7 +334,7 @@ func TestIntegrationConcurrentWritesWithLeasesSqlKV(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		runConcurrentWritesWithLeases(t, func() resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), SQLKVBackendModeLeases)
 			return backend
 		}, "sqlkv-leases")
 	})
@@ -449,15 +464,19 @@ func runConcurrentDeletesWithLeases(t *testing.T, backend resource.StorageBacken
 }
 
 func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{
+		SQLKVBackendModeRVManager,
+		SQLKVBackendModeLeases,
+		SQLKVBackendModeOptimisticLocking,
+	} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				opts.Concurrency = 1 // to avoid SQLite database is locked error
 			}
-			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), mode)
 			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
 			RunStorageBackendBenchmark(t, backend, opts)
 		})
@@ -465,14 +484,14 @@ func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
-	for _, withRvManager := range []bool{true, false} {
-		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+	for _, mode := range []SQLKVBackendMode{SQLKVBackendModeRVManager, SQLKVBackendModeLeases} {
+		t.Run(string(mode), func(t *testing.T) {
 			testutil.SkipIntegrationTestInShortMode(t)
 			opts := DefaultBenchmarkOptions(t)
 			if db.IsTestDbSQLite() {
 				t.Skip("concurrency benchmark skipped with sqlite")
 			}
-			backend, _ := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), mode)
 			searchBackend, err := search.NewBleveBackend(search.BleveOptions{
 				Root:                   t.TempDir(),
 				FileThreshold:          0,
@@ -505,7 +524,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("Without RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, false)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeLeases)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest",
@@ -515,7 +534,7 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 
 	t.Run("With RvManager", func(t *testing.T) {
 		RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := NewTestSqlKvBackend(t, ctx, true)
+			backend, _ := NewTestSqlKvBackend(t, ctx, SQLKVBackendModeRVManager)
 			return backend
 		}, &TestOptions{
 			NSPrefix:  "sqlkvstoragetest-rvmanager",

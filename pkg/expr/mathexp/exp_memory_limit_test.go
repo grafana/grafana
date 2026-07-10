@@ -28,12 +28,12 @@ func TestEstimateBinaryMemory(t *testing.T) {
 		{
 			name: "matching labels produce 1:1 unions",
 			a: Results{Values: Values{
-				makeSeries("a", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(1)}),
-				makeSeries("a", data.Labels{"id": "2"}, tp{time.Unix(1, 0), float64Pointer(2)}),
+				makeSeries("a", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(1.)}),
+				makeSeries("a", data.Labels{"id": "2"}, tp{time.Unix(1, 0), new(2.)}),
 			}},
 			b: Results{Values: Values{
-				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(10)}),
-				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), float64Pointer(20)}),
+				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(10.)}),
+				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), new(20.)}),
 			}},
 			expectUnions:  2,
 			expectNonZero: true,
@@ -53,12 +53,12 @@ func TestEstimateBinaryMemory(t *testing.T) {
 		{
 			name: "empty labels on one side produce cartesian product",
 			a: Results{Values: Values{
-				makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(1)}),
-				makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(2)}),
+				makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), new(1.)}),
+				makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), new(2.)}),
 			}},
 			b: Results{Values: Values{
-				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(10)}),
-				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), float64Pointer(20)}),
+				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(10.)}),
+				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), new(20.)}),
 			}},
 			expectUnions:  4,
 			expectNonZero: true,
@@ -66,11 +66,11 @@ func TestEstimateBinaryMemory(t *testing.T) {
 		{
 			name: "subset labels produce fan-out",
 			a: Results{Values: Values{
-				makeSeries("a", data.Labels{"service": "web", "endpoint": "/api"}, tp{time.Unix(1, 0), float64Pointer(1)}),
-				makeSeries("a", data.Labels{"service": "web", "endpoint": "/health"}, tp{time.Unix(1, 0), float64Pointer(2)}),
+				makeSeries("a", data.Labels{"service": "web", "endpoint": "/api"}, tp{time.Unix(1, 0), new(1.)}),
+				makeSeries("a", data.Labels{"service": "web", "endpoint": "/health"}, tp{time.Unix(1, 0), new(2.)}),
 			}},
 			b: Results{Values: Values{
-				makeSeries("b", data.Labels{"service": "web"}, tp{time.Unix(1, 0), float64Pointer(10)}),
+				makeSeries("b", data.Labels{"service": "web"}, tp{time.Unix(1, 0), new(10.)}),
 			}},
 			expectUnions:  2,
 			expectNonZero: true,
@@ -78,10 +78,10 @@ func TestEstimateBinaryMemory(t *testing.T) {
 		{
 			name: "single non-matching values fall back to 1 union",
 			a: Results{Values: Values{
-				makeSeries("a", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(1)}),
+				makeSeries("a", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(1.)}),
 			}},
 			b: Results{Values: Values{
-				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), float64Pointer(10)}),
+				makeSeries("b", data.Labels{"id": "2"}, tp{time.Unix(1, 0), new(10.)}),
 			}},
 			expectUnions:  1,
 			expectNonZero: true,
@@ -90,7 +90,7 @@ func TestEstimateBinaryMemory(t *testing.T) {
 			name: "NoData on one side produces 1 union",
 			a:    Results{Values: Values{NewNoData()}},
 			b: Results{Values: Values{
-				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(10)}),
+				makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(10.)}),
 			}},
 			expectUnions:  1,
 			expectNonZero: true,
@@ -116,25 +116,25 @@ func TestEstimateBinaryMemory_per_pair_cost_reflects_actual_sizes(t *testing.T) 
 	// Two matching series with different lengths. The estimate should use each
 	// pair's actual sizes, not a global max.
 	shortSeries := makeSeries("a", data.Labels{"id": "1"},
-		tp{time.Unix(1, 0), float64Pointer(1)},
+		tp{time.Unix(1, 0), new(1.)},
 	)
 	longSeries := makeSeries("a", data.Labels{"id": "2"},
-		tp{time.Unix(1, 0), float64Pointer(1)},
-		tp{time.Unix(2, 0), float64Pointer(2)},
-		tp{time.Unix(3, 0), float64Pointer(3)},
-		tp{time.Unix(4, 0), float64Pointer(4)},
-		tp{time.Unix(5, 0), float64Pointer(5)},
+		tp{time.Unix(1, 0), new(1.)},
+		tp{time.Unix(2, 0), new(2.)},
+		tp{time.Unix(3, 0), new(3.)},
+		tp{time.Unix(4, 0), new(4.)},
+		tp{time.Unix(5, 0), new(5.)},
 	)
 
 	a := Results{Values: Values{shortSeries, longSeries}}
 	b := Results{Values: Values{
-		makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), float64Pointer(10)}),
+		makeSeries("b", data.Labels{"id": "1"}, tp{time.Unix(1, 0), new(10.)}),
 		makeSeries("b", data.Labels{"id": "2"},
-			tp{time.Unix(1, 0), float64Pointer(10)},
-			tp{time.Unix(2, 0), float64Pointer(20)},
-			tp{time.Unix(3, 0), float64Pointer(30)},
-			tp{time.Unix(4, 0), float64Pointer(40)},
-			tp{time.Unix(5, 0), float64Pointer(50)},
+			tp{time.Unix(1, 0), new(10.)},
+			tp{time.Unix(2, 0), new(20.)},
+			tp{time.Unix(3, 0), new(30.)},
+			tp{time.Unix(4, 0), new(40.)},
+			tp{time.Unix(5, 0), new(50.)},
 		),
 	}}
 
@@ -156,14 +156,14 @@ func TestWalkBinary_memory_limit_blocks_cartesian_explosion(t *testing.T) {
 	bValues := make(Values, 100)
 	for i := range 100 {
 		aValues[i] = makeSeries("a", data.Labels{},
-			tp{time.Unix(1, 0), float64Pointer(1)},
-			tp{time.Unix(2, 0), float64Pointer(2)},
-			tp{time.Unix(3, 0), float64Pointer(3)},
+			tp{time.Unix(1, 0), new(1.)},
+			tp{time.Unix(2, 0), new(2.)},
+			tp{time.Unix(3, 0), new(3.)},
 		)
 		bValues[i] = makeSeries("b", data.Labels{},
-			tp{time.Unix(1, 0), float64Pointer(10)},
-			tp{time.Unix(2, 0), float64Pointer(20)},
-			tp{time.Unix(3, 0), float64Pointer(30)},
+			tp{time.Unix(1, 0), new(10.)},
+			tp{time.Unix(2, 0), new(20.)},
+			tp{time.Unix(3, 0), new(30.)},
 		)
 	}
 
@@ -191,12 +191,12 @@ func TestWalkBinary_memory_limit_allows_matched_labels(t *testing.T) {
 	for i := range 100 {
 		label := data.Labels{"id": string(rune('A'+i%26)) + string(rune('0'+i/26))}
 		aValues[i] = makeSeries("a", label,
-			tp{time.Unix(1, 0), float64Pointer(float64(i))},
-			tp{time.Unix(2, 0), float64Pointer(float64(i * 2))},
+			tp{time.Unix(1, 0), new(float64(i))},
+			tp{time.Unix(2, 0), new(float64(i * 2))},
 		)
 		bValues[i] = makeSeries("b", label,
-			tp{time.Unix(1, 0), float64Pointer(1)},
-			tp{time.Unix(2, 0), float64Pointer(2)},
+			tp{time.Unix(1, 0), new(float64(1))},
+			tp{time.Unix(2, 0), new(float64(2))},
 		)
 	}
 
@@ -223,12 +223,12 @@ func TestWalkBinary_memory_limit_zero_disables_check(t *testing.T) {
 	// Even a cartesian product should proceed when limit is 0.
 	vars := Vars{
 		"A": Results{Values: Values{
-			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(1)}),
-			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(2)}),
+			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), new(1.)}),
+			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), new(2.)}),
 		}},
 		"B": Results{Values: Values{
-			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(10)}),
-			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(20)}),
+			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), new(10.)}),
+			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), new(20.)}),
 		}},
 	}
 
@@ -244,10 +244,10 @@ func TestWalkBinary_memory_limit_not_applied_without_option(t *testing.T) {
 	// Without WithMemoryLimit, even small cartesian products should work.
 	vars := Vars{
 		"A": Results{Values: Values{
-			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(1)}),
+			makeSeries("a", data.Labels{}, tp{time.Unix(1, 0), new(1.)}),
 		}},
 		"B": Results{Values: Values{
-			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), float64Pointer(10)}),
+			makeSeries("b", data.Labels{}, tp{time.Unix(1, 0), new(10.)}),
 		}},
 	}
 

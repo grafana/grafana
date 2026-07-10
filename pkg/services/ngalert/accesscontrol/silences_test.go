@@ -16,19 +16,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 var orgID = rand.Int63()
 
 func TestFilterByAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -123,12 +122,12 @@ func TestFilterByAccess(t *testing.T) {
 
 func TestAuthorizeReadSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	testCases := []struct {
 		name             string
@@ -226,13 +225,13 @@ func TestAuthorizeReadSilence(t *testing.T) {
 
 func TestAuthorizeCreateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -403,13 +402,13 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 
 func TestAuthorizeUpdateSilence(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,
@@ -580,13 +579,13 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 
 func TestSilenceAccess(t *testing.T) {
 	global := testSilence("global", nil)
-	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
+	ruleSilence1 := testSilence("rule-1", new("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
+	ruleSilence2 := testSilence("rule-2", new("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
+	notFoundRule := testSilence("unknown-rule", new("unknown-rule-uid"))
 
 	silences := []*models.Silence{
 		global,

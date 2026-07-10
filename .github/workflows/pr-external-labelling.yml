@@ -2,7 +2,7 @@ name: External PR labelling
 
 on:
   # We need "write" permissions on the PR to be able to add a label.
-  pull_request_target: # zizmor: ignore[dangerous-triggers] We need this to have labelling permissions. There are no user inputs here, so we should be fine.
+  pull_request:
     types:
       - opened
 
@@ -12,7 +12,7 @@ jobs:
   label-if-external:
     name: Add 'pr/external' label if the PR is external
     if: github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       pull-requests: write # to write the label
 

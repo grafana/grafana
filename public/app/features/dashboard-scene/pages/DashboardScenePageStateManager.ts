@@ -1,7 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { UserStorage } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -40,6 +40,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
+import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -62,6 +64,7 @@ import {
   type SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
+import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -92,7 +95,7 @@ export const DASHBOARD_CACHE_TTL = 500;
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
-export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry<T> {
   dashboard: T;
@@ -106,11 +109,13 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  dashboardTemplateUid?: string;
+  editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
 }
 
-export type HomeDashboardDTO = DashboardDTO & {
+type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
 
@@ -120,7 +125,7 @@ export type HomeDashboardDTO = DashboardDTO & {
  * Kubernetes-style dashboard resource returned verbatim from the backend when
  * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
  */
-export type HomeDashboardFetchResult =
+type HomeDashboardFetchResult =
   | HomeDashboardDTO
   | DashboardWithAccessInfo<DashboardV2Spec>
   | DashboardWithAccessInfo<DashboardDataDTO>;
@@ -665,12 +670,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     const datasource = searchParams.get('datasource');
     const gnetId = searchParams.get('gnetId');
     const pluginId = searchParams.get('pluginId');
-
     const path = searchParams.get('path');
 
-    // Check if this is a template dashboard
+    // Check if this is a Grafana dashboard template
     if (gnetId && datasource && pluginId) {
-      return this.loadTemplateDashboard(gnetId, datasource, pluginId);
+      return this.loadGrafanaDashboardTemplate(gnetId, datasource, pluginId);
     }
 
     // Check if this is a community dashboard (has gnetId) or plugin dashboard
@@ -706,7 +710,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  private async loadTemplateDashboard(
+  private async loadGrafanaDashboardTemplate(
     gnetId: string,
     datasource: string | null,
     pluginId: string | null
@@ -1011,6 +1015,32 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
+      // Special handling for Template route - set up edit mode and dirty state
+      if (
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
+        options.route === DashboardRoutes.Template
+      ) {
+        const editMode = !!options.editTemplate;
+
+        if (options.dashboardTemplateUid && editMode) {
+          scene.setState({
+            meta: {
+              ...scene.state.meta,
+              isDashboardTemplate: true,
+              dashboardTemplateUid: options.dashboardTemplateUid,
+            },
+          });
+        }
+
+        scene.onEnterEditMode();
+
+        // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
+        // starts clean — dirtiness should reflect real user edits.
+        if (!editMode) {
+          scene.setState({ isDirty: true });
+        }
+      }
+
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
       if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
@@ -1028,6 +1058,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     uid,
     route,
     urlFolderUid,
+    dashboardTemplateUid,
+    editTemplate,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -1072,6 +1104,17 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
+        case DashboardRoutes.Template: {
+          if (
+            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
+            dashboardTemplateUid
+          ) {
+            rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
+            break;
+          }
+          // Grafana dashboard templates are V1 only — throw to fallback
+          throw new DashboardVersionError('v0alpha1', 'Grafana-provisioned dashboard templates use V1 schema');
+        }
         default:
           if (config.featureToggles.reloadDashboardsOnParamsChange) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
@@ -1113,6 +1156,48 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       throw e;
     }
     return rsp;
+  }
+
+  private async loadDashboardTemplate(
+    dashboardTemplateUid: string,
+    { editMode }: { editMode: boolean }
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
+      throw new Error('Custom dashboard templates are not enabled');
+    }
+
+    const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
+
+    const resourceVersion = response.metadata?.resourceVersion;
+
+    CustomDashboardTemplateInteractions.loaded({
+      templateUid: dashboardTemplateUid,
+      mode: editMode ? 'edit' : 'use',
+    });
+
+    if (editMode) {
+      // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
+      // irrelevant actions.
+      // canEdit and canSave will change in the future with specific RBAC permissions.
+      return transformTemplateToSaveModelSchemaV2({
+        dashboardSpec: response.spec.dashboard,
+        dashboardVersion: response.spec.dashboardVersion,
+        resourceVersion,
+        canEdit: true,
+        canSave: true,
+      });
+    }
+
+    // Use-template flow: The embedded dashboard spec is hydrated
+    // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the
+    // scene as an org template; no dashboardTemplateUid — this is not an edit of the
+    // template, it's a cloning flow.
+    return transformTemplateToSaveModelSchemaV2({
+      dashboardSpec: response.spec.dashboard,
+      dashboardVersion: response.spec.dashboardVersion,
+      canEdit: true,
+      canSave: true,
+    });
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap): Promise<void> {
@@ -1180,7 +1265,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-export function shouldForceV2API(): boolean {
+function shouldForceV2API(): boolean {
   return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 
@@ -1332,9 +1417,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.setActiveManager(newDashboardVersion);
     }
 
-    // Template dashboards are currently in v1 schema format.
+    // Dashboard templates: Grafana templates use V1, Custom templates use V2
     if (options.route === DashboardRoutes.Template) {
-      this.setActiveManager('v1');
+      if (
+        options.dashboardTemplateUid &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)
+      ) {
+        this.setActiveManager('v2');
+      } else {
+        this.setActiveManager('v1');
+      }
     }
 
     return this.withVersionHandling((manager) => {

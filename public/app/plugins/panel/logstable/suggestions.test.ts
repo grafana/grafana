@@ -5,10 +5,33 @@ import {
   getPanelDataSummary,
   VisualizationSuggestionScore,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 
 import { logstableSuggestionsSupplier } from './suggestions';
 
+const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getFeatureFlagClient: jest.fn(() => ({
+      getBooleanValue: mockGetBooleanValue,
+    })),
+  };
+});
+
 describe('logstable suggestions', () => {
+  beforeAll(() => {
+    mockGetBooleanValue.mockImplementation((key, defaultValue) =>
+      key === FlagKeys.LogsTablePanelNG ? true : defaultValue
+    );
+  });
+
+  afterAll(() => {
+    mockGetBooleanValue.mockImplementation((key, defaultValue) => defaultValue);
+  });
+
   it('does not suggest logs table for non-log data', () => {
     const dataSummary = getPanelDataSummary([
       createDataFrame({

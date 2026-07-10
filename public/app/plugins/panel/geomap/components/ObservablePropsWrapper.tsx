@@ -1,6 +1,5 @@
-import { Component } from 'react';
-import * as React from 'react';
-import { type Observable, type Unsubscribable } from 'rxjs';
+import React, { useState, useEffect } from 'react';
+import { type Observable } from 'rxjs';
 
 interface Props<T> {
   watch: Observable<T>;
@@ -8,38 +7,17 @@ interface Props<T> {
   initialSubProps: T;
 }
 
-interface State<T> {
-  subProps: T;
-}
+export function ObservablePropsWrapper<T extends {}>({ watch, child: Child, initialSubProps }: Props<T>) {
+  const [subProps, setSubProps] = useState<T>(initialSubProps);
 
-export class ObservablePropsWrapper<T extends {}> extends Component<Props<T>, State<T>> {
-  sub?: Unsubscribable;
-
-  constructor(props: Props<T>) {
-    super(props);
-    this.state = {
-      subProps: props.initialSubProps,
-    };
-  }
-
-  componentDidMount() {
-    this.sub = this.props.watch.subscribe({
-      next: (subProps: T) => {
-        this.setState({ subProps });
-      },
+  useEffect(() => {
+    const sub = watch.subscribe({
+      next: setSubProps,
       complete: () => {},
       error: (err) => {},
     });
-  }
+    return () => sub.unsubscribe();
+  }, [watch]);
 
-  componentWillUnmount() {
-    if (this.sub) {
-      this.sub.unsubscribe();
-    }
-  }
-
-  render() {
-    const { subProps } = this.state;
-    return <this.props.child {...subProps} />;
-  }
+  return <Child {...subProps} />;
 }

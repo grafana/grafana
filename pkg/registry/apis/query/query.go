@@ -147,19 +147,6 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	qdr, err := handleQuery(ctx, *raw, *b, httpreq, responder, connectLogger)
 
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			connectLogger.Warn(
-				"query-service request deadline exceeded",
-				"ctx_err", ctx.Err(),
-				"cause", context.Cause(ctx),
-			)
-		} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
-			connectLogger.Warn(
-				"query-service request cancelled",
-				"ctx_err", ctx.Err(),
-				"cause", context.Cause(ctx),
-			)
-		}
 		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err, "err_type", fmt.Sprintf("%T", err))
 		logEmptyRefids(raw.Queries, connectLogger)
 		if qdr != nil { // if we have a response, we assume the err is set in the response
@@ -167,49 +154,66 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 				QueryDataResponse: *qdr,
 			})
 			return
-		} else {
-			var errorDataResponse backend.DataResponse
+		}
 
-			badRequestErrors := []error{
-				service.ErrInvalidDatasourceID,
-				service.ErrNoQueriesFound,
-				service.ErrMissingDataSourceInfo,
-				service.ErrQueryParamMismatch,
-				service.ErrDuplicateRefId,
-				datasources.ErrDataSourceNotFound,
+		var errorDataResponse backend.DataResponse
+		badRequestErrors := []error{
+			service.ErrInvalidDatasourceID,
+			service.ErrNoQueriesFound,
+			service.ErrMissingDataSourceInfo,
+			service.ErrQueryParamMismatch,
+			service.ErrDuplicateRefId,
+			datasources.ErrDataSourceNotFound,
+		}
+		isTypedBadRequestError := false
+		for _, badRequestError := range badRequestErrors {
+			if errors.Is(err, badRequestError) {
+				isTypedBadRequestError = true
 			}
-			isTypedBadRequestError := false
-			for _, badRequestError := range badRequestErrors {
-				if errors.Is(err, badRequestError) {
-					isTypedBadRequestError = true
-				}
-			}
-			if isTypedBadRequestError {
-				errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-			} else if strings.Contains(err.Error(), "expression request error") {
-				connectLogger.Error("Error calling TransformData in an expression", "err", err)
-				errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
-			} else {
-				connectLogger.Error("unknown error, treated as a 500", "err", err)
-				responder.Error(err)
-				return
-			}
-			// TODO ensure errors also return the refId wherever possible
-			errorRefId := raw.Queries[0].RefID
-			if errorRefId == "" {
-				errorRefId = "A"
-			}
-
-			qdr = &backend.QueryDataResponse{
-				Responses: map[string]backend.DataResponse{
-					errorRefId: errorDataResponse,
-				},
-			}
-			responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-				QueryDataResponse: *qdr,
-			})
+		}
+		switch {
+		case errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded):
+			connectLogger.Warn(
+				"query-service request deadline exceeded",
+				"ctx_err", ctx.Err(),
+				"cause", context.Cause(ctx),
+			)
+			errorDataResponse = backend.ErrDataResponseWithSource(408, backend.ErrorSourceDownstream, err.Error())
+		case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+			connectLogger.Warn(
+				"query-service request cancelled",
+				"ctx_err", ctx.Err(),
+				"cause", context.Cause(ctx),
+			)
+			// Client-initiated cancellation — never the apiserver's fault.
+			// Tag downstream + status 499 so the response body stays a QueryDataResponse and
+			// errhttp.Write doesn't fall back to errutil.Internal (500).
+			errorDataResponse = backend.ErrDataResponseWithSource(499, backend.ErrorSourceDownstream, err.Error())
+		case isTypedBadRequestError:
+			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+		case strings.Contains(err.Error(), "expression request error"):
+			connectLogger.Error("Error calling TransformData in an expression", "err", err)
+			errorDataResponse = backend.ErrDataResponseWithSource(backend.StatusBadRequest, backend.ErrorSourceDownstream, err.Error())
+		default:
+			connectLogger.Error("unknown error, treated as a 500", "err", err)
+			responder.Error(err)
 			return
 		}
+		// TODO ensure errors also return the refId wherever possible
+		errorRefId := raw.Queries[0].RefID
+		if errorRefId == "" {
+			errorRefId = "A"
+		}
+
+		qdr = &backend.QueryDataResponse{
+			Responses: map[string]backend.DataResponse{
+				errorRefId: errorDataResponse,
+			},
+		}
+		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+			QueryDataResponse: *qdr,
+		})
+		return
 	}
 
 	responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{

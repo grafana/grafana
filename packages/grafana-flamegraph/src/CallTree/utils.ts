@@ -69,7 +69,7 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
  * Build a hierarchical call tree node from the LevelItem structure.
  * Each node gets a unique ID based on its path in the tree.
  */
-export function buildCallTreeNode(
+function buildCallTreeNode(
   data: FlameGraphDataContainer,
   rootItem: LevelItem,
   rootTotalLeft: number,

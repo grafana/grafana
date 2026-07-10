@@ -42,7 +42,14 @@ export function RepositoryList({ items }: Props) {
         <Box marginBottom={2}>
           <Stack alignItems="center">
             <Icon name="check" color="green" />
-            <Trans i18nKey="provisioning.folder-repository-list.all-resources-managed" count={resourceCount}>
+            <Trans
+              i18nKey="provisioning.folder-repository-list.all-resources-managed"
+              count={resourceCount}
+              tOptions={{
+                defaultValue_one: 'All {{count}} resources are managed',
+                defaultValue_other: 'All {{count}} resources are managed',
+              }}
+            >
               All {{ count: resourceCount }} resources are managed
             </Trans>
           </Stack>
@@ -63,7 +70,14 @@ export function RepositoryList({ items }: Props) {
             {unmanagedCount > 0 && (
               <>
                 {' '}
-                <Trans i18nKey="provisioning.folder-repository-list.unmanaged-resources" count={unmanagedCount}>
+                <Trans
+                  i18nKey="provisioning.folder-repository-list.unmanaged-resources"
+                  count={unmanagedCount}
+                  tOptions={{
+                    defaultValue_one: "{{count}} resources aren't managed by Git sync.",
+                    defaultValue_other: "{{count}} resources aren't managed by Git sync.",
+                  }}
+                >
                   {{ count: unmanagedCount }} resources aren&apos;t managed by Git sync.
                 </Trans>
               </>

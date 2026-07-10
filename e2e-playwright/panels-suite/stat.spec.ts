@@ -83,14 +83,17 @@ test.describe('Panels test: Stat', { tag: ['@panels', '@stat'] }, () => {
     ).toBeHidden();
   });
 
-  test('text mode: name displays series names', async ({ gotoDashboardPage, page }) => {
-    await gotoDashboardPage({
+  test('text mode: name displays series names', async ({ gotoDashboardPage, selectors }) => {
+    const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '15' }),
     });
 
     // panel 15 uses textMode: name with __server_names alias — predictable names from testdata
-    await expect(page.getByText('Backend-ops-01'), 'first server name is shown as BigValue title').toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).getByText('Backend-ops-01'),
+      'first server name is shown as BigValue title'
+    ).toBeVisible();
   });
 
   test('text mode: value with 45 series renders without errors', async ({ gotoDashboardPage, selectors }) => {

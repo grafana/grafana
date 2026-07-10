@@ -13,7 +13,7 @@ import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/Panel
 import { type LibraryElementDTO } from '../../types';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
-export interface LibraryPanelCardProps {
+interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;
   onClick: (panel: LibraryElementDTO) => void;
   onDelete?: (panel: LibraryElementDTO) => void;

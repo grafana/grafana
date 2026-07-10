@@ -41,12 +41,18 @@ type UserToken struct {
 const UrgentRotateTime = 1 * time.Minute
 
 func (t *UserToken) NeedsRotation(rotationInterval time.Duration) bool {
+	return t.NeedsRotationAt(time.Now(), rotationInterval)
+}
+
+// NeedsRotationAt is NeedsRotation evaluated against the given time rather than the
+// wall clock, so callers (and tests) can reason about rotation deterministically.
+func (t *UserToken) NeedsRotationAt(now time.Time, rotationInterval time.Duration) bool {
 	rotatedAt := time.Unix(t.RotatedAt, 0)
 	if !t.AuthTokenSeen {
-		return rotatedAt.Before(time.Now().Add(-UrgentRotateTime))
+		return rotatedAt.Before(now.Add(-UrgentRotateTime))
 	}
 
-	return rotatedAt.Before(time.Now().Add(-rotationInterval))
+	return rotatedAt.Before(now.Add(-rotationInterval))
 }
 
 const rotationLeeway = 5 * time.Second

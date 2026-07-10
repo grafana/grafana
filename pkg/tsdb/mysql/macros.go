@@ -174,6 +174,9 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
+		}
 		if len(args) == 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
@@ -208,6 +211,9 @@ func (m *mySQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])

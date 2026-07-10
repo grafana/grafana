@@ -97,15 +97,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   getAllGridTypes(): string[];
 }
 
-export interface LayoutManagerSerializer {
-  serialize(layout: DashboardLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'];
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): DashboardLayoutManager;
-}
-
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
   return 'isDashboardLayoutManager' in obj;
 }

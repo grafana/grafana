@@ -11,7 +11,7 @@ export type UsePluginLinksResult = {
   links: PluginExtensionLink[];
 };
 
-export type UsePluginLinks = (options: UsePluginLinksOptions) => UsePluginLinksResult;
+type UsePluginLinks = (options: UsePluginLinksOptions) => UsePluginLinksResult;
 
 let singleton: UsePluginLinks | undefined;
 

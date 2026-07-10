@@ -5,62 +5,23 @@ import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plu
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
-    position: { x: 0, y: 0 },
-  });
-};
+import { Controls, Sidebar } from './page-objects';
 
 export const flows = {
-  deselectPanels,
-  async changePanelTitle(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    oldPanelTitle: string,
-    newPanelTitle: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: oldPanelTitle })
-      .first()
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      .fill(newPanelTitle);
-  },
-  async changePanelDescription(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    panelTitle: string,
-    newDescription: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    const panelTitleRegex = new RegExp(`^${panelTitle}$`);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: panelTitleRegex })
-      .first()
-      .click();
-    const descriptionTextArea = dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
-    await descriptionTextArea.fill(newDescription);
-  },
-  async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
-      .click();
-  },
-  async newEditPanelCommonVariableInputs(
+  async addNewGenericVariable(
+    page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
     variable: Variable
   ) {
+    const controls = new Controls(page, dashboardPage, selectors);
+    const sidebar = new Sidebar(page, dashboardPage, selectors);
+
+    await controls.enterEditMode();
+
+    await sidebar.toolbar.clickButton('Add');
+    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.addNewVariableButton).click();
+
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
@@ -85,8 +46,7 @@ export const flows = {
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.newEditPaneVariableClick(dashboardPage, selectors);
-    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
     // set the textbox variable value
     const type = 'variable-type Value';
     const fieldLabel = dashboardPage.getByGrafanaSelector(

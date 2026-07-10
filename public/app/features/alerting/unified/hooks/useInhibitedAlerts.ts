@@ -14,8 +14,9 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 export function useInhibitedAlerts(): {
   inhibitedAlerts: AlertmanagerAlert[];
   isLoading: boolean;
+  isFetching: boolean;
 } {
-  const { data, isLoading } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
+  const { data, isLoading, isFetching } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
     {
       amSourceName: GRAFANA_RULES_SOURCE_NAME,
       filter: { inhibited: true, active: false, silenced: false },
@@ -27,5 +28,6 @@ export function useInhibitedAlerts(): {
   return {
     inhibitedAlerts: data ?? [],
     isLoading,
+    isFetching,
   };
 }

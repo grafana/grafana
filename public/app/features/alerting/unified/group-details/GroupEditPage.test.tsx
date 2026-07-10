@@ -8,6 +8,7 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import {
@@ -174,7 +175,10 @@ describe('GroupEditPage', () => {
       groupsByName.clear();
       groupsByName.set(group.name, group);
 
-      setRulerRuleGroupResolver(async ({ params: { groupName } }) => {
+      setRulerRuleGroupResolver(async ({ params: { namespace, groupName } }) => {
+        if (namespace === RULER_CONFIG_API_PROBE_NAMESPACE && groupName === RULER_CONFIG_API_PROBE_GROUP) {
+          return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+        }
         if (groupsByName.has(groupName)) {
           return HttpResponse.json(groupsByName.get(groupName));
         }
@@ -302,9 +306,7 @@ describe('GroupEditPage', () => {
       await user.type(intervalInput, 'invalid');
       await user.click(saveButton);
 
-      // The exact error message depends on your validation logic
-      // This is a common pattern for testing validation errors
-      expect(screen.getByText(/must be of format/i)).toBeInTheDocument();
+      expect(screen.getByText(/cannot be None and must be a valid duration/i)).toBeInTheDocument();
     });
 
     it('should handle API error when saving fails', async () => {

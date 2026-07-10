@@ -96,11 +96,3 @@ type NotificationTemplateHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
 }
-
-func (t *NotificationTemplate) ResourceType() string {
-	return "template"
-}
-
-func (t *NotificationTemplate) ResourceID() string {
-	return t.Name
-}

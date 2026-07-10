@@ -1601,7 +1601,7 @@ func preparePgpassFile(t *testing.T) error {
 		port = "5432"
 	}
 
-	return os.WriteFile(filepath.Join(dir, ".pgpass"),
+	return os.WriteFile(filepath.Join(dir, ".pgpass"), // #nosec G703 -- test writes to caller-provided temp dir
 		[]byte(fmt.Sprintf("%s:%s:grafanadstest:grafanatest:grafanatest", host, port)), 0600)
 }
 

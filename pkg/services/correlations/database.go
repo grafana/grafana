@@ -282,12 +282,15 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 	return correlation, nil
 }
 
-func (s CorrelationsService) CountCorrelations(ctx context.Context) (*quota.Map, error) {
+func (s CorrelationsService) CountCorrelations(ctx context.Context, orgId *int64) (*quota.Map, error) {
 	u := &quota.Map{}
 	var err error
 	count := int64(0)
 	err = s.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		q := sess.Table("correlation")
+		if orgId != nil {
+			q.Where("org_id = ?", orgId)
+		}
 		count, err = q.Count()
 
 		if err != nil {
@@ -354,7 +357,7 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 		return GetCorrelationsResponseBody{}, err
 	}
 
-	count, err := s.CountCorrelations(ctx)
+	count, err := s.CountCorrelations(ctx, &cmd.OrgId)
 	if err != nil {
 		return GetCorrelationsResponseBody{}, err
 	}

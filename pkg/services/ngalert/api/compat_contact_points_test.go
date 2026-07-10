@@ -21,9 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
-// Test that conversion notify.APIReceiver -> definitions.ContactPoint -> notify.APIReceiver does not lose data
+// Test that conversion alertingmodels.ReceiverConfig -> definitions.ContactPoint -> alertingmodels.ReceiverConfig does not lose data
 func TestContactPointFromContactPointExports(t *testing.T) {
-	getContactPointExport := func(t *testing.T, receiver *notify.APIReceiver) definitions.ContactPointExport {
+	getContactPointExport := func(t *testing.T, receiver *alertingmodels.ReceiverConfig) definitions.ContactPointExport {
 		export := make([]definitions.ReceiverExport, 0, len(receiver.Integrations))
 		for _, integrationConfig := range receiver.Integrations {
 			postable := &definitions.PostableGrafanaReceiver{
@@ -59,16 +59,14 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	// use the configs for testing because they have all fields supported by integrations
 	for integrationType, cfg := range notifytest.AllKnownV1ConfigsForTesting {
 		t.Run(string(integrationType), func(t *testing.T) {
-			recCfg := &notify.APIReceiver{
-				ConfigReceiver: notify.ConfigReceiver{Name: "test-receiver"},
-				ReceiverConfig: alertingmodels.ReceiverConfig{
-					Integrations: []*alertingmodels.IntegrationConfig{
-						cfg.GetRawNotifierConfig("test"),
-					},
+			recCfg := &alertingmodels.ReceiverConfig{
+				Name: "test-receiver",
+				Integrations: []*alertingmodels.IntegrationConfig{
+					cfg.GetRawNotifierConfig("test"),
 				},
 			}
 
-			expected, err := notify.BuildReceiverConfiguration(context.Background(), recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			expected, err := notify.BuildReceiverConfiguration(context.Background(), *recCfg, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
 				return value
 			})
@@ -80,7 +78,7 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 			back, err := ContactPointToContactPointExport(result)
 			require.NoError(t, err)
 
-			actual, err := notify.BuildReceiverConfiguration(context.Background(), &back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			actual, err := notify.BuildReceiverConfiguration(context.Background(), back, notify.DecodeSecretsFromBase64, func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				value, _ := receiversTesting.DecryptForTesting(sjd)(key, fallback)
 				return value
 			})

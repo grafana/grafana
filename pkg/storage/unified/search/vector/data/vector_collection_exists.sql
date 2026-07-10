@@ -1,4 +1,4 @@
-SELECT 1
+SELECT {{ .Into .Response.Exists "1" }}
     FROM embeddings
     WHERE {{ .Ident "resource" }}  = {{ .Arg .Resource }}
     AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}

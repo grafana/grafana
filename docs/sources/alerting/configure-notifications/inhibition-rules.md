@@ -75,11 +75,11 @@ You can manage inhibition rules by using the Grafana App Platform API. There is 
 The API resource is:
 
 - **Group:** `notifications.alerting.grafana.app`
-- **Version:** `v0alpha1`
+- **Version:** `v1beta1`
 - **Resource:** `inhibitionrules`
 
 {{< admonition type="caution" >}}
-The inhibition rules API is currently in alpha (`v0alpha1`) and is subject to change.
+The inhibition rules API is in beta (`v1beta1`) and is subject to change.
 {{< /admonition >}}
 
 Inhibition rules are also supported in the Prometheus Alertmanager. Refer to [Configure Alertmanager](ref:configure-alertmanager) to set up an external Alertmanager.
@@ -138,3 +138,12 @@ In this example:
 - The _source_ matcher selects `critical` alerts. When one fires, the rule becomes active.
 - The _target_ matcher selects `warning` alerts. The rule suppresses these while the source alert fires.
 - The `equal` field ensures suppression only applies when source and target share the same `cluster` and `namespace` label values.
+
+## Inhibition rules and managed routes
+
+When the `alertingMultiplePolicies` feature toggle is enabled, an Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:
+
+- **Grafana-managed rules** are created through the API and apply across the entire Alertmanager. They can match alerts handled by any route, including imported routes.
+- **Imported rules** come from an imported Alertmanager configuration and are scoped to the alerts handled by their imported route. Grafana adds an internal label matcher that limits each imported rule to its own imported route, so an imported rule can't suppress alerts that flow through other routes.
+
+To suppress alerts across multiple imported configurations, create a Grafana-managed rule through the API instead of relying on the inhibition rules embedded in an imported configuration.

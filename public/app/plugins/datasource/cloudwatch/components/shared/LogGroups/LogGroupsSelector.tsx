@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { type SelectableValue, AppEvents } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
+import { getAppEvents } from '@grafana/runtime';
 import {
   Button,
   Checkbox,
@@ -16,7 +17,7 @@ import {
 } from '@grafana/ui';
 
 import { type LogGroup } from '../../../dataquery.gen';
-import { type DescribeLogGroupsRequest, type ResourceResponse, type LogGroupResponse } from '../../../resources/types';
+import { type DescribeLogGroupsRequest, type LogGroupsResponse } from '../../../resources/types';
 import getStyles from '../../styles';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 
@@ -25,7 +26,7 @@ import Search from './Search';
 type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
   accountOptions?: Array<SelectableValue<string>>;
-  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
+  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<LogGroupsResponse>;
   variables?: string[];
   onChange: (selectedLogGroups: LogGroup[]) => void;
   onBeforeOpen?: () => void;
@@ -45,7 +46,10 @@ export const LogGroupsSelector = ({
   const [searchPhrase, setSearchPhrase] = useState('');
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextToken, setNextToken] = useState<string | undefined>();
   const styles = useStyles2(getStyles);
+  const appEvents = getAppEvents();
   const selectedLogGroupsCounter = useMemo(
     () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
     [selectedLogGroups]
@@ -85,23 +89,56 @@ export const LogGroupsSelector = ({
 
   const searchFn = async (searchTerm?: string, accountId?: string) => {
     setIsLoading(true);
+    setNextToken(undefined);
     try {
-      const possibleLogGroups = await fetchLogGroups({
+      const response = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
       });
       setSelectableLogGroups(
-        possibleLogGroups.map((lg) => ({
+        response.results.map((lg) => ({
           arn: lg.value.arn,
           name: lg.value.name,
           accountId: lg.accountId,
           accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
         }))
       );
+      setNextToken(response.nextToken);
     } catch (err) {
       setSelectableLogGroups([]);
     }
     setIsLoading(false);
+  };
+
+  const loadMore = async () => {
+    if (!nextToken) {
+      return;
+    }
+    setIsLoadingMore(true);
+    try {
+      const response = await fetchLogGroups({
+        logGroupPattern: searchPhrase,
+        accountId: searchAccountId,
+        nextToken,
+      });
+      setSelectableLogGroups((prev) => [
+        ...prev,
+        ...response.results.map((lg) => ({
+          arn: lg.value.arn,
+          name: lg.value.name,
+          accountId: lg.accountId,
+          accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
+        })),
+      ]);
+      setNextToken(response.nextToken);
+    } catch (err) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to load more log groups. Please try again.'],
+      });
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   const handleSelectCheckbox = (row: LogGroup, isChecked: boolean) => {
@@ -149,12 +186,11 @@ export const LogGroupsSelector = ({
         </div>
         <Space layout="block" v={2} />
         <div>
-          {!isLoading && selectableLogGroups.length >= 25 && (
+          {!isLoading && !nextToken && selectableLogGroups.length >= 25 && (
             <>
               <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
-                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
-                search.
+                If you do not see an expected log group, try narrowing down your search.
                 <p>
                   A{' '}
                   <TextLink
@@ -214,6 +250,14 @@ export const LogGroupsSelector = ({
               </tbody>
             </table>
           </div>
+          {!isLoading && nextToken && (
+            <>
+              <Space layout="block" v={1} />
+              <Button variant="secondary" onClick={loadMore} disabled={isLoadingMore} type="button" fill="text">
+                {isLoadingMore ? 'Loading...' : 'Load more'}
+              </Button>
+            </>
+          )}
         </div>
         <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>

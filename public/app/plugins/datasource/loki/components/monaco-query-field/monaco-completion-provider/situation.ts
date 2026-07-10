@@ -114,7 +114,7 @@ function parseStringLiteral(text: string): string {
   throw new Error(`Invalid string literal: ${text}`);
 }
 
-export type LabelOperator = '=' | '!=' | '=~' | '!~';
+type LabelOperator = '=' | '!=' | '=~' | '!~';
 
 export type Label = {
   name: string;

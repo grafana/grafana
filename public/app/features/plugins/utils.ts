@@ -1,7 +1,7 @@
 import { type GrafanaPlugin, type NavModel, type NavModelItem, type PanelPluginMeta, PluginType } from '@grafana/data';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 
 import { pluginImporter } from './importer/pluginImporter';
-import { getPluginSettings } from './pluginSettings';
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);

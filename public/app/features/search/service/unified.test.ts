@@ -141,7 +141,6 @@ describe('toDashboardResults', () => {
         resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
-        location: '/dashboards/1',
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 1 },
@@ -151,7 +150,6 @@ describe('toDashboardResults', () => {
         resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
-        location: '/dashboards/1',
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 2 },
@@ -180,7 +178,6 @@ describe('toDashboardResults', () => {
         resource: 'dashboards',
         name: 'Main Dashboard',
         title: 'Main Dashboard Title',
-        location: '/dashboards/1',
         folder: 'General',
         tags: ['monitoring', 'performance'],
         field: { errors_today: 1 },
@@ -196,6 +193,41 @@ describe('toDashboardResults', () => {
     const results = toDashboardResults(mockResponse, '-errors_today');
 
     expect(results.meta?.custom?.sortBy).toBe('errors_today');
+  });
+
+  it('always includes a description field even when the first hit has no description', () => {
+    const mockHits: SearchHit[] = [
+      {
+        resource: 'dashboards',
+        name: 'no-description',
+        title: 'No description',
+        folder: 'General',
+        tags: [],
+        field: {},
+        url: '/d/no-description',
+      },
+      {
+        resource: 'dashboards',
+        name: 'has-description',
+        title: 'Has description',
+        description: 'A helpful description',
+        folder: 'General',
+        tags: [],
+        field: {},
+        url: '/d/has-description',
+      },
+    ];
+
+    const mockResponse: SearchAPIResponse = {
+      totalHits: 2,
+      hits: mockHits,
+      facets: {},
+    };
+    const results = toDashboardResults(mockResponse, '');
+
+    const descriptionField = results.fields.find((f) => f.name === 'description');
+    expect(descriptionField).toBeDefined();
+    expect(descriptionField!.values).toEqual(['', 'A helpful description']);
   });
 
   describe('respects appSubUrl in search result URLs', () => {

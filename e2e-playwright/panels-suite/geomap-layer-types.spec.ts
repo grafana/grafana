@@ -11,33 +11,24 @@ type SetupFixtures = Pick<Parameters<Parameters<typeof test>[2]>[0], 'gotoDashbo
 
 async function setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page }: SetupFixtures) {
   const dashboardPage = await gotoDashboardPage({});
-  await dashboardPage.addPanel();
+  const editPage = await dashboardPage.addPanel();
 
   // Select Geomap visualization — handle case where viz picker may be auto-opened
-  const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-  if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
-    await vizPicker.click({ force: true });
-  }
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Visualizations')).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Geomap')).click();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
-    'Geomap',
-    { timeout: 10000 }
-  );
+  await editPage.setVisualization('Geomap');
 
   // Switch the map layer type to GeoJSON
-  const layerTypeField = dashboardPage.getByGrafanaSelector(
+  const layerTypeField = editPage.getByGrafanaSelector(
     selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE)
   );
   const layerTypeInput = layerTypeField.locator('input');
   await layerTypeInput.fill('GeoJSON');
   await layerTypeInput.press('Enter');
   await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
+    editPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
   ).toBeVisible();
 
   // Select airports.geojson as the data source (contains Point features)
-  const geojsonUrlInput = dashboardPage
+  const geojsonUrlInput = editPage
     .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
     .locator('input');
   await geojsonUrlInput.fill(AIRPORTS_GEOJSON_URL);
@@ -90,8 +81,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
 
-      // Open Street Map
-      await input.fill('Open Street Map');
+      // OpenStreetMap
+      await input.fill('OpenStreetMap');
       await input.press('Enter');
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(
@@ -217,14 +208,13 @@ test.describe(
       await expect(page.getByRole('dialog')).toBeHidden();
     });
 
-    // This test documents a known bug on this branch: switching the icon folder inside
-    // the ResourcePickerPopover and picking from the new folder does not persist correctly.
+    // Switching the icon folder and picking an icon from the new folder should persist the selection.
     test('ResourcePicker in GeoJSON Default style - switching icon folder', async ({
       gotoDashboardPage,
       selectors,
       page,
     }) => {
-      await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
+      const dashboardPage = await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
 
       const symbolInput = page.getByPlaceholder(/select a symbol/i);
       await expect(symbolInput).toBeVisible({ timeout: 15000 });
@@ -236,6 +226,10 @@ test.describe(
       // Switch from the default img/icons/marker folder to img/icons/unicons
       await resourcePickerDialog.getByRole('combobox').click();
       await page.getByText('img/icons/unicons', { exact: true }).click();
+
+      // Switching folders clears the grid; wait for the new folder's icons to load before searching
+      // so the filter + click run against the loaded folder rather than racing the in-flight request.
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.ResourcePicker.card).first()).toBeVisible();
 
       // Pick an icon from the new folder
       await resourcePickerDialog.getByPlaceholder('Search').fill('0-plus');

@@ -61,6 +61,7 @@ export const LogLevelColor = {
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
+  [LogLevel.unspecified]: getThemeColor('#8e8e8e', '#bdc4cd'),
 };
 
 const MILLISECOND = 1;
@@ -326,7 +327,7 @@ function parseTime(
   const time = toUtc(ts);
   const timeEpochMs = time.valueOf();
 
-  if (timeNsField) {
+  if (timeNsField?.values[index]) {
     return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
   }
 
@@ -448,12 +449,12 @@ export function logSeriesToLogsModel(
         raw: message,
         labels: labels || {},
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
-        uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
+        uid: `${series.refId}_${idField?.values[j] ? idField.values[j] : j.toString()}`,
         datasourceType,
         datasourceUid,
       };
 
-      if (idField !== null) {
+      if (idField?.values[j]) {
         row.rowId = idField.values[j];
       }
 
@@ -592,7 +593,8 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
  * Returns field configuration used to render logs volume bars
  */
 function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
-  const name = oneLevelDetected && level === LogLevel.unknown ? 'logs' : level;
+  // When the level is unspecified, or empty, we want to display "unspecified"
+  const name = oneLevelDetected && level === LogLevel.unspecified ? 'logs' : level || 'unspecified';
   const color = LogLevelColor[level];
   return {
     displayNameFromDS: name,
@@ -642,12 +644,12 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
   try {
     valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
   } catch {}
-  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
+  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unspecified;
 }
 
 function getLogLevelFromLabels(labels: Labels): LogLevel {
   const level = labels['level'] ?? labels['detected_level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
-  return level ? getLogLevelFromKey(level) : LogLevel.unknown;
+  return level ? getLogLevelFromKey(level) : LogLevel.unspecified;
 }
 
 /**

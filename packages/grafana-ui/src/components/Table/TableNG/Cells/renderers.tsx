@@ -204,11 +204,7 @@ export function getCellSpecificStyles(
 }
 
 /** @internal */
-export function getAutoRendererStyles(
-  theme: GrafanaTheme2,
-  options: TableCellStyleOptions,
-  field: Field
-): string | undefined {
+function getAutoRendererStyles(theme: GrafanaTheme2, options: TableCellStyleOptions, field: Field): string | undefined {
   const impliedDisplayMode = getAutoRendererDisplayMode(field);
   if (impliedDisplayMode !== TableCellDisplayMode.Auto) {
     return CELL_REGISTRY[impliedDisplayMode]?.getStyles?.(theme, options);

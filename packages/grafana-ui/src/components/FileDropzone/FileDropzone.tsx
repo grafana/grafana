@@ -261,7 +261,7 @@ export function FileDropzone({
   );
 }
 
-export function getMimeTypeByExtension(ext: string) {
+function getMimeTypeByExtension(ext: string) {
   if (['txt', 'json', 'csv', 'xls', 'yml'].some((e) => ext.match(e))) {
     return 'text/plain';
   }
@@ -269,7 +269,7 @@ export function getMimeTypeByExtension(ext: string) {
   return 'application/octet-stream';
 }
 
-export function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
+function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
   if (typeof accept === 'string') {
     return {
       [getMimeTypeByExtension(accept)]: [accept],

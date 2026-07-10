@@ -6,6 +6,7 @@ export const Loggers = {
   /* new loggers should follow package/area.feature naming convention */
   'grafana/runtime.plugins.meta': { logToConsole: true },
   'grafana/runtime.plugins.settings': { logToConsole: true },
+  'grafana/runtime.plugins.datasource': { logToConsole: true },
   'grafana/runtime.utils.getCachedPromise': {},
 
   /* existing loggers that keep their existing source name */
@@ -16,6 +17,8 @@ export const Loggers = {
   'features.correlations': {},
   'features.dashboards.genai': {},
   'features.query-history.local-storage': {},
+  'core.crash-detection': {},
+  'extensions.auth-config.scim': { context: { module: 'SCIM' } },
 } satisfies Record<string, LoggerDefaults>;
 
 export type LoggerSource = keyof typeof Loggers;

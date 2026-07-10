@@ -34,6 +34,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower("X-Rule-Source"):                   "X-Rule-Source",
 	strings.ToLower("X-Rule-Type"):                     "X-Rule-Type",
 	strings.ToLower("X-Rule-Version"):                  "X-Rule-Version",
+	strings.ToLower("X-Rule-Origin"):                   "X-Rule-Origin",
 	strings.ToLower("X-Grafana-Org-Id"):                "X-Grafana-Org-Id",
 	strings.ToLower(queryService.HeaderQueryGroupID):   queryService.HeaderQueryGroupID,
 	strings.ToLower(queryService.HeaderPanelID):        queryService.HeaderPanelID,
