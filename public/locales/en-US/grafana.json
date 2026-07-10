@@ -4992,6 +4992,7 @@
       "selected-scopes-label": "Scopes: "
     },
     "search-box": {
+      "ask-assistant": "Shift + Enter to ask Assistant",
       "placeholder": "Search or jump to..."
     },
     "section": {
