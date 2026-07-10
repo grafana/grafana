@@ -137,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2, overflow?: LegendOverflow) => {
       overflow: 'hidden',
       userSelect: 'text',
       textAlign: 'left',
-      wordWrap: 'break-word',
+      overflowWrap: 'break-word',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',

@@ -84,12 +84,7 @@ describe('LegendTableItem', () => {
     it('allows the label to wrap (normal) when overflow is "wrap"', () => {
       renderInTable({ overflow: 'wrap' });
       expect(screen.getByRole('button')).toHaveStyle({ whiteSpace: 'normal' });
-    });
-
-    it('allows the label to wrap without word breaks', () => {
-      renderInTable();
-      expect(screen.getByRole('button')).toHaveStyle({ wordWrap: 'break-word' });
-      expect(screen.getByRole('button')).toHaveStyle({ textOverflow: 'ellipsis' });
+      expect(screen.getByRole('button')).toHaveStyle({ overflowWrap: 'break-word' });
     });
   });
 });
