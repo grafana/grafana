@@ -10736,14 +10736,14 @@
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
       "most-viewed": "Most viewed",
-      "most-viewed-active": "Most viewed",
+      "most-viewed-active": "Most viewed dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
-      "recent-tab-active": "Recent",
+      "recent-tab-active": "Recent dashboards",
       "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards",
-      "starred-tab-active": "Starred"
+      "starred-tab-active": "Starred dashboards"
     },
     "dashboards": {
       "title": "Dashboards",
