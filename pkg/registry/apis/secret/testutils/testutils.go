@@ -96,7 +96,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 			_ = db.Close()
 		})
 		kvStore := resource.NewBadgerKV(db)
-		secureValueMetadataStorage = metadata.NewkvSecureValueMetadataStorage(kvStore, clock)
+		secureValueMetadataStorage = metadata.NewkvSecureValueMetadataStorage(kvStore, clock, tracer, nil)
 	default:
 		panic(fmt.Sprintf("unhandled storage type: %+v", setupCfg))
 	}
