@@ -108,7 +108,7 @@ export function PinnedFiltersEditor({
           <div className={styles.row} key={filter.key} data-testid={`pinned-filters-editor-row-${filter.key}`}>
             <Combobox
               width={25}
-              aria-label={t('dashboard-scene.pinned-filters-editor.field-aria-label', 'Pinned filter field')}
+              data-testid={`pinned-filters-editor-key-${filter.key}`}
               options={loadKeyOptions}
               value={filter.key}
               onChange={(option) => {
@@ -127,7 +127,7 @@ export function PinnedFiltersEditor({
             <MultiCombobox
               minWidth={25}
               maxWidth={50}
-              aria-label={t('dashboard-scene.pinned-filters-editor.values-aria-label', 'Pinned filter default values')}
+              data-testid={`pinned-filters-editor-values-${filter.key}`}
               placeholder={t('dashboard-scene.pinned-filters-editor.values-placeholder', 'Default values (optional)')}
               options={(inputValue) => loadValueOptions(getValueOptions, filter, inputValue)}
               value={isMatchAllFilter(filter) ? [] : getPinnedFilterSelectedValues(filter)}
@@ -147,7 +147,7 @@ export function PinnedFiltersEditor({
           <div className={styles.row} data-testid="pinned-filters-editor-row-new">
             <Combobox
               width={25}
-              aria-label={t('dashboard-scene.pinned-filters-editor.field-aria-label', 'Pinned filter field')}
+              data-testid="pinned-filters-editor-key-new"
               options={loadKeyOptions}
               value={null}
               placeholder={t('dashboard-scene.pinned-filters-editor.field-placeholder', 'Select field')}

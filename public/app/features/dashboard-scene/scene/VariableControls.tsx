@@ -4,7 +4,6 @@ import { useCallback, useMemo } from 'react';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaPinnedFilters } from '@grafana/runtime/internal';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -26,7 +25,7 @@ import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 import { PinnedAdHocFilters } from './pinned-filters/PinnedAdHocFilters';
-import { getPinnedFilters } from './pinned-filters/pinnedFilters';
+import { getPinnedFilters, isPinnedFiltersEnabled } from './pinned-filters/pinnedFilters';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
 export function VariableControls({
@@ -74,7 +73,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
-  const pinnedFiltersEnabled = useFlagGrafanaPinnedFilters();
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
@@ -157,7 +155,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   // Only applied in the standard controls bar; in the controls menu the default (pill) rendering
   // is kept as the vertical layout does not suit a row of standalone controls.
   const showPinnedFilters =
-    pinnedFiltersEnabled &&
+    isPinnedFiltersEnabled() &&
     sceneUtils.isAdHocVariable(variable) &&
     variable.state.layout === 'combobox' &&
     getPinnedFilters(variable.state.originFilters).length > 0;

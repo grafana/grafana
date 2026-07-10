@@ -63,11 +63,7 @@ export function PinnedFilterControl({ variable, filter, labelClassName }: Pinned
         onClick={() => variable.restoreOriginalFilter(filter)}
         tooltip={t(
           'dashboard-scene.pinned-filter-control.restore-tooltip',
-          'Restore the value set by this dashboard.'
-        )}
-        aria-label={t(
-          'dashboard-scene.pinned-filter-control.restore-aria-label',
-          'Restore pinned filter {{label}} to its default value',
+          'Restore {{label}} to the value set by this dashboard',
           { label }
         )}
       />

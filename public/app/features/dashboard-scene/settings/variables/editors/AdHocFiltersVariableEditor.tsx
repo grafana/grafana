@@ -10,10 +10,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaPinnedFilters } from '@grafana/runtime/internal';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { isPinnedFiltersEnabled } from '../../../scene/pinned-filters/pinnedFilters';
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 import { PinnedFiltersEditor } from '../components/PinnedFiltersEditor';
@@ -37,7 +37,7 @@ function isGroupByOriginFilter(f: AdHocFilterWithLabels) {
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
   const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
-  const pinnedFiltersEnabled = useFlagGrafanaPinnedFilters();
+  const pinnedFiltersEnabled = isPinnedFiltersEnabled();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
 
