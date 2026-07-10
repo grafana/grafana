@@ -30,7 +30,7 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
     const theme = createTheme({ colors: { mode } });
     const editor = createEditor(theme);
 
-    expect(getComputedStyle(editor.dom).backgroundColor).toBe(normalizeColor(theme.colors.background.primary));
+    expect(getComputedStyle(editor.dom).backgroundColor).toBe(normalizeColor(theme.colors.background.canvas));
     expect(getComputedStyle(editor.scrollDOM).fontFamily).toContain('Roboto Mono');
     expect(getComputedStyle(editor.contentDOM.querySelector('.cm-activeLine')!).backgroundColor).toBe(
       normalizeColor(theme.colors.background.secondary)
@@ -78,7 +78,11 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
       theme.colors.error.text,
       theme.colors.text.link,
     ];
-    const syntaxBackgrounds = [theme.colors.background.primary, theme.colors.background.secondary];
+    const syntaxBackgrounds = [
+      theme.colors.background.canvas,
+      theme.colors.background.primary,
+      theme.colors.background.secondary,
+    ];
 
     for (const background of syntaxBackgrounds) {
       for (const color of syntaxColors) {

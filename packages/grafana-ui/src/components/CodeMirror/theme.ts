@@ -12,7 +12,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
     {
       '&': {
         color: theme.colors.text.primary,
-        backgroundColor: theme.colors.background.primary,
+        backgroundColor: theme.colors.background.canvas,
         fontFamily: theme.typography.fontFamilyMonospace,
         fontSize: theme.typography.code.fontSize,
       },
@@ -31,7 +31,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
       },
       '.cm-gutters': {
         color: theme.colors.text.secondary,
-        backgroundColor: theme.colors.background.primary,
+        backgroundColor: theme.colors.background.canvas,
         borderRightColor: theme.colors.border.weak,
       },
       '.cm-activeLine, .cm-activeLineGutter': {
