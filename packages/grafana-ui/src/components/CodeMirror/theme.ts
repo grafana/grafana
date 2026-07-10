@@ -5,6 +5,8 @@ import { tags } from '@lezer/highlight';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
+import { getFocusStyles } from '../../themes/mixins';
+
 export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
   const editorTheme = EditorView.theme(
     {
@@ -15,7 +17,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
         fontSize: theme.typography.code.fontSize,
       },
       '&.cm-focused': {
-        outline: 'none',
+        ...getFocusStyles(theme),
       },
       '.cm-scroller': {
         fontFamily: theme.typography.fontFamilyMonospace,
@@ -33,7 +35,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
         borderRightColor: theme.colors.border.weak,
       },
       '.cm-activeLine, .cm-activeLineGutter': {
-        backgroundColor: theme.colors.action.hover,
+        backgroundColor: theme.colors.background.secondary,
       },
       '.cm-activeLineGutter': {
         color: theme.colors.text.primary,

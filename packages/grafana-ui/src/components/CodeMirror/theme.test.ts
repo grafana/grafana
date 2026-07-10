@@ -1,6 +1,6 @@
 import { sql } from '@codemirror/lang-sql';
 import { EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { EditorView, highlightActiveLine } from '@codemirror/view';
 
 import { colorManipulator, createTheme, type GrafanaTheme2 } from '@grafana/data';
 
@@ -20,7 +20,7 @@ function createEditor(theme: GrafanaTheme2): EditorView {
     parent: document.body,
     state: EditorState.create({
       doc: 'SELECT value_with_underscores FROM metrics',
-      extensions: [sql(), createCodeEditorTheme(theme)],
+      extensions: [sql(), highlightActiveLine(), createCodeEditorTheme(theme)],
     }),
   });
 }
@@ -32,6 +32,23 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
     expect(getComputedStyle(editor.dom).backgroundColor).toBe(normalizeColor(theme.colors.background.primary));
     expect(getComputedStyle(editor.scrollDOM).fontFamily).toContain('Roboto Mono');
+    expect(getComputedStyle(editor.contentDOM.querySelector('.cm-activeLine')!).backgroundColor).toBe(
+      normalizeColor(theme.colors.background.secondary)
+    );
+
+    editor.destroy();
+    editor.dom.remove();
+  });
+
+  it('uses the Grafana focus treatment', () => {
+    const theme = createTheme({ colors: { mode } });
+    const editor = createEditor(theme);
+    const focusRule = Array.from(document.styleSheets)
+      .flatMap((styleSheet) => Array.from(styleSheet.cssRules))
+      .find((rule) => rule.cssText.includes('cm-focused') && rule.cssText.includes('box-shadow'));
+
+    expect(focusRule?.cssText).toContain('outline: 2px dotted transparent');
+    expect(focusRule?.cssText).toContain('box-shadow');
 
     editor.destroy();
     editor.dom.remove();
@@ -59,12 +76,14 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
       theme.colors.success.text,
       theme.colors.warning.text,
       theme.colors.error.text,
+      theme.colors.text.link,
     ];
+    const syntaxBackgrounds = [theme.colors.background.primary, theme.colors.background.secondary];
 
-    for (const color of syntaxColors) {
-      expect(
-        colorManipulator.getContrastRatio(theme.colors.background.primary, color, theme.colors.background.primary)
-      ).toBeGreaterThanOrEqual(4.5);
+    for (const background of syntaxBackgrounds) {
+      for (const color of syntaxColors) {
+        expect(colorManipulator.getContrastRatio(background, color, background)).toBeGreaterThanOrEqual(4.5);
+      }
     }
   });
 });

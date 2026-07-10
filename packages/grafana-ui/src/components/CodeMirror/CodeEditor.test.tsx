@@ -4,10 +4,14 @@ import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/vie
 import { render, screen, waitFor } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 
+import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
+
+import { mockThemeContext } from '../../themes/ThemeContext';
 
 import { CodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
+import { createCodeEditorTheme } from './theme';
 
 let capturedProps: { extensions?: unknown[]; theme?: unknown; onChange?: unknown } | undefined;
 
@@ -39,6 +43,10 @@ jest.mock('./languageLoader', () => ({
   loadLanguageExtension: jest.fn(),
 }));
 
+jest.mock('./theme', () => ({
+  createCodeEditorTheme: jest.fn(() => ['grafana-code-editor-theme']),
+}));
+
 jest.mock('@grafana/faro-web-sdk', () => ({
   faro: {
     api: {
@@ -50,6 +58,7 @@ jest.mock('@grafana/faro-web-sdk', () => ({
 const autocompletionMock = autocompletion as jest.MockedFunction<typeof autocompletion>;
 const startCompletionMock = startCompletion as jest.MockedFunction<typeof startCompletion>;
 const loadLanguageExtensionMock = loadLanguageExtension as jest.MockedFunction<typeof loadLanguageExtension>;
+const createCodeEditorThemeMock = createCodeEditorTheme as jest.MockedFunction<typeof createCodeEditorTheme>;
 
 const getExtensions = () => capturedProps?.extensions ?? [];
 
@@ -76,6 +85,7 @@ describe('CodeMirror CodeEditor', () => {
     autocompletionMock.mockClear();
     startCompletionMock.mockClear();
     loadLanguageExtensionMock.mockClear();
+    createCodeEditorThemeMock.mockClear();
     loadLanguageExtensionMock.mockResolvedValue(null);
     (faro.api.pushError as jest.Mock).mockClear();
   });
@@ -173,7 +183,22 @@ describe('CodeMirror CodeEditor', () => {
   it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {
     render(<CodeEditor value="" onChange={jest.fn()} />);
 
-    expect(capturedProps?.theme).toEqual(expect.any(Array));
+    expect(createCodeEditorThemeMock).toHaveBeenCalledTimes(1);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results[0].value);
+  });
+
+  it('regenerates the default editor theme when the Grafana theme changes', () => {
+    const { rerender } = render(<CodeEditor value="" onChange={jest.fn()} />);
+    const initialTheme = createCodeEditorThemeMock.mock.calls[0][0] as GrafanaTheme2;
+    const nextTheme = createTheme({ colors: { mode: initialTheme.isDark ? 'light' : 'dark' } });
+    const restoreThemeContext = mockThemeContext(nextTheme);
+
+    rerender(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme);
+    expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
+
+    restoreThemeContext();
   });
 
   it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
