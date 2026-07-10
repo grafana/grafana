@@ -1,7 +1,7 @@
 import { foldable } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 
-import { foldByIndentation } from './folding';
+import { foldByIndentation } from './sqlFolding';
 
 const getFoldableRange = (doc: string, lineNumber: number) => {
   const state = EditorState.create({ doc, extensions: [foldByIndentation] });

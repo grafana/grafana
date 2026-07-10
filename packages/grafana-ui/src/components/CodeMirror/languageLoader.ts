@@ -10,7 +10,7 @@ const loadJson = async (): Promise<CodeMirrorExtension> =>
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
   const [{ sql, StandardSQL, MySQL }, { foldByIndentation }] = await Promise.all([
     import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'),
-    import(/* webpackChunkName: "codemirror-lang-sql" */ './folding'),
+    import(/* webpackChunkName: "codemirror-lang-sql" */ './sqlFolding'),
   ]);
   const dialects: Record<CodeMirrorSqlDialect, SQLDialect> = {
     standardSql: StandardSQL,
