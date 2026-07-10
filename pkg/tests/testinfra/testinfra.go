@@ -1018,7 +1018,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	maxConns := opts.DBMaxConns
 	if maxConns <= 0 {
-		maxConns = 2
+		// Keep the pool small to surface connection leaks, but not so small that
+		// startup deadlocks: while migrating, the migrator can hold one connection
+		// on the database lock while each migration's transaction needs a second,
+		// and other startup components share the same pool.
+		maxConns = 5
 	}
 
 	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))

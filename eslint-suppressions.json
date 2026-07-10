@@ -97,11 +97,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/themes/registry.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

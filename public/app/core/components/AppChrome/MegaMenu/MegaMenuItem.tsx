@@ -53,6 +53,9 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
+  // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
+  const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
   // Pinned sections use a separate expand-state key (and default to expanded) so a section shown
   // both pinned and in the normal nav doesn't share — and fight over — the same collapse state.
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
@@ -89,10 +92,25 @@ export function MegaMenuItem({
     return null;
   }
 
+  // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
+  // as two identical links to screen readers. Only the two icons starredNavEntry produces are
+  // mapped; anything else stays untitled (and thus aria-hidden), so a future kind never gets a
+  // wrong label. Level-0 section icons must stay aria-hidden or they double-announce the label.
+  let starredLeafIconTitle: string | undefined;
+  if (isStarredLeaf) {
+    if (link.icon === 'folder') {
+      starredLeafIconTitle = t('navigation.megamenu-item.starred-folder-icon', 'Folder');
+    } else if (link.icon === 'apps') {
+      starredLeafIconTitle = t('navigation.megamenu-item.starred-dashboard-icon', 'Dashboard');
+    }
+  }
+
   let iconElement: React.JSX.Element | null = null;
 
   if (link.icon) {
-    iconElement = <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />;
+    iconElement = (
+      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+    );
   } else if (link.img) {
     iconElement = (
       <Stack width={3} justifyContent="center">
@@ -134,13 +152,16 @@ export function MegaMenuItem({
             itemName={link.text}
             canCustomise={canCustomise}
           >
+            {/* labelWrapperWithIcon spacing is a top-level alignment concern; starred leaves are a
+                uniform indented group that already align among themselves, so they intentionally
+                render the icon without it. */}
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
                 [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
             >
-              {level === 0 && iconElement}
+              {(level === 0 || isStarredLeaf) && iconElement}
               <Text truncate element="p">
                 {link.text}
               </Text>
@@ -177,7 +198,7 @@ export function MegaMenuItem({
               .filter((childLink) => !childLink.isCreateAction)
               .map((childLink) => (
                 <MegaMenuItem
-                  key={`${link.text}-${childLink.text}`}
+                  key={childLink.id ?? `${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
                   onClick={onClick}
