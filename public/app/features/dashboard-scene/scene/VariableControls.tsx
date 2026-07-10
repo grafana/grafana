@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaPinnedFilters } from '@grafana/runtime/internal';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -24,6 +25,8 @@ import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopov
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { PinnedAdHocFilters } from './pinned-filters/PinnedAdHocFilters';
+import { getPinnedFilters } from './pinned-filters/pinnedFilters';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
 export function VariableControls({
@@ -71,6 +74,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
+  const pinnedFiltersEnabled = useFlagGrafanaPinnedFilters();
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
@@ -144,6 +148,39 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             className={cx(isSelectable && styles.labelSelectable)}
           />
           <variable.Component model={variable} />
+        </div>
+      </ControlActionsPopover>
+    );
+  }
+
+  // Pinned filters render as standalone value pickers next to the bulk filters combobox.
+  // Only applied in the standard controls bar; in the controls menu the default (pill) rendering
+  // is kept as the vertical layout does not suit a row of standalone controls.
+  const showPinnedFilters =
+    pinnedFiltersEnabled &&
+    sceneUtils.isAdHocVariable(variable) &&
+    variable.state.layout === 'combobox' &&
+    getPinnedFilters(variable.state.originFilters).length > 0;
+
+  if (showPinnedFilters && sceneUtils.isAdHocVariable(variable)) {
+    return (
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+        <div
+          className={cx(
+            styles.pinnedContainer,
+            isSelected && 'dashboard-selected-element',
+            isSelectable && !isSelected && 'dashboard-selectable-element'
+          )}
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          onPointerDown={markUserInitiated}
+        >
+          <PinnedAdHocFilters
+            variable={variable}
+            bulkFiltersLabel={
+              <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+            }
+            labelClassName={cx(isSelectable && styles.labelSelectable, styles.label)}
+          />
         </div>
       </ControlActionsPopover>
     );
@@ -255,6 +292,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderTopLeftRadius: 'unset',
       borderBottomLeftRadius: 'unset',
     }),
+    marginBottom: theme.spacing(1),
+    marginRight: theme.spacing(1),
+  }),
+  pinnedContainer: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    verticalAlign: 'middle',
     marginBottom: theme.spacing(1),
     marginRight: theme.spacing(1),
   }),
