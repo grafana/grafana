@@ -24,6 +24,7 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   const signerName = data.commit?.signerName?.trim();
   const signerEmail = data.commit?.signerEmail?.trim();
   const signingMethod = data.signingMethod;
+  const signerIsAuthor = Boolean(signingMethod) && Boolean(data.commit?.signerIsAuthor);
 
   if (!base && !signerName && !signerEmail && !signingMethod) {
     return undefined;
@@ -38,6 +39,9 @@ const buildCommitOptions = (data: RepositoryFormData): CommitOptions | undefined
   }
   if (signingMethod) {
     commit.signingMethod = signingMethod;
+  }
+  if (signerIsAuthor) {
+    commit.signerIsAuthor = true;
   }
   if (data.smimeCertificate) {
     commit.smimeCertificate = data.smimeCertificate;
@@ -210,7 +214,12 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     signingMethod: spec.commit?.signingMethod ?? '',
     smimeCertificate: spec.commit?.smimeCertificate ?? '',
     commitSigningKey: '',
-    commit: { ...spec.commit, signerName: spec.commit?.signerName ?? '', signerEmail: spec.commit?.signerEmail ?? '' },
+    commit: {
+      ...spec.commit,
+      signerName: spec.commit?.signerName ?? '',
+      signerEmail: spec.commit?.signerEmail ?? '',
+      signerIsAuthor: spec.commit?.signerIsAuthor ?? false,
+    },
   });
 };
 

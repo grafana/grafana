@@ -274,6 +274,10 @@ func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols 
 	return s, nil
 }
 
+func (db *MySQLDialect) SupportsAdvisoryLocks() bool {
+	return true
+}
+
 func (db *MySQLDialect) Lock(cfg LockCfg) error {
 	query := "SELECT GET_LOCK(?, ?)"
 	var success sql.NullBool

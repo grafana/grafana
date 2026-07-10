@@ -1,9 +1,9 @@
-import type { PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 
-export const initPreferences = async () => {
+export const initPreferences = async (): Promise<Preferences | undefined> => {
   const preferences = await fetchMergedPreferences();
   if (!preferences) {
-    return;
+    return undefined;
   }
   // URL prefs take precedence over saved preferences, matching the backend's
   // getURLPrefs behavior used when the flag is disabled.
@@ -29,9 +29,13 @@ export const initPreferences = async () => {
   if (timezone !== undefined) {
     window.grafanaBootData.user.timezone = timezone;
   }
+
+  // Return the fetched preferences so the app boot can seed the RTK Query cache,
+  // avoiding a duplicate preferences/merged request from useMergedPreferencesQuery.
+  return preferences;
 };
 
-export async function fetchMergedPreferences(): Promise<{ spec: PreferencesSpec } | undefined> {
+export async function fetchMergedPreferences(): Promise<Preferences | undefined> {
   const namespace = window.grafanaBootData?.settings?.namespace;
   const isSignedIn = window.grafanaBootData?.user?.isSignedIn;
 

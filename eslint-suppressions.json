@@ -97,11 +97,6 @@
       "count": 1
     }
   },
-  "packages/grafana-data/src/themes/registry.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -446,11 +441,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
@@ -613,11 +603,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -672,11 +657,6 @@
   },
   "packages/grafana-ui/src/components/Tags/Tag.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Typeahead/Typeahead.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -889,11 +869,6 @@
   "public/app/core/components/PluginHelp/PluginHelp.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
-    }
-  },
-  "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 4
     }
   },
   "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx": {
@@ -1269,16 +1244,6 @@
       "count": 4
     }
   },
-  "public/app/features/alerting/unified/components/rules/RuleListGroupView.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/RuleListStateView.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RulesTable.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 2
@@ -1322,11 +1287,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/hooks/useCombinedRuleNamespaces.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1367,11 +1327,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/utils/datasource.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/utils/misc.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -1391,11 +1346,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/utils/rule-id.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/utils/rules.ts": {
@@ -2064,11 +2014,6 @@
   },
   "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/utils/sort.ts": {
-    "@grafana/no-locale-compare": {
       "count": 1
     }
   },

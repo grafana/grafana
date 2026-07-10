@@ -661,7 +661,7 @@ If tracking with RudderStack is enabled, you can provide a custom URL to load th
 
 Optional.
 This is mirroring the old configuration option, which will be deprecated.
-If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the v3 SDK is loaded.
 
 #### `rudderstack_config_url`
 

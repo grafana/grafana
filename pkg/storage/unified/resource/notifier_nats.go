@@ -45,12 +45,12 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // Watch subscribes to the entire stream (SubjectAll) and ignores the resource
 // selectors in WatchOptions, so it is not a drop-in per-watch notifier.
 //
-// Two wire-format properties make it a low-latency hint, not a source of truth:
-//   - Events carry PreviousRV == 0 (WatchNotification has no previous RV), so
-//     consumers relying on PreviousRV behave differently than with store-sourced
-//     notifiers.
-//   - Delivery is at-most-once (core NATS, no JetStream); a missed message is
-//     never redelivered. The polling notifier remains the correctness backstop.
+// Delivery is at-most-once (core NATS, no JetStream); a missed message is never
+// redelivered, so it is a low-latency signal, not a source of truth. When it is
+// the selected notifier there is no server-side polling backstop (newNotifier
+// returns this OR the polling notifier, never both) — recovery relies on
+// consumers relisting (k8s reflector resync, provisioning informer relist).
+// PreviousRV is carried on the wire, matching the store-sourced notifiers.
 type natsNotifier struct {
 	subscriber EventSubscriber
 	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
@@ -98,7 +98,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 			ResourceVersion: notification.ResourceVersion,
 			Action:          action,
 			Folder:          notification.Folder,
-			// PreviousRV is unknown: WatchNotification does not carry it.
+			PreviousRV:      notification.PreviousResourceVersion,
 		}
 		select {
 		case raw <- evt:
@@ -140,5 +140,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 	return out
 }
 
-// Publish is a no-op: natsNotifier learns of writes from the bus, not callers.
+// TODO: currently the events are published to NATS in watch_publisher.go,
+// but we need refactor to publish them here in the notifier,
+// once we have a single notifier implementation (natsNotifier) and remove the pollingNotifier.
 func (n *natsNotifier) Publish(_ Event) {}

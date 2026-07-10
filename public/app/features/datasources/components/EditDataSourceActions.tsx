@@ -1,6 +1,7 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, usePluginLinks, useFavoriteDatasources, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, usePluginLinks, useFavoriteDatasources, reportInteraction } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -18,7 +19,7 @@ interface Props {
 
 const FavoriteButton = ({ uid }: { uid: string }) => {
   const favoriteDataSources = useFavoriteDatasources();
-  const dataSourceInstance = getDataSourceSrv().getInstanceSettings(uid);
+  const { settings: dataSourceInstance } = useDataSourceInstanceSettings(uid);
   const isFavorite = dataSourceInstance ? favoriteDataSources.isFavoriteDatasource(dataSourceInstance.uid) : false;
 
   return (

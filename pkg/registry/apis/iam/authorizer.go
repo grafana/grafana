@@ -99,6 +99,25 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	return authz.Authorize(ctx, attr)
 }
 
+// allowListAuthorizer allows a nameless list (resource request, no subresource, no name, verb=list)
+// at the API layer, deferring per-item filtering to unified storage.
+// Otherwise Zanzana maps a nameless list to a group_resource (wildcard) check,
+// so only a user who can read every item could list.
+//
+// Only safe for resources that unified storage filters per-item on list (see
+// the authzLimitedClient allowlist in pkg/storage/unified/resource/access.go).
+func allowListAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.IsResourceRequest() && attr.GetSubresource() == "" && attr.GetName() == "" && attr.GetVerb() == utils.VerbList {
+			if _, ok := authlib.AuthInfoFrom(ctx); ok {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "cannot list resource without an identity", nil
+		}
+		return base.Authorize(ctx, attr)
+	})
+}
+
 // newTeamAuthorizer authorizes the "members", "groups", "addmember" and
 // "removemember" subresources:
 //   - members / groups: read paths, gated on `get_permissions` on the
@@ -126,19 +145,21 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	}
 	getPermissions := check(utils.VerbGetPermissions, "requires team getpermissions")
 	update := check(utils.VerbUpdate, "requires team update")
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"members":      getPermissions,
 		"groups":       getPermissions,
 		"addmember":    update,
 		"removemember": update,
 	})
+
+	return allowListAuthorizer(base)
 }
 
 // newUserAuthorizer creates an authorizer for users that handles the "teams" and "status" subresources.
 // "teams" is read-only (Connecter/GET), so it checks user get.
 // "status" supports both GET and PUT, so the check verb mirrors the request verb.
 func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"teams": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
 				Verb:      utils.VerbGet,
@@ -176,6 +197,8 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 			return authorizer.DecisionAllow, "", nil
 		},
 	})
+
+	return allowListAuthorizer(base)
 }
 
 // newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource.
@@ -183,8 +206,11 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 //   - GET  (get/list) → serviceaccounts:read  (verb "get")
 //   - POST (create)   → serviceaccounts:write  (verb "update")
 //   - DELETE           → serviceaccounts:write  (verb "update")
+//
+// The nameless list is allowed at the API layer (see
+// allowList); unified storage filters service accounts per-item.
 func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	base := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"tokens": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			// Map verbs to match the legacy API: read operations use "get",
 			// write operations (create/delete) use "update" → serviceaccounts:write.
@@ -210,6 +236,8 @@ func newServiceAccountAuthorizer(accessClient authlib.AccessClient) authorizer.A
 			return authorizer.DecisionAllow, "", nil
 		},
 	})
+
+	return allowListAuthorizer(base)
 }
 
 func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) authlib.AccessClient {
