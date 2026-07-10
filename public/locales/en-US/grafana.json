@@ -10853,9 +10853,27 @@
       "loading": "Loading recently viewed dashboards..."
     },
     "recommendations": {
+      "application-observability": {
+        "action": "Enable Application Observability",
+        "context": "Built automatically from your telemetry",
+        "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
+        "title": "Explore your service map"
+      },
       "existing": "Enabled solution",
+      "frontend-observability": {
+        "action": "Enable Frontend Observability",
+        "context": "Connect the browser to your backend traces",
+        "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
+        "title": "Measure real user experience"
+      },
       "go-to": "Go to recommendation {{index}}",
       "hide": "Hide",
+      "hosted-traces": {
+        "action": "Enable Hosted Traces",
+        "context": "Because you set up Kubernetes Monitoring",
+        "description": "Add distributed tracing to see how requests flow between services and where they slow down.",
+        "title": "Trace requests across services"
+      },
       "next": "Next",
       "pause": "Pause",
       "previous": "Previous",
@@ -10863,6 +10881,12 @@
       "resume": "Resume",
       "show": "Show",
       "switch": "Switch to another app you run",
+      "synthetic-monitoring": {
+        "action": "Add Synthetic Monitoring",
+        "context": "Catch outages before your users do",
+        "description": "Probe your endpoints from 20+ global locations before your users notice.",
+        "title": "Watch your cluster from outside"
+      },
       "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {
