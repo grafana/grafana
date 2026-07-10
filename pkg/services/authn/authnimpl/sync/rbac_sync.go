@@ -18,8 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/authn"
 	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -27,22 +29,26 @@ var (
 	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
-func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry) *RBACSync {
+func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry, features featuremgmt.FeatureToggles) *RBACSync {
 	return &RBACSync{
+		cfg:          cfg,
 		ac:           acService,
 		log:          log.New("permissions.sync"),
 		permRegistry: permRegistry,
 		tracer:       tracer,
 		mapper:       rbac.NewMapperRegistry(),
+		features:     features,
 	}
 }
 
 type RBACSync struct {
+	cfg          *setting.Cfg
 	ac           accesscontrol.Service
 	permRegistry permreg.PermissionRegistry
 	log          log.Logger
 	tracer       tracing.Tracer
 	mapper       rbac.MapperRegistry
+	features     featuremgmt.FeatureToggles
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
@@ -222,13 +228,23 @@ func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string)
 	return permissions
 }
 
-func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {
+func (s *RBACSync) cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {
 	// Since Cloud Admin/Editor/Viewer roles are not yet implemented one-to-one in the Grafana, it becomes a confusing experience for users,
 	// therefore we are doing granular mapping of all available functionality in the Grafana temporary.
 	var fixedCloudRoles = map[org.RoleType][]string{
-		org.RoleViewer: {accesscontrol.FixedCloudViewerRole, accesscontrol.FixedCloudSupportTicketReader},
-		org.RoleEditor: {accesscontrol.FixedCloudEditorRole, accesscontrol.FixedCloudSupportTicketAdmin},
-		org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole, accesscontrol.FixedCloudSupportTicketAdmin},
+		org.RoleViewer: {accesscontrol.FixedCloudViewerRole},
+		org.RoleEditor: {accesscontrol.FixedCloudEditorRole},
+		org.RoleAdmin:  {accesscontrol.FixedCloudAdminRole},
+	}
+
+	// The support-ticket roles remain gated behind the cloudRBACRoles feature
+	// toggle. When disabled, they are left out of both the add and remove sets
+	// so any pre-existing assignments are not touched.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
+		fixedCloudRoles[org.RoleViewer] = append(fixedCloudRoles[org.RoleViewer], accesscontrol.FixedCloudSupportTicketReader)
+		fixedCloudRoles[org.RoleEditor] = append(fixedCloudRoles[org.RoleEditor], accesscontrol.FixedCloudSupportTicketAdmin)
+		fixedCloudRoles[org.RoleAdmin] = append(fixedCloudRoles[org.RoleAdmin], accesscontrol.FixedCloudSupportTicketAdmin)
 	}
 
 	rolesToAdd := make(map[string]bool)
@@ -265,6 +281,11 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 	ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncCloudRoles")
 	defer span.End()
 
+	// The cloud roles only make sense when running in Grafana Cloud (StackID set).
+	if s.cfg.StackID == "" {
+		return nil
+	}
+
 	// we only want to run this hook during login and if the module used is grafana com
 	if r.GetMeta(authn.MetaKeyAuthModule) != login.GrafanaComAuthModule {
 		return nil
@@ -280,7 +301,7 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return err
 	}
 
-	rolesToAdd, rolesToRemove, err := cloudRolesToAddAndRemove(ident)
+	rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(ident)
 	if err != nil {
 		return err
 	}
