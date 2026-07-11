@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
+  getOriginFilterControls,
   sceneGraph,
   sceneUtils,
   type SceneVariable,
@@ -160,6 +161,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     );
   }
 
+  // When an ad hoc variable renders its dashboard-origin filters as standalone (pinned) controls,
+  // scenes renders a label next to the bulk filters combobox itself, so the outer label is skipped
+  // to avoid duplicating it.
+  const rendersOwnLabel = sceneUtils.isAdHocVariable(variable) && getOriginFilterControls(variable.state).length > 0;
+
   return (
     <ControlActionsPopover isEditable={canEditControl} content={editActions}>
       <div
@@ -174,7 +180,9 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
         data-dashboard-element-type="variable"
         onPointerDown={markUserInitiated}
       >
-        <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+        {!rendersOwnLabel && (
+          <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
+        )}
         <variable.Component model={variable} />
       </div>
     </ControlActionsPopover>

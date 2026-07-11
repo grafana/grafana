@@ -23,6 +23,7 @@ import {
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { getOriginFiltersRenderMode } from '../../scene/pinned-filters/pinnedFilters';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
@@ -257,6 +258,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
+        originFiltersRenderMode: getOriginFiltersRenderMode(),
       });
     case 'groupby':
       return new GroupByVariable(initialState);
