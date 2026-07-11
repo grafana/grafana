@@ -71,7 +71,9 @@ describe('PinnedFiltersEditor', () => {
     await userEvent.type(labelInput, 'Loc L1');
     await userEvent.tab();
 
-    expect(onChange).toHaveBeenCalledWith([expect.objectContaining({ key: 'territory_location_l1', keyLabel: 'Loc L1' })]);
+    expect(onChange).toHaveBeenCalledWith([
+      expect.objectContaining({ key: 'territory_location_l1', keyLabel: 'Loc L1' }),
+    ]);
   });
 
   it('commits default values with the multi-value operator', async () => {

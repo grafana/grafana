@@ -4,7 +4,16 @@ import { useCallback, useState } from 'react';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
-import { Button, Combobox, type ComboboxOption, Field, IconButton, Input, MultiCombobox, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Combobox,
+  type ComboboxOption,
+  Field,
+  IconButton,
+  Input,
+  MultiCombobox,
+  useStyles2,
+} from '@grafana/ui';
 
 import {
   createMatchAllFilter,
@@ -123,7 +132,7 @@ export function PinnedFiltersEditor({
               defaultValue={filter.keyLabel !== filter.key ? filter.keyLabel : ''}
               onBlur={(event) => onLabelChange(index, event.currentTarget.value.trim())}
             />
-            <MultiCombobox
+            <MultiCombobox<string>
               width="auto"
               minWidth={25}
               maxWidth={50}

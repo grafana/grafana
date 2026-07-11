@@ -3,8 +3,8 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFiltersVariable, type AdHocFilterWithLabels, isGroupByFilter } from '@grafana/scenes';
 import { type ComboboxOption } from '@grafana/ui';
 
-export const MATCH_ALL_OPERATOR = '=~';
-export const MATCH_ALL_VALUE = '.*';
+const MATCH_ALL_OPERATOR = '=~';
+const MATCH_ALL_VALUE = '.*';
 export const MULTI_VALUE_OPERATOR = '=|';
 export const SINGLE_VALUE_OPERATOR = '=';
 

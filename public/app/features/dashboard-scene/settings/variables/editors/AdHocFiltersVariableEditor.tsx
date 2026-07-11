@@ -95,7 +95,15 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       (filter) => variable._getValuesFor(filter),
       () => variable._getOperators()
     );
-  }, [variable, adhocOriginFilters, originalFilters, wip, allowCustomValue, updateOriginalFilters, pinnedFiltersEnabled]);
+  }, [
+    variable,
+    adhocOriginFilters,
+    originalFilters,
+    wip,
+    allowCustomValue,
+    updateOriginalFilters,
+    pinnedFiltersEnabled,
+  ]);
 
   const defaultGroupByValues: Array<SelectableValue<string>> = useMemo(
     () => groupByOriginFilters.map((f) => ({ value: f.key, label: f.keyLabel || f.key })),
