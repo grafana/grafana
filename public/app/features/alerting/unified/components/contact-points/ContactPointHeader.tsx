@@ -111,7 +111,12 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           disabled={!exportAbility.granted}
           data-testid="export"
           childItems={[<ExportMenuItem key="export-with-modifications" urlId={urlId} />]}
-          onClick={() => openExportDrawer(name)}
+          onClick={() => {
+            if (!exportAbility.granted) {
+              return;
+            }
+            openExportDrawer(name);
+          }}
         />
         <Menu.Divider />
       </Fragment>

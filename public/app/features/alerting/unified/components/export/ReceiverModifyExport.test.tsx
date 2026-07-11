@@ -34,10 +34,10 @@ const exportDrawer = {
 const renderModifyExport = (contactPointUid: string) =>
   render(
     <Routes>
-      <Route path="/alerting/notifications/receivers/:name/edit" element={<ReceiverModifyExport />} />
+      <Route path="/alerting/notifications/receivers/:name/modify-export" element={<ReceiverModifyExport />} />
     </Routes>,
     {
-      historyOptions: { initialEntries: [`/alerting/notifications/receivers/${contactPointUid}/edit`] },
+      historyOptions: { initialEntries: [`/alerting/notifications/receivers/${contactPointUid}/modify-export`] },
     }
   );
 

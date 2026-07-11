@@ -13,6 +13,7 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
 import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
 import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { canCreateNotifier, hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import { grafanaReceiverToFormValues } from '../../../utils/receiver-form';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
@@ -89,9 +90,7 @@ export const GrafanaExportReceiverForm = ({ contactPoint }: Props) => {
   }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    try {
-      setExportData(values);
-    } catch (error) {}
+    setExportData(values);
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {
@@ -204,16 +203,32 @@ const GrafanaReceiverDesignExportPreview = ({
   }));
 
   const contactPointExport = { name: exportValues.name, receivers: receivers };
-  const exportData = alertRuleApi.endpoints.exportModifiedReceiver.useQuery({
+  const { currentData, error, isLoading } = alertRuleApi.endpoints.exportModifiedReceiver.useQuery({
     payload: contactPointExport,
     format: exportFormat,
   });
+
+  if (isLoading) {
+    return <LoadingPlaceholder text={t('alerting.grafana-rule-design-export-preview.text-loading', 'Loading....')} />;
+  }
+
+  if (error) {
+    return (
+      <Alert
+        severity="error"
+        title={t('alerting.export.contact-point-export-failed', 'Failed to export contact point')}
+      >
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
+  }
+
   const downloadFileName = `modify-export-cp-${contactPointExport.name}-${new Date().getTime()}`;
 
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={exportData.data ?? ''}
+      textDefinition={currentData ?? ''}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
