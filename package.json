@@ -362,6 +362,7 @@
     "moveable": "0.53.0",
     "nanoid": "^5.0.9",
     "node-forge": "^1.4.0",
+    "nodemailer": "9.0.1",
     "ol": "10.7.0",
     "ol-ext": "4.0.36",
     "ol-mapbox-style": "^13.0.1",

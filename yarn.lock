@@ -18838,6 +18838,7 @@ __metadata:
     nanoid: "npm:^5.0.9"
     node-forge: "npm:^1.4.0"
     node-notifier: "npm:10.0.1"
+    nodemailer: "npm:9.0.1"
     nx: "npm:22.5.4"
     ol: "npm:10.7.0"
     ol-ext: "npm:4.0.36"
