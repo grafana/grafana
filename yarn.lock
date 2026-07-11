@@ -24725,10 +24725,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:8.0.7":
-  version: 8.0.7
-  resolution: "nodemailer@npm:8.0.7"
-  checksum: 10/f0afea43af7f7deb55913811362b5d255e9d70c87024eb8b5161acd8a3a3c765454a52eefbfe40a5fe79ff0475b5445acafd20cb187826222b895dee15470c8f
+"nodemailer@npm:8.0.5, nodemailer@npm:8.0.7, nodemailer@npm:9.0.1":
+  version: 9.0.1
+  resolution: "nodemailer@npm:9.0.1"
+  checksum: 10/
   languageName: node
   linkType: hard
 
