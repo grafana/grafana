@@ -55,15 +55,15 @@ For each `(stack_id, cluster)` row:
 
 ## Configuration (environment)
 
-| Variable                  | Default                                       | Purpose                                  |
-| ------------------------- | --------------------------------------------- | ---------------------------------------- |
-| `PROVISIONING_CAP_SECRET` | `provisioning-connection-operator-system-cap` | Provisioning operator CAP (grafana-apps) |
-| `FOLDER_CAP_SECRET`       | `folder-grafana-app-main-system-cap`          | Folder app CAP (grafana-folder)          |
-| `GCOM_CMD`                | `gcom`                                        | Resolve org ID for token exchange        |
-| `KUBE_CONTEXT_PREFIX`     | _(empty)_                                     | Prefix for kubectl `--context`           |
-| `AUTH_LOCAL_PORT`         | `18080`                                       | Local auth API port-forward              |
-| `PROVISIONING_LOCAL_PORT` | `16443`                                       | Local provisioning API port-forward      |
-| `IAM_LOCAL_PORT`          | `16444`                                       | Local IAM API port-forward               |
+| Variable                  | Default   | Purpose                                                                                                                                          |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PROVISIONING_CAP_SECRET` | _(auto)_  | Provisioning operator CAP (grafana-apps). Prod: `provisioning-connection-operator-{cluster}`; dev: `provisioning-connection-operator-system-cap` |
+| `FOLDER_CAP_SECRET`       | _(auto)_  | Folder app CAP (grafana-folder). Prod: `folder-grafana-app-main-{cluster}`; dev: `folder-grafana-app-main-system-cap`                            |
+| `GCOM_CMD`                | `gcom`    | Resolve org ID for token exchange                                                                                                                |
+| `KUBE_CONTEXT_PREFIX`     | _(empty)_ | Prefix for kubectl `--context`                                                                                                                   |
+| `AUTH_LOCAL_PORT`         | `18080`   | Local auth API port-forward                                                                                                                      |
+| `PROVISIONING_LOCAL_PORT` | `16443`   | Local provisioning API port-forward                                                                                                              |
+| `IAM_LOCAL_PORT`          | `16444`   | Local IAM API port-forward                                                                                                                       |
 
 ## Permission object
 

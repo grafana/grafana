@@ -30,8 +30,12 @@ GRAFANA_FOLDER_NS="${GRAFANA_FOLDER_NS:-grafana-folder}"
 GRAFANA_IAM_NS="${GRAFANA_IAM_NS:-grafana-iam}"
 AUTH_NS="${AUTH_NS:-auth}"
 
-PROVISIONING_CAP_SECRET="${PROVISIONING_CAP_SECRET:-provisioning-connection-operator-system-cap}"
-FOLDER_CAP_SECRET="${FOLDER_CAP_SECRET:-folder-grafana-app-main-system-cap}"
+# Leave unset to auto-detect: prod uses *-{cluster}, dev/ops use *-system-cap.
+PROVISIONING_CAP_SECRET="${PROVISIONING_CAP_SECRET:-}"
+FOLDER_CAP_SECRET="${FOLDER_CAP_SECRET:-}"
+
+CLUSTER_PROVISIONING_CAP=""
+CLUSTER_FOLDER_CAP=""
 
 PROVISIONING_SVC="${PROVISIONING_SVC:-provisioning-grafana-app-main}"
 IAM_SVC="${IAM_SVC:-iam-grafana-app-main}"
@@ -146,15 +150,20 @@ parse_args() {
 
 kubectl_ctx() {
   local cluster="$1"
-  kubectl --context "${KUBE_CONTEXT_PREFIX}${cluster}"
+  shift
+  kubectl --context "${KUBE_CONTEXT_PREFIX}${cluster}" "$@"
 }
 
 cleanup() {
   local pid
-  for pid in "${PF_PIDS[@]:-}"; do
-    kill "${pid}" 2>/dev/null || true
-  done
-  [[ -n "${PF_LOG_DIR}" && -d "${PF_LOG_DIR}" ]] && rm -rf "${PF_LOG_DIR}"
+  if ((${#PF_PIDS[@]})); then
+    for pid in "${PF_PIDS[@]}"; do
+      kill "${pid}" 2>/dev/null || true
+    done
+  fi
+  if [[ -n "${PF_LOG_DIR}" && -d "${PF_LOG_DIR}" ]]; then
+    rm -rf "${PF_LOG_DIR}"
+  fi
 }
 
 start_port_forward() {
@@ -184,9 +193,51 @@ wait_for_port() {
   die "port-forward not ready on localhost:${port}"
 }
 
+cap_secret_name() {
+  local cluster="$1"
+  local k8s_ns="$2"
+  local override="$3"
+  local prod_name="$4"
+  local dev_name="$5"
+  local found
+
+  if [[ -n "${override}" ]]; then
+    echo "${override}"
+    return 0
+  fi
+
+  found="$(kubectl_ctx "${cluster}" -n "${k8s_ns}" get secret "${prod_name}" -o name 2>/dev/null || true)"
+  if [[ "${found}" == secret/* ]]; then
+    echo "${prod_name}"
+    return 0
+  fi
+  found="$(kubectl_ctx "${cluster}" -n "${k8s_ns}" get secret "${dev_name}" -o name 2>/dev/null || true)"
+  if [[ "${found}" == secret/* ]]; then
+    echo "${dev_name}"
+    return 0
+  fi
+  die "CAP secret not found in ${k8s_ns} on ${cluster} (tried ${prod_name}, ${dev_name})"
+}
+
+resolve_cap_secret_names() {
+  local cluster="$1"
+
+  CLUSTER_PROVISIONING_CAP="$(
+    cap_secret_name "${cluster}" "${GRAFANA_APPS_NS}" "${PROVISIONING_CAP_SECRET}" \
+      "provisioning-connection-operator-${cluster}" "provisioning-connection-operator-system-cap"
+  )"
+  CLUSTER_FOLDER_CAP="$(
+    cap_secret_name "${cluster}" "${GRAFANA_FOLDER_NS}" "${FOLDER_CAP_SECRET}" \
+      "folder-grafana-app-main-${cluster}" "folder-grafana-app-main-system-cap"
+  )"
+  vlog "provisioning CAP secret: ${CLUSTER_PROVISIONING_CAP}"
+  vlog "folder CAP secret: ${CLUSTER_FOLDER_CAP}"
+}
+
 setup_cluster_port_forwards() {
   local cluster="$1"
   PF_LOG_DIR="$(mktemp -d)"
+  resolve_cap_secret_names "${cluster}"
   start_port_forward "${cluster}" "${AUTH_NS}" "svc/${AUTH_SVC}" "${AUTH_LOCAL_PORT}" 80
   start_port_forward "${cluster}" "${GRAFANA_APPS_NS}" "svc/${PROVISIONING_SVC}" "${PROVISIONING_LOCAL_PORT}" 6443
   start_port_forward "${cluster}" "${GRAFANA_IAM_NS}" "svc/${IAM_SVC}" "${IAM_LOCAL_PORT}" 6443
@@ -199,8 +250,23 @@ get_cap_token() {
   local cluster="$1"
   local namespace="$2"
   local secret_name="$3"
-  kubectl_ctx "${cluster}" -n "${namespace}" get secret "${secret_name}" \
-    -o jsonpath='{.data.token}' 2>/dev/null | base64 -d
+  local encoded decoded err
+
+  if ! encoded="$(
+    kubectl_ctx "${cluster}" -n "${namespace}" get secret "${secret_name}" \
+      -o jsonpath='{.data.token}' 2>&1
+  )"; then
+    die "failed to read CAP secret ${namespace}/${secret_name} on ${cluster}: ${encoded}"
+  fi
+
+  if [[ -z "${encoded}" ]]; then
+    die "CAP secret ${namespace}/${secret_name} on ${cluster} has no .data.token field"
+  fi
+
+  if ! decoded="$(printf '%s' "${encoded}" | base64 -d 2>&1)"; then
+    die "failed to decode CAP secret ${namespace}/${secret_name} on ${cluster}: ${decoded}"
+  fi
+  printf '%s' "${decoded}"
 }
 
 stack_numeric_id() {
@@ -274,28 +340,31 @@ discover_root_folders() {
   local namespace="$1"
   local repo_name="$2"
   local prov_token="$3"
+  local sync_target="${4:-}"
   local base_url="https://127.0.0.1:${PROVISIONING_LOCAL_PORT}"
 
-  local repo_json http_code
-  repo_json="$(api_request GET "${base_url}" "${prov_token}" \
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/${namespace}/repositories/${repo_name}")"
-  http_code="$(echo "${repo_json}" | tail -n1)"
-  repo_json="$(echo "${repo_json}" | sed '$d')"
+  if [[ -z "${sync_target}" ]]; then
+    local repo_json http_code
+    repo_json="$(api_request GET "${base_url}" "${prov_token}" \
+      "/apis/provisioning.grafana.app/v0alpha1/namespaces/${namespace}/repositories/${repo_name}")"
+    http_code="$(echo "${repo_json}" | tail -n1)"
+    repo_json="$(echo "${repo_json}" | sed '$d')"
 
-  if [[ "${http_code}" != "200" ]]; then
-    warn "GET repository ${namespace}/${repo_name} returned HTTP ${http_code}"
-    STAT_ERRORS+=1
-    return 0
+    if [[ "${http_code}" != "200" ]]; then
+      warn "GET repository ${namespace}/${repo_name} returned HTTP ${http_code}"
+      STAT_ERRORS+=1
+      return 0
+    fi
+
+    sync_target="$(echo "${repo_json}" | jq -r '.spec.sync.target // empty')"
   fi
 
-  local sync_target
-  sync_target="$(echo "${repo_json}" | jq -r '.spec.sync.target // empty')"
   case "${sync_target}" in
     folder)
       echo "${repo_name}"
       ;;
     folderless)
-      local resources_json
+      local resources_json http_code
       resources_json="$(api_request GET "${base_url}" "${prov_token}" \
         "/apis/provisioning.grafana.app/v0alpha1/namespaces/${namespace}/repositories/${repo_name}/resources")"
       http_code="$(echo "${resources_json}" | tail -n1)"
@@ -307,17 +376,17 @@ discover_root_folders() {
       fi
       echo "${resources_json}" | jq -r --arg repo "${repo_name}" '
         .items[]?
-        | select(.resource == "folders")
-        | select((.path // "") | test("/") | not)
-        | select(.folder == $repo)
+        | select(.resource == "folders" or (.group // "") == "folder.grafana.app")
+        | select(((.path // "") | rtrimstr("/")) | contains("/") | not)
+        | select((.folder // "") == "" or .folder == $repo)
         | .name
       '
       ;;
     instance | "")
-      vlog "skip repo ${repo_name}: unsupported sync target '${sync_target}'"
+      return 0
       ;;
     *)
-      vlog "skip repo ${repo_name}: unsupported sync target '${sync_target}'"
+      return 0
       ;;
   esac
 }
@@ -399,14 +468,14 @@ process_stack() {
   log "stack ${namespace} (cluster=${cluster}, org=${org_id})"
   STAT_STACKS+=1
 
-  prov_cap="$(get_cap_token "${cluster}" "${GRAFANA_APPS_NS}" "${PROVISIONING_CAP_SECRET}")"
-  [[ -n "${prov_cap}" ]] || die "empty provisioning CAP token (${PROVISIONING_CAP_SECRET})"
+  prov_cap="$(get_cap_token "${cluster}" "${GRAFANA_APPS_NS}" "${CLUSTER_PROVISIONING_CAP}")"
+  [[ -n "${prov_cap}" ]] || die "empty provisioning CAP token (${CLUSTER_PROVISIONING_CAP})"
 
   prov_token="$(exchange_access_token "${prov_cap}" "${namespace}" "${org_id}" "${stack_id}" "provisioning.grafana.app")"
   [[ -n "${prov_token}" ]] || die "failed to exchange provisioning token for ${namespace}"
 
-  folder_cap="$(get_cap_token "${cluster}" "${GRAFANA_FOLDER_NS}" "${FOLDER_CAP_SECRET}")"
-  [[ -n "${folder_cap}" ]] || die "empty folder CAP token (${FOLDER_CAP_SECRET})"
+  folder_cap="$(get_cap_token "${cluster}" "${GRAFANA_FOLDER_NS}" "${CLUSTER_FOLDER_CAP}")"
+  [[ -n "${folder_cap}" ]] || die "empty folder CAP token (${CLUSTER_FOLDER_CAP})"
 
   iam_token="$(exchange_access_token "${folder_cap}" "${namespace}" "${org_id}" "${stack_id}" "iam.grafana.app")"
   [[ -n "${iam_token}" ]] || die "failed to exchange IAM token for ${namespace}"
@@ -422,17 +491,48 @@ process_stack() {
     return 0
   fi
 
-  while IFS= read -r repo; do
+  local repo sync_target folder folder_count
+  while IFS=$'\t' read -r repo sync_target; do
     [[ -n "${repo}" ]] || continue
     STAT_REPOS+=1
-    vlog "repo ${namespace}/${repo}"
 
+    case "${sync_target}" in
+      instance | "")
+        log "repo ${namespace}/${repo} (sync=${sync_target:-unknown}, skipped)"
+        continue
+        ;;
+      folder)
+        log "repo ${namespace}/${repo} (sync=folder, folder_uid=${repo})"
+        ;;
+      folderless)
+        log "repo ${namespace}/${repo} (sync=folderless, folder_uids from /resources)"
+        ;;
+      *)
+        log "repo ${namespace}/${repo} (sync=${sync_target}, skipped)"
+        continue
+        ;;
+    esac
+
+    folder_count=0
     while IFS= read -r folder; do
       [[ -n "${folder}" ]] || continue
+      folder_count=$((folder_count + 1))
       STAT_ROOT_FOLDERS+=1
       ensure_folder_permission "${namespace}" "${folder}" "${iam_token}"
-    done < <(discover_root_folders "${namespace}" "${repo}" "${prov_token}")
-  done < <(echo "${repos}" | jq -r '.items[]?.metadata.name // empty')
+    done < <(discover_root_folders "${namespace}" "${repo}" "${prov_token}" "${sync_target}")
+
+    if [[ "${sync_target}" == "folderless" && "${folder_count}" -eq 0 ]]; then
+      warn "folderless repo ${namespace}/${repo}: no root-level folders matched in /resources (check path and folder fields; top-level folderless folders use folder=\"\")"
+      if [[ "${VERBOSE}" == "1" ]]; then
+        vlog "folderless /resources folder items for ${namespace}/${repo}:"
+        api_request GET "https://127.0.0.1:${PROVISIONING_LOCAL_PORT}" "${prov_token}" \
+          "/apis/provisioning.grafana.app/v0alpha1/namespaces/${namespace}/repositories/${repo}/resources" \
+          | sed '$d' \
+          | jq -r '.items[]? | select(.resource == "folders" or (.group // "") == "folder.grafana.app") | "\(.name)\tpath=\(.path // "")\tfolder=\(.folder // "")"' \
+          | while IFS= read -r line; do vlog "  ${line}"; done
+      fi
+    fi
+  done < <(echo "${repos}" | jq -r '.items[]? | [.metadata.name, (.spec.sync.target // empty)] | @tsv')
 }
 
 matches_filter() {
@@ -463,7 +563,10 @@ main() {
 
   local -a rows=()
   local line cluster namespace
-  while IFS=$'\t' read -r namespace cluster _rest; do
+  # Bash 3.2 (macOS) skips the final row when the file has no trailing newline.
+  while IFS=$'\t' read -r namespace cluster _rest || [[ -n "${namespace}" ]]; do
+    namespace="${namespace//$'\r'/}"
+    cluster="${cluster//$'\r'/}"
     [[ "${namespace}" == "stack_id" ]] && continue
     [[ -n "${namespace}" && -n "${cluster}" ]] || continue
     matches_filter "${cluster}" "${CLUSTER_FILTER}" || continue
