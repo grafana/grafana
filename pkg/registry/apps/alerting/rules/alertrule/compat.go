@@ -38,6 +38,16 @@ func convertToK8sResource(
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
+	noDataState, err := ConvertToK8sNoDataState(rule.NoDataState)
+	if err != nil {
+		return nil, err
+	}
+
+	execErrState, err := ConvertToK8sExecErrState(rule.ExecErrState)
+	if err != nil {
+		return nil, err
+	}
+
 	k8sRule := &model.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
@@ -54,8 +64,8 @@ func convertToK8sResource(
 			},
 			Labels:                      make(map[string]model.AlertRuleTemplateString),
 			Annotations:                 make(map[string]model.AlertRuleTemplateString),
-			NoDataState:                 model.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState:                model.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:                 noDataState,
+			ExecErrState:                execErrState,
 			MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 		},
 	}
@@ -97,6 +107,46 @@ func convertToK8sResource(
 		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
 	}
 
+	if ns := convertToK8sNotificationSettings(rule); ns != nil {
+		k8sRule.Spec.NotificationSettings = ns
+	}
+
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+	meta.SetFolder(rule.NamespaceUID)
+	// Keep metadata label in sync with folder annotation for downstream consumers
+	if rule.NamespaceUID != "" {
+		k8sRule.Labels[model.FolderLabelKey] = rule.NamespaceUID
+	}
+	if rule.UpdatedBy != nil {
+		meta.SetUpdatedBy(string(*rule.UpdatedBy))
+		k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
+	}
+	meta.SetUpdatedTimestamp(&rule.Updated)
+	k8sRule.SetUpdateTimestamp(rule.Updated)
+
+	if err := k8sRule.SetProvenanceStatus(string(provenance)); err != nil {
+		return nil, fmt.Errorf("failed to set provenance status: %w", err)
+	}
+
+	if def, err := rule.PrometheusRuleDefinition(); err == nil {
+		if k8sRule.Annotations == nil {
+			k8sRule.Annotations = make(map[string]string, 1)
+		}
+		k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey] = def
+	}
+
+	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
+	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
+	// k8sRule.SetCreationTimestamp(rule.)
+	return k8sRule, nil
+}
+
+// convertToK8sNotificationSettings maps the domain rule's routing configuration into k8s
+// notification settings. It returns nil when the rule has no routing configured.
+func convertToK8sNotificationSettings(rule *ngmodels.AlertRule) *model.AlertRuleNotificationSettings {
 	if setting := rule.ContactPointRouting(); setting != nil {
 		simplifiedRouting := model.AlertRuleSimplifiedRouting{
 			Type:     model.AlertRuleNotificationSettingsTypeSimplifiedRouting,
@@ -124,46 +174,51 @@ func convertToK8sResource(
 				simplifiedRouting.ActiveTimeIntervals = append(simplifiedRouting.ActiveTimeIntervals, model.AlertRuleTimeIntervalRef(a))
 			}
 		}
-		k8sRule.Spec.NotificationSettings = &model.AlertRuleNotificationSettings{
+		return &model.AlertRuleNotificationSettings{
 			SimplifiedRouting: &simplifiedRouting,
 		}
 	}
 
 	if setting := rule.PolicyRouting(); setting != nil {
-		namedRoutingTree := model.AlertRuleNamedRoutingTree{
-			Type:        model.AlertRuleNotificationSettingsTypeNamedRoutingTree,
-			RoutingTree: setting.Policy,
-		}
-
-		k8sRule.Spec.NotificationSettings = &model.AlertRuleNotificationSettings{
-			NamedRoutingTree: &namedRoutingTree,
+		return &model.AlertRuleNotificationSettings{
+			NamedRoutingTree: &model.AlertRuleNamedRoutingTree{
+				Type:        model.AlertRuleNotificationSettingsTypeNamedRoutingTree,
+				RoutingTree: setting.Policy,
+			},
 		}
 	}
 
-	meta, err := utils.MetaAccessor(k8sRule)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get metadata: %w", err)
-	}
-	meta.SetFolder(rule.NamespaceUID)
-	// Keep metadata label in sync with folder annotation for downstream consumers
-	if rule.NamespaceUID != "" {
-		k8sRule.Labels[model.FolderLabelKey] = rule.NamespaceUID
-	}
-	if rule.UpdatedBy != nil {
-		meta.SetUpdatedBy(string(*rule.UpdatedBy))
-		k8sRule.SetUpdatedBy(string(*rule.UpdatedBy))
-	}
-	meta.SetUpdatedTimestamp(&rule.Updated)
-	k8sRule.SetUpdateTimestamp(rule.Updated)
+	return nil
+}
 
-	if err := k8sRule.SetProvenanceStatus(string(provenance)); err != nil {
-		return nil, fmt.Errorf("failed to set provenance status: %w", err)
+func ConvertToK8sNoDataState(state ngmodels.NoDataState) (model.AlertRuleNoDataState, error) {
+	switch state {
+	case ngmodels.OK:
+		return model.AlertRuleNoDataStateOk, nil
+	case ngmodels.NoData:
+		return model.AlertRuleNoDataStateNoData, nil
+	case ngmodels.KeepLast:
+		return model.AlertRuleNoDataStateKeepLast, nil
+	case ngmodels.Alerting:
+		return model.AlertRuleNoDataStateAlerting, nil
+	default:
+		return "", fmt.Errorf("invalid NoDataState value")
 	}
+}
 
-	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
-	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
-	// k8sRule.SetCreationTimestamp(rule.)
-	return k8sRule, nil
+func ConvertToK8sExecErrState(state ngmodels.ExecutionErrorState) (model.AlertRuleExecErrState, error) {
+	switch state {
+	case ngmodels.AlertingErrState:
+		return model.AlertRuleExecErrStateAlerting, nil
+	case ngmodels.ErrorErrState:
+		return model.AlertRuleExecErrStateError, nil
+	case ngmodels.OkErrState:
+		return model.AlertRuleExecErrStateOk, nil
+	case ngmodels.KeepLastErrState:
+		return model.AlertRuleExecErrStateKeepLast, nil
+	default:
+		return "", fmt.Errorf("invalid ExecErrState value")
+	}
 }
 
 func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) model.AlertRuleExpression {
@@ -301,6 +356,16 @@ func convertToDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.Aler
 }
 
 func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.AlertRule, error) {
+	noDataState, err := convertToDomainNoDataState(model.AlertRuleNoDataState(k8sRule.Spec.NoDataStateOrDefault()))
+	if err != nil {
+		return nil, err
+	}
+
+	execErrState, err := convertToDomainExecErrState(model.AlertRuleExecErrState(k8sRule.Spec.ExecErrStateOrDefault()))
+	if err != nil {
+		return nil, err
+	}
+
 	domainRule := &ngmodels.AlertRule{
 		OrgID:        orgID,
 		UID:          k8sRule.Name,
@@ -310,8 +375,8 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 		IsPaused:     k8sRule.Spec.Paused != nil && *k8sRule.Spec.Paused,
 		Labels:       make(map[string]string),
 		Annotations:  make(map[string]string),
-		NoDataState:  ngmodels.NoDataState(k8sRule.Spec.NoDataStateOrDefault()),
-		ExecErrState: ngmodels.ExecutionErrorState(k8sRule.Spec.ExecErrStateOrDefault()),
+		NoDataState:  noDataState,
+		ExecErrState: execErrState,
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -398,7 +463,43 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 		domainRule.NotificationSettings = &settings
 	}
 
+	if def := k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey]; def != "" {
+		domainRule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{
+			OriginalRuleDefinition: def,
+		}
+	}
+
 	return domainRule, nil
+}
+
+func convertToDomainNoDataState(state model.AlertRuleNoDataState) (ngmodels.NoDataState, error) {
+	switch state {
+	case model.AlertRuleNoDataStateOk:
+		return ngmodels.OK, nil
+	case model.AlertRuleNoDataStateNoData:
+		return ngmodels.NoData, nil
+	case model.AlertRuleNoDataStateKeepLast:
+		return ngmodels.KeepLast, nil
+	case model.AlertRuleNoDataStateAlerting:
+		return ngmodels.Alerting, nil
+	default:
+		return "", fmt.Errorf("invalid NoDataState value")
+	}
+}
+
+func convertToDomainExecErrState(state model.AlertRuleExecErrState) (ngmodels.ExecutionErrorState, error) {
+	switch state {
+	case model.AlertRuleExecErrStateAlerting:
+		return ngmodels.AlertingErrState, nil
+	case model.AlertRuleExecErrStateError:
+		return ngmodels.ErrorErrState, nil
+	case model.AlertRuleExecErrStateOk:
+		return ngmodels.OkErrState, nil
+	case model.AlertRuleExecErrStateKeepLast:
+		return ngmodels.KeepLastErrState, nil
+	default:
+		return "", fmt.Errorf("invalid ExecErrState value")
+	}
 }
 
 func ConvertNotificationSettings(sourceSettings *model.AlertRuleNotificationSettings) (ngmodels.NotificationSettings, error) {

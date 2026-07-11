@@ -13,6 +13,7 @@ import {
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
@@ -28,6 +29,7 @@ import {
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -35,6 +37,7 @@ import kbn from '../../../../core/utils/kbn';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -440,9 +443,10 @@ export function useCreateFolder() {
         metadata: {
           ...partialMetadata,
           generateName: 'f',
-          annotations: {
-            ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
-          },
+          annotations:
+            folder.parentUid && !isRootFolderUID(folder.parentUid)
+              ? { [AnnoKeyFolder]: folder.parentUid }
+              : { [AnnoKeyGrantPermissions]: 'default' },
         },
       },
     };
@@ -488,6 +492,10 @@ export function useUpdateFolder() {
 
     const result = await updateFolder(payload);
     refresh({ childrenOf: folder.parentUid });
+    // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+    if (!result.error && folder.title) {
+      dispatch(updateDashboardName({ id: folder.uid, title: folder.title, url: getStarredFolderURL(folder.uid) }));
+    }
 
     return {
       ...result,
@@ -552,9 +560,9 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
   const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
   const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
 
-  // TODO: Remove constant condition here once we have a solution for the app platform counts
-  // As of now, the counts are not calculated recursively, so we need to use the legacy API
-  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
+  // nested folders but both are good enough to report whether folder is empty or not.
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {

@@ -8,6 +8,13 @@ import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { LANGUAGES } from './languages';
 import { type ResourceLoader, type Resources, type TFunction, type TransProps, type TransType } from './types';
 
+// FIXME: No longer needed in i18next@26: https://www.locize.com/docs/general-questions/why-was-there-a-support-notice-for-i18next
+// Set __i18next_supportNoticeShown to true to avoid the console.info message promoting Locize.
+if (typeof globalThis !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  (globalThis as Record<string, unknown>).__i18next_supportNoticeShown = true;
+}
+
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
@@ -36,6 +43,12 @@ export async function loadNamespacedResources(namespace: string, language: strin
   }
 
   const resolvedLanguage = language === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : language;
+
+  // Don't load resources for the default language as they are already embedded in the source code.
+  // Pseudo-locale still needs the default-language resources loaded for post-processing.
+  if (language === DEFAULT_LANGUAGE) {
+    return;
+  }
 
   return Promise.all(
     loaders.map(async (loader) => {
@@ -175,7 +188,6 @@ export function getLanguage() {
 export function getResolvedLanguage() {
   return getI18nInstance()?.resolvedLanguage || DEFAULT_LANGUAGE;
 }
-
 export async function changeLanguage(language?: string) {
   const validLanguage = VALID_LANGUAGES.find((lang) => lang.code === language)?.code ?? DEFAULT_LANGUAGE;
   await getI18nInstance().changeLanguage(validLanguage);

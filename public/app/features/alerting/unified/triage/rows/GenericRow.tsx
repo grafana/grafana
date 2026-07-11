@@ -148,7 +148,7 @@ const LeftCell = ({ title, metadata = null, actions = null, isOpen = true, onTog
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     dropdownIcon: css({
       alignSelf: 'flex-start',

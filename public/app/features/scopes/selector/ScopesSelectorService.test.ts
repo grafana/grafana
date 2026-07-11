@@ -18,10 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: { version: 'test-version' },
-    featureToggles: {
-      ...jest.requireActual('@grafana/runtime').config.featureToggles,
-      useScopeSingleNodeEndpoint: true,
-    },
   },
 }));
 

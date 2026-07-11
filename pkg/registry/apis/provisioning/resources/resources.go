@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -156,7 +155,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how should we handle this?
-	if manager.Identity == r.repo.Config().GetName() {
+	// Only treat it as already-in-repository when a repository manager owns it;
+	// matching on identity alone would misclassify other manager kinds.
+	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
 	}
@@ -289,7 +290,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	r.addResource(id, path)
 
 	// For resources that exist in folders, set the header annotation
-	if slices.Contains(SupportsFolderAnnotation, parsed.GVR.GroupResource()) {
+	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
 		// Make sure the parent folders exist.
 		// For _folder.json the resource IS the folder, so its parent is one level above.
 		folderPath := path

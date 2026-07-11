@@ -15,7 +15,7 @@ interface Link {
   title: string;
   url: string;
 }
-export interface TransformationInfo {
+interface TransformationInfo {
   name: string;
   getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
@@ -710,8 +710,6 @@ Use this transformation to construct a matrix by specifying fields from your que
   | server 3 | 59.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
 
   #### Display options
-
-> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the \`groupToNestedTableV2\` feature toggle. To try out nested field overrides, enable \`nestedFramesFieldOverrides\`.
 
   | Option                            | Description                                                                                                                |
   | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
@@ -28,6 +29,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('QueryEditorRowHeader', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   it('Can edit title', async () => {
     const scenario = renderScenario({});
     await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.title('A')));

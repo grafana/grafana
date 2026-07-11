@@ -1,6 +1,5 @@
 import { capitalize } from 'lodash';
 import { useId, useMemo } from 'react';
-import { useObservable } from 'react-use';
 import { type Observable, of } from 'rxjs';
 
 import {
@@ -9,6 +8,7 @@ import {
   type StandardEditorsRegistryItem,
   type FrameMatcher,
 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import {
   type ScaleDimensionConfig,
@@ -39,7 +39,7 @@ import {
 import { styleUsesText } from '../style/utils';
 import { type LayerContentInfo } from '../utils/getFeatures';
 
-export interface StyleEditorOptions {
+interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;

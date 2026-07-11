@@ -36,6 +36,7 @@ var (
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
+	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
@@ -158,6 +159,26 @@ func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsList
 	return &cp, nil
 }
 
+type sqlVectorBackfillJobsCreateRequest struct {
+	sqltemplate.SQLTemplate
+	Model      string
+	Resource   string
+	StoppingRV int64
+}
+
+func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.StoppingRV <= 0 {
+		return fmt.Errorf("stopping_rv must be positive")
+	}
+	return nil
+}
+
 type sqlVectorBackfillJobsUpdateRequest struct {
 	sqltemplate.SQLTemplate
 	ID          int64
@@ -200,6 +221,7 @@ func (r *sqlVectorBackfillJobsCompleteRequest) Validate() error {
 type sqlVectorCollectionGetContentResponse struct {
 	Subresource string
 	Content     string
+	Folder      string
 }
 
 type sqlVectorCollectionGetContentRequest struct {

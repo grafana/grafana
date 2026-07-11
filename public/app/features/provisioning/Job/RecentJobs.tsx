@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
@@ -18,6 +19,9 @@ import { JobSummary } from './JobSummary';
 interface Props {
   repo: Repository;
 }
+
+const AnnoAuthor = 'provisioning.grafana.app/author';
+const AnnoAuthorEmail = 'provisioning.grafana.app/authorEmail';
 
 type JobCell = {
   row: {
@@ -40,7 +44,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = () => [
+const getJobColumns = (showAuthor: boolean) => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -62,6 +66,19 @@ const getJobColumns = () => [
     header: t('provisioning.recent-jobs.column-action', 'Action'),
     cell: ({ row: { original: job } }: JobCell) => job.spec?.action,
   },
+  ...(showAuthor
+    ? [
+        {
+          id: 'triggeredBy',
+          header: t('provisioning.recent-jobs.column-triggered-by', 'Triggered by'),
+          cell: ({ row: { original: job } }: JobCell) => {
+            const annotations = job.metadata?.annotations;
+            const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
+            return author || t('provisioning.recent-jobs.triggered-by-system', 'System');
+          },
+        },
+      ]
+    : []),
   {
     id: 'started',
     header: t('provisioning.recent-jobs.column-started', 'Started'),
@@ -159,7 +176,8 @@ export function RecentJobs({ repo }: Props) {
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  const jobColumns = useMemo(() => getJobColumns(), []);
+  const showAuthor = useBooleanFlagValue('provisioning.userAttribution', false);
+  const jobColumns = useMemo(() => getJobColumns(showAuthor), [showAuthor]);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {

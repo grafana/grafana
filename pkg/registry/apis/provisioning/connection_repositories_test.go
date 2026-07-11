@@ -223,11 +223,11 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		}
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
 			Return(github.InstallationToken{Token: "someToken"}, nil)
@@ -310,11 +310,11 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("test-token")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("test-token"), mock.Anything).
+			Return(mockClient, nil)
 		mockFactory.EXPECT().
-			New(mock.Anything, common.RawSecureValue("someToken")).
-			Return(mockClient)
+			New(mock.Anything, common.RawSecureValue("someToken"), mock.Anything).
+			Return(mockClient, nil)
 		mockClient.EXPECT().
 			CreateInstallationAccessToken(mock.Anything, "789012", "").
 			Return(github.InstallationToken{Token: "someToken"}, nil)

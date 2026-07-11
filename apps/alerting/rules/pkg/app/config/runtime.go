@@ -42,4 +42,8 @@ type RuntimeConfig struct {
 	// RuleSequence (if any) owns a rule UID. The default implementation is a
 	// watch-backed in-memory index that provides O(1) lookups.
 	MembershipResolver RuleSequenceMembershipResolver
+	// WatchNamespace scopes the RuleSequence informer to one namespace. Empty
+	// watches all namespaces (on-prem default); in cloud it must be the stack
+	// namespace, else the all-namespace watch is rejected as a mismatch.
+	WatchNamespace string
 }

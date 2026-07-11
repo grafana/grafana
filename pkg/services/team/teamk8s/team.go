@@ -119,7 +119,12 @@ func (s *TeamK8sService) resolveUserUID(ctx context.Context, namespace string, u
 	selector := labels.SelectorFromSet(labels.Set{
 		utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10),
 	})
-	result, err := client.List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	// Resolve the user with a service identity: the caller is already authorized
+	// for the team membership operation (e.g. teams.permissions:write) but may
+	// lack users:list (e.g. a team admin), which would otherwise fail the lookup.
+	// Mirrors the legacy SQL lookup, which needed no users:list.
+	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	result, err := client.List(svcCtx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return "", err
 	}
@@ -454,23 +459,34 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 	}
 
 	updated := result.DeepCopy()
-	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
-		ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	// Partial update: Name and ExternalUID are written only when set, so a
+	// single-field command doesn't clear the others. Matches the legacy store,
+	// where xorm skips zero-value columns.
+	if cmd.Name != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+			ctxLogger.Error("failed to set spec.title on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
+	// email is the deliberate exception: it's written unconditionally (not guarded
+	// like the fields above) so an empty value clears it, matching the legacy
+	// MustCols("email") contract that PUT /api/teams relies on. Do not add an
+	// `if cmd.Email != ""` guard or clearing a team's email breaks.
 	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
 		ctxLogger.Error("failed to set spec.email on team", "namespace", namespace, "err", err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
-		ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return err
+	if cmd.ExternalUID != "" {
+		if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+			ctxLogger.Error("failed to set spec.externalUID on team", "namespace", namespace, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
 	}
 
 	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
@@ -635,7 +651,12 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 		if hit.MemberCount != nil {
 			memberCount = *hit.MemberCount
 		}
+		var id int64
+		if hit.InternalId != nil {
+			id = *hit.InternalId
+		}
 		teams = append(teams, &team.TeamDTO{
+			ID:            id,
 			UID:           hit.Name,
 			OrgID:         query.OrgID,
 			Name:          hit.Title,

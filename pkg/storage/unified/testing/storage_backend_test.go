@@ -11,9 +11,11 @@ import (
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -269,10 +271,23 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		success       bool
 	}
 	results := make([]result, concurrency)
+
+	// The local client (pkg/storage/unified/resource/client.go) and the remote
+	// gRPC connection (pkg/storage/unified/client.go) both wire a retry
+	// interceptor with WithMax(3) and a 1s exponential backoff. With
+	// concurrency=10 that budget is too small: lease.Acquire returns
+	// ErrLeaseAlreadyHeld without waiting, so callers contend in waves and only
+	// ~1 caller can drain per wave. Override the retry budget per call so all 9
+	// losers can observe AlreadyExists. This does not change production behavior.
+	retryOpts := []grpc.CallOption{
+		grpc_retry.WithMax(uint(concurrency * 2)),
+		grpc_retry.WithBackoff(grpc_retry.BackoffLinearWithJitter(500*time.Millisecond, 0.5)),
+	}
+
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
 			if err != nil {
 				results[i] = result{err: err}
 				return

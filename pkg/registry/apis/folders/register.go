@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,14 +23,18 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -61,7 +66,51 @@ type FolderAPIBuilder struct {
 
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
-	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
+	// built lazily from restConfigProvider and is nil until the first call.
+	folderPermissionsSvc accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+
+	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; MT injects
+	// resourcePermissionsSvc directly and leaves restConfigProvider nil.
+	restConfigProvider       apiserver.RestConfigProvider
+	resourcePermissionsSvcMu sync.Mutex
+
+	// Dashboard client for cascade delete, built lazily from cascadeConfigProvider; access via
+	// dashboardClient(ctx). Set independently of the authz flag so cleanup works whenever cascade is on.
+	cascadeConfigProvider apiserver.RestConfigProvider
+	dashboardSvc          *dynamic.NamespaceableResourceInterface
+	dashboardSvcMu        sync.Mutex
+
+	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
+	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	contentsDeleter FolderContentsDeleter
+}
+
+// dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
+// set, in which case cascade delete skips dashboard cleanup.
+func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.cascadeConfigProvider == nil {
+		return b.dashboardSvc, nil
+	}
+
+	b.dashboardSvcMu.Lock()
+	defer b.dashboardSvcMu.Unlock()
+
+	if b.dashboardSvc != nil {
+		return b.dashboardSvc, nil
+	}
+
+	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource())
+	b.dashboardSvc = &client
+	return b.dashboardSvc, nil
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -72,26 +121,41 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
+	restConfigProvider apiserver.RestConfigProvider,
+	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		folderPermissionsSvc: folderPermissionsSvc,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
+		contentsDeleter:      contentsDeleter,
 	}
+
+	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
+	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+		builder.restConfigProvider = restConfigProvider
+	} else {
+		builder.folderPermissionsSvc = folderPermissionsSvc
+	}
+
+	// Cascade dashboard cleanup needs an apiserver client regardless of the authz flag above.
+	builder.cascadeConfigProvider = restConfigProvider
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		accessClient:           ac,
 		searcher:               searcher,
 		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
 	}
@@ -187,6 +251,10 @@ func (b *FolderAPIBuilder) storageForVersion(
 		}
 	}
 
+	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
+	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.contentsDeleter)
+
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
@@ -261,8 +329,70 @@ var defaultPermissions = []map[string]any{
 	},
 }
 
+// buildDefaultFolderPermissions returns the default folder permissions with the creator granted
+// admin (in addition to the default basic-role permissions). Non-user/service-account identities
+// (anonymous, render service, etc.) get only the default permission set.
+func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
+	var creatorKind string
+	switch id.GetIdentityType() {
+	case authlib.TypeUser:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindUser)
+	case authlib.TypeServiceAccount:
+		creatorKind = string(iamv0alpha1.ResourcePermissionSpecPermissionKindServiceAccount)
+	default:
+		// Non-user/service-account identities (anonymous, render service, etc.) get only the
+		// default permission set; no creator admin grant.
+	}
+
+	if creatorKind == "" {
+		return defaultPermissions
+	}
+
+	permissions := make([]map[string]any, 0, len(defaultPermissions)+1)
+	permissions = append(permissions, map[string]any{
+		"kind": creatorKind,
+		"name": id.GetIdentifier(),
+		"verb": "admin",
+	})
+	return append(permissions, defaultPermissions...)
+}
+
+// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
+// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
+func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	// MT: injected directly, never mutated, restConfigProvider nil.
+	if b.restConfigProvider == nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
+	// data race; failures aren't cached so a transient error doesn't poison later creates.
+	b.resourcePermissionsSvcMu.Lock()
+	defer b.resourcePermissionsSvcMu.Unlock()
+
+	if b.resourcePermissionsSvc != nil {
+		return b.resourcePermissionsSvc, nil
+	}
+
+	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
+	b.resourcePermissionsSvc = &client
+	return b.resourcePermissionsSvc, nil
+}
+
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	if b.resourcePermissionsSvc == nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		return err
+	}
+	if resourcePermissionsSvc == nil {
 		return nil
 	}
 
@@ -274,7 +404,21 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
-	client := (*b.resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	// Setting the default permissions is a system operation triggered by the creation of the
+	// folder, not an action the requester performs directly. The creator does not yet have
+	// permission to manage permissions on the brand-new folder, so we use a service identity to
+	// write them through the ResourcePermission API.
+	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("parse namespace: %w", err)
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+	// The creator gets admin on their folder, in addition to the default basic-role permissions.
+	// Anonymous and other non-user identities don't get an explicit grant.
+	permissions := buildDefaultFolderPermissions(id)
+
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
 	// the resource permission will likely already exist with admin can admin, so we will need to update it
@@ -291,7 +435,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 						"name":     obj.GetName(),
 					},
-					"permissions": defaultPermissions,
+					"permissions": permissions,
 				},
 			},
 		}, metav1.UpdateOptions{})
@@ -303,7 +447,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		return nil
 	}
 
-	_, err := client.Create(ctx, &unstructured.Unstructured{
+	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
 				"name":      name,
@@ -315,7 +459,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
 					"name":     obj.GetName(),
 				},
-				"permissions": defaultPermissions,
+				"permissions": permissions,
 			},
 		},
 	}, metav1.CreateOptions{})

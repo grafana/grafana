@@ -1788,7 +1788,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     it('edit-template flow: sets isDashboardTemplate + dashboardTemplateUid, scene is clean', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
 
       const loader = new DashboardScenePageStateManagerV2({});
       await loader.loadDashboard({
@@ -1807,7 +1807,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     it('use-template flow: does not set template meta and scene is marked dirty', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
 
       const loader = new DashboardScenePageStateManagerV2({});
       await loader.loadDashboard({
@@ -1826,7 +1826,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     it('throws DashboardVersionError when the feature flag is off', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': false });
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
 
       const loader = new DashboardScenePageStateManagerV2({});
 
@@ -2557,7 +2557,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('uses V2 manager for Custom dashboard template route when dashboardTemplateUid is set', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       // Mock the template extension so the V2 manager's loadDashboardTemplate has something to consume.
       const fakeTemplateResource = {
         apiVersion: 'v0alpha1',

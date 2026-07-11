@@ -25,7 +25,7 @@ import {
 import { setAlertmanagerChoices, setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY } from 'app/features/alerting/unified/utils/rule-form';
@@ -33,7 +33,6 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerGrafanaRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import * as analytics from '../../notification-policies/notificationPolicyAnalytics';
 import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -275,73 +274,6 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
       expect(serializedRequests).toMatchSnapshot();
     });
 
-    it('tracks analytics when policy selection changes from default to custom', async () => {
-      jest.spyOn(analytics, 'trackNotificationPolicySelectorChanged');
-
-      const { user } = renderRuleEditor();
-
-      await user.type(await ui.inputs.name.find(), 'my great new rule');
-      await selectFolderAndGroup(user);
-
-      await waitFor(() => {
-        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
-      });
-      await user.click(policyTreeUi.changeButton.get());
-
-      await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
-      });
-
-      await user.click(policyTreeUi.policySelector.get());
-      await waitFor(() => {
-        const options = screen.getAllByRole('option');
-        expect(options.length).toBeGreaterThan(1);
-      });
-      const customPolicyName = 'Managed Policy - Empty Provisioned';
-      await user.click(screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') }));
-
-      expect(analytics.trackNotificationPolicySelectorChanged).toHaveBeenCalledWith({
-        fromDefault: true,
-        toDefault: false,
-      });
-    });
-
-    it('tracks analytics when policy selection resets to default', async () => {
-      jest.spyOn(analytics, 'trackNotificationPolicySelectorChanged');
-
-      const { user } = renderRuleEditor();
-
-      await user.type(await ui.inputs.name.find(), 'my great new rule');
-      await selectFolderAndGroup(user);
-
-      await waitFor(() => {
-        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
-      });
-      await user.click(policyTreeUi.changeButton.get());
-
-      await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
-      });
-
-      await user.click(policyTreeUi.policySelector.get());
-      await waitFor(() => {
-        const options = screen.getAllByRole('option');
-        expect(options.length).toBeGreaterThan(1);
-      });
-      const customPolicyName = 'Managed Policy - Empty Provisioned';
-      await user.click(screen.getByRole('option', { name: new RegExp(customPolicyName, 'i') }));
-
-      await waitFor(() => {
-        expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
-      });
-      await user.click(policyTreeUi.resetButton.get());
-
-      expect(analytics.trackNotificationPolicySelectorChanged).toHaveBeenCalledWith({
-        fromDefault: false,
-        toDefault: true,
-      });
-    });
-
     it('resets to default and collapses when Reset to default is clicked', async () => {
       const { user } = renderRuleEditor();
 
@@ -400,7 +332,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -463,7 +397,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -544,7 +480,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -699,7 +637,9 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -747,7 +687,9 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );

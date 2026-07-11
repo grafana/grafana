@@ -932,7 +932,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -952,7 +952,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -1030,7 +1030,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
 					},
@@ -1072,7 +1072,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    10, // now validated
 					},

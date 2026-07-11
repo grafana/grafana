@@ -26,17 +26,19 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	// Seed the repo with a dashboard nested under parent/child/ so the worker
 	// sees two directories without _folder.json files. The "branch" workflow is
 	// included so the repository accepts commits to new branches.
-	helper.CreateGitRepo(t, repoName, map[string][]byte{
+	_, repo := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"parent/child/dashboard.json": common.DashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
 	}, "write", "branch")
 
 	// Run the fix-folder-metadata job targeting a new feature branch.
 	// The job creates the branch from main and commits _folder.json files there.
+	expectedCommitMsg := "fix folder metadata"
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
 			Ref: featureBranch,
 		},
+		Message: expectedCommitMsg,
 	})
 
 	state, _, _ := unstructured.NestedString(job.Object, "status", "state")
@@ -46,9 +48,9 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	// Both _folder.json files must appear on the feature branch with valid content.
 	parentUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/_folder.json", featureBranch)
 	childUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/child/_folder.json", featureBranch)
-
 	require.NotEqual(t, parentUID, childUID,
 		"parent and child folders should have different UIDs")
+	require.Equal(t, expectedCommitMsg, common.LatestCommitSubject(t, repo, featureBranch))
 
 	// Neither file should exist on the default branch — the job only touched the
 	// feature branch.

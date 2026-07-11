@@ -314,7 +314,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    borderTopLeftRadius: `${theme.shape.radius.default}`,
-    borderTopRightRadius: `${theme.shape.radius.default}`,
+    borderTopLeftRadius: `${theme.shape.radius.lg}`,
+    borderTopRightRadius: `${theme.shape.radius.lg}`,
   }),
 });

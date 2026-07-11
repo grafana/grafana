@@ -16,7 +16,7 @@ import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/dat
 
 import { GrafanaQueryType } from '../../../../plugins/datasource/grafana/types';
 
-export const PUBLIC_DATASOURCE = '-- Public --';
+const PUBLIC_DATASOURCE = '-- Public --';
 
 export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor() {

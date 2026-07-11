@@ -20,7 +20,9 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useIntegrationTypeSchemas } from '../../../api/integrationSchemasApi';
-import { useTestContactPoint } from '../../../hooks/useTestContactPoint';
+import { isGranted } from '../../../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../../hooks/abilities/types';
 import { type GrafanaChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
 import { canCreateNotifier, hasLegacyIntegrations } from '../../../utils/notifier-versions';
 import { formValuesToGrafanaReceiver, grafanaReceiverToFormValues } from '../../../utils/receiver-form';
@@ -127,17 +129,14 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     });
   };
 
-  const { canTest } = useTestContactPoint({
-    contactPoint,
-    defaultChannelValues,
-  });
+  const testAbility = useContactPointAbility({ action: ContactPointAction.Test, context: contactPoint });
 
   // If there is no contact point it means we're creating a new one, so scoped permissions doesn't exist yet
   const hasScopedEditPermissions = contactPoint ? canEditEntity(contactPoint) : true;
   const hasScopedEditProtectedPermissions = contactPoint ? canModifyProtectedEntity(contactPoint) : true;
   const isProvisioned = isProvisionedResource(contactPoint?.provenance);
   const isEditable = !readOnly && hasScopedEditPermissions && !isProvisioned;
-  const isTestable = !readOnly && canTest;
+  const isTestable = isGranted(testAbility);
   const canEditProtectedFields = editMode ? hasScopedEditProtectedPermissions : true;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {

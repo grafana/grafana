@@ -21,5 +21,7 @@ var themes = []ThemeDTO{
 	{ID: "tritanopia_light", Type: "light", IsExtra: true},
 	{ID: "tron", Type: "dark", IsExtra: true},
 	{ID: "victorian", Type: "dark", IsExtra: true},
+	{ID: "visual_refresh_dark", Type: "dark", IsExtra: true},
+	{ID: "visual_refresh_light", Type: "light", IsExtra: true},
 	{ID: "zen", Type: "light", IsExtra: true},
 }

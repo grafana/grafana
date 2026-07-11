@@ -80,7 +80,7 @@ export interface DashboardMeta {
   };
 }
 
-export interface AnnotationActions {
+interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -88,10 +88,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-}
-
-export interface SnapshotSpec {
-  dashboard: DashboardDataDTO;
 }
 
 // FIXME: This should not override Dashboard types
@@ -122,7 +118,7 @@ export enum DashboardInitPhase {
   Completed = 'Completed',
 }
 
-export interface DashboardInitError {
+interface DashboardInitError {
   message: string;
   error: unknown;
 }
@@ -131,7 +127,7 @@ export enum KioskMode {
   Full = 'full',
 }
 
-export type GetMutableDashboardModelFn = () => DashboardModel | null;
+type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;

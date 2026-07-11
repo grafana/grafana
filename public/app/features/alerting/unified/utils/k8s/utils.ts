@@ -28,8 +28,6 @@ export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) => {
   return isProvisionedResource(provenance);
 };
 
-export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
-
 /**
  * Checks annotations on a k8s entity to see if the requesting user has the required permission
  */

@@ -76,11 +76,11 @@ describe('deprecated getLoglevel()', () => {
     });
 
     it('returns no log level on empty line', () => {
-      expect(getLogLevel('')).toBe(LogLevel.unknown);
+      expect(getLogLevel('')).toBe(LogLevel.unspecified);
     });
 
     it('returns no log level on when level is part of a word', () => {
-      expect(getLogLevel('who warns us')).toBe(LogLevel.unknown);
+      expect(getLogLevel('who warns us')).toBe(LogLevel.unspecified);
     });
 
     it('returns same log level for long and short version', () => {
@@ -102,10 +102,29 @@ describe('deprecated getLoglevel()', () => {
       expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
       expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
     });
+
+    it('returns unspecified (not unknown) when no level is present in the line', () => {
+      const level = getLogLevel('a line without any level word');
+      expect(level).toBe(LogLevel.unspecified);
+      expect(level).toBe('');
+      expect(level).not.toBe(LogLevel.unknown);
+    });
+
+    it('returns the actual unknown level when the line explicitly contains it', () => {
+      const level = getLogLevel('2007-12-12 12:12:12 [unknown]: something happened');
+      expect(level).toBe(LogLevel.unknown);
+      expect(level).toBe('unknown');
+      expect(level).not.toBe(LogLevel.unspecified);
+    });
   });
 
-  describe('with grafana.logLevelInference disaabled', () => {
-    expect(getLogLevel('error warn info')).toBe(LogLevel.unknown);
+  describe('with grafana.logLevelInference disabled', () => {
+    it('returns unspecified (not unknown) regardless of the line content', () => {
+      const level = getLogLevel('error warn info');
+      expect(level).toBe(LogLevel.unspecified);
+      expect(level).toBe('');
+      expect(level).not.toBe(LogLevel.unknown);
+    });
   });
 });
 
@@ -136,9 +155,32 @@ describe('getLogLevelFromKey()', () => {
     it('returns debug', () => {
       expect(getLogLevelFromKey('7')).toBe(LogLevel.debug);
     });
-    it('returns unknown log level when level is an unexpected integer', () => {
-      expect(getLogLevelFromKey('8')).toBe(LogLevel.unknown);
-      expect(getLogLevelFromKey(8)).toBe(LogLevel.unknown);
+    it('returns unspecified log level when level is an unexpected integer', () => {
+      expect(getLogLevelFromKey('8')).toBe(LogLevel.unspecified);
+      expect(getLogLevelFromKey(8)).toBe(LogLevel.unspecified);
+    });
+  });
+
+  describe('unspecified vs unknown', () => {
+    it('returns the actual unknown level when the key is explicitly "unknown"', () => {
+      const level = getLogLevelFromKey('unknown');
+      expect(level).toBe(LogLevel.unknown);
+      expect(level).toBe('unknown');
+      expect(level).not.toBe(LogLevel.unspecified);
+    });
+
+    it('returns unspecified (not unknown) for an empty key', () => {
+      const level = getLogLevelFromKey('');
+      expect(level).toBe(LogLevel.unspecified);
+      expect(level).toBe('');
+      expect(level).not.toBe(LogLevel.unknown);
+    });
+
+    it('returns unspecified (not unknown) for an unrecognized key', () => {
+      const level = getLogLevelFromKey('not-a-level');
+      expect(level).toBe(LogLevel.unspecified);
+      expect(level).toBe('');
+      expect(level).not.toBe(LogLevel.unknown);
     });
   });
 });

@@ -3,6 +3,7 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -15,7 +16,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
+
+// authTestClients returns a ResourceClients exposing the static supported set and
+// resolving the static kinds (Dashboard, Folder) to their GVR via ForKind — which is
+// what the authorizer consults to map a supported kind to its plural resource.
+func authTestClients(t *testing.T) *MockResourceClients {
+	c := NewMockResourceClients(t)
+	c.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Maybe()
+	c.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+			switch gvk.GroupKind() {
+			case DashboardKind.GroupKind():
+				return nil, DashboardResource, nil
+			case FolderKind.GroupKind():
+				return nil, FolderResource, nil
+			default:
+				return nil, schema.GroupVersionResource{}, fmt.Errorf("unexpected kind %v", gvk)
+			}
+		}).Maybe()
+	return c
+}
+
+// emptyClients returns a ResourceClients reporting no supported resources. Used by
+// ResourcesManager tests that pass a nil FolderManager and only want to exercise the
+// write/delete path without entering the folder-annotation branch.
+func emptyClients(t *testing.T) *MockResourceClients {
+	c := NewMockResourceClients(t)
+	c.EXPECT().SupportedResources().Return(nil).Maybe()
+	return c
+}
 
 func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder string, hasExisting bool) *ParsedResource {
 	mockMeta := utils.NewMockGrafanaMetaAccessor(t)
@@ -63,7 +94,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "dest-folder").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbCreate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false).AuthorizeResource(context.Background(), parsed, utils.VerbCreate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -75,7 +106,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "folder-a").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -92,7 +123,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "folder-b").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -109,7 +140,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "restricted-folder").Return(assert.AnError).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.Error(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -122,7 +153,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "restricted-folder").Return(assert.AnError).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.Error(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -172,7 +203,7 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -240,7 +271,7 @@ func TestAuthorizeDeleteByPath_Folders(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedParentFolderID).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -344,7 +375,7 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 				}
 			}
 
-			authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 			err := authorizer.AuthorizeMoveByPath(context.Background(), tt.originalPath, tt.targetPath)
 
 			if tt.shouldSucceed {
@@ -435,7 +466,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 				}), tt.expectedFolder).Return(nil).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, reader, mockAccess, true) // folderMetadataEnabled=true
+			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), true) // folderMetadataEnabled=true
 			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.folderPath)
 
 			if tt.shouldPass {
@@ -526,7 +557,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 				}), tt.expectedParentID).Return(nil).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, reader, mockAccess, true)
+			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), true)
 			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.childPath)
 
 			if tt.shouldPass {
@@ -578,7 +609,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "target-parent-stable-uid").Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, rw, mockAccess, true)
+		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), true)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "source/", "target-parent/moved/")
 
 		assert.NoError(t, err)
@@ -594,7 +625,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
-		for _, kind := range SupportedProvisioningResources {
+		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 				return req.Group == kind.Group &&
 					req.Resource == kind.Resource &&
@@ -602,7 +633,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeReadAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -616,7 +647,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeReadAllSupported(context.Background())
 
 		assert.Error(t, err)
@@ -633,7 +664,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
-		for _, kind := range SupportedProvisioningResources {
+		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 				return req.Group == kind.Group &&
 					req.Resource == kind.Resource &&
@@ -641,7 +672,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 			}), "my-repo").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -657,7 +688,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
-		for _, kind := range SupportedProvisioningResources {
+		for _, kind := range []schema.GroupVersionResource{DashboardResource, FolderResource} {
 			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
 				return req.Group == kind.Group &&
 					req.Resource == kind.Resource &&
@@ -665,7 +696,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -682,7 +713,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.Error(t, err)
@@ -716,7 +747,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
 
 		assert.NoError(t, err)
@@ -741,7 +772,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), rootFolder).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "dashboard.json")
 
 		assert.NoError(t, err)
@@ -764,7 +795,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/")
 
 		assert.NoError(t, err)
@@ -785,7 +816,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json")
 
 		assert.Error(t, err)
@@ -801,7 +832,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
 
 		assert.Error(t, err)
@@ -822,7 +853,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "bad/widget.json")
 
 		assert.Error(t, err)
@@ -843,7 +874,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "sneaky/folder.json")
 
 		assert.Error(t, err)
@@ -873,7 +904,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), "stable-folder-uid").Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, rw, mockAccess, true)
+		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), true)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
 
 		assert.NoError(t, err)
@@ -905,7 +936,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json")
 
 		assert.NoError(t, err)
@@ -933,7 +964,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src-folder/", "dst-folder/")
 
 		assert.NoError(t, err)
@@ -956,7 +987,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "restricted/dash.json", "dest/dash.json")
 
 		assert.Error(t, err)
@@ -981,7 +1012,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json")
 
 		assert.Error(t, err)

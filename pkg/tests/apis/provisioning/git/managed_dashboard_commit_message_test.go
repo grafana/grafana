@@ -2,13 +2,11 @@ package git
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -57,7 +55,7 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "PUT must not fail with empty commit message")
 
-		require.Equal(t, "Update "+dashboardUID, latestCommitSubject(t, local))
+		require.Equal(t, "Update "+dashboardUID, common.LatestCommitSubject(t, local, "main"))
 	})
 
 	t.Run("annotation message", func(t *testing.T) {
@@ -76,7 +74,7 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
-		require.Equal(t, msg, latestCommitSubject(t, local))
+		require.Equal(t, msg, common.LatestCommitSubject(t, local, "main"))
 	})
 }
 
@@ -101,7 +99,7 @@ func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
 		require.NoError(t, err, "POST must not fail with empty commit message")
 
-		require.Equal(t, msg, latestCommitSubject(t, local))
+		require.Equal(t, msg, common.LatestCommitSubject(t, local, "main"))
 	})
 
 	t.Run("fallback message", func(t *testing.T) {
@@ -114,7 +112,7 @@ func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
 		require.NoError(t, err, "POST must not fail with empty commit message")
 
-		require.Equal(t, "Create "+newUID, latestCommitSubject(t, local))
+		require.Equal(t, "Create "+newUID, common.LatestCommitSubject(t, local, "main"))
 	})
 }
 
@@ -137,16 +135,5 @@ func TestIntegrationGit_ManagedDashboardDelete_CommitMessage(t *testing.T) {
 	require.NoError(t, helper.DashboardsV1.Resource.Delete(ctx, dashboardUID, metav1.DeleteOptions{}),
 		"DELETE must not fail with empty commit message")
 
-	require.Equal(t, "Delete "+dashboardUID, latestCommitSubject(t, local))
-}
-
-// latestCommitSubject fetches origin/main and returns the subject line of the
-// HEAD commit on that branch.
-func latestCommitSubject(t *testing.T, local *gittest.LocalRepo) string {
-	t.Helper()
-	_, err := local.Git("fetch", "origin", "main")
-	require.NoError(t, err, "git fetch origin main should succeed")
-	out, err := local.Git("log", "-1", "--format=%s", "origin/main")
-	require.NoError(t, err, "git log should succeed")
-	return strings.TrimSpace(out)
+	require.Equal(t, "Delete "+dashboardUID, common.LatestCommitSubject(t, local, "main"))
 }

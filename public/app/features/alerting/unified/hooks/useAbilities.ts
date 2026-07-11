@@ -5,7 +5,7 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from 'app/features/alerting/unified/components/mute-timings/permissions';
+} from 'app/features/alerting/unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -25,6 +25,7 @@ import {
   rulerRuleType,
 } from '../utils/rules';
 
+import { type FolderBulkAction } from './abilities/types';
 import { useIsRuleEditable } from './useIsRuleEditable';
 
 /**
@@ -98,12 +99,6 @@ export enum EnrichmentAction {
   Write = 'write-enrichment',
 }
 
-// this enum list all of the bulk actions we can perform on a folder
-export enum FolderBulkAction {
-  Pause = 'pause-folder', // unpause permissions are the same as pause
-  Delete = 'delete-folder',
-}
-
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
 // alert source, rule or alertmanager
 export enum AlertingAction {
@@ -160,21 +155,6 @@ export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
 /**
- * This one will check for folder abilities
- */
-export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
-  return {
-    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
-    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
-  };
-};
-
-export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
-  const allAbilities = useFolderBulkActionAbilities();
-  return allAbilities[action];
-};
-
-/**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
  */
 export const useAlertingAbilities = (): Abilities<AlertingAction> => {
@@ -218,18 +198,6 @@ export function useCanViewContactPoints(): boolean {
 }
 
 /**
- * UI-only permission helper for actions that create silences.
- */
-export function useCanCreateSilences(): boolean {
-  return useMemo(
-    () =>
-      ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
-      ctx.hasPermission(AccessControlAction.AlertingSilenceCreate),
-    []
-  );
-}
-
-/**
  * This one will check for enrichment abilities
  */
 export const useEnrichmentAbilities = (): Abilities<EnrichmentAction> => {
@@ -260,14 +228,6 @@ export function useAlertRuleAbility(rule: CombinedRule, action: AlertRuleAction)
   return useMemo(() => {
     return abilities[action];
   }, [abilities, action]);
-}
-
-export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleAction[]): Ability[] {
-  const abilities = useAllAlertRuleAbilities(rule);
-
-  return useMemo(() => {
-    return actions.map((action) => abilities[action]);
-  }, [abilities, actions]);
 }
 
 export function useRulerRuleAbility(
@@ -306,7 +266,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   return useAllRulerRuleAbilities(rule.rulerRule, groupIdentifierV2);
 }
 
-export function useAllRulerRuleAbilities(
+function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
@@ -385,7 +345,7 @@ export function useAllRulerRuleAbilities(
  * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleDTO)
  * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleDTO
  */
-export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
+function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
   // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
   const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
