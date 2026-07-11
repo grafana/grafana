@@ -32,6 +32,12 @@ function stubFFEnabled(enabled: boolean) {
   );
 }
 
+function stubPinnedFiltersEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaPinnedFilters ? enabled : defaultValue
+  );
+}
+
 const postFn = jest.fn();
 const putFn = jest.fn();
 const patchFn = jest.fn();
@@ -470,6 +476,104 @@ describe('setDashboardPanelContext', () => {
 
       context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('pinned filters (grafana.pinnedFilters)', () => {
+    function buildSceneWithPinnedFilter(supportsMultiValueOperators = true) {
+      const built = buildTestScene({ existingFilterVariable: true });
+      const variable = getAdHocFilterVariableFor(built.scene, { uid: 'my-ds-uid' });
+
+      variable.setState({
+        supportsMultiValueOperators,
+        originFilters: [
+          {
+            key: 'region',
+            keyLabel: 'Region',
+            operator: '=~',
+            value: '.*',
+            values: ['.*'],
+            valueLabels: ['All'],
+            matchAllFilter: true,
+            origin: 'dashboard',
+          },
+        ],
+      });
+
+      return { ...built, variable };
+    }
+
+    it('"filter for" on a pinned key should replace the pinned selection instead of adding a filter', () => {
+      stubPinnedFiltersEnabled(true);
+      const { context, variable } = buildSceneWithPinnedFilter();
+
+      context.onAddAdHocFilter!({ key: 'region', value: 'emea', operator: '=' });
+
+      expect(variable.state.filters).toEqual([]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({
+        key: 'region',
+        operator: '=|',
+        value: 'emea',
+        values: ['emea'],
+        origin: 'dashboard',
+      });
+    });
+
+    it('"filter for" on a pinned key should use = when multi-value operators are unsupported', () => {
+      stubPinnedFiltersEnabled(true);
+      const { context, variable } = buildSceneWithPinnedFilter(false);
+
+      context.onAddAdHocFilter!({ key: 'region', value: 'emea', operator: '=' });
+
+      expect(variable.state.filters).toEqual([]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({ key: 'region', operator: '=', value: 'emea' });
+    });
+
+    it('"filter for" on a non-pinned key should keep the default behavior', () => {
+      stubPinnedFiltersEnabled(true);
+      const { context, variable } = buildSceneWithPinnedFilter();
+
+      context.onAddAdHocFilter!({ key: 'cluster', value: 'prod', operator: '=' });
+
+      expect(variable.state.filters).toEqual([{ key: 'cluster', value: 'prod', operator: '=' }]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({ operator: '=~', value: '.*' });
+    });
+
+    it('"filter out" on a pinned key should keep the default behavior', () => {
+      stubPinnedFiltersEnabled(true);
+      const { context, variable } = buildSceneWithPinnedFilter();
+
+      context.onAddAdHocFilter!({ key: 'region', value: 'emea', operator: '!=' });
+
+      expect(variable.state.filters).toEqual([{ key: 'region', value: 'emea', operator: '!=' }]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({ operator: '=~', value: '.*' });
+    });
+
+    it('should keep the default behavior when the toggle is disabled', () => {
+      stubPinnedFiltersEnabled(false);
+      const { context, variable } = buildSceneWithPinnedFilter();
+
+      context.onAddAdHocFilter!({ key: 'region', value: 'emea', operator: '=' });
+
+      expect(variable.state.filters).toEqual([{ key: 'region', value: 'emea', operator: '=' }]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({ operator: '=~', value: '.*' });
+    });
+
+    it('bulk filters should route pinned keys to the pinned filter and append the rest', () => {
+      stubPinnedFiltersEnabled(true);
+      const { context, variable } = buildSceneWithPinnedFilter();
+
+      context.onAddAdHocFilters?.([
+        { key: 'region', value: 'emea', operator: '=' },
+        { key: 'cluster', value: 'prod', operator: '=' },
+      ]);
+
+      expect(variable.state.filters).toEqual([{ key: 'cluster', value: 'prod', operator: '=' }]);
+      expect(variable.state.originFilters?.[0]).toMatchObject({
+        key: 'region',
+        operator: '=|',
+        values: ['emea'],
+      });
     });
   });
 });

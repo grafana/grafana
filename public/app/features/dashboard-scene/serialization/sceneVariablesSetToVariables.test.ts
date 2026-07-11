@@ -1444,6 +1444,67 @@ describe('sceneVariablesSetToVariables', () => {
     `);
     });
 
+    it('should persist pinned (dashboard-origin) filters including match-all state and custom labels', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        originFilters: [
+          {
+            key: 'territory_location_l1',
+            keyLabel: 'Loc L1',
+            operator: '=~',
+            value: '.*',
+            values: ['.*'],
+            valueLabels: ['All'],
+            matchAllFilter: true,
+            origin: 'dashboard',
+          },
+          {
+            key: 'region',
+            keyLabel: 'Region',
+            operator: '=|',
+            value: 'emea',
+            values: ['emea', 'amer'],
+            valueLabels: ['EMEA', 'AMER'],
+            origin: 'dashboard',
+          },
+        ],
+        filters: [{ key: 'cluster', operator: '=', value: 'prod' }],
+      });
+      const set = new SceneVariableSet({ variables: [variable] });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kind).toBe('AdhocVariable');
+      const spec = result[0].spec;
+      if (!('filters' in spec)) {
+        throw new Error('Expected adhoc variable spec');
+      }
+      expect(spec.filters).toEqual([
+        {
+          key: 'territory_location_l1',
+          keyLabel: 'Loc L1',
+          operator: '=~',
+          value: '.*',
+          // single-value operators serialize without a values array
+          values: undefined,
+          valueLabels: ['All'],
+          origin: 'dashboard',
+        },
+        {
+          key: 'region',
+          keyLabel: 'Region',
+          operator: '=|',
+          value: 'emea',
+          values: ['emea', 'amer'],
+          valueLabels: ['EMEA', 'AMER'],
+          origin: 'dashboard',
+        },
+        { key: 'cluster', operator: '=', value: 'prod' },
+      ]);
+    });
+
     it('should handle AdHocFiltersVariable with defaultKeys', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',

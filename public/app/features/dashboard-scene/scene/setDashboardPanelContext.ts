@@ -3,7 +3,7 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
-import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -18,6 +18,12 @@ import {
 } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
+import {
+  getOriginFiltersRenderMode,
+  getPinnedFilters,
+  getPinnedOperator,
+  isPinnedFiltersEnabled,
+} from './pinned-filters/pinnedFilters';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -299,6 +305,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
     datasource: ds,
     supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
+    originFiltersRenderMode: getOriginFiltersRenderMode(),
   });
 
   // Add it to the scene
@@ -309,15 +316,53 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   return newVariable;
 }
 
+/**
+ * When pinned filters are enabled and a "filter for value" targets a pinned field, the value is
+ * applied to the pinned filter (replacing its current selection) instead of adding a separate
+ * filter. "Filter out value" intentionally keeps the default behavior for all fields.
+ */
+function applyFilterForToPinnedFilter(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem): boolean {
+  if (!isPinnedFiltersEnabled() || newFilter.operator !== FILTER_FOR_OPERATOR) {
+    return false;
+  }
+
+  const pinnedFilter = getPinnedFilters(filterVar.state.originFilters).find((f) => f.key === newFilter.key);
+  if (!pinnedFilter) {
+    return false;
+  }
+
+  const alreadySelected =
+    pinnedFilter.values?.length === 1 &&
+    pinnedFilter.values[0] === newFilter.value &&
+    pinnedFilter.operator === getPinnedOperator(filterVar);
+
+  if (!alreadySelected) {
+    filterVar._updateFilter(pinnedFilter, {
+      operator: getPinnedOperator(filterVar),
+      value: newFilter.value,
+      values: [newFilter.value],
+      valueLabels: [newFilter.value],
+    });
+  }
+
+  return true;
+}
+
 function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
   if (!newFilters.length) {
+    return;
+  }
+
+  const remainingFilters = newFilters.filter((newFilter) => !applyFilterForToPinnedFilter(filterVar, newFilter));
+
+  if (!remainingFilters.length) {
     return;
   }
 
   const updatedFilters = filterVar.state.filters.slice();
   let hasChanges = false;
 
-  for (const newFilter of newFilters) {
+  for (const newFilter of remainingFilters) {
     const filterToReplaceIndex = updatedFilters.findIndex(
       (filter) =>
         filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
@@ -341,6 +386,10 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
 function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
   // This function handles 'Filter for value' and 'Filter out value' from table cell
   // We are allowing to add filters with the same key because elastic search ds supports that
+
+  if (applyFilterForToPinnedFilter(filterVar, newFilter)) {
+    return;
+  }
 
   // Update is only required when we change operator and keep key and value the same
   //   key1 = value1 -> key1 != value1
