@@ -79,6 +79,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
+import { getOriginFiltersRenderMode } from '../scene/pinned-filters/pinnedFilters';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -386,6 +387,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.spec.enableGroupBy ?? false)
         : false,
+      originFiltersRenderMode: getOriginFiltersRenderMode(),
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
