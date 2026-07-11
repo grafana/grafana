@@ -51,6 +51,7 @@ export const QueryOptions = ({
         closeButton={true}
         placement="bottom-start"
         onClose={() => {
+          setShowOptions(false);
           const activeEl = document.activeElement;
           if (activeEl instanceof HTMLElement) {
             activeEl.blur();

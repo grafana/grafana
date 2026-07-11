@@ -80,6 +80,7 @@ describe('QueryOptions', () => {
 
     await user.keyboard('{Escape}');
 
+    expect(button).toHaveAttribute('aria-expanded', 'false');
     expect(document.activeElement).not.toBe(button);
   });
 
@@ -99,7 +100,9 @@ describe('QueryOptions', () => {
     expect(screen.getByText(/Min. Interval = 15s/)).toBeInTheDocument();
   });
 
-  it('does not render time range picker when onChangeTimeRange is not provided', () => {
+  it('does not render time range picker when onChangeTimeRange is not provided', async () => {
+    const user = userEvent.setup();
+
     render(
       <TestProvider>
         <QueryOptions
@@ -112,6 +115,9 @@ describe('QueryOptions', () => {
     );
 
     const button = screen.getByRole('button', { name: /toggle query options/i });
-    expect(button).toBeInTheDocument();
+    await user.click(button);
+
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByLabelText(/time range/i)).not.toBeInTheDocument();
   });
 });
