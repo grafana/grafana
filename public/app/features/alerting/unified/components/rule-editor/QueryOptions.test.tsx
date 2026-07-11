@@ -75,7 +75,12 @@ describe('QueryOptions', () => {
     const button = screen.getByRole('button', { name: /toggle query options/i });
     await user.click(button);
 
+    expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(document.activeElement).toBe(button);
+
+    await user.keyboard('{Escape}');
+
+    expect(document.activeElement).not.toBe(button);
   });
 
   it('displays time range, max data points and min interval values', () => {
