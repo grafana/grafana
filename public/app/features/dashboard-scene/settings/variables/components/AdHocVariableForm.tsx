@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback } from 'react';
+import { type FormEvent, type ReactNode, useCallback } from 'react';
 
 import {
   type DataSourceInstanceSettings,
@@ -32,6 +32,8 @@ export interface AdHocVariableFormProps {
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onEnableGroupByChange?: (event: FormEvent<HTMLInputElement>) => void;
   originFiltersController?: AdHocFiltersController;
+  /** When set (pinned filters feature), rendered in place of the default filters editor. */
+  pinnedFiltersEditor?: ReactNode;
   defaultGroupByValues?: Array<SelectableValue<string>>;
   defaultGroupByOptions?: Array<SelectableValue<string>>;
   onDefaultGroupByChange?: (items: Array<SelectableValue<string>>) => void;
@@ -50,6 +52,7 @@ export function AdHocVariableForm({
   onAllowCustomValueChange,
   onEnableGroupByChange,
   originFiltersController,
+  pinnedFiltersEditor,
   defaultGroupByValues,
   defaultGroupByOptions,
   onDefaultGroupByChange,
@@ -106,6 +109,8 @@ export function AdHocVariableForm({
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && pinnedFiltersEditor}
 
       {datasourceSupported && originFiltersController && (
         <div className={!inline ? styles.originFiltersWrapper : undefined}>

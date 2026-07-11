@@ -13,8 +13,10 @@ import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { isPinnedFiltersEnabled } from '../../../scene/pinned-filters/pinnedFilters';
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
+import { PinnedFiltersEditor } from '../components/PinnedFiltersEditor';
 
 interface AdHocFiltersVariableEditorProps {
   variable: AdHocFiltersVariable;
@@ -35,6 +37,7 @@ function isGroupByOriginFilter(f: AdHocFilterWithLabels) {
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
   const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
+  const pinnedFiltersEnabled = isPinnedFiltersEnabled();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
 
@@ -58,8 +61,23 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     [variable]
   );
 
+  const pinnedFiltersEditor = pinnedFiltersEnabled ? (
+    <PinnedFiltersEditor
+      filters={adhocOriginFilters}
+      onChange={(filters) => {
+        const keep = originalFilters.filter((f) => !isOriginDashboard(f) || isGroupByOriginFilter(f));
+        updateOriginalFilters([...keep, ...filters]);
+        reportInteraction('grafana_pinned_filters_changed', { count: filters.length });
+      }}
+      getKeyOptions={() => variable._getKeys(null)}
+      getValueOptions={(filter) => variable._getValuesFor(filter)}
+      supportsMultiValueOperators={variable.state.supportsMultiValueOperators}
+      allowCustomValue={allowCustomValue ?? true}
+    />
+  ) : undefined;
+
   const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
+    if (pinnedFiltersEnabled || !config.featureToggles.dashboardUnifiedDrilldownControls) {
       return undefined;
     }
 
@@ -77,7 +95,15 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       (filter) => variable._getValuesFor(filter),
       () => variable._getOperators()
     );
-  }, [variable, adhocOriginFilters, originalFilters, wip, allowCustomValue, updateOriginalFilters]);
+  }, [
+    variable,
+    adhocOriginFilters,
+    originalFilters,
+    wip,
+    allowCustomValue,
+    updateOriginalFilters,
+    pinnedFiltersEnabled,
+  ]);
 
   const defaultGroupByValues: Array<SelectableValue<string>> = useMemo(
     () => groupByOriginFilters.map((f) => ({ value: f.key, label: f.keyLabel || f.key })),
@@ -161,6 +187,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       onAllowCustomValueChange={onAllowCustomValueChange}
       onEnableGroupByChange={onEnableGroupByChange}
       originFiltersController={originFiltersController}
+      pinnedFiltersEditor={pinnedFiltersEditor}
       defaultGroupByValues={groupByEnabled ? defaultGroupByValues : undefined}
       defaultGroupByOptions={groupByEnabled ? groupByKeyOptions : undefined}
       onDefaultGroupByChange={groupByEnabled ? onDefaultGroupByChange : undefined}
