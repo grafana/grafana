@@ -227,7 +227,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   }
 
   getMetricNames(query: GetMetricNamesQuery, multipleResources?: boolean, region?: string) {
-    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
+    // The batch API forces a per-resource (resource-scoped) URL, so it uses the standard API
+    // version rather than the subscription-scoped preview version used for multi-resource requests.
+    const apiVersion = multipleResources && !this.batchAPIEnabled ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       apiVersion,
@@ -245,7 +247,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
   getMetricMetadata(query: GetMetricMetadataQuery, multipleResources?: boolean, region?: string) {
     const { metricName } = query;
-    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
+    // The batch API forces a per-resource (resource-scoped) URL, so it uses the standard API
+    // version rather than the subscription-scoped preview version used for multi-resource requests.
+    const apiVersion = multipleResources && !this.batchAPIEnabled ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       apiVersion,
