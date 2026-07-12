@@ -24,6 +24,15 @@ func isBatchableModel(model dataquery.AzureMonitorQuery) bool {
 	if az == nil {
 		return false
 	}
+	// The batch API requires explicit resource IDs in the request body. Queries
+	// without a Resources array — subscription-scoped queries and legacy
+	// pre-Grafana-9 query objects using the deprecated top-level
+	// resourceGroup/resourceName fields — must use the legacy ARM endpoint,
+	// which supports those shapes. Otherwise such queries would produce no
+	// batch entries and silently return no data.
+	if len(az.Resources) == 0 {
+		return false
+	}
 	if az.CustomNamespace != nil && *az.CustomNamespace != "" {
 		return false
 	}
@@ -219,19 +228,15 @@ func applyLegacyDimensions(queries []*types.AzureMonitorQuery, model dataquery.A
 // executes them in parallel, and distributes the resulting frames back to their
 // original RefIDs. Queries that cannot use the batch API (custom metrics, Guest
 // OS metrics) are executed individually via the legacy ARM endpoint.
-func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client) (*backend.QueryDataResponse, error) {
+// batchClient is the dedicated data-plane HTTP client for batch requests, so
+// that requests to *.metrics.monitor.azure.com carry a token scoped to that
+// audience rather than the ARM audience. The caller (ExecuteTimeSeriesQuery)
+// resolves it from the datasource services and falls back to the legacy ARM
+// path when the service is not configured.
+func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, batchClient *http.Client) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	armURL := dsInfo.Routes[types.RouteAzureMonitor].URL
-
-	// Use the dedicated data-plane client for batch requests so that requests to
-	// *.metrics.monitor.azure.com carry a token scoped to that audience rather
-	// than the ARM audience.
-	svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]
-	if !ok {
-		return nil, fmt.Errorf("batch API requires the %q service to be configured; ensure the datasource has a data-plane route for metrics.monitor.azure.com", types.RouteAzureMonitorBatchMetrics)
-	}
-	batchClient := svc.HTTPClient
 
 	// Separate batchable from non-batchable (custom namespace / Guest OS) queries.
 	// Non-batchable queries are executed individually via the legacy ARM endpoint.

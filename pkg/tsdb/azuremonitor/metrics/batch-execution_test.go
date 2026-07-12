@@ -274,11 +274,73 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, resp.Responses, "A")
 	})
+
+	t.Run("batch service missing: falls back to legacy instead of failing all queries", func(t *testing.T) {
+		// Regression: with batch mode on but no batch metrics service configured
+		// (e.g. a customized-cloud datasource without a metricsDataPlane route),
+		// executeBatchTimeSeriesQuery used to return a top-level error, failing
+		// the whole QueryData call. It must fall back to the legacy ARM path.
+		armResponse := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			b, _ := json.Marshal(armResponse)
+			_, _ = w.Write(b)
+		}))
+		defer srv.Close()
+
+		// BatchAPIEnabled = true, feature toggle on, but Services lacks the
+		// "Azure Monitor Batch Metrics" entry.
+		dsInfo := types.DatasourceInfo{
+			Settings: types.AzureMonitorSettings{BatchAPIEnabled: true, SubscriptionId: "sub-123"},
+			Routes: map[string]types.AzRoute{
+				"Azure Monitor": {URL: srv.URL},
+				"Azure Portal":  {URL: "https://portal.azure.com"},
+			},
+			Services: map[string]types.DatasourceService{},
+		}
+
+		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err, "missing batch service must not fail the whole QueryData call")
+		require.Contains(t, resp.Responses, "A")
+		assert.NoError(t, resp.Responses["A"].Error)
+		assert.NotEmpty(t, resp.Responses["A"].Frames)
+	})
+
+	t.Run("query without resources is not silently dropped by the batch path", func(t *testing.T) {
+		// Regression: a batchable-looking query with an empty Resources array
+		// produced no batch entries, so its refID received neither frames nor an
+		// error. It must now take the legacy ARM path and receive a response.
+		armResponse := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			b, _ := json.Marshal(armResponse)
+			_, _ = w.Write(b)
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", nil) // no resources
+
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		require.Contains(t, resp.Responses, "A", "resource-less query must receive a response, not vanish")
+	})
 }
 
 func TestIsBatchableModel(t *testing.T) {
 	makeQuery := func(metricNamespace string, customNamespace *string) backend.DataQuery {
-		az := &dataquery.AzureMetricQuery{MetricName: strPtr("Percentage CPU")}
+		az := &dataquery.AzureMetricQuery{
+			MetricName: strPtr("Percentage CPU"),
+			Resources: []dataquery.AzureMonitorResource{
+				{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+			},
+		}
 		if metricNamespace != "" {
 			az.MetricNamespace = strPtr(metricNamespace)
 		}
@@ -310,6 +372,17 @@ func TestIsBatchableModel(t *testing.T) {
 			assert.Equal(t, tt.want, isBatchableModel(m))
 		})
 	}
+
+	t.Run("query without resources is not batchable", func(t *testing.T) {
+		// The batch API requires resource IDs in the request body; resource-less
+		// queries (subscription-scoped, or legacy top-level resourceGroup/
+		// resourceName shapes) must take the legacy ARM path.
+		m := dataquery.AzureMonitorQuery{AzureMonitor: &dataquery.AzureMetricQuery{
+			MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+			MetricName:      strPtr("Percentage CPU"),
+		}}
+		assert.False(t, isBatchableModel(m))
+	})
 }
 
 func TestApplyLegacyDimensions(t *testing.T) {
