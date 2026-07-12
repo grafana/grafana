@@ -92,13 +92,14 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
   const multipleResources = (resources && resources.length > 1) ?? false;
   const region = query.azureMonitor?.region ?? '';
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   return useAsyncState(
     async () => {
       if (!subscription || !metricNamespace || !resourceGroup || !resourceName) {
         return;
       }
-      if (!datasource.azureMonitorDatasource.batchAPIEnabled && multipleResources && !region) {
+      if (!batchAPIEnabled && multipleResources && !region) {
         return;
       }
       const results = await datasource.azureMonitorDatasource.getMetricNames(
@@ -117,7 +118,16 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
       return options;
     },
     setError,
-    [subscription, resourceGroup, resourceName, metricNamespace, customNamespace, multipleResources, region]
+    [
+      subscription,
+      resourceGroup,
+      resourceName,
+      metricNamespace,
+      customNamespace,
+      multipleResources,
+      region,
+      batchAPIEnabled,
+    ]
   );
 };
 
@@ -137,10 +147,17 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
   const multipleResources = (resources && resources.length > 1) ?? false;
+  const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
   // Fetch new metric metadata when the fields change
   useEffect(() => {
     if (!subscription || !resourceGroup || !resourceName || !metricNamespace || !metricName) {
+      setMetricMetadata(defaultMetricMetadata);
+      return;
+    }
+    // Mirror useMetricNames: with the batch API off, a multi-resource selection needs a region.
+    // Skip fetching metadata too, otherwise aggregations/dimensions show while the metric list is empty.
+    if (!batchAPIEnabled && multipleResources && !region) {
       setMetricMetadata(defaultMetricMetadata);
       return;
     }
@@ -176,6 +193,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     metricName,
     customNamespace,
     multipleResources,
+    batchAPIEnabled,
   ]);
 
   // Update the query state in response to the meta data changing
