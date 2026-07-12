@@ -171,6 +171,29 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		assert.NoError(t, resp.Responses["A"].Error)
 	})
 
+	t.Run("empty batch response still assigns a response entry per refID", func(t *testing.T) {
+		// Regression: a successful batch that parses to zero frames (e.g. empty
+		// timeseries for the window) must still leave an entry for the refID,
+		// matching the legacy path.
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"values":[]}`))
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, &http.Client{}, "", false)
+		require.NoError(t, err)
+		dr, ok := resp.Responses["A"]
+		require.True(t, ok, "refID must have a response entry even with no frames")
+		assert.NoError(t, dr.Error)
+		assert.Empty(t, dr.Frames)
+	})
+
 	t.Run("batch HTTP failure: error set on all queries in batch", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"error":{"code":"Unauthorized"}}`, http.StatusUnauthorized)

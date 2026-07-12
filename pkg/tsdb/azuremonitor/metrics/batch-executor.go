@@ -382,6 +382,15 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 				attachErr(result, q.RefID, parseErr)
 			}
 		}
+		// Ensure every query in the batch has a response entry even when it
+		// yielded no frames and no error (e.g. an empty timeseries for the
+		// requested window), matching the legacy path which always assigns a
+		// per-query response.
+		for _, q := range br.Batch.Queries {
+			if _, ok := result.Responses[q.RefID]; !ok {
+				result.Responses[q.RefID] = backend.DataResponse{}
+			}
+		}
 	}
 
 	return result, nil

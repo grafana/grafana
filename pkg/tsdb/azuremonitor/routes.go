@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
+// Azure cloud query types
 const (
 	azureMonitor             = types.RouteAzureMonitor
 	azureLogAnalytics        = types.RouteAzureLogAnalytics
