@@ -49,21 +49,21 @@ const NestedRow = ({
       .catch(() => setRowStatus('closed'));
   };
 
-  // Auto-open once for a previously saved selection. Guarded so a manual collapse isn't undone
-  // when the tree re-renders (a sibling expand gives this row a new `row` prop, re-running the effect).
-  const hasAutoOpened = useRef(false);
+  // Auto-open the row when the current selection lives inside it. We remember which selection
+  // URI we opened for (rather than a one-shot flag) so a manual collapse survives unrelated
+  // re-renders — e.g. expanding a sibling row gives this row a new `row` prop — while still
+  // re-opening when the selection changes to another resource in this group.
+  const autoOpenedForUri = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (hasAutoOpened.current) {
+    // Assuming we don't have multi-select yet
+    const selectedUri = selectedRows[0]?.uri;
+    if (autoOpenedForUri.current === selectedUri) {
       return;
     }
-    // Assuming we don't have multi-select yet
-    const selectedRow = selectedRows[0];
 
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
-
-    if (containsChild) {
+    if (selectedUri && findRow(row.children ?? [], selectedUri)) {
       setRowStatus('open');
-      hasAutoOpened.current = true;
+      autoOpenedForUri.current = selectedUri;
     }
   }, [selectedRows, row]);
 
