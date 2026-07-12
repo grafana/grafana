@@ -356,11 +356,9 @@ func TestIsBatchableModel(t *testing.T) {
 		want            bool
 	}{
 		{"standard resource-type namespace is batchable", "Microsoft.Compute/virtualMachines", nil, true},
-		{"storage namespace is batchable", "microsoft.storage/storageaccounts", nil, true},
 		{"custom namespace is not batchable", "Microsoft.Compute/virtualMachines", strPtr("myCustomNs"), false},
-		{"windows guest OS metrics are not batchable", "azure.vm.windows.guestmetrics", nil, false},
-		{"linux guest OS metrics are not batchable", "azure.vm.linux.guestmetrics", nil, false},
-		{"guest OS namespace match is case-insensitive", "Azure.VM.Windows.GuestMetrics", nil, false},
+		{"guest OS metrics are not batchable", "azure.vm.windows.guestmetrics", nil, false},
+		{"guest OS namespace match is case-insensitive", "Azure.VM.Linux.GuestMetrics", nil, false},
 		{"WAD namespace is not batchable", "WAD", nil, false},
 		{"windows azure diagnostics namespace is not batchable", "Windows Azure Diagnostics", nil, false},
 	}

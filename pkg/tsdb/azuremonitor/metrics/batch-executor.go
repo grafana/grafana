@@ -323,8 +323,22 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 			continue
 		}
 
+		// Resolve the subscription display name (cached, one lookup per
+		// subscription) so {{subscription}} in legends renders the friendly name
+		// exactly like the legacy ARM path. All queries in a batch share one
+		// subscription, so resolving per batch is sufficient. A failed lookup
+		// fails the batch's queries, matching executeQuery on the legacy path.
+		subscription, err := e.retrieveSubscriptionDetails(client, ctx, br.Batch.Key.Subscription,
+			dsInfo.Routes[types.RouteAzureMonitor].URL, dsInfo.DatasourceID, dsInfo.OrgID, dsInfo.Credentials)
+		if err != nil {
+			for _, q := range br.Batch.Queries {
+				attachErr(result, q.RefID, err)
+			}
+			continue
+		}
+
 		// Successful HTTP response: parse and distribute frames.
-		frames, parseErr := parseBatchResponse(br, azurePortalURL, e.Logger)
+		frames, parseErr := parseBatchResponse(br, azurePortalURL, subscription, e.Logger)
 		for _, frame := range frames {
 			dr := result.Responses[frame.RefID]
 			dr.Frames = append(dr.Frames, frame)

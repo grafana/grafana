@@ -13,8 +13,11 @@ import (
 
 // parseBatchResponse converts a successful batch result into a flat data.Frames
 // slice. Each frame carries its RefID. Resource-level errors are joined and
-// returned alongside any frames that did succeed.
-func parseBatchResponse(result batchResult, azurePortalURL string, logger log.Logger) (data.Frames, error) {
+// returned alongside any frames that did succeed. subscription is the resolved
+// subscription display name substituted for {{subscription}} in legends,
+// matching the legacy ARM path; all queries in a batch share one subscription
+// (it is part of the batch group key).
+func parseBatchResponse(result batchResult, azurePortalURL string, subscription string, logger log.Logger) (data.Frames, error) {
 	var frames data.Frames
 	var errs []error
 
@@ -46,7 +49,7 @@ func parseBatchResponse(result batchResult, azurePortalURL string, logger log.Lo
 		}
 
 		for _, query := range queries {
-			f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL)
+			f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL, subscription)
 			frames = append(frames, f...)
 			if err != nil {
 				errs = append(errs, err)
@@ -59,7 +62,9 @@ func parseBatchResponse(result batchResult, azurePortalURL string, logger log.Lo
 
 // framesFromBatchResponseValue converts a single resource's batch response entry
 // into data.Frames, mirroring the logic of parseResponse for the ARM API.
-func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types.AzureMonitorQuery, azurePortalURL string) (data.Frames, error) {
+// subscription is the resolved subscription display name used for
+// {{subscription}} legend substitution.
+func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types.AzureMonitorQuery, azurePortalURL string, subscription string) (data.Frames, error) {
 	resourceID := resourceValue.ResourceID
 	// Trim any trailing slash before extracting the last path segment to avoid
 	// an empty resourceName when the API returns an ID ending with "/".
@@ -97,9 +102,9 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 				resourceID:   resourceID,
 				resourceName: resourceName,
 				amr:          &amr,
-				// Use query.Subscription so {{subscription}} resolves to the
-				// per-resource subscription rather than the datasource default.
-				subscription: query.Subscription,
+				// The resolved display name, so {{subscription}} renders the
+				// friendly name exactly like the legacy ARM path.
+				subscription: subscription,
 			}, azurePortalURL)
 			if err != nil {
 				errs = append(errs, err)
