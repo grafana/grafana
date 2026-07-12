@@ -78,6 +78,16 @@ describe('Pyroscope data source', () => {
       );
       expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
+
+    it('should request regex format for labelSelector so multi-value variables produce valid alternation', () => {
+      const templateSrv = {
+        replace: (query: string, _scopedVars: unknown, format?: string): string =>
+          format === 'regex' ? query.replace(/\$pod/g, '(pod-1|pod-2)') : query,
+      } as unknown as TemplateSrv;
+      const ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      const result = ds.applyTemplateVariables(defaultQuery({ labelSelector: '{pod=~"$pod"}', profileTypeId: '' }), {});
+      expect(result.labelSelector).toBe('{pod=~"(pod-1|pod-2)"}');
+    });
   });
 
   it('implements ad hoc variable support for keys', async () => {
