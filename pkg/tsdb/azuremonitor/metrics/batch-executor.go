@@ -90,13 +90,19 @@ func fanOutByResource(query backend.DataQuery, model dataquery.AzureMonitorQuery
 
 	queries := make([]backend.DataQuery, 0, len(az.Resources))
 	for _, resource := range az.Resources {
-		// Use the resource's own subscription so the ARM URL targets the correct
-		// subscription when resources span multiple subscriptions.
+		// Use the resource's own subscription and region so the ARM URL and
+		// query parameters target the correct location when resources span
+		// multiple subscriptions or regions. Resources without explicit values
+		// keep the query-level defaults (nil leaves the cloned model unchanged).
 		var sub *string
 		if resource.Subscription != nil && *resource.Subscription != "" {
 			sub = resource.Subscription
 		}
-		queryCopy, err := cloneQueryWithResources(query, model, []dataquery.AzureMonitorResource{resource}, sub, nil)
+		var region *string
+		if resource.Region != nil && *resource.Region != "" {
+			region = resource.Region
+		}
+		queryCopy, err := cloneQueryWithResources(query, model, []dataquery.AzureMonitorResource{resource}, sub, region)
 		if err != nil {
 			return nil, err
 		}

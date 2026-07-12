@@ -429,6 +429,45 @@ func TestApplyLegacyDimensions(t *testing.T) {
 	})
 }
 
+// TestFanOutByResource is a regression test: each fanned-out sub-query must
+// carry its resource's own subscription AND region (previously the query-level
+// region was kept on every sub-query, sending a wrong region param to ARM for
+// resources outside the query default).
+func TestFanOutByResource(t *testing.T) {
+	regionDefault := "eastus"
+	model := dataquery.AzureMonitorQuery{
+		Subscription: strPtr("sub-default"),
+		AzureMonitor: &dataquery.AzureMetricQuery{
+			MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+			CustomNamespace: strPtr("myCustomNs"), // non-batchable, so it fans out
+			MetricName:      strPtr("requests"),
+			Region:          &regionDefault,
+			Resources: []dataquery.AzureMonitorResource{
+				{Subscription: strPtr("sub-1"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("westus")},
+				{ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm2")}, // no explicit sub/region
+			},
+		},
+	}
+	raw, err := json.Marshal(model)
+	require.NoError(t, err)
+	q := backend.DataQuery{RefID: "A", JSON: raw}
+
+	subQueries, err := fanOutByResource(q, model)
+	require.NoError(t, err)
+	require.Len(t, subQueries, 2)
+
+	var m1, m2 dataquery.AzureMonitorQuery
+	require.NoError(t, json.Unmarshal(subQueries[0].JSON, &m1))
+	require.NoError(t, json.Unmarshal(subQueries[1].JSON, &m2))
+
+	// A resource with explicit values gets its own subscription and region.
+	assert.Equal(t, "sub-1", *m1.Subscription)
+	assert.Equal(t, "westus", *m1.AzureMonitor.Region)
+	// A resource without explicit values keeps the query-level defaults.
+	assert.Equal(t, "sub-default", *m2.Subscription)
+	assert.Equal(t, "eastus", *m2.AzureMonitor.Region)
+}
+
 // TestExecuteBatchTimeSeriesQuerySharedResources is an end-to-end regression
 // test: the batch group key excludes RefID/Alias, so queries with identical
 // parameters (e.g. a duplicated panel query) co-batch and share a deduplicated
