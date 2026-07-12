@@ -573,6 +573,9 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 			case strings.HasSuffix(r.URL.Path, "/batch"):
 				fallbackHit = true
 				armBatchOK(w, r)
+			case strings.HasSuffix(r.URL.Path, "/subscriptions/sub-123"):
+				// Subscription display-name lookup for {{subscription}} legends.
+				_, _ = w.Write([]byte(`{"displayName":"sub-123"}`))
 			default:
 				t.Errorf("unexpected request path: %s", r.URL.Path)
 			}
@@ -664,6 +667,9 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 			case strings.HasSuffix(r.URL.Path, "/batch"):
 				batchCalls++
 				armBatchOK(w, r)
+			case strings.HasSuffix(r.URL.Path, "/subscriptions/sub-123"):
+				// Subscription display-name lookup for {{subscription}} legends.
+				_, _ = w.Write([]byte(`{"displayName":"sub-123"}`))
 			default:
 				t.Errorf("unexpected request path: %s", r.URL.Path)
 			}
@@ -719,6 +725,9 @@ func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				b, _ := json.Marshal(out)
 				_, _ = w.Write(b)
+			case strings.HasSuffix(r.URL.Path, "/subscriptions/sub-123"):
+				// Subscription display-name lookup for {{subscription}} legends.
+				_, _ = w.Write([]byte(`{"displayName":"sub-123"}`))
 			default:
 				t.Errorf("unexpected request path: %s", r.URL.Path)
 			}

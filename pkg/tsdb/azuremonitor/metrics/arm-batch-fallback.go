@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -19,11 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
-// The ARM /batch endpoint bundles many ARM reads into one request. It is undocumented and
-// used internally by the Azure Portal; the request/response contract below was verified
-// against live portal traffic. Because it has no official spec, it is gated behind a flag.
-// We use it as a fallback when the documented metrics:getBatch data-plane API fails with a
-// retryable error, wrapping each per-resource /metrics GET call as a sub-request.
+// The Azure Portal batch endpoint (ARM /batch) is used as the fallback when the
+// metrics:getBatch data-plane API fails with a retryable error, wrapping each
+// per-resource /metrics GET call as a sub-request.
 const armBatchAPIVersion = "2020-06-01"
 
 // maxARMBatchSize bounds sub-requests per ARM batch call. Above ~20 sub-requests the
@@ -58,8 +55,7 @@ type armBatchResponseBody struct {
 }
 
 // executeARMBatch POSTs a set of sub-requests to the ARM /batch endpoint and returns the
-// parsed per-sub-request responses. Callers must keep len(subRequests) within
-// maxARMBatchSize to avoid the async path.
+// parsed per-sub-request responses.
 func executeARMBatch(ctx context.Context, cli *http.Client, armBaseURL string, subRequests []armBatchSubRequest) (*armBatchResponseBody, error) {
 	body, err := json.Marshal(armBatchRequestBody{Requests: subRequests})
 	if err != nil {
@@ -109,15 +105,18 @@ func executeARMBatch(ctx context.Context, cli *http.Client, armBaseURL string, s
 //
 // Only the failed batch's own ResourceIDs are rebuilt, so resources that succeeded in
 // sibling batches are never re-fetched.
-func (e *AzureMonitorDatasource) buildFallbackSubRequests(batch Batch, originalByRefID map[string]backend.DataQuery, dsInfo types.DatasourceInfo) ([]armBatchSubRequest, map[string]*types.AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildFallbackSubRequests(batch Batch, originalByRefID map[string]backend.DataQuery, dsInfo types.DatasourceInfo) ([]armBatchSubRequest, map[string][]*types.AzureMonitorQuery, error) {
 	wanted := make(map[string]bool, len(batch.ResourceIDs))
 	for _, id := range batch.ResourceIDs {
 		wanted[strings.ToLower(id)] = true
 	}
 
 	var subRequests []armBatchSubRequest
-	queriesByName := make(map[string]*types.AzureMonitorQuery)
-	seen := make(map[string]bool)
+	// A resource can be owned by more than one query (the batch group key
+	// excludes RefID), so each sub-request name maps to ALL owning queries —
+	// every owner's refID must receive the recovered frames.
+	queriesByName := make(map[string][]*types.AzureMonitorQuery)
+	nameByResource := make(map[string]string)
 
 	for _, q := range batch.Queries {
 		original, ok := originalByRefID[q.RefID]
@@ -139,14 +138,21 @@ func (e *AzureMonitorDatasource) buildFallbackSubRequests(batch Batch, originalB
 			}
 			for resourceURI := range azureQuery.Resources {
 				key := strings.ToLower(resourceURI)
-				if !wanted[key] || seen[key] {
+				if !wanted[key] {
 					continue
 				}
-				seen[key] = true
-				// GUID correlation name; keep the per-resource query so the
-				// response can be parsed with the existing parseResponse.
-				name := uuid.NewString()
-				queriesByName[name] = azureQuery
+				if name, ok := nameByResource[key]; ok {
+					// The resource already has a sub-request; register this query
+					// as an additional owner so its refID also receives frames.
+					queriesByName[name] = append(queriesByName[name], azureQuery)
+					continue
+				}
+				// Correlation name echoed back in the response. The refID alone is
+				// not unique here (one sub-request per resource of a query), so
+				// suffix it with the sub-request index.
+				name := fmt.Sprintf("%s-%d", azureQuery.RefID, len(subRequests))
+				nameByResource[key] = name
+				queriesByName[name] = []*types.AzureMonitorQuery{azureQuery}
 				subRequests = append(subRequests, armBatchSubRequest{
 					HTTPMethod: http.MethodGet,
 					Name:       name,
@@ -160,40 +166,57 @@ func (e *AzureMonitorDatasource) buildFallbackSubRequests(batch Batch, originalB
 
 // parseFallbackResponse converts an ARM /batch response into frames. Each sub-response's
 // content is a standard single-resource AzureMonitorResponse, so it's run through the
-// existing parseResponse; frames are routed back to the right query via the per-name
-// query map. Per-resource failures are joined into the returned error while frames from
-// the resources that succeeded are still returned.
-func (e *AzureMonitorDatasource) parseFallbackResponse(resp *armBatchResponseBody, queriesByName map[string]*types.AzureMonitorQuery, azurePortalURL string) (data.Frames, error) {
+// existing parseResponse; frames are routed back to every owning query via the per-name
+// query map. Failures are returned joined per refID so an error on one query's resource
+// never marks a sibling query failed; frames from resources that succeeded are still returned.
+func (e *AzureMonitorDatasource) parseFallbackResponse(resp *armBatchResponseBody, queriesByName map[string][]*types.AzureMonitorQuery, azurePortalURL string, subscription string) (data.Frames, map[string]error) {
 	var frames data.Frames
-	var errs []error
+	errsByRefID := make(map[string][]error)
 
 	for _, r := range resp.Responses {
-		query, ok := queriesByName[r.Name]
+		queries, ok := queriesByName[r.Name]
 		if !ok {
+			// Should not happen: sub-request names are generated by us and echoed
+			// back. Log so a request/response mismatch is diagnosable rather than
+			// silently showing up as missing data.
+			e.Logger.Warn("ARM /batch fallback response contained an unknown sub-request name; skipping", "name", r.Name)
 			continue
 		}
 		if r.HTTPStatusCode/100 != 2 {
-			errs = append(errs, fmt.Errorf("fallback query %q failed (status %d): %s", query.RefID, r.HTTPStatusCode, string(r.Content)))
+			for _, query := range queries {
+				errsByRefID[query.RefID] = append(errsByRefID[query.RefID],
+					fmt.Errorf("fallback query %q failed (status %d): %s", query.RefID, r.HTTPStatusCode, string(r.Content)))
+			}
 			continue
 		}
 
 		var amr types.AzureMonitorResponse
 		if err := json.Unmarshal(r.Content, &amr); err != nil {
-			errs = append(errs, fmt.Errorf("failed to parse fallback response for %q: %w", query.RefID, err))
+			for _, query := range queries {
+				errsByRefID[query.RefID] = append(errsByRefID[query.RefID],
+					fmt.Errorf("failed to parse fallback response for %q: %w", query.RefID, err))
+			}
 			continue
 		}
 
-		// Reuse the single-resource parser; pass query.Subscription for {{subscription}}
-		// (the same value the batch path uses).
-		f, err := e.parseResponse(amr, query, azurePortalURL, query.Subscription)
-		if err != nil {
-			errs = append(errs, err)
-			continue
+		// Reuse the single-resource parser once per owning query so each refID
+		// gets its own frames with its own alias/legend formatting. subscription
+		// is the resolved display name, matching the primary batch path.
+		for _, query := range queries {
+			f, err := e.parseResponse(amr, query, azurePortalURL, subscription)
+			if err != nil {
+				errsByRefID[query.RefID] = append(errsByRefID[query.RefID], err)
+				continue
+			}
+			frames = append(frames, f...)
 		}
-		frames = append(frames, f...)
 	}
 
-	return frames, errors.Join(errs...)
+	joined := make(map[string]error, len(errsByRefID))
+	for refID, errs := range errsByRefID {
+		joined[refID] = errors.Join(errs...)
+	}
+	return frames, joined
 }
 
 // relativeMetricsURL renders a single-resource AzureMonitorQuery as the relative URL for
@@ -267,6 +290,26 @@ func (e *AzureMonitorDatasource) fallbackBatch(ctx context.Context, br batchResu
 		}
 		return
 	}
+	if len(subRequests) == 0 {
+		// Nothing to retry; surface the original batch error rather than
+		// returning silently with neither frames nor errors.
+		e.Logger.Warn("ARM /batch fallback produced no sub-requests; surfacing the original batch error")
+		for _, q := range br.Batch.Queries {
+			attachErr(result, q.RefID, br.Err)
+		}
+		return
+	}
+
+	// Resolve the subscription display name (cached) so {{subscription}} in
+	// legends renders the friendly name, matching the primary batch path.
+	subscription, err := e.retrieveSubscriptionDetails(client, ctx, br.Batch.Key.Subscription,
+		armURL, dsInfo.DatasourceID, dsInfo.OrgID, dsInfo.Credentials)
+	if err != nil {
+		for _, q := range br.Batch.Queries {
+			attachErr(result, q.RefID, err)
+		}
+		return
+	}
 
 	for _, chunk := range chunkSubRequests(subRequests, maxARMBatchSize) {
 		armResp, err := executeARMBatch(ctx, client, armURL, chunk)
@@ -274,22 +317,28 @@ func (e *AzureMonitorDatasource) fallbackBatch(ctx context.Context, br batchResu
 			// The ARM /batch fallback itself failed; fail the affected queries.
 			e.Logger.Warn("ARM /batch fallback request failed", "err", err, "numSubRequests", len(chunk))
 			for _, sub := range chunk {
-				if q, ok := queriesByName[sub.Name]; ok {
+				for _, q := range queriesByName[sub.Name] {
 					attachErr(result, q.RefID, err)
 				}
 			}
 			continue
 		}
 
-		frames, parseErr := e.parseFallbackResponse(armResp, queriesByName, azurePortalURL)
+		frames, errsByRefID := e.parseFallbackResponse(armResp, queriesByName, azurePortalURL, subscription)
 		appendFrames(result, frames)
-		if parseErr != nil {
-			e.Logger.Warn("ARM /batch fallback returned partial failures", "err", parseErr)
-			for _, sub := range chunk {
-				if q, ok := queriesByName[sub.Name]; ok {
-					attachErr(result, q.RefID, parseErr)
-				}
-			}
+		// Errors are scoped per refID so a query whose resources all succeeded
+		// is not marked failed by a sibling query's failure.
+		for refID, parseErr := range errsByRefID {
+			e.Logger.Warn("ARM /batch fallback returned partial failures", "refID", refID, "err", parseErr)
+			attachErr(result, refID, parseErr)
+		}
+	}
+
+	// Ensure every query in the batch has a response entry even when it yielded
+	// no frames and no error, matching the primary batch path.
+	for _, q := range br.Batch.Queries {
+		if _, ok := result.Responses[q.RefID]; !ok {
+			result.Responses[q.RefID] = backend.DataResponse{}
 		}
 	}
 }
