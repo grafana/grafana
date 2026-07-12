@@ -52,24 +52,49 @@ func isBatchableModel(model dataquery.AzureMonitorQuery) bool {
 	return true
 }
 
-// cloneQueryWithResources returns a copy of query whose embedded AzureMonitor
-// model is shallow-copied with Resources overridden (and Subscription/Region
-// overridden when the corresponding argument is non-nil). All other query
-// fields are preserved. A shallow copy is sufficient because only whole fields
-// are replaced, never mutated in place.
-func cloneQueryWithResources(query backend.DataQuery, model dataquery.AzureMonitorQuery, resources []dataquery.AzureMonitorResource, sub, region *string) (backend.DataQuery, error) {
-	azCopy := *model.AzureMonitor
-	azCopy.Resources = resources
-	if region != nil {
-		azCopy.Region = region
+// cloneQueryWithResources returns a copy of query whose JSON has Resources
+// overridden (and Subscription/Region overridden when the corresponding
+// argument is non-nil). All other fields are preserved byte-for-byte: the raw
+// JSON is patched in place rather than round-tripped through the generated
+// model, so fields not present on that type (e.g. grafanaSql, which buildQuery
+// reads via its own wrapper) and empty slices that omitempty would drop
+// survive the clone unchanged.
+func cloneQueryWithResources(query backend.DataQuery, resources []dataquery.AzureMonitorResource, sub, region *string) (backend.DataQuery, error) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(query.JSON, &raw); err != nil {
+		return backend.DataQuery{}, err
 	}
-	modelCopy := model
-	modelCopy.AzureMonitor = &azCopy
-	if sub != nil {
-		modelCopy.Subscription = sub
+	var azRaw map[string]json.RawMessage
+	if err := json.Unmarshal(raw["azureMonitor"], &azRaw); err != nil {
+		return backend.DataQuery{}, fmt.Errorf("failed to decode the azureMonitor query object: %w", err)
 	}
 
-	copyJSON, err := json.Marshal(modelCopy)
+	resJSON, err := json.Marshal(resources)
+	if err != nil {
+		return backend.DataQuery{}, err
+	}
+	azRaw["resources"] = resJSON
+	if region != nil {
+		regionJSON, err := json.Marshal(*region)
+		if err != nil {
+			return backend.DataQuery{}, err
+		}
+		azRaw["region"] = regionJSON
+	}
+	azJSON, err := json.Marshal(azRaw)
+	if err != nil {
+		return backend.DataQuery{}, err
+	}
+	raw["azureMonitor"] = azJSON
+	if sub != nil {
+		subJSON, err := json.Marshal(*sub)
+		if err != nil {
+			return backend.DataQuery{}, err
+		}
+		raw["subscription"] = subJSON
+	}
+
+	copyJSON, err := json.Marshal(raw)
 	if err != nil {
 		return backend.DataQuery{}, err
 	}
@@ -102,7 +127,7 @@ func fanOutByResource(query backend.DataQuery, model dataquery.AzureMonitorQuery
 		if resource.Region != nil && *resource.Region != "" {
 			region = resource.Region
 		}
-		queryCopy, err := cloneQueryWithResources(query, model, []dataquery.AzureMonitorResource{resource}, sub, region)
+		queryCopy, err := cloneQueryWithResources(query, []dataquery.AzureMonitorResource{resource}, sub, region)
 		if err != nil {
 			return nil, err
 		}
@@ -181,7 +206,7 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, q
 	var result []*types.AzureMonitorQuery
 	for _, key := range orderedKeys {
 		sub, region := key.sub, key.region
-		queryCopy, err := cloneQueryWithResources(query, queryJSONModel, groupedResources[key], &sub, &region)
+		queryCopy, err := cloneQueryWithResources(query, groupedResources[key], &sub, &region)
 		if err != nil {
 			return nil, fmt.Errorf("failed to re-encode split query for subscription %q region %q: %w", key.sub, key.region, err)
 		}
