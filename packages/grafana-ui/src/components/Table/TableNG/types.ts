@@ -30,6 +30,9 @@ export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilte
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+/** Called whenever the set of top-level rows shown by the table changes, e.g. due to a column filter or sort
+ * being applied. `rowIndexes` are indexes into the original `DataFrame` passed to the table, in display order. */
+export type TableFilteredRowsChangeCallback = (rowIndexes: number[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
@@ -123,6 +126,7 @@ interface BaseTableProps {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onFilteredRowsChange?: TableFilteredRowsChangeCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;

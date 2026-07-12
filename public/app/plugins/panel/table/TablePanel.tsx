@@ -30,6 +30,16 @@ interface Props extends PanelProps<Options> {
   sortByBehavior?: 'initial' | 'managed';
 }
 
+/**
+ * Shape of the table panel's `PanelContext.instanceState`, used to expose the currently filtered/sorted row
+ * indexes to Panel Inspect so CSV export can reflect column filters applied on the panel itself.
+ */
+export interface TablePanelInstanceState {
+  filteredRowIndexes?: number[];
+  /** Index (within `PanelData.series`) of the frame that `filteredRowIndexes` corresponds to. */
+  frameIndex?: number;
+}
+
 export function TablePanel(props: Props) {
   const {
     data,
@@ -67,6 +77,14 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
+  const onFilteredRowsChange = useCallback(
+    (filteredRowIndexes: number[]) => {
+      const instanceState: TablePanelInstanceState = { filteredRowIndexes, frameIndex: currentIndex };
+      panelContext.onInstanceStateChange?.(instanceState);
+    },
+    [panelContext, currentIndex]
+  );
+
   let tableHeight = height;
 
   if (!count || !hasFields) {
@@ -101,6 +119,7 @@ export function TablePanel(props: Props) {
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onFilteredRowsChange={onFilteredRowsChange}
       frozenColumns={options.frozenColumns?.left}
       enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}

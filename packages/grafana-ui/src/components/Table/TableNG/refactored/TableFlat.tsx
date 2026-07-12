@@ -1,5 +1,5 @@
 import memoize from 'micro-memoize';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
@@ -68,6 +68,7 @@ export function TableFlat(props: TableNGProps) {
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onFilteredRowsChange,
     onSortByChange,
     protoParserEnabled,
     showTypeIcons,
@@ -121,6 +122,18 @@ export function TableFlat(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, [], { initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+
+  // Consumers (e.g. PanelContext.onInstanceStateChange) may hand back an unstable callback identity on every
+  // call, so this is read through a ref rather than being a dependency - otherwise the effect below could
+  // retrigger itself indefinitely without sortedRows ever actually changing.
+  const onFilteredRowsChangeRef = useRef(onFilteredRowsChange);
+  onFilteredRowsChangeRef.current = onFilteredRowsChange;
+
+  // sortedRows reflects the currently filtered/sorted set of rows (pre-pagination), so this fires whenever a
+  // column filter or sort changes which rows are shown, not just when the underlying data changes.
+  useEffect(() => {
+    onFilteredRowsChangeRef.current?.(sortedRows.map((row) => row.__index));
+  }, [sortedRows]);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
