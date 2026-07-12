@@ -324,7 +324,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 		}
 
 		// Successful HTTP response: parse and distribute frames.
-		frames, parseErr := parseBatchResponse(br, azurePortalURL)
+		frames, parseErr := parseBatchResponse(br, azurePortalURL, e.Logger)
 		for _, frame := range frames {
 			dr := result.Responses[frame.RefID]
 			dr.Frames = append(dr.Frames, frame)

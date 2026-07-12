@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	aztypes "github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -250,7 +251,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -265,7 +266,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -279,7 +280,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		assert.Empty(t, frames)
 	})
 
@@ -297,7 +298,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 2)
 	})
 
@@ -310,7 +311,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		_, err := parseBatchResponse(result, "https://portal.azure.com")
+		_, err := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		assert.Error(t, err)
 	})
 
@@ -330,7 +331,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, err := parseBatchResponse(result, "https://portal.azure.com")
+		frames, err := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		require.NoError(t, err)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 		assert.Len(t, framesForRefID(frames, "B"), 1)
@@ -353,7 +354,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, err := parseBatchResponse(result, "https://portal.azure.com")
+		frames, err := parseBatchResponse(result, "https://portal.azure.com", log.DefaultLogger)
 		require.NoError(t, err)
 		// A owns vm1+vm2, B owns vm2+vm3; the shared vm2 must reach both.
 		assert.Len(t, framesForRefID(frames, "A"), 2)

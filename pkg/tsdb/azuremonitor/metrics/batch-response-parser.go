@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -13,7 +14,7 @@ import (
 // parseBatchResponse converts a successful batch result into a flat data.Frames
 // slice. Each frame carries its RefID. Resource-level errors are joined and
 // returned alongside any frames that did succeed.
-func parseBatchResponse(result batchResult, azurePortalURL string) (data.Frames, error) {
+func parseBatchResponse(result batchResult, azurePortalURL string, logger log.Logger) (data.Frames, error) {
 	var frames data.Frames
 	var errs []error
 
@@ -35,6 +36,12 @@ func parseBatchResponse(result batchResult, azurePortalURL string) (data.Frames,
 	for _, resourceValue := range result.Response.Values {
 		queries, ok := resourceToQueries[strings.ToLower(resourceValue.ResourceID)]
 		if !ok {
+			// Should not happen: the batch only requests resource IDs owned by
+			// its queries (createBatches invariant), and the API echoes them
+			// back. Log so a request/response mismatch is diagnosable rather
+			// than silently showing up as missing data.
+			logger.Warn("batch response contained a resource ID not present in any query; skipping",
+				"resourceID", resourceValue.ResourceID)
 			continue
 		}
 
