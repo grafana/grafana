@@ -1872,7 +1872,36 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
-	return dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
+	err := dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
+	if err == nil || !apierrors.IsMethodNotSupported(err) {
+		return err
+	}
+
+	// Unified storage does not implement DeleteCollection. Fall back to
+	// forced individual deletes so organization deletion also removes provisioned dashboards.
+	zeroGracePeriod := int64(0)
+	deleteOptions := v1.DeleteOptions{GracePeriodSeconds: &zeroGracePeriod}
+	for continueToken := ""; ; {
+		list, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
+			Limit:    listAllDashboardsLimit,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, item := range list.Items {
+			err := dr.k8sclient.Delete(ctx, item.GetName(), orgID, deleteOptions)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return err
+			}
+		}
+
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			return nil
+		}
+	}
 }
 
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
