@@ -2,7 +2,7 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { config, DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
@@ -65,7 +65,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
-    this.batchAPIEnabled = instanceSettings.jsonData.batchAPIEnabled;
+    // Gate on the feature toggle so batchAPIEnabled is the single source of truth (callers needn't re-check it).
+    this.batchAPIEnabled = !!config.featureToggles.azureMonitorBatchAPI && instanceSettings.jsonData.batchAPIEnabled;
 
     this.resourcePath = routeNames.azureMonitor;
   }

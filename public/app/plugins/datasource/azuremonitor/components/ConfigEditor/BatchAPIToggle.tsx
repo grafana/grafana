@@ -46,7 +46,11 @@ export const BatchAPIToggle = (props: Props) => {
         >
           metrics.monitor.azure.com
         </TextLink>
-        . After 1,000,000 free API calls per month, additional calls cost $0.01 per 1,000.
+        . Additional{' '}
+        <TextLink href="https://azure.microsoft.com/en-us/pricing/details/monitor/" external variant="bodySmall">
+          costs may apply
+        </TextLink>{' '}
+        beyond the free tier.
       </Trans>
     </p>
   );

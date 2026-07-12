@@ -475,6 +475,26 @@ describe('isResourceRowDisabled', () => {
     it('disables a different namespace', () => {
       expect(isResourceRowDisabled(storageEastA, [vmEastA], true)).toBe(true);
     });
+
+    it('never disables subscription or resource group rows, as they may contain selectable resources', () => {
+      const subscriptionRow: ResourceRow = {
+        id: 'sub-b',
+        uri: '/subscriptions/sub-b',
+        name: 'sub-b',
+        type: ResourceRowType.Subscription,
+        typeLabel: 'Subscription',
+      };
+      const resourceGroupRow: ResourceRow = {
+        id: 'rg',
+        uri: '/subscriptions/sub-b/resourceGroups/rg',
+        name: 'rg',
+        type: ResourceRowType.ResourceGroup,
+        typeLabel: 'Resource group',
+      };
+      // A VM is selected; these containers have a different (or absent) namespace but must stay enabled.
+      expect(isResourceRowDisabled(subscriptionRow, [vmEastA], true)).toBe(false);
+      expect(isResourceRowDisabled(resourceGroupRow, [vmEastA], true)).toBe(false);
+    });
   });
 
   describe('batch API disabled', () => {

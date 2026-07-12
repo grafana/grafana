@@ -52,6 +52,10 @@ export const isResourceRowDisabled = (
   const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
 
   if (batchAPIEnabled) {
+    // Never grey out subscriptions/resource groups — they're containers that may hold selectable resources.
+    if (row.type === ResourceRowType.Subscription || row.type === ResourceRowType.ResourceGroup) {
+      return false;
+    }
     return rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase();
   }
 
