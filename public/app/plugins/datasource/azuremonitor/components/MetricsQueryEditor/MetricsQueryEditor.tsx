@@ -101,11 +101,13 @@ const MetricsQueryEditor = ({
   const metricNames = useMetricNames(query, datasource, onChange, setError);
   const resources =
     query.azureMonitor?.resources?.map((r) => ({
-      subscription: query.subscription,
+      // Prefer each resource's own subscription/region (batch selections can span both) and
+      // fall back to the query-level values for single-resource / non-batch queries.
+      subscription: r.subscription ?? query.subscription,
       resourceGroup: r.resourceGroup,
       metricNamespace: query.azureMonitor?.metricNamespace,
       resourceName: r.resourceName,
-      region: query.azureMonitor?.region,
+      region: r.region ?? query.azureMonitor?.region,
     })) ?? [];
 
   const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;

@@ -80,7 +80,7 @@
     },
     "batch-api-toggle": {
       "aria-label-enable-batch-api": "Batch API",
-      "description-batch-api": "Queries multiple resources in a single request, improving performance for large dashboards. Requires <2>Monitoring Reader</2> at the subscription scope on <6>metrics.monitor.azure.com</6>. Additional <9>costs may apply</9> beyond the free tier.",
+      "description-batch-api": "Queries multiple resources in a single request, improving performance for large dashboards. Requires the <2>Monitoring Reader</2> role at the subscription scope on <6>metrics.monitor.azure.com</6>. Additional <9>costs may apply</9> beyond the free tier.",
       "label-enable-batch-api": "Enable Batch API"
     },
     "config-editor": {

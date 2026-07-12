@@ -30,15 +30,15 @@ export const BatchAPIToggle = (props: Props) => {
   const description = (
     <p className={styles.description}>
       <Trans i18nKey="components.batch-api-toggle.description-batch-api">
-        Queries multiple resources in a single request, improving performance for large dashboards. Requires{' '}
+        Queries multiple resources in a single request, improving performance for large dashboards. Requires the{' '}
         <TextLink
-          href="https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/rest-api-walkthrough#retrieve-metric-values-multi-dimensional-api"
+          href="https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/monitor"
           external
           variant="bodySmall"
         >
           Monitoring Reader
         </TextLink>{' '}
-        at the subscription scope on{' '}
+        role at the subscription scope on{' '}
         <TextLink
           href="https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/migrate-to-batch-api"
           external
