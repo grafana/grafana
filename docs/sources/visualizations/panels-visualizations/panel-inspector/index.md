@@ -13,6 +13,12 @@ labels:
 title: The panel inspect view
 description: Inspect the raw data of your panels to understand and troubleshoot them
 weight: 30
+refs:
+  table-column-filtering:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#column-filtering
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/#column-filtering
 ---
 
 # The panel inspect view
@@ -38,6 +44,10 @@ The panel inspector consists of the following options:
 ## Download raw query results
 
 Grafana generates a CSV file that contains your data, including any transformations to that data. You can choose to view the data before or after the panel applies field options or field option overrides.
+
+{{< admonition type="note" >}}
+For table visualizations, if a [column filter](ref:table-column-filtering) is applied, the downloaded CSV file only includes the filtered rows.
+{{< /admonition >}}
 
 1. Edit the panel that contains the query data you want to download.
 1. In the query editor, click **Query Inspector**.

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import saveAs from 'file-saver';
 import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
@@ -18,6 +19,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
       width: 1,
     });
 });
+
+jest.mock('file-saver', () => jest.fn());
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
@@ -213,6 +216,62 @@ describe('InspectDataTab', () => {
         />
       );
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('when a panel-driven column filter is present (dashboard table panel)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should export only the panel-filtered rows as CSV', async () => {
+      render(
+        <InspectDataTab
+          {...createProps({
+            panelFilteredRowIndexes: [2, 0],
+            panelFilteredRowIndexesFrameIndex: 0,
+          })}
+        />
+      );
+
+      await userEvent.click(screen.getByText(/Download CSV/i));
+
+      const call = jest.mocked(saveAs).mock.calls[0];
+      const blob = call[0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toEqual('"time","name","value"\r\n300,c,3\r\n100,uniqueA,1');
+    });
+
+    it('should ignore the panel filter when it refers to a different frame than the one being exported', async () => {
+      render(
+        <InspectDataTab
+          {...createProps({
+            panelFilteredRowIndexes: [2, 0],
+            panelFilteredRowIndexesFrameIndex: 1, // exported frame (dataFrameIndex) defaults to 0
+          })}
+        />
+      );
+
+      await userEvent.click(screen.getByText(/Download CSV/i));
+
+      const call = jest.mocked(saveAs).mock.calls[0];
+      const blob = call[0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toEqual('"time","name","value"\r\n100,uniqueA,1\r\n200,b,2\r\n300,c,3');
+    });
+
+    it('should not apply the panel filter when no panel filter is provided', async () => {
+      render(<InspectDataTab {...createProps()} />);
+
+      await userEvent.click(screen.getByText(/Download CSV/i));
+
+      const call = jest.mocked(saveAs).mock.calls[0];
+      const blob = call[0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toEqual('"time","name","value"\r\n100,uniqueA,1\r\n200,b,2\r\n300,c,3');
     });
   });
 });

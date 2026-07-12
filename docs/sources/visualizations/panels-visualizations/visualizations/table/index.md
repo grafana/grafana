@@ -65,6 +65,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#graph-styles-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/#graph-styles-options
+  panel-inspector:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/#download-raw-query-results
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-inspector/#download-raw-query-results
 ---
 
 # Table
@@ -133,6 +138,10 @@ If you need to hide columns, you can do so using [data transformations](ref:data
 
 You can temporarily change how column data is displayed using column filtering.
 For example, you can show or hide specific values.
+
+{{< admonition type="note" >}}
+When you [download the panel's data as a CSV file](ref:panel-inspector), the file only includes the rows that match your current column filters.
+{{< /admonition >}}
 
 ### Turn on column filtering
 
