@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-// Azure cloud query types — package-local aliases for the exported constants in types.
 const (
 	azureMonitor             = types.RouteAzureMonitor
 	azureLogAnalytics        = types.RouteAzureLogAnalytics

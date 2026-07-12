@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -151,6 +152,16 @@ func dimensionFilterKey(query *types.AzureMonitorQuery) string {
 
 	parts := make([]string, 0, len(query.Dimensions))
 	for _, dim := range query.Dimensions {
+		// A dimension with no filter values means "split by this dimension"
+		// (all values), which the metrics API expresses as `<dimension> eq '*'`.
+		// ConstructFiltersString returns an empty string for an empty Filters
+		// slice, so handle this explicitly to mirror the single-resource builder.
+		if len(dim.Filters) == 0 {
+			if dim.Dimension != nil && *dim.Dimension != "" {
+				parts = append(parts, fmt.Sprintf("%s eq '*'", *dim.Dimension))
+			}
+			continue
+		}
 		// Sort filter values within each dimension so that ["vm1","vm2"] and
 		// ["vm2","vm1"] produce the same key and land in the same batch.
 		sorted := dim

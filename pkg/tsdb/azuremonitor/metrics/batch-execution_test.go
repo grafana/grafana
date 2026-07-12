@@ -276,7 +276,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 	})
 }
 
-func TestIsBatchableQuery(t *testing.T) {
+func TestIsBatchableModel(t *testing.T) {
 	makeQuery := func(metricNamespace string, customNamespace *string) backend.DataQuery {
 		az := &dataquery.AzureMetricQuery{MetricName: strPtr("Percentage CPU")}
 		if metricNamespace != "" {
@@ -304,7 +304,92 @@ func TestIsBatchableQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, isBatchableQuery(makeQuery(tt.metricNamespace, tt.customNamespace)))
+			q := makeQuery(tt.metricNamespace, tt.customNamespace)
+			var m dataquery.AzureMonitorQuery
+			require.NoError(t, json.Unmarshal(q.JSON, &m))
+			assert.Equal(t, tt.want, isBatchableModel(m))
 		})
 	}
+}
+
+func TestApplyLegacyDimensions(t *testing.T) {
+	strP := func(s string) *string { return &s }
+	makeModel := func(dim, dimFilter *string, filters []dataquery.AzureMetricDimension) dataquery.AzureMonitorQuery {
+		return dataquery.AzureMonitorQuery{AzureMonitor: &dataquery.AzureMetricQuery{
+			Dimension:        dim,
+			DimensionFilter:  dimFilter,
+			DimensionFilters: filters,
+		}}
+	}
+
+	t.Run("folds legacy dimension into Dimensions so the batch filter honours it", func(t *testing.T) {
+		model := makeModel(strP("VMName"), strP("vm1"), nil)
+		q := &types.AzureMonitorQuery{Params: url.Values{}}
+		applyLegacyDimensions([]*types.AzureMonitorQuery{q}, model)
+		require.Len(t, q.Dimensions, 1)
+		// Same filter string the single-resource legacy branch produces.
+		assert.Equal(t, "VMName eq 'vm1'", dimensionFilterKey(q))
+	})
+
+	t.Run("does nothing when modern dimensionFilters is present", func(t *testing.T) {
+		model := makeModel(strP("VMName"), strP("vm1"), []dataquery.AzureMetricDimension{
+			{Dimension: strP("Other"), Operator: strP("eq"), Filters: []string{"x"}},
+		})
+		q := &types.AzureMonitorQuery{Params: url.Values{}}
+		applyLegacyDimensions([]*types.AzureMonitorQuery{q}, model)
+		assert.Empty(t, q.Dimensions)
+	})
+
+	t.Run("does nothing when dimension is empty or None", func(t *testing.T) {
+		for _, dim := range []string{"", "None"} {
+			model := makeModel(strP(dim), strP("vm1"), nil)
+			q := &types.AzureMonitorQuery{Params: url.Values{}}
+			applyLegacyDimensions([]*types.AzureMonitorQuery{q}, model)
+			assert.Empty(t, q.Dimensions, "dim=%q", dim)
+		}
+	})
+
+	t.Run("does not overwrite a query that already has dimensions", func(t *testing.T) {
+		model := makeModel(strP("VMName"), strP("vm1"), nil)
+		existing := []dataquery.AzureMetricDimension{{Dimension: strP("Existing"), Operator: strP("eq"), Filters: []string{"y"}}}
+		q := &types.AzureMonitorQuery{Params: url.Values{}, Dimensions: existing}
+		applyLegacyDimensions([]*types.AzureMonitorQuery{q}, model)
+		assert.Equal(t, existing, q.Dimensions)
+	})
+}
+
+// TestExecuteBatchTimeSeriesQuerySharedResources is an end-to-end regression
+// test: the batch group key excludes RefID/Alias, so queries with identical
+// parameters (e.g. a duplicated panel query) co-batch and share a deduplicated
+// resource ID. Previously parseBatchResponse kept only the last owner of each
+// resource, so the other refID silently received neither frames nor an error.
+func TestExecuteBatchTimeSeriesQuerySharedResources(t *testing.T) {
+	ds := &AzureMonitorDatasource{Logger: log.DefaultLogger}
+	resourceID := "/subscriptions/sub-123/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(batchSuccessResponse([]string{resourceID}, 42.0))
+	}))
+	defer srv.Close()
+
+	dsInfo := makeBatchDsInfo(srv)
+	resources := []dataquery.AzureMonitorResource{
+		{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+	}
+	qA := makeBatchQuery("A", "sub-123", "eastus", resources)
+	qB := makeBatchQuery("B", "sub-123", "eastus", resources)
+
+	resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{qA, qB}, dsInfo, &http.Client{}, "", false)
+	require.NoError(t, err)
+
+	drA := resp.Responses["A"]
+	drB := resp.Responses["B"]
+	require.Len(t, drA.Frames, 1, "refID A must receive frames")
+	require.Len(t, drB.Frames, 1, "refID B must receive frames")
+	assert.NoError(t, drA.Error)
+	assert.NoError(t, drB.Error)
+	// Each frame must carry its own query's RefID.
+	assert.Equal(t, "A", drA.Frames[0].RefID)
+	assert.Equal(t, "B", drB.Frames[0].RefID)
 }

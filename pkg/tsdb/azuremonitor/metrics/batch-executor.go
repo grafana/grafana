@@ -14,16 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-// isBatchableQuery reports whether a backend query can be sent to the Metrics
+// isBatchableModel reports whether a query model can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
 // Insights custom telemetry) or a Guest OS / Windows Azure Diagnostics (WAD)
 // namespace must fall back to the legacy ARM metrics endpoint — those metrics
 // are not exposed via the metrics-batch data plane.
-func isBatchableQuery(query backend.DataQuery) bool {
-	var model dataquery.AzureMonitorQuery
-	if err := json.Unmarshal(query.JSON, &model); err != nil {
-		return false
-	}
+func isBatchableModel(model dataquery.AzureMonitorQuery) bool {
 	az := model.AzureMonitor
 	if az == nil {
 		return false
@@ -77,11 +73,7 @@ func cloneQueryWithResources(query backend.DataQuery, model dataquery.AzureMonit
 // per resource. Single-resource and legacy queries are returned unchanged.
 // Used to fan out non-batchable queries (e.g. custom namespace) so that each
 // resource is fetched via its own resource-level ARM URL.
-func fanOutByResource(query backend.DataQuery) ([]backend.DataQuery, error) {
-	var model dataquery.AzureMonitorQuery
-	if err := json.Unmarshal(query.JSON, &model); err != nil {
-		return nil, err
-	}
+func fanOutByResource(query backend.DataQuery, model dataquery.AzureMonitorQuery) ([]backend.DataQuery, error) {
 	az := model.AzureMonitor
 	if az == nil || len(az.Resources) <= 1 {
 		return []backend.DataQuery{query}, nil
@@ -108,18 +100,17 @@ func fanOutByResource(query backend.DataQuery) ([]backend.DataQuery, error) {
 // separate AzureMonitorQuery objects per (subscription, region) pair so that
 // groupQueriesForBatch can correctly route each resource to the right batch endpoint.
 // Single-resource and legacy queries are passed through unchanged.
-func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
-	queryJSONModel := dataquery.AzureMonitorQuery{}
-	if err := json.Unmarshal(query.JSON, &queryJSONModel); err != nil {
-		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
-	}
-
+func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, queryJSONModel dataquery.AzureMonitorQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
 	azJSONModel := queryJSONModel.AzureMonitor
 
 	// Determine the query-level defaults for subscription and region.
 	defaultSub := dsInfo.Settings.SubscriptionId
 	if queryJSONModel.Subscription != nil && *queryJSONModel.Subscription != "" {
 		defaultSub = *queryJSONModel.Subscription
+	} else {
+		// The frontend is expected to set a subscription on every query, so this
+		// fallback to the datasource-level default should not normally be hit.
+		e.Logger.Debug("batch query did not specify a subscription; falling back to the datasource default", "refID", query.RefID)
 	}
 
 	// Single-resource or legacy queries need no splitting.
@@ -189,6 +180,41 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 	return result, nil
 }
 
+// applyLegacyDimensions folds the deprecated top-level dimension/dimensionFilter
+// fields into each query's Dimensions so the batch filter honours them, matching
+// buildQuery's legacy branch on the single-resource path. The batch filter is
+// derived solely from Dimensions (via dimensionFilterKey), which only carries the
+// modern dimensionFilters, so without this the legacy fields would be silently
+// dropped for batch queries. Applies only when dimensionFilters is empty and both
+// legacy fields are set, mirroring the single-resource condition exactly.
+func applyLegacyDimensions(queries []*types.AzureMonitorQuery, model dataquery.AzureMonitorQuery) {
+	az := model.AzureMonitor
+	if az == nil || len(az.DimensionFilters) > 0 {
+		return
+	}
+	dimension := ""
+	if az.Dimension != nil {
+		dimension = strings.TrimSpace(*az.Dimension)
+	}
+	dimensionFilter := ""
+	if az.DimensionFilter != nil {
+		dimensionFilter = strings.TrimSpace(*az.DimensionFilter)
+	}
+	if dimension == "" || dimensionFilter == "" || dimension == "None" {
+		return
+	}
+
+	op := "eq"
+	for _, q := range queries {
+		if len(q.Dimensions) == 0 {
+			// Build a fresh slice per query so no two queries share backing state.
+			q.Dimensions = []dataquery.AzureMetricDimension{
+				{Dimension: &dimension, Operator: &op, Filters: []string{dimensionFilter}},
+			}
+		}
+	}
+}
+
 // executeBatchTimeSeriesQuery groups all queries into Metrics Batch API requests,
 // executes them in parallel, and distributes the resulting frames back to their
 // original RefIDs. Queries that cannot use the batch API (custom metrics, Guest
@@ -209,12 +235,21 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 
 	// Separate batchable from non-batchable (custom namespace / Guest OS) queries.
 	// Non-batchable queries are executed individually via the legacy ARM endpoint.
-	var batchableQueries []backend.DataQuery
+	// parsedQuery pairs a query with its decoded model so query.JSON is
+	// unmarshaled once here and reused by the batch helpers below.
+	type parsedQuery struct {
+		query backend.DataQuery
+		model dataquery.AzureMonitorQuery
+	}
+	var batchableQueries []parsedQuery
 	for _, query := range originalQueries {
-		batchable := isBatchableQuery(query)
-		e.Logger.Debug("query batchability", "refID", query.RefID, "batchable", batchable)
-		if !batchable {
-			subQueries, err := fanOutByResource(query)
+		var model dataquery.AzureMonitorQuery
+		if err := json.Unmarshal(query.JSON, &model); err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		if !isBatchableModel(model) {
+			subQueries, err := fanOutByResource(query, model)
 			if err != nil {
 				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
@@ -244,7 +279,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 				attachErr(result, query.RefID, errors.Join(subErrs...))
 			}
 		} else {
-			batchableQueries = append(batchableQueries, query)
+			batchableQueries = append(batchableQueries, parsedQuery{query: query, model: model})
 		}
 	}
 
@@ -252,12 +287,13 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	// (subscription, region) so that each AzureMonitorQuery targets a single
 	// batch endpoint.
 	var azureQueries []*types.AzureMonitorQuery
-	for _, query := range batchableQueries {
-		splitQueries, err := e.buildQueriesForBatch(query, dsInfo)
+	for _, bq := range batchableQueries {
+		splitQueries, err := e.buildQueriesForBatch(bq.query, bq.model, dsInfo)
 		if err != nil {
-			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			result.Responses[bq.query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
 		}
+		applyLegacyDimensions(splitQueries, bq.model)
 		azureQueries = append(azureQueries, splitQueries...)
 	}
 

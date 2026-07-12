@@ -313,6 +313,52 @@ func TestParseBatchResponse(t *testing.T) {
 		_, err := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Error(t, err)
 	})
+
+	t.Run("a resource shared by multiple queries produces frames for every owner", func(t *testing.T) {
+		// Regression: the batch group key excludes RefID, so two queries with
+		// identical parameters (e.g. a duplicated panel query) share a batch and
+		// a deduplicated resource ID. Previously the resource->query lookup kept
+		// only the last owner, so the other refID silently received no frames.
+		qA := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{resourceID: {}})
+		qB := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{resourceID: {}})
+
+		result := batchResult{
+			Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qA, qB}},
+			Response: &batchResponse{
+				Values: []batchResponseValue{
+					makeResourceValue(resourceID, "ns", "westus2", "Success", 1.0),
+				},
+			},
+		}
+		frames, err := parseBatchResponse(result, "https://portal.azure.com")
+		require.NoError(t, err)
+		assert.Len(t, framesForRefID(frames, "A"), 1)
+		assert.Len(t, framesForRefID(frames, "B"), 1)
+	})
+
+	t.Run("overlapping resources route each owner its own frames", func(t *testing.T) {
+		id1 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+		id2 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm2"
+		id3 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm3"
+		qA := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{id1: {}, id2: {}})
+		qB := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{id2: {}, id3: {}})
+
+		result := batchResult{
+			Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qA, qB}},
+			Response: &batchResponse{
+				Values: []batchResponseValue{
+					makeResourceValue(id1, "ns", "westus2", "Success", 1.0),
+					makeResourceValue(id2, "ns", "westus2", "Success", 2.0),
+					makeResourceValue(id3, "ns", "westus2", "Success", 3.0),
+				},
+			},
+		}
+		frames, err := parseBatchResponse(result, "https://portal.azure.com")
+		require.NoError(t, err)
+		// A owns vm1+vm2, B owns vm2+vm3; the shared vm2 must reach both.
+		assert.Len(t, framesForRefID(frames, "A"), 2)
+		assert.Len(t, framesForRefID(frames, "B"), 2)
+	})
 }
 
 // TestFramesFromBatchResponseValueAlias exercises the shared builder's alias /

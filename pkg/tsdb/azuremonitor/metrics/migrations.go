@@ -9,9 +9,14 @@ func MigrateDimensionFilters(filters []dataquery.AzureMetricDimension) []dataque
 		// Ignore the deprecation check as this is a migration
 		// nolint:staticcheck
 		newFilter.Filter = nil
-		// If there is no old field and the new field is specified - append as this is valid
+		// If there is no deprecated single-value filter there is nothing to
+		// migrate, so keep the (possibly empty or nil) Filters slice as-is.
+		// Guarding on Filter alone also avoids a nil-pointer dereference below
+		// when a dimension has neither Filter nor Filters set - which happens in
+		// the batch flow when an empty Filters slice is dropped by `omitempty`
+		// during the cloneQueryWithResources JSON round-trip.
 		// nolint:staticcheck
-		if filter.Filter == nil && filter.Filters != nil {
+		if filter.Filter == nil {
 			newFilters = append(newFilters, newFilter)
 		} else {
 			// nolint:staticcheck

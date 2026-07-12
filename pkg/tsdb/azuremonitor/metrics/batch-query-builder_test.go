@@ -169,6 +169,28 @@ func TestDimensionFilterKey(t *testing.T) {
 		assert.Equal(t, "VMName eq 'vm1'", dimensionFilterKey(q))
 	})
 
+	t.Run("dimension with empty filter values yields eq '*' (split by dimension)", func(t *testing.T) {
+		q := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{}},
+			},
+		}
+		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
+	})
+
+	t.Run("dimension with nil filter values yields eq '*'", func(t *testing.T) {
+		// Mirrors the batch flow where an empty Filters slice is dropped by
+		// omitempty during the cloneQueryWithResources JSON round-trip.
+		q := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: nil},
+			},
+		}
+		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
+	})
+
 	t.Run("filter values within a dimension are sorted for stable key", func(t *testing.T) {
 		q1 := &types.AzureMonitorQuery{
 			Params: url.Values{},

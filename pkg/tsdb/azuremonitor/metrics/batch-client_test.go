@@ -93,15 +93,7 @@ func TestBuildBatchURL(t *testing.T) {
 		assert.Empty(t, parsed.Query().Get("filter"))
 	})
 
-	t.Run("forwards dimension filter, stripping $ prefix", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "$VMName eq 'vm1'", from, to, nil, nil)
-		parsed, err := url.Parse(buildBatchURL(batch))
-		require.NoError(t, err)
-		assert.Equal(t, "VMName eq 'vm1'", parsed.Query().Get("filter"))
-	})
-
-	t.Run("forwards dimension filter without $ prefix unchanged", func(t *testing.T) {
+	t.Run("forwards dimension filter unchanged", func(t *testing.T) {
 		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
 			"PT1M", "Average", "VMName eq 'vm1'", from, to, nil, nil)
 		parsed, err := url.Parse(buildBatchURL(batch))
@@ -130,58 +122,29 @@ func TestBuildBatchRequest(t *testing.T) {
 	to := time.Date(2024, 1, 1, 1, 0, 0, 0, time.UTC)
 	ids := []string{"/sub/rg/vm1", "/sub/rg/vm2"}
 
-	t.Run("creates POST request", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, ids, nil)
-		req, err := buildBatchRequest(context.Background(), batch)
-		require.NoError(t, err)
-		assert.Equal(t, "POST", req.Method)
-	})
+	batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
+		"PT1M", "Average", "", from, to, ids, nil)
+	req, err := buildBatchRequest(context.Background(), batch)
+	require.NoError(t, err)
 
-	t.Run("sets Content-Type header", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, ids, nil)
-		req, err := buildBatchRequest(context.Background(), batch)
-		require.NoError(t, err)
-		assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
-	})
+	// Request line and headers.
+	assert.Equal(t, "POST", req.Method)
+	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
+	assert.Equal(t, buildBatchURL(batch), req.URL.String())
 
-	t.Run("body contains resource IDs", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, ids, nil)
-		req, err := buildBatchRequest(context.Background(), batch)
-		require.NoError(t, err)
+	// Body: resource IDs are sent under the exact "resourceids" key (casing
+	// matters for the Azure API).
+	bodyBytes, err := io.ReadAll(req.Body)
+	require.NoError(t, err)
 
-		bodyBytes, err := io.ReadAll(req.Body)
-		require.NoError(t, err)
+	var body batchRequestBody
+	require.NoError(t, json.Unmarshal(bodyBytes, &body))
+	assert.Equal(t, ids, body.ResourceIDs)
 
-		var body batchRequestBody
-		require.NoError(t, json.Unmarshal(bodyBytes, &body))
-		assert.Equal(t, ids, body.ResourceIDs)
-	})
-
-	t.Run("body uses resourceids JSON key", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, ids, nil)
-		req, err := buildBatchRequest(context.Background(), batch)
-		require.NoError(t, err)
-
-		bodyBytes, err := io.ReadAll(req.Body)
-		require.NoError(t, err)
-
-		var raw map[string]any
-		require.NoError(t, json.Unmarshal(bodyBytes, &raw))
-		assert.Contains(t, raw, "resourceids")
-		assert.NotContains(t, raw, "resourceIds") // exact casing matters for Azure API
-	})
-
-	t.Run("URL matches buildBatchURL output", func(t *testing.T) {
-		batch := makeBatch("westus2", "sub-123", "Microsoft.Compute/virtualMachines", "Percentage CPU",
-			"PT1M", "Average", "", from, to, ids, nil)
-		req, err := buildBatchRequest(context.Background(), batch)
-		require.NoError(t, err)
-		assert.Equal(t, buildBatchURL(batch), req.URL.String())
-	})
+	var raw map[string]any
+	require.NoError(t, json.Unmarshal(bodyBytes, &raw))
+	assert.Contains(t, raw, "resourceids")
+	assert.NotContains(t, raw, "resourceIds")
 }
 
 // minimalBatchResponse returns a valid batch response JSON for a single resource.

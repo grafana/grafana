@@ -17,25 +17,33 @@ func parseBatchResponse(result batchResult, azurePortalURL string) (data.Frames,
 	var frames data.Frames
 	var errs []error
 
-	// Build a lookup from lowercase resource ID -> query.
+	// Build a lookup from lowercase resource ID -> all queries that own it.
 	// Keys in query.Resources are already stored lowercase (see buildQuery).
-	resourceToQuery := make(map[string]*types.AzureMonitorQuery)
+	// A resource can be owned by more than one query: the batch group key
+	// excludes RefID and Alias, so two queries with identical parameters (e.g. a
+	// duplicated panel query) or overlapping resource selections share a batch,
+	// and resourceIDsForGroup dedupes the shared IDs. Each owning query must
+	// receive its own frames — with its own RefID and legend/alias formatting —
+	// or all but one would silently get no data.
+	resourceToQueries := make(map[string][]*types.AzureMonitorQuery)
 	for _, query := range result.Batch.Queries {
 		for resourceID := range query.Resources {
-			resourceToQuery[resourceID] = query
+			resourceToQueries[resourceID] = append(resourceToQueries[resourceID], query)
 		}
 	}
 
 	for _, resourceValue := range result.Response.Values {
-		query, ok := resourceToQuery[strings.ToLower(resourceValue.ResourceID)]
+		queries, ok := resourceToQueries[strings.ToLower(resourceValue.ResourceID)]
 		if !ok {
 			continue
 		}
 
-		f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL)
-		frames = append(frames, f...)
-		if err != nil {
-			errs = append(errs, err)
+		for _, query := range queries {
+			f, err := framesFromBatchResponseValue(resourceValue, query, azurePortalURL)
+			frames = append(frames, f...)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
 
