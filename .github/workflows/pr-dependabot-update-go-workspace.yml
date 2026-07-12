@@ -41,21 +41,24 @@ jobs:
       with:
         cache-build: 'false'
 
-    - name: Configure Git
-      run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
     - name: Update workspace
       run: make update-workspace
 
-    - name: Commit and push workspace changes
-      env:
-        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+    - name: Check for workspace changes
+      id: changes
       run: |
-        if ! git diff --exit-code --quiet; then
-          echo "Committing and pushing workspace changes"
-          git commit -a -m "update workspace"
-          git push "https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana.git" "HEAD:${BRANCH_NAME}"
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "changed=false" >> "$GITHUB_OUTPUT"
         fi
+
+    - name: Commit and push workspace changes
+      if: steps.changes.outputs.changed == 'true'
+      uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+      with:
+        commit_message: "update workspace"
+        repo: ${{ github.repository }}
+        branch: ${{ github.head_ref || github.ref_name }}
+      env:
+        GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}

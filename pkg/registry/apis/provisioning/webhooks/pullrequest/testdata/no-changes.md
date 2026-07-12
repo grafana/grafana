@@ -1,4 +1,4 @@
 Grafana didn't find any changes in this pull request.
 
 ---
-_Posted by [host](http://host/) · Repository: **My Repo** (`my-repo`)_
+_🔄 Synced from **My Repo** · Posted by [host](http://host/)_

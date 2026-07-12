@@ -6,6 +6,7 @@ import {
   createDataFrame,
   type DataFrame,
   DataFrameType,
+  type DataSourceApi,
   dateTime,
   type Field,
   FieldType,
@@ -16,7 +17,8 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv, setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
@@ -53,8 +55,12 @@ jest.mock('@grafana/assistant', () => {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   usePluginLinks: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -142,19 +148,15 @@ describe('LogLineDetails', () => {
       links: [],
       isLoading: false,
     });
-    jest.mocked(getDataSourceSrv).mockImplementation(
-      () =>
-        ({
-          get: (uid: string) => {
-            if (uid === 'loki-ds') {
-              return Promise.resolve(lokiDS);
-            } else if (uid === 'tempo-ds') {
-              return Promise.resolve(tempoDS);
-            }
-            return Promise.resolve(null);
-          },
-        }) as unknown as DataSourceSrv
-    );
+    jest.mocked(getDataSourceInstance).mockImplementation((ref) => {
+      const uid = typeof ref === 'string' ? ref : ref?.uid;
+      if (uid === 'loki-ds') {
+        return Promise.resolve(lokiDS as unknown as DataSourceApi);
+      } else if (uid === 'tempo-ds') {
+        return Promise.resolve(tempoDS as unknown as DataSourceApi);
+      }
+      return Promise.resolve(null as unknown as DataSourceApi);
+    });
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
@@ -639,9 +641,7 @@ describe('LogLineDetails', () => {
       });
 
       test('should fallback to a single group of Fields if not supported', async () => {
-        jest.requireMock('@grafana/runtime').getDataSourceSrv = jest.fn().mockImplementation(() => ({
-          get: (uid: string) => Promise.reject(null),
-        }));
+        jest.mocked(getDataSourceInstance).mockImplementation(() => Promise.reject(null));
 
         await setup(
           undefined,
