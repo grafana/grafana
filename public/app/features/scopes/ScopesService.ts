@@ -3,7 +3,9 @@ import { BehaviorSubject, type Observable, combineLatest, type Subscription } fr
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
+import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
 import { type ScopesSelectorService } from './selector/ScopesSelectorService';
@@ -31,7 +33,8 @@ export class ScopesService implements ScopesContextValue {
   constructor(
     private selectorService: ScopesSelectorService,
     private dashboardsService: ScopesDashboardsService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private apiClient: ScopesApiClient
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
@@ -248,6 +251,52 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
+        // When there is no selection yet and ScopesFirstMode is on, fetch the
+        // default scope and apply it. Fire-and-forget so setEnabled stays sync.
+        // fetchDefaultScope is itself gated on grafana.useDefaultScopesEndpoint
+        // and returns undefined when off, so the call is safe here.
+        if (
+          appliedScopes.length === 0 &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaEnableScopesFirstMode, false)
+        ) {
+          this.apiClient
+            .fetchDefaultScope()
+            .then((name) => {
+              // Only apply if scopes is still enabled AND the user has neither
+              // applied nor started picking a scope in the meantime. Checking
+              // selectedScopes as well as appliedScopes preserves any pending
+              // selection: the user may have opened the selector and ticked a
+              // scope before this slower fetch resolved — clobbering that with
+              // the default scope would silently discard their choice. If the
+              // user navigated to a non-scope page before the fetch resolved,
+              // state.enabled is now false and applying would leak `?scopes=…`
+              // into a page that doesn't use scopes.
+              if (
+                !name ||
+                !this.state.enabled ||
+                this.selectorService.state.appliedScopes.length > 0 ||
+                this.selectorService.state.selectedScopes.length > 0
+              ) {
+                return;
+              }
+              // Bypass this.changeScopes (which hardcodes redirectOnApply=false
+              // for URL-driven init) and call the selector service directly
+              // with redirectOnApply=true. Applying the default scope on first
+              // mount should land the user on the scope's redirectPath or
+              // first scope navigation, matching the behavior of selecting
+              // the scope manually. The scope metadata is already in the
+              // getScope RTK Query cache (seeded by fetchDefaultScope), so
+              // applyScopes' downstream fetch is a cache hit.
+              this.selectorService.changeScopes([name], undefined, undefined, true);
+            })
+            .catch((err) => {
+              // fetchDefaultScope handles its own errors, but changeScopes above
+              // returns an un-awaited promise; a rejection there would otherwise
+              // surface as an unhandled rejection. Match the pattern used by the
+              // resolvePathToRoot(...).catch(...) calls elsewhere in this file.
+              console.error('Failed to apply default scope:', err);
+            });
+        }
         // Defer the URL write when scope metadata has not loaded yet.
         // setEnabled is called from `@grafana/scenes` during dashboard mount,
         // which can race with `applyScopes` and re-write a stale `scope_node`

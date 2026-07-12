@@ -2,7 +2,7 @@ import { memo } from 'react';
 import * as React from 'react';
 
 import { type SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { InlineField, Input, Stack } from '@grafana/ui';
 
 import { LokiQueryType, LokiQueryDirection } from '../dataquery.gen';
@@ -63,9 +63,6 @@ export const LokiOptionFields = memo((props: LokiOptionFieldsProps) => {
     const maxLines = preprocessMaxLines(value);
     const nextQuery = { ...query, maxLines };
     onChange(nextQuery);
-    reportInteraction('grafana_loki_max_lines_changed', {
-      maxLines,
-    });
   }
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {

@@ -68,6 +68,9 @@ type IndexViewData struct {
 
 	// Feature flag for the new preferences page
 	NewPreferencesPage bool
+
+	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
+	LegacyAPIMode string
 }
 
 // Templates setup.
@@ -142,6 +145,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
+	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -161,6 +165,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		ReduceBootdataAPI:                     reduceBootdataAPI,
 		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
+		LegacyAPIMode:                         legacyAPIMode,
 	}
 
 	// TODO -- reevaluate with mt authnz
@@ -206,10 +211,15 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	legacyIndexViewData := dtos.IndexViewData{
 		Settings: &dtos.FrontendSettingsDTO{
 			BuildInfo: data.Settings.BuildInfo,
+			Licensing: &dtos.FrontendSettingsLicensingDTO{},
 		},
 	}
 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+
+	if data.FullSettings != nil {
+		data.FullSettings.Licensing = legacyIndexViewData.Settings.Licensing
+	}
 }

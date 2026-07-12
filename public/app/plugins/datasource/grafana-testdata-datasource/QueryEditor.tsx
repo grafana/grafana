@@ -135,6 +135,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         update.errorStatusCode = 400;
         update.errorSource = 'downstream';
         update.errorMessage = 'Flaky query error';
+        update.queryDelay = '5s';
+        update.queryDelayVariability = 0;
     }
 
     onUpdate(update);

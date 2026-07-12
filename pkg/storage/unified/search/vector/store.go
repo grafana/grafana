@@ -15,6 +15,12 @@ import (
 // equivalent to running them on the un-padded native vectors.
 const EmbeddingDim = 1024
 
+// maxTitleLen is the width of the `title VARCHAR(1024)` column. Titles are
+// display-only (search results), so an over-long one (e.g. a verbose
+// "Dashboard — Panel" subresource title) is truncated to fit rather than
+// failing the whole transactional upsert.
+const maxTitleLen = 1024
+
 // VectorBackend is vector storage isolated per (namespace, model) so an HNSW
 // never mixes embeddings from different vector spaces.
 type VectorBackend interface {

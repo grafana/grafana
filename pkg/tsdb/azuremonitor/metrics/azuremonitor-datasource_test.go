@@ -1012,9 +1012,14 @@ func TestRetrieveSubscriptionDetails_KeysDisambiguate(t *testing.T) {
 		hits.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		subID := strings.TrimPrefix(r.URL.Path, "/subscriptions/")
-		resp, _ := json.Marshal(map[string]string{"displayName": "name-for-" + subID})
-		_, _ = w.Write(resp)
+		// Switch on the subscription in the path but only ever write fixed
+		// bodies, so request input never flows into the response writer (gosec G705).
+		switch strings.TrimPrefix(r.URL.Path, "/subscriptions/") {
+		case "sub-a":
+			_, _ = fmt.Fprint(w, `{"displayName":"name-for-sub-a"}`)
+		case "sub-b":
+			_, _ = fmt.Fprint(w, `{"displayName":"name-for-sub-b"}`)
+		}
 	}))
 	t.Cleanup(srv.Close)
 

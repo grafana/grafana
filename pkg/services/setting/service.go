@@ -55,6 +55,9 @@ const DefaultBurst = 300
 const DefaultCacheTTL = 5 * time.Second
 const DefaultCacheMaxEntries = 1000
 
+// DefaultIdleConnTimeout caps how long idle keep-alive connections are pooled.
+const DefaultIdleConnTimeout = 30 * time.Second
+
 const (
 	ApiGroup   = "setting.grafana.app"
 	apiVersion = "v1beta1"
@@ -81,6 +84,9 @@ type clientMetrics struct {
 	rateLimiterThrottleTotal prometheus.Counter
 	cacheHitTotal            prometheus.Counter
 	cacheMissTotal           prometheus.Counter
+	cacheEvictionTotal       prometheus.Counter
+	cacheSize                prometheus.Gauge
+	cacheMaxSize             prometheus.Gauge
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -171,6 +177,10 @@ type Config struct {
 	CacheTTL time.Duration
 	// CacheMaxEntries sets the max LRU cache entries. Defaults to DefaultCacheMaxEntries (1000).
 	CacheMaxEntries int
+	// IdleConnTimeout caps how long idle keep-alive connections are pooled before
+	// being closed. Defaults to DefaultIdleConnTimeout. Set to a negative value to use the
+	// client-go default.
+	IdleConnTimeout time.Duration
 }
 
 // Setting represents the parsed spec of a Setting resource.
@@ -230,6 +240,7 @@ func New(config Config) (Service, error) {
 	if config.CacheTTL >= 0 {
 		cache = expirable.NewLRU[string, []*Setting](cacheMaxEntries, nil, cacheTTL)
 		fetchMutexes = expirable.NewLRU[string, *sync.Mutex](cacheMaxEntries, nil, 2*cacheTTL)
+		metrics.cacheMaxSize.Set(float64(cacheMaxEntries))
 	}
 
 	return &remoteSettingService{
@@ -333,7 +344,9 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 	}
 
 	if s.cache != nil {
-		s.cache.Add(cacheKey, allSettings)
+		if evicted := s.cache.Add(cacheKey, allSettings); evicted {
+			s.metrics.cacheEvictionTotal.Inc()
+		}
 	}
 
 	return allSettings, nil
@@ -526,9 +539,17 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		}
 	}
 
+	idleConnTimeout := DefaultIdleConnTimeout
+	if config.IdleConnTimeout != 0 {
+		idleConnTimeout = config.IdleConnTimeout
+	}
+
 	// Wrap with tracing middleware to propagate trace context to all outbound requests
 	tracingMiddleware := httpclientprovider.TracingMiddleware(logging.NewNopLogger(), tracer)
 	wrapTransport := func(rt http.RoundTripper) http.RoundTripper {
+		if baseTransport, ok := rt.(*http.Transport); ok && idleConnTimeout > 0 {
+			baseTransport.IdleConnTimeout = idleConnTimeout
+		}
 		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
 		return authTransport(tracingRT)
 	}
@@ -668,6 +689,27 @@ func initMetrics(serviceName string) clientMetrics {
 			Help:        "Total number of List cache misses",
 			ConstLabels: constLabels,
 		}),
+		cacheEvictionTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_eviction_total",
+			Help:        "Total number of List cache entries evicted due to capacity (CacheMaxEntries) being exceeded; use to tune cache size",
+			ConstLabels: constLabels,
+		}),
+		cacheSize: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_size",
+			Help:        "Current number of entries in the List cache; compare against CacheMaxEntries to tune cache size",
+			ConstLabels: constLabels,
+		}),
+		cacheMaxSize: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_max_size",
+			Help:        "Configured maximum number of entries in the List cache (CacheMaxEntries); compare against cache_size to tune cache size",
+			ConstLabels: constLabels,
+		}),
 	}
 	return metrics
 }
@@ -678,6 +720,9 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.rateLimiterThrottleTotal.Describe(descs)
 	s.metrics.cacheHitTotal.Describe(descs)
 	s.metrics.cacheMissTotal.Describe(descs)
+	s.metrics.cacheEvictionTotal.Describe(descs)
+	s.metrics.cacheSize.Describe(descs)
+	s.metrics.cacheMaxSize.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -686,4 +731,10 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
 	s.metrics.cacheHitTotal.Collect(metrics)
 	s.metrics.cacheMissTotal.Collect(metrics)
+	s.metrics.cacheEvictionTotal.Collect(metrics)
+	if s.cache != nil {
+		s.metrics.cacheSize.Set(float64(s.cache.Len()))
+	}
+	s.metrics.cacheSize.Collect(metrics)
+	s.metrics.cacheMaxSize.Collect(metrics)
 }

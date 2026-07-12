@@ -8,6 +8,13 @@ import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { LANGUAGES } from './languages';
 import { type ResourceLoader, type Resources, type TFunction, type TransProps, type TransType } from './types';
 
+// FIXME: No longer needed in i18next@26: https://www.locize.com/docs/general-questions/why-was-there-a-support-notice-for-i18next
+// Set __i18next_supportNoticeShown to true to avoid the console.info message promoting Locize.
+if (typeof globalThis !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  (globalThis as Record<string, unknown>).__i18next_supportNoticeShown = true;
+}
+
 let tFunc: I18NextTFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 

@@ -48,7 +48,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -108,7 +108,7 @@ Content-Length: 1840
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
 ## Get a report
@@ -129,7 +129,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -192,7 +192,7 @@ Content-Length: 940
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -215,7 +215,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"name": "Report 4",
@@ -282,7 +282,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 | Field name                     | Data type | Description                                                                                                                                                   |
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard [UID](../dashboard#identifier-id-vs-unique-identifier-uid).                                                                                         |
+| dashboard.uid                  | string    | Dashboard [UID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/).                |
 | timeRange.from                 | string    | Dashboard time range from.                                                                                                                                    |
 | timeRange.to                   | string    | Dashboard time range to.                                                                                                                                      |
 | reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used. |
@@ -327,7 +327,7 @@ See [JSON body schema](#config-json-body-schema) for fields description.
 GET /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"name": "Updated Report",
@@ -409,7 +409,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 DELETE /api/reports/6 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -452,7 +452,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports/email HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "id":"3",
@@ -507,7 +507,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -557,7 +557,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"branding": {
@@ -621,7 +621,7 @@ See [JSON body schema](#config-json-body-schema) for fields description.
 POST /api/reports/test-email HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {{
 	"name": "Report 4",

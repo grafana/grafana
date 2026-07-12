@@ -131,6 +131,65 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardVizConfigKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_DashboardVizConfigKind(ref),
 		DashboardVizConfigSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_DashboardVizConfigSpec(ref),
 		DashboardWithAccessInfo{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_DashboardWithAccessInfo(ref),
+		Notebook{}.OpenAPIModelName():                                                            schema_pkg_apis_dashboard_v2beta1_Notebook(ref),
+		NotebookAction{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2beta1_NotebookAction(ref),
+		NotebookActionVariable{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookActionVariable(ref),
+		NotebookCellKind{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref),
+		NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                       schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanelKind(ref),
+		NotebookCellSpec{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.NotebookClient":    schema_pkg_apis_dashboard_v2beta1_NotebookClient(ref),
+		NotebookCodeCellContentKind{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentKind(ref),
+		NotebookCodeCellContentSpec{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentSpec(ref),
+		NotebookDataLink{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookDataLink(ref),
+		NotebookDataQueryKind{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_NotebookDataQueryKind(ref),
+		NotebookDataTransformerConfig{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_NotebookDataTransformerConfig(ref),
+		NotebookDynamicConfigValue{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookDynamicConfigValue(ref),
+		NotebookElementReference{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookElementReference(ref),
+		NotebookFetchOptions{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2beta1_NotebookFetchOptions(ref),
+		NotebookFieldColor{}.OpenAPIModelName():                                                  schema_pkg_apis_dashboard_v2beta1_NotebookFieldColor(ref),
+		NotebookFieldConfig{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfig(ref),
+		NotebookFieldConfigSource{}.OpenAPIModelName():                                           schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfigSource(ref),
+		NotebookInfinityOptions{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookInfinityOptions(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.NotebookJSONCodec": schema_pkg_apis_dashboard_v2beta1_NotebookJSONCodec(ref),
+		NotebookLibraryPanelKind{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelKind(ref),
+		NotebookLibraryPanelKindSpec{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelKindSpec(ref),
+		NotebookLibraryPanelRef{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelRef(ref),
+		NotebookList{}.OpenAPIModelName():                                                        schema_pkg_apis_dashboard_v2beta1_NotebookList(ref),
+		NotebookMarkdownCellContentKind{}.OpenAPIModelName():                                     schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKind(ref),
+		NotebookMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName():                schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKindOrCodeCellContentKind(ref),
+		NotebookMarkdownCellContentSpec{}.OpenAPIModelName():                                     schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentSpec(ref),
+		NotebookMatcherConfig{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_NotebookMatcherConfig(ref),
+		NotebookNotebookLayoutItemKind{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemKind(ref),
+		NotebookNotebookLayoutItemSpec{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref),
+		NotebookNotebookLayoutKind{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutKind(ref),
+		NotebookNotebookLayoutSpec{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutSpec(ref),
+		NotebookPanelKind{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_NotebookPanelKind(ref),
+		NotebookPanelQueryKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookPanelQueryKind(ref),
+		NotebookPanelQuerySpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookPanelQuerySpec(ref),
+		NotebookPanelSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref),
+		NotebookQueryGroupKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupKind(ref),
+		NotebookQueryGroupSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupSpec(ref),
+		NotebookQueryOptionsSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref),
+		NotebookRangeMap{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookRangeMap(ref),
+		NotebookRegexMap{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookRegexMap(ref),
+		NotebookSpec{}.OpenAPIModelName():                                                        schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref),
+		NotebookSpecialValueMap{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookSpecialValueMap(ref),
+		NotebookThreshold{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_NotebookThreshold(ref),
+		NotebookThresholdsConfig{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookThresholdsConfig(ref),
+		NotebookTimeRangeOption{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookTimeRangeOption(ref),
+		NotebookTimeSettingsSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref),
+		NotebookTransformationKind{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref),
+		NotebookV2beta1ActionStyle{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1ActionStyle(ref),
+		NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1DataQueryKindDatasource(ref),
+		NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName():                           schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1FieldConfigSourceOverrides(ref),
+		NotebookV2beta1RangeMapOptions{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1RangeMapOptions(ref),
+		NotebookV2beta1RegexMapOptions{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1RegexMapOptions(ref),
+		NotebookV2beta1SpecialValueMapOptions{}.OpenAPIModelName():                               schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1SpecialValueMapOptions(ref),
+		NotebookValueMap{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookValueMap(ref),
+		NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap{}.OpenAPIModelName():               schema_pkg_apis_dashboard_v2beta1_NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref),
+		NotebookValueMappingResult{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookValueMappingResult(ref),
+		NotebookVizConfigKind{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_NotebookVizConfigKind(ref),
+		NotebookVizConfigSpec{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_NotebookVizConfigSpec(ref),
 		Variable{}.OpenAPIModelName():                                                            schema_pkg_apis_dashboard_v2beta1_Variable(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.VariableClient":    schema_pkg_apis_dashboard_v2beta1_VariableClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.VariableJSONCodec": schema_pkg_apis_dashboard_v2beta1_VariableJSONCodec(ref),
@@ -2199,6 +2258,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldColor(ref common.ReferenceC
 					"fixedColor": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The fixed color value for fixed or shades color modes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -5414,6 +5480,2371 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardWithAccessInfo(ref common.Refere
 		},
 		Dependencies: []string{
 			DashboardAccess{}.OpenAPIModelName(), DashboardSpec{}.OpenAPIModelName(), DashboardStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_Notebook(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the Notebook",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookAction(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"fetch": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookFetchOptions{}.OpenAPIModelName()),
+						},
+					},
+					"infinity": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookInfinityOptions{}.OpenAPIModelName()),
+						},
+					},
+					"confirmation": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"oneClick": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"variables": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookActionVariable{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"style": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookV2beta1ActionStyle{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"type", "title"},
+			},
+		},
+		Dependencies: []string{
+			NotebookActionVariable{}.OpenAPIModelName(), NotebookFetchOptions{}.OpenAPIModelName(), NotebookInfinityOptions{}.OpenAPIModelName(), NotebookV2beta1ActionStyle{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookActionVariable(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"key", "name", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookCellSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookCellSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"CellKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookCellKind{}.OpenAPIModelName()),
+						},
+					},
+					"PanelKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookPanelKind{}.OpenAPIModelName()),
+						},
+					},
+					"LibraryPanelKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookLibraryPanelKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			NotebookCellKind{}.OpenAPIModelName(), NotebookLibraryPanelKind{}.OpenAPIModelName(), NotebookPanelKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookCellSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"content"},
+			},
+		},
+		Dependencies: []string{
+			NotebookMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookCodeCellContentSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookCodeCellContentSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"language": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"highlight": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: 0,
+										Type:    []string{"integer"},
+										Format:  "int64",
+									},
+								},
+							},
+						},
+					},
+					"annotation": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"language", "code"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookDataLink(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"targetBlank": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"title", "url"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookDataQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
+							Ref:         ref(NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName()),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"kind", "group", "version", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookDataTransformerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of transformer",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled transformations are skipped",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional frame matcher. When missing it will be applied to all results",
+							Ref:         ref(NotebookMatcherConfig{}.OpenAPIModelName()),
+						},
+					},
+					"topic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where to pull DataFrames from as input to transformation",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options to be passed to the transformer Valid options depend on the transformer id",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"id", "options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookMatcherConfig{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookDynamicConfigValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"object"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"id"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookElementReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"kind", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookFetchOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"method": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"queryParams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"method", "url"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookFieldColor(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Map a field to a color.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The main color scheme mode.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"fixedColor": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The fixed color value for fixed or shades color modes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"gradientColorTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The end color for the gradient color mode (smallest value). Only used when mode is gradient.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"seriesBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Some visualizations need to know how to assign a series color from by value color schemes.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"mode"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"displayName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The display value for this field.  This supports template variables blank is auto",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"displayNameFromDS": {
+						SchemaProps: spec.SchemaProps{
+							Description: "This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Human readable field metadata",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "An explicit path to the field in the datasource.  When the frame meta includes a path, This will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and may be used to update the results",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"writeable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True if data source can write a value to the path. Auth/authz are supported separately",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"filterable": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True if data source field supports ad-hoc filters",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"unit": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"decimals": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Specify the number of decimals Grafana includes in the rendered value. If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. For example 1.1234 will display as 1.12 and 100.456 will display as 100. To display all decimals, set the unit to `String`.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"min": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"max": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"mappings": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Convert input values into a display string",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"thresholds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Map numeric values to states",
+							Ref:         ref(NotebookThresholdsConfig{}.OpenAPIModelName()),
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel color configuration",
+							Ref:         ref(NotebookFieldColor{}.OpenAPIModelName()),
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The behavior when clicking on a result",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"actions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Define interactive HTTP requests that can be triggered from data visualizations.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookAction{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"noValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Alternative to empty string",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"custom": {
+						SchemaProps: spec.SchemaProps{
+							Description: "custom is specified by the FieldConfig field in panel plugin schemas.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"fieldMinMax": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Calculate min max per field",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"nullValueMode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How null values should be handled when calculating field stats \"null\" - Include null values, \"connected\" - Ignore nulls, \"null as zero\" - Treat nulls as zero",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			NotebookAction{}.OpenAPIModelName(), NotebookFieldColor{}.OpenAPIModelName(), NotebookThresholdsConfig{}.OpenAPIModelName(), NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfigSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a field. A field can represent a single time series or table column. Field options allow you to change how the data is displayed in your visualizations.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"defaults": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Defaults are the options applied to all fields.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookFieldConfig{}.OpenAPIModelName()),
+						},
+					},
+					"overrides": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides are the options applied to specific fields overriding the defaults.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"defaults", "overrides"},
+			},
+		},
+		Dependencies: []string{
+			NotebookFieldConfig{}.OpenAPIModelName(), NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookInfinityOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"method": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"body": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"queryParams": {
+						SchemaProps: spec.SchemaProps{
+							Description: "These are 2D arrays of strings, each representing a key-value pair We are defining them this way because we can't generate a go struct that that would have exactly two strings in each sub-array",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"datasourceUid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"headers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"method", "url", "datasourceUid"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookJSONCodec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "NotebookJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookLibraryPanelKindSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookLibraryPanelKindSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelKindSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Panel ID for the library panel in the dashboard",
+							Default:     0,
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Title for the library panel in the dashboard",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"libraryPanel": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookLibraryPanelRef{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"id", "title", "libraryPanel"},
+			},
+		},
+		Dependencies: []string{
+			NotebookLibraryPanelRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookLibraryPanelRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A library panel is a reusable panel that you can use in any dashboard. When you make a change to a library panel, that change propagates to all instances of where the panel is used. Library panels streamline reuse of panels across multiple dashboards.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Library panel name",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Library panel uid",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name", "uid"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(Notebook{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			Notebook{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookMarkdownCellContentSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookMarkdownCellContentSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKindOrCodeCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"MarkdownCellContentKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookMarkdownCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+					"CodeCellContentKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookCodeCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			NotebookCodeCellContentKind{}.OpenAPIModelName(), NotebookMarkdownCellContentKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"text"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookMatcherConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation. It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The matcher id. This is used to find the matcher implementation from registry.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Description: "If set, limits this matcher to fields of that type. If not set, \"series\" mode is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The matcher options. This is specific to the matcher implementation.",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"id"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookNotebookLayoutItemSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookNotebookLayoutItemSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"element": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookElementReference{}.OpenAPIModelName()),
+						},
+					},
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"collapsed": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"element", "source"},
+			},
+		},
+		Dependencies: []string{
+			NotebookElementReference{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookNotebookLayoutSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookNotebookLayoutSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cells": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookNotebookLayoutItemKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"cells"},
+			},
+		},
+		Dependencies: []string{
+			NotebookNotebookLayoutItemKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookPanelSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookPanelSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookPanelQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookPanelQuerySpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookPanelQuerySpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookPanelQuerySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"query": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookDataQueryKind{}.OpenAPIModelName()),
+						},
+					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"hidden": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"query", "refId", "hidden"},
+			},
+		},
+		Dependencies: []string{
+			NotebookDataQueryKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookDataLink{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookQueryGroupKind{}.OpenAPIModelName()),
+						},
+					},
+					"vizConfig": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookVizConfigKind{}.OpenAPIModelName()),
+						},
+					},
+					"transparent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+			},
+		},
+		Dependencies: []string{
+			NotebookDataLink{}.OpenAPIModelName(), NotebookQueryGroupKind{}.OpenAPIModelName(), NotebookVizConfigKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookQueryGroupSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookQueryGroupSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"queries": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookPanelQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"transformations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookTransformationKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"queryOptions": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookQueryOptionsSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"queries", "transformations", "queryOptions"},
+			},
+		},
+		Dependencies: []string{
+			NotebookPanelQueryKind{}.OpenAPIModelName(), NotebookQueryOptionsSpec{}.OpenAPIModelName(), NotebookTransformationKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"timeShift": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"queryCachingTTL": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"cacheTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"hideTimeOverride": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"timeCompare": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookRangeMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Range to match against and the result to apply when the value is within the range",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookV2beta1RangeMapOptions{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2beta1RangeMapOptions{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookRegexMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to match against and the result to apply when the value matches the regex",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookV2beta1RegexMapOptions{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2beta1RegexMapOptions{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"tags": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"timeSettings": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookTimeSettingsSpec{}.OpenAPIModelName()),
+						},
+					},
+					"elements": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"layout": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookNotebookLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"title", "tags", "timeSettings", "elements", "layout"},
+			},
+		},
+		Dependencies: []string{
+			NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), NotebookNotebookLayoutKind{}.OpenAPIModelName(), NotebookTimeSettingsSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookSpecialValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookV2beta1SpecialValueMapOptions{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2beta1SpecialValueMapOptions{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookThreshold(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value null means -Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"value", "color"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookThresholdsConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"mode": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"steps": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookThreshold{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"mode", "steps"},
+			},
+		},
+		Dependencies: []string{
+			NotebookThreshold{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookTimeRangeOption(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"display": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"display", "from", "to"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Time configuration It defines the default time config for the time picker, the refresh picker for the specific dashboard.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"timezone": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Timezone of dashboard. Accepted values are IANA TZDB zone ID or \"browser\" or \"utc\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Start time range for dashboard. Accepted values are relative time strings like \"now-6h\" or absolute time strings like \"2020-07-10T08:00:00.000Z\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Description: "End time range for dashboard. Accepted values are relative time strings like \"now-6h\" or absolute time strings like \"2020-07-10T08:00:00.000Z\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"autoRefresh": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Refresh rate of dashboard. Represented via interval string, e.g. \"5s\", \"1m\", \"1h\", \"1d\". v1: refresh",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"autoRefreshIntervals": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"quickRanges": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookTimeRangeOption{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"hideTimepicker": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether timepicker is visible or not. v1: timepicker.hidden",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"weekStart": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Day when the week starts. Expressed by the name of the day in lowercase, e.g. \"monday\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"fiscalYearStartMonth": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The month that the fiscal year starts on. 0 = January, 11 = December",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"nowDelay": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values. v1: timepicker.nowDelay",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"from", "to", "autoRefresh", "autoRefreshIntervals", "hideTimepicker", "fiscalYearStartMonth"},
+			},
+		},
+		Dependencies: []string{
+			NotebookTimeRangeOption{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The kind of a TransformationKind is the transformation ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookDataTransformerConfig{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookDataTransformerConfig{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1ActionStyle(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"backgroundColor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1DataQueryKindDatasource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1FieldConfigSourceOverrides(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"__systemRef": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Describes config override rules created when interacting with Grafana.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"matcher": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookMatcherConfig{}.OpenAPIModelName()),
+						},
+					},
+					"properties": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookDynamicConfigValue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"matcher", "properties"},
+			},
+		},
+		Dependencies: []string{
+			NotebookDynamicConfigValue{}.OpenAPIModelName(), NotebookMatcherConfig{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1RangeMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"from": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Min value of the range. It can be null which means -Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"to": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Max value of the range. It can be null which means +Infinity",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value is within the range",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookValueMappingResult{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"from", "to", "result"},
+			},
+		},
+		Dependencies: []string{
+			NotebookValueMappingResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1RegexMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pattern": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Regular expression to match against",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value matches the regex",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookValueMappingResult{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"pattern", "result"},
+			},
+		},
+		Dependencies: []string{
+			NotebookValueMappingResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1SpecialValueMapOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"match": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Special value to match against",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"result": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Config to apply when the value matches the special value",
+							Default:     map[string]interface{}{},
+							Ref:         ref(NotebookValueMappingResult{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"match", "result"},
+			},
+		},
+		Dependencies: []string{
+			NotebookValueMappingResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookValueMappingResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"type", "options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookValueMappingResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ValueMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookValueMap{}.OpenAPIModelName()),
+						},
+					},
+					"RangeMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookRangeMap{}.OpenAPIModelName()),
+						},
+					},
+					"RegexMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookRegexMap{}.OpenAPIModelName()),
+						},
+					},
+					"SpecialValueMap": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(NotebookSpecialValueMap{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			NotebookRangeMap{}.OpenAPIModelName(), NotebookRegexMap{}.OpenAPIModelName(), NotebookSpecialValueMap{}.OpenAPIModelName(), NotebookValueMap{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookValueMappingResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Result used as replacement with text and color when the value matches",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Text to display when the value matches",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"color": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Text to use when the value matches",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Icon to display when the value matches. Only specific visualizations.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"index": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Position in the mapping array. Only used internally.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookVizConfigKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The group is the plugin ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookVizConfigSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "group", "version", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookVizConfigSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookVizConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "--- Kinds ---",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"fieldConfig": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookFieldConfigSource{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"options", "fieldConfig"},
+			},
+		},
+		Dependencies: []string{
+			NotebookFieldConfigSource{}.OpenAPIModelName()},
 	}
 }
 
