@@ -35,6 +35,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -82,6 +83,20 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Len(t, cps, 2)
 		require.Equal(t, "grafana-default-email", cps[0].Name)
 		require.Equal(t, "slack receiver", cps[1].Name)
+	})
+
+	t.Run("service returns an empty list when the org has no AM config", func(t *testing.T) {
+		configStore := fakes.NewFakeAlertmanagerConfigStore("")
+		configStore.GetFn = func(_ context.Context, _ int64) (*models.AlertConfiguration, error) {
+			return nil, ngalertstore.ErrNoAlertmanagerConfiguration
+		}
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, configStore)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+
+		require.NoError(t, err)
+		require.NotNil(t, cps)
+		require.Empty(t, cps)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {

@@ -116,6 +116,9 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	}
 
 	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
+	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return []apimodels.EmbeddedContactPoint{}, nil
+	}
 	if err != nil {
 		return nil, convertRecSvcErr(err)
 	}
