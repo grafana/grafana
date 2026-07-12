@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	aztypes "github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -63,45 +64,21 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 		"/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1": {},
 	})
 
-	t.Run("produces one frame per timeseries", func(t *testing.T) {
-		rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1",
+	t.Run("produces a correctly shaped frame", func(t *testing.T) {
+		rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/myVM",
 			"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
 
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.NoError(t, err)
-		require.Len(t, frames, 1)
-	})
-
-	t.Run("frame has correct RefID", func(t *testing.T) {
-		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
-		require.NoError(t, err)
+		require.Len(t, frames, 1, "one frame per timeseries")
 		assert.Equal(t, "A", frames[0].RefID)
-	})
-
-	t.Run("frame has time and value fields", func(t *testing.T) {
-		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 55.5)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
-		require.NoError(t, err)
 		require.Len(t, frames[0].Fields, 2)
 		assert.Equal(t, data.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
 		assert.Equal(t, "Percentage CPU", frames[0].Fields[1].Name)
-	})
-
-	t.Run("resourceName label is set from last path segment", func(t *testing.T) {
-		rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/myVM",
-			"ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
-		require.NoError(t, err)
+		// resourceName label comes from the last resource ID path segment.
 		assert.Equal(t, "myVM", frames[0].Fields[1].Labels["resourceName"])
-	})
-
-	t.Run("unit is mapped to Grafana unit", func(t *testing.T) {
-		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "Success", 1.0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
-		require.NoError(t, err)
 		require.NotNil(t, frames[0].Fields[1].Config)
-		assert.Equal(t, "percent", frames[0].Fields[1].Config.Unit)
+		assert.Equal(t, "percent", frames[0].Fields[1].Config.Unit, "Azure unit mapped to Grafana unit")
 	})
 
 	t.Run("aggregation selects correct data point field", func(t *testing.T) {
@@ -125,7 +102,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				ErrorCode: "Success",
 			}},
 		}
-		frames, err := framesFromBatchResponseValue(rv, qMax, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, qMax, "https://portal.azure.com", "sub-123")
 		require.NoError(t, err)
 		val, ok := frames[0].Fields[1].ConcreteAt(0)
 		require.True(t, ok)
@@ -134,7 +111,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 
 	t.Run("returns error for non-Success errorCode", func(t *testing.T) {
 		rv := makeResourceValue("/sub/rg/vm1", "ns", "westus2", "ResourceNotFound", 0)
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "ResourceNotFound")
 		assert.Empty(t, frames)
@@ -162,7 +139,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				},
 			},
 		}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "Disk Read Bytes")
 		assert.Len(t, frames, 1, "frame from successful metric should be preserved")
@@ -171,7 +148,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 
 	t.Run("returns nil frames for empty value array", func(t *testing.T) {
 		rv := batchResponseValue{ResourceID: "/sub/rg/vm1"}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.NoError(t, err)
 		assert.Empty(t, frames)
 	})
@@ -193,7 +170,7 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 				ErrorCode: "Success",
 			}},
 		}
-		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.NoError(t, err)
 		assert.Equal(t, "myvm", frames[0].Fields[1].Labels["VMName"])
 	})
@@ -211,7 +188,7 @@ func TestFramesFromBatchResponseValueGrafanaSql(t *testing.T) {
 	rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/myVM",
 		"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
 
-	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 	require.NoError(t, err)
 	require.Len(t, frames, 1)
 
@@ -250,7 +227,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -265,7 +242,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 1)
 	})
 
@@ -279,7 +256,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
 		assert.Empty(t, frames)
 	})
 
@@ -297,7 +274,7 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		frames, _ := parseBatchResponse(result, "https://portal.azure.com")
+		frames, _ := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
 		assert.Len(t, framesForRefID(frames, "A"), 2)
 	})
 
@@ -310,8 +287,54 @@ func TestParseBatchResponse(t *testing.T) {
 				},
 			},
 		}
-		_, err := parseBatchResponse(result, "https://portal.azure.com")
+		_, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
 		assert.Error(t, err)
+	})
+
+	t.Run("a resource shared by multiple queries produces frames for every owner", func(t *testing.T) {
+		// Regression: the batch group key excludes RefID, so two queries with
+		// identical parameters (e.g. a duplicated panel query) share a batch and
+		// a deduplicated resource ID. Previously the resource->query lookup kept
+		// only the last owner, so the other refID silently received no frames.
+		qA := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{resourceID: {}})
+		qB := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{resourceID: {}})
+
+		result := batchResult{
+			Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qA, qB}},
+			Response: &batchResponse{
+				Values: []batchResponseValue{
+					makeResourceValue(resourceID, "ns", "westus2", "Success", 1.0),
+				},
+			},
+		}
+		frames, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		require.NoError(t, err)
+		assert.Len(t, framesForRefID(frames, "A"), 1)
+		assert.Len(t, framesForRefID(frames, "B"), 1)
+	})
+
+	t.Run("overlapping resources route each owner its own frames", func(t *testing.T) {
+		id1 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+		id2 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm2"
+		id3 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm3"
+		qA := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{id1: {}, id2: {}})
+		qB := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{id2: {}, id3: {}})
+
+		result := batchResult{
+			Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qA, qB}},
+			Response: &batchResponse{
+				Values: []batchResponseValue{
+					makeResourceValue(id1, "ns", "westus2", "Success", 1.0),
+					makeResourceValue(id2, "ns", "westus2", "Success", 2.0),
+					makeResourceValue(id3, "ns", "westus2", "Success", 3.0),
+				},
+			},
+		}
+		frames, err := parseBatchResponse(result, "https://portal.azure.com", "sub-123", log.DefaultLogger)
+		require.NoError(t, err)
+		// A owns vm1+vm2, B owns vm2+vm3; the shared vm2 must reach both.
+		assert.Len(t, framesForRefID(frames, "A"), 2)
+		assert.Len(t, framesForRefID(frames, "B"), 2)
 	})
 }
 
@@ -328,11 +351,31 @@ func TestFramesFromBatchResponseValueAlias(t *testing.T) {
 	rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1",
 		"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
 
-	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 	require.NoError(t, err)
 	require.Len(t, frames, 1)
 	require.NotNil(t, frames[0].Fields[1].Config)
 	require.Equal(t, "microsoft.compute/virtualmachines vm1 Percentage CPU", frames[0].Fields[1].Config.DisplayName)
+}
+
+// TestFramesFromBatchResponseValueSubscriptionAlias is a regression test: the
+// {{subscription}} legend placeholder must render the resolved subscription
+// display name (as on the legacy ARM path), not the raw subscription GUID.
+func TestFramesFromBatchResponseValueSubscriptionAlias(t *testing.T) {
+	lowerID := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+	q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
+		lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+	})
+	q.Alias = "{{subscription}}"
+
+	rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1",
+		"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
+
+	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "My Subscription")
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.NotNil(t, frames[0].Fields[1].Config)
+	require.Equal(t, "My Subscription", frames[0].Fields[1].Config.DisplayName)
 }
 
 // TestParseResponseLegacyBatchEquivalence is the key guard for the shared-builder
@@ -371,7 +414,7 @@ func TestParseResponseLegacyBatchEquivalence(t *testing.T) {
 		ds := &AzureMonitorDatasource{}
 		legacy, err := ds.parseResponse(arm, q, "https://portal.azure.com", q.Subscription)
 		require.NoError(t, err)
-		batch, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		batch, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com", "sub-123")
 		require.NoError(t, err)
 		return legacy, batch
 	}

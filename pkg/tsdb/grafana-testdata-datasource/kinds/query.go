@@ -56,6 +56,7 @@ const (
 	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeErrorWithSource              TestDataQueryType = "error_with_source"
+	TestDataQueryTypeErrorsAndNotices             TestDataQueryType = "errors_and_notices"
 	TestDataQueryTypeFlakyQuery                   TestDataQueryType = "flaky_query"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
@@ -122,6 +123,10 @@ type TestDataQuery struct {
 	ErrorProbability float64 `json:"errorProbability,omitempty"`
 	ErrorMessage     string  `json:"errorMessage,omitempty"`
 	ErrorStatusCode  int     `json:"errorStatusCode,omitempty"`
+
+	// Flaky query scenario: base delay (Go duration string) and jitter percentage (0-100)
+	QueryDelay            string  `json:"queryDelay,omitempty"`
+	QueryDelayVariability float64 `json:"queryDelayVariability,omitempty"`
 
 	Nodes     *NodesQuery      `json:"nodes,omitempty"`
 	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`

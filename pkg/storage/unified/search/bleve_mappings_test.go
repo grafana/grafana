@@ -19,7 +19,7 @@ import (
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",
@@ -56,12 +56,14 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 19, len(doc.Fields))
+	// created and updated are int64 standard fields mapped as numbers, so they
+	// are indexed alongside the string standard fields.
+	require.Equal(t, 21, len(doc.Fields))
 	require.False(t, doc.HasComposite(), "_all composite field should be disabled")
 }
 
 func TestTermVectorsAndFreqNorm(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	data := resource.IndexableDocument{
@@ -133,8 +135,44 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	}
 }
 
+// TestStandardCreatedUpdatedAreNumeric guards that the int64 standard fields
+// created and updated are stored as numbers and returned on retrieve: with a
+// keyword mapping bleve dropped the numeric value entirely. They are
+// retrieve-only (store, not index), so they are not queryable.
+func TestStandardCreatedUpdatedAreNumeric(t *testing.T) {
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+
+	idx, err := bleve.NewMemOnly(mappings)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, idx.Close()) })
+
+	const created, updated = int64(1700000000123), int64(1700000009456)
+	doc := resource.IndexableDocument{Title: "a", Created: created, Updated: updated}
+	doc.UpdateCopyFields()
+	require.NoError(t, idx.Index("a", doc))
+
+	// Retrieve: both come back as float64 with the exact millis value.
+	req := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
+	req.Fields = []string{"created", "updated"}
+	res, err := idx.Search(req)
+	require.NoError(t, err)
+	require.Len(t, res.Hits, 1)
+	assert.Equal(t, float64(created), res.Hits[0].Fields["created"])
+	assert.Equal(t, float64(updated), res.Hits[0].Fields["updated"])
+
+	// Retrieve-only: the field is stored but not indexed, so it is not
+	// queryable (a numeric range query does not match).
+	lo, hi := float64(created-1), float64(created+1)
+	rangeQuery := bleve.NewNumericRangeQuery(&lo, &hi)
+	rangeQuery.SetField("created")
+	res, err = idx.Search(bleve.NewSearchRequest(rangeQuery))
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), res.Total)
+}
+
 func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil, nil)
+	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
 	idx, err := bleve.NewUsing(t.TempDir(), mappings, bleve.Config.DefaultIndexType, bleve.Config.DefaultKVStore, nil)
@@ -202,7 +240,7 @@ func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
 
 func TestDocValuesConfiguration(t *testing.T) {
 	t.Run("DocValuesDynamic is disabled", func(t *testing.T) {
-		mappings, err := search.GetBleveMappings(nil, nil)
+		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
 		impl, ok := mappings.(*mapping.IndexMappingImpl)
@@ -210,8 +248,8 @@ func TestDocValuesConfiguration(t *testing.T) {
 		assert.False(t, impl.DocValuesDynamic, "DocValuesDynamic should be false to prevent dynamic fields from getting DocValues")
 	})
 
-	t.Run("only folder and title_phrase have DocValues", func(t *testing.T) {
-		mappings, err := search.GetBleveMappings(nil, nil)
+	t.Run("only sortable fields have DocValues", func(t *testing.T) {
+		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
 		data := resource.IndexableDocument{
@@ -233,6 +271,7 @@ func TestDocValuesConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		fieldsWithDocValues := map[string]bool{
+			resource.SEARCH_FIELD_NAME:         true,
 			resource.SEARCH_FIELD_FOLDER:       true,
 			resource.SEARCH_FIELD_TITLE_PHRASE: true,
 		}

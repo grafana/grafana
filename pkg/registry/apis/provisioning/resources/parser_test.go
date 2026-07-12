@@ -202,6 +202,7 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.True(t, parsed.FolderScoped, "folder-capable kinds must be marked folder-scoped")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
 			"dashboards must continue to get a folder annotation")
 		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder])
@@ -219,6 +220,8 @@ spec:
 `),
 		})
 		require.NoError(t, err)
+		require.False(t, parsed.FolderScoped,
+			"org-scoped kinds must be marked not folder-scoped so the dual writer skips folder stamping")
 		require.Empty(t, parsed.Meta.GetFolder(),
 			"org-scoped resources must not have a folder annotation stamped on them")
 		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]

@@ -7,9 +7,17 @@ import { type RepositoryFormData } from '../types';
 
 import { WebhookSection } from './WebhookSection';
 
-function Wrapper() {
-  const { register } = useForm<RepositoryFormData>();
-  return <WebhookSection register={register} name="webhook.baseUrl" />;
+function Wrapper({ connectionWebhookDisabled }: { connectionWebhookDisabled?: boolean }) {
+  const { register, control } = useForm<RepositoryFormData>();
+  return (
+    <WebhookSection
+      register={register}
+      control={control}
+      name="webhook.baseUrl"
+      disabledName="webhook.disabled"
+      connectionWebhookDisabled={connectionWebhookDisabled}
+    />
+  );
 }
 
 describe('WebhookSection', () => {
@@ -30,6 +38,18 @@ describe('WebhookSection', () => {
     expect(screen.queryByText('Webhook URL')).not.toBeInTheDocument();
   });
 
+  it('renders the disable webhook checkbox under webhook.disabled when expanded', async () => {
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook options'));
+
+    expect(screen.getByText('Disable webhook integration')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toHaveAttribute(
+      'name',
+      'webhook.disabled'
+    );
+  });
+
   it('registers the webhook URL input under webhook.baseUrl when expanded', async () => {
     const { user } = render(<Wrapper />);
 
@@ -39,6 +59,15 @@ describe('WebhookSection', () => {
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'webhook.baseUrl');
   });
 
+  it('disables the webhook URL input when the disable checkbox is checked', async () => {
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook options'));
+    await user.click(screen.getByRole('checkbox', { name: /disable webhook integration/i }));
+
+    expect(screen.getByRole('textbox')).toBeDisabled();
+  });
+
   it('shows the learn more link on private instances', async () => {
     config.appUrl = 'http://localhost:3000/';
     const { user } = render(<Wrapper />);
@@ -46,6 +75,35 @@ describe('WebhookSection', () => {
     await user.click(screen.getByText('Webhook options'));
 
     expect(screen.getByRole('link', { name: 'Learn more' })).toBeInTheDocument();
+  });
+
+  describe('connectionWebhookDisabled', () => {
+    it('disables the checkbox when connectionWebhookDisabled is true', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={true} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeDisabled();
+    });
+
+    it('disables the URL input when connectionWebhookDisabled is true', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={true} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('textbox')).toBeDisabled();
+    });
+
+    it('enables the checkbox and shows the normal description when connectionWebhookDisabled is false', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={false} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeDisabled();
+      expect(
+        screen.getByText(/when checked, grafana will not register or receive webhook events/i)
+      ).toBeInTheDocument();
+    });
   });
 
   it('hides the learn more link on public instances', async () => {

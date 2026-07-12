@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
@@ -123,7 +124,11 @@ func (e *AzureMonitorDatasource) buildFallbackSubRequests(batch Batch, originalB
 		if !ok {
 			continue
 		}
-		perResourceQueries, err := fanOutByResource(original)
+		var model dataquery.AzureMonitorQuery
+		if err := json.Unmarshal(original.JSON, &model); err != nil {
+			return nil, nil, err
+		}
+		perResourceQueries, err := fanOutByResource(original, model)
 		if err != nil {
 			return nil, nil, err
 		}

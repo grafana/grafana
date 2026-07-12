@@ -47,6 +47,15 @@ func TestDimensionFiltersMigration(t *testing.T) {
 			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &additionalTestFilter, Filters: []string{testFilter}}},
 			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{testFilter, additionalTestFilter}}},
 		},
+		{
+			// Regression: neither the deprecated Filter nor Filters is set. This
+			// arises in the batch flow when an empty Filters slice is dropped by
+			// omitempty during the cloneQueryWithResources JSON round-trip, and
+			// previously caused a nil-pointer dereference panic.
+			name:                     "does not panic when neither filter nor filters is set",
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq")}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq")}},
+		},
 	}
 
 	for _, tt := range tests {

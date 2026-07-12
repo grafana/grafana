@@ -40,15 +40,20 @@ type batchRequestBody struct {
 // at a time) and returns one batchResult per input batch, preserving input order.
 func executeBatchRequests(ctx context.Context, batches []Batch, cli *http.Client) []batchResult {
 	results := make([]batchResult, len(batches))
+	// sem is a counting semaphore: a buffered channel with maxConcurrentBatches
+	// slots. Sending acquires a slot (blocking once full); receiving releases one.
+	// This caps how many requests run at once without limiting the total.
 	sem := make(chan struct{}, maxConcurrentBatches)
 	var wg sync.WaitGroup
 	for i, batch := range batches {
 		wg.Add(1)
-		sem <- struct{}{}
+		sem <- struct{}{} // acquire a slot; blocks here if maxConcurrentBatches are already in flight
 		go func(idx int, b Batch) {
 			defer wg.Done()
-			defer func() { <-sem }()
+			defer func() { <-sem }() // release the slot when this goroutine finishes
 			resp, status, err := executeBatchRequest(ctx, b, cli)
+			// Write to results[idx] (not append) so output order matches input order;
+			// each goroutine owns a distinct index, so this is safe without a lock.
 			results[idx] = batchResult{Batch: b, Response: resp, StatusCode: status, Err: err}
 		}(i, batch)
 	}
@@ -86,8 +91,7 @@ func buildBatchURL(batch Batch) string {
 	// automatically by the batch API via the resourceids body parameter; adding
 	// Microsoft.ResourceId here causes a 400 "invalid at Resource level" error.
 	if batch.Key.DimFilter != "" {
-		// Batch API uses "filter" without the "$" prefix used by the ARM API.
-		params.Set("filter", strings.TrimPrefix(batch.Key.DimFilter, "$"))
+		params.Set("filter", batch.Key.DimFilter)
 	}
 	if batch.Key.Top != "" {
 		params.Set("top", batch.Key.Top)

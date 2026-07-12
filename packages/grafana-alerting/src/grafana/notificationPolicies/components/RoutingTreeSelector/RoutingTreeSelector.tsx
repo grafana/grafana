@@ -5,8 +5,8 @@ import { t } from '@grafana/i18n';
 import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
-import { USER_DEFINED_TREE_NAME } from '../../consts';
 import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
+import { isDefaultRoutingTreeName } from '../../routingTrees';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
@@ -67,7 +67,7 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
     const opts: Array<ComboboxOption<string>> = routingTrees.items
       .map((tree) => {
         const name = tree.metadata.name ?? '';
-        const isDefault = name === USER_DEFINED_TREE_NAME;
+        const isDefault = isDefaultRoutingTreeName(name);
 
         lookup.set(name, tree);
 
@@ -86,10 +86,10 @@ function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
       })
       .sort((a, b) => {
         // Default policy always first
-        if (a.value === USER_DEFINED_TREE_NAME) {
+        if (isDefaultRoutingTreeName(a.value)) {
           return -1;
         }
-        if (b.value === USER_DEFINED_TREE_NAME) {
+        if (isDefaultRoutingTreeName(b.value)) {
           return 1;
         }
         return collator.compare(a.label, b.label);

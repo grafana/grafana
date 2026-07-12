@@ -862,11 +862,21 @@ func TestBuildQueriesForBatch(t *testing.T) {
 		return backend.DataQuery{RefID: "A", JSON: raw, TimeRange: backend.TimeRange{From: time.Now(), To: time.Now().Add(time.Hour)}}
 	}
 
+	// buildBatch decodes the query once (as the executor does) and calls
+	// buildQueriesForBatch with the parsed model.
+	buildBatch := func(q backend.DataQuery) ([]*types.AzureMonitorQuery, error) {
+		var m dataquery.AzureMonitorQuery
+		if err := json.Unmarshal(q.JSON, &m); err != nil {
+			return nil, err
+		}
+		return ds.buildQueriesForBatch(q, m, dsInfo)
+	}
+
 	t.Run("single resource produces one query", func(t *testing.T) {
 		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		assert.Len(t, queries, 1)
 	})
@@ -876,7 +886,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		assert.Len(t, queries, 1)
 		assert.Len(t, queries[0].Resources, 2)
@@ -887,7 +897,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
 			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		require.Len(t, queries, 2)
 		assert.Equal(t, "sub1", queries[0].Subscription)
@@ -899,7 +909,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		require.Len(t, queries, 2)
 		assert.Equal(t, "eastus", queries[0].Params.Get("region"))
@@ -912,7 +922,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
 			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm3"), Region: strPtr("eastus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		require.Len(t, queries, 2)
 		// sub1/eastus group has 2 resources, sub2/westus has 1
@@ -925,7 +935,7 @@ func TestBuildQueriesForBatch(t *testing.T) {
 			{ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
 			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
 		})
-		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		queries, err := buildBatch(q)
 		require.NoError(t, err)
 		require.Len(t, queries, 2)
 		assert.Equal(t, "sub1", queries[0].Subscription)
@@ -1012,9 +1022,14 @@ func TestRetrieveSubscriptionDetails_KeysDisambiguate(t *testing.T) {
 		hits.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		subID := strings.TrimPrefix(r.URL.Path, "/subscriptions/")
-		resp, _ := json.Marshal(map[string]string{"displayName": "name-for-" + subID})
-		_, _ = w.Write(resp)
+		// Switch on the subscription in the path but only ever write fixed
+		// bodies, so request input never flows into the response writer (gosec G705).
+		switch strings.TrimPrefix(r.URL.Path, "/subscriptions/") {
+		case "sub-a":
+			_, _ = fmt.Fprint(w, `{"displayName":"name-for-sub-a"}`)
+		case "sub-b":
+			_, _ = fmt.Fprint(w, `{"displayName":"name-for-sub-b"}`)
+		}
 	}))
 	t.Cleanup(srv.Close)
 

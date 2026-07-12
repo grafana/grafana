@@ -41,72 +41,40 @@ func TestGroupQueriesForBatch(t *testing.T) {
 		assert.Len(t, groups[0].Queries, 1)
 	})
 
-	t.Run("two queries with same parameters produce one group", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		require.Len(t, groups, 1)
-		assert.Len(t, groups[0].Queries, 2)
-	})
-
-	t.Run("queries with different regions produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "eastus", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different subscriptions produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub2", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different metric names produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Available Memory Bytes", "PT1M", "Average", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different namespaces produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Storage/storageAccounts", "Transactions", "PT1M", "Average", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different time ranges produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later.Add(time.Hour), nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different aggregations produce separate groups", func(t *testing.T) {
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Maximum", now, later, nil, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with different dimension filters produce separate groups", func(t *testing.T) {
-		dim1 := []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}}}
-		dim2 := []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm2"}}}
-		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim1, nil)
-		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim2, nil)
-		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
-		assert.Len(t, groups, 2)
-	})
-
-	t.Run("queries with same dimension filters are grouped together", func(t *testing.T) {
+	t.Run("queries with identical group keys share one group", func(t *testing.T) {
 		dim := []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm1"}}}
 		q1 := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim, nil)
 		q2 := makeQuery("B", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, dim, nil)
 		groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
 		require.Len(t, groups, 1)
 		assert.Len(t, groups[0].Queries, 2)
+	})
+
+	t.Run("queries differing in any group key field produce separate groups", func(t *testing.T) {
+		base := func(refID string) *types.AzureMonitorQuery {
+			return makeQuery(refID, "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil, nil)
+		}
+		tests := []struct {
+			field  string
+			modify func(q *types.AzureMonitorQuery)
+		}{
+			{"region", func(q *types.AzureMonitorQuery) { q.Params.Set("region", "eastus") }},
+			{"subscription", func(q *types.AzureMonitorQuery) { q.Subscription = "sub2" }},
+			{"metric names", func(q *types.AzureMonitorQuery) { q.Params.Set("metricnames", "Available Memory Bytes") }},
+			{"namespace", func(q *types.AzureMonitorQuery) { q.Params.Set("metricnamespace", "Microsoft.Storage/storageAccounts") }},
+			{"time range", func(q *types.AzureMonitorQuery) { q.TimeRange.To = later.Add(time.Hour) }},
+			{"aggregation", func(q *types.AzureMonitorQuery) { q.Params.Set("aggregation", "Maximum") }},
+			{"dimension filters", func(q *types.AzureMonitorQuery) {
+				q.Dimensions = []dataquery.AzureMetricDimension{{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{"vm2"}}}
+			}},
+		}
+		for _, tt := range tests {
+			q1 := base("A")
+			q2 := base("B")
+			tt.modify(q2)
+			groups := groupQueriesForBatch([]*types.AzureMonitorQuery{q1, q2})
+			assert.Len(t, groups, 2, "differing %s must split the group", tt.field)
+		}
 	})
 
 	t.Run("empty input produces empty output", func(t *testing.T) {
@@ -167,6 +135,28 @@ func TestDimensionFilterKey(t *testing.T) {
 			},
 		}
 		assert.Equal(t, "VMName eq 'vm1'", dimensionFilterKey(q))
+	})
+
+	t.Run("dimension with empty filter values yields eq '*' (split by dimension)", func(t *testing.T) {
+		q := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: []string{}},
+			},
+		}
+		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
+	})
+
+	t.Run("dimension with nil filter values yields eq '*'", func(t *testing.T) {
+		// Mirrors the batch flow where an empty Filters slice is dropped by
+		// omitempty during the cloneQueryWithResources JSON round-trip.
+		q := &types.AzureMonitorQuery{
+			Params: url.Values{},
+			Dimensions: []dataquery.AzureMetricDimension{
+				{Dimension: strPtr("VMName"), Operator: strPtr("eq"), Filters: nil},
+			},
+		}
+		assert.Equal(t, "VMName eq '*'", dimensionFilterKey(q))
 	})
 
 	t.Run("filter values within a dimension are sorted for stable key", func(t *testing.T) {
@@ -250,19 +240,6 @@ func TestCreateBatches(t *testing.T) {
 		require.Len(t, batches, 2)
 		assert.Len(t, batches[0].ResourceIDs, 50)
 		assert.Len(t, batches[1].ResourceIDs, 1)
-	})
-
-	t.Run("group with 100 resources produces two batches of 50", func(t *testing.T) {
-		ids := make([]string, 100)
-		for i := range ids {
-			ids[i] = fmt.Sprintf("/sub/rg/vm%03d", i)
-		}
-		q := makeQuery("A", "sub1", "westus2", "Microsoft.Compute/virtualMachines", "Percentage CPU", "PT1M", "Average", now, later, nil,
-			makeResources(ids...))
-		batches := createBatches(groupQueriesForBatch([]*types.AzureMonitorQuery{q}))
-		require.Len(t, batches, 2)
-		assert.Len(t, batches[0].ResourceIDs, 50)
-		assert.Len(t, batches[1].ResourceIDs, 50)
 	})
 
 	t.Run("two groups produce independent batches", func(t *testing.T) {

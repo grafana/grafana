@@ -56,11 +56,45 @@
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
+    },
+    "contrastThreshold": 4.5,
+    "action": {
+      "selected": "palette.ink700",
+      "hover": "palette.ink600",
+      "focus": "palette.ink600"
     }
   },
   "shape": {
-    "borderRadiusSm": 6,
+    "borderRadiusSm": 4,
     "borderRadius": 8,
     "borderRadiusLg": 12
+  },
+  "components": {
+    "tag": {
+      "colors": [
+        { "background": "palette.coral900", "text": "palette.coral300" },
+        { "background": "palette.peach900", "text": "palette.peach300" },
+        { "background": "palette.amber900", "text": "palette.amber300" },
+        { "background": "palette.lime900", "text": "palette.lime300" },
+        { "background": "palette.sage900", "text": "palette.sage300" },
+        { "background": "palette.teal900", "text": "palette.teal300" },
+        { "background": "palette.sky900", "text": "palette.sky300" },
+        { "background": "palette.blue900", "text": "palette.blue300" },
+        { "background": "palette.violet900", "text": "palette.violet300" },
+        { "background": "palette.lavender900", "text": "palette.lavender300" },
+        { "background": "palette.rose900", "text": "palette.rose300" },
+        { "background": "palette.coral800", "text": "palette.coral200" },
+        { "background": "palette.peach800", "text": "palette.peach200" },
+        { "background": "palette.amber800", "text": "palette.amber200" },
+        { "background": "palette.lime800", "text": "palette.lime200" },
+        { "background": "palette.sage800", "text": "palette.sage200" },
+        { "background": "palette.teal800", "text": "palette.teal200" },
+        { "background": "palette.sky800", "text": "palette.sky200" },
+        { "background": "palette.blue800", "text": "palette.blue200" },
+        { "background": "palette.violet800", "text": "palette.violet200" },
+        { "background": "palette.lavender800", "text": "palette.lavender200" },
+        { "background": "palette.rose800", "text": "palette.rose200" }
+      ]
+    }
   }
 }
