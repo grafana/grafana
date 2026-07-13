@@ -19,19 +19,13 @@ type DataSourcesSelectorProps = {
     params: Partial<ListDataSourcesRequest>
   ) => Promise<Array<ResourceResponse<LogDataSourceResponse>>>;
   onChange: (selectedDataSources: LogDataSource[]) => void;
-  onBeforeOpen?: () => void;
 };
 
 const MAX_DATA_SOURCES = 10;
 
 const toDataSourceKey = (dataSource: LogDataSource) => `${dataSource.name}.${dataSource.type}`;
 
-export const DataSourcesSelector = ({
-  fetchDataSources,
-  onChange,
-  onBeforeOpen,
-  ...props
-}: DataSourcesSelectorProps) => {
+export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: DataSourcesSelectorProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectableDataSources, setSelectableDataSources] = useState<LogDataSource[]>([]);
   const [draftSelectedDataSources, setDraftSelectedDataSources] = useState(props.selectedDataSources ?? []);
@@ -253,16 +247,7 @@ export const DataSourcesSelector = ({
       </Modal>
 
       <div>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            try {
-              onBeforeOpen?.();
-              openModal();
-            } catch (err) {}
-          }}
-          type="button"
-        >
+        <Button variant="secondary" onClick={openModal} type="button">
           Select data sources
         </Button>
       </div>
