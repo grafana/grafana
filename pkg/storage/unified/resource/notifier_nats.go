@@ -40,17 +40,19 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 	}
 }
 
-// natsNotifier emits an Event per WatchNotification received from NATS, learning
-// of writes the instant they are announced rather than by polling the store.
-// Watch subscribes to the entire stream (SubjectAll) and ignores the resource
-// selectors in WatchOptions, so it is not a drop-in per-watch notifier.
+// natsNotifier emits an Event per WatchNotification received from NATS rather
+// than by polling the store. Watch subscribes to the entire stream (SubjectAll)
+// and ignores the resource selectors in WatchOptions, so it is not a drop-in
+// per-watch notifier. PreviousRV is carried on the wire, matching the
+// store-sourced notifiers.
 //
-// Delivery is at-most-once (core NATS, no JetStream); a missed message is never
-// redelivered, so it is a low-latency signal, not a source of truth. When it is
-// the selected notifier there is no server-side polling backstop (newNotifier
-// returns this OR the polling notifier, never both) — recovery relies on
-// consumers relisting (k8s reflector resync, provisioning informer relist).
-// PreviousRV is carried on the wire, matching the store-sourced notifiers.
+// Delivery is at-most-once (core NATS, no JetStream): a missed message is never
+// redelivered, and there is no server-side polling backstop when this is the
+// selected notifier (newNotifier returns this OR polling, never both), so
+// recovery relies on consumers relisting (reflector resync, provisioning
+// relist). Core NATS also delivers in arrival order, not RV order, so Watch runs
+// arrivals through the same settle buffer as the channel notifier (held for
+// SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic.
 type natsNotifier struct {
 	subscriber EventSubscriber
 	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
@@ -121,21 +123,8 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		}
 	})
 
-	go func() {
-		defer close(out)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case evt := <-raw:
-				select {
-				case out <- evt:
-				case <-ctx.Done():
-					return
-				}
-			}
-		}
-	}()
+	// raw is never closed here; settleEvents exits on ctx.Done().
+	go settleEvents(ctx, raw, out, opts)
 
 	return out
 }
