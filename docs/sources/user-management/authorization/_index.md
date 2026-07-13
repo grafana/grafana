@@ -44,5 +44,7 @@ A Grafana server admin can also grant the **Server Admin** role, which gives acc
 - **[RBAC](./rbac/)** — Create custom roles and assign granular permissions (Enterprise and Cloud).
 - **[Folder access control](./folder-access-control/)** — Set view, edit, and admin permissions on folders.
 - **[Dashboard permissions](./dashboard-permissions/)** — Override folder permissions for individual dashboards.
+- **[Organization management](./organization-management/)** — Create and manage organizations to isolate resources across teams.
+- **[Organization preferences](./organization-preferences/)** — Configure default theme, timezone, and home dashboard for an organization.
 
 {{< section >}}

@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../../../administration/organization-management/
   - ../manage-users/server-admin/
   - ../manage-users/server-admin/server-admin-manage-orgs/
   - manage-organizations/
