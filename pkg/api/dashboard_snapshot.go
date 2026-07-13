@@ -23,8 +23,7 @@ import (
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !hs.Cfg.KubernetesSnapshotsEnabled && !hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+	if !hs.Cfg.KubernetesSnapshotsEnabled {
 		return hs.CreateDashboardSnapshot
 	}
 
