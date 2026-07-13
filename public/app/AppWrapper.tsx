@@ -8,15 +8,8 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import {
-  BrandingContext,
-  type BrandingContextValue,
-  ErrorBoundaryAlert,
-  getPortalContainer,
-  GlobalStyles,
-  PortalContainer,
-  TimeRangeProvider,
-} from '@grafana/ui';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { BrandingContext, type BrandingContextValue } from '@grafana/ui/internal';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
