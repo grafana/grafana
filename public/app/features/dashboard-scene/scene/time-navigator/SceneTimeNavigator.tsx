@@ -91,8 +91,8 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
   private _storageKey(kind: 'sources' | 'annotations'): string | undefined {
     // Duck-type the dashboard uid off the root state so we don't import DashboardScene (which would
     // reintroduce the circular dependency).
-    const rootState: { uid?: string } = this.getRoot().state;
-    const uid = rootState.uid;
+    const rootState = this.getRoot().state;
+    const uid = 'uid' in rootState && typeof rootState.uid === 'string' ? rootState.uid : undefined;
     return uid ? `grafana.dashboard.timeNavigator.${kind}.${uid}` : undefined;
   }
 
