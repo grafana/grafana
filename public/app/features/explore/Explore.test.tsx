@@ -132,6 +132,13 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // useDatasource() wraps the async getDataSourceInstanceSettings API. Stub it so the tests
+  // below don't trigger a post-render state update for a datasource none of them assert on.
+  useDatasource: jest.fn(),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     ...jest.requireActual('app/core/services/context_srv').contextSrv,
