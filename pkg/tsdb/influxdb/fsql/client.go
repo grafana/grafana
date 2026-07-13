@@ -12,6 +12,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -29,8 +30,8 @@ func (c *client) FlightClient() flight.Client {
 	return c.Client.Client
 }
 
-func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client) (*client, error) {
-	dialOptions, err := grpcDialOptions(secure, tlsConfig, proxyClient)
+func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client, logger log.Logger) (*client, error) {
+	dialOptions, err := grpcDialOptions(secure, tlsConfig, proxyClient, logger)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
@@ -47,7 +48,7 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, tlsConfi
 	return &client{Client: fsqlClient, md: metadata}, nil
 }
 
-func grpcDialOptions(secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client) ([]grpc.DialOption, error) {
+func grpcDialOptions(secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client, logger log.Logger) ([]grpc.DialOption, error) {
 	dialOptions := []grpc.DialOption{}
 	secureDialOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
 
@@ -70,7 +71,7 @@ func grpcDialOptions(secure bool, tlsConfig *httpclient.TLSOptions, proxyClient 
 		}
 
 		dialOptions = append(dialOptions, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
-			logger := glog.FromContext(ctx)
+			logger := logger.FromContext(ctx)
 			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {

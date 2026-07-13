@@ -264,9 +264,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// (temporary smoke-test instrumentation; default off)
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
-	// enable per-resource leases in the KV backend; only effective when the
-	// SQL RV manager is not in use.
+	// enable per-resource leases in the KV backend;
 	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
+	// TTL for per-resource write leases; 0 uses the backend default (10s).
+	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
+	// auto-renew write leases in the background so they are not lost while a
+	// slow write is still in flight.
+	cfg.KVLeaseAutoRenew = section.Key("kv_lease_auto_renew").MustBool(false)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

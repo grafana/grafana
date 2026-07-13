@@ -21,6 +21,13 @@ export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 export type CodeMirrorEditorLanguage = 'json' | 'sql';
 
 /**
+ * SQL dialect used for syntax highlighting and keyword completion when
+ * `language` is `'sql'`. Maps to the corresponding dialect from
+ * `@codemirror/lang-sql`. Defaults to `'standardSql'`.
+ */
+export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
+
+/**
  * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
  * or one of CodeMirror's built-in keywords.
  */
@@ -97,6 +104,11 @@ export interface CodeMirrorEditorProps {
    * Syntax highlighting and language-aware behavior to enable.
    */
   language?: CodeMirrorEditorLanguage;
+  /**
+   * SQL dialect to use when `language` is `'sql'`. Controls dialect-specific
+   * syntax highlighting and keyword completion. Defaults to `'standardSql'`.
+   */
+  sqlDialect?: CodeMirrorSqlDialect;
   /**
    * Editor height, such as `'200px'` or `'100%'`.
    */
