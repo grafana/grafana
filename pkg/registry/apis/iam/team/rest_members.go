@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -28,14 +29,13 @@ var (
 	_ rest.Connecter       = (*TeamMembersREST)(nil)
 )
 
-func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer, features featuremgmt.FeatureToggles) *TeamMembersREST {
-	return &TeamMembersREST{getter: getter, tracer: tracer, features: features}
+func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer) *TeamMembersREST {
+	return &TeamMembersREST{getter: getter, tracer: tracer}
 }
 
 type TeamMembersREST struct {
-	getter   rest.Getter
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
+	getter rest.Getter
+	tracer trace.Tracer
 }
 
 // New implements rest.Storage.
@@ -64,8 +64,8 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:staticcheck // not migrated to OpenFeature
-		if !s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsApi) {
+		client := openfeature.NewDefaultClient()
+		if !client.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return

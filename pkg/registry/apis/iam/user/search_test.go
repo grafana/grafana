@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -55,7 +54,7 @@ func TestSearchFallback(t *testing.T) {
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
 			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, featuremgmt.WithFeatures(), cfg, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, cfg, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -213,7 +212,6 @@ func TestSearchSort(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClient,
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				authlib.FixedAccessClient(true),
 			)
@@ -404,7 +402,6 @@ func TestAccessControl(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
 				mockClientWithHits(),
-				featuremgmt.WithFeatures(),
 				&setting.Cfg{},
 				tc.client,
 			)

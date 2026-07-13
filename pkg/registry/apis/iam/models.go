@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -103,9 +102,6 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
-
-	// Toggle for enabling authz management apis
-	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
 

@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -65,17 +64,15 @@ type SearchHandler struct {
 	log          log.Logger
 	client       resourcepb.ResourceIndexClient
 	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
 	cfg          *setting.Cfg
 	accessClient authlib.AccessClient
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, cfg *setting.Cfg, accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.users.search"),
 		tracer:       tracer,
-		features:     features,
 		cfg:          cfg,
 		accessClient: accessClient,
 	}
