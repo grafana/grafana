@@ -259,6 +259,37 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(run).not.toHaveBeenCalled();
   });
 
+  it('excludes the -- Grafana -- builtin from candidates but keeps prometheus-alias datasources', async () => {
+    setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
+    dataByUid = { 'only-uid': 1 };
+
+    await fetchKubernetesOverview();
+
+    const filters = mockGetDataSourceInstanceList.mock.calls[0][0];
+    expect(filters?.type).toBe('prometheus');
+    const filter = filters?.filter;
+    expect(filter).toBeDefined();
+    const item = (partial: { name: string; type: string; metaId: string }) =>
+      ({
+        uid: partial.name,
+        name: partial.name,
+        type: partial.type,
+        meta: { id: partial.metaId },
+      }) as unknown as DataSourceInstanceListItem;
+    // Builtin rejected by meta.id; real and alias prometheus datasources pass.
+    expect(filter!(item({ name: '-- Grafana --', type: 'datasource', metaId: 'grafana' }))).toBe(false);
+    expect(filter!(item({ name: 'team-prom', type: 'prometheus', metaId: 'prometheus' }))).toBe(true);
+    expect(
+      filter!(
+        item({
+          name: 'amp',
+          type: 'grafana-amazonprometheus-datasource',
+          metaId: 'grafana-amazonprometheus-datasource',
+        })
+      )
+    ).toBe(true);
+  });
+
   it('shares one resolution across both fetchers; a missing cpu metric returns null', async () => {
     setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
     dataByUid = { 'only-uid': 1 };

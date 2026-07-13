@@ -20,52 +20,31 @@ export interface KubernetesOverview {
   notReadyNodes: number | null; // null = metric absent (hide the row); 0 = all Ready
 }
 
-// How far back the inventory queries and the namespace probe look. Inventory counts are
-// "seen recently", not "alive right now" — last_over_time tolerates scrape gaps and seeded/demo
-// data at the cost of counting resources deleted within the window.
+// Lookback for the inventory queries and the namespace probe: "seen recently", tolerating scrape gaps.
 const KUBE_STATE_LOOKBACK = '24h';
 
-// refId -> portable kube-state-metrics PromQL. No recording rules: works on any Prometheus scraping
-// kube-state-metrics. Every query is single-sided so each stat reads one timeline:
-// - Inventory counts (clusters, pods) use last_over_time[24h]: "seen in the last day".
-// - Health stats (unhealthyPods, notReadyNodes, alertsFiring) are instant vectors: present-tense
-//   claims where staleness markers must drop deleted pods/nodes and resolved alerts immediately —
-//   last_over_time would pin them for the whole window (ALERTS series vanish on resolve).
-// - restarts1h is an explicit 1h increase window ("in the last hour" in the copy).
-// `group by (...)` dedupes series across replicas before count().
+// refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
 const OVERVIEW_QUERIES: Record<string, string> = {
   clusters: `count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
   pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
   unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
   notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
-  // ALERTS = datasource-managed rules; GRAFANA_ALERTS = Grafana-managed state (Prometheus state
-  // historian, same alertstate="firing"). The `or` here unions the two SOURCES at the same
-  // instant — not a timeline mix. Watchdog/InfoInhibitor are kube-prometheus-stack's
-  // always-firing heartbeats — excluded (ALERTS-only). count() over no matches is empty → null.
+  // Unions datasource-managed ALERTS with Grafana-managed GRAFANA_ALERTS; kube-prometheus-stack heartbeats excluded.
   alertsFiring:
     'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor"} or GRAFANA_ALERTS{alertstate="firing"})',
 };
 
-// Cap the probe fan-out on orgs with many Prometheus datasources: only the first 10 candidates
-// (in priority order) are probed per page load.
+// Cap the probe fan-out: only the first 10 candidates (in priority order) are probed per page load.
 const MAX_PROBED_DATASOURCES = 10;
 
 // Never user-visible (useAsync swallows it) — no i18n. Tests assert this exact message.
 const NO_KUBERNETES_DATA_ERROR = 'No Prometheus datasource with Kubernetes data';
 
-// Mirrors how the k8s app detects namespaces (kube_namespace_status_phase behind its
-// "No namespaces detected" empty state), with the same lookback as the inventory queries —
-// the probe asks "has this datasource seen Kubernetes data recently", not "is it live now".
-// A bare count() suffices for a has-data probe; grouping by namespace would only add evaluation
-// cost across up to MAX_PROBED_DATASOURCES datasources.
+// Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.
 const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
 
-/**
- * True when the available health signals show a problem, false when they are all clear, null when
- * NONE are available (e.g. Prometheus scrapes only inventory metrics) — absence of data is not health.
- * @lintignore
- */
+/** True when health signals show a problem, false when all clear, null when none are available. @lintignore */
 export function hasHealthProblems(o: KubernetesOverview): boolean | null {
   if (o.alertsFiring === null && o.unhealthyPods === null && o.notReadyNodes === null && o.restarts1h === null) {
     return null;
@@ -74,27 +53,25 @@ export function hasHealthProblems(o: KubernetesOverview): boolean | null {
   return (o.unhealthyPods ?? 0) + (o.notReadyNodes ?? 0) + (o.restarts1h ?? 0) + (o.alertsFiring ?? 0) > 0;
 }
 
-// The k8s app's PrometheusPicker persists the user's datasource choice under this key
-// (grafana-k8s-app src/constants.ts K8S_STORAGE_KEY). Reading it lets the homepage query the same
-// Prometheus the app itself shows instead of guessing default-else-first.
+// localStorage key where the k8s app's PrometheusPicker persists the user's datasource choice.
 const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 
-// Exact provisioned names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never
-// where kube-state-metrics lives. Exact match, not substring: user datasources may contain "usage".
+// Exact names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never where kube-state-metrics lives.
 const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
   'grafanacloud-usage': true,
   'grafanacloud-ml-metrics': true,
 };
 
-// Order Prometheus datasources by how likely they are to hold this org's kube-state-metrics:
-// the k8s app's stored choice first, then — skipping the cloud utility datasources unless nothing
-// else exists — the default, then list order.
+// Priority: the k8s app's stored choice, then — skipping cloud utility datasources — the default, then list order.
 async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
-  const list = await getDataSourceInstanceList({ type: 'prometheus' });
+  const list = await getDataSourceInstanceList({
+    type: 'prometheus',
+    // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop prometheus-alias datasources.
+    filter: (ds) => ds.meta.id !== 'grafana',
+  });
   let promName: string | undefined;
   try {
-    // store.getObject absorbs a missing key and corrupt JSON (returns the default); the try guards
-    // the rare case where localStorage access itself throws (privacy mode) — fall through then.
+    // store.getObject absorbs missing/corrupt values; the try guards localStorage access itself throwing.
     const stored = store.getObject<{ promName?: unknown }>(K8S_APP_STORAGE_KEY, {});
     promName = typeof stored.promName === 'string' ? stored.promName : undefined;
   } catch {
@@ -108,9 +85,7 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   return storedMatch ? [storedMatch, ...ordered.filter((ds) => ds !== storedMatch)] : ordered;
 }
 
-// A datasource "has Kubernetes data" when it detects namespaces — the same signal the k8s app's
-// empty state keys on. An errored probe retries once so a transient failure (timeout, gateway
-// hiccup) cannot flip the winning datasource across reloads; a second failure counts as no data.
+// "Has Kubernetes data" = namespaces detected; an errored probe retries once, then counts as no data.
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -123,10 +98,7 @@ async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid
   return false;
 }
 
-// One resolution per TTL window: both fetchers await the same promise, so the probe fan-out runs
-// once and the overview + sparkline always query the same datasource. The TTL lets a later home
-// visit in the same SPA session re-resolve after datasource or connectivity changes — without it,
-// a cached null from a transient outage would hide the entry until a full page reload.
+// One shared resolution per TTL window; the TTL lets a later home visit re-resolve after datasource changes.
 const RESOLUTION_TTL_MS = 60_000;
 let resolution: Promise<DataSourceInstanceListItem | null> | undefined;
 let resolvedAt = 0;
@@ -137,9 +109,7 @@ export function resetKubernetesPrometheusResolution(): void {
   resolvedAt = 0;
 }
 
-// Resolve the Prometheus datasource to show Kubernetes stats from: fire a namespace probe at every
-// candidate (in parallel), then settle on the highest-priority candidate whose probe found data.
-// null when none has Kubernetes data — callers treat that as "not enabled".
+// Probe all candidates in parallel, settle on the highest-priority one with data; null = "not enabled".
 function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
   if (!resolution || Date.now() - resolvedAt > RESOLUTION_TTL_MS) {
     resolvedAt = Date.now();
@@ -147,9 +117,7 @@ function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | nul
       const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
       const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
       for (let i = 0; i < candidates.length; i++) {
-        // Await in priority order: a candidate wins only once every higher-priority probe came back
-        // empty, so a slow high-priority probe (worst case the 30s query timeout) delays — never
-        // changes — the outcome. Priority is deliberately favored over fastest-success latency.
+        // Await in priority order: a slow high-priority probe delays — never changes — the outcome.
         if (await probes[i]) {
           return candidates[i];
         }
@@ -160,13 +128,7 @@ function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | nul
   return resolution;
 }
 
-/**
- * Resolve overview counts from Prometheus rather than a plugin REST endpoint: the k8s app has no
- * "summary" API, so we run portable kube-state-metrics instant queries directly against the
- * datasource {@link resolveKubernetesPrometheus} settles on (the k8s app's stored choice or the
- * first non-utility/default candidate whose namespace probe finds data), throwing when no
- * datasource has Kubernetes data — the caller then omits the entry.
- */
+/** Overview counts via kube-state-metrics queries against the resolved datasource; throws when none has data. */
 export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
   const ds = await resolveKubernetesPrometheus();
   if (!ds) {
@@ -183,12 +145,7 @@ export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
   };
 }
 
-/**
- * Aggregate cluster CPU usage over the last 24h as a sparkline series. Portable cAdvisor PromQL (no
- * recording rules). Two miss modes: throws when no datasource has Kubernetes data (the same shared
- * {@link resolveKubernetesPrometheus} resolution the overview uses), and returns null when the
- * resolved datasource lacks the cAdvisor CPU metric — so the caller omits only the sparkline.
- */
+/** Cluster CPU over 24h (cAdvisor); throws when no datasource has Kubernetes data, null when the metric is absent. */
 export async function fetchClusterCpuSeries(): Promise<FieldSparkline | null> {
   const ds = await resolveKubernetesPrometheus();
   if (!ds) {
