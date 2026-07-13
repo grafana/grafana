@@ -1,6 +1,13 @@
+import { logWarning } from '@grafana/runtime';
+
 import { initialCustomVariableModelState } from '../mocks/variables';
 
 import { fetchAllArmPages, hasOption, interpolateVariable, MAX_ARM_PAGES, nextLinkToPath } from './common';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logWarning: jest.fn(),
+}));
 
 describe('AzureMonitor: hasOption', () => {
   it('can find an option in flat array', () => {
@@ -60,6 +67,10 @@ describe('AzureMonitor: nextLinkToPath', () => {
 });
 
 describe('AzureMonitor: fetchAllArmPages', () => {
+  beforeEach(() => {
+    jest.mocked(logWarning).mockClear();
+  });
+
   it('returns the single page when there is no nextLink', async () => {
     const fetchPage = jest.fn().mockResolvedValue({ value: [{ id: 1 }, { id: 2 }] });
 
@@ -87,15 +98,13 @@ describe('AzureMonitor: fetchAllArmPages', () => {
 
   it('stops early and warns when a page returns no result', async () => {
     const fetchPage = jest.fn().mockResolvedValue(undefined);
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(results).toEqual([]);
     expect(fetchPage).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
-    warn.mockRestore();
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
   });
 
   it('does not emit the page-cap warning when a later page returns no result', async () => {
@@ -106,15 +115,13 @@ describe('AzureMonitor: fetchAllArmPages', () => {
         nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=abc',
       })
       .mockResolvedValueOnce(undefined);
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(results).toEqual([{ id: 1 }]);
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
-    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('ARM listing stopped after'));
-    warn.mockRestore();
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
+    expect(logWarning).not.toHaveBeenCalledWith(expect.stringContaining('ARM listing stopped after'));
   });
 
   it('stops after MAX_ARM_PAGES even if nextLink never clears, and warns', async () => {
@@ -122,17 +129,15 @@ describe('AzureMonitor: fetchAllArmPages', () => {
       value: [{ id: 1 }],
       nextLink: 'https://management.azure.com/subscriptions?api-version=x&$skiptoken=loop',
     });
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const results = await fetchAllArmPages('azuremonitor', 'azuremonitor/subscriptions?api-version=x', fetchPage);
 
     expect(fetchPage).toHaveBeenCalledTimes(MAX_ARM_PAGES);
     expect(results).toHaveLength(MAX_ARM_PAGES);
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith(
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith(
       `[azuremonitor] ARM listing stopped after ${MAX_ARM_PAGES} pages; some results may be omitted.`
     );
-    warn.mockRestore();
   });
 });
 
