@@ -130,18 +130,6 @@ export function getInstancesPermissions(rulesSourceName: string) {
   };
 }
 
-export function getNotificationsPermissions(rulesSourceName: string) {
-  const sourceType = getRulesSourceType(rulesSourceName);
-
-  return {
-    read: notificationsPermissions.read[sourceType],
-    create: notificationsPermissions.create[sourceType],
-    update: notificationsPermissions.update[sourceType],
-    delete: notificationsPermissions.delete[sourceType],
-    provisioning: provisioningPermissions,
-  };
-}
-
 export function getRulesPermissions(rulesSourceName: string) {
   const sourceType = getRulesSourceType(rulesSourceName);
 
