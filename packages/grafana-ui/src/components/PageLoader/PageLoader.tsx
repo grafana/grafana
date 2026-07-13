@@ -47,6 +47,8 @@ const pulse = keyframes({
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  // TODO: In the future we will want to move the visual appearance - background and borders - up into core
+  // Grafana and just have be a "full page loader" component.
   loadingPage: css(
     {
       backgroundColor: theme.colors.background.primary,
