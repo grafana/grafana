@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -387,6 +388,13 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return nil, err
 		}
 	}
+	if cmd.JsonData == nil {
+		cmd.JsonData = simplejson.New()
+	}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+	ensureGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, cmd.JsonData)
 
 	var dataSource *datasources.DataSource
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -668,6 +676,10 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return err
 			}
 		}
+		if cmd.JsonData == nil {
+			cmd.JsonData = simplejson.New()
+		}
+		preserveGrafanaExternalID(cmd.UID, s.cfg.AWSExternalId, dataSource.JsonData, cmd.JsonData)
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
