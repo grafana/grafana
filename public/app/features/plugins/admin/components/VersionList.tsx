@@ -23,6 +23,12 @@ export const VersionList = ({ plugin }: Props) => {
   const installedVersion = plugin.installedVersion;
   const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
 
+  // Managed plugins don't have a meaningful per-instance installed version (see usePluginInfo,
+  // which substitutes "Managed by Grafana" for the same reason) — treat as if nothing is installed
+  // rather than presenting a potentially stale version number as ground truth.
+  const isManagedPlugin = plugin.managed.enabled;
+  const effectiveInstalledVersion = isManagedPlugin ? undefined : installedVersion;
+
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
   const latestMajorVersions = getLatestMajorVersions(versions);
 
@@ -34,11 +40,11 @@ export const VersionList = ({ plugin }: Props) => {
 
   // Check if installed version is in the versions list
   const isInstalledVersionMissing = useMemo(() => {
-    if (!installedVersion) {
+    if (!effectiveInstalledVersion) {
       return false;
     }
-    return !versions.some((v) => v.version === installedVersion);
-  }, [versions, installedVersion]);
+    return !versions.some((v) => v.version === effectiveInstalledVersion);
+  }, [versions, effectiveInstalledVersion]);
 
   if (versions.length === 0 && !isInstalledVersionMissing) {
     return (
@@ -71,7 +77,7 @@ export const VersionList = ({ plugin }: Props) => {
       <tbody>
         {versions.map((version) => {
           let tooltip: string | undefined = undefined;
-          const isInstalledVersion = installedVersion === version.version;
+          const isInstalledVersion = effectiveInstalledVersion === version.version;
 
           if (version.angularDetected) {
             tooltip = 'This plugin version is AngularJS type which is not supported';
@@ -116,7 +122,7 @@ export const VersionList = ({ plugin }: Props) => {
                     pluginId={pluginId}
                     version={version}
                     latestCompatibleVersion={latestCompatibleVersion?.version}
-                    installedVersion={installedVersion}
+                    installedVersion={effectiveInstalledVersion}
                     onConfirmInstallation={onInstallClick}
                     disabled={
                       isInstalledVersion ||
@@ -128,7 +134,7 @@ export const VersionList = ({ plugin }: Props) => {
                         version,
                         latestMajorVersions,
                         latestCompatibleVersion: latestCompatibleVersion?.version,
-                        installedVersion,
+                        installedVersion: effectiveInstalledVersion,
                         updateStrategy: plugin.managed.strategy,
                       })
                     }
