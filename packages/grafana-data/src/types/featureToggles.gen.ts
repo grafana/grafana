@@ -1136,11 +1136,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable visualization presets
-  * @default true
-  */
-  vizPresets?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */
@@ -1295,11 +1290,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirect?: boolean;
-  /**
-  * Enables the ability to create multiple notification policies in alerting
-  * @default true
-  */
-  alertingMultiplePolicies?: boolean;
   /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false

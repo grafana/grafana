@@ -122,6 +122,35 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	}
 }
 
+func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
+	sub := &fakeEventSubscriber{enabled: true}
+	n := newNatsNotifier(sub, nil, log.NewNopLogger())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	out := n.Watch(ctx, WatchOptions{})
+	require.NotNil(t, sub.handler)
+
+	// Deliver notifications for the same object out of RV order, all within one
+	// settle window. The settle buffer must reorder them so the watcher sees
+	// ascending resource versions regardless of bus arrival order.
+	for _, rv := range []int64{30, 10, 20} {
+		sub.handler("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type:                    resourcepb.WatchNotification_MODIFIED,
+			Group:                   "playlist.grafana.app",
+			Resource:                "playlists",
+			Namespace:               "default",
+			Name:                    "abc",
+			ResourceVersion:         rv,
+			PreviousResourceVersion: rv - 1,
+		}))
+	}
+
+	require.Equal(t, int64(10), recvEvent(t, out).ResourceVersion)
+	require.Equal(t, int64(20), recvEvent(t, out).ResourceVersion)
+	require.Equal(t, int64(30), recvEvent(t, out).ResourceVersion)
+}
+
 func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
