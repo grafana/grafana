@@ -1,7 +1,7 @@
 import { KBarProvider } from 'kbar';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
-import { useAssistant } from '@grafana/assistant';
+import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
@@ -33,7 +33,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
-  OpenAssistantButton: jest.fn().mockImplementation(({ title }) => <button>{title}</button>),
+  OpenAssistantButton: jest.fn().mockImplementation(({ title, onClick }) => <button onClick={onClick}>{title}</button>),
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -382,6 +382,82 @@ describe('CommandPalette', () => {
           itemsCount: expect.any(Number),
         })
       );
+    });
+  });
+
+  describe('ask assistant', () => {
+    it('opens the assistant with the search query on Shift+Enter', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+
+      expect(openAssistant).toHaveBeenCalledWith({
+        origin: 'grafana/command-palette',
+        prompt: 'Search for latency',
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_ask_assistant', { trigger: 'shortcut' });
+    });
+
+    it('opens the assistant from the input pill', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+      await user.click(screen.getByRole('button', { name: /ask Assistant/ }));
+
+      // The real OpenAssistantButton opens the assistant itself (mocked here), so assert it got the right props
+      expect((OpenAssistantButton as jest.Mock).mock.lastCall?.[0]).toMatchObject({
+        origin: 'grafana/command-palette',
+        prompt: 'Search for latency',
+      });
+      expect(reportInteraction).toHaveBeenCalledWith('command_palette_ask_assistant', { trigger: 'input-pill' });
+    });
+
+    it('does not show the pill or react to Shift+Enter when the assistant is not available', async () => {
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(reportInteraction).not.toHaveBeenCalledWith('command_palette_ask_assistant', expect.anything());
+    });
+
+    it('does not show the pill or react to Shift+Enter when the search query is empty', async () => {
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      // Focus the input without typing anything
+      screen.getByPlaceholderText('Search or jump to...').focus();
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(openAssistant).not.toHaveBeenCalled();
+    });
+
+    it('does not show the pill or react to Shift+Enter when deep search is disabled', async () => {
+      // Either flag off → deepSearchEnabled is false → the pill and shortcut are gated off too
+      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+      const openAssistant = jest.fn();
+      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(screen.queryByRole('button', { name: /ask Assistant/ })).not.toBeInTheDocument();
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(openAssistant).not.toHaveBeenCalled();
     });
   });
 

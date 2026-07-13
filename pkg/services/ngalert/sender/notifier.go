@@ -138,6 +138,8 @@ type alertMetrics struct {
 	queueLength             prometheus.GaugeFunc
 	queueCapacity           prometheus.Gauge
 	alertmanagersDiscovered prometheus.GaugeFunc
+	// Extension: counts label/annotation strings clamped by the sender.
+	clampedStrings *prometheus.CounterVec
 }
 
 // NewManager is the manager constructor.

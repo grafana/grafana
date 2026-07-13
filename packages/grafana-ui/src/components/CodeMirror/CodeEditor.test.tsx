@@ -2,6 +2,7 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
+import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@uiw/react-codemirror';
 
 import { faro } from '@grafana/faro-web-sdk';
@@ -170,14 +171,45 @@ describe('CodeMirror CodeEditor', () => {
     );
   });
 
+  it('defaults to the baked-in vscode theme when no theme prop is provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect([vscodeLight, vscodeDark]).toContain(capturedProps?.theme);
+  });
+
+  it('passes a provided theme through to CodeMirror, replacing the default vscode theme', () => {
+    const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
+
+    render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
+
+    expect(capturedProps?.theme).toBe(customTheme);
+  });
+
+  it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {
+    const basicSetup = { lineNumbers: false, foldGutter: false } as const;
+
+    render(<CodeEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
+
+    expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toBe(basicSetup);
+  });
+
   it('loads language extensions lazily when language is provided', async () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
 
     render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
 
-    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql'));
+    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: undefined }));
     await waitFor(() => expect(getExtensions()).toContain(languageExtension));
+  });
+
+  it('forwards the sqlDialect to the language loader', async () => {
+    const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
+    loadLanguageExtensionMock.mockResolvedValue(languageExtension);
+
+    render(<CodeEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
+
+    await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: 'mySql' }));
   });
 
   it('reports language extension load failures and shows a warning while keeping the editor rendered', async () => {
