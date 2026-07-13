@@ -55,6 +55,7 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
+  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -75,6 +76,7 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
+  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,

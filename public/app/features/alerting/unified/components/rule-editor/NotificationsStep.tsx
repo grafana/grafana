@@ -13,7 +13,6 @@ import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../typ
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -243,11 +242,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   const selectedPolicy = watch('selectedPolicy');
 
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend
-  // in both toggle states), falling back to the legacy __grafana_managed_route__ label, so the
-  // notification preview fetches the correct routing tree instead of always defaulting to root.
-  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
+  const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
 
   return (
     <Stack direction="column" gap={2}>
@@ -259,7 +254,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
         folder={folder}
         alertName={alertName}
         alertUid={alertUid}
-        policyName={policyNameForPreview}
+        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
       />
     </Stack>
   );

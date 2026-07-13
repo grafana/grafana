@@ -7,15 +7,9 @@ import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils
 import { byRole, byText } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
-import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import {
-  grantUserPermissions,
-  mockAlertmanagerAlert,
-  mockDataSource,
-  mockFolder,
-} from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions, mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   grafanaRulerGroup,
   grafanaRulerNamespace,
@@ -38,8 +32,6 @@ import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificati
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
 }));
-
-jest.mock('app/features/alerting/unified/useRouteGroupsMatcher');
 
 jest.setTimeout(90 * 1000);
 
@@ -78,8 +70,6 @@ const selectFolderAndGroup = async (user: UserEvent) => {
   const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
   await user.click(folderOption);
 
-  await user.click(await screen.findByRole('radio', { name: /use groups \(legacy\)/i }));
-
   const groupInput = await ui.inputs.group.find();
   const groupCombobox = await byRole('combobox').find(groupInput);
   await user.click(groupCombobox);
@@ -89,7 +79,18 @@ const selectFolderAndGroup = async (user: UserEvent) => {
 const server = setupMswServer();
 
 beforeEach(() => {
-  mockComboboxRect();
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
+
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
 
   mockPreviewApiResponse(server, []);
 });
@@ -120,8 +121,6 @@ const grantAllPermissions = () => {
 };
 
 describe('PolicyTreeSelector - feature toggle OFF', () => {
-  testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
-
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     contextSrv.isEditor = true;
@@ -149,7 +148,7 @@ describe('PolicyTreeSelector - feature toggle OFF', () => {
 });
 
 describe('PolicyTreeSelector - feature toggle ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alerting.rulesAPIV2'] });
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -542,9 +541,7 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 });
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
-  testWithFeatureToggles({
-    enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
-  });
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -725,30 +722,6 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
-    });
-
-    it('clears the policy on reset (re-opening the selector shows default, not the stale label)', async () => {
-      const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
-
-      // Loads expanded with the migrated policy selected.
-      await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeEnabled();
-      });
-      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
-
-      // Reset to default, then re-open the selector.
-      await user.click(policyTreeUi.resetButton.get());
-      await waitFor(() => {
-        expect(policyTreeUi.changeButton.get()).toBeInTheDocument();
-      });
-      await user.click(policyTreeUi.changeButton.get());
-      await waitFor(() => {
-        expect(policyTreeUi.policySelector.get()).toBeInTheDocument();
-      });
-
-      // The selector must reflect the default policy, not the stale legacy label.
-      expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
-      expect(within(policyTreeUi.policySelector.get()).queryByText(CUSTOM_POLICY_NAME)).not.toBeInTheDocument();
     });
   });
 });
