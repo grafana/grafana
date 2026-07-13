@@ -63,6 +63,9 @@ export function AppChrome({ children }: Props) {
   const portalTargetRef = useRef<HTMLDivElement | null>(null);
   if (fullscreenWorkspaceFeatureFlagEnabled && !portalTargetRef.current) {
     portalTargetRef.current = document.createElement('div');
+    // Keep the portal wrapper out of the box tree so `children` stays a direct flex child of its
+    // host (<main> / workspace Platform tab) and the page's layout is unchanged.
+    portalTargetRef.current.style.display = 'contents';
   }
   const portalHostRef = useCallback((host: HTMLElement | null) => {
     if (host && portalTargetRef.current) {
