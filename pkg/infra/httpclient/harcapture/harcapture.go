@@ -259,9 +259,11 @@ func FromContext(ctx context.Context) *Buffer {
 	return v
 }
 
-// AddEntry appends a captured request/response pair. Thread-safe.
-func (b *Buffer) AddEntry(req *http.Request, resp *http.Response, started time.Time, elapsed time.Duration) {
-	e := buildEntry(req, resp, started, elapsed, b.snapshotSensitive())
+// AddEntry appends a captured request/response pair. rtErr is the RoundTrip error (nil on success);
+// a transport-level failure (connection refused, DNS/TLS error, timeout) leaves resp nil and is
+// recorded in the entry's comment. Thread-safe.
+func (b *Buffer) AddEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration) {
+	e := buildEntry(req, resp, rtErr, started, elapsed, b.snapshotSensitive())
 	b.mu.Lock()
 	b.entries = append(b.entries, e)
 	b.mu.Unlock()
@@ -293,7 +295,7 @@ func (b *Buffer) ToHAR() ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func buildEntry(req *http.Request, resp *http.Response, started time.Time, elapsed time.Duration, extra map[string]struct{}) *har.Entry {
+func buildEntry(req *http.Request, resp *http.Response, rtErr error, started time.Time, elapsed time.Duration, extra map[string]struct{}) *har.Entry {
 	reqHeaders := toNameValues(req.Header, extra)
 
 	query := req.URL.Query()
@@ -369,6 +371,11 @@ func buildEntry(req *http.Request, resp *http.Response, started time.Time, elaps
 		}
 	}
 
+	var comment string
+	if rtErr != nil {
+		comment = "transport error: " + rtErr.Error()
+	}
+
 	waitMs := float64(elapsed.Milliseconds())
 	return &har.Entry{
 		StartedDateTime: started.UTC().Format(time.RFC3339Nano),
@@ -387,6 +394,7 @@ func buildEntry(req *http.Request, resp *http.Response, started time.Time, elaps
 		Response: harResp,
 		Cache:    &har.Cache{},
 		Timings:  &har.Timings{Send: 0, Wait: waitMs, Receive: 0},
+		Comment:  comment,
 	}
 }
 

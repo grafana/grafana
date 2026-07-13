@@ -35,7 +35,7 @@ func TestBuffer_Len(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 	assert.Equal(t, 0, buf.Len())
 
-	buf.AddEntry(newGetReq(t, "http://example.com"), okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	buf.AddEntry(newGetReq(t, "http://example.com"), okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 	assert.Equal(t, 1, buf.Len())
 }
 
@@ -47,7 +47,7 @@ func TestBuffer_ToHAR_structure(t *testing.T) {
 	resp.Body = io.NopCloser(bytes.NewBufferString(`{"data":"result"}`))
 	resp.Header.Set("Content-Type", "application/json")
 
-	buf.AddEntry(req, resp, time.Now(), 42*time.Millisecond)
+	buf.AddEntry(req, resp, nil, time.Now(), 42*time.Millisecond)
 
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestBuffer_ToHAR_requestBodyRestored(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 
 	req := newPostReq(t, "http://example.com", `body`)
-	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	buf.AddEntry(req, okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 
 	// body must still be readable after AddEntry
 	body, err := io.ReadAll(req.Body)
@@ -84,7 +84,7 @@ func TestBuffer_ToHAR_responseBodyRestored(t *testing.T) {
 
 	resp := okResp(200) //nolint:bodyclose
 	resp.Body = io.NopCloser(bytes.NewBufferString("response"))
-	buf.AddEntry(newGetReq(t, "http://example.com"), resp, time.Now(), time.Millisecond)
+	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond)
 
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestBuffer_ToHAR_responseBodyReadError_surfacedToCaller(t *testing.T) {
 	resp := okResp(200) //nolint:bodyclose
 	resp.Body = io.NopCloser(&partialThenErrorReader{data: []byte("partial"), err: wantErr})
 
-	buf.AddEntry(newGetReq(t, "http://example.com"), resp, time.Now(), time.Millisecond)
+	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond)
 
 	// The caller reads the captured bytes, then the original read error is re-surfaced rather
 	// than being silently swallowed and replaced with a truncated-but-successful body.
@@ -121,7 +121,7 @@ func TestBuffer_ToHAR_requestBodyReadError_restored(t *testing.T) {
 	req := newGetReq(t, "http://example.com")
 	req.Body = io.NopCloser(&partialThenErrorReader{data: []byte("partial-req"), err: wantErr})
 
-	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	buf.AddEntry(req, okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 
 	// Symmetric with the response path: req.Body is restored (captured bytes then the error),
 	// not left consumed.
@@ -143,7 +143,7 @@ func TestBuffer_ToHAR_redactsSensitiveData(t *testing.T) {
 	resp := okResp(200) //nolint:bodyclose
 	resp.Header.Set("Set-Cookie", "grafana_session=resp-cookie-secret; Path=/")
 
-	buf.AddEntry(req, resp, time.Now(), time.Millisecond)
+	buf.AddEntry(req, resp, nil, time.Now(), time.Millisecond)
 
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
@@ -167,7 +167,7 @@ func TestBuffer_ToHAR_binaryResponseBody_base64(t *testing.T) {
 	resp.Body = io.NopCloser(bytes.NewReader(binary))
 	resp.Header.Set("Content-Type", "application/octet-stream")
 
-	buf.AddEntry(newGetReq(t, "http://example.com"), resp, time.Now(), time.Millisecond)
+	buf.AddEntry(newGetReq(t, "http://example.com"), resp, nil, time.Now(), time.Millisecond)
 
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
@@ -192,7 +192,7 @@ func TestBuffer_ToHAR_redactsURLsAndCredentials(t *testing.T) {
 	// A redirect whose Location carries a secret in its query string.
 	resp.Header.Set("Location", "https://idp.example.com/cb?access_token=SECRET&state=ok")
 
-	buf.AddEntry(req, resp, time.Now(), time.Millisecond)
+	buf.AddEntry(req, resp, nil, time.Now(), time.Millisecond)
 
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
@@ -270,6 +270,20 @@ func TestToNameValues_sortedAndMultiValue(t *testing.T) {
 	}, toNameValues(h, nil), "names sorted, one pair per value")
 }
 
+func TestBuffer_ToHAR_transportError_recordedInComment(t *testing.T) {
+	_, buf := WithCapture(context.Background())
+	// A failed dial has no HTTP response; the attempt (and why it failed) must still be captured.
+	buf.AddEntry(newGetReq(t, "http://ds.example.com/q"), nil, errors.New("dial tcp: connection refused"), time.Now(), time.Millisecond)
+
+	raw, err := buf.ToHAR()
+	require.NoError(t, err)
+	var doc har.HAR
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	require.Len(t, doc.Log.Entries, 1)
+	assert.Equal(t, int64(0), doc.Log.Entries[0].Response.Status, "no-response entry has zero status")
+	assert.Contains(t, doc.Log.Entries[0].Comment, "connection refused", "transport error recorded in entry comment")
+}
+
 func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 	// A datasource's custom HTTP headers carry secrets under arbitrary names not in the denylist.
@@ -280,7 +294,7 @@ func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
 	req.Header.Set("X-Vault-Token", "vault-SECRET") // canonicalization must still match
 	req.Header.Set("Accept", "application/json")    // untouched header stays for fidelity
 
-	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	buf.AddEntry(req, okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
 	s := string(raw)
@@ -293,8 +307,8 @@ func TestBuffer_ToHAR_redactsCustomHeaders(t *testing.T) {
 func TestBuffer_ToHAR_emptyHeaderValues_noPanic(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 	req := newGetReq(t, "http://example.com")
-	req.Header["X-Empty"] = []string{}                           // empty value slice — must not panic
-	buf.AddEntry(req, okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+	req.Header["X-Empty"] = []string{}                                // empty value slice — must not panic
+	buf.AddEntry(req, okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 	_, err := buf.ToHAR()
 	require.NoError(t, err)
 }
@@ -302,7 +316,7 @@ func TestBuffer_ToHAR_emptyHeaderValues_noPanic(t *testing.T) {
 func TestBuffer_ToHAR_nilResponse(t *testing.T) {
 	_, buf := WithCapture(context.Background())
 	// A transport-level failure yields a nil response; the entry must still serialize.
-	buf.AddEntry(newGetReq(t, "http://example.com"), nil, time.Now(), time.Millisecond)
+	buf.AddEntry(newGetReq(t, "http://example.com"), nil, nil, time.Now(), time.Millisecond)
 
 	raw, err := buf.ToHAR()
 	require.NoError(t, err)
@@ -321,7 +335,7 @@ func TestBuffer_concurrentAddEntry(t *testing.T) {
 	for range n {
 		go func() {
 			defer wg.Done()
-			buf.AddEntry(newGetReq(t, "http://example.com"), okResp(200), time.Now(), time.Millisecond) //nolint:bodyclose
+			buf.AddEntry(newGetReq(t, "http://example.com"), okResp(200), nil, time.Now(), time.Millisecond) //nolint:bodyclose
 		}()
 	}
 	wg.Wait()

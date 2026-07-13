@@ -86,7 +86,7 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 			// requests worth seeing in a diagnostics bundle. Restore the request body first so
 			// buildEntry can read it.
 			r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
-			buf.AddEntry(r, resp, started, elapsed)
+			buf.AddEntry(r, resp, err, started, elapsed)
 
 			return resp, err
 		})

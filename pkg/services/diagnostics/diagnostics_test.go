@@ -133,7 +133,7 @@ func TestCollectHAR_BufferOnly_returnedVerbatim(t *testing.T) {
 	buf := &harcapture.Buffer{}
 	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
 	require.NoError(t, err)
-	buf.AddEntry(req, nil, time.Now(), time.Millisecond)
+	buf.AddEntry(req, nil, nil, time.Now(), time.Millisecond)
 
 	out, err := collectHAR(nil, buf)
 	require.NoError(t, err)
