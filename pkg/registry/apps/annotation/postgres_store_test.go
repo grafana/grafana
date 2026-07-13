@@ -146,17 +146,34 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			assert.NotContains(t, names, "sd-dead")
 		})
 
-		t.Run("List includes soft-deleted with a tombstone when IncludeDeleted", func(t *testing.T) {
+		t.Run("List includes soft-deleted with a tombstone when DeletedInclude", func(t *testing.T) {
 			create(t, "sd-incl")
 			require.NoError(t, store.Delete(ctx, ns, "sd-incl"))
 
-			list, err := store.List(ctx, ns, ListOptions{IncludeDeleted: true})
+			list, err := store.List(ctx, ns, ListOptions{Deleted: DeletedInclude})
 			require.NoError(t, err)
 
 			found := findByName(list, "sd-incl")
-			require.NotNil(t, found, "expected soft-deleted annotation in IncludeDeleted list")
+			require.NotNil(t, found, "expected soft-deleted annotation in DeletedInclude list")
 			require.NotNil(t, found.DeletionTimestamp, "expected tombstone deletionTimestamp")
 			assert.False(t, found.DeletionTimestamp.IsZero())
+		})
+
+		t.Run("List returns only tombstones when DeletedOnly", func(t *testing.T) {
+			create(t, "sd-only-live")
+			create(t, "sd-only-dead")
+			require.NoError(t, store.Delete(ctx, ns, "sd-only-dead"))
+
+			list, err := store.List(ctx, ns, ListOptions{Deleted: DeletedOnly})
+			require.NoError(t, err)
+
+			names := annotationNames(list)
+			assert.Contains(t, names, "sd-only-dead")
+			assert.NotContains(t, names, "sd-only-live")
+
+			found := findByName(list, "sd-only-dead")
+			require.NotNil(t, found)
+			require.NotNil(t, found.DeletionTimestamp, "expected tombstone deletionTimestamp")
 		})
 	})
 }

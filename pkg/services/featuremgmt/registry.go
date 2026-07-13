@@ -284,7 +284,7 @@ var (
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
@@ -2122,14 +2122,6 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "vizPresets",
-			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "heatmapNegativeLogBuckets",
