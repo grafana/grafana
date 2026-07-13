@@ -6,10 +6,11 @@ import { t } from '@grafana/i18n';
 import { Icon, IconButton, Link, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getDragHandleStyles } from './styles';
-import { type PinnedEntry } from './utils';
+import { type PinnedLine } from './utils';
 
 interface Props {
-  entry: PinnedEntry;
+  /** The single breadcrumb line to render. Whole-section pins (Starred) go through MegaMenuItem. */
+  line: PinnedLine;
   activeItem?: NavModelItem;
   editMode?: boolean;
   onUnpin: () => void;
@@ -26,7 +27,7 @@ interface Props {
  * crumbs truncate first. Whole-section pins (Starred) are rendered by MegaMenuItem instead.
  */
 export function MegaMenuPinnedItem({
-  entry,
+  line,
   activeItem,
   editMode,
   onUnpin,
@@ -36,7 +37,6 @@ export function MegaMenuPinnedItem({
 }: Props) {
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragHandleStyles);
-  const line = entry.lines[0];
   const { item, ancestors, icon } = line;
   const label = item.text;
 

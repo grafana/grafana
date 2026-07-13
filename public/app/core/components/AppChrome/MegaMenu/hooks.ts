@@ -31,6 +31,7 @@ import {
   moveItem,
   NON_MENU_NAV_IDS,
   orderTopLevelSections,
+  type PinnedEntry,
   removeHiddenItems,
   reorderSections,
   revealItem,
@@ -347,16 +348,18 @@ export const useNavCustomization = () => {
 
   // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items
   // here; the main nav below is never pruned. Leaf items are enriched so clicks are tracked.
-  const pinnedEntries = (canCustomise ? getPinnedEntries(baseItems, effectivePinnedUrls) : []).map((entry) => ({
-    ...entry,
-    section: entry.section ? enrichWithInteractionTracking(entry.section, docked) : undefined,
-    lines: entry.lines.map((line) => ({ ...line, item: enrichWithInteractionTracking(line.item, docked) })),
-  }));
-  // The pinned items (section headers + leaves), for active-item resolution alongside the nav.
-  const pinnedLeafItems = pinnedEntries.flatMap((entry) => [
-    ...(entry.section ? [entry.section] : []),
-    ...entry.lines.map((line) => line.item),
-  ]);
+  const pinnedEntries: PinnedEntry[] = (canCustomise ? getPinnedEntries(baseItems, effectivePinnedUrls) : []).map(
+    (entry) =>
+      entry.section
+        ? { url: entry.url, section: enrichWithInteractionTracking(entry.section, docked) }
+        : { url: entry.url, line: { ...entry.line, item: enrichWithInteractionTracking(entry.line.item, docked) } }
+  );
+  // The pinned items (a section header plus its children, or a normal pin's leaf), for active-item
+  // resolution alongside the nav. Section children come from the section node itself, so they're the
+  // same enriched objects the rendered rows use.
+  const pinnedLeafItems = pinnedEntries.flatMap((entry) =>
+    entry.section ? [entry.section, ...(entry.section.children ?? [])] : [entry.line.item]
+  );
 
   // Top-level nav in the user's order; hidden items (any depth) are dropped outside edit mode and
   // shown (greyed) while editing so they can be toggled back. Children are untouched by pinning.

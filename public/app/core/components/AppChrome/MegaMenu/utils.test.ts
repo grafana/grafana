@@ -308,16 +308,15 @@ describe('pinning helpers', () => {
       const entries = getPinnedEntries(tree, ['/explore']);
       expect(entries).toHaveLength(1);
       expect(entries[0].url).toBe('/explore');
-      expect(entries[0].lines).toHaveLength(1);
-      expect(entries[0].lines[0].item.text).toBe('Explore');
-      expect(entries[0].lines[0].ancestors).toEqual([]);
+      expect(entries[0].section).toBeUndefined();
+      expect(entries[0].line?.item.text).toBe('Explore');
+      expect(entries[0].line?.ancestors).toEqual([]);
     });
 
     it('resolves a nested child to a single line carrying its ancestor path', () => {
       const entries = getPinnedEntries(tree, ['/playlists']);
-      expect(entries[0].lines).toHaveLength(1);
-      expect(entries[0].lines[0].item.text).toBe('Playlists');
-      expect(entries[0].lines[0].ancestors).toEqual(['Dashboards']);
+      expect(entries[0].line?.item.text).toBe('Playlists');
+      expect(entries[0].line?.ancestors).toEqual(['Dashboards']);
     });
 
     it('keeps the stored order and skips urls that match no nav item', () => {
@@ -325,13 +324,14 @@ describe('pinning helpers', () => {
       expect(entries.map((e) => e.url)).toEqual(['/admin/settings', '/explore']);
     });
 
-    it('flags a whole-section pin (Starred) with its section node and lists its children', () => {
+    it('flags a whole-section pin (Starred) with its section node and no breadcrumb line', () => {
       const entries = getPinnedEntries(withStarred, ['/dashboards?starred']);
       expect(entries).toHaveLength(1);
       expect(entries[0].url).toBe('/dashboards?starred');
-      // The section is carried so the box can render it as a collapsible section.
+      // The section node is carried (its children render the list); there's no single breadcrumb line.
+      expect(entries[0].line).toBeUndefined();
       expect(entries[0].section?.text).toBe('Starred');
-      expect(entries[0].lines.map((l) => l.item.text)).toEqual(['First', 'Second']);
+      expect(entries[0].section?.children?.map((c) => c.text)).toEqual(['First', 'Second']);
     });
 
     it('treats an empty Starred section as a section, not a breadcrumb', () => {
@@ -345,7 +345,7 @@ describe('pinning helpers', () => {
       const entries = getPinnedEntries(emptyStarred, ['/dashboards?starred']);
       expect(entries).toHaveLength(1);
       expect(entries[0].section?.text).toBe('Starred');
-      expect(entries[0].lines).toEqual([]);
+      expect(entries[0].line).toBeUndefined();
     });
   });
 

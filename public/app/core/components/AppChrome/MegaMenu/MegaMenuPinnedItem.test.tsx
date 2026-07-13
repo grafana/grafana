@@ -3,16 +3,16 @@ import { render, screen } from 'test/test-utils';
 import { type NavModelItem } from '@grafana/data';
 
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
-import { type PinnedEntry } from './utils';
+import { type PinnedLine } from './utils';
 
 const renderItem = (
   activeItem?: NavModelItem,
   item: NavModelItem = { text: 'Explore', url: '/explore', id: 'explore' }
 ) => {
-  const entry: PinnedEntry = { url: item.url!, lines: [{ item, ancestors: [], icon: 'compass' }] };
+  const line: PinnedLine = { item, ancestors: [], icon: 'compass' };
   return render(
     <ul>
-      <MegaMenuPinnedItem entry={entry} activeItem={activeItem} onUnpin={() => {}} />
+      <MegaMenuPinnedItem line={line} activeItem={activeItem} onUnpin={() => {}} />
     </ul>
   );
 };

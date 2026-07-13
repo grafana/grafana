@@ -134,7 +134,7 @@ export const MegaMenu = memo(
       ) : (
         <MegaMenuPinnedItem
           key={entry.url}
-          entry={entry}
+          line={entry.line}
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}

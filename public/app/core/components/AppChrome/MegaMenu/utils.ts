@@ -189,21 +189,21 @@ function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean)
 }
 
 /** One breadcrumb line in the pinned box: the nav item it links to, its ancestor text labels, and
- * the icon of its top-level parent section (shown as the row's leading icon). Reached via
- * `PinnedEntry['lines'][number]`, so it doesn't need to be exported. */
-interface PinnedLine {
+ * the icon of its top-level parent section (shown as the row's leading icon). */
+export interface PinnedLine {
   item: NavModelItem;
   ancestors: string[];
   icon?: string;
 }
 
-/** A pinned entry: one pinned url. A normal pin has a single breadcrumb line; a whole-section pin
- * (Starred) additionally carries the `section` node and is rendered as a collapsible section. */
-export interface PinnedEntry {
-  url: string;
-  section?: NavModelItem;
-  lines: PinnedLine[];
-}
+/**
+ * A pinned entry (one pinned url). Either a normal pin — rendered as a single breadcrumb `line` — or a
+ * whole-section pin (Starred), which carries the `section` node and renders as a collapsible section
+ * listing the section's own children.
+ */
+export type PinnedEntry =
+  | { url: string; line: PinnedLine; section?: undefined }
+  | { url: string; section: NavModelItem; line?: undefined };
 
 /**
  * Resolve the pinned urls (in their stored order) into entries for the pinned box. A normal url
@@ -220,10 +220,6 @@ export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): P
       continue;
     }
     const node = path[path.length - 1];
-    const ancestors = path.slice(0, -1).map((item) => item.text);
-    // The leading icon comes from the top-level parent section (path[0]) — its own icon for a
-    // top-level pin, or the ancestor section's icon for a nested one.
-    const icon = path[0].icon;
     const children = (node.children ?? []).filter((child) => !child.isCreateAction);
     // Starred is always a whole-section pin (its children are dynamic and none are individually
     // pinnable) even before its children have loaded — so it keeps the collapsible section layout and
@@ -232,9 +228,13 @@ export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): P
     // none of which are individually pinnable.
     const isSection = node.id === 'starred' || (children.length > 0 && pinnableChildren(node).length === 0);
     if (isSection) {
-      entries.push({ url, section: node, lines: children.map((child) => ({ item: child, ancestors, icon })) });
+      entries.push({ url, section: node });
     } else {
-      entries.push({ url, lines: [{ item: node, ancestors, icon }] });
+      const ancestors = path.slice(0, -1).map((item) => item.text);
+      // The leading icon comes from the top-level parent section (path[0]) — its own icon for a
+      // top-level pin, or the ancestor section's icon for a nested one.
+      const icon = path[0].icon;
+      entries.push({ url, line: { item: node, ancestors, icon } });
     }
   }
   return entries;
