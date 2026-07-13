@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+
 import { ReactUtils, useStyles2 } from '@grafana/ui';
 
 import { QueryOperationRowHeader, type ExpanderMessages } from './QueryOperationRowHeader';
@@ -73,12 +73,6 @@ export function QueryOperationRow({
       const y = e.clientY - rect.top;
 
       // report relative mouse position within the header element
-      reportInteraction('query_row_reorder_drag_position', {
-        x: x / rect.width,
-        y: y / rect.height,
-        width: rect.width,
-        height: rect.height,
-      });
     }
   }, []);
 

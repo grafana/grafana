@@ -34,7 +34,6 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
       const stop = Date.now();
       const elapsed = stop - start;
       if (elapsed >= SLOW_VARIABLES_EXPANSION_THRESHOLD) {
-        reportInteraction('Slow unknown variables expansion', { elapsed });
       }
       setChanged(0);
       setUsages(unknownsNetwork);

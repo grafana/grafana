@@ -135,7 +135,6 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
 
       return () => {
         if (!closedExplicitlyRef.current) {
-          reportInteraction('dashboards_assistant_popover_closed', { action: 'click_outside' });
         }
       };
     }
@@ -145,7 +144,6 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
 
   const handleClose = useCallback(() => {
     closedExplicitlyRef.current = true;
-    reportInteraction('dashboards_assistant_popover_closed', { action: 'escape' });
     onClose();
   }, [onClose]);
 

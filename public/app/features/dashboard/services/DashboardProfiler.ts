@@ -1,4 +1,4 @@
-import { logMeasurement, reportInteraction, config } from '@grafana/runtime';
+import { logMeasurement, config } from '@grafana/runtime';
 import { performanceUtils, type SceneObject } from '@grafana/scenes';
 
 interface SceneInteractionProfileEvent {
@@ -32,12 +32,6 @@ export function getDashboardComponentInteractionCallback(uid: string, title: str
       endTs: e.endTs,
       timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
     };
-
-    reportInteraction('dashboard_interaction', {
-      interactionType: e.origin,
-      uid,
-      ...payload,
-    });
 
     logMeasurement(`dashboard_interaction`, payload, { interactionType: e.origin, dashboard: uid, title: title });
   };

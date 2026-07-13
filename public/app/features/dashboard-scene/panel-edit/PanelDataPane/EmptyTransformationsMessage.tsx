@@ -103,9 +103,6 @@ function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   };
 
   const handleShowMoreClick = () => {
-    reportInteraction('grafana_panel_transformations_show_more_clicked', {
-      context: 'empty_transformations_placeholder',
-    });
     props.onShowPicker();
   };
 
