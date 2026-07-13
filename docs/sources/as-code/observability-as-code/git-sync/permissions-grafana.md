@@ -16,6 +16,8 @@ title: Git Sync permissions and access control
 menuTitle: Permissions and access control
 weight: 700
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/permissions-and-access-control/
+aliases:
+  - ../../../observability-as-code/git-sync/gitsync-permissions
 refs:
   roles-and-permissions:
     - pattern: /docs/grafana/
@@ -34,25 +36,17 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#manage-dashboard-permissions
   manage-folder-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#folder-permissions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/organize-dashboards/manage-folders/#manage-folder-permissions
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
 ---
 
 # Git Sync permissions and access control
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 For Git Sync you need to configure permissions at two layers to function correctly:
 
 - At the Grafana level for repository management and resource access, as described in this document.
-- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-repo-protection) for more information.
+- At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git) for more information.
 
 ## Grafana role-based permissions
 
@@ -118,7 +112,11 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 **Organization-level capabilities**:
 
 - View dashboard preview links in pull requests
-- Trigger manual sync operations via jobs API
+- Push their dashboard and folder changes to Git, including opening pull requests, via the jobs API
+
+{{< admonition type="note" >}}
+**Only Admins can trigger a manual sync (**pull** from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
+{{< /admonition >}}
 
 **Resource access** depends on folder/dashboard permissions:
 
@@ -203,10 +201,14 @@ Users with the `Admin` role receive full access to Git Sync infrastructure:
 
 Users with the `Editor` role can manage sync operations but not infrastructure configuration:
 
-| Permission Category  | Specific Permissions                                                                                              | What This Allows                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Jobs**             | `provisioning.jobs:create`<br>`provisioning.jobs:read`<br>`provisioning.jobs:write`<br>`provisioning.jobs:delete` | Trigger manual syncs<br>View sync jobs<br>Modify sync job settings<br>Cancel/delete sync jobs |
-| **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                      |
+| Permission Category  | Specific Permissions                                                                                              | What This Allows                                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Jobs**             | `provisioning.jobs:create`<br>`provisioning.jobs:read`<br>`provisioning.jobs:write`<br>`provisioning.jobs:delete` | Push changes and open pull requests<br>View sync jobs<br>Modify sync job settings<br>Cancel/delete sync jobs |
+| **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                                     |
+
+{{< admonition type="note" >}}
+`provisioning.jobs:create` allows editors to create jobs to push their changes, subject to the relevant `dashboards:*` and `folders:*` permissions. However, **it doesn't allow admin-only job actions** such as a manual **pull** from Git or orphan-resource cleanup, which require the `provisioning.repositories:write` permission. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
+{{< /admonition >}}
 
 `Editors` can access resources based on the folder/dashboard assignments:
 
@@ -238,11 +240,43 @@ The following applies for Git Sync:
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
 
+### Job actions and required permissions
+
+Git Sync operations run as jobs. You need the `provisioning.jobs:create` permission to create any job. Moreover, **some job actions are restricted to administrators** and require the `provisioning.repositories:write` permission. This prevents editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
+
+| Job action                          | Required permission                                                                   | Who can run it                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Push changes / open pull request    | `provisioning.jobs:create` plus the relevant `dashboards:*` / `folders:*` permissions | Editors and Admins, on the resources they can modify      |
+| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types             | Editors and Admins with the required resource permissions |
+| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                     | Admins only                                               |
+| Release / delete orphaned resources | `provisioning.repositories:write`                                                     | Admins only                                               |
+
+### Repository subresource access
+
+The repository API exposes several subresources. The following table shows the permission each one is gated on.
+
+The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
+
+- **Editors pushing changes**: When an editor saves changes or opens a pull request through the push-job flow, Grafana needs the branch list. This is authorized with `provisioning.jobs:create`.
+- **Admins configuring a repository**: When an admin or repository owner sets up or edits a repository and picks a target branch, Grafana updates the `Repository` resource info. This is authorized with `provisioning.repositories:write`.
+
+Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
+
+| Subresource                      | Purpose                                    | Required permission                                                     | Who can access it       |
+| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
+| `files`                          | Read and write provisioned resource files  | Authenticated access, then standard `dashboards:*` / `folders:*` checks | All authenticated users |
+| `refs`                           | List repository branches and commits       | `provisioning.repositories:write` **or** `provisioning.jobs:create`     | Admins and Editors      |
+| `resources`, `history`, `status` | Repository management and inspection views | `provisioning.repositories:write`                                       | Admins only             |
+
+{{< admonition type="note" >}}
+The management and inspection views (`resources`, `history`, `status`) are gated on `provisioning.repositories:write` rather than `repositories:read`, because there's no admin-only read action on the `repositories` resource. As a result, only users who can manage a repository can inspect its management views; Viewers and Editors can't access these views.
+{{< /admonition >}}
+
 ## Configure Git repository protection
 
 After you've configured your Grafana permissions, set up the appropriate permissions at your Git provider to write changes. Repository protection settings control write access, branch protection rules, and code review requirements.
 
-For detailed information about configuring repository write access and branch protection, refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/gitsync-repo-protection).
+For detailed information about configuring repository write access and branch protection, refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git).
 
 ## Troubleshoot permissions
 

@@ -35,6 +35,12 @@ type Mapper interface {
 	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
 
+	// UIDScope returns the uid-form RBAC scope for a given resource name, regardless of the
+	// mapper's configured ScopeAttribute. Used by the write path to pass a uid-scoped string
+	// to ResolveUIDScopeForWrite for id-scoped resources.
+	// Example: UIDScope("123") returns "serviceaccounts:uid:123".
+	UIDScope(name string) string
+
 	// AllowsKind reports whether the resource type permits assignments to the given permission kind.
 	// Returns true when no kind restriction is configured (all kinds allowed).
 	AllowsKind(kind v0alpha1.ResourcePermissionSpecPermissionKind) bool
@@ -91,6 +97,10 @@ func (m mapper) ActionSets() []string {
 
 func (m mapper) Scope(name string) string {
 	return m.resource + ":" + string(m.scopeAttribute) + ":" + name
+}
+
+func (m mapper) UIDScope(name string) string {
+	return m.resource + ":" + string(ScopeAttributeUID) + ":" + name
 }
 
 func (m mapper) ActionSet(level string) (string, error) {

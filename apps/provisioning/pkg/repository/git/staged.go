@@ -36,7 +36,7 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 		return nil, fmt.Errorf("ensure branch exists: %w", err)
 	}
 
-	writer, err := repo.client.NewStagedWriter(ctx, ref)
+	writer, err := repo.client.NewStagedWriter(ctx, ref, repo.writerOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("build staged writer: %w", err)
 	}
@@ -204,6 +204,9 @@ func (r *stagedGitRepository) Move(ctx context.Context, oldPath, newPath, ref, m
 }
 
 func (r *stagedGitRepository) Push(ctx context.Context) error {
+	ctx, logger := r.withGitContext(ctx, "")
+	logger.Info("push repository")
+
 	if r.opts.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, r.opts.Timeout)

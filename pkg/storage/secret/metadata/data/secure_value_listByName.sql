@@ -9,5 +9,4 @@ WHERE
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }}) AND
   {{ .Ident "active" }} = true
-{{ .SelectFor "UPDATE" }}
 ;

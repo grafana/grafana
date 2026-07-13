@@ -23,7 +23,7 @@ export function getColorDimension(
   return getColorDimensionForField(findField(frame, config.field), config, theme);
 }
 
-export function getColorDimensionForField(
+function getColorDimensionForField(
   field: Field | undefined,
   config: ColorDimensionConfig,
   theme: GrafanaTheme2

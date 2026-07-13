@@ -8,12 +8,12 @@ import { KnownProvenance } from 'app/features/alerting/unified/types/knownProven
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
-export const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
+const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
 /** Display name of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_NAME_HAPPY_PATH = 'Some interval';
 
 /** UID of a (file) provisioned time interval */
-export const TIME_INTERVAL_UID_FILE_PROVISIONED = 'd7b8515fc39e90f7';
+const TIME_INTERVAL_UID_FILE_PROVISIONED = 'd7b8515fc39e90f7';
 export const TIME_INTERVAL_NAME_FILE_PROVISIONED = 'A provisioned interval';
 
 const allTimeIntervals = getK8sResponse<TimeInterval>('TimeIntervalList', [

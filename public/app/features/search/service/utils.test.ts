@@ -3,6 +3,7 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from '../../apiserver/types';
 
+import { type DashboardQueryResult } from './types';
 import { type SearchHit } from './unified';
 import {
   appendFrame,
@@ -10,6 +11,7 @@ import {
   DELETED_BY_UNKNOWN,
   filterSearchResults,
   formatDeletedByDisplayValue,
+  queryResultToViewItem,
   resourceToSearchResult,
 } from './utils';
 
@@ -194,6 +196,36 @@ describe('resourceToSearchResult', () => {
   });
 });
 
+describe('queryResultToViewItem', () => {
+  function makeQueryResult(partial?: Partial<DashboardQueryResult>): DashboardQueryResult {
+    return {
+      kind: 'dashboard',
+      name: 'A dashboard',
+      uid: 'abc',
+      url: '/d/abc',
+      panel_type: '',
+      tags: [],
+      location: '',
+      ds_uid: [],
+      score: 0,
+      explain: {},
+      ...partial,
+    };
+  }
+
+  it('carries the description through to the view item', () => {
+    const viewItem = queryResultToViewItem(makeQueryResult({ description: 'A helpful description' }));
+
+    expect(viewItem.description).toBe('A helpful description');
+  });
+
+  it('leaves description undefined when not present', () => {
+    const viewItem = queryResultToViewItem(makeQueryResult());
+
+    expect(viewItem.description).toBeUndefined();
+  });
+});
+
 describe('formatDeletedByDisplayValue', () => {
   const t = (_key: string, defaultValue: string) => defaultValue;
 
@@ -222,7 +254,6 @@ describe('filterSearchResults deletedby sort', () => {
       resource: 'dashboards',
       name: title.toLowerCase(),
       title,
-      location: 'general',
       folder: 'general',
       tags: [],
       field,

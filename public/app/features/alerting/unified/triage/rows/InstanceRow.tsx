@@ -8,15 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema';
-import {
-  AxisPlacement,
-  BarAlignment,
-  LegendDisplayMode,
-  StackingMode,
-  Text,
-  TooltipDisplayMode,
-  useStyles2,
-} from '@grafana/ui';
+import { AxisPlacement, BarAlignment, StackingMode, Text, TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { overrideToFixedColor } from '../../home/Insights';
 import { InstanceDetailsDrawer } from '../instance-details/InstanceDetailsDrawer';
@@ -51,7 +43,6 @@ const chartConfig = VizConfigBuilders.timeseries()
   .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
   .setOption('legend', {
     showLegend: false,
-    displayMode: LegendDisplayMode.Hidden,
   })
   .setMin(0)
   .setMax(1)

@@ -2,16 +2,14 @@ package sqleng
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-)
 
-const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
+)
 
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
@@ -120,11 +118,9 @@ func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
 
-	// TODO: Return any error
-	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(sqlmacro.RegExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
@@ -144,6 +140,7 @@ func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	return sql, nil
 }
 
+//nolint:gocyclo // The complexity was added in a patch. We do not want to modify the patch right now.
 func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
@@ -173,6 +170,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'"`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])
@@ -208,6 +208,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])

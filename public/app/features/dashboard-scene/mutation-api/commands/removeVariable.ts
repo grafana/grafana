@@ -8,9 +8,16 @@ import { type z } from 'zod';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
+import {
+  buildVariableChangePath,
+  findSectionPathsContainingVariable,
+  getEffectiveVariableParentPath,
+  isSectionVariablesFeatureEnabled,
+  resolveVariableScope,
+} from './variableScope';
+import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
-export const removeVariablePayloadSchema = payloads.removeVariable;
+const removeVariablePayloadSchema = payloads.removeVariable;
 
 export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 
@@ -24,13 +31,36 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene } = context;
-    const { name } = payload;
+    const { name, parentPath } = payload;
+    const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
+    const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
     enterEditModeIfNeeded(scene);
 
     try {
-      const variables = scene.state.$variables;
+      let scope;
+      if (effectiveParentPath === '/') {
+        if (!dashboardHasVariableNamed(scene, name)) {
+          if (!sectionVariablesEnabled) {
+            throw new Error(`Variable '${name}' not found`);
+          }
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
+          if (sectionPaths.length === 0) {
+            throw new Error(`Variable '${name}' not found`);
+          }
+          throw new Error(
+            `Variable '${name}' is not on the dashboard. Pass parentPath to remove a section variable (e.g. "${sectionPaths[0]}").`
+          );
+        }
+        scope = resolveVariableScope(scene, '/');
+      } else {
+        scope = resolveVariableScope(scene, effectiveParentPath);
+      }
+
+      const { scopeOwner, layoutPathPrefix } = scope;
+
+      const variables = scopeOwner.state.$variables;
       if (!variables) {
-        throw new Error('Dashboard has no variable set');
+        throw new Error(`Variable '${name}' not found`);
       }
 
       const variable = variables.getByName(name);
@@ -40,13 +70,15 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       const previousState = variable.state;
 
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
+      const updatedVariables = getScopeVariableArray(scopeOwner).filter((v) => v.state.name !== name);
+      replaceScopeVariableSet(scopeOwner, updatedVariables);
+
+      const changePath = buildVariableChangePath(layoutPathPrefix, name);
 
       return {
         success: true,
         data: { name },
-        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
+        changes: [{ path: changePath, previousValue: previousState, newValue: null }],
       };
     } catch (error) {
       return {

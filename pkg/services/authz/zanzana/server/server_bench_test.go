@@ -14,6 +14,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -331,7 +332,7 @@ func generatePermissionTuples(data *benchmarkData) []*openfgav1.TupleKey {
 	return tuples
 }
 
-// setupBenchmarkServer creates a server with the benchmark data loaded
+// setupBenchmarkServer creates a server with the benchmark data loaded.
 func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	b.Helper()
 	if testing.Short() {
@@ -353,7 +354,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(b, err)
 
 	// Generate test data
@@ -453,7 +454,7 @@ func setupSubresourceDepthBenchmarkServer(b *testing.B, childrenPerLevel, depth 
 	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
 	require.NoError(b, err)
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil)
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(b, err)
 
 	// Build only the hierarchy needed to force TTU walks.
@@ -695,7 +696,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 	store, err := srv.getStoreInfo(ctx, benchNamespace)
 	require.NoError(b, err)
 
-	contextuals, err := srv.getContextuals(deniedUser)
+	contextuals, err := srv.getContextuals(deniedUser, nil)
 	require.NoError(b, err)
 
 	subresourceGR := common.FormatGroupResource(benchDashboardGroup, benchDashboardResource, benchStatusSubresource)
@@ -744,7 +745,7 @@ func BenchmarkSubresourceRelationComparison(b *testing.B) {
 						ctx,
 						store,
 						deniedUser,
-						common.RelationCanSubresourceGet,
+						common.SubresourcePermissionRelation(common.RelationSubresourceGet),
 						folderIdent,
 						contextuals,
 						resourceCtx,

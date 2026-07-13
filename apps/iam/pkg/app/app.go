@@ -5,15 +5,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 )
 
-var appManifestData = app.ManifestData{
-	AppName: "iam",
-	Group:   "iam.grafana.app",
-}
-
-func Provider(appCfg app.SpecificConfig) app.Provider {
-	return simple.NewAppProvider(app.NewEmbeddedManifest(appManifestData), appCfg, New)
-}
-
 func New(cfg app.Config) (app.App, error) {
 	config := simple.AppConfig{
 		Name:       cfg.ManifestData.AppName,

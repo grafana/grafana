@@ -38,10 +38,7 @@ type ResourceIndexClient interface {
 	GetStats(ctx context.Context, in *ResourceStatsRequest, opts ...grpc.CallOption) (*ResourceStatsResponse, error)
 	// Rebuild the search index
 	RebuildIndexes(ctx context.Context, in *RebuildIndexesRequest, opts ...grpc.CallOption) (*RebuildIndexesResponse, error)
-	// Semantic search backed by vector embeddings. The server embeds the query
-	// string with the configured embedding model and returns nearest neighbors
-	// by cosine distance. Returns Unimplemented when no embedding provider is
-	// configured.
+	// Semantic search
 	VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error)
 }
 
@@ -106,10 +103,7 @@ type ResourceIndexServer interface {
 	GetStats(context.Context, *ResourceStatsRequest) (*ResourceStatsResponse, error)
 	// Rebuild the search index
 	RebuildIndexes(context.Context, *RebuildIndexesRequest) (*RebuildIndexesResponse, error)
-	// Semantic search backed by vector embeddings. The server embeds the query
-	// string with the configured embedding model and returns nearest neighbors
-	// by cosine distance. Returns Unimplemented when no embedding provider is
-	// configured.
+	// Semantic search
 	VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error)
 }
 

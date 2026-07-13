@@ -87,6 +87,18 @@ describe('generateLogGrammar', () => {
     }
   );
 
+  test.each([['1w'], ['2y'], ['1y6m'], ['1w2d3h']])(
+    'Identifies durations with week/year units: %s',
+    (duration: string) => {
+      const { tokens } = generateScenario(duration);
+      if (tokens[0] instanceof Token) {
+        expect(tokens[0].content).toBe(duration);
+        expect(tokens[0].type).toBe('log-token-duration');
+      }
+      expect.assertions(3);
+    }
+  );
+
   test('Does not identify invalid duration-like strings', () => {
     const { tokens } = generateScenario('5min');
     expect(tokens.every((token) => !(token instanceof Token) || token.type !== 'log-token-duration')).toBe(true);

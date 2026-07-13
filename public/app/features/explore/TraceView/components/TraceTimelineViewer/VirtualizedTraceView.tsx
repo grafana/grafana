@@ -35,7 +35,7 @@ import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import ListView from './ListView';
-import SpanBarRow from './SpanBarRow';
+import { SpanBarRow } from './SpanBarRow';
 import { type TraceFlameGraphs } from './SpanDetail';
 import type DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
@@ -119,7 +119,7 @@ type TVirtualizedTraceViewOwnProps = {
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
 
 // export for tests
-export const DEFAULT_HEIGHTS = {
+const DEFAULT_HEIGHTS = {
   bar: 28,
   detail: 161,
   detailWithLogs: 197,
@@ -227,7 +227,7 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 const memoizedChildSpansMap = memoizeOne(childSpansMap);
 
 // export from tests
-export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
+class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
   hasScrolledToSpan = false;
 

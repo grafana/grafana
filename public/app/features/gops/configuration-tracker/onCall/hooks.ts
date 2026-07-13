@@ -2,7 +2,7 @@ import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-export function useGetOnCallIntegrations() {
+function useGetOnCallIntegrations() {
   const { pluginId, installed: onCallPluginInstalled } = useIrmPlugin(SupportedPlugin.OnCall);
 
   const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(

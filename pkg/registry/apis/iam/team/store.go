@@ -33,14 +33,18 @@ var (
 
 var teamResource = iamv0alpha1.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer, egr legacy.ExternalGroupReconciler) *LegacyStore {
+	if egr == nil {
+		egr = legacy.NoopExternalGroupReconciler{}
+	}
+	return &LegacyStore{store, ac, tracer, egr}
 }
 
 type LegacyStore struct {
-	store  legacy.LegacyIdentityStore
-	ac     claims.AccessClient
-	tracer trace.Tracer
+	store                   legacy.LegacyIdentityStore
+	ac                      claims.AccessClient
+	tracer                  trace.Tracer
+	externalGroupReconciler legacy.ExternalGroupReconciler
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -88,7 +92,8 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	}
 
 	err = s.store.DeleteTeam(ctx, ns, legacy.DeleteTeamCommand{
-		UID: name,
+		UID:                     name,
+		ExternalGroupReconciler: s.externalGroupReconciler,
 	})
 
 	if err != nil {
@@ -152,6 +157,7 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
+
 	// Plumb caller's RV (ms-precision unix timestamp) so UpdateTeam can
 	// gate the SQL UPDATE on it.
 	if rv := teamObj.GetResourceVersion(); rv != "" {
@@ -165,7 +171,8 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	result, err := s.store.UpdateTeam(ctx, ns, updateCmd)
 	if err != nil {
 		// Same-user-add race → 409.
-		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) ||
+			errors.Is(err, legacy.ErrTeamGroupAlreadyAdded) {
 			return oldObj, false, apierrors.NewConflict(teamResource.GroupResource(), name, err)
 		}
 		// Stale RV → 409 so the caller re-reads against fresh state.
@@ -184,7 +191,11 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	if err != nil {
 		return oldObj, false, err
 	}
-	iamTeam, err := toTeamObject(result.Team, ns, members)
+	groupsByTeam, err := s.externalGroupReconciler.ListByTeams(ctx, ns.OrgID, []string{teamObj.Name})
+	if err != nil {
+		return oldObj, false, err
+	}
+	iamTeam, err := toTeamObject(result.Team, ns, members, groupsByTeam[teamObj.Name])
 	if err != nil {
 		return oldObj, false, err
 	}
@@ -218,10 +229,14 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 			if err != nil {
 				return nil, err
 			}
+			groupsByTeam, err := s.externalGroupReconciler.ListByTeams(ctx, ns.OrgID, teamUIDs)
+			if err != nil {
+				return nil, err
+			}
 
 			teams := make([]*iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
-				teamObj, err := toTeamObject(t, ns, membersByTeam[t.UID])
+				teamObj, err := toTeamObject(t, ns, membersByTeam[t.UID], groupsByTeam[t.UID])
 				if err != nil {
 					return nil, err
 				}
@@ -277,7 +292,11 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, fmt.Errorf("failed to list members for team %s: %w", name, err)
 	}
-	obj, err := toTeamObject(found.Teams[0], ns, members)
+	groupsByTeam, err := s.externalGroupReconciler.ListByTeams(ctx, ns.OrgID, []string{name})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list external groups for team %s: %w", name, err)
+	}
+	obj, err := toTeamObject(found.Teams[0], ns, members, groupsByTeam[name])
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +335,8 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	result, err := s.store.CreateTeam(ctx, ns, createCmd)
 	if err != nil {
-		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) {
+		if errors.Is(err, team.ErrTeamMemberAlreadyAdded) ||
+			errors.Is(err, legacy.ErrTeamGroupAlreadyAdded) {
 			return nil, apierrors.NewConflict(teamResource.GroupResource(), teamObj.Name, err)
 		}
 		return nil, err
@@ -326,7 +346,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	if err != nil {
 		return nil, err
 	}
-	iamTeam, err := toTeamObject(result.Team, ns, members)
+	groupsByTeam, err := s.externalGroupReconciler.ListByTeams(ctx, ns.OrgID, []string{result.Team.UID})
+	if err != nil {
+		return nil, err
+	}
+	iamTeam, err := toTeamObject(result.Team, ns, members, groupsByTeam[result.Team.UID])
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +386,7 @@ func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOpti
 	return 0
 }
 
-func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMember) (iamv0alpha1.Team, error) {
+func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMember, externalGroups []string) (iamv0alpha1.Team, error) {
 	specMembers := make([]iamv0alpha1.TeamTeamMember, 0, len(members))
 	for _, m := range members {
 		mapped, err := mapToTeamMember(m)
@@ -379,11 +403,12 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMem
 			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
 		},
 		Spec: iamv0alpha1.TeamSpec{
-			Title:       t.Name,
-			Email:       t.Email,
-			Provisioned: t.IsProvisioned,
-			ExternalUID: t.ExternalUID,
-			Members:     specMembers,
+			Title:          t.Name,
+			Email:          t.Email,
+			Provisioned:    t.IsProvisioned,
+			ExternalUID:    t.ExternalUID,
+			Members:        specMembers,
+			ExternalGroups: externalGroups,
 		},
 	}
 	meta, _ := utils.MetaAccessor(&obj)
@@ -448,11 +473,13 @@ func (s *LegacyStore) listTeamMembersForTeams(ctx context.Context, ns claims.Nam
 // SQL transaction. Unknown user UIDs surface as 400 Bad Request.
 func (s *LegacyStore) buildCreateCommand(ctx context.Context, ns claims.NamespaceInfo, teamObj *iamv0alpha1.Team) (legacy.CreateTeamCommand, error) {
 	cmd := legacy.CreateTeamCommand{
-		UID:           teamObj.Name,
-		Name:          teamObj.Spec.Title,
-		Email:         teamObj.Spec.Email,
-		IsProvisioned: teamObj.Spec.Provisioned,
-		ExternalUID:   teamObj.Spec.ExternalUID,
+		UID:                     teamObj.Name,
+		Name:                    teamObj.Spec.Title,
+		Email:                   teamObj.Spec.Email,
+		IsProvisioned:           teamObj.Spec.Provisioned,
+		ExternalUID:             teamObj.Spec.ExternalUID,
+		ExternalGroupReconciler: s.externalGroupReconciler,
+		DesiredExternalGroups:   teamObj.Spec.ExternalGroups,
 	}
 
 	diff, err := diffMembers(nil, teamObj.Spec.Members)
@@ -485,11 +512,13 @@ func (s *LegacyStore) buildCreateCommand(ctx context.Context, ns claims.Namespac
 // Request.
 func (s *LegacyStore) buildUpdateCommand(ctx context.Context, ns claims.NamespaceInfo, teamObj *iamv0alpha1.Team, diff memberDiff) (legacy.UpdateTeamCommand, error) {
 	cmd := legacy.UpdateTeamCommand{
-		UID:           teamObj.Name,
-		Name:          teamObj.Spec.Title,
-		Email:         teamObj.Spec.Email,
-		IsProvisioned: teamObj.Spec.Provisioned,
-		ExternalUID:   teamObj.Spec.ExternalUID,
+		UID:                     teamObj.Name,
+		Name:                    teamObj.Spec.Title,
+		Email:                   teamObj.Spec.Email,
+		IsProvisioned:           teamObj.Spec.Provisioned,
+		ExternalUID:             teamObj.Spec.ExternalUID,
+		ExternalGroupReconciler: s.externalGroupReconciler,
+		DesiredExternalGroups:   teamObj.Spec.ExternalGroups,
 	}
 
 	for _, del := range diff.toDelete {

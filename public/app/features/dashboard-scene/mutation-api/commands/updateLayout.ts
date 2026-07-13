@@ -26,7 +26,7 @@ import {
   type MutationContext,
 } from './types';
 
-export const updateLayoutPayloadSchema = payloads.updateLayout;
+const updateLayoutPayloadSchema = payloads.updateLayout;
 
 export type UpdateLayoutPayload = z.infer<typeof updateLayoutPayloadSchema>;
 

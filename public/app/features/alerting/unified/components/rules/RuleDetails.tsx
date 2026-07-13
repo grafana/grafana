@@ -150,7 +150,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'row',

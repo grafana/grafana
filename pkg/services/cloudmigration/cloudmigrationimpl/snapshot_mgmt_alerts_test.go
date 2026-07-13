@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -73,7 +74,7 @@ func TestGetNotificationTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, notificationTemplates)
 		require.Len(t, notificationTemplates, 1)
-		require.Equal(t, createdTemplate.Name, notificationTemplates[0].Name)
+		require.Equal(t, createdTemplate.Title, notificationTemplates[0].Name)
 	})
 }
 
@@ -321,12 +322,12 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	return createdTiming
 }
 
-func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.NotificationTemplate {
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) v1.TemplateGroup {
 	t.Helper()
 
-	tmpl := definitions.NotificationTemplate{
-		Name:     "MyTestNotificationTemplate",
-		Template: "This is a test template\n{{ .ExternalURL }}",
+	tmpl := v1.TemplateGroup{
+		Title:   "MyTestNotificationTemplate",
+		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
 	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)

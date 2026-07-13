@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -438,6 +439,13 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Twice()
 			// Folders are pre-seeded in the fake with non-hash UIDs; provisioning must not create folders.
+			// UpdateFolderWithManagedByAnnotation is called for each pre-existing folder that lacks ManagedBy.
+			fakeService.On("UpdateFolderWithManagedByAnnotation", mock.Anything, mock.Anything, configName).
+				Return(func(ctx context.Context, f *folder.Folder, name string) (*folder.Folder, error) {
+					updated := *f
+					updated.ManagedBy = utils.ManagerKind(name)
+					return &updated, nil
+				})
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(10)
 
 			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderServiceWithPreexistingFilesStructureHierarchy(), cfgT)

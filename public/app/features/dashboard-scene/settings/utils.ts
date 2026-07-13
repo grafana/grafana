@@ -10,14 +10,6 @@ import { useSelector } from 'app/types/store';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { AnnotationsEditView } from './AnnotationsEditView';
-import { DashboardLinksEditView } from './DashboardLinksEditView';
-import { GeneralSettingsEditView } from './GeneralSettingsEditView';
-import { JsonModelEditView } from './JsonModelEditView';
-import { PermissionsEditView } from './PermissionsEditView';
-import { VariablesEditView } from './VariablesEditView';
-import { VersionsEditView } from './VersionsEditView';
-
 export interface DashboardEditViewState extends SceneObjectState {}
 
 export interface DashboardEditListViewState extends DashboardEditViewState {
@@ -42,6 +34,14 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     parentItem: dashboardPageNav,
   };
 
+  if (dashboard.state.meta.isDashboardTemplate && dashboard.state.meta.canSave) {
+    pageNav.children!.push({
+      text: t('dashboard-settings.template.title', 'Template'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'template', editIndex: null }),
+      active: currentEditView === 'template',
+    });
+  }
+
   if (dashboard.state.meta.canEdit) {
     pageNav.children!.push({
       text: t('dashboard-settings.general.title', 'General'),
@@ -65,7 +65,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.uid && dashboard.state.meta.canSave) {
+  if ((dashboard.state.uid || dashboard.state.meta.isDashboardTemplate) && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
@@ -90,24 +90,4 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   });
 
   return { navModel, pageNav };
-}
-
-export function createDashboardEditViewFor(editview: string): DashboardEditView {
-  switch (editview) {
-    case 'annotations':
-      return new AnnotationsEditView({});
-    case 'variables':
-      return new VariablesEditView({});
-    case 'links':
-      return new DashboardLinksEditView({});
-    case 'versions':
-      return new VersionsEditView({});
-    case 'json-model':
-      return new JsonModelEditView({});
-    case 'permissions':
-      return new PermissionsEditView({});
-    case 'settings':
-    default:
-      return new GeneralSettingsEditView({});
-  }
 }

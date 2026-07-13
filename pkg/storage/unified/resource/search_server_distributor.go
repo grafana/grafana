@@ -37,10 +37,11 @@ var (
 
 func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
 	s := &distributorServer{
-		log:        log.New("index-server-distributor"),
-		ring:       ring,
-		clientPool: ringClientPool,
-		tracing:    tracer,
+		log:            log.New("index-server-distributor"),
+		ring:           ring,
+		searchRingRead: newSearchRingReadOp(cfg.SearchRingExtendReplicaSet),
+		clientPool:     ringClientPool,
+		tracing:        tracer,
 	}
 
 	srv := provider.GetServer()
@@ -90,18 +91,24 @@ const RingNumTokens = 128
 
 type distributorServer struct {
 	*services.BasicService
-	clientPool *ringclient.Pool
-	ring       *ring.Ring
-	log        log.Logger
-	tracing    trace.Tracer
+	clientPool     *ringclient.Pool
+	ring           *ring.Ring
+	searchRingRead ring.Operation
+	log            log.Logger
+	tracing        trace.Tracer
 }
 
-var (
-	// operation used by the distributor to select only ACTIVE instances to handle search-related requests
-	searchRingRead = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-		return s != ring.ACTIVE
-	})
-)
+func newSearchRingReadOp(extendReplicaSet bool) ring.Operation {
+	// The distributor routes search-related requests only to ACTIVE instances.
+	// Replica-set extension is configurable to avoid forcing replacement pods to open large local indexes during rollouts.
+	var shouldExtendReplicaSet func(ring.InstanceState) bool
+	if extendReplicaSet {
+		shouldExtendReplicaSet = func(s ring.InstanceState) bool {
+			return s != ring.ACTIVE
+		}
+	}
+	return ring.NewOp([]ring.InstanceState{ring.ACTIVE}, shouldExtendReplicaSet)
+}
 
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.Search")
@@ -131,7 +138,7 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 
 	// No per-namespace locality — every search pod hits the same pgvector
 	// backend — so pick any healthy instance.
-	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	rs, err := ds.ring.GetAllHealthy(ds.searchRingRead)
 	if err != nil || len(rs.Instances) == 0 {
 		return nil, fmt.Errorf("no healthy search instances available: %w", err)
 	}
@@ -144,7 +151,11 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	if r.Key != nil {
 		ns = r.Key.Namespace
 	}
-	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), ns)
 	return client.(*RingClient).Client.VectorSearch(ctx, r)
 }
 
@@ -163,7 +174,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	// distribute the request to all search pods to minimize risk of stale index
 	// it will not rebuild on those which don't have the index open
-	rs, err := ds.ring.GetAllHealthy(searchRingRead)
+	rs, err := ds.ring.GetAllHealthy(ds.searchRingRead)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all healthy instances from the ring")
 	}
@@ -300,7 +311,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		return ctx, nil, err
 	}
 
-	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
+	rs, err := ds.ring.GetWithOptions(ringHasher.Sum32(), ds.searchRingRead, ring.WithReplicationFactor(ds.ring.ReplicationFactor()))
 	if err != nil {
 		ds.log.Debug("error getting replication set from ring", "err", err, "namespace", namespace)
 		return ctx, nil, err

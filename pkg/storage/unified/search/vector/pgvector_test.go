@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"unicode/utf8"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
@@ -98,6 +100,44 @@ func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, []string{}))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *testing.T) {
+	// Validate() runs before any DB work, so no Begin/Rollback expected.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
+		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
+	}, []string{"panel/1"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "uid must not be empty")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *testing.T) {
+	// Unknown resource is rejected before any DB work; no tx is opened.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
+		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
+	}, []string{"panel/1"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
@@ -130,6 +170,29 @@ func TestPgvectorBackend_GetLatestRV(t *testing.T) {
 	rv, err := backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(42), rv)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_NonPositive_NoOp(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	require.NoError(t, backend.SetLatestRV(ctx, 0))
+	require.NoError(t, backend.SetLatestRV(ctx, -1))
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestPgvectorBackend_SetLatestRV_Positive_Updates(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	rdb.SQLMock.ExpectExec("UPDATE vector_latest_rv").
+		WithArgs(int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	require.NoError(t, backend.SetLatestRV(ctx, 42))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -192,5 +255,26 @@ func TestFitEmbedding(t *testing.T) {
 	t.Run("dim of zero rejects any non-empty input", func(t *testing.T) {
 		_, err := fitEmbedding([]float32{1}, 0)
 		require.Error(t, err)
+	})
+}
+
+func TestTruncateRunes(t *testing.T) {
+	t.Run("short string is unchanged", func(t *testing.T) {
+		require.Equal(t, "hello", truncateRunes("hello", 1024))
+	})
+
+	t.Run("truncates and marks with ellipsis, staying within max", func(t *testing.T) {
+		got := truncateRunes("abcdefghij", 6)
+		require.Equal(t, "abc...", got)
+		require.Equal(t, 6, utf8.RuneCountInString(got))
+	})
+
+	t.Run("does not split a multi-byte rune", func(t *testing.T) {
+		// Each "é" / "—" is multi-byte; the kept prefix must stay valid
+		// UTF-8 and the whole result must fit within max runes.
+		got := truncateRunes("é—éxyz", 5)
+		require.Equal(t, "é—...", got)
+		require.True(t, utf8.ValidString(got))
+		require.Equal(t, 5, utf8.RuneCountInString(got))
 	})
 }

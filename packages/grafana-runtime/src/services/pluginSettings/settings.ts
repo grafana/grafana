@@ -5,6 +5,10 @@ import { logPluginSettingsError, logPluginSettingsWarning } from './logging';
 import { isAuthError } from './utils';
 
 export async function getAppPluginEnabled(pluginId: string): Promise<boolean> {
+  if (!pluginId) {
+    return false;
+  }
+
   const app = await getPluginSettings(pluginId);
   if (!app) {
     return false;
@@ -26,7 +30,7 @@ export async function isAppPluginEnabled(pluginId: string): Promise<boolean> {
     if (isAuthError(error)) {
       logPluginSettingsWarning(`isAppPluginEnabled: failed because auth denied`, { pluginId });
     } else {
-      logPluginSettingsError(`isAppPluginEnabled: failed because of unknonw reason`, error, { pluginId });
+      logPluginSettingsError(`isAppPluginEnabled: failed because of unknown reason`, error, { pluginId });
     }
   }
   return false;

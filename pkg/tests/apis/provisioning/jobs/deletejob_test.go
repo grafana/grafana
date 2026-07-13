@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,21 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
+
+// renameDashboard rewrites a dashboard fixture's identity to name. The gdev fixtures are
+// dashboard.grafana.app/v2 resources keyed by metadata.name (there is no top-level uid), so
+// ResourceRef tests assign a unique name by editing the envelope rather than the legacy uid.
+func renameDashboard(t *testing.T, content []byte, name string) string {
+	t.Helper()
+	var obj map[string]any
+	require.NoError(t, json.Unmarshal(content, &obj))
+	meta, ok := obj["metadata"].(map[string]any)
+	require.True(t, ok, "dashboard fixture is missing a metadata object")
+	meta["name"] = name
+	out, err := json.Marshal(obj)
+	require.NoError(t, err)
+	return string(out)
+}
 
 func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 	helper := sharedHelper(t)
@@ -113,9 +129,9 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 		// FIXME: use generic objects
 		// Modify UIDs to be unique for ResourceRef tests
-		allPanelsModified := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "resourceref1"`, 1)
-		textOptionsModified := strings.Replace(string(textOptionsContent), `"uid": "WZ7AhQiVz"`, `"uid": "resourceref2"`, 1)
-		timelineDemoModified := strings.Replace(string(timelineDemoContent), `"uid": "mIJjFy8Kz"`, `"uid": "resourceref3"`, 1)
+		allPanelsModified := renameDashboard(t, allPanelsContent, "resourceref1")
+		textOptionsModified := renameDashboard(t, textOptionsContent, "resourceref2")
+		timelineDemoModified := renameDashboard(t, timelineDemoContent, "resourceref3")
 
 		// Create temporary files and copy them to the provisioning path
 		tmpDir := t.TempDir()
@@ -282,7 +298,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			// FIXME: do not build this case on top of the previous one. Isolate them
 			// Create a dashboard inside a folder to automatically create the folder structure
 			// This follows the same pattern as other tests in this file
-			testDashboard := strings.Replace(string(allPanelsContent), `"uid": "n1jR8vnnz"`, `"uid": "folder-dash"`, 1)
+			testDashboard := renameDashboard(t, allPanelsContent, "folder-dash")
 
 			// Write the modified dashboard to a temporary file first
 			tmpFolderDash := filepath.Join(tmpDir, "folder-dashboard.json")
@@ -356,7 +372,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 			state := common.MustNestedString(job.Object, "status", "state")
-			assert.Equal(t, "error", state, "delete job should have failed due to non-existent file")
+			assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job should have warned due to non-existent file")
 		})
 	})
 

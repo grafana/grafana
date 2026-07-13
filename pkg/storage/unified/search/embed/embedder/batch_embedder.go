@@ -86,3 +86,7 @@ func (b *BatchEmbedder) Embed(
 	}
 	return vectors, nil
 }
+
+func (b *BatchEmbedder) Model() string {
+	return b.embedder.Model
+}

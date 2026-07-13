@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
@@ -63,8 +63,6 @@ const createStateManager = () => ({
 });
 
 describe('BrowseFilters', () => {
-  testWithFeatureToggles({ enable: ['teamFolders'] });
-
   beforeEach(() => {
     mockSearchTeamsQuery.mockReturnValue({
       data: {

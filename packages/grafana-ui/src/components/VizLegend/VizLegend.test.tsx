@@ -23,13 +23,6 @@ const legendButton = () => screen.getByRole('button', { name: /all series select
 
 describe('VizLegend', () => {
   describe('display modes', () => {
-    it('renders null for Hidden mode', () => {
-      const { container } = renderWithContext(
-        <VizLegend displayMode={LegendDisplayMode.Hidden} items={[makeItem('A')]} placement="bottom" />
-      );
-      expect(container).toBeEmptyDOMElement();
-    });
-
     it('renders list items for List mode', () => {
       renderWithContext(
         <VizLegend displayMode={LegendDisplayMode.List} items={[makeItem('A'), makeItem('B')]} placement="bottom" />

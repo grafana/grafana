@@ -61,7 +61,7 @@ function isInsideGoExpression(model: editor.ITextModel, position: Position) {
   );
 }
 
-export class CompletionProvider {
+class CompletionProvider {
   constructor(
     private readonly monaco: Monaco,
     private readonly range: IRange

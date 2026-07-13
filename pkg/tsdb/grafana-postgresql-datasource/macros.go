@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -10,10 +9,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqlmacro"
 )
-
-const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 // isDollarTagChar reports whether b is valid inside a PostgreSQL dollar-quote tag
 // (letters and digits only; underscore is also allowed per identifier rules).
@@ -67,7 +64,8 @@ func consumeDollarQuoted(sql string, i int, closing string, out *strings.Builder
 // stripSQLComments removes SQL line comments (--) and block comments (/* */)
 // from the query string. It is quote-aware: comment sequences inside single-quoted
 // string literals, double-quoted identifiers, and dollar-quoted strings are
-// preserved verbatim.
+// preserved verbatim. SQLCommenter attribution blocks are also preserved so query
+// tagging metadata reaches the database, unless they embed a macro.
 func stripSQLComments(sql string) string {
 	var out strings.Builder
 	out.Grow(len(sql))
@@ -144,11 +142,9 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 	// in executable SQL are evaluated.
 	sql = stripSQLComments(sql)
 
-	// TODO: Handle error
-	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+	sql = m.ReplaceAllStringSubmatchFunc(sqlmacro.RegExp, sql, func(groups []string) string {
 		// detect if $__timeGroup is supposed to add AS time for pre 5.3 compatibility
 		// if there is a ',' directly after the macro call $__timeGroup is probably used
 		// in the old way. Inside window function ORDER BY $__timeGroup will be followed
@@ -213,6 +209,9 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
+		}
 		if len(args) == 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])
 			if err != nil {
@@ -256,6 +255,9 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := sqleng.SetupFillmode(query, interval, args[2])

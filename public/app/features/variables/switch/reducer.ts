@@ -28,7 +28,7 @@ export const initialSwitchVariableModelState: SwitchVariableModel = {
   ],
 };
 
-export const switchVariableSlice = createSlice({
+const switchVariableSlice = createSlice({
   name: 'templating/switch',
   initialState: initialVariablesState,
   reducers: {},

@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
+	"slices"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/index/scorch"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -18,6 +21,46 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+const zapSegmentType = "zap"
+
+func maxSupportedIndexFormat() string {
+	versions := scorch.SupportedSegmentTypeVersions(zapSegmentType)
+	if len(versions) == 0 {
+		return ""
+	}
+	return indexFormat(zapSegmentType, slices.Max(versions))
+}
+
+func indexFormat(formatType string, version uint32) string {
+	if formatType == "" || version == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s/%d", formatType, version)
+}
+
+func parseIndexFormat(format string) (string, uint32, bool) {
+	formatType, versionString, ok := strings.Cut(format, "/")
+	if !ok || formatType == "" {
+		return "", 0, false
+	}
+	version, err := strconv.ParseUint(versionString, 10, 32)
+	if err != nil || version == 0 {
+		return "", 0, false
+	}
+	return formatType, uint32(version), true
+}
+
+// isSnapshotIndexFormatUnknownOrSupported treats unknown formats as supported
+// for legacy snapshots uploaded before IndexFormat was added to the manifest.
+func isSnapshotIndexFormatUnknownOrSupported(snapshotFormat, maxSupportedFormat string) bool {
+	if snapshotFormat == "" || maxSupportedFormat == "" {
+		return true
+	}
+	snapshotType, snapshotVersion, ok := parseIndexFormat(snapshotFormat)
+	maxSupportedType, maxSupportedVersion, maxOK := parseIndexFormat(maxSupportedFormat)
+	return ok && maxOK && snapshotType == maxSupportedType && snapshotVersion <= maxSupportedVersion
+}
 
 // Labels for the index_server_snapshot_downloads_total counter.
 const (
@@ -121,7 +164,7 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 
 	return b.downloadSelectedSnapshot(ctx, key, resourceDir, policy, spanName, logger,
 		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
-			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion)
+			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion, b.maxSupportedIndexFormat, logger)
 			if err != nil {
 				return ulid.ULID{}, nil, fmt.Errorf("probing for fresh snapshot: %w", err)
 			}
@@ -161,6 +204,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 			attrs = append(attrs,
 				attribute.String("snapshot_key", snapKey.String()),
 				attribute.String("snapshot_version", meta.BuildVersion),
+				attribute.String("snapshot_index_format", meta.IndexFormat),
 				attribute.Int64("snapshot_rv", meta.LatestResourceVersion),
 			)
 			// Zero-value BuildTime means the snapshot was uploaded before that
@@ -197,6 +241,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	logFields := []any{
 		"snapshot_key", snapKey.String(),
 		"snapshot_version", meta.BuildVersion,
+		"snapshot_index_format", meta.IndexFormat,
 		"snapshot_rv", meta.LatestResourceVersion,
 		"snapshot_uploaded", meta.UploadTimestamp,
 	}
@@ -205,20 +250,18 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	}
 	logger = logger.New(logFields...)
 
-	// Pick a fresh destination directory name. DownloadIndexSnapshot refuses to
-	// overwrite an existing destDir; the bump-on-exists loop mirrors what
-	// BuildIndex does when creating new file-based indexes.
-	destDir, name, err := b.reserveSnapshotDir(resourceDir)
+	// Pick and reserve a fresh destination directory name. DownloadIndexSnapshot
+	// refuses to overwrite an existing destDir, so reserveIndexDir protects the
+	// not-yet-created path from other in-process builds while we download.
+	destDir, name, err := b.reserveIndexDir(resourceDir)
 	if err != nil {
 		outcome = snapshotStatusDownloadError
 		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
-	// Protect destDir from cleanOldIndexes for the duration of the download
-	// and validation. On success, ownership of the registration transfers to
-	// the caller (BuildIndex unregisters via its own defer); on any failure
-	// path below, this defer releases it.
-	b.registerInFlightBuildDir(destDir)
+	// On success, ownership of the reservation transfers to the caller
+	// (BuildIndex unregisters via its own defer); on any failure path below,
+	// this defer releases it.
 	defer func() {
 		if retErr != nil {
 			b.unregisterInFlightBuildDir(destDir)
@@ -268,8 +311,9 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	return idx, name, rv, nil
 }
 
-// pickBestSnapshot applies hard filters (upload time, unparseable version)
-// and the three-tier preference to pick the best snapshot, if any.
+// pickBestSnapshot applies hard filters (upload time, index format,
+// unparseable version) and the three-tier preference to pick the best
+// snapshot, if any.
 //
 // Tier 0 (ideal): MinBuildVersion <= v <= runningVersion
 // Tier 1 (older, acceptable): v < MinBuildVersion
@@ -280,12 +324,24 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
-	var droppedAge, droppedUnparseable int
+	var droppedAge, droppedUnparseable, droppedFormatUnsupported int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
 		// Hard filter: age.
 		if !notOlderThan.IsZero() && m.UploadTimestamp.Before(notOlderThan) {
 			droppedAge++
+			continue
+		}
+		if !isSnapshotIndexFormatUnknownOrSupported(m.IndexFormat, b.maxSupportedIndexFormat) {
+			droppedFormatUnsupported++
+			logger.Debug("index snapshot candidate dropped: unsupported format",
+				"key", k.String(),
+				"snapshot_format", m.IndexFormat,
+				"max_supported_format", b.maxSupportedIndexFormat,
+				"version", m.BuildVersion,
+				"rv", m.LatestResourceVersion,
+				"uploaded", m.UploadTimestamp,
+			)
 			continue
 		}
 		// Hard filter: unparseable version (we can't tier it). Metadata validation
@@ -307,13 +363,15 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 			"key", c.key.String(),
 			"tier", c.tier,
 			"version", c.version.String(),
+			"snapshot_format", c.meta.IndexFormat,
+			"max_supported_format", b.maxSupportedIndexFormat,
 			"rv", c.meta.LatestResourceVersion,
 			"uploaded", c.meta.UploadTimestamp,
 		)
 	}
 
 	if len(candidates) == 0 {
-		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable)
+		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "max_supported_format", b.maxSupportedIndexFormat)
 		return snapshotCandidate{}, false
 	}
 
@@ -333,9 +391,12 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	logger.Debug("selected index snapshot",
 		"key", candidates[0].key.String(),
 		"tier", candidates[0].tier,
+		"snapshot_format", candidates[0].meta.IndexFormat,
+		"max_supported_format", b.maxSupportedIndexFormat,
 		"candidates", len(candidates),
 		"dropped_age", droppedAge,
 		"dropped_unparseable", droppedUnparseable,
+		"dropped_format_unsupported", droppedFormatUnsupported,
 	)
 	return candidates[0], true
 }
@@ -352,31 +413,6 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 		return 1 // below preferred floor
 	}
 	return 0
-}
-
-// reserveSnapshotDir returns an absolute path (and its base name) inside
-// resourceDir that does not exist yet. It bumps the timestamp if a collision
-// happens, mirroring the fresh-build naming in BuildIndex.
-func (b *bleveBackend) reserveSnapshotDir(resourceDir string) (string, string, error) {
-	if err := os.MkdirAll(resourceDir, 0o750); err != nil {
-		return "", "", err
-	}
-
-	t := time.Now()
-	for {
-		name := formatIndexName(t)
-		dir := filepath.Join(resourceDir, name)
-		if !isPathWithinRoot(dir, b.opts.Root) {
-			return "", "", fmt.Errorf("invalid path %s", dir)
-		}
-		if _, err := os.Stat(dir); err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return dir, name, nil
-			}
-			return "", "", err
-		}
-		t = t.Add(time.Second)
-	}
 }
 
 // validateDownloadedIndex reads the internal RV + buildInfo from the opened
@@ -403,9 +439,9 @@ func (b *bleveBackend) recordSnapshotDownloadOutcome(policy, status string) {
 }
 
 // findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
-// returns the first one whose BuildVersion matches runningVersion and
-// whose ULID time is after notOlderThan. Returns a zero key and nil meta when
-// no such snapshot exists.
+// returns the first one whose BuildVersion matches runningVersion, whose
+// index format is not newer than this process can support, and whose ULID time
+// is after notOlderThan. Returns a zero key and nil meta when no such snapshot exists.
 //
 // Walking (rather than checking only the newest) is necessary in mixed-version
 // clusters — either transiently during rolling upgrades, or as a deliberate
@@ -423,8 +459,10 @@ func findFreshSnapshotByUploadTime(
 	ns resource.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
+	maxSupportedIndexFormat string,
+	logger log.Logger,
 ) (ulid.ULID, *IndexMeta, error) {
-	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, func(*IndexMeta) bool {
+	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, maxSupportedIndexFormat, logger, func(*IndexMeta) bool {
 		return true
 	})
 }
@@ -447,8 +485,10 @@ func findFreshSnapshotByBuildStart(
 	ns resource.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
+	maxSupportedIndexFormat string,
+	logger log.Logger,
 ) (ulid.ULID, *IndexMeta, error) {
-	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, func(meta *IndexMeta) bool {
+	return findFreshSnapshot(ctx, store, ns, notOlderThan, runningVersion, maxSupportedIndexFormat, logger, func(meta *IndexMeta) bool {
 		return !meta.BuildTime.IsZero() && meta.BuildTime.After(notOlderThan)
 	})
 }
@@ -459,6 +499,8 @@ func findFreshSnapshot(
 	ns resource.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
+	maxSupportedIndexFormat string,
+	logger log.Logger,
 	isFresh func(*IndexMeta) bool,
 ) (ulid.ULID, *IndexMeta, error) {
 	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
@@ -489,6 +531,16 @@ func findFreshSnapshot(
 			return ulid.ULID{}, nil, fmt.Errorf("reading manifest for %s: %w", k, err)
 		}
 
+		if !isSnapshotIndexFormatUnknownOrSupported(meta.IndexFormat, maxSupportedIndexFormat) {
+			logger.Debug("index snapshot candidate dropped: unsupported format",
+				"key", k.String(),
+				"snapshot_format", meta.IndexFormat,
+				"max_supported_format", maxSupportedIndexFormat,
+				"version", meta.BuildVersion,
+			)
+			continue
+		}
+
 		if meta.BuildVersion == runningVersion && isFresh(meta) {
 			return k, meta, nil
 		}
@@ -497,100 +549,140 @@ func findFreshSnapshot(
 	return ulid.ULID{}, nil, nil
 }
 
-// Outcome labels for the IndexSnapshotColdStarts metric.
 const (
-	coldStartOutcomeAcquiredLock        = "acquired_lock"
-	coldStartOutcomeDownloadedAfterWait = "downloaded_after_wait"
-	coldStartOutcomeWaitTimedOut        = "wait_timed_out"
-	coldStartOutcomeLockError           = "lock_error"
-	coldStartOutcomeContextCanceled     = "context_canceled"
+	snapshotBuildFlowColdStart = "cold_start"
+	snapshotBuildFlowRebuild   = "rebuild"
+)
+
+// Outcome labels for the IndexSnapshotBuildCoordinations metric and the
+// coordination span. Kept compatible with the metric label values.
+const (
+	snapshotBuildOutcomeAcquiredLock        = "acquired_lock"
+	snapshotBuildOutcomeDownloadedAfterWait = "downloaded_after_wait"
+	snapshotBuildOutcomeWaitTimedOut        = "wait_timed_out"
+	snapshotBuildOutcomeLockError           = "lock_error"
+	snapshotBuildOutcomeContextCanceled     = "context_canceled"
 )
 
 // Wait-for-leader timing. Package-level vars so tests can shrink them.
 var (
-	coldStartPollInterval = 30 * time.Second
-	coldStartTotalWait    = 15 * time.Minute
+	snapshotBuildPollInterval = 30 * time.Second
+	coldStartTotalWait        = 15 * time.Minute
 )
 
-// coordinateColdStartBuild coordinates from-scratch index builds across
-// same-version replicas. Called when BuildIndex has no usable local index
-// and the tiered remote selection found nothing.
+// snapshotBuildCoordinationOpts configures coordinateSnapshotBuild.
+type snapshotBuildCoordinationOpts struct {
+	// flow identifies the caller for logs and span attributes.
+	flow string
+	// spanName is the tracer span name for the coordination loop.
+	spanName string
+	// pollInterval is how long to wait between probe/lock attempts.
+	pollInterval time.Duration
+	// totalWait caps how long to wait for a leader before giving up. Zero
+	// means "wait until ctx cancellation": used by the rebuild path where
+	// an existing index is already serving search, so waiting indefinitely
+	// is preferable to running a duplicate rebuild.
+	totalWait time.Duration
+	// probe is called once per iteration to look for an acceptable same-
+	// version snapshot. Probe errors other than ctx cancellation should be
+	// swallowed and returned as (nil, "", 0, nil).
+	probe func(ctx context.Context) (bleve.Index, string, int64, error)
+	// recordOutcome is invoked once after the loop returns. May be nil.
+	recordOutcome func(outcome string)
+}
+
+// coordinateSnapshotBuild coordinates from-scratch index builds across same-
+// version replicas using the existing remote build lock. Shared between the
+// cold-start path (no usable local index) and the periodic rebuild path.
 //
 // Outcomes:
-//   - (idx, name, rv, nil, nil) -- another replica's snapshot was downloaded; caller skips build.
-//   - (nil, "", 0, lock, nil)   -- caller is the leader; build, upload immediately, then release lock.
-//   - (nil, "", 0, nil, nil)    --  no snapshot and no leader slot in time; caller builds alone.
-//   - (nil, "", 0, nil, err)    -- context canceled mid-coordination.
+//   - idx != nil:           another replica's snapshot was downloaded; caller skips build.
+//   - lock != nil:          caller is the leader; build, upload immediately, then release lock.
+//   - both nil, err == nil: lock backend failed or wait timed out; caller builds alone.
+//   - err != nil:           context canceled mid-coordination.
 //
-// Each iteration, up to coldStartTotalWait:
+// Error contract: coordination is best-effort. Only context cancellation is
+// returned to the caller. Probe failures (list/download/manifest read) and
+// non-contention lock backend failures are logged and converted to outcomes
+// ("lock_error", "wait_timed_out", ...) on the IndexSnapshotBuildCoordinations
+// metric, then the caller is told to build alone or to keep waiting. This
+// keeps callers simple: a flaky storage or lock backend should never fail an
+// index build, just degrade coordination quality. For debugging, inspect the
+// warn logs from this function and from the probe helpers, plus the metric.
+//
+// Each iteration:
 //  1. Probe for a usable same-version snapshot. If found, download it.
 //  2. Try to acquire LockBuildIndex (no waiting). If acquired, return as
 //     leader (lock held for the whole build).
-//  3. Wait coldStartPollInterval and try again.
+//  3. Wait pollInterval and try again, until totalWait elapses or ctx is canceled.
 //
-// Probe runs before tryAcquire so that we download a leader's just-
-// uploaded snapshot instead of becoming a duplicate leader after the
-// leader releases the lock (the leader uploads then releases; by the
-// time the lock is free the snapshot is in the store).
+// Probe runs before tryAcquire so that we download a leader's just-uploaded
+// snapshot instead of becoming a duplicate leader after the leader releases
+// the lock (the leader uploads then releases; by the time the lock is free the
+// snapshot is in the store).
 //
 // The lock prevents duplicate expensive builds but is not a correctness
-// primitive: lock loss, leader death, or wait timeout all degrade to
-// duplicate work. ULID-keyed snapshots are immutable and cleanup reaps
-// duplicates.
-func (b *bleveBackend) coordinateColdStartBuild(
+// primitive: lock loss, leader death, or wait timeout all degrade to duplicate
+// work. ULID-keyed snapshots are immutable and cleanup reaps duplicates.
+func (b *bleveBackend) coordinateSnapshotBuild(
 	ctx context.Context,
 	key resource.NamespacedResource,
-	resourceDir string,
-	lastImportTime time.Time,
+	opts snapshotBuildCoordinationOpts,
 	logger log.Logger,
 ) (_ bleve.Index, _ string, _ int64, _ IndexStoreLock, retErr error) {
-	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.cold_start")
+	ctx, span := tracer.Start(ctx, opts.spanName)
 	start := time.Now()
-	outcome := coldStartOutcomeWaitTimedOut
+	outcome := snapshotBuildOutcomeWaitTimedOut
 	defer func() {
 		span.SetAttributes(
 			attribute.String("namespace", key.Namespace),
 			attribute.String("group", key.Group),
 			attribute.String("resource", key.Resource),
+			attribute.String("flow", opts.flow),
 			attribute.String("outcome", outcome),
 		)
 		if retErr != nil {
 			span.RecordError(retErr)
 			span.SetStatus(codes.Error, retErr.Error())
 		}
-		b.recordColdStartOutcome(outcome)
-		logger.Info("Cold-start coordination completed", "elapsed", time.Since(start), "outcome", outcome)
+		if opts.recordOutcome != nil {
+			opts.recordOutcome(outcome)
+		}
+		logger.Info("Snapshot build coordination completed",
+			"flow", opts.flow, "elapsed", time.Since(start), "outcome", outcome)
 		span.End()
 	}()
-	// Probe freshness window: Snapshot.MaxIndexAge, the same hard age
-	// filter the tiered selection applies. We don't reuse the rebuild
-	// path's tighter maxFreshSnapshotAge — on a cold start any
-	// same-version snapshot beats rebuilding, so we want the loosest
-	// threshold. Zero means "no age limit": the probe still runs and
-	// accepts any same-version snapshot.
-	probeMaxAge := b.opts.Snapshot.MaxIndexAge
-	logger.Info("Cold-start coordination started", "probe_max_age", probeMaxAge, "last_import_time", lastImportTime)
 
-	ticker := time.NewTicker(coldStartPollInterval)
+	logger.Info("Snapshot build coordination started",
+		"flow", opts.flow,
+		"poll_interval", opts.pollInterval,
+		"total_wait", opts.totalWait,
+	)
+
+	ticker := time.NewTicker(opts.pollInterval)
 	defer ticker.Stop()
-	deadline := time.NewTimer(coldStartTotalWait)
-	defer deadline.Stop()
+	var deadlineC <-chan time.Time
+	if opts.totalWait > 0 {
+		deadline := time.NewTimer(opts.totalWait)
+		defer deadline.Stop()
+		deadlineC = deadline.C
+	}
 
 	for {
-		idx, name, rv, err := b.tryDownloadColdStartSnapshot(ctx, key, resourceDir, lastImportTime, probeMaxAge, logger)
+		idx, name, rv, err := opts.probe(ctx)
 		if err != nil {
-			outcome = coldStartOutcomeContextCanceled
+			outcome = snapshotBuildOutcomeContextCanceled
 			return nil, "", 0, nil, err
 		}
 		if idx != nil {
-			outcome = coldStartOutcomeDownloadedAfterWait
+			outcome = snapshotBuildOutcomeDownloadedAfterWait
 			return idx, name, rv, nil, nil
 		}
 
 		lock, err := b.opts.Snapshot.Store.LockBuildIndex(ctx, key, b.opts.BuildVersion)
 		switch {
 		case err == nil:
-			outcome = coldStartOutcomeAcquiredLock
+			outcome = snapshotBuildOutcomeAcquiredLock
 			return nil, "", 0, lock, nil
 		case errors.Is(err, errLockHeld):
 			// keep waiting
@@ -598,24 +690,56 @@ func (b *bleveBackend) coordinateColdStartBuild(
 			// Propagate context cancellation so callers can abort cleanly
 			// instead of falling through to a from-scratch build.
 			if ctxErr := ctx.Err(); ctxErr != nil {
-				outcome = coldStartOutcomeContextCanceled
+				outcome = snapshotBuildOutcomeContextCanceled
 				return nil, "", 0, nil, ctxErr
 			}
-			logger.Warn("Cold-start lock acquire failed; will build alone", "err", err)
-			outcome = coldStartOutcomeLockError
+			logger.Warn("Snapshot build coordination lock acquire failed; will build alone",
+				"flow", opts.flow, "err", err)
+			outcome = snapshotBuildOutcomeLockError
 			return nil, "", 0, nil, nil
 		}
 
 		select {
 		case <-ctx.Done():
-			outcome = coldStartOutcomeContextCanceled
+			outcome = snapshotBuildOutcomeContextCanceled
 			return nil, "", 0, nil, ctx.Err()
-		case <-deadline.C:
-			outcome = coldStartOutcomeWaitTimedOut
+		case <-deadlineC:
+			// deadlineC is nil when totalWait == 0; this branch never fires in that case.
+			outcome = snapshotBuildOutcomeWaitTimedOut
 			return nil, "", 0, nil, nil
 		case <-ticker.C:
 		}
 	}
+}
+
+// coordinateColdStartBuild coordinates from-scratch index builds across
+// same-version replicas. Called when BuildIndex has no usable local index
+// and the tiered remote selection found nothing.
+func (b *bleveBackend) coordinateColdStartBuild(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	logger log.Logger,
+) (bleve.Index, string, int64, IndexStoreLock, error) {
+	// Probe freshness window: Snapshot.MaxIndexAge, the same hard age filter
+	// the tiered selection applies. We don't reuse the rebuild path's tighter
+	// maxFreshSnapshotAge — on a cold start any same-version snapshot beats
+	// rebuilding, so we want the loosest threshold. Zero means "no age limit":
+	// the probe still runs and accepts any same-version snapshot.
+	probeMaxAge := b.opts.Snapshot.MaxIndexAge
+	return b.coordinateSnapshotBuild(ctx, key, snapshotBuildCoordinationOpts{
+		flow:         snapshotBuildFlowColdStart,
+		spanName:     "search.remote_index_snapshot.cold_start",
+		pollInterval: snapshotBuildPollInterval,
+		totalWait:    coldStartTotalWait,
+		probe: func(ctx context.Context) (bleve.Index, string, int64, error) {
+			return b.tryDownloadColdStartSnapshot(ctx, key, resourceDir, lastImportTime, probeMaxAge, logger)
+		},
+		recordOutcome: func(outcome string) {
+			b.recordBuildCoordinationOutcome(snapshotBuildFlowColdStart, outcome)
+		},
+	}, logger)
 }
 
 // tryDownloadColdStartSnapshot checks whether a usable same-version
@@ -656,9 +780,63 @@ func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	return idx, name, rv, nil
 }
 
-func (b *bleveBackend) recordColdStartOutcome(outcome string) {
+// coordinateRebuild coordinates periodic rebuilds across same-version replicas.
+// It uses the same remote build lock as cold-start coordination, but probes
+// with the rebuild freshness window so waiting replicas only accept snapshots
+// fresh enough to satisfy the rebuild condition. The rebuild path passes no
+// totalWait: the existing index is still serving search, so waiting for a
+// leader is preferable to running a duplicate rebuild.
+func (b *bleveBackend) coordinateRebuild(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	logger log.Logger,
+) (bleve.Index, string, int64, IndexStoreLock, error) {
+	return b.coordinateSnapshotBuild(ctx, key, snapshotBuildCoordinationOpts{
+		flow:         snapshotBuildFlowRebuild,
+		spanName:     "search.remote_index_snapshot.rebuild_coordination",
+		pollInterval: snapshotBuildPollInterval,
+		probe: func(ctx context.Context) (bleve.Index, string, int64, error) {
+			return b.tryDownloadRebuildSnapshot(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
+		},
+		recordOutcome: func(outcome string) {
+			b.recordBuildCoordinationOutcome(snapshotBuildFlowRebuild, outcome)
+		},
+	}, logger)
+}
+
+// tryDownloadRebuildSnapshot checks whether a fresh same-version snapshot
+// exists for the rebuild path, and downloads it if so. Probe failures are
+// treated as "no hit" so coordination can still elect a leader and rebuild;
+// only context cancellation aborts the loop.
+func (b *bleveBackend) tryDownloadRebuildSnapshot(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	lastImportTime time.Time,
+	maxFreshSnapshotAge time.Duration,
+	logger log.Logger,
+) (bleve.Index, string, int64, error) {
+	idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
+		ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
+		snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
+		logger,
+	)
+	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, "", 0, ctxErr
+		}
+		logger.Warn("Rebuild coordination probe failed; will keep coordinating", "err", err)
+		return nil, "", 0, nil
+	}
+	return idx, name, rv, nil
+}
+
+func (b *bleveBackend) recordBuildCoordinationOutcome(flow, outcome string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotColdStarts.WithLabelValues(outcome).Inc()
+	b.indexMetrics.IndexSnapshotBuildCoordinations.WithLabelValues(flow, outcome).Inc()
 }

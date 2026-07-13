@@ -83,7 +83,7 @@ export function getHueGradientFn(
   };
 }
 
-export enum GradientDirection {
+enum GradientDirection {
   Right = 0,
   Up = 1,
   Left = 2,
@@ -176,7 +176,7 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   return grd;
 }
 
-export function getDataRange(plot: uPlot, scaleKey: string) {
+function getDataRange(plot: uPlot, scaleKey: string) {
   let sc = plot.scales[scaleKey];
 
   let min = Infinity;

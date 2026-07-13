@@ -6,13 +6,18 @@
 export * from './grafana/api/notifications/v0alpha1/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v0alpha1/useContactPoints';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
-export { getContactPointDescription } from './grafana/contactPoints/utils';
+export {
+  getContactPointDescription,
+  getContactPointInUse,
+  getContactPointInUseRoutes,
+  getContactPointInUseRules,
+} from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
 export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { isDefaultRoutingTree } from './grafana/notificationPolicies/consts';
+export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';

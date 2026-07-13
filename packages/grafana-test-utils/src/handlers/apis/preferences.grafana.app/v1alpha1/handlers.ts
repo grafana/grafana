@@ -4,6 +4,8 @@ import { wellFormedTree } from '../../../../fixtures/folders';
 
 const [_, { dashbdD }] = wellFormedTree();
 
+export const MERGED_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/merged';
+
 const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
   http.get('/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences', () => {
     return (
@@ -19,7 +21,6 @@ const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>)
               weekStart: 'monday',
               homeDashboardUID: dashbdD.item.uid,
               language: '',
-              regionalFormat: '',
               queryHistory: { homeTab: '' },
               navbar: { bookmarkUrls: [] },
             },
@@ -40,8 +41,27 @@ const updatePreferencesHandler = (override?: ReturnType<typeof HttpResponse.json
     );
   });
 
-export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler };
+const mergedPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
+  http.get(MERGED_PREFS_URL, () => {
+    return (
+      override ??
+      HttpResponse.json({
+        metadata: {},
+        spec: {
+          theme: 'light',
+          timezone: 'browser',
+          weekStart: 'monday',
+          homeDashboardUID: dashbdD.item.uid,
+          language: '',
+          queryHistory: { homeTab: '' },
+          navbar: { bookmarkUrls: [] },
+        },
+      })
+    );
+  });
 
-const handlers = [listPreferencesHandler(), updatePreferencesHandler()];
+export const preferencesHandlers = { listPreferencesHandler, updatePreferencesHandler, mergedPreferencesHandler };
+
+const handlers = [listPreferencesHandler(), updatePreferencesHandler(), mergedPreferencesHandler()];
 
 export default handlers;

@@ -1049,6 +1049,30 @@ describe('GrafanaReceiverForm', () => {
       const nameField = screen.getByRole('textbox', { name: /^name/i });
       expect(nameField).toHaveAttribute('readonly');
     });
+
+    it('should show test button for a provisioned contact point when the user has the test permission', async () => {
+      // Regression: isTestable was previously computed as !readOnly && canTest. For provisioned
+      // contact points, EditReceiverView sets readOnly=true (canWrite annotation is false), which
+      // suppressed the test button even when the user held the test permission (canTest=true).
+      // isTestable is now driven solely by useContactPointAbility(Test), which reads the
+      // grafana.com/access/canTest annotation independently of whether the form is read-only.
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [integrationFactory.email().build()])
+        .build({
+          metadata: {
+            annotations: {
+              'grafana.com/access/canTest': 'true',
+            },
+          },
+        });
+
+      // readOnly={true} simulates what EditReceiverView passes for provisioned contact points
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode readOnly />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      expect(ui.testButton.get()).toBeInTheDocument();
+    });
   });
 
   describe('with alertingSyncNotifiersApiMigration flag enabled', () => {

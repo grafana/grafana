@@ -109,3 +109,8 @@ func (m *k8sNativeMapping) SkipScope(_ string) bool {
 func (m *k8sNativeMapping) Resource() string {
 	return m.resource
 }
+
+// SkipWildcard always returns false; K8s-native resources use normal wildcard semantics.
+func (m *k8sNativeMapping) SkipWildcard() bool {
+	return false
+}

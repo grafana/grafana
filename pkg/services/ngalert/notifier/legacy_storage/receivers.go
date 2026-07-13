@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -15,13 +13,13 @@ type provenances = map[string]models.Provenance
 
 func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	// Remove the receiver from the configuration.
-	rev.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definitions.PostableApiReceiver) bool {
+	rev.Config.AlertmanagerConfig.Receivers = slices.DeleteFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
 		return NameToUid(r.GetName()) == uid
 	})
 }
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
-	exists := slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *definition.PostableApiReceiver) bool {
+	exists := slices.ContainsFunc(rev.Config.AlertmanagerConfig.Receivers, func(r *v1.PostableApiReceiver) bool {
 		return NameToUid(r.Name) == receiver.GetUID()
 	})
 	if exists {
@@ -47,7 +45,7 @@ func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*models.Re
 }
 
 func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Receiver, error) {
-	existingIdx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(postable *definitions.PostableApiReceiver) bool {
+	existingIdx := slices.IndexFunc(rev.Config.AlertmanagerConfig.Receivers, func(postable *v1.PostableApiReceiver) bool {
 		return NameToUid(postable.GetName()) == receiver.GetUID()
 	})
 	if existingIdx < 0 {
@@ -74,12 +72,12 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*models.Re
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
 func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string, includeManagedRoutes bool) bool {
-	if isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route}) {
+	if isReceiverInUse(name, []*v1.Route{rev.Config.AlertmanagerConfig.Route}) {
 		return true
 	}
 	if includeManagedRoutes {
 		for _, r := range rev.Config.ManagedRoutes {
-			if isReceiverInUse(name, []*definitions.Route{r}) {
+			if isReceiverInUse(name, []*v1.Route{r}) {
 				return true
 			}
 		}
@@ -90,10 +88,10 @@ func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string, includeManagedR
 // ReceiverUseByName returns a map of receiver names to the number of times they are used in routes.
 func (rev *ConfigRevision) ReceiverUseByName(includeManagedRoutes bool) map[string]int {
 	m := make(map[string]int)
-	receiverUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
+	receiverUseCounts([]*v1.Route{rev.Config.AlertmanagerConfig.Route}, m)
 	if includeManagedRoutes {
 		for _, r := range rev.Config.ManagedRoutes {
-			receiverUseCounts([]*definitions.Route{r}, m)
+			receiverUseCounts([]*v1.Route{r}, m)
 		}
 	}
 	return m
@@ -144,7 +142,7 @@ func (rev *ConfigRevision) GetReceiversNames() map[string]struct{} {
 
 // validateReceiver checks if the given receiver conflicts in name or integration UID with existing receivers.
 // We only check the receiver being modified to prevent existing issues from other receivers being reported.
-func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) error {
+func (rev *ConfigRevision) validateReceiver(p *v1.PostableApiReceiver) error {
 	uids := make(map[string]struct{}, len(rev.Config.AlertmanagerConfig.Receivers))
 	for _, integrations := range p.GrafanaManagedReceivers {
 		if _, exists := uids[integrations.UID]; exists {
@@ -172,7 +170,7 @@ func (rev *ConfigRevision) validateReceiver(p *definitions.PostableApiReceiver) 
 }
 
 // isReceiverInUse checks if a receiver is used in a route or any of its sub-routes.
-func isReceiverInUse(name string, routes []*definitions.Route) bool {
+func isReceiverInUse(name string, routes []*v1.Route) bool {
 	if len(routes) == 0 {
 		return false
 	}
@@ -188,7 +186,7 @@ func isReceiverInUse(name string, routes []*definitions.Route) bool {
 }
 
 // receiverUseCounts counts how many times receivers are used in a route or any of its sub-routes.
-func receiverUseCounts(routes []*definitions.Route, m map[string]int) {
+func receiverUseCounts(routes []*v1.Route, m map[string]int) {
 	if len(routes) == 0 {
 		return
 	}

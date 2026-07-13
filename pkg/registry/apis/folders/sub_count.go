@@ -10,8 +10,20 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// countedKinds is the explicit "group/resource" list passed to GetStats.
+// Without it, the search server enumerates every kind in the namespace first
+// (very expensive on KV-backed storage). The set matches what the browse-
+// dashboards UI consumes in normalizeDescendantCounts.
+var countedKinds = []string{
+	"folder.grafana.app/folders",
+	"dashboard.grafana.app/dashboards",
+	"dashboard.grafana.app/librarypanels",
+	"rules.alerting.grafana.app/alertrules",
+}
 
 type subCountREST struct {
 	getter   rest.Getter
@@ -43,10 +55,10 @@ func (r *subCountREST) ProducesObject(verb string) interface{} {
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, "" // true means you can use the trailing path as a variable
+	return nil, false, ""
 }
 
-func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
 		return nil, err
 	}
@@ -59,10 +71,15 @@ func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
-			Folder:    name,
+			Kinds:     countedKinds,
+			Folder:    []string{name},
 		})
 		if err != nil {
 			responder.Error(err)
+			return
+		}
+		if stats.Error != nil {
+			responder.Error(resource.GetError(stats.Error))
 			return
 		}
 		rsp := &folders.DescendantCounts{

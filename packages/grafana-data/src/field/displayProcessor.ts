@@ -10,9 +10,11 @@ import { type KeyValue } from '../types/data';
 import { type Field, FieldType } from '../types/dataFrame';
 import { type DecimalCount, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
+import { type FormattedValue } from '../types/valueFormats';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
-import { type FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+import { isBooleanUnit } from '../valueFormats/baseFormatters';
+import { getValueFormat } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
 

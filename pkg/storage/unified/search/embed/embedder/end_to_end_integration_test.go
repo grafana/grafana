@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/azure"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/bedrock"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/vertex"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -47,7 +48,7 @@ import (
 func TestIntegration_EndToEndDashboardSearch(t *testing.T) {
 	providerName := os.Getenv("EMBED_PROVIDER")
 	if providerName == "" {
-		t.Skip("EMBED_PROVIDER not set (expected: vertex | bedrock)")
+		t.Skip("EMBED_PROVIDER not set (expected: vertex | bedrock | azure)")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
@@ -201,7 +202,7 @@ func buildEmbedder(ctx context.Context, t *testing.T, name string) *embedder.Emb
 		client, err := vertex.NewClient(ctx, projectID, location)
 		require.NoError(t, err)
 		return &embedder.Embedder{
-			TextEmbedder: vertex.NewDenseEmbedder(client, model, 768),
+			TextEmbedder: vertex.NewDenseEmbedder(client, model, 768, 50),
 			Model:        "vertex/" + model,
 			VectorType:   embedder.VectorTypeDense,
 			Metric:       embedder.CosineDistance,
@@ -219,15 +220,36 @@ func buildEmbedder(ctx context.Context, t *testing.T, name string) *embedder.Emb
 		rt := bedrockruntime.NewFromConfig(cfg)
 		client := bedrock.NewClient(rt)
 		return &embedder.Embedder{
-			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024),
+			TextEmbedder: bedrock.NewDenseEmbedder(client, model, 1024, 50),
 			Model:        "bedrock/" + model,
 			VectorType:   embedder.VectorTypeDense,
 			Metric:       embedder.CosineDistance,
 			Dimensions:   1024,
 			Normalized:   false,
 		}
+	case "azure":
+		endpoint := os.Getenv("AZURE_OPENAI_ENDPOINT")
+		if endpoint == "" {
+			t.Skip("AZURE_OPENAI_ENDPOINT not set")
+		}
+		apiKey := os.Getenv("AZURE_OPENAI_API_KEY")
+		if apiKey == "" {
+			t.Skip("AZURE_OPENAI_API_KEY not set")
+		}
+		deployment := envOr("AZURE_DEPLOYMENT", "text-embedding-3-small")
+		apiVersion := envOr("AZURE_API_VERSION", "2024-02-01")
+		client, err := azure.NewClient(endpoint, deployment, apiVersion, apiKey)
+		require.NoError(t, err)
+		return &embedder.Embedder{
+			TextEmbedder: azure.NewDenseEmbedder(client, 1024, 50),
+			Model:        "azure/" + deployment,
+			VectorType:   embedder.VectorTypeDense,
+			Metric:       embedder.CosineDistance,
+			Dimensions:   1024,
+			Normalized:   false,
+		}
 	default:
-		t.Fatalf("unknown EMBED_PROVIDER %q (expected: vertex | bedrock)", name)
+		t.Fatalf("unknown EMBED_PROVIDER %q (expected: vertex | bedrock | azure)", name)
 		return nil
 	}
 }

@@ -5,7 +5,6 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import {
   type AbstractQuery,
   type AnnotationEvent,
-  type AnnotationQueryRequest,
   CoreApp,
   type DataFrame,
   DataFrameView,
@@ -106,16 +105,14 @@ import {
   type QueryStats,
 } from './types';
 
-export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
-export const DEFAULT_MAX_LINES = 1000;
+const DEFAULT_MAX_LINES = 1000;
 export const DEFAULT_MAX_LINES_SAMPLE = 10;
-export const LOKI_ENDPOINT = '/loki/api/v1';
 export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
 export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
-export const REF_ID_STARTER_STATS = 'log-stats-';
+const REF_ID_STARTER_STATS = 'log-stats-';
 
 const NS_IN_MS = 1000000;
 
@@ -1245,7 +1242,7 @@ export class LokiDatasource
     };
   }
 }
-export function lokiSpecialRegexEscape<T>(value: T) {
+function lokiSpecialRegexEscape<T>(value: T) {
   if (typeof value === 'string') {
     return value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&');
   }

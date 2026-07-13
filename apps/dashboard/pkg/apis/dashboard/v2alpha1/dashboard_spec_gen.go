@@ -775,6 +775,8 @@ type DashboardFieldColor struct {
 	Mode DashboardFieldColorModeId `json:"mode"`
 	// The fixed color value for fixed or shades color modes.
 	FixedColor *string `json:"fixedColor,omitempty"`
+	// The end color for the gradient color mode (smallest value). Only used when mode is gradient.
+	GradientColorTo *string `json:"gradientColorTo,omitempty"`
 	// Some visualizations need to know how to assign a series color from by value color schemes.
 	SeriesBy *DashboardFieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
@@ -795,6 +797,10 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 // `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
 // `continuous-viridis`: Continuous Viridis palette mode
 // `continuous-magma`: Continuous Magma palette mode
 // `continuous-plasma`: Continuous Plasma palette mode
@@ -812,30 +818,36 @@ func (DashboardFieldColor) OpenAPIModelName() string {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+// `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
 // +k8s:openapi-gen=true
 type DashboardFieldColorModeId string
 
 const (
-	DashboardFieldColorModeIdThresholds           DashboardFieldColorModeId = "thresholds"
-	DashboardFieldColorModeIdPaletteClassic       DashboardFieldColorModeId = "palette-classic"
-	DashboardFieldColorModeIdPaletteClassicByName DashboardFieldColorModeId = "palette-classic-by-name"
-	DashboardFieldColorModeIdContinuousViridis    DashboardFieldColorModeId = "continuous-viridis"
-	DashboardFieldColorModeIdContinuousMagma      DashboardFieldColorModeId = "continuous-magma"
-	DashboardFieldColorModeIdContinuousPlasma     DashboardFieldColorModeId = "continuous-plasma"
-	DashboardFieldColorModeIdContinuousInferno    DashboardFieldColorModeId = "continuous-inferno"
-	DashboardFieldColorModeIdContinuousCividis    DashboardFieldColorModeId = "continuous-cividis"
-	DashboardFieldColorModeIdContinuousGrYlRd     DashboardFieldColorModeId = "continuous-GrYlRd"
-	DashboardFieldColorModeIdContinuousRdYlGr     DashboardFieldColorModeId = "continuous-RdYlGr"
-	DashboardFieldColorModeIdContinuousBlYlRd     DashboardFieldColorModeId = "continuous-BlYlRd"
-	DashboardFieldColorModeIdContinuousYlRd       DashboardFieldColorModeId = "continuous-YlRd"
-	DashboardFieldColorModeIdContinuousBlPu       DashboardFieldColorModeId = "continuous-BlPu"
-	DashboardFieldColorModeIdContinuousYlBl       DashboardFieldColorModeId = "continuous-YlBl"
-	DashboardFieldColorModeIdContinuousBlues      DashboardFieldColorModeId = "continuous-blues"
-	DashboardFieldColorModeIdContinuousReds       DashboardFieldColorModeId = "continuous-reds"
-	DashboardFieldColorModeIdContinuousGreens     DashboardFieldColorModeId = "continuous-greens"
-	DashboardFieldColorModeIdContinuousPurples    DashboardFieldColorModeId = "continuous-purples"
-	DashboardFieldColorModeIdFixed                DashboardFieldColorModeId = "fixed"
-	DashboardFieldColorModeIdShades               DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdThresholds              DashboardFieldColorModeId = "thresholds"
+	DashboardFieldColorModeIdPaletteClassic          DashboardFieldColorModeId = "palette-classic"
+	DashboardFieldColorModeIdPaletteClassicByName    DashboardFieldColorModeId = "palette-classic-by-name"
+	DashboardFieldColorModeIdPaletteColorblind       DashboardFieldColorModeId = "palette-colorblind"
+	DashboardFieldColorModeIdPaletteCategoricalNext  DashboardFieldColorModeId = "palette-categorical-next"
+	DashboardFieldColorModeIdPaletteCategoricalNext2 DashboardFieldColorModeId = "palette-categorical-next-2"
+	DashboardFieldColorModeIdPaletteCategoricalNext3 DashboardFieldColorModeId = "palette-categorical-next-3"
+	DashboardFieldColorModeIdContinuousViridis       DashboardFieldColorModeId = "continuous-viridis"
+	DashboardFieldColorModeIdContinuousMagma         DashboardFieldColorModeId = "continuous-magma"
+	DashboardFieldColorModeIdContinuousPlasma        DashboardFieldColorModeId = "continuous-plasma"
+	DashboardFieldColorModeIdContinuousInferno       DashboardFieldColorModeId = "continuous-inferno"
+	DashboardFieldColorModeIdContinuousCividis       DashboardFieldColorModeId = "continuous-cividis"
+	DashboardFieldColorModeIdContinuousGrYlRd        DashboardFieldColorModeId = "continuous-GrYlRd"
+	DashboardFieldColorModeIdContinuousRdYlGr        DashboardFieldColorModeId = "continuous-RdYlGr"
+	DashboardFieldColorModeIdContinuousBlYlRd        DashboardFieldColorModeId = "continuous-BlYlRd"
+	DashboardFieldColorModeIdContinuousYlRd          DashboardFieldColorModeId = "continuous-YlRd"
+	DashboardFieldColorModeIdContinuousBlPu          DashboardFieldColorModeId = "continuous-BlPu"
+	DashboardFieldColorModeIdContinuousYlBl          DashboardFieldColorModeId = "continuous-YlBl"
+	DashboardFieldColorModeIdContinuousBlues         DashboardFieldColorModeId = "continuous-blues"
+	DashboardFieldColorModeIdContinuousReds          DashboardFieldColorModeId = "continuous-reds"
+	DashboardFieldColorModeIdContinuousGreens        DashboardFieldColorModeId = "continuous-greens"
+	DashboardFieldColorModeIdContinuousPurples       DashboardFieldColorModeId = "continuous-purples"
+	DashboardFieldColorModeIdFixed                   DashboardFieldColorModeId = "fixed"
+	DashboardFieldColorModeIdShades                  DashboardFieldColorModeId = "shades"
+	DashboardFieldColorModeIdGradient                DashboardFieldColorModeId = "gradient"
 )
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardFieldColorModeId.

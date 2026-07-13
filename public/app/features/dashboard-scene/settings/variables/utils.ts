@@ -32,7 +32,8 @@ import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCust
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { QueryVariableEditor } from './editors/QueryVariableEditor/QueryVariableEditor';
+import { getQueryVariableOptions } from './editors/QueryVariableEditor/getQueryVariableOptions';
 import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
@@ -49,6 +50,9 @@ export type EditableVariableType = Exclude<VariableType, 'system' | 'snapshot'>;
 export function isEditableVariableType(type: VariableType): type is EditableVariableType {
   return type !== 'system' && type !== 'snapshot';
 }
+
+export const getDefaultTopPlacementLabel = () =>
+  t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {
