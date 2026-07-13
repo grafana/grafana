@@ -18,7 +18,7 @@ keywords:
 weight: 300
 ---
 
-# Authorize and give permissions to your users 
+# Authorize and give permissions to your users
 
 Authorization determines what an authenticated user is allowed to do in Grafana. Permissions are layered from broad to specific:
 
@@ -31,11 +31,11 @@ Authorization determines what an authenticated user is allowed to do in Grafana.
 
 Every user has one of three roles within each organization:
 
-| Role | Description |
-|------|-------------|
-| Viewer | Read-only access to dashboards and data sources. |
-| Editor | Create and edit dashboards and alerts. |
-| Admin | Manage users, teams, data sources, and organization settings. |
+| Role   | Description                                                   |
+| ------ | ------------------------------------------------------------- |
+| Viewer | Read-only access to dashboards and data sources.              |
+| Editor | Create and edit dashboards and alerts.                        |
+| Admin  | Manage users, teams, data sources, and organization settings. |
 
 A Grafana server admin can also grant the **Server Admin** role, which gives access to all organizations and instance-level settings.
 

@@ -71,13 +71,14 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `additionalData`        | object  | Additional information that can be provided about the request.                                                                                                                                                           |
 
 The `additionalData` field can contain the following information:
-| Field name | Action | Description |
-| ---------- | ------ | ----------- |
-| `loginUsername` | `login` | Login used in the Grafana authentication form. |
-| `extUserInfo` | `login` | User information provided by the external system that was used to log in. |
-| `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
-| `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring. |
-| `billing_role` | `billing-information` | The billing role associated with the billing information being sent. |
+
+| Field name          | Action                | Description                                                                      |
+| ------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `loginUsername`     | `login`               | Login used in the Grafana authentication form.                                   |
+| `extUserInfo`       | `login`               | User information provided by the external system that was used to log in.        |
+| `authTokenCount`    | `login`               | Number of active authentication tokens for the user that logged in.              |
+| `terminationReason` | `logout`              | The reason why the user logged out, such as a manual logout or a token expiring. |
+| `billing_role`      | `billing-information` | The billing role associated with the billing information being sent.             |
 
 ### Identify recorded actions
 

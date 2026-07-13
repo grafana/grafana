@@ -22,11 +22,11 @@ Use service account tokens to authenticate non-human workloads — such as Terra
 
 ## Choose the right method
 
-| Scenario | Recommended method |
-|----------|--------------------|
-| Grafana HTTP API (self-hosted or Cloud-hosted Grafana) | [Service account token](../user-identity/service-accounts/) |
+| Scenario                                                        | Recommended method                                                                                                                   |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Grafana HTTP API (self-hosted or Cloud-hosted Grafana)          | [Service account token](../user-identity/service-accounts/)                                                                          |
 | Grafana Cloud data plane APIs (metrics, logs, traces, profiles) | [Grafana Cloud Access Policies](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) |
-| Legacy automation using API keys | [Migrate to service accounts](../user-identity/service-accounts/migrate-api-keys/) |
+| Legacy automation using API keys                                | [Migrate to service accounts](../user-identity/service-accounts/migrate-api-keys/)                                                   |
 
 ## Service account tokens
 
