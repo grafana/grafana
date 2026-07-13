@@ -90,12 +90,6 @@ export const silencesPermissions = {
   },
 };
 
-const provisioningPermissions = {
-  read: AccessControlAction.AlertingProvisioningRead,
-  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  write: AccessControlAction.AlertingProvisioningWrite,
-};
-
 const rulesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingRuleRead,

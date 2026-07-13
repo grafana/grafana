@@ -115,6 +115,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     <Stack direction="column" gap={0}>
       <Stack direction="row" gap={1} wrap="wrap">
         <Field
+          noMargin
           className={styles.dsPickerContainer}
           label={
             <Label htmlFor="data-source-picker">
@@ -166,6 +167,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         </Field>
 
         <Field
+          noMargin
           className={styles.dashboardPickerContainer}
           label={
             <Label htmlFor="filters-dashboard-picker">
@@ -218,6 +220,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
         {canRenderContactPointSelector && (
           <Stack direction="column" gap={0}>
             <Field
+              noMargin
               label={
                 <Label htmlFor="contactPointFilter">
                   <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
@@ -272,6 +275,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             })}
           >
             <Field
+              noMargin
               label={
                 <Label htmlFor="rulesSearchInput">
                   <Stack gap={0.5} alignItems="center">
@@ -329,14 +333,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     dsPickerContainer: css({
       width: theme.spacing(60),
       flexGrow: 0,
-      margin: 0,
     }),
     dashboardPickerContainer: css({
       minWidth: theme.spacing(50),
     }),
     searchInput: css({
       flex: 1,
-      margin: 0,
     }),
   };
 };
