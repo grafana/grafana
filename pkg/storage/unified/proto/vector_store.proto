@@ -1,0 +1,106 @@
+syntax = "proto3";
+package vectorstore;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/unified/vectorstorepb";
+
+// VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
+// Callers send text; the server embeds it and stores it in the existing pgvector layout. Reads go through the existing
+// search service.
+//
+// Request-level failures come back as gRPC status codes with an empty response
+// body:
+//   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content
+//   NOT_FOUND          collection not allowlisted / never provisioned (callers branch on this)
+//   PERMISSION_DENIED  request namespace not permitted for the caller identity
+//   RESOURCE_EXHAUSTED per-cluster embed budget exhausted (retryable)
+//   UNAVAILABLE        transient; retryable
+// The response bodies below are only returned on OK.
+service VectorStore {
+  rpc Upsert(UpsertRequest) returns (UpsertResponse);
+  rpc UpsertSubresources(UpsertSubresourcesRequest) returns (UpsertSubresourcesResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc UpdateMetadata(UpdateMetadataRequest) returns (UpdateMetadataResponse);
+}
+
+// EmbeddingInput is a piece of text to be embedded, plus its identity and metadata.
+// It only becomes a vector once the server embeds it.
+message EmbeddingInput {
+  string uid = 1;          // entity id (caller-chosen, deterministic)
+  string subresource = 2;  // chunk id within the entity
+  string content = 3;      // text to embed
+  bytes metadata = 4;      // JSON object, max 4 KiB
+}
+
+// Plain upsert: inserts or overwrites exactly the (uid, subresource) rows in the batch.
+// All inputs must be from the same namespace
+// All params are required
+message UpsertRequest {
+  // required
+  string namespace = 1;         // tenant
+  // required
+  string collection = 2;        // For example: incidents or infra_memories (we'll need to agree on naming, as these collection names will be allowlisted on our side)
+  // required
+  repeated EmbeddingInput inputs = 3;  // max 500
+}
+
+// Upsert subresources (chunks) for a single entity atomically.
+// All subresources must be part of the same parent entity (i.e have the same uid).
+// New chunks will be embedded, existing ones will be re-embedded only if content has changed, and chunks that don't
+// exist in the inputs set will be deleted.
+message UpsertSubresourcesRequest {
+  string namespace = 1; // required
+  string collection = 2; // required
+  // required
+  repeated EmbeddingInput inputs = 3;  // max 500
+}
+
+message UpsertFailure {
+  string uid = 1;
+  string subresource = 2;
+  string reason = 3;
+}
+
+// Upserting a batch could have partial failures. The failed resources are in the response.
+message UpsertResponse {
+  int64 upserted = 1;
+  repeated UpsertFailure failures = 2;
+}
+
+// UpsertSubresources is atomic: the whole request succeeds or fails as one,
+// so there is no partial-failure list — any failure is a gRPC status.
+// Chunks whose content didn't change are not re-embedded and are not counted.
+message UpsertSubresourcesResponse {
+  int64 created = 1; // chunks that didn't exist before
+  int64 updated = 2; // chunks whose content changed (re-embedded)
+  int64 deleted = 3; // existing chunks not in the inputs set
+}
+
+// The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
+message DeleteRequest {
+  // required
+  string namespace = 1;
+  // required
+  string collection = 2;
+  // provide at most ONE OF the following
+  // if none are provided, will delete all from tenant/collection up to the page limit
+  repeated string uids = 3;  // delete whole entities (and their subresources)
+  bytes filter = 4;          // delete by metadata filter (paged, 10k/page)
+}
+
+message DeleteResponse {
+  int64 deleted = 1; // number of rows deleted
+  bool has_more = 2; // is there more left to delete?
+}
+
+message UpdateMetadataRequest {
+  string namespace = 1; // required
+  string collection = 2; // required
+  bytes filter = 3;          // required; selects the rows to update
+  // at least one of the below are required
+  bytes set = 4;             // JSON merged into metadata
+  repeated string unset = 5; // metadata keys to remove
+}
+
+message UpdateMetadataResponse {
+  int64 updated = 1; // number of rows changes
+}
