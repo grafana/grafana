@@ -46,38 +46,9 @@ import (
 
 searchRoutes: {
 	namespaced: {
-		"/search/alertrules": {
-			GET: {
-				// These search routes are experimental and subject to change without deprecation until stabilized
-				name: "getSearchAlertRules"
-				request: {
-					query: #alertRuleSearchQuery
-				}
-				response: {
-					items: [...v0alpha1.#AlertRuleHit]
-				}
-				responseMetadata: {
-					typeMeta: true
-					listMeta: true
-				}
-			}
-		}
-		"/search/recordingrules": {
-			GET: {
-				// These search routes are experimental and subject to change without deprecation until stabilized
-				name: "getSearchRecordingRules"
-				request: {
-					query: #recordingRuleSearchQuery
-				}
-				response: {
-					items: [...v0alpha1.#RecordingRuleHit]
-				}
-				responseMetadata: {
-					typeMeta: true
-					listMeta: true
-				}
-			}
-		}
+		// A single cross-kind search endpoint. Callers narrow to a single kind
+		// with the optional "type" query param rather than hitting per-kind
+		// routes.
 		"/search": {
 			GET: {
 				// These search routes are experimental and subject to change without deprecation until stabilized

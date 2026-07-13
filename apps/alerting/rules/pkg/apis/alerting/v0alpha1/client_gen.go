@@ -30,54 +30,6 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetSearchAlertRulesRequest struct {
-	Params  GetSearchAlertRulesRequestParams
-	Headers http.Header
-}
-
-func (c *CustomRouteClient) GetSearchAlertRules(ctx context.Context, namespace string, request GetSearchAlertRulesRequest) (*GetSearchAlertRulesResponse, error) {
-	params := url.Values{}
-	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/search/alertrules",
-		Verb:    "GET",
-		Query:   params,
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := GetSearchAlertRulesResponse{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearchAlertRulesResponse: %w", err)
-	}
-	return &cast, nil
-}
-
-type GetSearchRecordingRulesRequest struct {
-	Params  GetSearchRecordingRulesRequestParams
-	Headers http.Header
-}
-
-func (c *CustomRouteClient) GetSearchRecordingRules(ctx context.Context, namespace string, request GetSearchRecordingRulesRequest) (*GetSearchRecordingRulesResponse, error) {
-	params := url.Values{}
-	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/search/recordingrules",
-		Verb:    "GET",
-		Query:   params,
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := GetSearchRecordingRulesResponse{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearchRecordingRulesResponse: %w", err)
-	}
-	return &cast, nil
-}
-
 type GetSearchRulesRequest struct {
 	Params  GetSearchRulesRequestParams
 	Headers http.Header
