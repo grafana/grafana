@@ -346,6 +346,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       expression,
       logGroupPrefixes,
       selectedAccountIds,
+      // Keep AWS data source name/type pairs literal. The selector does not accept variables,
+      // and independently expanding multi-value fields would lose their pairing.
       logDataSources: query.logDataSources,
     };
   }
