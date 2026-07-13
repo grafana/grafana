@@ -10,7 +10,7 @@ option go_package = "github.com/grafana/grafana/pkg/storage/unified/vectorstorep
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
 //   INVALID_ARGUMENT   bad filter, oversized batch (>500 vectors or >4 KiB metadata), empty content
-//   NOT_FOUND          collection not allowlisted / never provisioned (callers branch on this)
+//   NOT_FOUND          collection not allowlisted / never provisioned
 //   PERMISSION_DENIED  request namespace not permitted for the caller identity
 //   RESOURCE_EXHAUSTED per-cluster embed budget exhausted (retryable)
 //   UNAVAILABLE        transient; retryable
@@ -26,8 +26,8 @@ service VectorStore {
 // It only becomes a vector once the server embeds it.
 message EmbeddingInput {
   string uid = 1;          // entity id (caller-chosen, deterministic)
-  string subresource = 2;  // chunk id within the entity
-  string content = 3;      // text to embed
+  string subresource = 2;  // chunk id within the entity (optional)
+  string content = 3;      // text to embed (required)
   bytes metadata = 4;      // JSON object, max 4 KiB
 }
 
@@ -50,8 +50,7 @@ message UpsertRequest {
 message UpsertSubresourcesRequest {
   string namespace = 1; // required
   string collection = 2; // required
-  // required
-  repeated EmbeddingInput inputs = 3;  // max 500
+  repeated EmbeddingInput inputs = 3;  // max 500 (required)
 }
 
 message UpsertFailure {
@@ -70,19 +69,23 @@ message UpsertResponse {
 // so there is no partial-failure list — any failure is a gRPC status.
 // Chunks whose content didn't change are not re-embedded and are not counted.
 message UpsertSubresourcesResponse {
-  int64 created = 1; // chunks that didn't exist before
-  int64 updated = 2; // chunks whose content changed (re-embedded)
-  int64 deleted = 3; // existing chunks not in the inputs set
+  int64 created = 1; // count of chunks that didn't exist before
+  int64 updated = 2; // count of chunks whose content changed (re-embedded)
+  int64 deleted = 3; // count of existing chunks not in the inputs set
 }
 
-// The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
+// For a tenant + collection, you can:
+// 1. Delete everything
+// 2. Delete by uid(s)
+// 3. Delete by metadata
 message DeleteRequest {
   // required
   string namespace = 1;
   // required
   string collection = 2;
-  // provide at most ONE OF the following
-  // if none are provided, will delete all from tenant/collection up to the page limit
+  // Provide at most ONE OF the following
+  // If none are provided, will delete all from tenant/collection up to the page limit
+  // The uids are the parent/resource uids. This means you cant directly delete specific subresources by their id.
   repeated string uids = 3;  // delete whole entities (and their subresources)
   bytes filter = 4;          // delete by metadata filter (paged, 10k/page)
 }
