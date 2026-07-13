@@ -12,11 +12,11 @@ import { getVariableKind, getVariableSpecName } from 'app/features/variables-man
  * persisted dashboard spec and out of the editable variables list.
  */
 
-export interface GlobalControlSourceRef {
+interface GlobalControlSourceRef {
   type: 'global';
 }
 
-export interface FolderControlSourceRef {
+interface FolderControlSourceRef {
   type: 'folder';
   folderUid: string;
 }
