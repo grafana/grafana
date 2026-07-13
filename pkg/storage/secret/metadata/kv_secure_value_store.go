@@ -88,7 +88,7 @@ type secureValueKV struct {
 	LeaseToken    string `json:"lease_token,omitempty"`
 	LeaseCreated  int64  `json:"lease_created,omitempty"`
 	LeaseDuration int64  `json:"lease_duration"`
-	GCAttempts    int    `json:"gc_atttempts"`
+	GCAttempts    int    `json:"gc_attempts"`
 }
 
 // makePrefix creates a prefix for listing all versions of a resource
@@ -280,10 +280,10 @@ func (s *kvSecureValueMetadataStorage) writeValue(ctx context.Context, key strin
 	return nil
 }
 
-func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, namespace, name string) (latestVersion int64, createdAt int64, err error) {
+func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, namespace, name string) (latestVersion int64, createdBy string, createdAt int64, err error) {
 	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.getLatestVersion", trace.WithAttributes(
 		attribute.String("namespace", namespace),
-		attribute.String("name", namespace)))
+		attribute.String("name", name)))
 	defer span.End()
 
 	prefix := makePrefix(namespace, name)
@@ -295,24 +295,24 @@ func (s *kvSecureValueMetadataStorage) getLatestVersion(ctx context.Context, nam
 		Limit:    1,
 	}) {
 		if err != nil {
-			return 0, 0, err
+			return 0, "", 0, err
 		}
 
 		value, err := s.readValue(ctx, key)
 		if err != nil {
-			return 0, 0, err
+			return 0, "", 0, err
 		}
 
 		latestVersion = value.Version
 		if value.Active {
 			createdAt = value.Created
+			createdBy = value.CreatedBy
 		}
 
 		break
 	}
 
-	// TODO: return created by? check sql impl
-	return latestVersion, createdAt, nil
+	return latestVersion, createdBy, createdAt, nil
 }
 
 func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *v1beta1.SecureValue, actorUID string) (_ *v1beta1.SecureValue, svmCreateErr error) {
@@ -350,7 +350,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		s.metrics.KVSecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	latestVersion, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
+	latestVersion, createdBy, createdAt, err := s.getLatestVersion(ctx, sv.Namespace, sv.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest version: %w", err)
 	}
@@ -375,10 +375,28 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 		value.GUID = uuid.New().String()
 	}
 
+	if createdBy != "" {
+		value.CreatedBy = createdBy
+	}
+
+	value.UpdatedBy = actorUID
+
 	// Save the new version (it starts as inactive)
 	key := makeKey(sv.Namespace, sv.Name, sv.Status.Version)
-	if err := s.writeValue(ctx, key, value); err != nil {
-		return nil, fmt.Errorf("failed to write value: %w", err)
+
+	buffer, err := json.Marshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("json marshaling secure value: %w", err)
+	}
+
+	if err := s.kv.Batch(ctx, kvSectionSecureValues, []kv.BatchOp{
+		{
+			Mode:  kv.BatchOpCreate,
+			Key:   key,
+			Value: buffer,
+		},
+	}); err != nil {
+		return nil, fmt.Errorf("writing secure value to kv store: %w", err)
 	}
 
 	return value.toKubernetes()
@@ -720,7 +738,14 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 
 	value.ExternalID = externalID.String()
 
-	return s.writeValue(ctx, key, value)
+	if err := s.writeValue(ctx, key, value); err != nil {
+		if errors.Is(err, kv.ErrNotFound) {
+			return nil
+		}
+		return fmt.Errorf("storing secure value in kv store: %w", err)
+	}
+
+	return nil
 }
 
 func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error {
@@ -820,7 +845,7 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 		}
 
 		if parsed.Active {
-			count[kvValue.Key] = parsed.GCAttempts
+			count[parsed.GUID] = parsed.GCAttempts
 			continue
 		}
 
@@ -948,5 +973,7 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 }
 
 func makeKey(namespace, name string, version int64) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
+	// Add padding to version to ensure lexical sorting works correctly.
+	// The maximum int64 has 19 digits (math.MaxInt64)
+	return fmt.Sprintf("%s/%s/%019d", namespace, name, version)
 }

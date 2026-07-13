@@ -2,6 +2,7 @@ package metadata_test
 
 import (
 	"context"
+	"maps"
 	"slices"
 	"testing"
 	"time"
@@ -17,192 +18,183 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-// All tests must check the SQL and KV implementations.
-func TestSecureValueStoreTestMachine(t *testing.T) {
-	t.Parallel()
+func TestPropertyStateMachine(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		opts []func(*testutils.SetupConfig)
+	}{
+		{name: "sql", opts: nil},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := t
 
-	t.Run("SQL backend", func(t *testing.T) {
-		t.Parallel()
-		runModelStateMachineTests(t)
-	})
+			rapid.Check(tt, func(t *rapid.T) {
+				sut := testutils.Setup(tt, tc.opts...)
+				model := testutils.NewModelGsm(sut.ModelSecretsManager)
 
-	t.Run("KV backend", func(t *testing.T) {
-		t.Parallel()
-		runModelStateMachineTests(t, testutils.WithKVStorage())
-	})
+				t.Repeat(map[string]func(*rapid.T){
+					"createSecureValueWithSecretValue": func(t *rapid.T) {
+						sv := testutils.AnySecureValueGen.Draw(t, "sv")
 
-	t.Run("SQL and KV backend behave the same", func(t *testing.T) {
-		t.Parallel()
-		runSutStateMachineTests(t)
-	})
-}
+						modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
+						createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
+						require.Equal(t, modelCreatedSv.Name, createdSv.Name)
+						require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+					},
+					"createSecureValueWithRef": func(t *rapid.T) {
+						sv := testutils.AnySecureValueWithRefGen.Draw(t, "sv")
 
-func runModelStateMachineTests(t *testing.T, opts ...func(*testutils.SetupConfig)) {
-	tt := t
-	rapid.Check(t, func(t *rapid.T) {
-		sut := testutils.Setup(tt, opts...)
-		model := testutils.NewModelGsm(sut.ModelSecretsManager)
+						modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
+						createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
+						require.Equal(t, modelCreatedSv.Name, createdSv.Name)
+						require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+					},
+					"createSecretOn3rdPartyKeeper": func(t *rapid.T) {
+						name := testutils.SecretsToRefGen.Draw(t, "name")
+						value := rapid.String().Draw(t, "value")
+						sut.ModelSecretsManager.Create(name, value)
+					},
+					"update": func(t *rapid.T) {
+						sv := testutils.UpdateSecureValueGen.Draw(t, "sv")
+						modelCreatedSv, _, modelErr := model.Update(t.Context(), sut.Clock.Now(), sv.DeepCopy())
+						createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
+						require.Equal(t, modelCreatedSv.Name, createdSv.Name)
+						require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
+					},
+					"delete": func(t *rapid.T) {
+						ns := testutils.NamespaceGen.Draw(t, "ns")
+						name := testutils.SecureValueNameGen.Draw(t, "name")
+						modelSv, modelErr := model.Delete(ns, name)
+						deletedSv, err := sut.DeleteSv(t.Context(), ns, name)
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelSv.Namespace, deletedSv.Namespace)
+						require.Equal(t, modelSv.Name, deletedSv.Name)
+						require.Equal(t, modelSv.Status.Version, deletedSv.Status.Version)
+					},
+					"list": func(t *rapid.T) {
+						ns := testutils.NamespaceGen.Draw(t, "ns")
+						authCtx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
+							"securevalues:read": {"securevalues:uid:*"},
+						})
+						modelList, modelErr := model.List(ns)
+						list, err := sut.SecureValueService.List(authCtx, xkube.Namespace(ns))
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
 
-		t.Repeat(map[string]func(*rapid.T){
-			"createSecureValueWithSecretValue": func(t *rapid.T) {
-				sv := testutils.AnySecureValueGen.Draw(t, "sv")
+						require.Equal(t, len(modelList.Items), len(list.Items))
 
-				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
-				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
-				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
-			},
-			"createSecureValueWithRef": func(t *rapid.T) {
-				sv := testutils.AnySecureValueWithRefGen.Draw(t, "sv")
+						// PERFORMANCE: The lists are always small
+						for _, v1 := range modelList.Items {
+							if !slices.ContainsFunc(list.Items, func(v2 secretv1beta1.SecureValue) bool {
+								return v2.Namespace == v1.Namespace && v2.Name == v1.Name && v2.Status.Version == v1.Status.Version
+							}) {
+								t.Fatalf("expected sut to return secure value ns=%+v name=%+v version=%+v in the result",
+									v1.Namespace, v1.Name, v1.Status.Version)
+							}
+						}
+					},
+					"get": func(t *rapid.T) {
+						ns := testutils.NamespaceGen.Draw(t, "ns")
+						name := testutils.SecureValueNameGen.Draw(t, "name")
+						modelSv, modelErr := model.Read(ns, name)
+						readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelSv.Namespace, readSv.Namespace)
+						require.Equal(t, modelSv.Name, readSv.Name)
+						require.Equal(t, modelSv.Status.Version, readSv.Status.Version)
+					},
+					"decrypt": func(t *rapid.T) {
+						input := testutils.DecryptGen.Draw(t, "decryptInput")
+						modelResult, modelErr := model.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
+						result, err := sut.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
 
-				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
-				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
-				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
-			},
-			"createSecretOn3rdPartyKeeper": func(t *rapid.T) {
-				name := testutils.SecretsToRefGen.Draw(t, "name")
-				value := rapid.String().Draw(t, "value")
-				sut.ModelSecretsManager.Create(name, value)
-			},
-			"update": func(t *rapid.T) {
-				sv := testutils.UpdateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, _, modelErr := model.Update(t.Context(), sut.Clock.Now(), sv.DeepCopy())
-				createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelCreatedSv.Namespace, createdSv.Namespace)
-				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
-				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
-			},
-			"delete": func(t *rapid.T) {
-				ns := testutils.NamespaceGen.Draw(t, "ns")
-				name := testutils.SecureValueNameGen.Draw(t, "name")
-				modelSv, modelErr := model.Delete(ns, name)
-				deletedSv, err := sut.DeleteSv(t.Context(), ns, name)
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelSv.Namespace, deletedSv.Namespace)
-				require.Equal(t, modelSv.Name, deletedSv.Name)
-				require.Equal(t, modelSv.Status.Version, deletedSv.Status.Version)
-			},
-			"list": func(t *rapid.T) {
-				ns := testutils.NamespaceGen.Draw(t, "ns")
-				authCtx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
-					"securevalues:read": {"securevalues:uid:*"},
+						require.Equal(t, len(modelResult), len(result))
+						for name := range modelResult {
+							require.ErrorIs(t, modelResult[name].Error(), result[name].Error())
+							require.Equal(t, modelResult[name].Value(), result[name].Value())
+						}
+					},
+					"createKeeper": func(t *rapid.T) {
+						input := testutils.AnyKeeperGen.Draw(t, "keeper")
+						modelKeeper, modelErr := model.CreateKeeper(input)
+						keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+						require.Equal(t, modelKeeper.Name, keeper.Name)
+					},
+					"setKeeperAsActive": func(t *rapid.T) {
+						namespace := testutils.NamespaceGen.Draw(t, "namespace")
+						var keeper string
+						if rapid.Bool().Draw(t, "systemKeeper") {
+							keeper = contracts.SystemKeeperName
+						} else {
+							keeper = testutils.KeeperNameGen.Draw(t, "keeper")
+						}
+						modelErr := model.SetKeeperAsActive(namespace, keeper)
+						err := sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
+						if err != nil || modelErr != nil {
+							require.ErrorIs(t, err, modelErr)
+							return
+						}
+					},
+					"setInactiveAllFromGroup": func(t *rapid.T) {
+						// TODO: implement
+					},
+					"leaseInactiveSecureValues": func(t *rapid.T) {
+						// TODO: implement
+					},
+					"incGCAttemptCount": func(t *rapid.T) {
+						// TODO: implement
+					},
 				})
-				modelList, modelErr := model.List(ns)
-				list, err := sut.SecureValueService.List(authCtx, xkube.Namespace(ns))
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-
-				require.Equal(t, len(modelList.Items), len(list.Items))
-
-				// PERFORMANCE: The lists are always small
-				for _, v1 := range modelList.Items {
-					if !slices.ContainsFunc(list.Items, func(v2 secretv1beta1.SecureValue) bool {
-						return v2.Namespace == v1.Namespace && v2.Name == v1.Name && v2.Status.Version == v1.Status.Version
-					}) {
-						t.Fatalf("expected sut to return secure value ns=%+v name=%+v version=%+v in the result",
-							v1.Namespace, v1.Name, v1.Status.Version)
-					}
-				}
-			},
-			"get": func(t *rapid.T) {
-				ns := testutils.NamespaceGen.Draw(t, "ns")
-				name := testutils.SecureValueNameGen.Draw(t, "name")
-				modelSv, modelErr := model.Read(ns, name)
-				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelSv.Namespace, readSv.Namespace)
-				require.Equal(t, modelSv.Name, readSv.Name)
-				require.Equal(t, modelSv.Status.Version, readSv.Status.Version)
-			},
-			"decrypt": func(t *rapid.T) {
-				input := testutils.DecryptGen.Draw(t, "decryptInput")
-				modelResult, modelErr := model.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
-				result, err := sut.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-
-				require.Equal(t, len(modelResult), len(result))
-				for name := range modelResult {
-					require.ErrorIs(t, modelResult[name].Error(), result[name].Error())
-					require.Equal(t, modelResult[name].Value(), result[name].Value())
-				}
-			},
-			"createKeeper": func(t *rapid.T) {
-				input := testutils.AnyKeeperGen.Draw(t, "keeper")
-				modelKeeper, modelErr := model.CreateKeeper(input)
-				keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-				require.Equal(t, modelKeeper.Name, keeper.Name)
-			},
-			"setKeeperAsActive": func(t *rapid.T) {
-				namespace := testutils.NamespaceGen.Draw(t, "namespace")
-				var keeper string
-				if rapid.Bool().Draw(t, "systemKeeper") {
-					keeper = contracts.SystemKeeperName
-				} else {
-					keeper = testutils.KeeperNameGen.Draw(t, "keeper")
-				}
-				modelErr := model.SetKeeperAsActive(namespace, keeper)
-				err := sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
-				if err != nil || modelErr != nil {
-					require.ErrorIs(t, err, modelErr)
-					return
-				}
-			},
-			"setInactiveAllFromGroup": func(t *rapid.T) {
-				// TODO: implement
-			},
-			"leaseInactiveSecureValues": func(t *rapid.T) {
-				// TODO: implement
-			},
-			"incGCAttemptCount": func(t *rapid.T) {
-				// TODO: implement
-			},
+			})
 		})
-	})
+	}
 }
 
 //nolint:gocyclo
-func runSutStateMachineTests(t *testing.T) {
+func TestKVAndSQLBackendMatch(t *testing.T) {
 	tt := t
 	rapid.Check(t, func(t *rapid.T) {
-		sut := testutils.Setup(tt)
-		model := testutils.Setup(tt, testutils.WithKVStorage())
+		sqlSut := testutils.Setup(tt)
+		kvSut := testutils.Setup(tt, testutils.WithKVStorage())
 
 		t.Repeat(map[string]func(*rapid.T){
 			"createSecureValueWithSecretValue": func(t *rapid.T) {
 				sv := testutils.AnySecureValueGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				modelCreatedSv, modelErr := kvSut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				createdSv, err := sqlSut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.EqualValues(t, err, modelErr)
 					return
@@ -214,8 +206,8 @@ func runSutStateMachineTests(t *testing.T) {
 			"createSecureValueWithRef": func(t *rapid.T) {
 				sv := testutils.AnySecureValueWithRefGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				modelCreatedSv, modelErr := kvSut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				createdSv, err := sqlSut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -227,12 +219,13 @@ func runSutStateMachineTests(t *testing.T) {
 			"createSecretOn3rdPartyKeeper": func(t *rapid.T) {
 				name := testutils.SecretsToRefGen.Draw(t, "name")
 				value := rapid.String().Draw(t, "value")
-				sut.ModelSecretsManager.Create(name, value)
+				sqlSut.ModelSecretsManager.Create(name, value)
+				kvSut.ModelSecretsManager.Create(name, value)
 			},
 			"update": func(t *rapid.T) {
 				sv := testutils.UpdateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, modelErr := model.UpdateSv(t.Context(), sv.DeepCopy())
-				createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
+				modelCreatedSv, modelErr := kvSut.UpdateSv(t.Context(), sv.DeepCopy())
+				createdSv, err := sqlSut.UpdateSv(t.Context(), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -244,8 +237,8 @@ func runSutStateMachineTests(t *testing.T) {
 			"delete": func(t *rapid.T) {
 				ns := testutils.NamespaceGen.Draw(t, "ns")
 				name := testutils.SecureValueNameGen.Draw(t, "name")
-				modelSv, modelErr := model.DeleteSv(t.Context(), ns, name)
-				deletedSv, err := sut.DeleteSv(t.Context(), ns, name)
+				modelSv, modelErr := kvSut.DeleteSv(t.Context(), ns, name)
+				deletedSv, err := sqlSut.DeleteSv(t.Context(), ns, name)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -259,8 +252,8 @@ func runSutStateMachineTests(t *testing.T) {
 				authCtx := testutils.CreateUserAuthContext(t.Context(), ns, map[string][]string{
 					"securevalues:read": {"securevalues:uid:*"},
 				})
-				modelList, modelErr := model.SecureValueService.List(authCtx, xkube.Namespace(ns))
-				list, err := sut.SecureValueService.List(authCtx, xkube.Namespace(ns))
+				modelList, modelErr := kvSut.SecureValueService.List(authCtx, xkube.Namespace(ns))
+				list, err := sqlSut.SecureValueService.List(authCtx, xkube.Namespace(ns))
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -281,8 +274,8 @@ func runSutStateMachineTests(t *testing.T) {
 			"get": func(t *rapid.T) {
 				ns := testutils.NamespaceGen.Draw(t, "ns")
 				name := testutils.SecureValueNameGen.Draw(t, "name")
-				modelSv, modelErr := model.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
-				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
+				modelSv, modelErr := kvSut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
+				readSv, err := sqlSut.SecureValueService.Read(t.Context(), xkube.Namespace(ns), name)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -293,8 +286,8 @@ func runSutStateMachineTests(t *testing.T) {
 			},
 			"decrypt": func(t *rapid.T) {
 				input := testutils.DecryptGen.Draw(t, "decryptInput")
-				modelResult, modelErr := model.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
-				result, err := sut.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
+				modelResult, modelErr := kvSut.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
+				result, err := sqlSut.DecryptService.Decrypt(t.Context(), input.Decrypter, input.Namespace, input.Name)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -308,8 +301,8 @@ func runSutStateMachineTests(t *testing.T) {
 			},
 			"createKeeper": func(t *rapid.T) {
 				input := testutils.AnyKeeperGen.Draw(t, "keeper")
-				modelKeeper, modelErr := model.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
-				keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
+				modelKeeper, modelErr := kvSut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
+				keeper, err := sqlSut.KeeperMetadataStorage.Create(t.Context(), input, "actor-uid")
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -324,8 +317,8 @@ func runSutStateMachineTests(t *testing.T) {
 				} else {
 					keeper = testutils.KeeperNameGen.Draw(t, "keeper")
 				}
-				modelErr := model.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
-				err := sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
+				modelErr := kvSut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
+				err := sqlSut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(namespace), keeper)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -334,8 +327,8 @@ func runSutStateMachineTests(t *testing.T) {
 			"setInactiveAllFromGroup": func(t *rapid.T) {
 				namespace := testutils.NamespaceGen.Draw(t, "namespace")
 				apiGroup := testutils.APIGroupGen.Draw(t, "apiGroup")
-				modelErr := model.SecureValueMetadataStorage.SetInactiveAllFromGroup(t.Context(), xkube.Namespace(namespace), apiGroup)
-				err := sut.SecureValueMetadataStorage.SetInactiveAllFromGroup(t.Context(), xkube.Namespace(namespace), apiGroup)
+				modelErr := kvSut.SecureValueMetadataStorage.SetInactiveAllFromGroup(t.Context(), xkube.Namespace(namespace), apiGroup)
+				err := sqlSut.SecureValueMetadataStorage.SetInactiveAllFromGroup(t.Context(), xkube.Namespace(namespace), apiGroup)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -343,8 +336,8 @@ func runSutStateMachineTests(t *testing.T) {
 			},
 			"leaseInactiveSecureValues": func(t *rapid.T) {
 				maxBatchSize := rapid.Uint16().Draw(t, "maxBatchSize")
-				modelSecureValues, modelErr := model.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
-				secureValues, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
+				modelSecureValues, modelErr := kvSut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
+				secureValues, err := sqlSut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
@@ -359,118 +352,116 @@ func runSutStateMachineTests(t *testing.T) {
 						Version:   int64(rapid.IntRange(1, 10).Draw(t, "version")),
 					}
 				})).Draw(t, "secureValues")
-				modelSecureValues, modelErr := model.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), input)
-				secureValues, err := sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), input)
+				modelSecureValues, modelErr := kvSut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), input)
+				secureValues, err := sqlSut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), input)
 				if err != nil || modelErr != nil {
 					require.Equal(t, err.Error(), modelErr.Error())
 					return
 				}
-				require.Equal(t, modelSecureValues, secureValues)
+				// The returned maps are keyed by the secure value's GUID, which each backend
+				// generates independently, so the keys never match.
+				// Compare the GC attempt counts instead.
+				require.ElementsMatch(t, slices.Collect(maps.Values(modelSecureValues)), slices.Collect(maps.Values(secureValues)))
 			},
 		})
 	})
 }
 
-// All tests must check the SQL and KV implementations.
 func TestExampleBased(t *testing.T) {
-	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		opts []func(*testutils.SetupConfig)
+	}{
+		{name: "sql", opts: nil},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("shouldn't be able to decrypt using deleted secure value", func(t *testing.T) {
+				t.Parallel()
 
-	t.Run("SQL backend", func(t *testing.T) {
-		t.Parallel()
-		runExampleBasedTests(t)
-	})
+				sut := testutils.Setup(t, tc.opts...)
 
-	t.Run("KV backend", func(t *testing.T) {
-		t.Parallel()
-		runExampleBasedTests(t, testutils.WithKVStorage())
-	})
-}
+				sv, err := sut.CreateSv(t.Context())
+				require.NoError(t, err)
 
-func runExampleBasedTests(t *testing.T, opts ...func(*testutils.SetupConfig)) {
-	t.Run("shouldn't be able to decrypt using deleted secure value", func(t *testing.T) {
-		t.Parallel()
+				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name)
+				require.NoError(t, err)
+				require.Equal(t, sv.Status.Version, readSv.Status.Version)
 
-		sut := testutils.Setup(t, opts...)
+				deletedSv, err := sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+				require.NoError(t, err)
+				require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
 
-		sv, err := sut.CreateSv(t.Context())
-		require.NoError(t, err)
+				result, err := sut.DecryptService.Decrypt(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, sv.Name)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(result))
+				require.ErrorIs(t, result[sv.Name].Error(), contracts.ErrDecryptNotFound)
+			})
 
-		readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv.Namespace), sv.Name)
-		require.NoError(t, err)
-		require.Equal(t, sv.Status.Version, readSv.Status.Version)
+			t.Run("should be able to use secrets that were created with a keeper that's inactive", func(t *testing.T) {
+				t.Parallel()
 
-		deletedSv, err := sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
-		require.NoError(t, err)
-		require.Equal(t, sv.Status.Version, deletedSv.Status.Version)
+				sut := testutils.Setup(t)
 
-		result, err := sut.DecryptService.Decrypt(t.Context(), sv.Spec.Decrypters[0], sv.Namespace, sv.Name)
-		require.NoError(t, err)
-		require.Equal(t, 1, len(result))
-		require.ErrorIs(t, result[sv.Name].Error(), contracts.ErrDecryptNotFound)
-	})
+				// - Create a secret with k1
+				k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "n1",
+						Name:      "k1",
+					},
+					Spec: secretv1beta1.KeeperSpec{
+						Description: "description",
+						Aws:         &secretv1beta1.KeeperAWSConfig{},
+					},
+				}, "actor-uid")
+				require.NoError(t, err)
 
-	t.Run("should be able to use secrets that were created with a keeper that's inactive", func(t *testing.T) {
-		t.Parallel()
+				require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
 
-		sut := testutils.Setup(t)
+				value := secretv1beta1.NewExposedSecureValue("v1")
+				sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
+					ObjectMeta: metav1.ObjectMeta{Namespace: k1.Namespace, Name: "s1"},
+					Spec: secretv1beta1.SecureValueSpec{
+						Description: "desc",
+						Value:       &value,
+					},
+				}))
+				require.NoError(t, err)
+				require.Equal(t, k1.Name, sv1.Status.Keeper)
 
-		// - Create a secret with k1
-		k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "n1",
-				Name:      "k1",
-			},
-			Spec: secretv1beta1.KeeperSpec{
-				Description: "description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
-			},
-		}, "actor-uid")
-		require.NoError(t, err)
+				// - Set a new keeper as active
+				k2, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "n1",
+						Name:      "k2",
+					},
+					Spec: secretv1beta1.KeeperSpec{
+						Description: "description",
+						Aws:         &secretv1beta1.KeeperAWSConfig{},
+					},
+				}, "actor-uid")
+				require.NoError(t, err)
+				require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
 
-		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
+				// - Read secure value created with inactive keeper
+				readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv1.Namespace), sv1.Name)
+				require.NoError(t, err)
+				require.Equal(t, sv1.Namespace, readSv.Namespace)
+				require.Equal(t, sv1.Name, readSv.Name)
+				require.Equal(t, k1.Name, readSv.Status.Keeper)
 
-		value := secretv1beta1.NewExposedSecureValue("v1")
-		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{Namespace: k1.Namespace, Name: "s1"},
-			Spec: secretv1beta1.SecureValueSpec{
-				Description: "desc",
-				Value:       &value,
-			},
-		}))
-		require.NoError(t, err)
-		require.Equal(t, k1.Name, sv1.Status.Keeper)
-
-		// - Set a new keeper as active
-		k2, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "n1",
-				Name:      "k2",
-			},
-			Spec: secretv1beta1.KeeperSpec{
-				Description: "description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
-			},
-		}, "actor-uid")
-		require.NoError(t, err)
-		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k2.Namespace), k2.Name))
-
-		// - Read secure value created with inactive keeper
-		readSv, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv1.Namespace), sv1.Name)
-		require.NoError(t, err)
-		require.Equal(t, sv1.Namespace, readSv.Namespace)
-		require.Equal(t, sv1.Name, readSv.Name)
-		require.Equal(t, k1.Name, readSv.Status.Keeper)
-
-		// - Update secure value created with inactive keeper
-		newSv1 := sv1.DeepCopy()
-		newSv1.Spec.Description = "updated desc"
-		updatedSv, _, err := sut.SecureValueService.Update(t.Context(), newSv1, "actor-uid")
-		require.NoError(t, err)
-		require.Equal(t, sv1.Namespace, updatedSv.Namespace)
-		require.Equal(t, sv1.Name, updatedSv.Name)
-		require.Equal(t, k1.Name, updatedSv.Status.Keeper)
-		require.Equal(t, newSv1.Spec.Description, updatedSv.Spec.Description)
-	})
+				// - Update secure value created with inactive keeper
+				newSv1 := sv1.DeepCopy()
+				newSv1.Spec.Description = "updated desc"
+				updatedSv, _, err := sut.SecureValueService.Update(t.Context(), newSv1, "actor-uid")
+				require.NoError(t, err)
+				require.Equal(t, sv1.Namespace, updatedSv.Namespace)
+				require.Equal(t, sv1.Name, updatedSv.Name)
+				require.Equal(t, k1.Name, updatedSv.Status.Keeper)
+				require.Equal(t, newSv1.Spec.Description, updatedSv.Spec.Description)
+			})
+		})
+	}
 }
 
 // The Grafana Secrets Manager model is used for checking against the real system.
@@ -888,7 +879,7 @@ func Test_KV_LeaseInactiveSecureValues(t *testing.T) {
 		require.NoError(t, err)
 
 		// Advance clock to pass min age
-		sut.Clock.AdvanceBy(10 * time.Minute)
+		sut.Clock.AdvanceBy(15 * time.Minute)
 
 		// Acquire a lease
 		values1, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(ctx, 10)
@@ -902,7 +893,7 @@ func Test_KV_LeaseInactiveSecureValues(t *testing.T) {
 		require.Empty(t, values2)
 
 		// Advance clock to expire lease
-		sut.Clock.AdvanceBy(5 * time.Minute)
+		sut.Clock.AdvanceBy(15 * time.Minute)
 
 		// Should be able to acquire a new lease
 		values3, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(ctx, 10)

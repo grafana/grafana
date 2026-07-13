@@ -147,6 +147,56 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	})
 }
 
+func Test_KVSecureValueMetadataStorage_CreateVersionOrdering(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		opts []func(*testutils.SetupConfig)
+	}{
+		{name: "sql", opts: nil},
+		{name: "kv", opts: []func(*testutils.SetupConfig){testutils.WithKVStorage()}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			sut := testutils.Setup(t, tc.opts...)
+
+			const namespace = "default"
+			const name = "sv-versions"
+
+			const numVersions = 11
+			gotVersions := make([]int64, 0, numVersions)
+			seen := make(map[int64]struct{}, numVersions)
+
+			for range numVersions {
+				sv := &secretv1beta1.SecureValue{
+					Spec: secretv1beta1.SecureValueSpec{Description: "test description"},
+				}
+				sv.Name = name
+				sv.Namespace = namespace
+
+				created, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv, "actor-uid")
+				require.NoError(t, err)
+
+				v := created.Status.Version
+				if _, dup := seen[v]; dup {
+					t.Fatalf("Create returned version %d twice: an existing version was overwritten (data loss). versions so far: %v", v, gotVersions)
+				}
+				seen[v] = struct{}{}
+				gotVersions = append(gotVersions, v)
+			}
+
+			want := make([]int64, 0, numVersions)
+			for i := int64(1); i <= numVersions; i++ {
+				want = append(want, i)
+			}
+
+			require.Equal(t, want, gotVersions, "expected monotonically increasing versions 1..%d", numVersions)
+		})
+	}
+}
+
 func TestLeaseInactiveSecureValues(t *testing.T) {
 	t.Parallel()
 
@@ -319,7 +369,10 @@ func TestPropertyDelete(t *testing.T) {
 				"create": func(t *rapid.T) {
 					sv := testutils.AnySecureValueGen.Draw(t, "sv")
 					createdSv, err := sut.SecureValueMetadataStorage.Create(t.Context(), contracts.SystemKeeperName, sv.DeepCopy(), "actor-uid")
-					require.NoError(t, err)
+					if err != nil {
+						require.ErrorIs(t, err, contracts.ErrTooManyOwnerReferences)
+						return
+					}
 					i := slices.IndexFunc(secureValues, func(v *secretv1beta1.SecureValue) bool {
 						return v.Namespace == createdSv.Namespace && v.Name == createdSv.Name
 					})
