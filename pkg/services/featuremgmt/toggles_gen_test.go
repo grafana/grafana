@@ -78,6 +78,24 @@ func TestFeatureToggleFiles(t *testing.T) {
 	})
 }
 
+func TestFrontendUsedField(t *testing.T) {
+	dual := 0
+	for _, flag := range standardFeatureFlags {
+		frontendUsed := flag.Generate.React || flag.Generate.LegacyFrontend
+		frontendOnly := !flag.Generate.Go && !flag.Generate.LegacyGo
+		if frontendOnly {
+			require.True(t, frontendUsed,
+				"flag %q is FrontendOnly but not frontendUsed", flag.Name)
+		}
+		if frontendUsed && !frontendOnly {
+			dual++
+		}
+	}
+	require.Positive(t, dual,
+		"expected frontend+backend flags where frontendUsed differs from FrontendOnly; "+
+			"if this is 0 the field adds nothing over FrontendOnly")
+}
+
 func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	created := v1.NewTime(time.Now().UTC())
 	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
@@ -104,6 +122,7 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 			Owner:           string(flag.Owner),
 			RequiresDevMode: flag.RequiresDevMode,
 			FrontendOnly:    !flag.Generate.Go && !flag.Generate.LegacyGo,
+			FrontendUsed:    flag.Generate.React || flag.Generate.LegacyFrontend,
 			RequiresRestart: flag.RequiresRestart,
 			HideFromDocs:    flag.HideFromDocs,
 			Expression:      flag.Expression,
@@ -408,6 +427,7 @@ func generateCSV(lookup map[string]featuretoggleapi.Feature) string {
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
+		"FrontendUsed",    //strconv.FormatBool(flag.Generate.React || flag.Generate.LegacyFrontend),
 	})
 
 	for _, flag := range standardFeatureFlags {

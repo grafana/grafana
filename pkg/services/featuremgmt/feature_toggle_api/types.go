@@ -41,6 +41,9 @@ type FeatureSpec struct {
 	// The flab behavior only effects frontend -- it is not used in the backend
 	FrontendOnly bool `json:"frontend,omitempty"`
 
+	// Unlike FrontendOnly, this is true for flags used by both frontend and backend.
+	FrontendUsed bool `json:"frontendUsed,omitempty"`
+
 	// The flag is used at startup, so any change requires a restart
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 
