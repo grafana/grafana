@@ -183,6 +183,12 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
         {fetchError && <Alert title={fetchError} severity="error" topSpacing={1} />}
         {selectionError && <Alert title={selectionError} severity="warning" topSpacing={1} />}
         <Checkbox
+          ref={(element) => {
+            // Checkbox does not clear the native indeterminate state when the prop changes to false.
+            if (element) {
+              element.indeterminate = listedSelectionMixed;
+            }
+          }}
           aria-label="Select listed data sources"
           value={allListedSelected}
           indeterminate={listedSelectionMixed}

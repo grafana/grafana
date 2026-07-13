@@ -221,7 +221,33 @@ describe('DataSourcesSelector', () => {
     expect(
       screen.queryByText('Only 1 listed data source was added. You can select up to 10 data sources.')
     ).not.toBeInTheDocument();
+    const selectListedCheckbox = screen.getByLabelText('Select listed data sources') as HTMLInputElement;
+    expect(selectListedCheckbox).not.toBeChecked();
+    expect(selectListedCheckbox.indeterminate).toBe(false);
+    expect(selectListedCheckbox).toBeEnabled();
     expect(screen.getByText('9 data sources selected')).toBeInTheDocument();
+  });
+
+  it('disables selection when the limit is reached by unlisted data sources', async () => {
+    render(
+      <DataSourcesSelector
+        {...defaultProps}
+        selectedDataSources={Array.from({ length: 10 }, (_, index) => ({
+          name: `hidden${index + 1}`,
+          type: `type${index + 1}`,
+        }))}
+      />
+    );
+
+    await userEvent.click(screen.getByText('Select data sources'));
+    await waitFor(() => expect(screen.getByLabelText('amazon_vpc.flow')).toBeInTheDocument());
+
+    const selectListedCheckbox = screen.getByLabelText('Select listed data sources') as HTMLInputElement;
+    expect(selectListedCheckbox).not.toBeChecked();
+    expect(selectListedCheckbox.indeterminate).toBe(false);
+    expect(selectListedCheckbox).toBeDisabled();
+    expect(screen.getByLabelText('amazon_vpc.flow')).toBeDisabled();
+    expect(screen.getByLabelText('amazon_eks.audit')).toBeDisabled();
   });
 
   it('shows indeterminate select-listed state when some listed data sources are selected', async () => {
@@ -233,6 +259,48 @@ describe('DataSourcesSelector', () => {
     const selectListedCheckbox = screen.getByLabelText('Select listed data sources') as HTMLInputElement;
     expect(selectListedCheckbox).not.toBeChecked();
     expect(selectListedCheckbox.indeterminate).toBe(true);
+  });
+
+  it('shows checked state when filtering an indeterminate list to fully selected results', async () => {
+    const listedDataSources: Array<ResourceResponse<LogDataSourceResponse>> = [
+      { value: { name: 'ds1', type: 'type1' } },
+      { value: { name: 'ds2', type: 'type2' } },
+      { value: { name: 'ds3', type: 'type3' } },
+    ];
+    const fetchDataSources = jest.fn(({ pattern }: Partial<ListDataSourcesRequest>) =>
+      Promise.resolve(pattern ? listedDataSources.slice(0, 1) : listedDataSources)
+    );
+    render(
+      <DataSourcesSelector
+        {...defaultProps}
+        fetchDataSources={fetchDataSources}
+        selectedDataSources={Array.from({ length: 9 }, (_, index) => ({
+          name: `already${index + 1}`,
+          type: `type${index + 1}`,
+        }))}
+      />
+    );
+
+    await userEvent.click(screen.getByText('Select data sources'));
+    await waitFor(() => expect(screen.getByLabelText('ds1.type1')).toBeInTheDocument());
+
+    const selectListedCheckbox = screen.getByLabelText('Select listed data sources') as HTMLInputElement;
+    await userEvent.click(selectListedCheckbox);
+    expect(selectListedCheckbox).not.toBeChecked();
+    expect(selectListedCheckbox.indeterminate).toBe(true);
+
+    await userEvent.type(screen.getByLabelText('data source search'), 'ds1');
+    await waitFor(() => expect(fetchDataSources).toHaveBeenCalledWith({ pattern: 'ds1' }));
+
+    expect(selectListedCheckbox).toBeChecked();
+    expect(selectListedCheckbox.indeterminate).toBe(false);
+    expect(selectListedCheckbox).toBeEnabled();
+
+    await userEvent.click(selectListedCheckbox);
+    expect(selectListedCheckbox).not.toBeChecked();
+    expect(selectListedCheckbox.indeterminate).toBe(false);
+    expect(selectListedCheckbox).toBeEnabled();
+    expect(screen.getByText('9 data sources selected')).toBeInTheDocument();
   });
 
   it('clears selected data sources when bulk checkbox is clicked in indeterminate state', async () => {
