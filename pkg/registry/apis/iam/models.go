@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -111,6 +112,10 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service
+
+	// ofClient evaluates the feature flags gating the IAM APIs. The default
+	// client resolves the globally-registered provider at evaluation time.
+	ofClient openfeature.IClient
 
 	apiConfig Config
 }

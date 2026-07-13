@@ -46,6 +46,7 @@ type UserTeamREST struct {
 	client     resourcepb.ResourceIndexClient
 	teamGetter rest.Getter
 	tracer     trace.Tracer
+	ofClient   openfeature.IClient
 }
 
 func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer) *UserTeamREST {
@@ -53,6 +54,7 @@ func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Gett
 		client:     client,
 		teamGetter: teamGetter,
 		tracer:     tracer,
+		ofClient:   openfeature.NewDefaultClient(),
 	}
 }
 
@@ -77,8 +79,7 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client := openfeature.NewDefaultClient()
-		if !client.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
+		if !s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return

@@ -49,7 +49,7 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 			})
 			require.NoError(t, openfeature.SetProviderAndWait(provider))
 
-			b := &IdentityAccessManagementAPIBuilder{}
+			b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
 			scheme := runtime.NewScheme()
 			require.NoError(t, b.InstallSchema(scheme))
 			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk),

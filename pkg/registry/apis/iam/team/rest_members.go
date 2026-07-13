@@ -30,12 +30,13 @@ var (
 )
 
 func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer) *TeamMembersREST {
-	return &TeamMembersREST{getter: getter, tracer: tracer}
+	return &TeamMembersREST{getter: getter, tracer: tracer, ofClient: openfeature.NewDefaultClient()}
 }
 
 type TeamMembersREST struct {
-	getter rest.Getter
-	tracer trace.Tracer
+	getter   rest.Getter
+	tracer   trace.Tracer
+	ofClient openfeature.IClient
 }
 
 // New implements rest.Storage.
@@ -64,8 +65,7 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client := openfeature.NewDefaultClient()
-		if !client.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
+		if !s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return
