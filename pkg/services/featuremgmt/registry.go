@@ -284,7 +284,7 @@ var (
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
@@ -2115,14 +2115,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "vizPresets",
-			Description: "Enable visualization presets",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "heatmapNegativeLogBuckets",
 			Description: "Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis",
 			Stage:       FeatureStageExperimental,
@@ -2387,6 +2379,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "grafana.ssoSettingsToMTSettings",
+			Description:  "Enables reading and writing SSO settings through the MT-Settings service",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "kubernetesExternalGroupMappingsApi",
@@ -2979,6 +2980,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.queryVarEditorRedesign",
+			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "table.refactorNested",

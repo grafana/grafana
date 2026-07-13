@@ -63,6 +63,7 @@ declare module "@openfeature/core" {
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
+    | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"

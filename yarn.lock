@@ -683,7 +683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/language@npm:6.12.3, @codemirror/language@npm:^6.0.0":
+"@codemirror/language@npm:6.12.3, @codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.12.3":
   version: 6.12.3
   resolution: "@codemirror/language@npm:6.12.3"
   dependencies:
@@ -2936,13 +2936,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.9.5":
-  version: 8.9.5
-  resolution: "@grafana/scenes-react@npm:8.9.5"
+"@grafana/scenes-react@npm:^8.12.0":
+  version: 8.12.0
+  resolution: "@grafana/scenes-react@npm:8.12.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.9.5"
+    "@grafana/scenes": "npm:8.12.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -2956,13 +2956,13 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/f20645c9d0bb2535d1454535ea37741d32f852599226a1c4b3cdad8d62b45b15c8e3d1173fc0fa00b7173082efacb90f92502a7d58ff1e1946fc0b21c82a272c
+  checksum: 10/454d555d6fbe082b0c765971cb2767e9dcaa9d7273fce2abea2deeb8fd9c3fa664be7eb7572bca16e29b90beef6b0679c5b49a201235cd70cdf3a2d1b5eeb05c
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.9.5":
-  version: 8.9.5
-  resolution: "@grafana/scenes@npm:8.9.5"
+"@grafana/scenes@npm:8.12.0, @grafana/scenes@npm:^8.12.0":
+  version: 8.12.0
+  resolution: "@grafana/scenes@npm:8.12.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -2987,7 +2987,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/1010ccffdcc33fec6596919e295be2fd8731414032dc51e5d9c5d5829beb759dc542f1ed1ebd170a11264fcead490fca59f8d6921fbe49a47b4a9058ff1b4fcc
+  checksum: 10/8a69c96388ba3d2815fb3954d0d44686ae3c45a5fd86f5ae6bdd02b23a968f8ed57c74b06692dbdff9e7e76d4d56c65423690db387583a7dbc8b464f35b3b86e
   languageName: node
   linkType: hard
 
@@ -3089,6 +3089,7 @@ __metadata:
     "@codemirror/autocomplete": "npm:^6.20.1"
     "@codemirror/lang-json": "npm:^6.0.2"
     "@codemirror/lang-sql": "npm:^6.10.0"
+    "@codemirror/language": "npm:^6.12.3"
     "@codemirror/state": "npm:^6.6.0"
     "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:^11.13.5"
@@ -18638,8 +18639,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.9.5"
-    "@grafana/scenes-react": "npm:8.9.5"
+    "@grafana/scenes": "npm:^8.12.0"
+    "@grafana/scenes-react": "npm:^8.12.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

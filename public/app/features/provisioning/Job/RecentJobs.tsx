@@ -74,7 +74,7 @@ const getJobColumns = (showAuthor: boolean) => [
           cell: ({ row: { original: job } }: JobCell) => {
             const annotations = job.metadata?.annotations;
             const author = annotations?.[AnnoAuthor] || annotations?.[AnnoAuthorEmail];
-            return author || t('provisioning.recent-jobs.triggered-by-webhook', 'Webhook');
+            return author || t('provisioning.recent-jobs.triggered-by-system', 'System');
           },
         },
       ]
