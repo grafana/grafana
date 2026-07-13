@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/searchfields"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -31,8 +32,7 @@ const (
 	// analyzer). Requires SearchCapabilityText.
 	SearchCapabilityPartial SearchCapability = "partial"
 	// SearchCapabilitySort makes the field sortable. It also enables DocValues
-	// on the keyword variant, which the authz searcher reads column-wise to
-	// check folder permissions on every matching document.
+	// on the keyword variant for column-wise reads and stable sort tie-breakers.
 	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
@@ -284,24 +284,6 @@ func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 	}
 }
 
-// sortableTypes lists SearchFieldTypes that can carry SearchCapabilitySort
-// under today's bleve mapper. The mapper emits a keyword/text mapping for
-// every field regardless of Type, so sort works only for fields whose
-// extracted value is already string-shaped. The allowlist is intentionally
-// minimal: extend it when a concrete consumer needs sort on a new type.
-var sortableTypes = []SearchFieldType{
-	SearchFieldTypeString,
-}
-
-// stringOnlyCapabilities lists capabilities that require a string-mapped
-// Type. These rely on text/keyword analysis under the bleve text engine
-// and have no meaningful semantics on numeric or boolean fields.
-var stringOnlyCapabilities = []SearchCapability{
-	SearchCapabilityText,
-	SearchCapabilityPartial,
-	SearchCapabilityFacet,
-}
-
 // mappingAttributes is the bleve-mapping-affecting projection of a
 // SearchFieldDefinition used for cross-version equality. Only Type, Array,
 // and Capabilities count: those are what GetBleveMappings reads to produce
@@ -434,26 +416,20 @@ func validateCrossVersionConsistency(fields map[schema.GroupVersionResource][]Se
 }
 
 // validateSearchFieldDefinitions returns a non-nil error when any declaration
-// uses a capability that the current bleve mapper cannot honour. The only
-// rule enforced today is that SearchCapabilitySort requires a string-mapped
-// Type; numeric and boolean fields would otherwise be sorted lexically
-// because the mapper does not emit numeric mappings yet. The validator
-// also rejects text/partial/facet capabilities on non-string fields:
-// these capabilities rely on text or keyword analysis that has no
-// meaning on numeric or boolean values.
+// pairs a capability with a field type that cannot support it. The rules live
+// in the shared searchfields package, which the app-SDK codegen validator also
+// uses, so the two cannot drift: text, partial and facet require a string
+// type; sort works on string, numeric and boolean; filter, retrieve and
+// unranked work on any type.
 func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 	var violations []string
 	for _, sfd := range sfds {
-		isStringTyped := sfd.Type == SearchFieldTypeString
-		if slices.Contains(sfd.Capabilities, SearchCapabilitySort) && !slices.Contains(sortableTypes, sfd.Type) {
-			violations = append(violations, "field "+sfd.Name+": sort capability is not supported for type "+string(sfd.Type))
+		caps := make([]string, len(sfd.Capabilities))
+		for i, c := range sfd.Capabilities {
+			caps[i] = string(c)
 		}
-		if !isStringTyped {
-			for _, cap := range stringOnlyCapabilities {
-				if slices.Contains(sfd.Capabilities, cap) {
-					violations = append(violations, "field "+sfd.Name+": "+string(cap)+" capability requires a string-typed field (got "+string(sfd.Type)+")")
-				}
-			}
+		if err := searchfields.Validate(string(sfd.Type), caps); err != nil {
+			violations = append(violations, "field "+sfd.Name+": "+err.Error())
 		}
 	}
 	if len(violations) == 0 {

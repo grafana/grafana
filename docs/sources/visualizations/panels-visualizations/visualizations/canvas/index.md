@@ -130,7 +130,7 @@ The server element lets you easily represent a single server, a stack of servers
 
 #### Button
 
-The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
+The button element lets you add a basic button to the canvas. Button elements are available when **Experimental element types** is enabled. They support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
 {{< admonition type="note" >}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
@@ -247,34 +247,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 #### Experimental Element types
 
-Toggle the switch to include experimental element types in the available selections.
-
-#### Pan and zoom
-
-You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
-
-{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
-
-Use the following pointer and keyboard strokes:
-
-- **Zoom in** - Scroll up
-- **Zoom out** - Scroll down
-- **Pan** - Middle mouse/wheel + drag OR Control + right-click + drag
-- **Reset** - Double-click
-
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
-
-##### Zoom to content
-
-When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
-
-##### Infinite panning
-
-You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
-
-{{< admonition type="note" >}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{< /admonition >}}
+Toggle the switch to include experimental element types in the available selections, including **Button**, **Wind Turbine**, **Drone Top**, **Drone Front**, and **Drone Side**. This option is on by default.
 
 ### Tooltip options
 
@@ -471,7 +444,7 @@ To add a data link, follow these steps:
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**.                                                                                                            |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.

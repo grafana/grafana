@@ -1,4 +1,4 @@
-import { act, getWrapper, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, getWrapper, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,6 +9,7 @@ import {
   getFolderFixtures,
   mockUserPreferences,
   setMockStarredDashboards,
+  setMockStarredFolders,
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
@@ -32,12 +33,19 @@ jest.mock('app/features/search/service/searcher');
 
 // The starred dashboard the tests pin to: the stars fixture is seeded with its UID and the searcher
 // resolves that UID to this row, so the synced Starred section is populated deterministically.
-const [, { dashbdE }] = getFolderFixtures();
-const STARRED_DASHBOARD = { uid: dashbdE.item.uid, name: dashbdE.item.title, url: `/d/${dashbdE.item.uid}` };
+const [, { dashbdE, folderB }] = getFolderFixtures();
+const STARRED_DASHBOARD = {
+  uid: dashbdE.item.uid,
+  name: dashbdE.item.title,
+  url: `/d/${dashbdE.item.uid}`,
+  kind: 'dashboard',
+};
 
-const setupSearcher = (dashboards = [STARRED_DASHBOARD]) => {
+// Resolves starred uids to nav rows. Accepts a combined dashboard+folder list ({uid,name,url,kind})
+// and filters by the requested `name`, so folders and dashboards both round-trip through one searcher.
+const setupSearcher = (items = [STARRED_DASHBOARD]) => {
   const search = jest.fn(({ name }: { name: string[] }) => {
-    const rows = dashboards.filter((d) => name.includes(d.uid));
+    const rows = items.filter((d) => name.includes(d.uid));
     return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i] } });
   });
   jest.mocked(getGrafanaSearcher).mockReturnValue({ search } as unknown as ReturnType<typeof getGrafanaSearcher>);
@@ -435,6 +443,47 @@ describe('MegaMenu', () => {
         expect(await screen.findByRole('list', { name: 'Pinned' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Alerting' })).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('when starredFolders is enabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+
+    // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
+    // OpenFeature events into the still-mounted menu).
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+    });
+
+    it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
+      const dashUid = dashbdE.item.uid;
+      const folderUid = folderB.item.uid;
+      // A folder and a dashboard that share a display name — only the icon tells them apart.
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+      setupSearcher([
+        { uid: dashUid, name: 'Shared Name', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'Shared Name', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+      ]);
+
+      const { user } = renderMegaMenu();
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+      // The real sync replaces the placeholder Starred child with both starred items.
+      const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+      await waitFor(() => {
+        expect(starredSection().getAllByRole('link', { name: 'Shared Name' })).toHaveLength(2);
+      });
+
+      // Same name, but the per-kind icons make the two rows distinguishable.
+      expect(starredSection().getByTestId('icon-apps')).toBeInTheDocument();
+      expect(starredSection().getByTestId('icon-folder')).toBeInTheDocument();
+
+      // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
+      // so screen readers don't hear the two rows as identical links.
+      expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
+      expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
     });
   });
 });

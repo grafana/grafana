@@ -5,6 +5,7 @@ import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
@@ -16,6 +17,7 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
+import Recommendations from './Recommendations/Recommendations';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -33,6 +35,8 @@ const getEdition = () => {
 export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
+
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
 
   const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,
@@ -53,11 +57,14 @@ export default function HomePage() {
     props: {},
     components: extraComponents,
     pluginId: SETUPGUIDE_PLUGIN_ID,
-    wrapper: ({ children }) => (
-      <div className={styles.extra}>
-        <HomeSection>{children}</HomeSection>
-      </div>
-    ),
+    wrapper: ({ children }) =>
+      redesignEnabled ? (
+        children
+      ) : (
+        <div className={styles.extra}>
+          <HomeSection>{children}</HomeSection>
+        </div>
+      ),
   });
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
@@ -89,6 +96,8 @@ export default function HomePage() {
                 })}
                 <DashboardTabs extensionComponents={tabComponents} />
               </HomeSection>
+
+              {redesignEnabled && <Recommendations />}
 
               <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                 <FiringAlertsCard />

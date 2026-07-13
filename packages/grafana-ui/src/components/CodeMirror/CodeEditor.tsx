@@ -85,6 +85,7 @@ const autocompleteSpaceKeymap = Prec.highest(
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
+  sqlDialect,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
@@ -92,19 +93,42 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
+  theme: themeOverride,
+  basicSetup,
+  indentWithTab = true,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const foldPlaceholderTheme = useMemo(
+    () =>
+      EditorView.theme({
+        '.cm-foldPlaceholder': {
+          backgroundColor: theme.colors.background.secondary,
+          borderColor: theme.colors.border.medium,
+          color: theme.colors.text.secondary,
+        },
+      }),
+    [theme]
+  );
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
+      foldPlaceholderTheme,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
+    [
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      completionSources,
+      completionMode,
+      additionalExtensions,
+      foldPlaceholderTheme,
+    ]
   );
   return (
     <>
@@ -117,11 +141,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? (theme.isDark ? vscodeDark : vscodeLight)}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
+        basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
       />
     </>
   );

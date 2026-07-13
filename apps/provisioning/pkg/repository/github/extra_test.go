@@ -38,7 +38,7 @@ func (m *mockSecureValues) CommitSigningKey(_ context.Context) (common.RawSecure
 }
 
 func TestExtra_Type(t *testing.T) {
-	e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false)
+	e := github.Extra(nil, nil, nil, false)
 	assert.Equal(t, provisioning.GitHubRepositoryType, e.Type())
 }
 
@@ -400,7 +400,7 @@ func TestExtra_Build(t *testing.T) {
 			webhookBuilder := tt.setupWebhook(t, tt.repo)
 			factory := github.ProvideFactory()
 
-			e := github.Extra(decrypter, factory, webhookBuilder, repository.IncrementalSyncPolicy{}, false)
+			e := github.Extra(decrypter, factory, webhookBuilder, false)
 
 			result, err := e.Build(ctx, tt.repo)
 
@@ -530,7 +530,7 @@ func TestExtra_Mutate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false)
+			e := github.Extra(nil, nil, nil, false)
 
 			err := e.Mutate(ctx, tt.obj)
 
