@@ -146,16 +146,11 @@ func ConstructFiltersString(a dataquery.AzureMetricDimension) string {
 		filterStrings[i] = fmt.Sprintf("%v %v '%v'", dimension, operator, filter)
 	}
 
-	// "ne" filters exclude every value, so they are intersected. "eq" and
-	// "sw" filters each select a set of values, so they are unioned: a
-	// dimension value can never equal (or start with) two different filter
-	// values at once, and joining them with "and" produces a filter that
-	// matches nothing.
-	if a.Operator != nil && *a.Operator == "ne" {
-		return strings.Join(filterStrings, " and ")
+	if a.Operator != nil && *a.Operator == "eq" {
+		return strings.Join(filterStrings, " or ")
 	}
 
-	return strings.Join(filterStrings, " or ")
+	return strings.Join(filterStrings, " and ")
 }
 
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.

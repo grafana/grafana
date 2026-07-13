@@ -175,19 +175,6 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			expectedPortalURL:       new("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A3%2C%22values%22%3A%5B%22test%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
-			name: "correctly constructs target when multiple filter values are provided for the 'sw' operator",
-			azureMonitorVariedProperties: map[string]any{
-				"timeGrain":        "PT1M",
-				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: new("blob"), Operator: new("sw"), Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
-				"top":              "30",
-			},
-			queryInterval:           duration,
-			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
-			expectedParamFilter:     "blob sw 'test' or blob sw 'test2'",
-			expectedPortalURL:       new("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A3%2C%22values%22%3A%5B%22test%22%2C%22test2%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
-		},
-		{
 			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is '*'",
 			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
@@ -359,6 +346,33 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			require.Equal(t, expectedPortalURL, actual)
 		})
 	}
+}
+
+func TestAzureMonitorBuildQueriesRejectsMultiValueStartsWithFilter(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	query := backend.DataQuery{
+		RefID: "A",
+		JSON: []byte(`{
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+			"azureMonitor": {
+				"aggregation": "Total",
+				"timeGrain": "PT1M",
+				"metricName": "Transactions",
+				"metricNamespace": "Microsoft.Storage/storageAccounts",
+				"resources": [{"resourceGroup": "rg", "resourceName": "sa"}],
+				"dimensionFilters": [{"dimension": "ApiName", "operator": "sw", "filters": ["Get", "Put"]}]
+			}
+		}`),
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+	}
+
+	_, err := datasource.buildQuery(query, types.DatasourceInfo{})
+	require.Error(t, err)
+	require.ErrorContains(t, err, "one 'starts with' filter value")
+	require.True(t, backend.IsDownstreamError(err), "a multi-value sw filter is a query configuration error, not a plugin error")
 }
 
 func TestCustomNamespace(t *testing.T) {
