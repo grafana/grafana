@@ -58,7 +58,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    const link = await screen.findByRole('link', { name: /source \(github\)/i });
+    const link = await screen.findByRole('link', { name: /view source/i });
     expect(link).toHaveAttribute('href', 'https://github.com/grafana/repo/blob/main/playlists/foo.json');
     expect(link).toHaveAttribute('target', '_blank');
   });
@@ -69,7 +69,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    await user.click(await screen.findByRole('link', { name: /source \(github\)/i }));
+    await user.click(await screen.findByRole('link', { name: /view source/i }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_provisioning_source_link_clicked', {
       repositoryName: 'my-repo',
@@ -84,7 +84,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    expect(await screen.findByRole('link', { name: /source \(github\)/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /view source/i })).toHaveAttribute(
       'href',
       'https://github.com/grafana/repo/blob/main/grafana/playlists/foo.json'
     );
@@ -97,7 +97,7 @@ describe('SourceLink', () => {
 
     render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
 
-    expect(await screen.findByRole('link', { name: /source \(github enterprise\)/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /view source/i })).toHaveAttribute(
       'href',
       'https://ghe.example.com/grafana/repo/blob/main/playlists/foo.json'
     );

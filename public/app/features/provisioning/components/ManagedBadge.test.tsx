@@ -120,7 +120,7 @@ describe('ManagedBadge', () => {
 
       await user.hover(screen.getByTestId('icon-exchange-alt'));
 
-      const link = await screen.findByRole('link', { name: /source \(github\)/i });
+      const link = await screen.findByRole('link', { name: /view source/i });
       expect(link).toHaveAttribute('href', 'https://github.com/grafana/repo/blob/main/foo.json');
     });
 
@@ -150,7 +150,7 @@ describe('ManagedBadge', () => {
 
       await user.hover(screen.getByTestId('icon-exchange-alt'));
 
-      expect(await screen.findByRole('link', { name: /source \(github\)/i })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /view source/i })).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'View repository' })).not.toBeInTheDocument();
     });
 
