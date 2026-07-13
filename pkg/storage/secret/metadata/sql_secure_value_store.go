@@ -771,6 +771,12 @@ func (s *secureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in [
 		s.metrics.SecureValueIncGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
+	for _, in := range in {
+		if in.Namespace == "" || in.Name == "" || in.Version == 0 {
+			return nil, fmt.Errorf("malformed input: %+v", in)
+		}
+	}
+
 	req := IncGCAttemptCountSecureValues{
 		SQLTemplate:  sqltemplate.New(s.dialect),
 		SecureValues: in,
@@ -795,8 +801,7 @@ func (s *secureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in [
 
 	count = make(map[string]int, len(secureValues))
 	for _, sv := range secureValues {
-		key := contracts.MakeKey(sv.Namespace, sv.Name, sv.Version)
-		count[key] = sv.GCAttempts
+		count[sv.GUID] = sv.GCAttempts
 	}
 
 	span.AddEvent("updated count", trace.WithAttributes(attribute.String("count", fmt.Sprintf("%+v", count))))

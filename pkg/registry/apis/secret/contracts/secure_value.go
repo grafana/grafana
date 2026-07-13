@@ -3,7 +3,6 @@ package contracts
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"k8s.io/client-go/dynamic"
 
@@ -38,10 +37,6 @@ type SecureValueIdentifier struct {
 	Namespace xkube.Namespace
 	Name      string
 	Version   int64
-}
-
-func MakeKey(namespace, name string, version int64) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
 }
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.

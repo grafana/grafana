@@ -376,7 +376,7 @@ func (s *kvSecureValueMetadataStorage) Create(ctx context.Context, keeper string
 	}
 
 	// Save the new version (it starts as inactive)
-	key := contracts.MakeKey(sv.Namespace, sv.Name, sv.Status.Version)
+	key := makeKey(sv.Namespace, sv.Name, sv.Status.Version)
 	if err := s.writeValue(ctx, key, value); err != nil {
 		return nil, fmt.Errorf("failed to write value: %w", err)
 	}
@@ -415,7 +415,7 @@ func (s *kvSecureValueMetadataStorage) Delete(ctx context.Context, in []contract
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, contracts.MakeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
 	if err := s.kv.BatchDelete(ctx, kvSectionSecureValues, keys); err != nil {
@@ -711,7 +711,7 @@ func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namesp
 		s.metrics.KVSecureValueSetExternalIDDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	key := contracts.MakeKey(namespace.String(), name, version)
+	key := makeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
 	if err != nil {
@@ -732,7 +732,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToActive(ctx context.Context, n
 	defer span.End()
 
 	prefix := makePrefix(namespace.String(), name)
-	targetKey := contracts.MakeKey(namespace.String(), name, version)
+	targetKey := makeKey(namespace.String(), name, version)
 
 	// First, deactivate all versions, this mimics the SQL behavior which happens in a single update query
 	for key, err := range s.kv.Keys(ctx, kvSectionSecureValues, resource.ListOptions{
@@ -770,7 +770,7 @@ func (s *kvSecureValueMetadataStorage) SetVersionToInactive(ctx context.Context,
 	))
 	defer span.End()
 
-	key := contracts.MakeKey(namespace.String(), name, version)
+	key := makeKey(namespace.String(), name, version)
 
 	value, err := s.readValue(ctx, key)
 	if err != nil {
@@ -804,7 +804,7 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 
 	keys := make([]string, 0, len(in))
 	for _, in := range in {
-		keys = append(keys, contracts.MakeKey(in.Namespace.String(), in.Name, in.Version))
+		keys = append(keys, makeKey(in.Namespace.String(), in.Name, in.Version))
 	}
 
 	count := make(map[string]int, len(keys))
@@ -826,7 +826,7 @@ func (s *kvSecureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in
 
 		parsed.GCAttempts += 1
 		toUpdate[kvValue.Key] = parsed
-		count[kvValue.Key] = parsed.GCAttempts
+		count[parsed.GUID] = parsed.GCAttempts
 	}
 
 	if len(toUpdate) > 0 {
@@ -945,4 +945,8 @@ func (s *kvSecureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Conte
 	}
 
 	return nil
+}
+
+func makeKey(namespace, name string, version int64) string {
+	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
 }

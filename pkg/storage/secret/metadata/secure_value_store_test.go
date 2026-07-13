@@ -219,7 +219,8 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.Len(t, values, 1)
 
 			// Pretend something went wrong and increment attempt count
-			_, err = sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), []contracts.SecureValueIdentifier{{Name: string(values[0].UID)}})
+			_, err = sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), []contracts.SecureValueIdentifier{
+				{Namespace: xkube.Namespace(values[0].Namespace), Name: values[0].Name, Version: values[0].Status.Version}})
 			require.NoError(t, err)
 
 			rows, err := sut.Database.QueryContext(t.Context(), "SELECT lease_duration FROM secret_secure_value WHERE guid = ?", values[0].UID)
