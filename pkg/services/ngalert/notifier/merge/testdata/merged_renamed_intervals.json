@@ -1,5 +1,4 @@
 {
-  "template_files": {},
   "alertmanager_config": {
     "route": {
       "receiver": "grafana-default-email",
