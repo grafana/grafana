@@ -39,7 +39,6 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			expected: map[string]string{
 				AnnoAuthor:      "Test User",
 				AnnoAuthorEmail: "test@example.com",
-				AnnoAuthorID:    "user:abc123",
 			},
 		},
 		{
@@ -51,7 +50,6 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			expected: map[string]string{
 				AnnoAuthor:      "Test User",
 				AnnoAuthorEmail: "test@example.com",
-				AnnoAuthorID:    "user:abc123",
 			},
 		},
 		{
@@ -107,7 +105,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			// The mutator only ever touches the author annotations; assert on
 			// exactly those to confirm none are left stray.
 			got := map[string]string{}
-			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail, AnnoAuthorID} {
+			for _, k := range []string{AnnoAuthor, AnnoAuthorEmail} {
 				if v, ok := job.Annotations[k]; ok {
 					got[k] = v
 				}

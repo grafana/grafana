@@ -778,6 +778,10 @@ const (
 	// Enables SSO settings APIs in the app platform
 	FlagKubernetesSsoSettingsApi = "kubernetesSsoSettingsApi"
 
+	// FlagGrafanaSsoSettingsToMTSettings
+	// Enables reading and writing SSO settings through the MT-Settings service
+	FlagGrafanaSsoSettingsToMTSettings = "grafana.ssoSettingsToMTSettings"
+
 	// FlagKubernetesExternalGroupMappingsApi
 	// Enables external group mapping APIs in the app platform
 	FlagKubernetesExternalGroupMappingsApi = "kubernetesExternalGroupMappingsApi"

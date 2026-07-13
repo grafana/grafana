@@ -1136,11 +1136,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable visualization presets
-  * @default true
-  */
-  vizPresets?: boolean;
-  /**
   * Render native histogram (exponential and NHCB) zero and negative heatmap buckets on a symlog y-axis
   * @default false
   */
