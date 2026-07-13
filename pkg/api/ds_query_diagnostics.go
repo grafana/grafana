@@ -130,6 +130,14 @@ func (hs *HTTPServer) diagnosticsNoCaptureError(queryErr, respErr error) respons
 
 // redactURLError wraps an error so its rendered message has URLs (with secret query params) redacted
 // via harcapture.RedactErrorText, while Unwrap preserves the original for errors.Is/As classification.
+//
+// This covers the real leak vector on the no-capture path: a plain transport error (e.g. a
+// net/url.Error from a datasource with a bespoke HTTP client) rendered into the response/logs.
+// Note it does NOT redact errutil.Error-typed errors: response.ErrOrFallback extracts those via
+// errors.As (unwrapping past this wrapper) and renders their own LogMessage. That is acceptable
+// because such errors are Grafana-internal pre-flight failures (access-denied, not-found,
+// validation) that carry no request-time URL/credential — the wire-hitting errors that do are
+// plain and routed either here or, when traffic was captured, into the redacted bundle.
 type redactURLError struct{ err error }
 
 func (e redactURLError) Error() string { return harcapture.RedactErrorText(e.err.Error()) }
