@@ -107,9 +107,12 @@ function reducer(state: TimeNavigatorState, action: Action): TimeNavigatorState 
       if (ms == null) {
         return state; // invalid duration -> no-op, rather than freezing in a broken relative mode
       }
+      // Cap at max(now, selection end) so a selection that reaches into the future isn't clipped out of
+      // the context (extendedContext caps `to` at its 3rd arg, and clampRange's maxTo mirrors it).
+      const cap = Math.max(action.now, state.selection.to);
       return {
         ...state,
-        contextWindow: clampRange(extendedContext(state.selection, ms, action.now), { maxTo: action.now }),
+        contextWindow: clampRange(extendedContext(state.selection, ms, cap), { maxTo: cap }),
         relativeDuration: action.duration,
       };
     }
@@ -119,10 +122,10 @@ function reducer(state: TimeNavigatorState, action: Action): TimeNavigatorState 
       let contextWindow: TimeRangeMs;
       if (state.relativeDuration) {
         const ms = durationToMs(state.relativeDuration);
+        // Cap at max(now, selection end) so a future-reaching selection isn't clipped out of the context.
+        const cap = Math.max(action.now, selection.to);
         contextWindow =
-          ms != null
-            ? clampRange(extendedContext(selection, ms, action.now), { maxTo: action.now })
-            : state.contextWindow;
+          ms != null ? clampRange(extendedContext(selection, ms, cap), { maxTo: cap }) : state.contextWindow;
       } else {
         const selSpan = selection.to - selection.from;
         const ctxSpan = state.contextWindow.to - state.contextWindow.from;

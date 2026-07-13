@@ -161,6 +161,11 @@ export const TimeNavigatorBrushPlugin = ({
       // Wheel = zoom the context window around the selection (same as the zoom buttons), not the cursor.
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
+        // Ignore zoom while a gesture is in progress: a mid-drag context change would leave the drag
+        // mapping mouse position with a stale scale and commit the wrong range.
+        if (stateRef.current.interaction !== 'idle') {
+          return;
+        }
         actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
       };
       u.over.addEventListener('wheel', onWheel, { passive: false });
@@ -294,6 +299,11 @@ export const TimeNavigatorBrushPlugin = ({
   }, []);
 
   const onOverlayWheel = useCallback((e: React.WheelEvent) => {
+    // Ignore zoom while dragging the selection (see onWheel above): a mid-drag context change would map
+    // the drag with a stale scale.
+    if (stateRef.current.interaction !== 'idle') {
+      return;
+    }
     actionsRef.current.zoom(e.deltaY < 0 ? WHEEL_ZOOM_BASE : 1 / WHEEL_ZOOM_BASE);
   }, []);
 
