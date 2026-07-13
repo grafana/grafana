@@ -6,6 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -67,6 +68,42 @@ func TestIsGrantTuple(t *testing.T) {
 			require.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestGrantObjectPrefixesForTypes(t *testing.T) {
+	dashboardType := &authzextv1.ResourceType{Group: dashboardGroup, Resource: dashboardResource}
+	teamType := &authzextv1.ResourceType{
+		Group:    iamv0.TeamResourceInfo.GroupResource().Group,
+		Resource: iamv0.TeamResourceInfo.GroupResource().Resource,
+	}
+
+	t.Run("unfiltered retains all scans", func(t *testing.T) {
+		require.Equal(t, grantObjectPrefixes, grantObjectPrefixesForTypes(nil))
+	})
+
+	t.Run("filters to requested resource scans and folders", func(t *testing.T) {
+		dashboardGroupResource := common.FormatGroupResource(dashboardType.GetGroup(), dashboardType.GetResource(), "")
+		require.Equal(t, []string{
+			common.TypeFolderPrefix,
+			common.TypeGroupResoucePrefix + dashboardGroupResource,
+			common.TypeResourcePrefix + dashboardGroupResource + "/",
+		}, grantObjectPrefixesForTypes([]*authzextv1.ResourceType{dashboardType}))
+	})
+
+	t.Run("includes typed object scan for IAM resources", func(t *testing.T) {
+		teamGroupResource := common.FormatGroupResource(teamType.GetGroup(), teamType.GetResource(), "")
+		require.Equal(t, []string{
+			common.TypeFolderPrefix,
+			common.TypeGroupResoucePrefix + teamGroupResource,
+			common.TypeResourcePrefix + teamGroupResource + "/",
+			common.TypeTeamPrefix,
+		}, grantObjectPrefixesForTypes([]*authzextv1.ResourceType{teamType}))
+	})
+
+	t.Run("deduplicates and skips invalid types", func(t *testing.T) {
+		require.Equal(t, []string{common.TypeFolderPrefix},
+			grantObjectPrefixesForTypes([]*authzextv1.ResourceType{{}, nil}))
+	})
 }
 
 func TestGetGrants_ReturnsDirectAndRoleGrants(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -20,7 +21,8 @@ const (
 	maxGrantReadConcurrent = 8
 )
 
-// grantObjectPrefixes are the fixed OpenFGA object-type prefixes scanned for permission grants.
+// grantObjectPrefixes are the fixed OpenFGA object-type prefixes scanned when a
+// GetGrants request has no resource-type filter.
 var grantObjectPrefixes = []string{
 	common.TypeGroupResoucePrefix,
 	common.TypeResourcePrefix,
@@ -38,7 +40,7 @@ func (s *Server) queryGetGrants(ctx context.Context, store *zanzana.StoreInfo, r
 		return nil, errors.New("subject cannot be empty")
 	}
 
-	tuples, err := s.readDirectGrantTuples(ctx, store, req.GetSubject(), req.GetTeams())
+	tuples, err := s.readDirectGrantTuples(ctx, store, req.GetSubject(), req.GetTeams(), req.GetTypes())
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,7 @@ func (s *Server) queryGetGrants(ctx context.Context, store *zanzana.StoreInfo, r
 	}, nil
 }
 
-func (s *Server) readDirectGrantTuples(ctx context.Context, store *zanzana.StoreInfo, subject string, teams []string) ([]*authzextv1.TupleKey, error) {
+func (s *Server) readDirectGrantTuples(ctx context.Context, store *zanzana.StoreInfo, subject string, teams []string, types []*authzextv1.ResourceType) ([]*authzextv1.TupleKey, error) {
 	subjects, err := s.resolveGrantSubjects(ctx, store, subject, teams)
 	if err != nil {
 		return nil, err
@@ -66,7 +68,7 @@ func (s *Server) readDirectGrantTuples(ctx context.Context, store *zanzana.Store
 
 	for subject := range subjects {
 		subject := subject
-		for _, objectPrefix := range grantObjectPrefixes {
+		for _, objectPrefix := range grantObjectPrefixesForTypes(types) {
 			objectPrefix := objectPrefix
 			g.Go(func() error {
 				tuples, err := s.readGrantTuples(gctx, store, subject, objectPrefix)
@@ -91,6 +93,46 @@ func (s *Server) readDirectGrantTuples(ctx context.Context, store *zanzana.Store
 	}
 
 	return grants, nil
+}
+
+func grantObjectPrefixesForTypes(types []*authzextv1.ResourceType) []string {
+	if len(types) == 0 {
+		return grantObjectPrefixes
+	}
+
+	prefixes := []string{common.TypeFolderPrefix}
+	seen := map[string]struct{}{common.TypeFolderPrefix: {}}
+	appendPrefix := func(prefix string) {
+		if _, ok := seen[prefix]; ok {
+			return
+		}
+		seen[prefix] = struct{}{}
+		prefixes = append(prefixes, prefix)
+	}
+
+	for _, resourceType := range types {
+		if resourceType.GetGroup() == "" || resourceType.GetResource() == "" {
+			continue
+		}
+
+		groupResource := common.FormatGroupResource(resourceType.GetGroup(), resourceType.GetResource(), resourceType.GetSubresource())
+		appendPrefix(common.TypeGroupResoucePrefix + groupResource)
+		appendPrefix(common.TypeResourcePrefix + groupResource + "/")
+
+		switch {
+		case resourceType.GetGroup() == iamv0.TeamResourceInfo.GroupResource().Group &&
+			resourceType.GetResource() == iamv0.TeamResourceInfo.GroupResource().Resource:
+			appendPrefix(common.TypeTeamPrefix)
+		case resourceType.GetGroup() == iamv0.UserResourceInfo.GroupResource().Group &&
+			resourceType.GetResource() == iamv0.UserResourceInfo.GroupResource().Resource:
+			appendPrefix(common.TypeUser + ":")
+		case resourceType.GetGroup() == iamv0.ServiceAccountResourceInfo.GroupResource().Group &&
+			resourceType.GetResource() == iamv0.ServiceAccountResourceInfo.GroupResource().Resource:
+			appendPrefix(common.TypeServiceAccount + ":")
+		}
+	}
+
+	return prefixes
 }
 
 func (s *Server) resolveGrantSubjects(ctx context.Context, store *zanzana.StoreInfo, subject string, teams []string) (map[string]struct{}, error) {
