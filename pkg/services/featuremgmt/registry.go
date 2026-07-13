@@ -2982,6 +2982,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "grafana.queryVarEditorRedesign",
+			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "table.refactorNested",
 			Description:  "Enables the refactored TableNG nested-table implementation",
 			Stage:        FeatureStageExperimental,
