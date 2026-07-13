@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import { useRef } from 'react';
 
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Badge, Stack, Tooltip, type BadgeColor, type IconName } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 
@@ -37,6 +39,21 @@ interface ManagedBadgeProps {
  * file link and the admin repository link on hover in a single interactive tooltip.
  */
 export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
+  // Report a hover once per pointer/focus session (reset on leave/blur) so continuous movement over
+  // the badge doesn't inflate the count. Paired with the source/repository link click events, this
+  // measures how often users reveal the links vs. act on them.
+  const hasReportedHover = useRef(false);
+  const reportHover = () => {
+    if (hasReportedHover.current) {
+      return;
+    }
+    hasReportedHover.current = true;
+    reportInteraction('grafana_provisioning_managed_badge_hovered', { managerKind });
+  };
+  const resetHover = () => {
+    hasReportedHover.current = false;
+  };
+
   let color: BadgeColor = 'purple';
   let icon: IconName = 'exchange-alt';
   let tooltip: string;
@@ -90,11 +107,21 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false, repository
     );
 
     return (
-      <Tooltip content={content} placement="auto" interactive>
-        <span className={badgeWrap}>
-          <Badge color={color} icon={icon} />
-        </span>
-      </Tooltip>
+      // Hover handlers live on this outer wrapper because Tooltip clones its child and overrides its
+      // event props with its own hover/focus interactions, which would drop handlers set here.
+      <span
+        className={badgeWrap}
+        onMouseEnter={reportHover}
+        onMouseLeave={resetHover}
+        onFocus={reportHover}
+        onBlur={resetHover}
+      >
+        <Tooltip content={content} placement="auto" interactive>
+          <span className={badgeWrap}>
+            <Badge color={color} icon={icon} />
+          </span>
+        </Tooltip>
+      </span>
     );
   }
 

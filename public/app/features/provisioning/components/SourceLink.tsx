@@ -1,7 +1,7 @@
 import { type ComponentProps } from 'react';
 
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 
 import { RepoTypeDisplay } from '../Wizard/types';
@@ -53,6 +53,12 @@ export function SourceLink({ repositoryName, sourcePath, size = 'sm' }: SourceLi
       icon="external-link-alt"
       variant="secondary"
       size={size}
+      onClick={() =>
+        reportInteraction('grafana_provisioning_source_link_clicked', {
+          repositoryName,
+          repositoryType: repoType,
+        })
+      }
     >
       <Trans i18nKey="provisioning.source-link.title" values={{ provider: RepoTypeDisplay[repoType] }}>
         Source ({'{{provider}}'})

@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -13,6 +13,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import { ManagedBadge } from './ManagedBadge';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 setupProvisioningMswServer();
 
@@ -97,6 +102,7 @@ describe('ManagedBadge', () => {
     beforeEach(() => {
       originalProvisioning = config.featureToggles.provisioning;
       config.featureToggles.provisioning = true;
+      jest.mocked(reportInteraction).mockClear();
     });
 
     afterEach(() => {
@@ -179,6 +185,19 @@ describe('ManagedBadge', () => {
       expect(await screen.findByText('Managed by: Repository My repo')).toBeInTheDocument();
       await waitFor(() => expect(screen.queryByRole('link', { name: /source/i })).not.toBeInTheDocument());
       expect(settingsRequested).toBe(false);
+    });
+
+    it('reports a hover interaction when the badge is hovered', async () => {
+      const user = userEvent.setup();
+      mockRepositories([makeRepository({})]);
+
+      render(<ManagedBadge managerKind={ManagerKind.Repo} name="My repo" repositoryName="my-repo" />);
+
+      await user.hover(screen.getByTestId('icon-exchange-alt'));
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_provisioning_managed_badge_hovered', {
+        managerKind: ManagerKind.Repo,
+      });
     });
   });
 });

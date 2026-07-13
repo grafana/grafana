@@ -1,10 +1,16 @@
+import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ViewRepositoryButton } from './ViewRepositoryButton';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 describe('ViewRepositoryButton', () => {
   const originalProvisioningToggle = config.featureToggles.provisioning;
@@ -27,6 +33,20 @@ describe('ViewRepositoryButton', () => {
     const link = screen.getByRole('link', { name: 'View repository' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/admin/provisioning/my-repo');
+  });
+
+  it('reports an interaction when the repository link is clicked', async () => {
+    const user = userEvent.setup();
+    const { baseElement } = render(<ViewRepositoryButton repositoryName="my-repo" />);
+    // Stop jsdom from attempting real navigation (which logs an unhandled error) while still letting
+    // the onClick handler run.
+    baseElement.addEventListener('click', (e) => e.preventDefault());
+
+    await user.click(screen.getByRole('link', { name: 'View repository' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_provisioning_view_repository_clicked', {
+      repositoryName: 'my-repo',
+    });
   });
 
   it('renders the label as visible text when showLabel is set', () => {
