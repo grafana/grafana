@@ -307,6 +307,10 @@ func isUserRBACAction(action string) bool {
 		strings.HasPrefix(action, "org.users:")
 }
 
+func isServiceAccountRBACAction(action string) bool {
+	return strings.HasPrefix(action, "serviceaccounts:")
+}
+
 // userScopeKind returns the legacy RBAC scope kind for a user-management action.
 // Most user actions are server-level and scoped to global.users (users:read/write/delete and
 // users.permissions:write all grant global.users:* in the fixed roles). The org-level
@@ -335,6 +339,21 @@ func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namesp
 		return "", err
 	}
 	return ac.Scope(userScopeKind(action), "id", fmt.Sprintf("%d", id)), nil
+}
+
+func (r *ZanzanaPermissionResolver) resolveServiceAccountScope(ctx context.Context, namespace, serviceAccountUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetServiceAccountIDByUID(ctx, nsInfo, serviceAccountUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope("serviceaccounts", "id", fmt.Sprintf("%d", id)), nil
 }
 
 // userWildcardScope returns the legacy wildcard scope for a user action (<kind>:id:*).
@@ -469,14 +488,12 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 func (r *ZanzanaPermissionResolver) grantsToLegacyPermissions(ctx context.Context, namespace string, grants *authzextv1.GetGrantsResult) []ac.Permission {
 	permissions := make([]ac.Permission, 0)
 	for _, gp := range common.TranslateGrants(grants) {
-		scope := r.formatGrantScope(ctx, namespace, gp.Action, gp.Scope)
-		if scope == "" {
-			continue
+		for _, scope := range r.formatGrantScopes(ctx, namespace, gp.Action, gp.Scope) {
+			permissions = append(permissions, ac.Permission{
+				Action: gp.Action,
+				Scope:  scope,
+			})
 		}
-		permissions = append(permissions, ac.Permission{
-			Action: gp.Action,
-			Scope:  scope,
-		})
 	}
 
 	// Expand action sets (e.g. dashboards:view -> dashboards:read) so the merged result
@@ -488,20 +505,48 @@ func (r *ZanzanaPermissionResolver) grantsToLegacyPermissions(ctx context.Contex
 	return dedupePermissions(permissions)
 }
 
-func (r *ZanzanaPermissionResolver) formatGrantScope(ctx context.Context, namespace, action string, scope common.GrantScope) string {
+func (r *ZanzanaPermissionResolver) formatGrantScopes(ctx context.Context, namespace, action string, scope common.GrantScope) []string {
+	if isDashboardRBACAction(action) && scope.Kind == "dashboards" && scope.Identifier == "*" {
+		return []string{"*", resourceWildcardScope(scope.Kind), ac.Scope("folders", "*")}
+	}
+
 	if isTeamRBACAction(action) {
 		if scope.Identifier == "*" {
-			return teamWildcardScope()
+			return []string{teamWildcardScope()}
 		}
 		resolved, err := r.resolveTeamScope(ctx, namespace, scope.Identifier)
 		if err != nil {
 			zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", scope.Identifier, "error", err)
-			return resourceScope(scope.Kind, scope.Identifier)
+			return []string{resourceScope(scope.Kind, scope.Identifier)}
 		}
-		return resolved
+		return []string{resolved}
 	}
 
-	return common.FormatGrantScope(scope)
+	if isUserRBACAction(action) {
+		if scope.Identifier == "*" {
+			return []string{userWildcardScope(action)}
+		}
+		resolved, err := r.resolveUserScope(ctx, namespace, action, scope.Identifier)
+		if err != nil {
+			zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", scope.Identifier, "error", err)
+			return []string{resourceScope(scope.Kind, scope.Identifier)}
+		}
+		return []string{resolved}
+	}
+
+	if isServiceAccountRBACAction(action) {
+		if scope.Identifier == "*" {
+			return []string{ac.Scope("serviceaccounts", "id", "*")}
+		}
+		resolved, err := r.resolveServiceAccountScope(ctx, namespace, scope.Identifier)
+		if err != nil {
+			zLogger.Warn("failed to resolve service account UID to ID, using uid scope", "uid", scope.Identifier, "error", err)
+			return []string{resourceScope(scope.Kind, scope.Identifier)}
+		}
+		return []string{resolved}
+	}
+
+	return []string{common.FormatGrantScope(scope)}
 }
 
 // dedupePermissions removes duplicate action+scope pairs while preserving order.
@@ -653,8 +698,9 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 // GVRs are derived from the IAM resource info so the group/version/resource always match what
 // the apiserver serves, instead of hardcoding (which previously drifted to the wrong group).
 var (
-	teamGVR = iamv0.TeamResourceInfo.GroupVersionResource()
-	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
+	teamGVR           = iamv0.TeamResourceInfo.GroupVersionResource()
+	userGVR           = iamv0.UserResourceInfo.GroupVersionResource()
+	serviceAccountGVR = iamv0.ServiceAccountResourceInfo.GroupVersionResource()
 )
 
 // UID→internal-ID mappings are immutable for an object's lifetime, so a long TTL is safe;
@@ -789,4 +835,8 @@ func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.Names
 
 func (r *uidToIDResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
 	return r.getObjectID(ctx, nsInfo, userGVR, uid)
+}
+
+func (r *uidToIDResolver) GetServiceAccountIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, serviceAccountGVR, uid)
 }

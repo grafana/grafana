@@ -817,6 +817,87 @@ func TestResolveCurrentUserPermissions_ExpandsActionSets(t *testing.T) {
 	}}, perms)
 }
 
+func TestResolveCurrentUserPermissions_PreservesGlobalDashboardScopes(t *testing.T) {
+	grant := common.ToAuthzExtTupleKey(common.NewGroupResourceTuple(
+		"user:u1",
+		common.RelationGet,
+		"dashboard.grafana.app",
+		"dashboards",
+		"",
+	))
+	r := NewZanzanaPermissionResolver(&fakeZanzanaClient{
+		queryResp: testGetGrantsResponse(grant),
+	}, &usertest.FakeUserService{}, nil, false, nil)
+
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserUID: "u1",
+		OrgID:   1,
+	})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []ac.Permission{
+		{Action: "dashboards:read", Scope: "*"},
+		{Action: "dashboards:read", Scope: "dashboards:*"},
+		{Action: "dashboards:read", Scope: "folders:*"},
+	}, perms)
+}
+
+func TestResolveCurrentUserPermissions_UsesLegacyIdentityScopes(t *testing.T) {
+	nsInfo, err := claims.ParseNamespace(claims.OrgNamespaceFormatter(1))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name  string
+		tuple *authzextv1.TupleKey
+		gvr   string
+		uid   string
+		want  []ac.Permission
+	}{
+		{
+			name: "user",
+			tuple: common.ToAuthzExtTupleKey(common.NewTypedTuple(
+				common.TypeUser, "user:u1", common.RelationGet, "user-1",
+			)),
+			gvr: userGVR.Resource,
+			uid: "user-1",
+			want: []ac.Permission{
+				{Action: "org.users:read", Scope: "users:id:42"},
+				{Action: "users:read", Scope: "global.users:id:42"},
+			},
+		},
+		{
+			name: "service account",
+			tuple: common.ToAuthzExtTupleKey(common.NewTypedTuple(
+				common.TypeServiceAccount, "user:u1", common.RelationGet, "service-account-1",
+			)),
+			gvr:  serviceAccountGVR.Resource,
+			uid:  "service-account-1",
+			want: []ac.Permission{{Action: "serviceaccounts:read", Scope: "serviceaccounts:id:42"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewZanzanaPermissionResolver(&fakeZanzanaClient{
+				queryResp: testGetGrantsResponse(tt.tuple),
+			}, &usertest.FakeUserService{}, nil, false, nil)
+			cacheKey := tt.gvr + "/" + nsInfo.Value + "/" + tt.uid
+			r.scopeResolver.cache.Set(cacheKey, int64(42), uidToIDCacheTTL)
+			cachedID, ok := r.scopeResolver.cache.Get(cacheKey)
+			require.True(t, ok)
+			require.Equal(t, int64(42), cachedID)
+
+			perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+				Type:    claims.TypeUser,
+				UserUID: "u1",
+				OrgID:   1,
+			})
+			require.NoError(t, err)
+			require.ElementsMatch(t, tt.want, perms)
+		})
+	}
+}
+
 // permScopes returns the scopes the resolver produced for the given action.
 func permScopes(perms []ac.Permission, action string) []string {
 	var out []string
