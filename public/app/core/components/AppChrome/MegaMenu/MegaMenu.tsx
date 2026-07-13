@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, useId } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -102,6 +102,9 @@ export const MegaMenu = memo(
 
     const navLabel = t('navigation.megamenu.list-label', 'Navigation');
     const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
+    // The pinned list is named by its visible heading (aria-labelledby) rather than repeating the
+    // label as an aria-label, so screen readers don't announce "Pinned" twice.
+    const pinnedHeadingId = useId();
     const sectionKey = (link: NavModelItem) => `section-${link.id ?? link.text}`;
 
     const onPinnedDragEnd = (result: DropResult) => {
@@ -150,7 +153,7 @@ export const MegaMenu = memo(
       pinnedEntries.length > 0 && (
         <>
           <div className={styles.pinnedBox}>
-            <div className={styles.pinnedHeading}>
+            <div className={styles.pinnedHeading} id={pinnedHeadingId}>
               <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
@@ -162,7 +165,7 @@ export const MegaMenu = memo(
                   {(dropProvided) => (
                     <ul
                       className={styles.list}
-                      aria-label={pinnedListLabel}
+                      aria-labelledby={pinnedHeadingId}
                       ref={dropProvided.innerRef}
                       {...dropProvided.droppableProps}
                     >
@@ -182,7 +185,7 @@ export const MegaMenu = memo(
                 </Droppable>
               </DragDropContext>
             ) : (
-              <ul className={styles.list} aria-label={pinnedListLabel}>
+              <ul className={styles.list} aria-labelledby={pinnedHeadingId}>
                 {pinnedEntries.map((entry) => renderPinnedEntry(entry))}
               </ul>
             )}
