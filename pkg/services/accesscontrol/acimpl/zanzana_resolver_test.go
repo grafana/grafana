@@ -743,10 +743,6 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 	}
 }
 
-// TestResolveCurrentUserPermissions_AnnotationsResolveAsDashboardScopes verifies the
-// dashboard-derived annotations:* actions resolve through the dashboards/annotations
-// subresource and produce legacy dashboard/folder scopes, matching the legacy action
-// sets (a dashboard "View" grant carries annotations:read alongside dashboards:read).
 func TestResolveCurrentUserPermissions_AnnotationsResolveAsDashboardScopes(t *testing.T) {
 	cap := &capturingZanzanaClient{}
 	cap.listResp = &authzv1.ListResponse{

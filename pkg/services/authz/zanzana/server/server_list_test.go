@@ -664,6 +664,70 @@ func TestStripHelpersDoNotMutateInput(t *testing.T) {
 	})
 }
 
+func TestMergeUnique(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        []string
+		b        []string
+		expected []string
+	}{
+		{
+			name:     "both empty",
+			a:        nil,
+			b:        nil,
+			expected: nil,
+		},
+		{
+			name:     "empty b returns a unchanged",
+			a:        []string{"x", "y"},
+			b:        nil,
+			expected: []string{"x", "y"},
+		},
+		{
+			name:     "empty a returns all of b",
+			a:        nil,
+			b:        []string{"x", "y"},
+			expected: []string{"x", "y"},
+		},
+		{
+			name:     "disjoint slices are concatenated",
+			a:        []string{"a", "b"},
+			b:        []string{"c", "d"},
+			expected: []string{"a", "b", "c", "d"},
+		},
+		{
+			name:     "entries of b already in a are skipped",
+			a:        []string{"a", "b"},
+			b:        []string{"b", "c", "a"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "duplicates within b are added once",
+			a:        []string{"a"},
+			b:        []string{"b", "b", "c", "b"},
+			expected: []string{"a", "b", "c"},
+		},
+		{
+			name:     "duplicates already in a are not deduped",
+			a:        []string{"a", "a"},
+			b:        []string{"a", "b"},
+			expected: []string{"a", "a", "b"},
+		},
+		{
+			name:     "order preserved: a first then first occurrence in b",
+			a:        []string{"d2", "d1"},
+			b:        []string{"d3", "d1", "d0"},
+			expected: []string{"d2", "d1", "d3", "d0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, mergeUnique(tt.a, tt.b))
+		})
+	}
+}
+
 // TestIntegrationListDoesNotPoisonBatchCheckCache reproduces the end-to-end bug: with the query
 // cache enabled, a List call must not corrupt the cached ListObjects response that a subsequent
 // BatchCheck (identical request) reads, so a directly-granted resource stays authorized.
