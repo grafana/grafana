@@ -62,7 +62,7 @@ const LIST_PAGE_SIZE = 500;
  * Keeps repeat dashboard loads cheap (e.g. switching between dashboards in the same
  * folder) without holding on to stale variables for long.
  */
-export const PREDEFINED_VARIABLES_CACHE_TTL = 30_000;
+const PREDEFINED_VARIABLES_CACHE_TTL = 30_000;
 
 const cache = new Map<string, { ts: number; variables: VariableKind[] }>();
 
