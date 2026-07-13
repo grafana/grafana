@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { escapeRegExp } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type MouseEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -78,10 +78,7 @@ export function useFiringAlerts() {
   // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
   const loading = enabled && (teamsLoading || alertsLoading);
 
-  // Anchor the dwell window (card data visible -> click) for the home_to_alert_insight journey.
-  // Record it once, and only after a *successful* alerts response: `loading` also flips false on an
-  // initial error, so anchoring on `loading` alone would fold a later error -> retry interval into
-  // ms_since_load instead of measuring time since the data actually became visible.
+  // Dwell anchor (home_to_alert_insight): set once on the first successful load — an error screen must not anchor it.
   const loadedAtRef = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (!loading && !error && loadedAtRef.current === undefined) {
@@ -89,10 +86,10 @@ export function useFiringAlerts() {
     }
   }, [loading, error]);
 
-  // Route every card click through here so each action carries the dwell attribute.
-  const trackClick = (props: Pick<CtaClicked, 'action' | 'placement' | 'severity'>) => {
+  // Card clicks route through here to carry the dwell attribute and the new-tab flag (interceptLinkClicks ctrl/meta).
+  const trackClick = (e: MouseEvent, props: Pick<CtaClicked, 'action' | 'placement' | 'severity'>) => {
     const msSinceLoad = loadedAtRef.current === undefined ? undefined : Date.now() - loadedAtRef.current;
-    ctaClicked({ surface: 'alerts_card', ...props, ms_since_load: msSinceLoad });
+    ctaClicked({ surface: 'alerts_card', ...props, ms_since_load: msSinceLoad, new_tab: e.ctrlKey || e.metaKey });
   };
 
   // Severity and timestamp are derived once per alert so the sort comparator,

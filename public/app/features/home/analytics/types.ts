@@ -43,4 +43,6 @@ export interface CtaClicked extends EventProperty {
   severity?: string;
   /** Milliseconds between the card's data becoming visible and this click. Absent if the card never finished loading (surface 'alerts_card' only). */
   ms_since_load?: number;
+  /** True when the click opens a new tab/window (Cmd/Ctrl-click) instead of SPA-navigating this tab. */
+  new_tab?: boolean;
 }

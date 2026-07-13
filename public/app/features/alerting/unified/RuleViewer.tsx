@@ -42,9 +42,7 @@ const RuleViewer = () => {
   // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
-  // CUJ signal: emit once when the rule detail settles (loaded, errored, or not found) so the
-  // home_to_alert_insight journey can measure time-to-value for the alert_detail leg. Fires once
-  // per mount even though the query refetches when the instances tab toggles limitAlerts.
+  // CUJ signal (home_to_alert_insight): emit once when the rule detail settles; refetches don't re-fire.
   const loadedTracked = useRef(false);
   useEffect(() => {
     if (loading || loadedTracked.current) {

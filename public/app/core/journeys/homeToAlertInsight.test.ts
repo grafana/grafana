@@ -55,7 +55,7 @@ describe('homeToAlertInsight journey wiring', () => {
     });
   }
 
-  it('starts the journey for each of the four card actions with coerced attributes', () => {
+  it('starts the journey for each qualifying card action with coerced attributes', () => {
     loadWiring();
 
     simulateInteraction(CARD_CLICKED, {
@@ -78,7 +78,7 @@ describe('homeToAlertInsight journey wiring', () => {
       })
     );
 
-    for (const action of ['view_all_alerts', 'view_all_rules', 'create_rule']) {
+    for (const action of ['view_all_alerts', 'create_rule']) {
       simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action, placement: 'footer' });
       expect(mockTracker.startJourney).toHaveBeenCalledWith(
         'home_to_alert_insight',
@@ -93,6 +93,22 @@ describe('homeToAlertInsight journey wiring', () => {
     loadWiring();
 
     simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'declare_incident', placement: 'footer' });
+
+    expect(mockTracker.startJourney).not.toHaveBeenCalled();
+  });
+
+  it('does not start a journey for view_all_rules (no data-settled signal on the rule list)', () => {
+    loadWiring();
+
+    simulateInteraction(CARD_CLICKED, { action: 'view_all_rules', placement: 'footer' });
+
+    expect(mockTracker.startJourney).not.toHaveBeenCalled();
+  });
+
+  it('does not start a journey for a new-tab (Cmd/Ctrl) click', () => {
+    loadWiring();
+
+    simulateInteraction(CARD_CLICKED, { action: 'alert_detail', placement: 'list', new_tab: true });
 
     expect(mockTracker.startJourney).not.toHaveBeenCalled();
   });
@@ -123,15 +139,6 @@ describe('homeToAlertInsight journey wiring', () => {
       props: { status: 'not_found' },
       outcome: 'error',
       attributes: { endEvent: 'rule_viewer_loaded', status: 'not_found' },
-    },
-    {
-      name: 'view_all_rules -> success (view)',
-      action: 'view_all_rules',
-      placement: 'footer',
-      event: 'grafana_alerting_rule_list_page_view',
-      props: { view: 'v2' },
-      outcome: 'success',
-      attributes: { endEvent: 'rule_list_page_view', view: 'v2' },
     },
     {
       name: 'view_all_alerts -> error',
@@ -173,7 +180,7 @@ describe('homeToAlertInsight journey wiring', () => {
     loadWiring();
 
     simulateInteraction(CARD_CLICKED, { surface: 'alerts_card', action: 'alert_detail', placement: 'list' });
-    // The rule list mounting belongs to the view_all_rules leg, not alert_detail.
+    // The rule-list mount event is unrelated to the alert detail journey.
     simulateInteraction('grafana_alerting_rule_list_page_view', { view: 'v2' });
 
     expect(mockHandle.end).not.toHaveBeenCalled();

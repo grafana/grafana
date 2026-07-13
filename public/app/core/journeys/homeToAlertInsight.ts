@@ -10,18 +10,18 @@ import { collectUnsubs, str } from './utils';
  * the alerting page the user asked for.
  *
  * Start triggers:
- *   - grafana_homepage_cta_clicked (surface alerts_card) — one of four card actions. `action`
- *     selects the destination and therefore which end event completes the journey; `msSinceLoad`
- *     carries the card-visible → click dwell so the click event's own timing is queryable on the journey.
+ *   - grafana_homepage_cta_clicked (surface alerts_card) — alert_detail, view_all_alerts, or create_rule. `action`
+ *     selects the destination and end event; `msSinceLoad` carries the card-visible → click dwell.
+ *   - view_all_rules is excluded until the rule list emits a data-settled signal; its page-view
+ *     event fires at mount, before the lazy list and rule data load.
+ *   - Cmd/Ctrl clicks carry `new_tab: true` and never start a journey because the browser opens
+ *     the destination in another tab.
  *
  * End conditions (each leg ends ONLY on its own destination's load event, so bailing to a
  * different alerting page never fakes a success):
  *   - alert_detail    → grafana_alerting_rule_viewer_loaded  (success | error)
  *   - view_all_alerts → grafana_alerting_alert_groups_loaded (success | error)
  *   - create_rule     → grafana_alerting_rule_editor_loaded  (success | error[denied])
- *   - view_all_rules  → grafana_alerting_rule_list_page_view (success). Weak leg: this event
- *     fires at mount, before the rule list data loads — it is the only signal the rule list
- *     emits today, so the leg over-reports "fast".
  *   - timeout: 60s — covers mid-navigation abandonment. There is no discard condition: nothing
  *     emits a "navigated elsewhere" interaction, so an abandoned journey ends via timeout.
  *
@@ -50,26 +50,14 @@ function settled(endEvent: string): LegResolver {
   };
 }
 
-// One destination leg per card action. The journey subscribes only to the selected action's event,
-// so bailing to a different alerting page never ends it.
+// One destination leg per card action; the journey subscribes only to the selected action's event.
 const LEG_BY_ACTION: Record<string, Leg> = {
   alert_detail: { event: 'grafana_alerting_rule_viewer_loaded', resolve: settled('rule_viewer_loaded') },
   view_all_alerts: { event: 'grafana_alerting_alert_groups_loaded', resolve: settled('alert_groups_loaded') },
   create_rule: { event: 'grafana_alerting_rule_editor_loaded', resolve: settled('rule_editor_loaded') },
-  // Weak leg: rule_list_page_view fires at mount, before the list data loads.
-  view_all_rules: {
-    event: 'grafana_alerting_rule_list_page_view',
-    resolve: (props) => ({
-      outcome: 'success',
-      attributes: { endEvent: 'rule_list_page_view', view: str(props.view) },
-    }),
-  },
 };
 
-// Start-context handoff from the trigger to the instance closure. The trigger sets this and
-// then calls startJourney, which synchronously invokes onJourneyInstance before returning — and
-// cancelOnRestart guarantees a single active instance — so the instance always reads the action
-// that started it. It is a plain string, not a StepHandle, so it does not leak journey state.
+// Trigger->instance handoff: startJourney runs onJourneyInstance synchronously; cancelOnRestart keeps one instance.
 let lastAction = '';
 
 registerJourneyTriggers('home_to_alert_insight', (tracker) => {
@@ -79,6 +67,10 @@ registerJourneyTriggers('home_to_alert_insight', (tracker) => {
     }
     const action = String(props.action);
     if (!LEG_BY_ACTION[action]) {
+      return;
+    }
+    // Cmd/Ctrl-click opens a new tab (interceptLinkClicks ignores it); a journey here could only time out.
+    if (props.new_tab === true) {
       return;
     }
     lastAction = action;

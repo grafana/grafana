@@ -70,9 +70,7 @@ const AlertGroups = () => {
     }
   );
 
-  // CUJ signal: emit once when the alert groups query settles so the home_to_alert_insight
-  // journey can measure time-to-value for the view_all_alerts leg. Fires once per mount even
-  // though the query polls.
+  // CUJ signal (home_to_alert_insight): emit once when the alert groups query settles; polling doesn't re-fire.
   const loadedTracked = useRef(false);
   useEffect(() => {
     if (isLoading || loadedTracked.current) {

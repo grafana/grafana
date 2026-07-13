@@ -32,10 +32,7 @@ const RuleEditor = () => {
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  // CUJ signal: emit once on mount when the editor resolves to a rendered form or a permission
-  // denial, so the home_to_alert_insight journey can measure time-to-value for the create_rule
-  // leg. Fires for existing-rule edits too; harmless since the event is silent and the journey
-  // only consumes it on the create_rule leg. `denied` mirrors the two permission-warning branches.
+  // CUJ signal (home_to_alert_insight): emit once on mount; denied mirrors the permission-warning branches below.
   const editorTracked = useRef(false);
   const denied =
     (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) ||

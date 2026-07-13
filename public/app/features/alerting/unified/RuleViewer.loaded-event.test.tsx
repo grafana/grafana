@@ -20,8 +20,7 @@ jest.mock('./components/rule-viewer/RuleViewer', () => ({
   useActiveTab: () => ['query'],
 }));
 
-// getRuleIdFromPathname reads locationService; short-circuit to a valid Grafana UID so the
-// identifier parses without a real route.
+// Short-circuit getRuleIdFromPathname (reads locationService) so the identifier parses without a real route.
 jest.mock('./utils/rule-id', () => ({
   ...jest.requireActual('./utils/rule-id'),
   getRuleIdFromPathname: () => 'test-rule-uid',

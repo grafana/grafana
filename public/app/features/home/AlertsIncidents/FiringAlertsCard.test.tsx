@@ -363,6 +363,7 @@ describe('FiringAlertsCard', () => {
         placement: 'list',
         severity: 'critical',
         ms_since_load: expect.any(Number),
+        new_tab: false,
       });
     });
 
@@ -385,6 +386,7 @@ describe('FiringAlertsCard', () => {
         action: 'create_rule',
         placement: 'empty_state',
         ms_since_load: expect.any(Number),
+        new_tab: false,
       });
     });
 
@@ -406,6 +408,7 @@ describe('FiringAlertsCard', () => {
         action: 'create_rule',
         placement: 'footer',
         ms_since_load: expect.any(Number),
+        new_tab: false,
       });
 
       await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
@@ -414,6 +417,7 @@ describe('FiringAlertsCard', () => {
         action: 'view_all_alerts',
         placement: 'footer',
         ms_since_load: expect.any(Number),
+        new_tab: false,
       });
     });
 
@@ -430,7 +434,25 @@ describe('FiringAlertsCard', () => {
         action: 'view_all_rules',
         placement: 'footer',
         ms_since_load: expect.any(Number),
+        new_tab: false,
       });
+    });
+
+    it('flags new-tab (Cmd/Ctrl) clicks so the journey can skip them', async () => {
+      // interceptLinkClicks ignores ctrl/meta, so jsdom would really navigate; prevent the default instead.
+      const navigationAbortController = new AbortController();
+      document.addEventListener('click', (e) => e.preventDefault(), { signal: navigationAbortController.signal });
+      try {
+        const { user } = render(<FiringAlertsCard />);
+        await user.keyboard('{Control>}');
+        await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
+        await user.keyboard('{/Control}');
+        expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith(
+          expect.objectContaining({ action: 'view_all_rules', new_tab: true })
+        );
+      } finally {
+        navigationAbortController.abort();
+      }
     });
 
     it('anchors ms_since_load to the successful response, not an earlier error screen', async () => {

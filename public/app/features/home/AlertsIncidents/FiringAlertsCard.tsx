@@ -153,7 +153,7 @@ export function FiringAlertsCardView({
             }
             trailing={<SummaryCardAge date={startedAt} />}
             href={detailHref}
-            onClick={() => trackClick({ action: 'alert_detail', placement: 'list', severity: level })}
+            onClick={(e) => trackClick(e, { action: 'alert_detail', placement: 'list', severity: level })}
           />
         );
       }}
@@ -163,7 +163,7 @@ export function FiringAlertsCardView({
             variant="primary"
             icon="plus"
             href={newRuleHref}
-            onClick={() => trackClick({ action: 'create_rule', placement: 'empty_state' })}
+            onClick={(e) => trackClick(e, { action: 'create_rule', placement: 'empty_state' })}
           >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>
