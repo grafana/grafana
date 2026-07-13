@@ -922,11 +922,6 @@
       "count": 1
     }
   },
-  "public/app/core/reducers/appNotification.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 3
-    }
-  },
   "public/app/core/services/ResponseQueue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
