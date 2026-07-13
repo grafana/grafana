@@ -18,7 +18,7 @@ keywords:
 weight: 300
 ---
 
-# Authorization
+# Authorize and give permissions to your users 
 
 Authorization determines what an authenticated user is allowed to do in Grafana. Permissions are layered from broad to specific:
 

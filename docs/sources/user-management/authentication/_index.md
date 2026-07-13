@@ -15,7 +15,7 @@ title: Configure authentication
 weight: 100
 ---
 
-# Configure authentication
+# Authenticate your users in Grafana
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 

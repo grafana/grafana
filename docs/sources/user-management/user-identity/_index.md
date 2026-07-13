@@ -18,9 +18,9 @@ keywords:
 weight: 200
 ---
 
-# User identity
+# Set up your user identity in Grafana
 
-User identity covers how accounts exist in Grafana — how users and services are created, organized, and maintained.
+User identity covers how accounts exist in Grafana, that is, how users and services are created, organized, and maintained.
 
 - **[Manage users](./manage-users/)** — Add, remove, and update user accounts at the server level and within organizations.
 - **[Service accounts](./service-accounts/)** — Create non-human identities for automated workloads and integrations.
