@@ -1,4 +1,4 @@
-Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
+Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly,FrontendUsed
 2022-02-15,panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
