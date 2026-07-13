@@ -55,23 +55,23 @@ You can use any type of tabular data with at least two numeric fields in an xy c
 
 ### XY Chart options
 
-The following options let you control how data is displayed in an xy chart:
+The following panel options control how data is mapped in an xy chart. Point and line styling options are per-series field options that you can set in field defaults or overrides.
 
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
 | [Series mapping](#series-mapping) | Set how series data is mapped in the chart. Choose from: **Auto** and **Manual**. Depending on your series mapping selection, the **Frame**, **X-field**, and **Y-field** options differ. For information on setting these specific fields, refer to the [Series mapping section](#series-mapping). |
-| Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. Required in **Manual** mode. |
-| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the **Standard** options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. Required in **Manual** mode. Only supports `number` fields.  |
-| [Show](#show) | Set how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. |
-| Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. You can set an [override](ref:configure-field-overrides) to set the pixel size by series (y-field). |
-| Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series. |
-| Point shape | Set the shape of the points in the chart. Choose from:<ul><li>**Circle** - The default setting</li><li>**Square** </li></ul> |
-| Point stroke width | The width of the point stroke in pixels. The default is one pixel. |
-| Fill opacity | The opacity of the point fill. The default is 50. |
-| [Line style](#line-style) | Set the style of the lines that connect points. Choose from: **Solid**, **Dash**, or **Dots**. |
-| Line width | The width of the lines that connect points, in pixels. |
+| Size field | Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame. When you select this option, you can then set the **Min point size** and **Max point size** options. This field is optional in **Auto** and **Manual** mode. |
+| Color field | Set which field's values control the color of the points in the chart. To use the color value options under the **Standard** options, you must set this field. Typically, this field is used when you only have one series displayed in the chart. This field is optional in **Auto** and **Manual** mode and only supports `number` fields. |
+| [Show](#show) | Set how values are represented in the visualization. Choose from: **Points**, **Lines**, or **Both**. This is a per-series field option. |
+| Point size | Set the size of all points in the chart, from one to one hundred pixels in diameter. The default size is five pixels. This is a per-series field option. |
+| Min/Max point size | Use these options to control the minimum or maximum point size when you've set the **Size field** option. This is a per-series field option. |
+| Point shape | Set the shape of the points in the chart. Choose from:<ul><li>**Circle** - The default setting</li><li>**Square** </li></ul> This is a per-series field option. |
+| Point stroke width | The width of the point stroke in pixels. The default is one pixel. This is a per-series field option. |
+| Fill opacity | The opacity of the point fill. The default is 50. This is a per-series field option. |
+| [Line style](#line-style) | Set the style of the lines that connect points. Choose from: **Solid**, **Dash**, or **Dots**. This is a per-series field option. |
+| Line width | The width of the lines that connect points, in pixels. This is a per-series field option. |
 
 <!-- prettier-ignore-end -->
 
@@ -149,8 +149,8 @@ You can also use [overrides](ref:configure-field-overrides) to exclude y-fields 
 To do so, add an override with the following properties for each y-field you want removed:
 
 - Override type: **Fields with name**
-- Override property: **Series > Hide in area**
-- Area: **Viz**
+- Override property: **Hide in area**
+- Area: **Viz**, which hides the series from the chart.
 
 #### Show
 

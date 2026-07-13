@@ -161,7 +161,7 @@ Tooltip options control the information overlay that appears when you hover over
 | [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
 | [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
 | Max width                               | Set the maximum width of the tooltip box.                                                                                      |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+| Max height                              | Set the maximum height of the tooltip box. If this option is unset, the tooltip isn't scroll-limited.                          |
 
 #### Tooltip mode
 
@@ -213,6 +213,7 @@ The options under the **Graph styles** section let you control the general appea
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
+| Show values                                 | Set whether Grafana shows values on the graph. |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
 | [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
@@ -320,6 +321,13 @@ Set the position of the bar relative to a data point. In the examples below, **S
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-2.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+
+### Transform override property
+
+Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
+
+- **Constant** - Show the first value as a constant line.
+- **Negative Y** - Flip the results to negative values on the y-axis.
 
 ### Standard options
 
