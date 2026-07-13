@@ -68,7 +68,6 @@ type DataSourceGeneralTrackingProps = {
 };
 
 export const trackExploreClicked = (props: DataSourceGeneralTrackingProps) => {
-  reportInteraction('grafana_ds_explore_datasource_clicked', props);
 };
 
 export const trackBuildDashboardDropdownClicked = (props: DataSourceGeneralTrackingProps) => {
@@ -80,7 +79,6 @@ export const trackCreateDashboardClicked = (props: DataSourceGeneralTrackingProp
 };
 
 export const trackDataSourcesListViewed = (props: { grafana_version?: string; path?: string }) => {
-  reportInteraction('grafana_ds_datasources_list_viewed', props);
 };
 
 export const trackDsConfigClicked = (item: string) => {
@@ -100,9 +98,4 @@ export const trackDsSearched = (props: { query: string }) => {
 };
 
 export const trackAddNewDsClicked = (props: { path: string }) => {
-  reportInteraction('connections_datasource_list_add_datasource_clicked', {
-    ...props,
-    creator_team: 'grafana_plugins_catalog',
-    schema_version: '1.0.0',
-  });
 };

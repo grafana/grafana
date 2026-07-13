@@ -14,5 +14,4 @@ export const trackPluginInstalled = (props: PluginTrackingProps) => {
 };
 
 export const trackPluginUninstalled = (props: PluginTrackingProps) => {
-  reportInteraction('grafana_plugin_uninstall_clicked', props);
 };
