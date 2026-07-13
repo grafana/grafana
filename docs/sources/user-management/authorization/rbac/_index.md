@@ -3,6 +3,7 @@ aliases:
   - ../../enterprise/access-control/
   - ../../enterprise/access-control/about-rbac/
   - ../../enterprise/access-control/roles/
+  - ../user-management/authorization/rbac/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
@@ -21,36 +22,36 @@ refs:
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/api-legacy/access_control/
   rbac-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
   rbac-role-definitions-permissions-associated-to-basic-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#permissions-associated-to-basic-roles
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#permissions-associated-to-basic-roles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#permissions-associated-to-basic-roles
   rbac-role-definitions-basic-role-assignments:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-fixed-basic-role-definitions/#basic-role-assignments
     - pattern: /docs/grafana-cloud/
   rbac-manage-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/
   rbac-assign-rbac-roles:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/assign-rbac-roles/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/assign-rbac-roles/
   rbac-basic-role-uid-mapping:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#list-permissions-associated-with-roles
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles/#list-permissions-associated-with-roles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#list-permissions-associated-with-roles
   service-accounts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   alerting:
@@ -65,7 +66,7 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   roles-and-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/authorization/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
   dashboards:
@@ -100,7 +101,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
   migrate-api-keys:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/
+      destination: /docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/service-accounts/migrate-api-keys/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/migrate-api-keys/
 ---
@@ -126,7 +127,7 @@ RBAC roles are associated to multiple permissions, each of which has an action a
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
-For more information refer to [RBAC permission's actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+For more information refer to [RBAC permission's actions and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/custom-role-actions-scopes/).
 
 ## Available RBAC roles
 
@@ -136,7 +137,7 @@ You can assign the following RBAC roles in Grafana:
 - **Fixed role**: If you're using Grafana Enterprise or Grafana Cloud, you can assign discrete [fixed roles](#fixed-roles) to users, teams, and service accounts for improved control over user permissions than you cannot have with basic roles alone.
 - **Custom role**: If you're using Grafana Enterprise or Grafana Cloud, use [custom roles](#custom-roles) to create unique combinations of permission _actions_ and _scopes_.
 
-Additionally, if you're using Grafana Cloud app plugins, there's roles to control access to specific plugin features and can be assigned to users, teams, or basic roles. For more information refer to [RBAC for app plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-for-app-plugins).
+Additionally, if you're using Grafana Cloud app plugins, there's roles to control access to specific plugin features and can be assigned to users, teams, or basic roles. For more information refer to [RBAC for app plugins](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/rbac-for-app-plugins).
 
 ### Basic roles
 
@@ -166,7 +167,7 @@ For a comprehensive list of the basic role permissions refer to [Permissions ass
 
 You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, [the change is not propagated to the other basic roles](#permission-propagation). You can't delete basic roles.
 
-You can modify basic roles using the configuration file or with the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
+You can modify basic roles using the configuration file or with the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles) to learn how.
 
 Note that:
 
@@ -196,7 +197,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Roles](ref:roles-and-permissions)
 - [Service accounts](ref:service-accounts)
 - [Settings](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/)
-- [Teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/)
+- [Teams](/docs/grafana/<GRAFANA_VERSION>/user-management/user-identity/teams/)
 - [Users](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/)
 
 To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions](ref:rbac-role-definitions).
@@ -210,7 +211,7 @@ For example:
 - The `teams.roles:read` action allows a user to see a list of roles associated with each team.
 - The `teams:id:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:read` action, this permission prohibits the user from viewing the roles for teams other than team `1`.
 
-Consider creating a custom role only when fixed roles do not meet your permissions requirements. To learn more, refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles).
+Consider creating a custom role only when fixed roles do not meet your permissions requirements. To learn more, refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/create-custom-roles).
 
 ## Permission propagation
 
@@ -244,7 +245,7 @@ To prevent this, you can:
 
 To do so, follow these steps:
 
-1. Get the current definition of the role. Refer to [View role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles#view-basic-role-definitions) for more details.
+1. Get the current definition of the role. Refer to [View role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/user-management/authorization/rbac/manage-rbac-roles#view-basic-role-definitions) for more details.
 
 1. Modify the role definition. Open the JSON file, remove this permission, and add only the plugin IDs you want to keep access to. Make sure to include cloud-home-app or the homepage will result in a 404 error. For example:
 

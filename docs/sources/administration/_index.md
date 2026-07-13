@@ -10,7 +10,9 @@ weight: 40
 
 # Administration
 
-This section includes information for Grafana administrators, team administrators, and users performing administrative tasks:
+This section includes information for Grafana administrators, team administrators, and users performing administrative tasks.
+
+For authentication, user identity, authorization, API access, and audit, refer to [User management](/docs/grafana/<GRAFANA_VERSION>/user-management/).
 
 {{< section >}}
 

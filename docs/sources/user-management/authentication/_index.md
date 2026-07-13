@@ -1,9 +1,10 @@
 ---
 aliases:
-  - ../../auth/ # /docs/grafana/next/auth/
-  - ../../auth/overview/ # /docs/grafana/next/auth/overview/
-  - ../setup-grafana/configure-security/configure-authentication/ # /docs/grafana/next/setup-grafana/setup-grafana/configure-security/configure-authentication/
-  - ../configure-security/configure-authentication/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/
+  - ../../auth/
+  - ../../auth/overview/
+  - ../setup-grafana/configure-access/configure-authentication/
+  - ../setup-grafana/configure-security/configure-authentication/
+  - ../administration/user-management/authentication/
 description: Learn about all the ways in which you can configure Grafana to authenticate users.
 labels:
   products:
@@ -18,7 +19,7 @@ weight: 100
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
+The following table shows all supported authentication methods and the features available for them. [Team sync](../user-identity/team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
 
 | Authentication method               | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout | SCIM support |
 | :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |

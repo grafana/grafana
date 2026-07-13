@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../../../administration/team-management/
   - ../manage-users/add-or-remove-user-from-team/
   - ../manage-users/create-or-remove-team/
   - ../manage-users/manage-teams/

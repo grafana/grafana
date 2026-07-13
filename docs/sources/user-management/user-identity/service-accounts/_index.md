@@ -4,6 +4,7 @@ aliases:
   - add-service-account-token/
   - create-service-account/
   - enable-service-accounts/
+  - ../../../administration/service-accounts/
 description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
