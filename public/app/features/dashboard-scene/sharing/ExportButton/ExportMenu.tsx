@@ -2,7 +2,7 @@ import { useCallback, useContext, useMemo } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { type IconName, Menu, ModalsContext } from '@grafana/ui';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
@@ -79,9 +79,6 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
       continueAction();
 
-      reportInteraction('grafana_dashboards_export_dashboard_button_clicked', {
-        item: item.shareId,
-      });
     },
     [dashboard, hideModal, showModal]
   );
