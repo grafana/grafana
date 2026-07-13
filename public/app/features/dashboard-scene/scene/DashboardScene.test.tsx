@@ -174,6 +174,39 @@ describe('DashboardScene', () => {
 
         expect(spy).not.toHaveBeenCalled();
       });
+
+      it('exposes the edit session source', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        expect(scene.getEditSessionSource()).toBeUndefined();
+
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('tags the session from the editSource url param when a new dashboard auto-enters edit mode', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=assistant');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('defaults to source "user" when a new dashboard auto-enters edit mode without the param', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+        expect(scene.getEditSessionSource()).toBe('user');
+      });
     });
 
     describe('Given scene in edit mode', () => {
