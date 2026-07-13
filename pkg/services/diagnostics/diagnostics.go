@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -62,6 +64,32 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 // harResponseKey is the reserved synthetic refId under which externalized (gRPC) plugins return
 // captured traffic as a __har__ response frame.
 const harResponseKey = "__har__"
+
+// ResponseError returns a combined error describing any per-refId query failures in resp
+// (backend.DataResponse.Error), or nil if there are none. Datasource queries usually fail this way
+// — QueryData returns no top-level error while individual responses carry the failure — so a caller
+// that only checks the top-level error would miss them. Errors are wrapped per refId (preserving
+// errors.Is/As for typed classification) and ordered deterministically by refId.
+func ResponseError(resp *backend.QueryDataResponse) error {
+	if resp == nil {
+		return nil
+	}
+	refIDs := make([]string, 0, len(resp.Responses))
+	for refID, r := range resp.Responses {
+		if r.Error != nil {
+			refIDs = append(refIDs, refID)
+		}
+	}
+	if len(refIDs) == 0 {
+		return nil
+	}
+	sort.Strings(refIDs)
+	errs := make([]error, 0, len(refIDs))
+	for _, refID := range refIDs {
+		errs = append(errs, fmt.Errorf("%s: %w", refID, resp.Responses[refID].Error))
+	}
+	return errors.Join(errs...)
+}
 
 // HasCapturedHAR reports whether any HAR traffic was captured for this request — either the
 // in-process buffer has entries (core plugins) or an external plugin returned a __har__ frame. The

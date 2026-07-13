@@ -75,6 +75,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
+	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
+	// same way QueryMetricsV2 surfaces failures. Fold those into queryErr so they are both recorded
+	// in the bundle (query-error.txt) and — when nothing was captured — surfaced as an error rather
+	// than a 200 with a sparse bundle that never explains the failure.
+	if queryErr == nil {
+		queryErr = diagnostics.ResponseError(resp)
+	}
+
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
 	// surface the real HTTP error (403/404/…) instead of a 200 bundle. A runtime failure that did

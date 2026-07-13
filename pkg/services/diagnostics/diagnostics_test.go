@@ -176,6 +176,22 @@ func TestIndentJSON(t *testing.T) {
 	require.Equal(t, "not json", string(indentJSON([]byte("not json"))), "falls back to raw bytes when unparseable")
 }
 
+func TestResponseError(t *testing.T) {
+	require.NoError(t, ResponseError(nil))
+	require.NoError(t, ResponseError(&backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}))
+
+	sentinel := errors.New("boom")
+	err := ResponseError(&backend.QueryDataResponse{Responses: backend.Responses{
+		"B": {Error: sentinel},
+		"A": {Error: errors.New("bad query")},
+	}})
+	require.Error(t, err)
+	// Typed classification survives (handleQueryMetricsError relies on errors.Is).
+	require.ErrorIs(t, err, sentinel)
+	// Combined, wrapped per refId, and ordered deterministically by refId.
+	require.Equal(t, "A: bad query\nB: boom", err.Error())
+}
+
 func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	t.Helper()
 
