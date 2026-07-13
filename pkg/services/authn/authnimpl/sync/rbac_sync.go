@@ -306,11 +306,20 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return err
 	}
 
-	return s.ac.SyncUserRoles(ctx, ident.GetOrgID(), accesscontrol.SyncUserRolesCommand{
+	err = s.ac.SyncUserRoles(ctx, ident.GetOrgID(), accesscontrol.SyncUserRolesCommand{
 		UserID:        userID,
 		RolesToAdd:    rolesToAdd,
 		RolesToRemove: rolesToRemove,
 	})
+	if errors.Is(err, accesscontrol.ErrRoleNotFound) {
+		// A cloud role may not be registered yet when the enterprise build has
+		// not caught up with the role definitions. Skip this login's sync rather
+		// than blocking login; the roles apply once the definitions land.
+		s.log.FromContext(ctx).Warn("Skipping cloud role sync; role not registered", "error", err)
+		return nil
+	}
+
+	return err
 }
 
 // ClearUserPermissionCacheHook clears a user's permission cache if user Login succeeded. Necessary so that if a user logs in

@@ -253,6 +253,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 		module         string
 		stackID        string
 		identity       *authn.Identity
+		syncErr        error
 		expectedErr    error
 		expectedCalled bool
 	}
@@ -336,6 +337,20 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedErr:    nil,
 			expectedCalled: false,
 		},
+		{
+			desc:    "should not fail login when a cloud role is not registered",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			syncErr:        accesscontrol.ErrRoleNotFound,
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -345,7 +360,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 				ac: &acmock.Mock{
 					SyncUserRolesFunc: func(_ context.Context, _ int64, _ accesscontrol.SyncUserRolesCommand) error {
 						called = true
-						return nil
+						return tt.syncErr
 					},
 				},
 				log:      log.NewNopLogger(),
