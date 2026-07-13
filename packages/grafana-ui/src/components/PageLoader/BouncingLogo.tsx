@@ -1,49 +1,26 @@
 import { css, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
 
-import { Branding } from '../Branding/Branding';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { useBranding } from '../Branding/BrandingContext';
 
-export function BouncingLoader() {
+import grafanaIconSvg from './grafana_icon.svg';
+
+export function BouncingLogo() {
   const styles = useStyles2(getStyles);
+  const { AppLogo } = useBranding();
+
+  // Use the branded logo supplied by the host app, falling back to the default Grafana icon.
+  // This lets the loader pick up custom branding without the caller knowing.
+  const logo = AppLogo ? <AppLogo /> : <img src={grafanaIconSvg} alt="Grafana" />;
 
   return (
-    <div
-      className={styles.container}
-      aria-live="polite"
-      role="status"
-      aria-label={t('bouncing-loader.label', 'Loading')}
-    >
-      <div className={styles.bounce}>
-        <Branding.LoginLogo className={styles.logo} />
-      </div>
+    <div className={styles.bounce}>
+      <div className={styles.logo}>{logo}</div>
     </div>
   );
 }
-
-const fadeIn = keyframes({
-  '0%': {
-    opacity: 0,
-    animationTimingFunction: 'cubic-bezier(0, 0, 0.5, 1)',
-  },
-  '100%': {
-    opacity: 1,
-  },
-});
-
-const pulse = keyframes({
-  '0%': {
-    opacity: 0,
-  },
-  '50%': {
-    opacity: 1,
-  },
-  '100%': {
-    opacity: 0,
-  },
-});
 
 const bounce = keyframes({
   'from, to': {
@@ -80,23 +57,6 @@ const squash = keyframes({
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    opacity: 0,
-    [theme.transitions.handleMotion('no-preference')]: {
-      animationName: fadeIn,
-      animationIterationCount: 1,
-      animationDuration: '0.9s',
-      animationDelay: '0.5s',
-      animationFillMode: 'forwards',
-    },
-    [theme.transitions.handleMotion('reduce')]: {
-      animationName: pulse,
-      animationIterationCount: 'infinite',
-      animationDuration: '4s',
-      animationDelay: '0.5s',
-    },
-  }),
-
   bounce: css({
     textAlign: 'center',
     [theme.transitions.handleMotion('no-preference')]: {
@@ -113,7 +73,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       animationDuration: '0.9s',
       animationIterationCount: 'infinite',
     },
-    width: '60px',
-    height: '60px',
+
+    img: {
+      width: '60px',
+      height: '60px',
+    },
   }),
 });
