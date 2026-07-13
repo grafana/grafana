@@ -80,7 +80,7 @@ describe('DataSourcesSelector', () => {
     expect(screen.getByText('2 data sources selected')).toBeInTheDocument();
     expect(selectListedCheckbox).toBeChecked();
 
-    await userEvent.click(screen.getByText('Add data sources'));
+    await userEvent.click(screen.getByText('Apply selection'));
     expect(onChange).toHaveBeenCalledWith([
       { name: 'amazon_vpc', type: 'flow' },
       { name: 'amazon_eks', type: 'audit' },
@@ -134,7 +134,7 @@ describe('DataSourcesSelector', () => {
     expect(selectListedCheckbox).not.toBeChecked();
     expect(screen.getByText('1 data source selected')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText('Add data sources'));
+    await userEvent.click(screen.getByText('Apply selection'));
     expect(onChange).toHaveBeenCalledWith([{ name: 'hidden_ds', type: 'logs' }]);
   });
 
@@ -176,7 +176,7 @@ describe('DataSourcesSelector', () => {
     ).toBeInTheDocument();
     expect(selectListedCheckbox.indeterminate).toBe(true);
 
-    await userEvent.click(screen.getByText('Add data sources'));
+    await userEvent.click(screen.getByText('Apply selection'));
     expect(onChange).toHaveBeenCalledWith([
       { name: 'already1', type: 'type1' },
       { name: 'already2', type: 'type2' },

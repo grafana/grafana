@@ -263,7 +263,7 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
             Cancel
           </Button>
           <Button onClick={handleApply} type="button">
-            Add data sources
+            Apply selection
           </Button>
         </Modal.ButtonRow>
       </Modal>
