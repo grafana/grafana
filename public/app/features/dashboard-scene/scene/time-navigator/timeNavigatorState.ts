@@ -98,7 +98,13 @@ function reducer(state: TimeNavigatorState, action: Action): TimeNavigatorState 
 
     case 'setContextWindow': {
       // Any manual context manipulation drops the relative framing, and must keep the selection in view.
-      const contextWindow = containSelection(clampRange(action.range, { maxTo: action.now }), state.selection);
+      // Cap at max(now, selection end) — matching the relative branch — so a future-reaching selection
+      // isn't clipped (containSelection would re-extend past a `now`-only cap anyway; this keeps the
+      // future-cap consistent across the reducer).
+      const contextWindow = containSelection(
+        clampRange(action.range, { maxTo: Math.max(action.now, state.selection.to) }),
+        state.selection
+      );
       return { ...state, contextWindow, relativeDuration: null };
     }
 
