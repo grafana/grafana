@@ -66,6 +66,7 @@ export async function fetchAllArmPages<T>(
     if (!page) {
       // eslint-disable-next-line no-console
       console.warn('[azuremonitor] ARM page request returned no result; stopping pagination.');
+      path = undefined;
       break;
     }
     results.push(...(page.value ?? []));
