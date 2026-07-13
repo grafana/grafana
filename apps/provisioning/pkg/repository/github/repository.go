@@ -18,7 +18,6 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
 	config *provisioning.Repository
@@ -281,7 +280,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 		ref = r.config.Branch()
 	}
 
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
+	finalPath := safepath.Join(r.config.Path(), path)
 	commits, err := r.gh.Commits(ctx, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
@@ -336,6 +335,17 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 }
 
 // ResourceURLs implements RepositoryWithURLs.
+// encodeGitPath percent-encodes each segment of a slash-separated repository
+// path so characters that are valid in git paths but reserved in URLs (#, ?, %,
+// spaces, …) don't corrupt the resulting blob link.
+func encodeGitPath(p string) string {
+	segments := strings.Split(p, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	return strings.Join(segments, "/")
+}
+
 func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
 	url := r.config.URL()
 	branch := r.config.Branch()
@@ -348,9 +358,15 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 		ref = branch
 	}
 
+	// file.Path is relative to the configured repository path (Read joins that
+	// prefix before fetching), so re-apply it here or scoped repos get 404 links.
+	// Use the provider-agnostic Path() so this is nil-safe for GitHub Enterprise
+	// (Spec.GitHub is nil there).
+	repoPath := safepath.Join(r.config.Path(), file.Path)
+
 	urls := &provisioning.RepositoryURLs{
 		RepositoryURL: r.config.URL(),
-		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", url, ref, file.Path),
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", url, ref, encodeGitPath(repoPath)),
 	}
 
 	if ref != branch {

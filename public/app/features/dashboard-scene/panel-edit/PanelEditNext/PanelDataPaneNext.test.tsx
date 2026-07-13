@@ -238,6 +238,21 @@ describe('PanelDataPaneNext', () => {
         expect(lastCall.$timeRange).toBeUndefined();
       });
 
+      it('should preserve compareWith when updating other query options', () => {
+        mockPanel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+        dataPane.onQueryOptionsChange({
+          dataSource: { type: 'test', uid: 'test' },
+          queries: [],
+          maxDataPoints: 100,
+          timeRange: { from: undefined, shift: undefined },
+        });
+
+        const lastCall = (mockPanel.setState as jest.Mock).mock.calls.at(-1)[0];
+        expect(lastCall.$timeRange).toBeInstanceOf(PanelTimeRange);
+        expect((lastCall.$timeRange.state as PanelTimeRangeState).compareWith).toBe('1d');
+      });
+
       it('should set hideTimeOverride on PanelTimeRange', () => {
         dataPane.onQueryOptionsChange({
           dataSource: { type: 'test', uid: 'test' },

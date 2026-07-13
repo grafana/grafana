@@ -82,6 +82,7 @@ func TestTeamSearchBuilder(t *testing.T) {
 		Resource:  "teams",
 	}, []string{
 		"with-email-and-external-uid",
+		"with-members-and-groups",
 	})
 }
 

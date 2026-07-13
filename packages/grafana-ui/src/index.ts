@@ -36,6 +36,7 @@ export { ButtonCascader } from './components/ButtonCascader/ButtonCascader';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';
+export { PageLoader } from './components/PageLoader/PageLoader';
 export { ColorPicker, SeriesColorPicker } from './components/ColorPicker/ColorPicker';
 export { ColorPickerInput } from './components/ColorPicker/ColorPickerInput';
 export {
@@ -445,7 +446,7 @@ export {
 export { EventsWithValidation, validate, hasValidationEvent, regexValidation } from './utils/validate';
 export { SCHEMA, makeFragment, makeValue } from './utils/slate';
 export { linkModelToContextMenuItems } from './utils/dataLinks';
-export { getTagColorsFromName } from './utils/tags';
+export { getTagColorIndexFromName, getTagColorsFromName, getTagColor } from './utils/tags';
 export { getScrollbarWidth } from './utils/scrollbar';
 export { getCellLinks } from './utils/table';
 export { getCanvasContext, measureText, calculateFontSize } from './utils/measureText';

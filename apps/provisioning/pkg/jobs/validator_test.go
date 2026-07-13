@@ -12,7 +12,10 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	authlib "github.com/grafana/authlib/types"
+
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestValidateJob(t *testing.T) {
@@ -1200,4 +1203,137 @@ func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Oper
 		false,
 		&user.DefaultInfo{},
 	)
+}
+
+func TestValidateAuthor(t *testing.T) {
+	requester := &identity.StaticRequester{
+		Type:    authlib.TypeUser,
+		Name:    "Test User",
+		Email:   "test@example.com",
+		UserUID: "abc123",
+	}
+	userCtx := identity.WithRequester(t.Context(), requester)
+	serviceCtx, _, err := identity.WithProvisioningIdentity(t.Context(), "default")
+	require.NoError(t, err)
+
+	annotations := map[string]string{
+		AnnoAuthor:      requester.GetName(),
+		AnnoAuthorEmail: requester.GetEmail(),
+	}
+
+	tests := []struct {
+		name            string
+		ctx             context.Context
+		operation       admission.Operation
+		annotations     map[string]string
+		oldAnnotations  map[string]string
+		wantErrContains string
+	}{
+		{
+			name:        "create without annotations",
+			ctx:         userCtx,
+			operation:   admission.Create,
+			annotations: nil,
+		},
+		{
+			name:        "create by service identity",
+			ctx:         serviceCtx,
+			operation:   admission.Create,
+			annotations: map[string]string{AnnoAuthor: "someone else"},
+		},
+		{
+			name:        "create with matching annotations",
+			ctx:         userCtx,
+			operation:   admission.Create,
+			annotations: annotations,
+		},
+		{
+			name:            "create with mismatched name",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			wantErrContains: AnnoAuthor + " must match",
+		},
+		{
+			name:            "create with mismatched email",
+			ctx:             userCtx,
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthorEmail: "other@example.com"},
+			wantErrContains: AnnoAuthorEmail + " must match",
+		},
+		{
+			name:            "create without requester",
+			ctx:             t.Context(),
+			operation:       admission.Create,
+			annotations:     map[string]string{AnnoAuthor: "Test User"},
+			wantErrContains: "job author annotations must match the requesting user",
+		},
+		{
+			name:           "update with unchanged annotations",
+			ctx:            userCtx,
+			operation:      admission.Update,
+			annotations:    annotations,
+			oldAnnotations: annotations,
+		},
+		{
+			name:            "update changing name",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: "someone else"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthor + " is immutable",
+		},
+		{
+			name:            "update changing email",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: "other@example.com"},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:            "update removing email",
+			ctx:             userCtx,
+			operation:       admission.Update,
+			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
+			oldAnnotations:  annotations,
+			wantErrContains: AnnoAuthorEmail + " is immutable",
+		},
+		{
+			name:        "delete is ignored",
+			ctx:         userCtx,
+			operation:   admission.Delete,
+			annotations: map[string]string{AnnoAuthor: "someone else"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.annotations}}
+			var oldObj runtime.Object
+			if tt.oldAnnotations != nil {
+				oldObj = &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "test-job", Annotations: tt.oldAnnotations}}
+			}
+			attr := admission.NewAttributesRecord(
+				job,
+				oldObj,
+				provisioning.JobResourceInfo.GroupVersionKind(),
+				"default",
+				"test-job",
+				provisioning.JobResourceInfo.GroupVersionResource(),
+				"",
+				tt.operation,
+				nil,
+				false,
+				&user.DefaultInfo{},
+			)
+
+			err := validateAuthor(tt.ctx, attr, job)
+			if tt.wantErrContains != "" {
+				require.ErrorContains(t, err, tt.wantErrContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

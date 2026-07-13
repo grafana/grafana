@@ -69,8 +69,48 @@ func translateGitHubError(err error) error {
 
 	default:
 		// Other errors - return with GitHub message context
+		if details := formatGitHubErrorDetails(ghErr.Errors); details != "" {
+			return fmt.Errorf("GitHub API error (HTTP %d: %s: %s)", statusCode, ghMessage, details)
+		}
 		return fmt.Errorf("GitHub API error (HTTP %d: %s)", statusCode, ghMessage)
 	}
+}
+
+// When receiving a 422 hook already exists error, we query
+// for all the repo's hooks and match against its payload URL.
+// If none match, we return this error
+var ErrWebhookAlreadyExists = errors.New("webhook already exists on repository but could not be queried based on payload url")
+
+func isWebhookAlreadyExists(ghErr *github.ErrorResponse) bool {
+	if ghErr.Response == nil || ghErr.Response.StatusCode != http.StatusUnprocessableEntity {
+		return false
+	}
+	if strings.Contains(strings.ToLower(ghErr.Message), "already exists") {
+		return true
+	}
+	for _, e := range ghErr.Errors {
+		if strings.Contains(strings.ToLower(e.Message), "already exists") {
+			return true
+		}
+	}
+	return false
+}
+
+// formatGitHubErrorDetails renders the per-field error details GitHub returns
+// alongside a validation error into a single readable string.
+func formatGitHubErrorDetails(errs []github.Error) string {
+	details := make([]string, 0, len(errs))
+	for _, e := range errs {
+		switch {
+		case e.Message != "":
+			details = append(details, e.Message)
+		case e.Field != "" && e.Code != "":
+			details = append(details, fmt.Sprintf("%s %s", e.Field, e.Code))
+		case e.Code != "":
+			details = append(details, e.Code)
+		}
+	}
+	return strings.Join(details, "; ")
 }
 
 const (
@@ -287,46 +327,13 @@ func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Comm
 	return ret, nil
 }
 
-func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error) {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
-		return r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
-	}
-
-	hooks, err := paginatedList(
-		ctx,
-		listFn,
-		defaultListOptions(maxWebhooks),
-	)
-	if errors.Is(err, repo.ErrTooManyItems) {
-		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
-	}
-	if err != nil {
-		return nil, translateGitHubError(err)
-	}
-
-	// Pre-allocate the result slice
-	ret := make([]WebhookConfig, 0, len(hooks))
-	for _, h := range hooks {
-		contentType := h.GetConfig().GetContentType()
-		if contentType == "" {
-			contentType = "form"
-		}
-
-		ret = append(ret, WebhookConfig{
-			ID:          h.GetID(),
-			Events:      h.Events,
-			Active:      h.GetActive(),
-			URL:         h.GetConfig().GetURL(),
-			ContentType: contentType,
-			// Intentionally not setting Secret.
-		})
-	}
-	return ret, nil
-}
-
-func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error) {
-	if cfg.ContentType == "" {
-		cfg.ContentType = "form"
+func (r *githubClient) CreateWebhook(ctx context.Context, url string, events []string, secret string) (repo.WebhookConfig, error) {
+	cfg := webhookConfig{
+		URL:         url,
+		Events:      events,
+		Secret:      secret,
+		Active:      true,
+		ContentType: "json",
 	}
 
 	hook := &github.Hook{
@@ -342,10 +349,19 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (We
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, r.owner, r.repo, hook)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		// GitHub returns 422 when a hook with the same payload URL already exists
+		// (e.g. Status.Webhook was lost while the hook still lives on the repo).
+		// The 422 body carries no ID, so recover the existing hook by URL and
+		// take ownership of it instead of failing — this keeps CreateWebhook
+		// idempotent so the repository can self-heal rather than looping unhealthy.
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && isWebhookAlreadyExists(ghErr) {
+			return r.adoptExistingWebhook(ctx, cfg)
+		}
+		return nil, translateGitHubError(err)
 	}
 
-	return WebhookConfig{
+	return &webhookConfig{
 		ID: createdHook.GetID(),
 		// events is not returned by GitHub.
 		Events:      cfg.Events,
@@ -357,10 +373,68 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (We
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error) {
+// adoptExistingWebhook recovers the hook already registered for cfg.URL after
+// CreateHook reported it exists. GitHub's 422 does not include the hook ID, so we
+// list the repo's hooks and match on the payload URL (GitHub's uniqueness key).
+// The stored secret is never returned by GitHub, so the matched hook is edited to
+// use cfg's secret and events, leaving a fully-owned webhook whose ID the caller
+// can persist to Status.Webhook.
+func (r *githubClient) adoptExistingWebhook(ctx context.Context, cfg webhookConfig) (repo.WebhookConfig, error) {
+	opts := &github.ListOptions{PerPage: 100}
+	for {
+		hooks, resp, err := r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("list webhooks to adopt existing: %w", translateGitHubError(err))
+		}
+
+		for _, h := range hooks {
+			if h.GetConfig().GetURL() != cfg.URL {
+				continue
+			}
+
+			edit := &github.Hook{
+				URL:    &cfg.URL,
+				Events: cfg.Events,
+				Active: &cfg.Active,
+				Config: &github.HookConfig{
+					ContentType: &cfg.ContentType,
+					Secret:      &cfg.Secret,
+					URL:         &cfg.URL,
+				},
+			}
+			if _, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, h.GetID(), edit); err != nil {
+				return nil, fmt.Errorf("adopt existing webhook %d: %w", h.GetID(), translateGitHubError(err))
+			}
+
+			logging.FromContext(ctx).Info("adopted existing webhook", "url", cfg.URL, "id", h.GetID())
+			return &webhookConfig{
+				ID:          h.GetID(),
+				Events:      cfg.Events,
+				Active:      true,
+				URL:         cfg.URL,
+				ContentType: cfg.ContentType,
+				Secret:      cfg.Secret,
+			}, nil
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	// GitHub said the hook exists but no hook matched our URL; surface it.
+	logging.FromContext(ctx).Error(
+		"GitHub said webhook exists but no hook with URL exists when queried",
+		slog.String("url", cfg.URL),
+	)
+	return nil, ErrWebhookAlreadyExists
+}
+
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		return nil, translateGitHubError(err)
 	}
 
 	contentType := hook.GetConfig().GetContentType()
@@ -370,7 +444,7 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (Webhook
 		contentType = "json"
 	}
 
-	return WebhookConfig{
+	return &webhookConfig{
 		ID:          hook.GetID(),
 		Events:      hook.Events,
 		Active:      hook.GetActive(),
@@ -388,12 +462,17 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error
 	return nil
 }
 
-func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error {
+func (r *githubClient) EditWebhook(ctx context.Context, hook repo.WebhookConfig) error {
+	cfg, ok := hook.(*webhookConfig)
+	if !ok {
+		return fmt.Errorf("unexpected webhook type %T", hook)
+	}
+
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
 
-	hook := &github.Hook{
+	ghHook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
 		Active: &cfg.Active,
@@ -403,7 +482,7 @@ func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error
 			URL:         &cfg.URL,
 		},
 	}
-	_, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, cfg.ID, hook)
+	_, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, cfg.ID, ghHook)
 	if err != nil {
 		return translateGitHubError(err)
 	}
@@ -434,6 +513,20 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]
 	}
 
 	return ret, nil
+}
+
+func (r *githubClient) MergeBase(ctx context.Context, base, head string) (string, error) {
+	cmp, _, err := r.gh.Repositories.CompareCommits(ctx, r.owner, r.repo, base, head, &github.ListOptions{PerPage: 1})
+	if err != nil {
+		return "", translateGitHubError(err)
+	}
+
+	sha := cmp.GetMergeBaseCommit().GetSHA()
+	if sha == "" {
+		return "", fmt.Errorf("no merge base found between %q and %q", base, head)
+	}
+
+	return sha, nil
 }
 
 func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {

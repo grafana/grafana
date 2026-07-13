@@ -4,8 +4,8 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance, useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -108,6 +108,9 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       starred: true,
     };
     updateFilters(filters);
+    // Intentionally only depends on `isLoadingDatasources` so the initial filters are seeded
+    // exactly once, when the datasource list resolves. Re-running when the other values change
+    // would clobber user-adjusted filters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingDatasources]);
 
@@ -125,8 +128,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
         : listOfDatasources.map((ds) => ds.uid);
     const dsGetProm = await datasourcesToGet.map(async (dsf) => {
       try {
-        // this get works off datasource names
-        return getDataSourceSrv().get(dsf);
+        return await getDataSourceInstance(dsf);
       } catch (e) {
         return Promise.resolve();
       }

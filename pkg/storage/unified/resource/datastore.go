@@ -682,6 +682,71 @@ func (d *dataStore) GetResourceStats(ctx context.Context, nsr NamespacedResource
 	return stats, nil
 }
 
+// ListStoredResources implements StorageBackend for the KV backend.
+//
+// A namespace is required; discovering across all namespaces would need a full
+// scan and no caller needs it. Existence matches any key under the
+// group/resource/namespace prefix, including delete tombstones, so results may
+// contain false positives.
+func (d *dataStore) ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.ListStoredResources")
+	defer span.End()
+
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+
+	groupResources, err := d.getGroupResources(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get group resources: %w", err)
+	}
+
+	var result []NamespacedResource
+	for _, gr := range groupResources {
+		if filter.Group != "" && gr.Group != filter.Group {
+			continue
+		}
+		if filter.Resource != "" && gr.Resource != filter.Resource {
+			continue
+		}
+
+		exists, err := d.groupResourceExistsInNamespace(ctx, gr, filter.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			result = append(result, NamespacedResource{
+				Namespace: filter.Namespace,
+				Group:     gr.Group,
+				Resource:  gr.Resource,
+			})
+		}
+	}
+
+	return result, nil
+}
+
+// groupResourceExistsInNamespace reports whether any key exists under the
+// group/resource/namespace prefix.
+func (d *dataStore) groupResourceExistsInNamespace(ctx context.Context, gr GroupResource, namespace string) (bool, error) {
+	// No namespace validation: for a discovery existence check an absent or
+	// malformed namespace simply has no keys, so it should return "not found"
+	// rather than an error (matching the SQL backend).
+	prefix := ListRequestKey{Group: gr.Group, Resource: gr.Resource, Namespace: namespace}.Prefix()
+	for _, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    1,
+		Sort:     SortOrderAsc,
+	}) {
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+}
+
 // processGroupResourceStats processes stats for a specific group/resource combination
 func (d *dataStore) processGroupResourceStats(ctx context.Context, groupResource GroupResource, namespace string, minCount int) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.dataStore.processGroupResourceStats")
