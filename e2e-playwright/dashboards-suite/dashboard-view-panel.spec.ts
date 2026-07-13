@@ -77,7 +77,7 @@ test.describe('View panel', { tag: ['@dashboards'] }, () => {
     expect(headerTitles).toEqual(['method=GET', 'method=POST']);
 
     // Verify url is updated
-    expect(page).toHaveURL((url) => {
+    await expect(page).toHaveURL((url) => {
       const params = url.searchParams;
       return params.get('fanout') === '$__by_label__method';
     });
