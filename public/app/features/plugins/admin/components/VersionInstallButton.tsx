@@ -21,6 +21,10 @@ interface Props {
   disabled: boolean;
   tooltip?: string;
   onConfirmInstallation: () => void;
+  // Suppresses the "Installed"/Upgrade/Downgrade labeling (used for managed plugins, where
+  // installedVersion may not be trustworthy) without affecting installedVersion itself, which
+  // this component still needs to detect when an install it triggered has actually completed.
+  hideInstallState?: boolean;
 }
 
 export const VersionInstallButton = ({
@@ -31,13 +35,14 @@ export const VersionInstallButton = ({
   disabled,
   tooltip,
   onConfirmInstallation,
+  hideInstallState,
 }: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  const installState = getInstallState(installedVersion, version.version);
+  const installState = hideInstallState ? PluginStatus.INSTALL : getInstallState(installedVersion, version.version);
 
   useEffect(() => {
     if (installedVersion === version.version) {
@@ -46,7 +51,7 @@ export const VersionInstallButton = ({
     }
   }, [installedVersion, version.version]);
 
-  if (version.version === installedVersion) {
+  if (!hideInstallState && version.version === installedVersion) {
     return (
       <Badge
         className={styles.badge}

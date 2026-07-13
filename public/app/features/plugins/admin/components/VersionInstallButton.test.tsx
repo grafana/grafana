@@ -9,6 +9,11 @@ import { type Version } from '../types';
 
 import { VersionInstallButton } from './VersionInstallButton';
 
+jest.mock('../state/hooks', () => ({
+  ...jest.requireActual('../state/hooks'),
+  useInstall: () => jest.fn(),
+}));
+
 describe('VersionInstallButton', () => {
   const originalConfig = { ...config };
   afterEach(() => {
@@ -197,6 +202,51 @@ describe('VersionInstallButton', () => {
         onConfirmInstallation={() => {}}
       />
     );
+    expect(screen.getByText('Install')).toBeInTheDocument();
+  });
+
+  it('should clear the spinner once installedVersion catches up, even with hideInstallState set', () => {
+    // Regression test: hideInstallState (used for managed plugins) must only suppress the
+    // Installed/Upgrade/Downgrade labeling — it must not prevent this component from noticing
+    // that a triggered install has actually completed and clearing its own local spinner state.
+    const version: Version = {
+      version: '1.0.1',
+      createdAt: '',
+      isCompatible: false,
+      grafanaDependency: null,
+    };
+    const store = configureStore();
+
+    const { rerender } = render(
+      <Provider store={store}>
+        <VersionInstallButton
+          installedVersion={undefined}
+          hideInstallState
+          pluginId={'test'}
+          version={version}
+          disabled={false}
+          onConfirmInstallation={() => {}}
+        />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Install'));
+    expect(screen.getByRole('button')).toBeDisabled();
+
+    rerender(
+      <Provider store={store}>
+        <VersionInstallButton
+          installedVersion={version.version}
+          hideInstallState
+          pluginId={'test'}
+          version={version}
+          disabled={false}
+          onConfirmInstallation={() => {}}
+        />
+      </Provider>
+    );
+
+    expect(screen.getByRole('button')).not.toBeDisabled();
     expect(screen.getByText('Install')).toBeInTheDocument();
   });
 
