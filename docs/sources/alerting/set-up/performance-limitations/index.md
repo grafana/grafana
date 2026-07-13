@@ -130,22 +130,22 @@ If this happens, Grafana might send duplicate notifications for firing alerts.
 
 ## Limit on the number of results per alert rule
 
-Each alert rule evaluation generates one alert instance per series in the rule's query result set. Rules with very high-cardinality result sets consume significant CPU, memory, network, and database resources, and can produce a very large number of alert instances (refer to [High load on database caused by a high number of alert instances](#high-load-on-database-caused-by-a-high-number-of-alert-instances)).
+Each alert rule evaluation generates one alert instance per series in the rule's query result set. Rules with high-cardinality result sets consume more CPU, memory, network, and database resources, and can produce a large number of alert instances (refer to [High load on database caused by a high number of alert instances](#high-load-on-database-caused-by-a-high-number-of-alert-instances)).
 
-To bound this at the source, Grafana can limit the number of query evaluation results a single alert rule may produce in one evaluation. When a rule's condition query returns more results than the limit, the evaluation fails with an error similar to:
+To prevent this, Grafana can limit the number of query evaluation results a single alert rule produces in one evaluation. When a rule's query returns more results than the limit, the evaluation fails with an error similar to the following:
 
 ```
 query evaluation returned too many results: 12345 (limit: 10000)
 ```
 
-The alert rule enters the [Error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/) and produces no alert instances for that evaluation until its result set is reduced below the limit.
+The alert rule enters the [Error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/) and produces no alert instances for that evaluation until you reduce its result set below the limit.
 
-In self-managed Grafana, set this limit with the [`alerting_rule_evaluation_results`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#alerting_rule_evaluation_results) option in the `[quota]` section. The default is `-1` (unlimited). In Grafana Cloud, this limit is managed by Grafana Labs.
+In self-managed Grafana, set this limit using the [`alerting_rule_evaluation_results`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#alerting_rule_evaluation_results) option in the `[quota]` section. The default is `-1` (unlimited). In Grafana Cloud, Grafana Labs manages this limit.
 
-If a rule reaches the limit, reduce the cardinality of its result set:
+To resolve the error, reduce the cardinality of the rule's result set:
 
-- Aggregate the query to return fewer series—for example, sum or average by fewer labels.
-- Add label filters to narrow the query to only the series you need to alert on.
+- Aggregate the query so it returns fewer series. For example, sum or average by fewer labels.
+- Add label filters so the query returns only the series you need to alert on.
 - Split a single high-cardinality rule into several rules with narrower queries.
 
 ## Alert rule migrations for Grafana 11.6.0
