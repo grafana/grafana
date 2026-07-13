@@ -400,7 +400,7 @@ For example, if you set it to `100`, Grafana requests no more than 100 points, r
 This means the query resolution remains more consistent whether the panel is in the dashboard grid or in view mode.
 
 {{< admonition type="note" >}}
-Because **Max data points** defaults to the panel’s pixel width, resizing a panel changes how many points the data source returns. This affects not only the visual resolution but also any values calculated from that data, such as transformations, Stat reducer calculations, and expressions. If a panel’s computed value shifts with its size, set **Max data points** to a fixed value, or set **Min interval** to stabilize the resolution.
+**Max data points** defaults to the panel’s pixel width, so resizing a panel changes how many points the data source returns. This affects not only the visual resolution, but also any values calculated from that data, such as transformations, Stat reducer calculations, and expressions. If a panel’s computed value shifts with its size, set **Max data points** to a fixed value, or set **Min interval** to stabilize the resolution.
 {{< /admonition >}}
 
 With streaming data, Grafana uses the max data points value for the rolling buffer.
