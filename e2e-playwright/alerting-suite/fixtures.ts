@@ -8,14 +8,20 @@ export const dataSource = 'gdev-testdata';
 
 // POST that retries a transient failure with Playwright's built-in expect(...).toPass. At the worker
 // startup burst the write (or its folders:read authz check) can lose the SQLITE_BUSY race against the
-// e2e server's small SQLite connection pool and return a transient 403/500. Bounded to a few short
-// attempts so a genuine failure still surfaces quickly with its status/body.
-async function postWithRetry(request: APIRequestContext, url: string, data: unknown): Promise<APIResponse> {
+// e2e server's small SQLite connection pool and return a transient 403/500. Default timeout is bounded
+// so a genuine failure still surfaces quickly with its status/body; the folder-create call below passes
+// a longer one since a single attempt can itself take as long as the server's `busy_timeout` (7.5s).
+async function postWithRetry(
+  request: APIRequestContext,
+  url: string,
+  data: unknown,
+  timeout = 5000
+): Promise<APIResponse> {
   let response: APIResponse | undefined;
   await expect(async () => {
     response = await request.post(url, { data });
     expect(response.ok(), `POST ${url} -> ${response.status()} ${await response.text()}`).toBeTruthy();
-  }).toPass({ intervals: [200, 500, 1000, 2000], timeout: 5000 });
+  }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
   // toPass only resolves once the callback passed, so response is set; the guard narrows the type.
   if (!response) {
     throw new Error(`POST ${url} produced no response`);
@@ -154,17 +160,28 @@ export const test = base.extend<
   // One folder per worker, reused across its tests. A per-invocation unique name avoids cross-worker
   // collisions and orphan accumulation. Reusing it (vs. one per test) keeps folder writes — the main
   // SQLITE_BUSY contention source — to one per worker. Created via the App Platform (k8s) folders API.
+  //
+  // All workers create their folder at the same instant, so this single request can itself stall for
+  // as long as the server's SQLite `busy_timeout` (7.5s, scripts/grafana-server/custom.ini) before it
+  // resolves. A 15s retry budget (default is 5s) gives it room to survive that instead of giving up
+  // before the server has even finished stalling on the first attempt. `timeout: 20_000` on the fixture
+  // itself raises Playwright's own fixture-setup ceiling (normally the 10s test timeout) to match.
   workerFolder: [
     async ({ workerApi }, use, workerInfo) => {
       const suffix = crypto.randomUUID().slice(0, 8);
       const uid = `e2e-alerting-w${workerInfo.workerIndex}-${suffix}`;
       const title = `Infrastructure alerts w${workerInfo.workerIndex} ${suffix}`;
-      await postWithRetry(workerApi.request, `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders`, {
-        apiVersion: 'folder.grafana.app/v1',
-        kind: 'Folder',
-        metadata: { name: uid },
-        spec: { title },
-      });
+      await postWithRetry(
+        workerApi.request,
+        `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders`,
+        {
+          apiVersion: 'folder.grafana.app/v1',
+          kind: 'Folder',
+          metadata: { name: uid },
+          spec: { title },
+        },
+        15_000
+      );
 
       await use({ uid, title });
 
@@ -175,7 +192,7 @@ export const test = base.extend<
         await workerApi.request.delete(`/api/folders/${uid}?forceDeleteRules=true`);
       }
     },
-    { scope: 'worker' },
+    { scope: 'worker', timeout: 20_000 },
   ],
 
   folder: [
