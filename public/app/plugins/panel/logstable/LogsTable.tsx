@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -15,6 +16,7 @@ import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
+import { getSuggestedFieldsFromLogList } from 'app/features/logs/components/fieldSelector/suggestedFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { LogListModel } from 'app/features/logs/components/panel/processing';
 import {
@@ -75,6 +77,7 @@ export const LogsTable = ({
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
   const { app } = usePanelContext();
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -267,6 +270,12 @@ export const LogsTable = ({
     return logs ?? [];
   }, [panelData.request?.targets, rawTableFrame, timeZone]);
 
+  const getSuggestedFields = useCallback(
+    (_dataFrame: DataFrame, displayedColumns: string[], defaultColumns: string[] = []) =>
+      getSuggestedFieldsFromLogList(logRows, displayedColumns, defaultColumns, otelLogsFormattingEnabled),
+    [logRows, otelLogsFormattingEnabled]
+  );
+
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
 
@@ -307,6 +316,7 @@ export const LogsTable = ({
               handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
             }
             onFieldSelectorWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+            getSuggestedFields={getSuggestedFields}
           />
 
           <TableNGWrap

@@ -95,6 +95,10 @@ const (
 	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
 	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
+	// FlagProvisioningUserAttribution
+	// Author Git Sync commits as the acting Grafana user
+	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -222,6 +226,10 @@ const (
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
+
+	// FlagDashboardNotebooks
+	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
+	FlagDashboardNotebooks = "dashboard.notebooks"
 
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
@@ -414,10 +422,6 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
-
-	// FlagGroupToNestedTableV2
-	// Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
-	FlagGroupToNestedTableV2 = "groupToNestedTableV2"
 
 	// FlagImprovedExternalSessionHandling
 	// Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
@@ -722,14 +726,6 @@ const (
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
 
-	// FlagElasticsearchRawDSLQuery
-	// Enables the raw DSL query editor in the Elasticsearch data source
-	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
-
-	// FlagElasticsearchESQLQuery
-	// Enables the ES|QL query editor in the Elasticsearch data source
-	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
-
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
@@ -961,4 +957,12 @@ const (
 	// FlagKubernetesReporting
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
+
+	// FlagGrafanaOnDemandDiagnostics
+	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
+	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
+
+	// FlagGrafanaFrontendLegacyAPIHandling
+	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 )

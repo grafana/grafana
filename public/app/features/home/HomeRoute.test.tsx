@@ -129,4 +129,24 @@ describe('HomeRoute', () => {
       expect(locationService.getLocation().pathname).toContain('/d/abc');
     });
   });
+
+  it('flag on + homeURL pointing at the setup guide → renders HomePage without redirecting', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': true });
+    stubMergedPreferences({ homeURL: '/a/grafana-setupguide-app/home' });
+
+    render(<HomeRoute {...props} />);
+
+    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(locationService.getLocation().pathname).not.toContain('grafana-setupguide-app');
+  });
+
+  it('flag on + homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': true });
+    stubMergedPreferences({ homeDashboardUID: 'abc', homeURL: '/d/other' });
+
+    render(<HomeRoute {...props} />);
+
+    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    expect(locationService.getLocation().pathname).not.toContain('/d/other');
+  });
 });

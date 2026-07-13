@@ -43,6 +43,7 @@ var (
 		"zipkin":                       {ID: "zipkin"},
 		"opentsdb":                     {ID: "opentsdb"},
 		"stackdriver":                  {ID: "stackdriver"},
+		"mssql":                        {ID: "mssql"},
 	}
 )
 

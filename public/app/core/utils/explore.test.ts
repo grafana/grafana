@@ -1,20 +1,23 @@
 import {
-  type DataSourceApi,
-  type DataSourceRef,
+  type AdHocVariableFilter,
+  DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   dateTime,
   type ExploreUrlState,
   type GrafanaConfig,
   locationUtil,
   LogsSortOrder,
+  type ScopedVars,
   serializeStateToUrlParam,
 } from '@grafana/data';
+import { setDataSourceSrv, setTemplateSrv, type DataSourceSrv, type TemplateSrv } from '@grafana/runtime';
+import { initDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
-
-import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 
 import {
   buildQueryTransaction,
@@ -32,50 +35,90 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   range: DEFAULT_RANGE,
 };
 
-const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
-const interpolateMockLoki = jest
-  .fn()
-  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]) as unknown as DataQuery[];
-const interpolateMockProm = jest
-  .fn()
-  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]) as unknown as DataQuery[];
-const datasourceSrv = new DatasourceSrvMock(defaultDs, {
-  'generate empty query': new MockDataSourceApi('generateEmptyQuery'),
-  ds1: {
-    name: 'testDs',
-    type: 'loki',
-    meta: { mixed: false },
-    interpolateVariablesInQueries: interpolateMockLoki,
-    getRef: () => {
-      return 'ds1';
-    },
-  } as unknown as DataSourceApi,
-  ds2: {
-    name: 'testDs2',
-    type: 'prom',
-    meta: { mixed: false },
-    interpolateVariablesInQueries: interpolateMockProm,
-    getRef: () => {
-      return 'ds2';
-    },
-  } as unknown as DataSourceApi,
-  dsMixed: {
-    name: 'testDSMixed',
-    type: 'mixed',
-    meta: { mixed: true },
-  } as MockDataSourceApi,
+// The migration under test swaps getDataSourceSrv().get() for getDataSourceInstance() from
+// @grafana/runtime/unstable. We deliberately seed the *real* new-API caches (instance settings +
+// plugin importer) rather than delegate getDataSourceInstance back to a legacy mock. A
+// delegate-to-legacy mock reasserts the old semantics by construction, so it can never fail on the
+// template-variable identity gap that got the original migration (#127578) reverted (#127870).
+const interpolateMockLoki = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]);
+const interpolateMockProm = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]);
+const interpolateByUid: Record<string, jest.Mock> = { ds1: interpolateMockLoki, ds2: interpolateMockProm };
+
+function makeSettings(
+  uid: string,
+  name: string,
+  type: string,
+  opts: { isDefault?: boolean; mixed?: boolean } = {}
+): DataSourceInstanceSettings {
+  return {
+    id: 1,
+    uid,
+    name,
+    type,
+    access: 'direct',
+    jsonData: {},
+    readOnly: false,
+    isDefault: opts.isDefault ?? false,
+    meta: {
+      id: type,
+      name: type,
+      type: 'datasource',
+      module: '',
+      baseUrl: '',
+      mixed: opts.mixed ?? false,
+      metrics: true,
+      info: {
+        author: { name: '' },
+        description: '',
+        links: [],
+        logos: { small: '', large: '' },
+        screenshots: [],
+        updated: '',
+        version: '',
+      },
+    } as unknown as DataSourcePluginMeta,
+  } as DataSourceInstanceSettings;
+}
+
+const DEFAULT_DS_NAME = 'default datasource';
+const dsSettings: Record<string, DataSourceInstanceSettings> = {
+  default: makeSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
+  ds1: makeSettings('ds1', 'testDs', 'loki'),
+  ds2: makeSettings('ds2', 'testDs2', 'prom'),
+  dsMixed: makeSettings('dsMixed', 'testDSMixed', 'mixed', { mixed: true }),
+};
+
+// Unlike a preset-instance mock, this class derives its identity from the settings the loader
+// passes to its constructor — the identity a real plugin instance carries. A variable ref that
+// resolves to a concrete uid therefore yields an instance whose getRef()/uid is the concrete uid,
+// never the literal "${var}".
+class TestDataSource extends DataSourceApi<DataQuery> {
+  query() {
+    return Promise.resolve({ data: [] });
+  }
+  testDatasource() {
+    return Promise.resolve({ status: 'success', message: '' });
+  }
+  interpolateVariablesInQueries(queries: DataQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
+    const spy = interpolateByUid[this.uid];
+    return spy ? spy(queries, scopedVars, filters) : queries;
+  }
+}
+
+const pluginImporter = jest.fn().mockResolvedValue({ DataSourceClass: TestDataSource, components: {} });
+
+beforeEach(() => {
+  initDataSourceInstanceSettings(dsSettings, DEFAULT_DS_NAME);
+  setDataSourcePluginImporter(pluginImporter);
+  // Resolve the datasource template variable to a concrete uid, mirroring dashboard interpolation.
+  setTemplateSrv({
+    getVariables: () => [],
+    replace: (target?: string) => (target === '${datasource}' ? 'ds1' : (target ?? '')),
+  } as unknown as TemplateSrv);
+  // No legacy srv: the new-API fallback stays inert, so a resolution miss surfaces as a failure
+  // instead of silently delegating to legacy semantics (the shape that hid the reverted bug).
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
-
-const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => getDataSourceSrvMock(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: (ref?: DataSourceRef | string) => datasourceSrv.get(ref),
-}));
 
 // Avoids errors caused by circular dependencies
 jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
@@ -187,6 +230,80 @@ describe('getExploreUrl', () => {
     it('should work with sub path', async () => {
       expect(await getExploreUrl(args)).toMatch(/subpath\/explore/g);
     });
+  });
+});
+
+describe('getExploreUrl datasource identity (DPRO-168 regression)', () => {
+  const timeRange = { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } };
+
+  // Reads the query datasource that getExploreUrl actually wrote into the URL. This is the field
+  // Explore consumes — the reverted migration wrote the literal "${datasource}" here, so Explore
+  // could not map it and fell back to the default datasource with an empty query.
+  function queryDatasourceFromUrl(url: string): unknown {
+    const panes = JSON.parse(new URLSearchParams(url.slice(url.indexOf('?') + 1)).get('panes')!);
+    const [pane] = Object.values(panes) as Array<{ queries: DataQuery[] }>;
+    return pane.queries[0].datasource;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('resolves a concrete uid ref to that datasource', async () => {
+    const url = await getExploreUrl({
+      queries: [{ refId: 'A', expr: 'query1', datasource: { type: 'prom', uid: 'ds2' } }],
+      dsRef: { type: 'loki', uid: 'ds1' },
+      timeRange,
+      scopedVars: {},
+    } as unknown as GetExploreUrlArguments);
+
+    expect(queryDatasourceFromUrl(url!)).toEqual({ type: 'prom', uid: 'ds2' });
+  });
+
+  it('resolves to the default datasource when no ref is provided', async () => {
+    const url = await getExploreUrl({
+      queries: [{ refId: 'A', expr: 'query1' }],
+      dsRef: null,
+      timeRange,
+      scopedVars: {},
+    } as unknown as GetExploreUrlArguments);
+
+    expect(queryDatasourceFromUrl(url!)).toEqual({ type: 'test-db', uid: 'default-uid' });
+  });
+
+  it('carries the concrete resolved uid when the panel datasource is a ${var} ref object (v2 panel shape)', async () => {
+    const url = await getExploreUrl({
+      queries: [{ refId: 'A', expr: 'query1' }],
+      dsRef: { uid: '${datasource}', type: '' },
+      timeRange,
+      scopedVars: {},
+    } as unknown as GetExploreUrlArguments);
+
+    // Concrete uid, not the literal variable. On the old identity gap getRef() returned
+    // { type: 'loki', uid: '${datasource}' } and this assertion fails.
+    expect(queryDatasourceFromUrl(url!)).toEqual({ type: 'loki', uid: 'ds1' });
+  });
+
+  it('carries the concrete resolved uid when a query datasource is a ${var} ref object', async () => {
+    const url = await getExploreUrl({
+      queries: [{ refId: 'A', expr: 'query1', datasource: { uid: '${datasource}', type: '' } }],
+      dsRef: { type: 'prom', uid: 'ds2' },
+      timeRange,
+      scopedVars: {},
+    } as unknown as GetExploreUrlArguments);
+
+    expect(queryDatasourceFromUrl(url!)).toEqual({ type: 'loki', uid: 'ds1' });
+  });
+
+  it('carries the concrete resolved uid when a query datasource is a ${var} string', async () => {
+    const url = await getExploreUrl({
+      queries: [{ refId: 'A', expr: 'query1', datasource: '${datasource}' }],
+      dsRef: { type: 'prom', uid: 'ds2' },
+      timeRange,
+      scopedVars: {},
+    } as unknown as GetExploreUrlArguments);
+
+    expect(queryDatasourceFromUrl(url!)).toEqual({ type: 'loki', uid: 'ds1' });
   });
 });
 

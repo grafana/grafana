@@ -10,11 +10,33 @@ import {
   type Abilities,
   type Ability,
   EnrichmentAction,
+  FolderAction,
   FolderBulkAction,
   Granted,
   InsufficientPermissions,
   NotSupported,
 } from './types';
+
+// ── Folder abilities ──────────────────────────────────────────────────────────
+
+/**
+ * This hooks fetches all computed folder abilities for the logged in user
+ * @lintignore
+ */
+export function useFolderAbilities(): Abilities<FolderAction> {
+  const canCreate = ctx.hasPermission(AccessControlAction.FoldersCreate);
+  return useMemo(
+    () => ({
+      [FolderAction.Create]: canCreate ? Granted : InsufficientPermissions([AccessControlAction.FoldersCreate]),
+    }),
+    [canCreate]
+  );
+}
+
+export function useFolderAbility(action: FolderAction): Ability {
+  const all = useFolderAbilities();
+  return useMemo(() => all[action], [all, action]);
+}
 
 // ── Folder bulk action abilities ──────────────────────────────────────────────
 

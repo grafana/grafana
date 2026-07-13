@@ -20,6 +20,10 @@ type GithubWebhookRepository interface {
 	repository.WebhookRepository
 }
 
+// The webhook repository is the only type that reaches PullRequest job
+// processing, so fail the build if it ever stops satisfying the full contract.
+var _ repository.PullRequestRepo = (*githubWebhookRepository)(nil)
+
 type githubWebhookRepository struct {
 	GithubRepository
 	webhookURL string
@@ -138,6 +142,10 @@ func (r *githubWebhookRepository) SubscribedEvents() []string {
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
 	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
+}
+
+func (r *githubWebhookRepository) MergeBase(ctx context.Context, headRef string) (string, error) {
+	return r.Client().MergeBase(ctx, r.Config().Branch(), headRef)
 }
 
 func normalizeGitHubAction(action string) repository.PullRequestAction {

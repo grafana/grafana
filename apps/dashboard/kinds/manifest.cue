@@ -31,11 +31,12 @@ manifest: {
 					// and usage-insights stats itself and fills these in, so none read from a
 					// resource path. Type and capabilities still drive the bleve mapping.
 					//
-					// The int64 fields carry "filter" to get bleve's numeric mapping, which is
-					// what makes range queries and numeric sort work on them. Filtering these
-					// fields by an exact value through the search query path does not work yet
-					// (that path treats filter values as strings) and no client relies on it
-					// today; wiring up numeric filters is a separate follow-up.
+					// int64 fields need a numeric bleve mapping or bleve silently drops the
+					// value; any of filter, sort or retrieve produces that mapping. None of
+					// them declare "filter": filtering a numeric field by value through the
+					// search query path does not work (that path treats filter values as
+					// strings) and no client relies on it. The usage counters add "sort" so
+					// they can be sorted; schema_version and link_count are retrieve-only.
 					//
 					// Declared on v1 only for now. A kind's bleve mapping is built from the
 					// union of searchFields across all its versions, and the dashboard builder
@@ -49,13 +50,13 @@ manifest: {
 						{
 							name: "schema_version"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["retrieve"]
 							description: "Numeric version saying when the schema was saved"
 						},
 						{
 							name: "link_count"
 							type: "int64"
-							capabilities: ["filter", "retrieve"]
+							capabilities: ["retrieve"]
 							description: "How many links appear on the page"
 						},
 						{
@@ -92,91 +93,91 @@ manifest: {
 						{
 							name: "errors_today"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of errors that occurred today"
 						},
 						{
 							name: "errors_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of errors that occurred in the last 1 days"
 						},
 						{
 							name: "errors_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of errors that occurred in the last 7 days"
 						},
 						{
 							name: "errors_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of errors that occurred in the last 30 days"
 						},
 						{
 							name: "errors_total"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Total number of errors"
 						},
 						{
 							name: "queries_today"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of queries that occurred today"
 						},
 						{
 							name: "queries_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of queries that occurred in the last 1 days"
 						},
 						{
 							name: "queries_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of queries that occurred in the last 7 days"
 						},
 						{
 							name: "queries_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of queries that occurred in the last 30 days"
 						},
 						{
 							name: "queries_total"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Total number of queries"
 						},
 						{
 							name: "views_today"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of views that occurred today"
 						},
 						{
 							name: "views_last_1_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of views that occurred in the last 1 days"
 						},
 						{
 							name: "views_last_7_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of views that occurred in the last 7 days"
 						},
 						{
 							name: "views_last_30_days"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Number of views that occurred in the last 30 days"
 						},
 						{
 							name: "views_total"
 							type: "int64"
-							capabilities: ["filter", "sort", "retrieve"]
+							capabilities: ["sort", "retrieve"]
 							description: "Total number of views"
 						},
 					]
@@ -257,6 +258,7 @@ manifest: {
 					}
 				},
 				globalVariableV2beta1,
+				notebookV2beta1,
 			]
 		}
 		"v2": {

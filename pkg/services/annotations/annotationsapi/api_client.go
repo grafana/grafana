@@ -40,25 +40,15 @@ type annotationAPIClient struct {
 	restClient *rest.RESTClient
 }
 
-// newAnnotationAPIClient returns nil when APIServerURL is empty (proxy disabled).
-func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service) (*annotationAPIClient, error) {
+// newAnnotationAPIClient returns a client for the new annotation API server.
+// It returns nil when APIServerURL is empty (proxy disabled).
+func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger authnlib.TokenExchanger) *annotationAPIClient {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
-		return nil, nil
+		return nil
 	}
 
-	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
-	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
-
-	if token == "" || tokenExchangeURL == "" {
-		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token and token_exchange_url are required when api_server_url is set")
-	}
-
-	restCfg, err := buildRESTConfig(url, token, tokenExchangeURL, cfg.Env == setting.Dev)
-	if err != nil {
-		return nil, err
-	}
+	restCfg := buildRESTConfig(url, exchanger, cfg.Env == setting.Dev)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
@@ -69,7 +59,28 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service) (*annotation
 			nil,
 		),
 		restCfg: restCfg,
-	}, nil
+	}
+}
+
+// ProvideTokenExchanger returns a TokenExchanger for the annotation API server, or nil if the proxy is disabled.
+func ProvideTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
+	if strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
+		return nil, nil // proxy disabled
+	}
+
+	grpcSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	token := strings.TrimSpace(grpcSection.Key("token").MustString(""))
+	tokenExchangeURL := strings.TrimSpace(grpcSection.Key("token_exchange_url").MustString(""))
+
+	if token == "" {
+		return nil, fmt.Errorf("annotation proxy: grpc_client_authentication token is required when api_server_url is set")
+	}
+
+	if tokenExchangeURL == "" {
+		return authnlib.NewStaticTokenExchanger(token), nil
+	}
+
+	return newTokenExchangeClient(token, tokenExchangeURL, cfg.Env == setting.Dev)
 }
 
 func (s *annotationAPIClient) Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
@@ -206,7 +217,7 @@ func (s *annotationAPIClient) getRESTClient() (*rest.RESTClient, error) {
 	return rc, nil
 }
 
-func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*rest.Config, error) {
+func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) (authnlib.TokenExchanger, error) {
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if allowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
@@ -223,14 +234,17 @@ func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*
 	if err != nil {
 		return nil, fmt.Errorf("annotation proxy: creating token exchange client: %w", err)
 	}
+	return tc, nil
+}
 
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, allowInsecure bool) *rest.Config {
 	return &rest.Config{
 		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(tc),
+		WrapTransport: newBearerTokenExchangeWrapper(exchanger),
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: allowInsecure,
 		},
-	}, nil
+	}
 }
 
 type bearerTokenExchangeRT struct {

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	authnlib "github.com/grafana/authlib/authn"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +42,8 @@ type MigrationProxy struct {
 	logger log.Logger
 }
 
-func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationProxy, error) {
+// ProvideMigrationProxy builds the proxy that routes legacy annotation operations to the new API server.
+func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service, exchanger authnlib.TokenExchanger) (*MigrationProxy, error) {
 	phase := cfg.AnnotationAppPlatform.APIMigrationPhase
 
 	if phase == "off" {
@@ -49,7 +51,7 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 	}
 
 	switch phase {
-	case "proxy-writes", "proxy-all":
+	case setting.AnnotationAPIMigrationPhaseProxyWrites, setting.AnnotationAPIMigrationPhaseProxyAll:
 	default:
 		return nil, fmt.Errorf("annotation proxy: unknown api_migration_phase %q: must be one of off, proxy-writes, proxy-all", phase)
 	}
@@ -58,13 +60,8 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
-	c, err := newAnnotationAPIClient(cfg, userSvc)
-	if err != nil {
-		return nil, err
-	}
-
 	return &MigrationProxy{
-		client: c,
+		client: newAnnotationAPIClient(cfg, userSvc, exchanger),
 		logger: log.New("annotationsapi"),
 	}, nil
 }
