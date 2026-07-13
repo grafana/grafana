@@ -29,6 +29,13 @@ describe('ViewRepositoryButton', () => {
     expect(link).toHaveAttribute('href', '/admin/provisioning/my-repo');
   });
 
+  it('renders the label as visible text when showLabel is set', () => {
+    render(<ViewRepositoryButton repositoryName="my-repo" showLabel />);
+
+    const link = screen.getByRole('link', { name: 'View repository' });
+    expect(link).toHaveTextContent('View repository');
+  });
+
   it('encodes the repository name in the URL', () => {
     render(<ViewRepositoryButton repositoryName="my repo/with special" />);
 

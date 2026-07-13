@@ -27,7 +27,13 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
 
   return (
     <Stack direction="row" alignItems="stretch">
-      <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />
+      <ManagedBadge
+        managerKind={kind}
+        name={repoData?.spec?.title || id}
+        isOrphaned={isOrphaned}
+        repositoryName={isOrphaned ? undefined : id}
+        sourcePath={isOrphaned ? undefined : dashboard.getPath()}
+      />
     </Stack>
   );
 };

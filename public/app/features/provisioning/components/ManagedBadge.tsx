@@ -1,8 +1,13 @@
+import { css } from '@emotion/css';
+
 import { t } from '@grafana/i18n';
-import { Badge, type BadgeColor, type IconName } from '@grafana/ui';
+import { Badge, Stack, Tooltip, type BadgeColor, type IconName } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
+
+import { SourceLink } from './SourceLink';
+import { ViewRepositoryButton } from './ViewRepositoryButton';
 
 interface ManagedBadgeProps {
   /** Which system manages the resource. When omitted, a generic "Provisioned" badge is shown. */
@@ -11,6 +16,14 @@ interface ManagedBadgeProps {
   name?: string;
   /** Repository-managed resource whose backing repository no longer exists. */
   isOrphaned?: boolean;
+  /**
+   * Name of the managing repository (`grafana.app/managerId`). When set on a repository-managed
+   * resource, the badge reveals its source-file link and the (admin-only) repository link on hover,
+   * so callers don't need to render `SourceLink`/`ViewRepositoryButton` alongside it.
+   */
+  repositoryName?: string;
+  /** Path of the resource's source file within the repository (`grafana.app/sourcePath`); enables the "Source" link. */
+  sourcePath?: string;
 }
 
 /**
@@ -19,8 +32,11 @@ interface ManagedBadgeProps {
  * variants, the orphaned-repository state (`isOrphaned`), and a generic "Provisioned" fallback when
  * `managerKind` is omitted/unknown. Use it for any resource that `getManagerKind`/`isManaged`
  * reports as managed so the styling stays consistent.
+ *
+ * For repository-managed resources, pass `repositoryName` (and `sourcePath`) to surface the source
+ * file link and the admin repository link on hover in a single interactive tooltip.
  */
-export function ManagedBadge({ managerKind, name, isOrphaned = false }: ManagedBadgeProps) {
+export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   let color: BadgeColor = 'purple';
   let icon: IconName = 'exchange-alt';
   let tooltip: string;
@@ -51,5 +67,40 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false }: ManagedB
       tooltip = t('provisioning.managed-badge.provisioned', 'Provisioned');
   }
 
+  // A live repository-managed resource can link back to its source file and (for admins) to the
+  // repository config page. Surface those on hover in an interactive tooltip instead of requiring
+  // callers to render SourceLink / ViewRepositoryButton next to the badge. The links self-gate
+  // (git provider, source path, permission) and only mount when the tooltip opens, so nothing is
+  // fetched until the user hovers.
+  const showRepositoryLinks = managerKind === ManagerKind.Repo && !isOrphaned && Boolean(repositoryName);
+
+  if (showRepositoryLinks) {
+    const content = (
+      <Stack direction="column" gap={1} alignItems="flex-start">
+        <span>{tooltip}</span>
+        <Stack direction="row" gap={1} wrap>
+          {/* SourceLink self-gates on git provider, but only mount it when there is a source file to
+              link to — folders map to a directory and pass none, so we avoid a pointless settings query. */}
+          {sourcePath && <SourceLink repositoryName={repositoryName} sourcePath={sourcePath} />}
+          {/* Repository (admin) link. Self-gates on `provisioning.repositories:read`, so editors who
+              lack it see only the source link. */}
+          <ViewRepositoryButton repositoryName={repositoryName} showLabel />
+        </Stack>
+      </Stack>
+    );
+
+    return (
+      <Tooltip content={content} placement="auto" interactive>
+        <span className={badgeWrap}>
+          <Badge color={color} icon={icon} />
+        </span>
+      </Tooltip>
+    );
+  }
+
   return <Badge color={color} icon={icon} tooltip={tooltip} />;
 }
+
+const badgeWrap = css({
+  display: 'inline-flex',
+});

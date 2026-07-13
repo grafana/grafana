@@ -4,7 +4,6 @@ import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
-import { ViewRepositoryButton } from 'app/features/provisioning/components/ViewRepositoryButton';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
@@ -47,8 +46,13 @@ export const FolderRepo = memo(function FolderRepo({ folder, enableRepositoryLin
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
       {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
-      <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
-      {enableRepositoryLink && <ViewRepositoryButton repositoryName={repository?.name} />}
+      {/* enableRepositoryLink is opt-in so the folder-picker dropdown badge stays non-interactive;
+          when set, the badge reveals the (admin-only) repository link on hover. */}
+      <ManagedBadge
+        managerKind={ManagerKind.Repo}
+        name={repository?.title || repository?.name}
+        repositoryName={enableRepositoryLink ? repository?.name : undefined}
+      />
     </Stack>
   );
 });

@@ -11,6 +11,11 @@ interface ViewRepositoryButtonProps {
   repositoryName?: string;
   /** Repository-managed resource whose backing repository no longer exists. */
   isOrphaned?: boolean;
+  /**
+   * Render the label as visible text instead of an icon-only button with a tooltip. Use when the
+   * button is embedded somewhere a hover tooltip would nest awkwardly (e.g. inside another tooltip).
+   */
+  showLabel?: boolean;
 }
 
 /**
@@ -20,7 +25,11 @@ interface ViewRepositoryButtonProps {
  * target repository route only exists when provisioning is enabled. Rendered as a real anchor so
  * middle-click / open-in-new-tab work.
  */
-export function ViewRepositoryButton({ repositoryName, isOrphaned = false }: ViewRepositoryButtonProps) {
+export function ViewRepositoryButton({
+  repositoryName,
+  isOrphaned = false,
+  showLabel = false,
+}: ViewRepositoryButtonProps) {
   if (
     !config.featureToggles.provisioning ||
     !repositoryName ||
@@ -39,8 +48,10 @@ export function ViewRepositoryButton({ repositoryName, isOrphaned = false }: Vie
       fill="outline"
       size="sm"
       icon="code-branch"
-      tooltip={label}
+      tooltip={showLabel ? undefined : label}
       aria-label={label}
-    />
+    >
+      {showLabel ? label : undefined}
+    </LinkButton>
   );
 }
