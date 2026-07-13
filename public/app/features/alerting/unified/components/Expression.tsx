@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Prism, { type Grammar } from 'prismjs';
 import { type FC, useMemo } from 'react';
 
@@ -23,13 +23,14 @@ const GRAMMARS: Record<'promql' | 'logql', Grammar> = {
 };
 
 const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
+  const styles = useStyles2(getStyles);
   // Prism.highlight HTML-escapes token content, so the query is safe to inject. We render a plain
   // element rather than an editor so copied text contains no stray characters. See PR #57839.
   const html = useMemo(() => Prism.highlight(expr, GRAMMARS[language], language), [expr, language]);
 
   return (
     <div
-      className="prism-syntax-highlight"
+      className={cx('prism-syntax-highlight', styles.highlightedQuery)}
       data-testid="expression-editor"
       dangerouslySetInnerHTML={{ __html: html }}
     />
@@ -56,5 +57,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.fontSize,
     wordBreak: 'break-word',
     overflow: 'auto',
+  }),
+  // Preserve newlines so multi-line queries render across multiple lines, matching the
+  // previous Slate editor which split the query into separate lines.
+  highlightedQuery: css({
+    whiteSpace: 'pre-wrap',
   }),
 });
