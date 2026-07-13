@@ -72,6 +72,15 @@ export function useGlobalContactPointAbility(action: ContactPointAction): Abilit
   return useMemo(() => makeAbility(true, PERMISSIONS[action]), [action]);
 }
 
+/**
+ * Context-free boolean helper for places that need contact point visibility checks
+ * without requiring AlertmanagerContext (e.g. navigation, notification detail menus).
+ */
+export function useCanViewContactPoints(): boolean {
+  const ability = useGlobalContactPointAbility(ContactPointAction.View);
+  return ability.granted;
+}
+
 export function useContactPointAbility(payload: ContactPointAbilityParam): Ability {
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
 

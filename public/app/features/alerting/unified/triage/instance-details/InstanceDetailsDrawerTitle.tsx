@@ -8,7 +8,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaAlertState, type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { createBridgeURL } from '../../components/PluginBridge';
-import { useCanCreateSilences } from '../../hooks/useAbilities';
+import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from '../../hooks/abilities/types';
 import { stringifyFolder, useFolder } from '../../hooks/useFolder';
 import { canAccessPluginPage, useIrmPlugin } from '../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -70,7 +71,7 @@ export function InstanceDetailsDrawerTitle({
 }: InstanceDetailsDrawerTitleProps) {
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
-  const canCreateSilence = useCanCreateSilences();
+  const canCreateSilence = useGlobalSilenceAbility(SilenceAction.Create).granted;
 
   const silenceLink = useMemo(() => {
     if (!rule) {

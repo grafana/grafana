@@ -6,7 +6,7 @@ import { type AccessControlAction } from 'app/types/accessControl';
 import { useAlertmanager } from '../../../state/AlertmanagerContext';
 import { instancesPermissions, silencesPermissions } from '../../../utils/access-control';
 import { makeAbility } from '../abilityUtils';
-import { type AsyncAbility, InsufficientPermissions, Loading, SilenceAction } from '../types';
+import { type Ability, type AsyncAbility, InsufficientPermissions, Loading, SilenceAction } from '../types';
 
 export type SilenceAbilityParam =
   | { action: SilenceAction.View }
@@ -29,6 +29,18 @@ const EXTERNAL_PERMISSIONS: Record<SilenceAction, AccessControlAction[]> = {
   [SilenceAction.Create]: [instancesPermissions.create.external],
   [SilenceAction.Update]: [instancesPermissions.update.external],
 };
+
+/**
+ * Global (unscoped) silence ability check.
+ *
+ * Use this in navigation and any context outside AlertmanagerContext (e.g. alert instance
+ * drawers, triage views). Performs a pure RBAC check with no alertmanager-type gate.
+ * Always uses the Grafana-AM permission set since context-free callers target the built-in
+ * alertmanager — external-AM-only users don't interact with the Grafana silence API.
+ */
+export function useGlobalSilenceAbility(action: SilenceAction): Ability {
+  return useMemo(() => makeAbility(true, GRAFANA_PERMISSIONS[action]), [action]);
+}
 
 export function useSilenceAbility(payload: SilenceAbilityParam): AsyncAbility {
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
