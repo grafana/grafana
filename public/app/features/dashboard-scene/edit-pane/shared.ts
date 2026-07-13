@@ -24,7 +24,13 @@ import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEdit
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
-import { isSceneVariable, isVariableEditable } from '../settings/variables/utils';
+import {
+  dropShadowedPredefinedVariables,
+  isSceneVariable,
+  isVariableEditable,
+  restoreVariableSetSnapshots,
+  snapshotSetsWithPredefinedNamed,
+} from '../settings/variables/utils';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
 import { type DashboardEditPane } from './DashboardEditPane';
@@ -275,10 +281,23 @@ export const dashboardEditActions = {
       },
     });
   },
-  changeVariableName: makeEditAction<SceneVariable, 'name'>({
-    description: t('dashboard.variable.name.action', 'Change variable name'),
-    prop: 'name',
-  }),
+  changeVariableName({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'name'>) {
+    // Snapshot before perform so undo can restore predefined vars dropped on commit.
+    const snapshots = snapshotSetsWithPredefinedNamed(source, newValue);
+
+    dashboardEditActions.edit({
+      description: t('dashboard.variable.name.action', 'Change variable name'),
+      source,
+      perform: () => {
+        source.setState({ name: newValue });
+        dropShadowedPredefinedVariables(source, newValue);
+      },
+      undo: () => {
+        source.setState({ name: oldValue });
+        restoreVariableSetSnapshots(snapshots);
+      },
+    });
+  },
   changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
     description: t('dashboard.variable.label.action', 'Change variable label'),
     prop: 'label',

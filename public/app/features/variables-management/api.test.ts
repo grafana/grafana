@@ -147,6 +147,7 @@ describe('recreateVariable', () => {
 
     expect(calls).toEqual(['create', 'delete']);
     expect(result).toEqual({ deletedOriginal: true });
+    expect(invalidatePredefinedVariableCachesMock).toHaveBeenCalledTimes(1);
   });
 
   it('propagates a create failure without deleting the original', async () => {
@@ -154,6 +155,7 @@ describe('recreateVariable', () => {
 
     await expect(recreateVariable('a', kind, 'folder-1')).rejects.toThrow('conflict');
     expect(deleteMock).not.toHaveBeenCalled();
+    expect(invalidatePredefinedVariableCachesMock).not.toHaveBeenCalled();
   });
 
   it('reports a delete failure without throwing, since the copy already exists', async () => {
@@ -163,5 +165,7 @@ describe('recreateVariable', () => {
 
     expect(postMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ deletedOriginal: false });
+    // Copy exists — caches must refresh even when the original could not be removed.
+    expect(invalidatePredefinedVariableCachesMock).toHaveBeenCalledTimes(1);
   });
 });

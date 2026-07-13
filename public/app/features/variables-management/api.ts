@@ -140,16 +140,18 @@ export async function recreateVariable(
   targetFolderUid?: string
 ): Promise<RecreateVariableResult> {
   await getBackendSrv().post(`${BASE_URL}/variables`, buildVariableResource(kind, targetFolderUid));
+  let deletedOriginal = true;
   try {
     await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(sourceMetadataName)}`, undefined, {
       showErrorAlert: false,
     });
   } catch (error) {
     notifyDeleteAfterCreateFailed(error);
-    return { deletedOriginal: false };
+    deletedOriginal = false;
   }
+  // Always invalidate: the copy exists whether or not the original was removed.
   invalidateAfterVariableMutation();
-  return { deletedOriginal: true };
+  return { deletedOriginal };
 }
 
 /**

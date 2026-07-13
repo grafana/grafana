@@ -46,6 +46,8 @@ import {
   PREDEFINED_VARIABLE_SHADOW_WARNING,
   dropPredefinedVariableNamed,
   dropShadowedPredefinedVariables,
+  restoreVariableSetSnapshots,
+  snapshotSetsWithPredefinedNamed,
   validateVariableName,
 } from './utils';
 
@@ -692,5 +694,32 @@ describe('Predefined variable name shadowing', () => {
     dropShadowedPredefinedVariables(sectionVar, 'env');
 
     expect(rootSet.state.variables).toHaveLength(0);
+  });
+
+  it('snapshotSetsWithPredefinedNamed + restore restores dropped predefined after an intermediate name', () => {
+    const predefined = new CustomVariable({
+      name: 'env',
+      query: 'prod,dev',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const local = new CustomVariable({ name: 'localVar', query: 'a,b' });
+    const set = new SceneVariableSet({ variables: [predefined, local] });
+
+    // Typing through "env" must not permanently lose the predefined: snapshot, drop only on
+    // the intermediate match, then restore when the committed name moves on.
+    const snapshotsAtEnv = snapshotSetsWithPredefinedNamed(local, 'env');
+    expect(snapshotsAtEnv).toHaveLength(1);
+
+    dropShadowedPredefinedVariables(local, 'env');
+    expect(set.state.variables).toEqual([local]);
+
+    restoreVariableSetSnapshots(snapshotsAtEnv);
+    expect(set.state.variables).toEqual([predefined, local]);
+
+    // Commit as "env2" — no predefined named env2, so nothing to drop.
+    const snapshotsAtEnv2 = snapshotSetsWithPredefinedNamed(local, 'env2');
+    expect(snapshotsAtEnv2).toHaveLength(0);
+    dropShadowedPredefinedVariables(local, 'env2');
+    expect(set.state.variables).toEqual([predefined, local]);
   });
 });

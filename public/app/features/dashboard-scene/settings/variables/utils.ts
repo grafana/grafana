@@ -370,10 +370,52 @@ export function dropPredefinedVariableNamed(set: SceneVariableSet, name: string)
   }
 }
 
+export type VariableSetSnapshot = { set: SceneVariableSet; variables: SceneVariable[] };
+
+/**
+ * Snapshots variable sets that currently hold a predefined variable named `name`
+ * (this variable's set and ancestors). Used so a later drop can be undone.
+ */
+export function snapshotSetsWithPredefinedNamed(variable: SceneVariable, name: string): VariableSetSnapshot[] {
+  const snapshots: VariableSetSnapshot[] = [];
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return snapshots;
+  }
+
+  const maybeSnapshot = (candidate: SceneVariableSet) => {
+    if (candidate.state.variables.some((v) => v.state.name === name && isPredefinedOrigin(v.state.origin))) {
+      snapshots.push({ set: candidate, variables: [...candidate.state.variables] });
+    }
+  };
+
+  maybeSnapshot(set);
+
+  let ancestor: SceneObject | undefined = set.parent;
+  while (ancestor) {
+    const ancestorVars = ancestor.state.$variables;
+    if (ancestorVars instanceof SceneVariableSet && ancestorVars !== set) {
+      maybeSnapshot(ancestorVars);
+    }
+    ancestor = ancestor.parent;
+  }
+
+  return snapshots;
+}
+
+export function restoreVariableSetSnapshots(snapshots: VariableSetSnapshot[]): void {
+  for (const { set, variables } of snapshots) {
+    set.setState({ variables });
+  }
+}
+
 /**
  * Drops any predefined variable shadowed by `name` from this variable's set and
  * ancestor sets. Safe when the collision is a non-predefined dashboard local —
  * those are left in place (section shadowing does not delete them).
+ *
+ * Call only on name *commit* (blur / undoable edit action), never on each keystroke —
+ * intermediate typed names that briefly match a predefined variable must not drop it.
  */
 export function dropShadowedPredefinedVariables(variable: SceneVariable, name: string): void {
   const set = variable.parent;

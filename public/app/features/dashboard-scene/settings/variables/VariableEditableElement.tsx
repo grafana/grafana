@@ -206,8 +206,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return result;
     }
 
-    dropShadowedPredefinedVariables(this.variable, name);
+    // Do not drop predefined vars here — onChangeName runs per keystroke (outline rename).
+    // Drop happens on commit via onCommitName / changeVariableName.
     return;
+  }
+
+  /**
+   * Called when an outline rename commits (blur / Enter). Drops any predefined
+   * variable shadowed by the committed name.
+   */
+  public onCommitName() {
+    dropShadowedPredefinedVariables(this.variable, this.variable.state.name);
   }
 
   public scrollIntoView() {
@@ -262,10 +271,9 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
       setNameWarning(result.warningMessage);
     }
 
+    // Update live state for the input; drop shadowed predefined vars only on blur
+    // commit (changeVariableName) so intermediate keystrokes cannot permanently remove them.
     variable.setState({ name: nextName });
-    if (!result.errorMessage) {
-      dropShadowedPredefinedVariables(variable, nextName);
-    }
   };
 
   const oldName = useRef(name);

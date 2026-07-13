@@ -25,12 +25,12 @@ import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import {
-  dropShadowedPredefinedVariables,
   type EditableVariableType,
   getVariableEditor,
   hasVariableOptions,
   isEditableVariableType,
   validateVariableName,
+  dropShadowedPredefinedVariables,
 } from './utils';
 
 interface VariableEditorFormProps {
@@ -82,15 +82,22 @@ export function VariableEditorForm({
       if (result.warningMessage !== nameWarning) {
         setNameWarning(result.warningMessage);
       }
-      // Commit on change (not only blur) so Save / Preview see the typed name
+      // Commit name on change (not only blur) so Save / Preview see the typed name
       // even when the field still has focus — same pattern as the edit pane.
+      // Do not drop predefined vars here: intermediate keystrokes that briefly match
+      // a global/folder name must not permanently remove them from the live scene.
       if (!result.errorMessage) {
         variable.setState({ name: nextName });
-        dropShadowedPredefinedVariables(variable, nextName);
       }
     },
     [variable, nameError, nameWarning, onNameErrorChange]
   );
+
+  const onNameBlur = useCallback(() => {
+    // Drop against the last valid name on the variable (onNameChange only commits
+    // valid names). Intermediate keystrokes never drop; blur is the commit point.
+    dropShadowedPredefinedVariables(variable, variable.state.name);
+  }, [variable]);
 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
@@ -127,6 +134,7 @@ export function VariableEditorForm({
         placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
         defaultValue={name ?? ''}
         onChange={onNameChange}
+        onBlur={onNameBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required
