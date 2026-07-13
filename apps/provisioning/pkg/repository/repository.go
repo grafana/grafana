@@ -257,3 +257,15 @@ type BranchHandler interface {
 	GetCurrentBranch() string
 	SetBranch(branch string)
 }
+
+// PullRequestRepo is implemented by repositories that can be evaluated and
+// commented on as part of a pull request preview job.
+//
+//go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --inpackage --filename pull_request_repo_mock.go --with-expecter
+type PullRequestRepo interface {
+	Config() *provisioning.Repository
+	Read(ctx context.Context, path, ref string) (*FileInfo, error)
+	MergeBase(ctx context.Context, headRef string) (string, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
+}

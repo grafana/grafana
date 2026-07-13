@@ -65,6 +65,11 @@ type NATSSettings struct {
 	// testing: comparison metrics only, never feeds the watch pipeline.
 	NotifierShadow bool
 
+	// Notifier feeds the watch pipeline directly from the NATS bus instead of
+	// polling. Delivery is at-most-once; a disabled or unavailable bus degrades
+	// to polling.
+	Notifier bool
+
 	TLS  NATSTLSSettings
 	Auth NATSAuthSettings
 }
@@ -143,6 +148,7 @@ func readNATSSettings(cfg *Cfg) error {
 		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
 		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
 		NotifierShadow:    section.Key("notifier_shadow").MustBool(false),
+		Notifier:          section.Key("notifier").MustBool(false),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),

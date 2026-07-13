@@ -36,7 +36,8 @@
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-03-05T12:01:31Z"
+        "creationTimestamp": "2024-03-05T12:01:31Z",
+        "deletionTimestamp": "2026-07-07T09:06:03Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
@@ -476,6 +477,7 @@
         "name": "alertingMultiplePolicies",
         "resourceVersion": "1781102456776",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-10T18:32:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
         }
@@ -1435,6 +1437,19 @@
     },
     {
       "metadata": {
+        "name": "dashboard.notebooks",
+        "resourceVersion": "1783509818865",
+        "creationTimestamp": "2026-07-08T11:23:38Z"
+      },
+      "spec": {
+        "description": "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -1554,6 +1569,7 @@
         "name": "dashboardNotebookLayout",
         "resourceVersion": "1781098889122",
         "creationTimestamp": "2026-06-10T13:08:25Z",
+        "deletionTimestamp": "2026-07-08T11:23:38Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
         }
@@ -1986,7 +2002,8 @@
       "metadata": {
         "name": "elasticsearchESQLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the ES|QL query editor in the Elasticsearch data source",
@@ -2012,7 +2029,8 @@
       "metadata": {
         "name": "elasticsearchRawDSLQuery",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-15T19:11:05Z"
+        "creationTimestamp": "2025-12-15T19:11:05Z",
+        "deletionTimestamp": "2026-07-08T21:29:18Z"
       },
       "spec": {
         "description": "Enables the raw DSL query editor in the Elasticsearch data source",
@@ -2463,13 +2481,16 @@
     {
       "metadata": {
         "name": "grafana.assetSriChecks",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782832293915",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
         "stage": "experimental",
-        "codeowner": "@grafana/frontend-ops",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
     },
@@ -2736,6 +2757,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.queryVarEditorRedesign",
+        "resourceVersion": "1781718345897",
+        "creationTimestamp": "2026-06-17T17:45:45Z"
+      },
+      "spec": {
+        "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
@@ -2763,6 +2798,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.ssoSettingsToMTSettings",
+        "resourceVersion": "1783523719423",
+        "creationTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2989,6 +3038,7 @@
         "name": "groupToNestedTableV2",
         "resourceVersion": "1779387430820",
         "creationTimestamp": "2026-03-27T20:18:08Z",
+        "deletionTimestamp": "2026-07-07T16:17:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-21 18:17:10.820324 +0000 UTC"
         }
@@ -4120,6 +4170,7 @@
         "name": "panelStyleActions",
         "resourceVersion": "1779296829158",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-07-07T16:17:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 17:07:09.158003 +0000 UTC"
         }
@@ -4564,6 +4615,22 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "provisioning.userAttribution",
+        "resourceVersion": "1783717809512",
+        "creationTimestamp": "2026-07-08T13:32:58Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Author Git Sync commits as the acting Grafana user",
+        "stage": "preview",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
       }
     },
     {
@@ -5052,7 +5119,8 @@
       "metadata": {
         "name": "rudderstackUpgrade",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-19T16:48:23Z"
+        "creationTimestamp": "2025-11-19T16:48:23Z",
+        "deletionTimestamp": "2026-06-10T21:28:05Z"
       },
       "spec": {
         "description": "Enables the new version of rudderstack",
@@ -5297,6 +5365,21 @@
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "ssoSettingsToMTSettings",
+        "resourceVersion": "1783417175218",
+        "creationTimestamp": "2026-07-07T09:39:35Z",
+        "deletionTimestamp": "2026-07-08T15:15:19Z"
+      },
+      "spec": {
+        "description": "Enables reading and writing SSO settings through the MT-Settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5599,7 +5682,8 @@
       "metadata": {
         "name": "unlimitedLayoutsNesting",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-10T12:15:54Z"
+        "creationTimestamp": "2025-10-10T12:15:54Z",
+        "deletionTimestamp": "2026-07-09T10:11:22Z"
       },
       "spec": {
         "description": "Enables unlimited dashboard panel grouping",
@@ -5738,6 +5822,7 @@
         "name": "vizPresets",
         "resourceVersion": "1779296184831",
         "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-06-29T12:51:15Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-05-20 16:56:24.831547 +0000 UTC"
         }

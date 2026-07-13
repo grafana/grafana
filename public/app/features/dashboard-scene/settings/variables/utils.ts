@@ -32,7 +32,8 @@ import { getCustomVariableOptions } from './editors/CustomVariableEditor/getCust
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { getGroupByVariableOptions, GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { QueryVariableEditor } from './editors/QueryVariableEditor/QueryVariableEditor';
+import { getQueryVariableOptions } from './editors/QueryVariableEditor/getQueryVariableOptions';
 import { getSwitchVariableOptions, SwitchVariableEditor } from './editors/SwitchVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 

@@ -50,7 +50,7 @@ import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import type DetailState from './DetailState';
 import { ShareSpanButton } from './ShareSpanButton';
-import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
+import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
 const useResourceAttributesExtensionLinks = ({
@@ -408,16 +408,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanStartTime: startTime,
   });
 
-  const linksComponent = getSpanDetailLinkButtons({
-    span,
-    createSpanLink,
-    datasourceType,
-    traceToProfilesOptions,
-    timeRange,
-    app,
-    shareButton: <ShareSpanButton focusSpanLink={focusSpanLink} />,
-  });
-
   const listOfContentCards = [];
 
   listOfContentCards.push(
@@ -526,7 +516,16 @@ export default function SpanDetail(props: SpanDetailProps) {
           <h6 className={styles.operationName} title={operationName}>
             {operationName}
           </h6>
-          {linksComponent}
+          <SpanDetailLinkButtons
+            span={span}
+            createSpanLink={createSpanLink}
+            datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
+            traceToProfilesOptions={traceToProfilesOptions}
+            timeRange={timeRange}
+            app={app}
+            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+          />
         </div>
         <div className={styles.listWrapper}>
           <LabeledList className={styles.list} divider={false} items={overviewItems} color={color} />
