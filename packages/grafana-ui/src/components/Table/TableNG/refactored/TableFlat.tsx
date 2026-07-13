@@ -37,7 +37,6 @@ import {
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
-  getDisplayName,
   getVisibleFields,
 } from '../utils';
 
