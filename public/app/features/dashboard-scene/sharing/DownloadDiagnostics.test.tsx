@@ -83,6 +83,17 @@ describe('DownloadDiagnostics', () => {
     expect(await screen.findByText('404 Not Found')).toBeInTheDocument();
   });
 
+  it('shows a message and does not POST when the panel has no active queries', async () => {
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A', hide: true }] });
+    const { tab } = setupScenario(undefined, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(await screen.findByText('This panel has no active queries to capture.')).toBeInTheDocument();
+    expect(downloadDiagnosticsForQueries).not.toHaveBeenCalled();
+  });
+
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
     const { tab } = setupScenario(onDismiss);

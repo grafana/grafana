@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useRef } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -62,14 +63,18 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
 function diagnosticsErrorMessage(error: Error): string {
   if (isFetchError(error)) {
     const parts = [error.status, error.statusText].filter(Boolean);
-    return parts.length ? parts.join(' ') : 'Request failed';
+    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
   }
-  return error.message || 'Failed to generate diagnostics';
+  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
 }
 
 function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
   const { onDismiss, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight request if the drawer unmounts.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const [{ loading: isGenerating, error }, onDownload] = useAsyncFn(async () => {
     const panel = panelRef?.resolve();
@@ -86,13 +91,28 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     );
     // Known limitation (follow-up): template variables are sent un-interpolated, so captured
     // traffic won't match a panel that uses $vars until per-datasource interpolation is applied.
+    if (queries.filter((query) => !query.hide).length === 0) {
+      throw new Error(t('dashboard.diagnostics.no-queries', 'This panel has no active queries to capture.'));
+    }
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
-    await downloadDiagnosticsForQueries(queries, String(timeRange.from.valueOf()), String(timeRange.to.valueOf()));
+    const controller = new AbortController();
+    abortRef.current = controller;
+    await downloadDiagnosticsForQueries(
+      queries,
+      String(timeRange.from.valueOf()),
+      String(timeRange.to.valueOf()),
+      controller.signal
+    );
   }, [panelRef]);
 
+  const handleDismiss = () => {
+    abortRef.current?.abort();
+    onDismiss?.();
+  };
+
   return (
-    <main>
+    <div>
       <p className={styles.info}>
         <Trans i18nKey="dashboard.diagnostics.info-text-panel">
           Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download
@@ -131,11 +151,11 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
             <Trans i18nKey="dashboard.diagnostics.download-button">Download diagnostics</Trans>
           )}
         </Button>
-        <Button variant="secondary" onClick={onDismiss} fill="outline">
+        <Button variant="secondary" onClick={handleDismiss} fill="outline">
           <Trans i18nKey="dashboard.diagnostics.cancel-button">Cancel</Trans>
         </Button>
       </div>
-    </main>
+    </div>
   );
 }
 

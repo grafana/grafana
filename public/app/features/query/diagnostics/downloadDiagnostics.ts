@@ -29,7 +29,12 @@ function fileNameFromContentDisposition(header: string | null): string | undefin
  * yet (it lands in a separate backend PR); until then this call fails and the drawer surfaces the
  * error. The request/response contract and this download flow are final.
  */
-export async function downloadDiagnosticsForQueries(queries: DataQuery[], from: string, to: string): Promise<void> {
+export async function downloadDiagnosticsForQueries(
+  queries: DataQuery[],
+  from: string,
+  to: string,
+  signal?: AbortSignal
+): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
   if (visibleQueries.length === 0) {
@@ -44,6 +49,8 @@ export async function downloadDiagnosticsForQueries(queries: DataQuery[], from: 
       data: { from, to, queries: visibleQueries },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
+      // Cancelling the drawer aborts the in-flight request.
+      abortSignal: signal,
     })
   );
 
