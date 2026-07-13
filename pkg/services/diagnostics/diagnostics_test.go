@@ -108,6 +108,17 @@ func TestCollectHAR_ExternalFramesAndNilFrame(t *testing.T) {
 	require.False(t, ok, "__har__ synthetic response is consumed, not returned to the client")
 }
 
+func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
+	out, err := collectHAR(nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, out)
+
+	// A nil buffer must also flow through Build without panicking.
+	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, bundle)
+}
+
 func TestCollectHAR_Empty(t *testing.T) {
 	out, err := collectHAR(nil, &harcapture.Buffer{})
 	require.NoError(t, err)

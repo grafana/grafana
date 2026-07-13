@@ -96,6 +96,10 @@ func redactedURLString(u *url.URL) string {
 	}
 	redacted := *u
 	redacted.User = nil // drop any inline user:password@ credentials
+	// Drop any #fragment: it can carry secrets (e.g. an OAuth implicit-flow #access_token=...) and
+	// is query-shaped but not covered by the query-param redaction below, so fail closed.
+	redacted.Fragment = ""
+	redacted.RawFragment = ""
 	if redacted.RawQuery != "" {
 		changed := false
 		out := url.Values{}

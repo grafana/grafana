@@ -230,6 +230,16 @@ func TestRedactHARDocument(t *testing.T) {
 	assert.Nil(t, RedactHARDocument([]byte(`{"notalog":1}`)))
 }
 
+func TestRedactedURLString_dropsFragment(t *testing.T) {
+	// A #fragment can carry a token (OAuth implicit flow); it must be dropped, not passed through.
+	u, err := url.Parse("https://idp.example.com/cb?state=ok#access_token=SECRET")
+	require.NoError(t, err)
+	out := redactedURLString(u)
+	assert.NotContains(t, out, "SECRET")
+	assert.NotContains(t, out, "access_token")
+	assert.Equal(t, "https://idp.example.com/cb?state=ok", out)
+}
+
 func TestRedactURLValue_failsClosedOnUnparseable(t *testing.T) {
 	// net/url.Parse rejects raw control characters; such a value can't be query-redacted, so it
 	// must be dropped rather than passed through into a bundle meant for external sharing.

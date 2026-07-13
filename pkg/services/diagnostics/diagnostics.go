@@ -118,7 +118,7 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 // same way in-process capture is (don't rely on the plugin/SDK to redact).
 func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) ([]byte, error) {
 	var bufferDoc []byte
-	if harBuffer.Len() > 0 {
+	if harBuffer != nil && harBuffer.Len() > 0 {
 		b, err := harBuffer.ToHAR()
 		if err != nil {
 			// The in-process buffer captured traffic but couldn't be serialized. Surface the error
