@@ -1870,14 +1870,6 @@
       "count": 1
     }
   },
-  "public/app/features/dimensions/editors/FolderPickerTab.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/dimensions/editors/ResourceDimensionEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2775,7 +2767,7 @@
   },
   "public/app/plugins/datasource/grafana/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 7
+      "count": 6
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
