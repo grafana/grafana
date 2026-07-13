@@ -299,7 +299,7 @@ export const useNestedRows = (
   filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
-  const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }), nestedFramesFieldName);
+  const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
     const result: NestedRowEntry[] = [];
