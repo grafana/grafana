@@ -139,7 +139,7 @@ export function TablePanel(props: Props) {
   );
 }
 
-function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
+export function getCurrentFrameIndex(frames: DataFrame[], options: Pick<Options, 'frameIndex'>) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
@@ -184,7 +184,7 @@ export function onColumnResize(
   });
 }
 
-function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
+export function onSortByChange(sortBy: TableSortByFieldState[], props: Pick<Props, 'onOptionsChange' | 'options'>) {
   props.onOptionsChange({
     ...props.options,
     sortBy,
@@ -201,7 +201,7 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
 // placeholder function; assuming the values are already interpolated
 const replaceVars: InterpolateFunction = (value: string) => value;
 
-const getCellActions = (
+export const getCellActions = (
   dataFrame: DataFrame,
   field: Field,
   rowIndex: number,
