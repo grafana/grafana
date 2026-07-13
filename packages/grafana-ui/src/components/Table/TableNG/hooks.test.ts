@@ -15,6 +15,7 @@ import {
   useManagedSort,
   useNestedRows,
   useColWidths,
+  useRowCompiler,
 } from './hooks';
 import { type TableRow } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
@@ -1104,10 +1105,8 @@ describe('TableNG hooks', () => {
           ],
         });
         const nestedFrame = createDataFrame({ fields: nestedFieldsWithTime });
-        const nestedFrameToRecords = compileFrameToRecords(
-          nestedFrame.fields.map((f) => f.name),
-          'nested'
-        );
+        const fieldNames = nestedFrame.fields.map((f) => f.name);
+        const nestedFrameToRecords = compileFrameToRecords(fieldNames, 'nested');
         const nestedRows = nestedFrameToRecords(nestedFrame, 0);
 
         const measureHeightFn = jest.fn(() => 40);
@@ -1437,6 +1436,132 @@ describe('TableNG hooks', () => {
       rerender({ resetKey: Symbol() });
 
       expect(result.current[0]).toEqual([300, 300]);
+    });
+  });
+
+  describe('useRowCompiler', () => {
+    it('returns a converter that maps a frame to rows with column getters and metadata', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.number, values: [1, 2] },
+          { name: 'value', type: FieldType.string, values: ['a', 'b'] },
+        ],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame);
+
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 'a' });
+      expect(rows[1]).toMatchObject({ __depth: 0, __index: 1, time: 2, value: 'b' });
+    });
+
+    it('resolves column keys from the display name rather than the raw field name', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'raw', type: FieldType.number, values: [1] }],
+      });
+      // getDisplayName reads field.state.displayName; set it directly since
+      // createDataFrame does not derive it from config here.
+      frame.fields[0].state = { displayName: 'Display' };
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame);
+
+      expect(rows[0].Display).toBe(1);
+    });
+
+    it('emits an expander placeholder row for non-empty nested frames and hides the nested column', () => {
+      const child = createDataFrame({
+        fields: [{ name: 'inner', type: FieldType.number, values: [10] }],
+      });
+      const frame = createDataFrame({
+        fields: [
+          { name: 'id', type: FieldType.string, values: ['x', 'y'] },
+          { name: 'nested', type: FieldType.nestedFrames, values: [[child], undefined] },
+        ],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame, 'nested'));
+      const rows = result.current(frame);
+
+      // 'x' has a nested frame -> data row + expander placeholder; 'y' has none -> data row only.
+      expect(rows).toHaveLength(3);
+      expect(rows[0]).toMatchObject({ __depth: 0, __index: 0, id: 'x' });
+      expect(rows[1]).toMatchObject({ __depth: 1, __index: 0 });
+      expect(rows[2]).toMatchObject({ __depth: 0, __index: 1, id: 'y' });
+      // the nested-frames column is not exposed as a data key.
+      expect(rows[0].nested).toBeUndefined();
+    });
+
+    it('tags rows with __parentIndex when a nested row index is passed to the converter', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1, 2] }],
+      });
+
+      const { result } = renderHook(() => useRowCompiler(frame));
+      const rows = result.current(frame, 7);
+
+      expect(rows[0].__parentIndex).toBe(7);
+      expect(rows[1].__parentIndex).toBe(7);
+    });
+
+    it('returns a stable converter across re-renders when field names are unchanged', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(() => useRowCompiler(frame));
+      const first = result.current;
+      rerender();
+
+      expect(result.current).toBe(first);
+    });
+
+    it('keeps the same converter when the frame identity changes but field names do not', () => {
+      const makeFrame = () => createDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [1] }] });
+
+      const { result, rerender } = renderHook(({ frame }) => useRowCompiler(frame), {
+        initialProps: { frame: makeFrame() },
+      });
+      const first = result.current;
+
+      rerender({ frame: makeFrame() });
+
+      expect(result.current).toBe(first);
+    });
+
+    it('returns a new converter when the field display names change', () => {
+      const frameA = createDataFrame({
+        fields: [{ name: 'a', type: FieldType.number, values: [1] }],
+      });
+      const frameB = createDataFrame({
+        fields: [{ name: 'b', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(({ frame }) => useRowCompiler(frame), {
+        initialProps: { frame: frameA },
+      });
+      const first = result.current;
+
+      rerender({ frame: frameB });
+
+      expect(result.current).not.toBe(first);
+    });
+
+    it('returns a new converter when nestedFramesFieldName changes', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+      });
+
+      const { result, rerender } = renderHook(
+        ({ nestedName }: { nestedName?: string }) => useRowCompiler(frame, nestedName),
+        { initialProps: { nestedName: undefined as string | undefined } }
+      );
+      const first = result.current;
+
+      rerender({ nestedName: 'nested' });
+
+      expect(result.current).not.toBe(first);
     });
   });
 });
