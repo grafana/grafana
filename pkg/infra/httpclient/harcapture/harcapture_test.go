@@ -243,6 +243,15 @@ func TestRedactErrorText(t *testing.T) {
 	in2 := `Get https://ds.example.com/q?token=SECRET: EOF`
 	assert.NotContains(t, RedactErrorText(in2), "SECRET")
 
+	// Uppercase/mixed-case scheme must still be redacted (URL schemes are case-insensitive).
+	assert.NotContains(t, RedactErrorText(`Get "HTTPS://host/db?api_key=SUPERSECRET": refused`), "SUPERSECRET")
+
+	// Non-HTTP scheme DSNs carrying inline credentials must have the userinfo dropped.
+	assert.NotContains(t, RedactErrorText(`dial redis://default:hunter2@host:6379: timeout`), "hunter2")
+
+	// A malformed percent-escape in a sensitive param must not fail open (url.Query drops it).
+	assert.NotContains(t, RedactErrorText(`Get "https://host/p?sig=abc%ZZ": bad`), "abc%ZZ")
+
 	// Non-URL text is returned unchanged.
 	assert.Equal(t, "context deadline exceeded", RedactErrorText("context deadline exceeded"))
 }

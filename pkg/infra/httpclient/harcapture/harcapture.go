@@ -18,9 +18,11 @@ import (
 	"github.com/chromedp/cdproto/har"
 )
 
-// urlInText matches http(s) URL substrings in freeform text, e.g. a Go net/url.Error message, which
-// renders the full request URL including its query string.
-var urlInText = regexp.MustCompile(`https?://[^\s"'<>]+`)
+// urlInText matches URL substrings in freeform text, e.g. a Go net/url.Error message, which renders
+// the full request URL including its query string. Case-insensitive (URL schemes are case-insensitive
+// per RFC 3986 and net/url preserves the original case) and scheme-agnostic (so credentials in a
+// non-HTTP DSN such as redis://user:pass@host or postgres://... are redacted too, not just http(s)).
+var urlInText = regexp.MustCompile(`(?i)[a-z][a-z0-9+.-]*://[^\s"'<>]+`)
 
 // RedactErrorText redacts inline credentials, fragments, and sensitive query params from any URL
 // substrings in a freeform error message. Transport errors (net/url.Error) embed the full request
@@ -136,19 +138,25 @@ func redactedURLString(u *url.URL) string {
 	redacted.Fragment = ""
 	redacted.RawFragment = ""
 	if redacted.RawQuery != "" {
+		// Parse RawQuery manually rather than via url.Query(): url.Query() silently drops any pair
+		// whose value has a malformed percent-escape (e.g. sig=abc%ZZ), which would leave that
+		// sensitive value in RawQuery unredacted -- a fail-open. Splitting the raw string never drops
+		// a pair, and preserves parameter order/encoding for the untouched ones.
 		changed := false
-		out := url.Values{}
-		for k, vals := range redacted.Query() {
-			for _, v := range vals {
-				rv := redactQueryParam(k, v)
-				if rv != v {
-					changed = true
-				}
-				out.Add(k, rv)
+		parts := strings.Split(redacted.RawQuery, "&")
+		for i, p := range parts {
+			key, _, hasValue := strings.Cut(p, "=")
+			name := key
+			if unescaped, err := url.QueryUnescape(key); err == nil {
+				name = unescaped
+			}
+			if _, sensitive := sensitiveQueryParams[strings.ToLower(name)]; sensitive && hasValue {
+				parts[i] = key + "=" + redactedValue
+				changed = true
 			}
 		}
 		if changed {
-			redacted.RawQuery = out.Encode()
+			redacted.RawQuery = strings.Join(parts, "&")
 		}
 	}
 	return redacted.String()
