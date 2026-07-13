@@ -58,8 +58,11 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 
 	// Force a live query: a query-result cache hit returns without a datasource round trip, so HTTP
 	// capture would run on nothing and traffic.har would be silently empty. Diagnostics must capture
-	// what actually happens on the wire, so bypass the query cache (the caching service reads this
-	// off the request's ReqContext).
+	// what actually happens on the wire, so bypass the query cache. This is the same signal the
+	// X-Cache-Skip request header feeds (see middleware.go); the Enterprise caching service reads it
+	// back off the ReqContext via contexthandler.FromContext in the plugin caching middleware
+	// (clientmiddleware.CachingMiddleware), and c is the same ReqContext pointer stored in the query
+	// context, so mutating it here takes effect for this request.
 	c.SkipQueryCache = true
 
 	resp, queryErr := hs.queryDataService.QueryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)

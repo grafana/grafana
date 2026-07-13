@@ -151,7 +151,9 @@ func RedactHARDocument(doc []byte) []byte {
 	}
 	out, err := json.Marshal(h)
 	if err != nil {
-		return doc
+		// Fail closed: returning the original bytes here would leak the unredacted frame we just
+		// failed to re-serialize into a bundle meant for external sharing.
+		return nil
 	}
 	return out
 }
