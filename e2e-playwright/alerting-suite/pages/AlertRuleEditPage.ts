@@ -128,6 +128,17 @@ export class AlertRuleEditPage {
 
   async save(): Promise<void> {
     await this.saveButton.click();
+    // The Save button's `disabled`/spinner state mirrors react-hook-form's `isSubmitting`
+    // (AlertRuleForm.tsx:357-358) regardless of which API the submit handler ends up calling —
+    // waiting for it to settle (button re-enables, or disappears because the page navigated away
+    // on success) means the async submit work has actually finished, instead of racing ahead of it
+    // the way a bare click does.
+    await Promise.race([
+      this.saveButton.waitFor({ state: 'hidden' }).catch(() => undefined),
+      expect(this.saveButton)
+        .not.toBeDisabled({ timeout: 10_000 })
+        .catch(() => undefined),
+    ]);
   }
 
   protected get nameInput(): Locator {
