@@ -97,11 +97,13 @@ func testZanzanaQueryResponse() *authzextv1.QueryResponse {
 		"",
 		"zanzana-dash",
 	))
+	return testGetGrantsResponse(grant)
+}
+
+func testGetGrantsResponse(grants ...*authzextv1.TupleKey) *authzextv1.QueryResponse {
 	return &authzextv1.QueryResponse{
-		Result: &authzextv1.QueryResponse_UserPermissions{
-			UserPermissions: &authzextv1.ListUserPermissionsResult{
-				Grants: []*authzextv1.TupleKey{grant},
-			},
+		Result: &authzextv1.QueryResponse_Grants{
+			Grants: common.NormalizeGrantTuples(grants, nil),
 		},
 	}
 }
@@ -274,13 +276,7 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 			"zanzana-dash",
 		))
 		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{
-			queryResp: &authzextv1.QueryResponse{
-				Result: &authzextv1.QueryResponse_UserPermissions{
-					UserPermissions: &authzextv1.ListUserPermissionsResult{
-						Grants: []*authzextv1.TupleKey{grant},
-					},
-				},
-			},
+			queryResp: testGetGrantsResponse(grant),
 		}, &usertest.FakeUserService{}, nil, false, nil)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
@@ -528,13 +524,7 @@ func TestService_GetUserPermissions_MergesLegacyAndZanzana(t *testing.T) {
 		"zanzana-dash",
 	))
 	zClient := &fakeZanzanaClient{
-		queryResp: &authzextv1.QueryResponse{
-			Result: &authzextv1.QueryResponse_UserPermissions{
-				UserPermissions: &authzextv1.ListUserPermissionsResult{
-					Grants: []*authzextv1.TupleKey{grant},
-				},
-			},
-		},
+		queryResp: testGetGrantsResponse(grant),
 	}
 
 	svc := setupServiceWithFakeStore(t, store, zClient, &usertest.FakeUserService{})

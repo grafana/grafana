@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -25,37 +26,36 @@ var grantObjectPrefixes = []string{
 	common.TypeResourcePrefix,
 	common.TypeFolderPrefix,
 	common.TypeTeamPrefix,
+	common.TypeUser + ":",
+	common.TypeServiceAccount + ":",
 }
 
-func (s *Server) queryListUserPermissions(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.ListUserPermissionsQuery) (*authzextv1.QueryResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "server.queryListUserPermissions")
+func (s *Server) queryGetGrants(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.GetGrantsQuery) (*authzextv1.QueryResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "server.queryGetGrants")
 	defer span.End()
 
 	if req.GetSubject() == "" {
 		return nil, errors.New("subject cannot be empty")
 	}
 
-	grants, err := s.listUserPermissions(ctx, store, req)
+	tuples, err := s.readDirectGrantTuples(ctx, store, req.GetSubject(), req.GetTeams())
 	if err != nil {
 		return nil, err
 	}
 
 	return &authzextv1.QueryResponse{
-		Result: &authzextv1.QueryResponse_UserPermissions{
-			UserPermissions: &authzextv1.ListUserPermissionsResult{
-				Grants: grants,
-			},
+		Result: &authzextv1.QueryResponse_Grants{
+			Grants: common.NormalizeGrantTuples(tuples, req.GetTypes()),
 		},
 	}, nil
 }
 
-func (s *Server) listUserPermissions(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.ListUserPermissionsQuery) ([]*authzextv1.TupleKey, error) {
-	subjects, err := s.resolveGrantSubjects(ctx, store, req.GetSubject(), req.GetTeams())
+func (s *Server) readDirectGrantTuples(ctx context.Context, store *zanzana.StoreInfo, subject string, teams []string) ([]*authzextv1.TupleKey, error) {
+	subjects, err := s.resolveGrantSubjects(ctx, store, subject, teams)
 	if err != nil {
 		return nil, err
 	}
 
-	seen := make(map[string]struct{})
 	var (
 		mu     sync.Mutex
 		grants []*authzextv1.TupleKey
@@ -78,11 +78,6 @@ func (s *Server) listUserPermissions(ctx context.Context, store *zanzana.StoreIn
 					if !isGrantTuple(t) {
 						continue
 					}
-					key := zanzana.TupleStringWithoutCondition(t)
-					if _, dup := seen[key]; dup {
-						continue
-					}
-					seen[key] = struct{}{}
 					grants = append(grants, common.ToAuthzExtTupleKey(t))
 				}
 				mu.Unlock()
@@ -147,6 +142,10 @@ func (s *Server) collectRoleAssignees(ctx context.Context, store *zanzana.StoreI
 			}
 		}
 		queue = nextQueue
+	}
+
+	if len(queue) > 0 {
+		return nil, fmt.Errorf("role nesting exceeds maximum depth of %d", maxRoleNestDepth)
 	}
 
 	return roleAssignees, nil

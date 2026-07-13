@@ -69,7 +69,7 @@ func TestIsGrantTuple(t *testing.T) {
 	}
 }
 
-func TestListUserPermissions_ReturnsDirectAndRoleGrants(t *testing.T) {
+func TestGetGrants_ReturnsDirectAndRoleGrants(t *testing.T) {
 	srv := setupOpenFGAServer(t)
 
 	const (
@@ -126,8 +126,8 @@ func TestListUserPermissions_ReturnsDirectAndRoleGrants(t *testing.T) {
 	resp, err := srv.Query(newContextWithNamespace(), &authzextv1.QueryRequest{
 		Namespace: namespace,
 		Operation: &authzextv1.QueryOperation{
-			Operation: &authzextv1.QueryOperation_ListUserPermissions{
-				ListUserPermissions: &authzextv1.ListUserPermissionsQuery{
+			Operation: &authzextv1.QueryOperation_GetGrants{
+				GetGrants: &authzextv1.GetGrantsQuery{
 					Subject: common.NewTupleEntry(common.TypeUser, userUID, ""),
 					Teams:   []string{teamUID},
 				},
@@ -136,32 +136,19 @@ func TestListUserPermissions_ReturnsDirectAndRoleGrants(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	result := resp.GetUserPermissions()
+	result := resp.GetGrants()
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.GetGrants())
-
-	grantKeys := make(map[string]struct{})
-	for _, grant := range result.GetGrants() {
-		grantKeys[grant.GetUser()+"|"+grant.GetRelation()+"|"+grant.GetObject()] = struct{}{}
-	}
-
-	require.Contains(t, grantKeys, common.NewTupleEntry(common.TypeUser, userUID, "")+"|"+common.RelationGet+"|"+common.NewResourceIdent(dashboardGroup, dashboardResource, "", dashUID))
-	require.Contains(t, grantKeys, common.NewTupleEntry(common.TypeUser, userUID, "")+"|"+common.RelationGet+"|"+common.NewFolderIdent(folderUID))
-	require.Contains(t, grantKeys, common.NewTupleEntry(common.TypeRole, roleUID, common.RelationAssignee)+"|"+common.RelationGet+"|"+common.NewGroupResourceIdent(dashboardGroup, dashboardResource, ""))
-	require.Contains(t, grantKeys, common.NewTupleEntry(common.TypeTeam, teamUID, common.RelationTeamMember)+"|"+common.RelationGet+"|"+common.NewResourceIdent(dashboardGroup, dashboardResource, "", "team-dash"))
-
-	// Role binding tuples themselves are not permission grants.
-	require.NotContains(t, grantKeys, common.NewTupleEntry(common.TypeUser, userUID, "")+"|"+common.RelationAssignee+"|"+common.NewTupleEntry(common.TypeRole, roleUID, ""))
+	require.Equal(t, common.NormalizeGrantTuples(common.ToAuthzExtTupleKeys(tuples), nil), result)
 }
 
-func TestListUserPermissions_EmptySubject(t *testing.T) {
+func TestGetGrants_EmptySubject(t *testing.T) {
 	srv := setupOpenFGAServer(t)
 
 	_, err := srv.Query(newContextWithNamespace(), &authzextv1.QueryRequest{
 		Namespace: namespace,
 		Operation: &authzextv1.QueryOperation{
-			Operation: &authzextv1.QueryOperation_ListUserPermissions{
-				ListUserPermissions: &authzextv1.ListUserPermissionsQuery{},
+			Operation: &authzextv1.QueryOperation_GetGrants{
+				GetGrants: &authzextv1.GetGrantsQuery{},
 			},
 		},
 	})

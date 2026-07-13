@@ -189,7 +189,7 @@ func grantInstanceName(objectType, object, objectName string) string {
 	case TypeResource:
 		_, _, _, name := parseResourceObject(object)
 		return name
-	case TypeFolder, TypeTeam:
+	case TypeFolder, TypeTeam, TypeUser, TypeServiceAccount:
 		return objectName
 	default:
 		return ""
@@ -303,6 +303,10 @@ func grantScopeForObject(objectType, group, resource, instanceName string) Grant
 		return GrantScope{Kind: KindFolders, Identifier: instanceName}
 	case TypeTeam:
 		return GrantScope{Kind: KindTeams, Identifier: instanceName}
+	case TypeUser:
+		return GrantScope{Kind: KindUsers, Identifier: instanceName}
+	case TypeServiceAccount:
+		return GrantScope{Kind: KindServiceAccounts, Identifier: instanceName}
 	default:
 		return GrantScope{}
 	}

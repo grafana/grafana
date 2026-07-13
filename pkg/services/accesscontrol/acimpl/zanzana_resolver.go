@@ -83,8 +83,8 @@ func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Co
 	resp, err := r.client.Query(ctx, &authzextv1.QueryRequest{
 		Namespace: namespace,
 		Operation: &authzextv1.QueryOperation{
-			Operation: &authzextv1.QueryOperation_ListUserPermissions{
-				ListUserPermissions: &authzextv1.ListUserPermissionsQuery{
+			Operation: &authzextv1.QueryOperation_GetGrants{
+				GetGrants: &authzextv1.GetGrantsQuery{
 					Subject: subject,
 					Teams:   r.teamsForCurrentUser(usr),
 				},
@@ -95,12 +95,12 @@ func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Co
 		return nil, fmt.Errorf("zanzana query failed: %w", err)
 	}
 
-	result := resp.GetUserPermissions()
+	result := resp.GetGrants()
 	if result == nil {
 		return nil, nil
 	}
 
-	return r.grantsToLegacyPermissions(ctx, namespace, result.GetGrants()), nil
+	return r.grantsToLegacyPermissions(ctx, namespace, result), nil
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana
@@ -466,19 +466,17 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	return permissions, nil
 }
 
-func (r *ZanzanaPermissionResolver) grantsToLegacyPermissions(ctx context.Context, namespace string, grants []*authzextv1.TupleKey) []ac.Permission {
-	permissions := make([]ac.Permission, 0, len(grants))
-	for _, grant := range grants {
-		for _, gp := range common.TranslateGrantTuple(grant) {
-			scope := r.formatGrantScope(ctx, namespace, gp.Action, gp.Scope)
-			if scope == "" {
-				continue
-			}
-			permissions = append(permissions, ac.Permission{
-				Action: gp.Action,
-				Scope:  scope,
-			})
+func (r *ZanzanaPermissionResolver) grantsToLegacyPermissions(ctx context.Context, namespace string, grants *authzextv1.GetGrantsResult) []ac.Permission {
+	permissions := make([]ac.Permission, 0)
+	for _, gp := range common.TranslateGrants(grants) {
+		scope := r.formatGrantScope(ctx, namespace, gp.Action, gp.Scope)
+		if scope == "" {
+			continue
 		}
+		permissions = append(permissions, ac.Permission{
+			Action: gp.Action,
+			Scope:  scope,
+		})
 	}
 
 	// Expand action sets (e.g. dashboards:view -> dashboards:read) so the merged result

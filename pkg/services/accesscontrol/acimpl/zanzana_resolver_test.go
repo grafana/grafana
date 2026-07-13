@@ -709,7 +709,7 @@ func TestLegacyZanzanaParity(t *testing.T) {
 }
 
 // TestResolveCurrentUserPermissions_PassesTeamsToQuery verifies the merge
-// resolver sends the signed-in user's team memberships in ListUserPermissionsQuery,
+// resolver sends the signed-in user's team memberships in GetGrantsQuery,
 // so team-based grants surface in the merged permissions.
 func TestResolveCurrentUserPermissions_PassesTeamsToQuery(t *testing.T) {
 	newReq := func(stored, external []string) identity.Requester {
@@ -737,8 +737,8 @@ func TestResolveCurrentUserPermissions_PassesTeamsToQuery(t *testing.T) {
 			cap := &capturingZanzanaClient{
 				fakeZanzanaClient: fakeZanzanaClient{
 					queryResp: &authzextv1.QueryResponse{
-						Result: &authzextv1.QueryResponse_UserPermissions{
-							UserPermissions: &authzextv1.ListUserPermissionsResult{},
+						Result: &authzextv1.QueryResponse_Grants{
+							Grants: &authzextv1.GetGrantsResult{},
 						},
 					},
 				},
@@ -749,7 +749,7 @@ func TestResolveCurrentUserPermissions_PassesTeamsToQuery(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, cap.queryCalls, 1)
 
-			op := cap.queryCalls[0].GetOperation().GetListUserPermissions()
+			op := cap.queryCalls[0].GetOperation().GetGetGrants()
 			require.NotNil(t, op)
 			require.Equal(t, tc.wantTeams, op.GetTeams())
 			require.Equal(t, "user:u1", op.GetSubject())
@@ -768,13 +768,7 @@ func TestResolveCurrentUserPermissions_TranslatesGrantTuples(t *testing.T) {
 	))
 
 	fake := &fakeZanzanaClient{
-		queryResp: &authzextv1.QueryResponse{
-			Result: &authzextv1.QueryResponse_UserPermissions{
-				UserPermissions: &authzextv1.ListUserPermissionsResult{
-					Grants: []*authzextv1.TupleKey{grant},
-				},
-			},
-		},
+		queryResp: testGetGrantsResponse(grant),
 	}
 	r := NewZanzanaPermissionResolver(fake, &usertest.FakeUserService{}, nil, false, nil)
 
@@ -803,13 +797,7 @@ func TestResolveCurrentUserPermissions_ExpandsActionSets(t *testing.T) {
 	))
 
 	fake := &fakeZanzanaClient{
-		queryResp: &authzextv1.QueryResponse{
-			Result: &authzextv1.QueryResponse_UserPermissions{
-				UserPermissions: &authzextv1.ListUserPermissionsResult{
-					Grants: []*authzextv1.TupleKey{grant},
-				},
-			},
-		},
+		queryResp: testGetGrantsResponse(grant),
 	}
 
 	actionResolver := resourcepermissions.NewActionSetService()
