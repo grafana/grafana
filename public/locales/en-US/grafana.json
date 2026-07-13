@@ -7293,7 +7293,6 @@
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
-      "label-predefined": "Predefined variables",
       "tooltip": "Added by the {{pluginName}} plugin",
       "tooltip-folder": "Folder variable, inherited from this dashboard's folder",
       "tooltip-global": "Global variable, shared across all dashboards",
@@ -7338,9 +7337,6 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
-    },
-    "read-only-variables-section": {
-      "label": "Provisioned variables"
     },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
@@ -7588,6 +7584,9 @@
           "variables": "Variables"
         }
       }
+    },
+    "validate-variable-name": {
+      "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",

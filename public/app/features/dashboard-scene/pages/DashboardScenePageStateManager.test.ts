@@ -817,12 +817,32 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
+      const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
+
+      beforeEach(() => {
+        config.featureToggles.globalDashboardVariables = true;
+      });
+
+      afterEach(() => {
+        config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+      });
+
       const predefinedVariable = {
         kind: 'CustomVariable' as const,
         spec: {
           name: 'injectedGlobalVar',
           current: { text: 'a', value: 'a' },
           query: 'a,b,c',
+          origin: { type: 'global' },
+        },
+      };
+
+      const updatedPredefinedVariable = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'injectedGlobalVar',
+          current: { text: 'x', value: 'x' },
+          query: 'x,y,z',
           origin: { type: 'global' },
         },
       };
@@ -835,6 +855,7 @@ describe('DashboardScenePageStateManager v2', () => {
           name: 'fake-dash',
           creationTimestamp: '',
           resourceVersion: '1',
+          generation: 1,
           annotations,
         },
         spec: { ...defaultDashboardV2Spec() },
@@ -875,6 +896,18 @@ describe('DashboardScenePageStateManager v2', () => {
         expect(mockFetchPredefinedVariables).toHaveBeenCalledWith('url-folder-uid');
       });
 
+      it('should attach an empty defaultVariables list when none are returned', async () => {
+        mockFetchPredefinedVariables.mockResolvedValueOnce([]);
+        const loader = new DashboardScenePageStateManagerV2({});
+
+        const options = await loader.enrichLoadOptions(v2Response(), {
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+        });
+
+        expect(options.defaultVariables).toEqual([]);
+      });
+
       it('should not fetch predefined variables for public dashboards', async () => {
         const loader = new DashboardScenePageStateManagerV2({});
 
@@ -885,6 +918,47 @@ describe('DashboardScenePageStateManager v2', () => {
 
         expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
         expect(options.defaultVariables).toBeUndefined();
+      });
+
+      it('should sync predefined variables onto a cached scene on revisit', async () => {
+        mockFetchPredefinedVariables
+          .mockResolvedValueOnce([predefinedVariable])
+          .mockResolvedValueOnce([updatedPredefinedVariable]);
+        setupDashboardAPI(v2Response(), jest.fn());
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        const firstQuery = loader.state.dashboard?.state.$variables?.state.variables.find(
+          (v) => v.state.name === 'injectedGlobalVar'
+        )?.state;
+        expect(firstQuery).toMatchObject({ query: 'a,b,c' });
+
+        // Second load hits the scene cache (same generation) but must still apply the
+        // freshly fetched predefined variables — scene cache has no TTL.
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        const synced = loader.state.dashboard?.state.$variables?.state.variables.find(
+          (v) => v.state.name === 'injectedGlobalVar'
+        )?.state;
+        expect(synced).toMatchObject({ query: 'x,y,z' });
+        expect(loader.state.dashboard).toBe(loader.getSceneFromCache('fake-dash'));
+      });
+
+      it('should clear predefined variables from a cached scene when none remain', async () => {
+        mockFetchPredefinedVariables.mockResolvedValueOnce([predefinedVariable]).mockResolvedValueOnce([]);
+        setupDashboardAPI(v2Response(), jest.fn());
+
+        const loader = new DashboardScenePageStateManagerV2({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loader.state.dashboard?.state.$variables?.state.variables.map((v) => v.state.name)).toContain(
+          'injectedGlobalVar'
+        );
+
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+        expect(loader.state.dashboard?.state.$variables?.state.variables.map((v) => v.state.name)).not.toContain(
+          'injectedGlobalVar'
+        );
       });
     });
 

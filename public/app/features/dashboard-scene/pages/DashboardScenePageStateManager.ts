@@ -1012,14 +1012,17 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       return options;
     }
 
+    // fetchPredefinedVariables is a no-op when the feature flag is off.
+    if (!config.featureToggles.globalDashboardVariables) {
+      return options;
+    }
+
     // New dashboards carry the target folder in the URL; existing ones in the folder annotation.
     const folderUid = rsp.metadata.annotations?.[AnnoKeyFolder] || options.urlFolderUid || undefined;
     const predefinedVariables = await fetchPredefinedVariables(folderUid);
 
-    if (predefinedVariables.length === 0) {
-      return options;
-    }
-
+    // Always attach (including []) so scene-cache hits can sync — including clearing
+    // variables that were deleted after the scene was cached.
     return {
       ...options,
       defaultVariables: [...predefinedVariables, ...(options.defaultVariables ?? [])],
@@ -1037,6 +1040,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const fromCache = this.getSceneFromCache(options.uid);
 
       if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        // Scene cache has no TTL. Re-apply predefined variables fetched by enrichLoadOptions
+        // so revisits pick up changes after the 30s predefined-variables cache expires.
+        if (options.defaultVariables !== undefined) {
+          fromCache.setPredefinedVariables(options.defaultVariables);
+        }
+
         const profiler = getDashboardSceneProfiler();
         profiler.setMetadata({
           dashboardUID: fromCache.state.uid,

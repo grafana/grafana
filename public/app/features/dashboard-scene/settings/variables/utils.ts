@@ -356,8 +356,11 @@ export interface VariableNameValidationResult {
   warningMessage?: string;
 }
 
-export const PREDEFINED_VARIABLE_SHADOW_WARNING =
-  'A global or folder variable with this name exists and will be overwritten by this dashboard variable.';
+export const getPredefinedVariableShadowWarning = () =>
+  t(
+    'dashboard-scene.validate-variable-name.warning-predefined-shadow',
+    'A global or folder variable with this name exists and will be overwritten by this dashboard variable.'
+  );
 
 /**
  * Removes a predefined (global/folder) variable of the given name from the set so a
@@ -458,7 +461,7 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
     if (isPredefinedOrigin(varLookupByName.state.origin)) {
       return {
         isValid: true,
-        warningMessage: PREDEFINED_VARIABLE_SHADOW_WARNING,
+        warningMessage: getPredefinedVariableShadowWarning(),
       };
     }
     return { isValid: false, errorMessage: 'Variable with the same name already exists' };
@@ -474,7 +477,7 @@ export function validateVariableName(variable: SceneVariable, name: string): Var
         return {
           isValid: true,
           warningMessage: isPredefinedOrigin(ancestorVar.state.origin)
-            ? PREDEFINED_VARIABLE_SHADOW_WARNING
+            ? getPredefinedVariableShadowWarning()
             : 'A variable with this name already exists at the dashboard level. This variable will overwrite it.',
         };
       }

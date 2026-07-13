@@ -43,7 +43,7 @@ import {
   getVariableDefault,
   isSceneVariableInstance,
   isVariableEditable,
-  PREDEFINED_VARIABLE_SHADOW_WARNING,
+  getPredefinedVariableShadowWarning,
   dropPredefinedVariableNamed,
   dropShadowedPredefinedVariables,
   restoreVariableSetSnapshots,
@@ -604,7 +604,7 @@ describe('Predefined variable name shadowing', () => {
 
     const result = validateVariableName(local, 'env');
     expect(result.isValid).toBe(true);
-    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.warningMessage).toBe(getPredefinedVariableShadowWarning());
     expect(result.errorMessage).toBeUndefined();
   });
 
@@ -619,7 +619,7 @@ describe('Predefined variable name shadowing', () => {
 
     const result = validateVariableName(local, 'env');
     expect(result.isValid).toBe(true);
-    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.warningMessage).toBe(getPredefinedVariableShadowWarning());
     expect(result.errorMessage).toBeUndefined();
   });
 
@@ -653,7 +653,7 @@ describe('Predefined variable name shadowing', () => {
 
     const result = validateVariableName(sectionVar, 'env');
     expect(result.isValid).toBe(true);
-    expect(result.warningMessage).toBe(PREDEFINED_VARIABLE_SHADOW_WARNING);
+    expect(result.warningMessage).toBe(getPredefinedVariableShadowWarning());
     expect(result.errorMessage).toBeUndefined();
   });
 

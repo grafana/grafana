@@ -2577,6 +2577,115 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('setPredefinedVariables', () => {
+    it('should replace previous predefined variables on subsequent calls', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'x', value: 'x' },
+            query: 'x,y,z',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('globalVar');
+      expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
+    });
+
+    it('should preserve the current selection when refreshing a predefined variable', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const existing = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      existing?.setState({ value: 'b', text: 'b' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c,d',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const refreshed = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      expect(refreshed?.state).toMatchObject({ query: 'a,b,c,d', value: 'b', text: 'b' });
+    });
+
+    it('should keep datasource defaults and local variables while replacing predefined ones', () => {
+      const localVar = new TestVariable({ name: 'localVar' });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [localVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const names = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(names).toEqual(expect.arrayContaining(['globalVar', 'dsVar', 'localVar']));
+
+      scene.setPredefinedVariables([]);
+
+      const remaining = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(remaining).toContain('dsVar');
+      expect(remaining).toContain('localVar');
+      expect(remaining).not.toContain('globalVar');
+    });
+  });
+
   describe('setDefaultLinks', () => {
     it('should prepend default links to existing links', () => {
       const scene = buildTestScene();
