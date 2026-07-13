@@ -209,7 +209,12 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
       }
     }
     runner.setState({ queries, datasource: MIXED_DATASOURCE });
-    runner.runQueries();
+    // Only run explicitly when the runner is already active (a user-driven source change). On the initial
+    // activation, _applySources runs *before* $data is cascade-activated, and that activation issues the
+    // first query itself (shouldRunQueriesOnActivate); running here too would fire a duplicate request.
+    if (runner.isActive) {
+      runner.runQueries();
+    }
   }
 
   /** Choose which panels' queries feed the sparklines. */
