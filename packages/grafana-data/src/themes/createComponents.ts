@@ -152,7 +152,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       borderColor: colors.border.weak,
       boxShadow: 'none',
       contentBackground: colors.background.secondary,
-      contentBorderColor: colors.border.medium,
+      contentBorderColor: colors.border.weak,
     },
     dropdown: {
       background: colors.background.elevated,

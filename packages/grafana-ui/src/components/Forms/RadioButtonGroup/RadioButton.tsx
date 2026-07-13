@@ -20,6 +20,7 @@ export interface RadioButtonProps extends Omit<HTMLProps<HTMLInputElement>, 'siz
   active: boolean;
   onChange: () => void;
   onClick: () => void;
+  fullWidth?: boolean;
   title?: string;
   'aria-label'?: StringSelector;
   children?: React.ReactNode;
@@ -36,13 +37,14 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
       onClick,
       name = undefined,
       description,
+      fullWidth,
       title,
       'aria-label': ariaLabel,
       ...rest
     },
     ref
   ) => {
-    const styles = useStyles2(getRadioButtonStyles, size);
+    const styles = useStyles2(getRadioButtonStyles, size, fullWidth);
     const id = useId();
     const adjustedTitle = title ?? ariaLabel;
 
@@ -84,7 +86,7 @@ export const RadioButton = forwardRef<HTMLInputElement, RadioButtonProps>(
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize) => {
+const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
@@ -98,7 +100,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize) => {
       display: 'flex',
       justifyContent: 'space-between',
       position: 'relative',
-      flex: '1 1 auto',
+      flex: fullWidth ? '1 1 0' : '0 1 auto',
       minWidth: 0,
       textAlign: 'center',
     }),
