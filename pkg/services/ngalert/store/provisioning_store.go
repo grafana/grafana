@@ -132,7 +132,14 @@ func (st DBstore) setProvenanceUpsert(sess *db.Session, recordKey, recordType st
 		return err
 	}
 	mp := managerForProvenanceWrite(stored, p)
+	return st.provenanceUpsert(sess, recordKey, recordType, org, p, mp)
+}
 
+// provenanceUpsert writes the provenance and manager columns in a single upsert
+// statement. It performs no reads, so it is safe to call from the locking path
+// (setProvenanceWithLocking) where an extra intra-transaction SELECT after a
+// FOR UPDATE gap lock would reintroduce MySQL insert-intention deadlocks.
+func (st DBstore) provenanceUpsert(sess *db.Session, recordKey, recordType string, org int64, p models.Provenance, mp utils.ManagerProperties) error {
 	upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 		provenanceRecord{}.TableName(),
 		[]string{"record_key", "record_type", "org_id"},
@@ -158,19 +165,26 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 	// If it does, we just update, otherwise we upsert the record.
 	// This is done to avoid deadlocks that can occur in MySQL when multiple transactions try to
 	// insert records (even different) because of the gap and insert intention locks.
-	var record provenanceRecord
+	// Use a minimal existence check (SELECT 1 ... FOR UPDATE) rather than reading
+	// the full row: a Get() with ORDER BY widens the gap/next-key locks acquired
+	// under MySQL REPEATABLE READ and reintroduces the insert-intention deadlock
+	// this locking path exists to avoid.
 	exists, err := sess.Table(provenanceRecord{}).
 		Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
 		ForUpdate().
-		Get(&record)
+		Exist()
 	if err != nil {
 		return fmt.Errorf("failed to check if provenance record exists: %w", err)
 	}
 
 	if exists {
-		// Preserve a stored specific manager rather than downgrading it to the
-		// coarse classic manager derived from the incoming legacy provenance.
-		mp := managerForProvenanceWrite(managerFromRecord(record), p)
+		// The row already exists (and is now locked), so reading it to preserve a
+		// stored specific manager does not contend on insert-intention gap locks.
+		stored, err := st.readStoredManager(sess, recordKey, recordType, org)
+		if err != nil {
+			return err
+		}
+		mp := managerForProvenanceWrite(stored, p)
 		_, err = sess.Table(provenanceRecord{}).
 			Where("record_key = ? AND record_type = ? AND org_id = ?", recordKey, recordType, org).
 			Update(map[string]interface{}{
@@ -184,8 +198,12 @@ func (st DBstore) setProvenanceWithLocking(sess *db.Session, recordKey, recordTy
 		return nil
 	}
 
-	// Still upsert in case it was created while we were checking
-	return st.setProvenanceUpsert(sess, recordKey, recordType, org, p)
+	// Record does not exist: we hold the gap lock and know there is no stored
+	// manager to preserve, so derive the manager from the incoming provenance and
+	// upsert directly. Calling setProvenanceUpsert here would issue an extra
+	// non-locking SELECT inside the locked transaction and reintroduce the
+	// insert-intention deadlock this path exists to avoid.
+	return st.provenanceUpsert(sess, recordKey, recordType, org, p, models.ProvenanceToManagerProperties(p))
 }
 
 // readStoredManager returns the ManagerProperties currently persisted for a

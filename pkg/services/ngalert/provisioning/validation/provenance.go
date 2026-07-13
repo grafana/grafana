@@ -21,11 +21,9 @@ import (
 // silently reset them to unmanaged would diverge Grafana from that source of
 // truth, so it is not allowed.
 func isAPISourcedManager(k utils.ManagerKind) bool {
-	switch k { //nolint:staticcheck // classic shim kinds are intentionally handled here
-	case utils.ManagerKindClassicAPI,
-		utils.ManagerKindClassicConvertedPrometheus,
-		utils.ManagerKindTerraform,
-		utils.ManagerKindKubectl:
+	// classic shim kinds are intentionally handled here
+	switch k { //nolint:staticcheck
+	case utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus, utils.ManagerKindTerraform, utils.ManagerKindKubectl: //nolint:staticcheck
 		return true
 	default:
 		// ManagerKindClassicFP and ManagerKindRepo are backed by an external
