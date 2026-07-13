@@ -1,7 +1,7 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { EditorView, keymap } from '@codemirror/view';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';

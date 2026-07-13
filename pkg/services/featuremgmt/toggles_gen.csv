@@ -186,7 +186,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-14,scopeSearchAllLevels,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2025-02-17,alertingRuleVersionHistoryRestore,GA,@grafana/alerting-squad,false,false,true
 2025-02-17,newShareReportDrawer,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2026-05-22,grafana.assetSriChecks,experimental,@grafana/frontend-ops,false,false,false
+2026-05-22,grafana.assetSriChecks,experimental,@grafana/grafana-frontend-platform,false,false,false
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-03-14,alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
@@ -245,7 +245,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
-2026-02-18,vizPresets,GA,@grafana/dataviz-squad,false,false,true
 2026-06-03,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
@@ -277,6 +276,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesServiceAccountTokensApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesSsoSettingsApi,experimental,@grafana/identity-access-team,false,false,false
+2026-07-08,grafana.ssoSettingsToMTSettings,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesExternalGroupMappingsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesExternalGroupMappingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
@@ -346,6 +346,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-25,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
 2026-06-22,table.protoRowParser,experimental,@grafana/dataviz-squad,false,false,true
+2026-06-17,grafana.queryVarEditorRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true

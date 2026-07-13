@@ -8,8 +8,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { getFocusStyles } from '../../themes/mixins';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
-  const selectionState = EditorView.editorAttributes.compute(['selection'], (state): Record<string, string> =>
-    state.selection.main.empty ? {} : { class: 'cm-hasSelection' }
+  const selectionState = EditorView.editorAttributes.compute(
+    ['selection'],
+    (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
   );
   const editorTheme = EditorView.theme(
     {

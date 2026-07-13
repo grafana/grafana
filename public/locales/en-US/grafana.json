@@ -4285,9 +4285,6 @@
       "tip": "Hover over any item in the nav menu and click on the bookmark icon to add it here."
     }
   },
-  "bouncing-loader": {
-    "label": "Loading"
-  },
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
@@ -4992,6 +4989,7 @@
       "selected-scopes-label": "Scopes: "
     },
     "search-box": {
+      "ask-assistant": "Shift + Enter to ask Assistant",
       "placeholder": "Search or jump to..."
     },
     "section": {
@@ -5556,6 +5554,20 @@
     "description": {
       "action": "Change dashboard description"
     },
+    "diagnostics": {
+      "actions": "Diagnostics actions",
+      "cancel-button": "Cancel",
+      "download-button": "Download diagnostics",
+      "error-title": "Failed to generate diagnostics",
+      "generating-button": "Generating…",
+      "info-text-panel": "Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download may take a moment while the bundle is generated.",
+      "no-queries": "This panel has no active queries to capture.",
+      "request-failed": "Request failed",
+      "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
+      "sensitive-warning-title": "May contain sensitive data",
+      "subtitle-panel": "Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.",
+      "title": "Download diagnostics"
+    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Remove property"
@@ -5689,7 +5701,7 @@
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
           "close": "Close",
-          "modal-title": "Query Variable",
+          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "selection-options": {
@@ -7320,6 +7332,33 @@
       "try-it": "Try it out",
       "upgrade-title": "New editor available"
     },
+    "query-variable-editor": {
+      "modal": {
+        "apply": "Apply",
+        "apply-description": "Change variable query",
+        "discard": "Discard",
+        "drag-to-resize": "Drag to resize",
+        "no-values-found": "No values found",
+        "preview-of-values": "Preview of values ({{ optionsCount }})",
+        "run-query": "Run query",
+        "static-options-require-query": "Static options only appear once a query is set.",
+        "tabs": {
+          "query": "Query",
+          "static-options": "Static options ({{staticOptionsCount}})"
+        },
+        "title": "Query variable: {{name}}"
+      },
+      "spreadsheet": {
+        "add-option": "Add new option",
+        "clipboard-access-blocked": "Clipboard access is blocked. Enable it in your browser's site settings.",
+        "drag-to-reorder": "Drag and drop to reorder",
+        "enable-copy-paste-tooltip": "Your browser will ask for permission to read your clipboard",
+        "paste-from-clipboard": "Paste from clipboard",
+        "paste-from-clipboard-with-format": "Paste from clipboard ({{format}})",
+        "paste-parse-error": "Could not parse clipboard content",
+        "remove-option": "Remove {{optionName}}"
+      }
+    },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
@@ -7339,6 +7378,14 @@
       },
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
+    },
+    "refresh-select": {
+      "options": {
+        "label": {
+          "on-dashboard-load": "On dashboard load",
+          "on-time-range-change": "On time range change"
+        }
+      }
     },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
@@ -8756,6 +8803,14 @@
         }
       },
       "share-span": "Share"
+    },
+    "span-detail-link-buttons": {
+      "logs-for-this-span": "Logs for this span",
+      "logs-for-this-trace": "Logs for this trace",
+      "open-in-profiles-drilldown": "Open in Profiles Drilldown",
+      "profiles-for-this-span": "Profiles for this span",
+      "related-logs": "Related logs",
+      "session-for-this-span": "Session for this span"
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
@@ -10294,6 +10349,9 @@
     "named-colors-palette": {
       "text-color-swatch": "Text color",
       "transparent-swatch": "Transparent"
+    },
+    "page-loader": {
+      "label": "Loading"
     },
     "page-toolbar": {
       "go-back": "Go back (Esc)",
@@ -12458,6 +12516,7 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
+      "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -13642,7 +13701,7 @@
       "error-loading-active-jobs": "Error loading active jobs",
       "error-loading-historic-jobs": "Error loading historic jobs",
       "jobs": "Jobs",
-      "triggered-by-webhook": "Webhook"
+      "triggered-by-system": "System"
     },
     "repository-actions": {
       "connection": "Connection",
