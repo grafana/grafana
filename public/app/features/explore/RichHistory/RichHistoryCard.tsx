@@ -149,10 +149,6 @@ export function RichHistoryCard(props: Props) {
 
   const onCopyQuery = async () => {
     const datasources = [...queryHistoryItem.queries.map((query) => query.datasource?.type || 'unknown')];
-    reportInteraction('grafana_explore_query_history_copy_query', {
-      datasources,
-      mixed: Boolean(cardRootDatasource?.meta.mixed),
-    });
 
     const queriesText = queryHistoryItem.queries
       .map((query) => {

@@ -6,7 +6,7 @@ import { VariableSizeList as List } from 'react-window';
 
 import { type DataFrame, type Field as DataFrameField } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+
 import { Field, Switch } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
@@ -81,7 +81,6 @@ const RawListContainer = (props: RawListContainerProps) => {
     const props = {
       isExpanded: !isExpandedView,
     };
-    reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand', props);
   };
 
   useEffect(() => {
