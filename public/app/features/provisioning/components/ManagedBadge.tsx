@@ -93,17 +93,20 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false, repository
 
   if (showRepositoryLinks) {
     const content = (
-      <Stack direction="column" gap={1} alignItems="flex-start">
-        <span>{tooltip}</span>
-        <Stack direction="row" gap={1} wrap>
-          {/* SourceLink self-gates on git provider, but only mount it when there is a source file to
-              link to — folders map to a directory and pass none, so we avoid a pointless settings query. */}
-          {sourcePath && <SourceLink repositoryName={repositoryName} sourcePath={sourcePath} />}
-          {/* Repository (admin) link. Self-gates on `provisioning.repositories:read`, so editors who
-              lack it see only the source link. */}
-          <ViewRepositoryButton repositoryName={repositoryName} showLabel />
+      <div className={tooltipContent}>
+        <Stack direction="column" gap={1.5} alignItems="stretch">
+          <span>{tooltip}</span>
+          <Stack direction="row" gap={1} wrap>
+            {/* Both links share the secondary/outline style so the row reads as one set of actions.
+                SourceLink self-gates on git provider, but only mount it when there is a source file to
+                link to — folders map to a directory and pass none, so we avoid a pointless settings query. */}
+            {sourcePath && <SourceLink repositoryName={repositoryName} sourcePath={sourcePath} fill="outline" />}
+            {/* Repository (admin) link. Self-gates on `provisioning.repositories:read`, so editors who
+                lack it see only the source link. */}
+            <ViewRepositoryButton repositoryName={repositoryName} showLabel />
+          </Stack>
         </Stack>
-      </Stack>
+      </div>
     );
 
     return (
@@ -130,4 +133,9 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false, repository
 
 const badgeWrap = css({
   display: 'inline-flex',
+});
+
+// Keep the tooltip compact so long repository names wrap instead of stretching it across the screen.
+const tooltipContent = css({
+  maxWidth: 320,
 });
