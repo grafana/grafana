@@ -131,7 +131,7 @@ describe('DataSourcePicker', () => {
         </ModalsProvider>
       );
 
-      const searchBox = await screen.findByRole('textbox');
+      const searchBox = await screen.findByRole('combobox');
       expect(searchBox).toBeInTheDocument();
 
       getListMock.mockClear();
@@ -271,6 +271,24 @@ describe('DataSourcePicker', () => {
       expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
 
+    it('should announce the keyboard-highlighted item via aria-activedescendant', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      const searchBox = screen.getByRole('combobox');
+      expect(searchBox).toHaveAttribute('aria-expanded', 'true');
+
+      // On open, the first item is highlighted
+      let option = screen.getByRole('option', { selected: true });
+      expect(option).toHaveTextContent(mockDS1.name);
+      expect(option.id).toBeTruthy();
+      expect(searchBox).toHaveAttribute('aria-activedescendant', option.id);
+
+      await user.keyboard('[ArrowDown]');
+      option = screen.getByRole('option', { selected: true });
+      expect(option).toHaveTextContent(mockDS2.name);
+      expect(searchBox).toHaveAttribute('aria-activedescendant', option.id);
+    });
+
     it('should be searchable', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
@@ -298,7 +316,7 @@ describe('DataSourcePicker', () => {
         </ModalsProvider>
       );
 
-      const searchBox = await screen.findByRole('textbox');
+      const searchBox = await screen.findByRole('combobox');
       expect(searchBox).toBeInTheDocument();
       await user.click(searchBox!);
       await user.click(await screen.findByText('Open advanced data source picker'));

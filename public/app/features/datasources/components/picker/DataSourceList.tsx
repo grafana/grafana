@@ -52,6 +52,10 @@ export interface DataSourceListProps {
   favoriteDataSources: FavoriteDatasources;
   /** Ref to the scroll container element, used by the virtualizer */
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  /** DOM id of the listbox, used to build option ids for aria-activedescendant */
+  listboxId?: string;
+  /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
+  onActiveItemChange?: (id: string | undefined) => void;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -64,6 +68,8 @@ export function DataSourceList(props: DataSourceListProps) {
     enableKeyboardNavigation,
     onClickEmptyStateCTA,
     favoriteDataSources,
+    listboxId,
+    onActiveItemChange,
     scrollRef,
   } = props;
 
@@ -83,6 +89,8 @@ export function DataSourceList(props: DataSourceListProps) {
           onChange={onChange}
           pushRecentlyUsedDataSource={pushRecentlyUsedDataSource}
           scrollRef={scrollRef}
+          listboxId={listboxId}
+          onActiveItemChange={onActiveItemChange}
         />
       )}
     </div>
