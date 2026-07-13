@@ -102,7 +102,8 @@ export class GrafanaJavascriptAgentBackend
         persistent: true,
       },
       batching: {
-        sendTimeout: 1000,
+        sendTimeout: 2000,
+        itemLimit: 250,
       },
       beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
