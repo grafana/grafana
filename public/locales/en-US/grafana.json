@@ -8758,6 +8758,14 @@
       },
       "share-span": "Share"
     },
+    "span-detail-link-buttons": {
+      "logs-for-this-span": "Logs for this span",
+      "logs-for-this-trace": "Logs for this trace",
+      "open-in-profiles-drilldown": "Open in Profiles Drilldown",
+      "profiles-for-this-span": "Profiles for this span",
+      "related-logs": "Related logs",
+      "session-for-this-span": "Session for this span"
+    },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
     },
