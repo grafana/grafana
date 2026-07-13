@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -101,6 +102,58 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
+  });
+
+  it('should not allow changing predefined variable values in edit mode', async () => {
+    const user = userEvent.setup();
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByTestId('read-only-variable-input')).toBeInTheDocument();
+
+    const valueSelect = await screen.findByTestId(
+      selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')
+    );
+    const inputElement = valueSelect.querySelector('input');
+    expect(inputElement).toBeDisabled();
+
+    await user.click(screen.getByText('globalVar'));
+    expect(inputElement).toBeDisabled();
+  });
+
+  it('should allow changing predefined variable values in view mode', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        value: 'a',
+        text: 'a',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('globalVar')).toBeInTheDocument();
+    expect(screen.queryByTestId('read-only-variable-input')).not.toBeInTheDocument();
+
+    const valueSelect = await screen.findByTestId(
+      selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('a')
+    );
+    const inputElement = valueSelect.querySelector('input');
+    expect(inputElement).not.toBeDisabled();
   });
 
   it('should not show edit/delete hover actions for predefined variables in edit mode', async () => {
