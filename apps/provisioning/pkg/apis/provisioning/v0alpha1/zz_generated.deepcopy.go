@@ -248,6 +248,7 @@ func (in *ConnectionStatus) DeepCopyInto(out *ConnectionStatus) {
 		}
 	}
 	in.Health.DeepCopyInto(&out.Health)
+	out.Token = in.Token
 	return
 }
 

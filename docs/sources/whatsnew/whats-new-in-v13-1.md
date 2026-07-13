@@ -37,6 +37,7 @@ posts:
       - whats-new/2026-06-23-grafana-assistant-is-now-pre-installed-in-grafana-enterprise.md
   - title: Data sources
     items:
+      - whats-new/2026-06-12-query-snowflake-jira-dynatrace-and-five-more-directly-from-grafana-assistant.md
       - whats-new/2026-06-11-pdc-now-supports-mqtt-github-and-ibm-db2.md
 whats_new_grafana_version: 13.1
 weight: -55

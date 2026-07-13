@@ -495,7 +495,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      "connection",
+				"name":      "connection-api-unavailable",
 				"namespace": "default",
 			},
 			"spec": map[string]any{
@@ -590,7 +590,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Connection",
 			"metadata": map[string]any{
-				"name":      "connection",
+				"name":      "connection-appid-mismatch",
 				"namespace": "default",
 			},
 			"spec": map[string]any{

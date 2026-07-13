@@ -3,18 +3,27 @@ import { type ReactNode, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FolderEntry } from './FolderEntry';
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey, compareFolders } from './sorting';
 
+/** Folder rows shown per page before pagination kicks in. */
+const PAGE_SIZE = 10;
+
 interface Props {
+  /**
+   * Folder rows to migrate. Kinds that don't support folders (e.g. playlists)
+   * are grouped under a synthetic folder row by the caller, so this component
+   * stays kind-agnostic.
+   */
   folders: FolderRow[];
   selectedFolderUids: Set<string>;
-  selectedDashboardUids: Set<string>;
+  /** Composite keys (see `resourceKey`) of individually-ticked resources. */
+  selectedResourceKeys: Set<string>;
   onToggleFolder: (uid: string) => void;
-  onToggleDashboard: (uid: string) => void;
+  onToggleResource: (key: string) => void;
   /** Folders + independently-ticked resources, shown in the migrate button. */
   selectedCount: number;
   /** True when every migratable folder is selected — drives the "Migrate all" label. */
@@ -35,18 +44,18 @@ interface Props {
 }
 
 /**
- * Foldable, searchable list of folders that hold dashboards to migrate. A whole
- * folder or individual dashboards can be selected; the migrate footer action
+ * Foldable, searchable list of folders that hold resources to migrate. A whole
+ * folder or individual resources can be selected; the migrate footer action
  * hands the selection to the migrate drawer. The hook only surfaces folders with
- * unmanaged dashboards directly inside them, so empty and already-managed
- * folders never appear here.
+ * unmanaged resources directly inside them, so empty and already-managed folders
+ * never appear here.
  */
 export function ResourcesToMigrate({
   folders,
   selectedFolderUids,
-  selectedDashboardUids,
+  selectedResourceKeys,
   onToggleFolder,
-  onToggleDashboard,
+  onToggleResource,
   selectedCount,
   allSelected,
   onSetFoldersSelected,
@@ -59,6 +68,7 @@ export function ResourcesToMigrate({
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -68,29 +78,45 @@ export function ResourcesToMigrate({
           if (folder.title.toLowerCase().includes(q)) {
             return true;
           }
-          return folder.directDashboards.some((d) => d.title.toLowerCase().includes(q));
+          return folder.directResources.some((r) => r.title.toLowerCase().includes(q));
         });
     matched.sort((a, b) => compareFolders(a, b, sortKey));
     return matched;
   }, [folders, search, sortKey]);
 
+  // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
+  // a search) without needing an effect to reset it.
+  const numberOfPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, numberOfPages);
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  );
+
+  // 1-based range of matching folders visible on the current page, shown in the
+  // footer so the count stays honest once only a page's worth of rows renders.
+  // Only read when there's at least one match (the footer is hidden otherwise).
+  const rangeStart = (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = (currentPage - 1) * PAGE_SIZE + paged.length;
+
   // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
   // stored) so deselecting one folder doesn't strip resources covered by
   // another.
-  const folderCoveredDashboardUids = useMemo(() => {
+  const folderCoveredResourceKeys = useMemo(() => {
     const covered = new Set<string>();
     for (const folder of folders) {
       if (selectedFolderUids.has(folder.uid)) {
-        folder.directDashboards.forEach((d) => covered.add(d.uid));
+        folder.directResources.forEach((r) => covered.add(resourceKey(r)));
       }
     }
     return covered;
   }, [folders, selectedFolderUids]);
 
-  // Select-all is scoped to the rows currently shown (after search), matching
-  // standard table behaviour — it never reaches past the filter to tick the
-  // whole instance.
+  // Select-all covers the whole filtered set — every matching folder across all
+  // pages, not just the page on screen — matching standard table behaviour
+  // where search narrows the target but pagination doesn't. It never reaches
+  // past the filter to tick the whole instance.
   const filteredFolderUids = filtered.map((folder) => folder.uid);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
@@ -116,7 +142,7 @@ export function ResourcesToMigrate({
         </Text>
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="provisioning.migrate.resources-to-migrate-subtitle">
-            Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources
+            Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources
             directly inside it — anything in subfolders migrates through its own folder.
           </Trans>
         </Text>
@@ -127,7 +153,10 @@ export function ResourcesToMigrate({
           <FilterInput
             placeholder={t('provisioning.migrate.resources-to-migrate-search', 'Search folders and resources')}
             value={search}
-            onChange={setSearch}
+            onChange={(value) => {
+              setSearch(value);
+              setPage(1);
+            }}
           />
         </div>
         <div className={styles.sortInput}>
@@ -151,6 +180,7 @@ export function ResourcesToMigrate({
             onChange={(opt) => {
               if (opt?.value) {
                 setSortKey(opt.value);
+                setPage(1);
               }
             }}
             aria-label={t('provisioning.migrate.resources-sort-aria', 'Sort folders')}
@@ -184,7 +214,10 @@ export function ResourcesToMigrate({
           variant="not-found"
           message={
             folders.length === 0
-              ? t('provisioning.migrate.resources-to-migrate-all-managed', 'All dashboards are already managed by Git.')
+              ? t(
+                  'provisioning.migrate.resources-to-migrate-all-managed',
+                  'All supported resources are already managed by Git.'
+                )
               : t(
                   'provisioning.migrate.resources-to-migrate-empty',
                   'No folders or resources match the current search.'
@@ -193,33 +226,43 @@ export function ResourcesToMigrate({
         />
       ) : (
         <div className={styles.list}>
-          {filtered.map((folder) => (
+          {paged.map((folder) => (
             <FolderEntry
               key={folder.uid}
               folder={folder}
               isExpanded={expanded.has(folder.uid)}
               isSelected={selectedFolderUids.has(folder.uid)}
-              selectedDashboardUids={selectedDashboardUids}
-              folderCoveredDashboardUids={folderCoveredDashboardUids}
+              selectedResourceKeys={selectedResourceKeys}
+              folderCoveredResourceKeys={folderCoveredResourceKeys}
               onToggleExpanded={() => toggleExpanded(folder.uid)}
               onToggleFolder={() => onToggleFolder(folder.uid)}
-              onToggleDashboard={onToggleDashboard}
+              onToggleResource={onToggleResource}
             />
           ))}
         </div>
       )}
 
+      {numberOfPages > 1 && (
+        <Stack justifyContent="flex-end">
+          <Pagination currentPage={currentPage} numberOfPages={numberOfPages} onNavigate={setPage} />
+        </Stack>
+      )}
+
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
-        <Text variant="bodySmall" color="secondary">
-          {t('provisioning.migrate.resources-to-migrate-footer', '', {
-            // Plural agrees with the total folder count (the noun), not the
-            // number of rows shown.
-            shown: filtered.length,
-            count: folders.length,
-            defaultValue_one: 'Showing {{shown}} of {{count}} folder',
-            defaultValue_other: 'Showing {{shown}} of {{count}} folders',
-          })}
-        </Text>
+        {/* Skipped when nothing matches so it doesn't read "0–0 of 0" under the empty state. */}
+        {filtered.length > 0 && (
+          <Text variant="bodySmall" color="secondary">
+            {t('provisioning.migrate.resources-to-migrate-footer', '', {
+              // Plural agrees with the total matching folder count (the noun), not
+              // the size of the visible page range.
+              from: rangeStart,
+              to: rangeEnd,
+              count: filtered.length,
+              defaultValue_one: 'Showing {{from}}–{{to}} of {{count}} folder',
+              defaultValue_other: 'Showing {{from}}–{{to}} of {{count}} folders',
+            })}
+          </Text>
+        )}
         {folders.length > 0 &&
           (canMigrate ? (
             <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={submitDisabled}>

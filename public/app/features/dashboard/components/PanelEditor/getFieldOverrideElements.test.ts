@@ -13,15 +13,6 @@ jest.mock('app/features/panel/panellinks/link_srv', () => ({
   getDataLinksVariableSuggestions: () => [],
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      nestedFramesFieldOverrides: false,
-    },
-  },
-}));
-
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
   fieldMatchersUI: {
