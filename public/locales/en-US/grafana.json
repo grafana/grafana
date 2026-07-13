@@ -16818,6 +16818,7 @@
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
       "folder-label": "Folder",
       "moved": "Variable moved",
+      "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",
       "saving": "Saving...",
       "updated": "Variable updated"
