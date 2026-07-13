@@ -8,7 +8,11 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/authn"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type fakeExchanger struct {
@@ -195,6 +199,72 @@ func TestNewTokenExchangeTransportWrapper(t *testing.T) {
 	require.NotNil(t, exchanger.gotReq)
 	require.Equal(t, []string{"test-audience"}, exchanger.gotReq.Audiences)
 	require.Equal(t, "test-namespace", exchanger.gotReq.Namespace)
+}
+
+func TestWithCallerTokenForwarding(t *testing.T) {
+	tests := []struct {
+		name            string
+		requester       identity.Requester
+		wantAccessToken string
+		wantIDToken     string
+	}{
+		{
+			name: "user with access and id tokens forwards both",
+			requester: &identity.StaticRequester{
+				Type:        authlib.TypeUser,
+				AccessToken: "at-token",
+				IDToken:     "id-token",
+			},
+			wantAccessToken: "at-token",
+			wantIDToken:     "id-token",
+		},
+		{
+			name: "requester with access token only forwards access token",
+			requester: &identity.StaticRequester{
+				Type:        authlib.TypeAccessPolicy,
+				AccessToken: "at-token",
+			},
+			wantAccessToken: "at-token",
+		},
+		{
+			name: "requester without raw tokens leaves request untouched",
+			requester: &identity.StaticRequester{
+				Type: authlib.TypeAccessPolicy,
+			},
+		},
+		{
+			name: "no requester in context leaves request untouched",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got *http.Request
+			config := WithCallerTokenForwarding(&rest.Config{})
+			rt := config.WrapTransport(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				got = req
+				rr := httptest.NewRecorder()
+				rr.WriteHeader(http.StatusOK)
+				return rr.Result(), nil
+			}))
+
+			ctx := t.Context()
+			if tt.requester != nil {
+				ctx = identity.WithRequester(ctx, tt.requester)
+			}
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://localhost/apis", nil)
+			require.NoError(t, err)
+
+			resp, err := rt.RoundTrip(req)
+			require.NoError(t, err)
+			_ = resp.Body.Close()
+
+			require.Equal(t, tt.wantAccessToken, got.Header.Get("X-Access-Token"))
+			require.Equal(t, tt.wantIDToken, got.Header.Get("X-Grafana-Id"))
+			require.Empty(t, req.Header.Get("X-Access-Token"))
+			require.Empty(t, req.Header.Get("X-Grafana-Id"))
+		})
+	}
 }
 
 func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {

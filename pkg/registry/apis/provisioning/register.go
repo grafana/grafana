@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -948,7 +949,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
-				config = postStartHookCtx.LoopbackClientConfig
+				config = clientauth.WithCallerTokenForwarding(postStartHookCtx.LoopbackClientConfig)
 			} else {
 				config, err = b.restConfigGetter(postStartHookCtx.Context)
 				if err != nil {
