@@ -1,7 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type ResourceResponse, type LogDataSourceResponse } from '../../../resources/types';
+import {
+  type ListDataSourcesRequest,
+  type ResourceResponse,
+  type LogDataSourceResponse,
+} from '../../../resources/types';
 
 import { DataSourcesSelector } from './DataSourcesSelector';
 
@@ -30,6 +34,38 @@ describe('DataSourcesSelector', () => {
     );
     expect(screen.getByLabelText('amazon_vpc.flow')).toBeInTheDocument();
     expect(screen.getByLabelText('amazon_eks.audit')).toBeInTheDocument();
+  });
+
+  it('ignores results from an older search request', async () => {
+    const initialDataSources: Array<ResourceResponse<LogDataSourceResponse>> = [
+      { value: { name: 'initial', type: 'result' } },
+    ];
+    const searchedDataSources: Array<ResourceResponse<LogDataSourceResponse>> = [
+      { value: { name: 'searched', type: 'result' } },
+    ];
+    let resolveInitialRequest!: (value: Array<ResourceResponse<LogDataSourceResponse>>) => void;
+    let resolveSearchRequest!: (value: Array<ResourceResponse<LogDataSourceResponse>>) => void;
+    const initialRequest = new Promise<Array<ResourceResponse<LogDataSourceResponse>>>((resolve) => {
+      resolveInitialRequest = resolve;
+    });
+    const searchRequest = new Promise<Array<ResourceResponse<LogDataSourceResponse>>>((resolve) => {
+      resolveSearchRequest = resolve;
+    });
+    const fetchDataSources = jest.fn(({ pattern }: Partial<ListDataSourcesRequest>) =>
+      pattern ? searchRequest : initialRequest
+    );
+    render(<DataSourcesSelector {...defaultProps} fetchDataSources={fetchDataSources} />);
+
+    await userEvent.click(screen.getByText('Select data sources'));
+    await userEvent.type(screen.getByLabelText('data source search'), 'searched');
+    await waitFor(() => expect(fetchDataSources).toHaveBeenCalledWith({ pattern: 'searched' }));
+
+    await act(async () => resolveSearchRequest(searchedDataSources));
+    expect(await screen.findByLabelText('searched.result')).toBeInTheDocument();
+
+    await act(async () => resolveInitialRequest(initialDataSources));
+    expect(screen.getByLabelText('searched.result')).toBeInTheDocument();
+    expect(screen.queryByLabelText('initial.result')).not.toBeInTheDocument();
   });
 
   it('selects all listed data sources when bulk action is used', async () => {

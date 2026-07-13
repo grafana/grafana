@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { EditorField } from '@grafana/plugin-ui';
 import { Alert, Button, Checkbox, Label, LoadingPlaceholder, Modal, Space, useStyles2 } from '@grafana/ui';
@@ -33,6 +33,7 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | undefined>(undefined);
   const [selectionError, setSelectionError] = useState<string | undefined>(undefined);
+  const latestSearchRequestId = useRef(0);
   const styles = useStyles2(getStyles);
 
   const selectionLimitReached = draftSelectedDataSources.length >= MAX_DATA_SOURCES;
@@ -61,12 +62,18 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
   };
 
   const searchFn = async (searchTerm?: string) => {
+    const requestId = ++latestSearchRequestId.current;
     setIsLoading(true);
     setFetchError(undefined);
     try {
       const dataSources = await fetchDataSources({
         pattern: searchTerm,
       });
+
+      if (requestId !== latestSearchRequestId.current) {
+        return;
+      }
+
       setSelectableDataSources(
         dataSources.map((ds) => ({
           name: ds.value.name,
@@ -74,10 +81,17 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
         }))
       );
     } catch (err) {
+      if (requestId !== latestSearchRequestId.current) {
+        return;
+      }
+
       setSelectableDataSources([]);
       setFetchError('Unable to load data sources.');
+    } finally {
+      if (requestId === latestSearchRequestId.current) {
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
   };
 
   const handleSelectCheckbox = (row: LogDataSource, isChecked: boolean) => {
