@@ -1,4 +1,5 @@
 import {
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type DataSourceRef,
   type ScopedVars,
@@ -6,19 +7,21 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
+import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
+import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
 let byId: Record<string, DataSourceInstanceSettings> = {};
 let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
-let expressionDsSettings: DataSourceInstanceSettings | undefined;
 let defaultName = '';
 
 function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
@@ -40,11 +43,6 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   // Re-apply any previously registered runtime data sources so they survive a refetch.
   for (const ds of Object.values(runtimeByUid)) {
     byUid[ds.uid] = ds;
-  }
-
-  // Re-apply the expression datasource so it survives a cache repopulate.
-  if (expressionDsSettings) {
-    byUid[expressionDsSettings.uid] = expressionDsSettings;
   }
 }
 
@@ -131,39 +129,60 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  return lookupFromMaps(ref, scopedVars);
-}
-
-/**
- * Search and filter data source instance settings from the in-memory cache.
- *
- * @internal
- */
-export async function getDataSourceInstanceSettingsList(
-  filters?: GetDataSourceListFilters
-): Promise<DataSourceInstanceSettings[]> {
-  return applyFilters(filters);
-}
-
-/**
- * Set the instance settings for the expression pseudo-datasource, which is not
- * part of /api/frontend/settings and must be injected client-side. Re-applied
- * on every populate so it survives a cache repopulate.
- *
- * This is a temporary bridge until ExpressionDatasource moves from core to
- * @grafana/runtime, at which point it can be imported directly.
- *
- * @internal
- */
-export function setExpressionDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
-  // We allow overriding in tests
-  if (expressionDsSettings && process.env.NODE_ENV !== 'test') {
-    throw new Error(
-      'setExpressionDataSourceInstanceSettings() function should only be called once, when Grafana is starting.'
-    );
+  const result = lookupFromMaps(ref, scopedVars);
+  if (result) {
+    return result;
   }
-  expressionDsSettings = settings;
-  byUid[settings.uid] = settings;
+  return getInstanceSettingsFallback(ref, scopedVars);
+}
+
+/**
+ * Filters for {@link getDataSourceInstanceList} and {@link useDataSourceInstanceList}.
+ *
+ * Identical to {@link GetDataSourceListFilters} except the `filter` callback receives a
+ * {@link DataSourceInstanceListItem} instead of the full {@link DataSourceInstanceSettings}.
+ * This reflects the long-term data model: the list API will only expose the slim item shape,
+ * so filter callbacks must not rely on settings-specific fields such as `jsonData` or `url`.
+ *
+ * @public
+ */
+export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceListFilters, 'filter'> {
+  /** Apply a function to filter the list. Receives a slim {@link DataSourceInstanceListItem}. */
+  filter?: (item: DataSourceInstanceListItem) => boolean;
+}
+
+/**
+ * Search and filter data sources from the in-memory cache, returning a
+ * lightweight view of each match. The heavy per-instance settings are not
+ * included — fetch them on demand via {@link getDataSourceInstanceSettings}.
+ *
+ * @public
+ */
+export async function getDataSourceInstanceList(
+  filters?: GetDataSourceInstanceListFilters
+): Promise<DataSourceInstanceListItem[]> {
+  const { filter: itemFilter, ...settingsFilters } = filters ?? {};
+  // Wrap the slim filter into a settings-compatible callback so applyFilters applies
+  // it with the same semantics as the legacy getList(): checked on base items and on
+  // -- Grafana --, but NOT on -- Mixed -- or -- Dashboard -- (which are appended
+  // unconditionally). Passing it through here avoids a post-map filter pass that would
+  // incorrectly gate those built-ins.
+  const settingsFilter = itemFilter ? (ds: DataSourceInstanceSettings) => itemFilter(toListItem(ds)) : undefined;
+  const filtersWithAdapter = { ...settingsFilters, filter: settingsFilter };
+  const results = applyFilters(filtersWithAdapter);
+  return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
+}
+
+function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+  return {
+    uid: settings.uid,
+    type: settings.type,
+    apiVersion: settings.apiVersion,
+    name: settings.name,
+    meta: settings.meta,
+    readOnly: settings.readOnly,
+    isDefault: settings.isDefault ?? false,
+  };
 }
 
 /**
@@ -185,7 +204,7 @@ function lookupFromMaps(
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(ref)) {
-    return byUid[ExpressionDatasourceRef.uid];
+    return getExpressionDataSourceSettings();
   }
 
   const nameOrUid = getNameOrUid(ref);
@@ -350,6 +369,46 @@ function variableInterpolation<T>(value: T | T[]): T {
 }
 
 /**
+ * Last resort while the legacy `DataSourceSrv` still exists: the new in-memory cache found
+ * nothing, so consult the legacy service. If it resolves what the new path missed, that's a
+ * divergence worth tracking. Delete this (and its call site) once `DataSourceSrv` is gone.
+ */
+function getInstanceSettingsFallback(
+  ref: DataSourceRef | string | null | undefined,
+  scopedVars: ScopedVars | undefined
+): DataSourceInstanceSettings | undefined {
+  const legacy = getDataSourceSrv()?.getInstanceSettings(ref, scopedVars);
+  if (legacy) {
+    logDataSourceWarning(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: describeRef(ref) });
+    return legacy;
+  }
+  return undefined;
+}
+
+/**
+ * Last resort while the legacy `DataSourceSrv` still exists: the new in-memory cache produced
+ * an empty list, so consult the legacy service. Delete this (and its call site) once
+ * `DataSourceSrv` is gone.
+ */
+function getInstanceSettingsListFallback(filters: GetDataSourceListFilters | undefined): DataSourceInstanceSettings[] {
+  const legacy = getDataSourceSrv()?.getList(filters) ?? [];
+  if (legacy.length > 0) {
+    logDataSourceWarning(FALLBACK_TO_LEGACY_LIST_WARNING, { filters: filtersForLog(filters) });
+    return legacy;
+  }
+  return [];
+}
+
+function filtersForLog(filters: GetDataSourceListFilters | undefined): string {
+  if (!filters) {
+    return 'none';
+  }
+  // The `filter` callback can't be serialized; the rest is enough to identify the query.
+  const { filter: _filter, ...rest } = filters;
+  return JSON.stringify(rest);
+}
+
+/**
  * Test helper — resets all module state. Should only be called from tests.
  *
  * @internal
@@ -362,6 +421,6 @@ export function _resetForTests(): void {
   byUid = {};
   byId = {};
   runtimeByUid = {};
-  expressionDsSettings = undefined;
   defaultName = '';
+  resetExpressionDs();
 }

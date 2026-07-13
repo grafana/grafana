@@ -316,7 +316,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:        "delete receiver used by route fails",
 			user:        writer,
 			deleteUID:   legacy_storage.NameToUid("grafana-default-email"),
-			version:     "cd95627c75892a39", // Correct version for grafana-default-email.
+			version:     "7aca30c12be86d57", // Correct version for grafana-default-email.
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
 		{
@@ -1035,7 +1035,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	newReceiverName := "new-name"
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithIntegrations(slackIntegration))()
-	baseReceiver.Version = "cd95627c75892a39" // Correct version for grafana-default-email.
+	baseReceiver.Version = "7aca30c12be86d57" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
 	t.Run("renames receiver and all its dependencies", func(t *testing.T) {
@@ -1057,8 +1057,8 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 		require.NoError(t, err)
 
-		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName, false), "old receiver name '%s' should not be used by routes", receiverName)
-		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName, false), "new receiver name '%s' should be used by routes", newReceiverName)
+		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
+		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
 
 	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
@@ -2048,7 +2048,7 @@ const defaultAlertmanagerConfigJSON = `
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
+					"addresses": "\u003cexample@example.com\u003e"
 				},
 				"secureFields": {}
 			}]

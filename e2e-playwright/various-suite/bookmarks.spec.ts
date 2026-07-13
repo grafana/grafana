@@ -24,7 +24,7 @@ test.describe(
       await expect(navList).toBeVisible();
 
       // Check if the Bookmark section is visible
-      const bookmarksItem = navList.locator('li').nth(1);
+      const bookmarksItem = navList.locator('li').nth(0);
       await expect(bookmarksItem).toBeVisible();
       await expect(bookmarksItem).toContainText('Bookmarks');
 
@@ -70,7 +70,7 @@ test.describe(
       await expect(navList).toBeVisible();
 
       // Check if the Bookmark section is visible
-      const bookmarksItem = navList.locator('li').nth(1);
+      const bookmarksItem = navList.locator('li').nth(0);
       await expect(bookmarksItem).toBeVisible();
       await expect(bookmarksItem).toContainText('Bookmarks');
 

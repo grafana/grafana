@@ -66,9 +66,9 @@ var (
 
 const (
 	// Valid Grafana Alertmanager configurations.
-	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@example.com\u003e"}}]}]}}`
 	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","version":"v1","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test","password":"test"}}]}]}}`
-	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@email.com>"}}],"name":"grafana-default-email"}]}}`
+	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@example.com>"}}],"name":"grafana-default-email"}]}}`
 
 	// Valid Alertmanager state base64 encoded.
 	testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
@@ -308,7 +308,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		require.NoError(t, err)
 		return client.GrafanaAlertmanagerConfig{
 			AlertmanagerConfig: postable.AlertmanagerConfig,
-			Templates:          postable.GetMergedTemplateDefinitions(),
+			Templates:          definition.TemplatesMapToPostableAPITemplates(postable.TemplateFiles, definition.GrafanaTemplateKind),
 		}
 	}
 
@@ -496,12 +496,11 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                  string
-		config                v1.AMConfigDB
-		autogenConfig         map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
-		enabledMultipleRoutes bool
-		expCfg                *client.UserGrafanaConfig
-		expErrContains        []string
+		name           string
+		config         v1.AMConfigDB
+		autogenConfig  map[int64]map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting
+		expCfg         *client.UserGrafanaConfig
+		expErrContains []string
 	}{
 		{
 			name:           "invalid config",
@@ -620,9 +619,8 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			}(),
 		},
 		{
-			name:                  "no error, with managed routes",
-			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
-			enabledMultipleRoutes: true,
+			name:   "no error, with managed routes",
+			config: mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
@@ -633,27 +631,13 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:                  "no error, with managed routes but flag disabled",
-			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
-			enabledMultipleRoutes: false,
-			expCfg: &client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
-					AlertmanagerConfig: notifier.PostableApiAlertingConfigToAPI(policy_exports.Config().AlertmanagerConfig),
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			flags := []any{}
-			if test.enabledMultipleRoutes {
-				flags = append(flags, featuremgmt.FlagAlertingMultiplePolicies)
-			}
-			features := featuremgmt.WithFeatures(flags...)
+			features := featuremgmt.WithFeatures()
 			moa, _ := newRemoteMOA(t, cfg, test.autogenConfig, features, secretsService)
 
 			dbConfig := func() *ngmodels.AlertConfiguration {
@@ -779,7 +763,7 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 			ctx := context.Background()
 			got = ""
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 			moa, _ := newRemoteMOA(t, cfg, nil, features, secretsService)
 
 			dbConfig := func() *ngmodels.AlertConfiguration {
@@ -857,13 +841,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "default configuration and FF enabled",
-			config:   mustLoad(defaultGrafanaConfig),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), // Flag shouldn't affect Default status if there aren't any ManagedRoutes.
-			expected: true,
-		},
-		{
-			name: "default config with ManagedRoutes and FF disabled",
+			name: "default config with ManagedRoutes",
 			config: func() *apimodels.PostableUserConfig {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedRoutes = map[string]*definition.Route{
@@ -871,22 +849,10 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: true,
-		},
-		{
-			name: "default config with ManagedRoutes and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				c := mustLoad(defaultGrafanaConfig)
-				c.ManagedRoutes = map[string]*definition.Route{
-					"imported": {Receiver: "empty"},
-				}
-				return c
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
-			name: "default config with ExtraConfig and FF disabled",
+			name: "default config with ExtraConfig",
 			config: func() *apimodels.PostableUserConfig {
 				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
 				require.NoError(t, err)
@@ -894,18 +860,6 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				require.NoError(t, err)
 				return cfgWithExtraUnmerged
 			}(),
-			expected: false, // Even disabled the ExtraConfig is merged into the Route.
-		},
-		{
-			name: "default config with ExtraConfig and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
-				require.NoError(t, err)
-				cfgWithExtraUnmerged, err := loadDBModel(cfgWithExtraUnmergedBytes)
-				require.NoError(t, err)
-				return cfgWithExtraUnmerged
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
@@ -945,7 +899,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "default config with ManagedInhibitionRules and FF disabled",
+			name: "default config with ManagedInhibitionRules",
 			config: func() *apimodels.PostableUserConfig {
 				c := mustLoad(defaultGrafanaConfig)
 				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
@@ -953,18 +907,6 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: false,
-		},
-		{
-			name: "default config with ManagedInhibitionRules and FF enabled",
-			config: func() *apimodels.PostableUserConfig {
-				c := mustLoad(defaultGrafanaConfig)
-				c.ManagedInhibitionRules = map[string]*apimodels.InhibitionRule{
-					"imported": {Name: "imported"},
-				}
-				return c
-			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: false,
 		},
 		{
@@ -1077,7 +1019,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := json.Marshal(cfg)
@@ -1146,7 +1088,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 							{
 								Name:     "email receiver",
 								Type:     "email",
-								Settings: apimodels.RawMessage(`{"addresses":"<example@email.com>"}`),
+								Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 							},
 						},
 					},
@@ -1185,7 +1127,7 @@ receivers:
 		PromoteConfig: true,
 	}
 
-	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies), secretsService)
+	moa, _ := newRemoteMOA(t, c, nil, featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI), secretsService)
 
 	dbConfig := func() *ngmodels.AlertConfiguration {
 		raw, err := legacy_storage.SerializeAlertmanagerConfig(cfg)
@@ -1259,7 +1201,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, err)
 		return client.GrafanaAlertmanagerConfig{
 			AlertmanagerConfig: postable.AlertmanagerConfig,
-			Templates:          postable.GetMergedTemplateDefinitions(),
+			Templates:          definition.TemplatesMapToPostableAPITemplates(postable.TemplateFiles, definition.GrafanaTemplateKind),
 		}
 	}
 
