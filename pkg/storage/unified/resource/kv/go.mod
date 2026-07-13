@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.11.1
 )
