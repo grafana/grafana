@@ -152,6 +152,7 @@ export default function VariablesManagementPage() {
 
   if (isNew || editName) {
     const editVariable = editName ? variables.find((v) => v.metadata.name === editName) : undefined;
+    const existingNames = variables.map(getVariableSpecName);
     const pageNav: NavModelItem = {
       text: isNew
         ? t('variables-management.editor-nav.new', 'New variable')
@@ -159,12 +160,22 @@ export default function VariablesManagementPage() {
           ? getVariableSpecName(editVariable)
           : (editName ?? ''),
     };
+    // Wait for the list before mounting /new so the default name can skip collisions.
+    // If the list failed, still allow create with whatever names we have (may be empty).
+    const showNewEditor = isNew && (!isLoading || isError);
     return (
       <Page navId="dashboards/variables" pageNav={pageNav}>
-        <Page.Contents isLoading={!isNew && isLoading}>
-          {isNew || editVariable ? (
-            <VariableEditorView source={editVariable} onBack={backToList} />
-          ) : isError ? (
+        <Page.Contents isLoading={isNew ? isLoading && !isError : isLoading}>
+          {showNewEditor || editVariable ? (
+            // Key by route identity so local editor state resets when navigating
+            // between /edit/:name URLs (or to /new) without unmounting the page.
+            <VariableEditorView
+              key={editName ?? 'new'}
+              source={editVariable}
+              existingNames={existingNames}
+              onBack={backToList}
+            />
+          ) : isNew ? null : isError ? (
             // Don't claim "not found" when the list simply failed to load.
             <LoadVariablesError error={error} onBack={backToList} />
           ) : (

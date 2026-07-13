@@ -82,6 +82,7 @@ type kvStorageBackend struct {
 	eventStore              *eventStore
 	notifier                notifier
 	eventPublisher          EventPublisher
+	natsShadow              *natsShadow
 	log                     log.Logger
 	disablePruner           bool
 	dashboardVersionsToKeep int
@@ -177,6 +178,13 @@ type KVBackendOptions struct {
 	// EventPublisher, when set, is used to announce committed writes on an
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
+
+	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
+	EventSubscriber EventSubscriber
+	// EnableNatsNotifierShadow starts the shadow NATS notifier (see natsShadow):
+	// metrics only, never feeds the watch pipeline. Requires EventSubscriber set
+	// and enabled.
+	EnableNatsNotifierShadow bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -323,6 +331,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Start the cleanup background job.
 	go backend.runCleanups(ctx)
+
+	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
+	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.New("notifier", "natsShadow"))
+		backend.natsShadow.start(ctx)
+		logger.Info("nats notifier shadow enabled")
+	}
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -2204,6 +2219,18 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	defer span.End()
 
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
+}
+
+// ListStoredResources discovers resource identities in the storage backend.
+func (k *kvStorageBackend) ListStoredResources(ctx context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListStoredResources", trace.WithAttributes(
+		attribute.String("namespace", filter.Namespace),
+		attribute.String("group", filter.Group),
+		attribute.String("resource", filter.Resource),
+	))
+	defer span.End()
+
+	return k.dataStore.ListStoredResources(ctx, filter)
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {

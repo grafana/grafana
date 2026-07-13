@@ -117,6 +117,17 @@ describe('bulkMoveVariables', () => {
     expect(result.failed).toHaveLength(1);
     expect(result.failed[0].name).toBe('a');
   });
+
+  it('warns without counting failed when create succeeds but delete fails', async () => {
+    deleteMock.mockRejectedValueOnce(new Error('boom'));
+
+    const result = await bulkMoveVariables([makeVariable('a')], 'folder-1');
+
+    expect(postMock).toHaveBeenCalledTimes(1);
+    expect(deleteMock).toHaveBeenCalledTimes(1);
+    // Not failed (retry would conflict) and not succeeded (original remains).
+    expect(result).toEqual({ succeeded: 0, skipped: 0, failed: [] });
+  });
 });
 
 describe('recreateVariable', () => {

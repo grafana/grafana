@@ -20,6 +20,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
+import { getJustifyContent } from './styles';
 import { type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
@@ -44,8 +45,6 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
-  getIsNestedTable,
-  getJustifyContent,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
@@ -500,32 +499,6 @@ describe('TableNG utils', () => {
       };
 
       expect(getColumnTypes(frame.fields)).toEqual({ stringCol: FieldType.string });
-    });
-  });
-
-  describe('getIsNestedTable', () => {
-    it('should detect nested frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(true);
-    });
-
-    it('should return false for regular frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.number, name: 'numberCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(false);
     });
   });
 

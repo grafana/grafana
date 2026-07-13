@@ -4,6 +4,7 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import {
   buildVariableResource,
   buildVariablesTree,
+  getNextAvailableVariableName,
   getVariableEditableType,
   getVariableFolderUid,
   getVariableSpecName,
@@ -22,6 +23,19 @@ function makeVariable(specName: string, folderUid?: string, spec?: object): Vari
     }) as VariableSpec,
   };
 }
+
+describe('getNextAvailableVariableName', () => {
+  it('returns prefix0 when nothing is taken', () => {
+    expect(getNextAvailableVariableName('query', [])).toBe('query0');
+  });
+
+  it('skips names that already exist', () => {
+    expect(getNextAvailableVariableName('query', ['query0', 'query1', 'env'])).toBe('query2');
+  });
+});
+
+// deriveVariableMetadataName coverage lives in useVariableNameCollisionCheck.test.ts
+// alongside the collision evaluator (same naming contract as the server).
 
 describe('getVariableSpecName', () => {
   it('returns the logical name from the union spec', () => {

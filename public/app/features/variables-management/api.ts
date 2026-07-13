@@ -20,7 +20,7 @@ import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariab
 
 const LIST_PAGE_SIZE = 500;
 
-export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
+const variableListTag = { type: 'Variable' as const, id: 'LIST' };
 
 function invalidateAfterVariableMutation() {
   dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
@@ -33,7 +33,7 @@ function invalidateAfterVariableMutation() {
  * hook is the data-fetching seam for the variables tree: if fetch-all proves not to
  * scale, swap this for a per-folder labelSelector strategy without touching the UI.
  */
-export const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
+const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
     listAllVariables: build.query<Variable[], void>({
       queryFn: async (_arg, _api, _extraOptions, baseQuery) => {
@@ -145,18 +145,8 @@ export async function recreateVariable(
       showErrorAlert: false,
     });
   } catch (error) {
-    dispatch(
-      notifyApp(
-        createWarningNotification(
-          t(
-            'variables-management.recreate.delete-failed',
-            'The variable was saved to the new location, but the previous version could not be removed. Delete it manually to avoid duplicates.'
-          ),
-          extractErrorMessage(error, '')
-        )
-      )
-    );
-    invalidateAfterVariableMutation();
+    notifyDeleteAfterCreateFailed(error);
+    invalidateVariablesList();
     return { deletedOriginal: false };
   }
   invalidateAfterVariableMutation();
@@ -195,6 +185,11 @@ export async function bulkDeleteVariables(variables: Variable[]): Promise<BulkOp
  * changing the folder scope on update, so a move is create-then-delete: the copy is
  * created in the target scope first, and the original is only deleted once the copy
  * exists, so a failure can never lose the variable.
+ *
+ * Create failures are reported in {@link BulkOperationResult.failed} (safe to retry).
+ * Delete-after-create failures match {@link recreateVariable}: a warning about the
+ * leftover original is shown, and the item is not marked failed (retry would conflict
+ * on create) or succeeded (the original remains).
  */
 export async function bulkMoveVariables(variables: Variable[], targetFolderUid?: string): Promise<BulkOperationResult> {
   const result: BulkOperationResult = { succeeded: 0, skipped: 0, failed: [] };
@@ -209,18 +204,40 @@ export async function bulkMoveVariables(variables: Variable[], targetFolderUid?:
       result.skipped++;
       continue;
     }
+
+    const resource = buildVariableResource(getVariableKind(variable), targetFolderUid);
     try {
-      const resource = buildVariableResource(getVariableKind(variable), targetFolderUid);
       await getBackendSrv().post(`${BASE_URL}/variables`, resource, { showErrorAlert: false });
+    } catch (error) {
+      result.failed.push({ name: getVariableSpecName(variable), metadataName: name, error });
+      continue;
+    }
+
+    try {
       await getBackendSrv().delete(`${BASE_URL}/variables/${encodeURIComponent(name)}`, undefined, {
         showErrorAlert: false,
       });
       result.succeeded++;
     } catch (error) {
-      result.failed.push({ name: getVariableSpecName(variable), metadataName: name, error });
+      // Copy exists in the target; don't mark failed (retry would re-POST) or succeeded.
+      notifyDeleteAfterCreateFailed(error);
     }
   }
 
   invalidateAfterVariableMutation();
   return result;
+}
+
+function notifyDeleteAfterCreateFailed(error: unknown) {
+  dispatch(
+    notifyApp(
+      createWarningNotification(
+        t(
+          'variables-management.recreate.delete-failed',
+          'The variable was saved to the new location, but the previous version could not be removed. Delete it manually to avoid duplicates.'
+        ),
+        extractErrorMessage(error, '')
+      )
+    )
+  );
 }

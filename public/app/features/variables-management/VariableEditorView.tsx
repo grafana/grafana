@@ -24,8 +24,10 @@ import { type EditableVariableType, getVariableScene } from 'app/features/dashbo
 import { dispatch } from 'app/store/store';
 
 import { recreateVariable } from './api';
+import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
+  getNextAvailableVariableName,
   getVariableFolderUid,
   getVariableKind,
   getVariableSpecName,
@@ -35,6 +37,8 @@ import {
 export interface VariableEditorViewProps {
   /** The variable resource being edited; undefined when creating a new variable. */
   source?: Variable;
+  /** Logical names of existing variables — used to pick a non-colliding default for new ones. */
+  existingNames?: string[];
   onBack: () => void;
 }
 
@@ -45,7 +49,7 @@ export interface VariableEditorViewProps {
  * (variable set + time range so query editors can resolve context), and serialized
  * back to a VariableKind on save.
  */
-export function VariableEditorView({ source, onBack }: VariableEditorViewProps) {
+export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
   // '' represents the root Dashboards folder (global scope), matching the
@@ -55,7 +59,7 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : getVariableScene('query', { name: 'query0' })
+      : getVariableScene('query', { name: getNextAvailableVariableName('query', existingNames) })
   );
 
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
@@ -64,7 +68,18 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
   const [isRecreating, setIsRecreating] = useState(false);
   const [hasNameError, setHasNameError] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const isSaving = isCreating || isUpdating || isDeleting || isRecreating;
+  // Keep delete out of isSaving so the Save button doesn't flash "Saving..." mid-delete.
+  const isSaving = isCreating || isUpdating || isRecreating;
+  const isBusy = isSaving || isDeleting;
+
+  const { name: logicalName } = sceneVariable.useState();
+  const { isChecking: isCheckingName, collisionError } = useVariableNameCollisionCheck(
+    logicalName,
+    folderUid,
+    source?.metadata.name,
+    hasNameError
+  );
+  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName;
 
   const scene = useMemo(
     () =>
@@ -76,7 +91,10 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
     [sceneVariable]
   );
 
-  useEffect(() => scene.activate(), [scene]);
+  useEffect(() => {
+    const deactivate = scene.activate();
+    return deactivate;
+  }, [scene]);
 
   const onTypeChange = (type: EditableVariableType) => {
     const { name, label } = sceneVariable.state;
@@ -171,25 +189,29 @@ export function VariableEditorView({ source, onBack }: VariableEditorViewProps) 
       </Field>
 
       <VariableEditorForm
+        // Remount on type change (new scene key) so the form's name-error state and
+        // uncontrolled inputs reset with the committed name — same as dashboard settings.
+        key={sceneVariable.state.key}
         variable={sceneVariable}
         onTypeChange={onTypeChange}
         onGoBack={onBack}
         onDelete={onDelete}
         onNameErrorChange={setHasNameError}
+        externalNameError={collisionError}
         standalone
       />
 
       <Stack gap={2}>
-        <Button variant="primary" onClick={onSave} disabled={isSaving || hasNameError}>
+        <Button variant="primary" onClick={onSave} disabled={!canSave}>
           {isSaving
             ? t('variables-management.editor.saving', 'Saving...')
             : t('variables-management.editor.save', 'Save')}
         </Button>
-        <Button variant="secondary" fill="outline" onClick={onBack}>
+        <Button variant="secondary" fill="outline" onClick={onBack} disabled={isBusy}>
           <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
         </Button>
         {!isNew && (
-          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isSaving}>
+          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isBusy}>
             <Trans i18nKey="variables-management.editor.delete">Delete</Trans>
           </Button>
         )}

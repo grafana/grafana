@@ -41,6 +41,11 @@ interface VariableEditorFormProps {
   standalone?: boolean;
   /** Notifies the host when the name field enters or leaves an invalid state, so it can gate its own save action. */
   onNameErrorChange?: (hasError: boolean) => void;
+  /**
+   * Host-owned name error (e.g. API collision check in the standalone editor).
+   * Shown when local format validation has not already failed.
+   */
+  externalNameError?: string;
 }
 export function VariableEditorForm({
   variable,
@@ -49,6 +54,7 @@ export function VariableEditorForm({
   onDelete,
   standalone,
   onNameErrorChange,
+  externalNameError,
 }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
@@ -66,7 +72,8 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const result = validateVariableName(variable, e.currentTarget.value);
+      const nextName = e.currentTarget.value;
+      const result = validateVariableName(variable, nextName);
       if (result.errorMessage !== nameError) {
         setNameError(result.errorMessage);
         onNameErrorChange?.(Boolean(result.errorMessage));
@@ -74,15 +81,14 @@ export function VariableEditorForm({
       if (result.warningMessage !== nameWarning) {
         setNameWarning(result.warningMessage);
       }
+      // Commit on change (not only blur) so Save / Preview see the typed name
+      // even when the field still has focus — same pattern as the edit pane.
+      if (!result.errorMessage) {
+        variable.setState({ name: nextName });
+      }
     },
     [variable, nameError, nameWarning, onNameErrorChange]
   );
-
-  const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
-    if (!nameError) {
-      variable.setState({ name: e.currentTarget.value });
-    }
-  };
 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
@@ -119,12 +125,11 @@ export function VariableEditorForm({
         placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
         defaultValue={name ?? ''}
         onChange={onNameChange}
-        onBlur={onNameBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required
-        invalid={!!nameError}
-        error={nameError}
+        invalid={!!(nameError || externalNameError)}
+        error={nameError || externalNameError}
       />
       {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
       <VariableTextField
@@ -198,7 +203,8 @@ export function VariableEditorForm({
           {isHasVariableOptions && (
             <Button
               disabled={runQueryState.loading}
-              variant="secondary"
+              variant="primary"
+              fill="outline"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
               onClick={onRunQuery}
             >
@@ -208,7 +214,7 @@ export function VariableEditorForm({
                   text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
                 />
               ) : (
-                t('dashboard-scene.variable-editor-form.run-query', 'Run query')
+                <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
               )}
             </Button>
           )}

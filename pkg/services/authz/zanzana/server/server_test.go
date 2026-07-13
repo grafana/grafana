@@ -76,7 +76,8 @@ func setup(t *testing.T, srv *Server) *Server {
 		// user:20 can create users org-wide via the group_resource (the only place `create`
 		// is modeled for flat IAM types).
 		common.NewGroupResourceTuple("user:20", common.RelationCreate, userGroup, userResource, ""),
-		// user:21 is admin of team:admin-team, which grants per-object team `create` via `or admin`.
+		// user:21 is admin of team:admin-team. Team admin does NOT grant per-object `create`:
+		// team creation is governed by the group_resource, like users / service accounts.
 		common.NewTypedTuple(common.TypeTeam, "user:21", common.RelationTeamAdmin, "admin-team"),
 		// user:22 / user:23 have a subresource `resource_create` grant on a user / service-account.
 		// These types have no per-object base `create`, but they do support subresource create.
