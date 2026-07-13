@@ -391,7 +391,7 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Form Validation', () => {
-    it('should validate required fields on connection step', async () => {
+    it('should disable next button until a branch is selected on connection step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option (GitHub App is the default)
@@ -410,11 +410,14 @@ describe('ProvisioningWizard', () => {
       const clearButtons = screen.getAllByTitle(/Clear value/i);
       await user.click(clearButtons[0]); // Clear the branch combobox
 
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeDisabled();
 
-      // Should still be on connection step due to validation
-      expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
-      expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
+      const branchCombobox = screen.getAllByRole('combobox')[0];
+      await user.click(branchCombobox);
+      await user.paste('main');
+      await user.keyboard('{Enter}');
+
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeEnabled();
     });
   });
 

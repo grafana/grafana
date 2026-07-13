@@ -1,16 +1,36 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import { useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, Box, Button, IconButton, TagList, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Box,
+  Button,
+  Dropdown,
+  Icon,
+  IconButton,
+  Menu,
+  Stack,
+  TagList,
+  Text,
+  TextLink,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
+import { ConfirmContent } from '@grafana/ui/internal';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
 import { CompatibilityBadge, type CompatibilityState } from './CompatibilityBadge';
+import { NewTemplateDashboardInteractions } from './analytics/main';
+import { CONTENT_KINDS } from './constants';
 import { type GnetDashboard } from './types';
 import { buildAssistantPrompt, buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 
@@ -23,10 +43,16 @@ interface Details {
   grafanaComUrl?: string;
 }
 
-interface Props {
+/** Lightweight dashboard shape used by custom-template cards. */
+export interface CustomTemplateDashboard {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface BaseProps {
   title: string;
   imageUrl?: string;
-  dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
   onClick: (customizeWithAssistant?: boolean) => void;
   onClose?: () => void;
@@ -34,7 +60,6 @@ interface Props {
   showDatasourceProvidedBadge?: boolean;
   showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
-  kind: 'template_dashboard' | 'suggested_dashboard' | 'custom_dashboard_template';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
   showCompatibilityBadge?: boolean;
   /** State for the compatibility badge (idle, loading, success, error) */
@@ -44,11 +69,22 @@ interface Props {
   /** Whether to show the "Customize with assistant" button (caller must check relevant feature flags) */
   showAssistantButton?: boolean;
   onEdit?: () => void;
+  /**
+   * Handler called when the user confirms deleting the template.
+   */
+  onDelete?: () => void | Promise<void>;
   /** Optional tags to display at the bottom of the card */
   tags?: string[];
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
 }
+
+// Discriminated on `kind` so the `dashboard` shape is correlated with the kind of card being rendered.
+type Props = BaseProps &
+  (
+    | { kind: 'template_dashboard' | 'suggested_dashboard'; dashboard: PluginDashboard | GnetDashboard }
+    | { kind: 'custom_dashboard_template'; dashboard: CustomTemplateDashboard }
+  );
 
 function DashboardCardComponent({
   title,
@@ -67,12 +103,31 @@ function DashboardCardComponent({
   onCompatibilityCheck,
   showAssistantButton,
   onEdit,
+  onDelete,
   tags,
   createdByName,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
   const isCustomTemplate = kind === 'custom_dashboard_template';
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const onConfirmDelete = async () => {
+    if (!onDelete) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Edit and Delete live in a kebab menu on custom-template cards only.
+  const hasCardMenu = isCustomTemplate && (Boolean(onEdit) || Boolean(onDelete));
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
@@ -82,36 +137,79 @@ function DashboardCardComponent({
 
   const { isAvailable: assistantAvailable, openAssistant } = useAssistant();
 
-  // Create structured context item with template metadata for the Assistant
-  const templateContext = useMemo(
-    () =>
-      createAssistantContextItem('structured', {
-        hidden: false,
-        title: buildTemplateContextTitle(dashboard, kind),
-        data: buildTemplateContextData(dashboard, kind),
-      }),
-    [dashboard, kind]
-  );
+  const assistantDashboard: PluginDashboard | GnetDashboard | null =
+    kind === 'custom_dashboard_template' ? null : dashboard;
+  const assistantKind: 'template_dashboard' | 'suggested_dashboard' | null =
+    kind === 'custom_dashboard_template' ? null : kind;
 
   const onUseAssistantClick = () => {
-    if (assistantAvailable) {
-      openAssistant?.({
-        origin: 'dashboard-library/use-dashboard',
-        mode: 'dashboarding',
-        prompt: buildAssistantPrompt(kind),
-        context: [templateContext],
-        autoSend: true,
-      });
-      // these both closes the modal and redirects the user the the template dashboard url
-      onClose?.();
-      onClick?.(true);
+    if (!assistantAvailable || !assistantDashboard || !assistantKind) {
+      return;
     }
+    const templateContext = createAssistantContextItem('structured', {
+      hidden: false,
+      title: buildTemplateContextTitle(assistantDashboard, assistantKind),
+      data: buildTemplateContextData(assistantDashboard, assistantKind),
+    });
+    openAssistant?.({
+      origin: 'dashboard-library/use-dashboard',
+      mode: 'dashboarding',
+      prompt: buildAssistantPrompt(assistantKind),
+      context: [templateContext],
+      autoSend: true,
+    });
+    // these both close the modal and redirect the user to the template dashboard url
+    onClose?.();
+    onClick?.(true);
   };
 
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
   return (
     <article className={styles.card}>
+      {hasCardMenu && (
+        <div className={styles.cardMenu}>
+          <Dropdown
+            placement="bottom-end"
+            onVisibleChange={(visible) =>
+              visible &&
+              NewTemplateDashboardInteractions.dropdownMenuClicked({
+                contentKind: CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE,
+              })
+            }
+            overlay={
+              <Menu>
+                {onEdit && (
+                  <Menu.Item
+                    label={t('dashboard-library.card.edit-template-menu-item', 'Edit')}
+                    icon="pen"
+                    ariaLabel={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
+                      title,
+                    })}
+                    onClick={onEdit}
+                  />
+                )}
+                {onDelete && (
+                  <Menu.Item
+                    destructive
+                    label={t('dashboard-library.card.delete-template-menu-item', 'Delete')}
+                    icon="trash-alt"
+                    ariaLabel={t('dashboard-library.card.delete-template-button-label', 'Delete template: {{title}}', {
+                      title,
+                    })}
+                    onClick={() => setShowDeleteConfirm(true)}
+                  />
+                )}
+              </Menu>
+            }
+          >
+            <IconButton
+              name="ellipsis-v"
+              aria-label={t('dashboard-library.card.more-actions-label', 'More actions for {{title}}', { title })}
+            />
+          </Dropdown>
+        </div>
+      )}
       {!isCustomTemplate && (
         <h3 className={styles.title}>
           <span className={styles.titleWithInfo} role="group" aria-label={title}>
@@ -207,18 +305,6 @@ function DashboardCardComponent({
               <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
             </Button>
           )}
-          {onEdit && (
-            <Button
-              variant="secondary"
-              className={styles.overlayButton}
-              onClick={onEdit}
-              aria-label={t('dashboard-library.card.edit-template-button-label', 'Edit template: {{title}}', {
-                title,
-              })}
-            >
-              <Trans i18nKey="dashboard-library.card.edit-template-button">Edit</Trans>
-            </Button>
-          )}
         </div>
       </div>
       <div className={styles.bottomSection}>
@@ -258,7 +344,74 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
+      {showDeleteConfirm && (
+        <DeleteTemplateConfirm
+          title={title}
+          isDeleting={isDeleting}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={onConfirmDelete}
+        />
+      )}
     </article>
+  );
+}
+
+interface DeleteTemplateConfirmProps {
+  title: string;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+/**
+ * Inline delete confirmation rendered as an opaque overlay covering the card.
+ */
+function DeleteTemplateConfirm({ title, isDeleting, onCancel, onConfirm }: DeleteTemplateConfirmProps) {
+  const styles = useStyles2(getStyles);
+  const ref = useRef<HTMLDivElement>(null);
+  const { dialogProps } = useDialog({ role: 'alertdialog' }, ref);
+  const { overlayProps } = useOverlay(
+    { isOpen: true, onClose: onCancel, isDismissable: false, isKeyboardDismissDisabled: isDeleting },
+    ref
+  );
+
+  return (
+    <FocusScope contain restoreFocus>
+      <div
+        ref={ref}
+        className={styles.confirmOverlay}
+        aria-label={t('dashboard-library.card.delete-confirm-title', 'Delete this template?')}
+        {...overlayProps}
+        {...dialogProps}
+      >
+        <ConfirmContent
+          body={
+            <Stack direction="column" gap={1}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Icon name="exclamation-triangle" size="lg" className={styles.confirmIcon} />
+                <Text element="h3" variant="h5">
+                  <Trans i18nKey="dashboard-library.card.delete-confirm-title">Delete this template?</Trans>
+                </Text>
+              </Stack>
+              <Text color="secondary" variant="bodySmall">
+                {t(
+                  'dashboard-library.card.delete-confirm-body',
+                  'This permanently deletes "{{templateTitle}}". This action cannot be undone.',
+                  { templateTitle: title }
+                )}
+              </Text>
+            </Stack>
+          }
+          confirmPromptText={t('dashboard-library.card.delete-confirm-prompt', 'Delete')}
+          confirmButtonLabel={t('dashboard-library.card.delete-confirm-confirm', 'Delete')}
+          confirmButtonVariant="destructive"
+          dismissButtonLabel={t('dashboard-library.card.delete-confirm-cancel', 'Cancel')}
+          dismissButtonVariant="secondary"
+          onConfirm={onConfirm}
+          onDismiss={onCancel}
+        />
+      </div>
+    </FocusScope>
   );
 }
 
@@ -337,6 +490,7 @@ function getStyles(theme: GrafanaTheme2) {
 
   return {
     card: css({
+      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       width: '350px',
@@ -351,6 +505,26 @@ function getStyles(theme: GrafanaTheme2) {
           duration: theme.transitions.duration.short,
         }),
       },
+    }),
+    cardMenu: css({
+      position: 'absolute',
+      top: theme.spacing(2),
+      right: theme.spacing(1.5),
+    }),
+    confirmOverlay: css({
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      // Opaque background hides the underlying card content without changing the card's height.
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(2),
+      overflowY: 'auto',
+    }),
+    confirmIcon: css({
+      color: theme.colors.warning.text,
     }),
     thumbnailContainer: css({
       // Render visually above the heading while keeping heading first in source order for tab/keyboard order.

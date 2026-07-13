@@ -11,7 +11,12 @@ import (
 	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+// tokenExchangeTimeout bounds a single access-token mint so a slow or unreachable
+// signer cannot stall a (re)connect indefinitely.
+const tokenExchangeTimeout = 5 * time.Second
 
 type connRole string
 
@@ -227,15 +232,36 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		options = append(options, natsclient.Secure(tc))
 	}
 
-	// Precedence: per-role creds file > shared creds file > token.
-	switch creds := c.credentials(); {
-	case creds != "":
-		options = append(options, natsclient.UserCredentials(creds))
-	case c.config.Token() != "":
+	// The auth mechanism is selected explicitly by mode, not inferred from which
+	// fields are populated. For token exchange, TokenHandler is invoked on every
+	// (re)connect so the minted token is always fresh; the authlib client caches
+	// it under the hood.
+	switch c.config.AuthMode() {
+	case setting.NATSAuthModeCredentials:
+		options = append(options, natsclient.UserCredentials(c.credentials()))
+	case setting.NATSAuthModeTokenExchange:
+		options = append(options, natsclient.TokenHandler(c.tokenHandler))
+	case setting.NATSAuthModeToken:
 		options = append(options, natsclient.Token(c.config.Token()))
+	case setting.NATSAuthModeNone:
 	}
 
 	return options, nil
+}
+
+// tokenHandler mints a fresh access token for this connection. It satisfies
+// nats.TokenHandler, which cannot return an error: on failure it logs and
+// returns an empty token, letting the server reject the connect so the client
+// retries rather than silently proceeding unauthenticated.
+func (c *connection) tokenHandler() string {
+	ctx, cancel := context.WithTimeout(context.Background(), tokenExchangeTimeout)
+	defer cancel()
+	token, err := c.config.exchangeAccessToken(ctx)
+	if err != nil {
+		c.log.Error("nats access-token exchange failed", "role", c.role, "err", err)
+		return ""
+	}
+	return token
 }
 
 // healthy reports whether the connection is usable. It tolerates the lazy state
@@ -259,16 +285,36 @@ func (c *connection) healthy() error {
 	return nil
 }
 
-// close drains the connection so in-flight work flushes before shutdown. It is
-// terminal: once closed, get() refuses to reopen a connection.
+// close drains the connection and waits for the drain to complete so it does not
+// outlive the caller. Terminal: once closed, get() refuses to reopen.
 func (c *connection) close() {
+	// Drain outside the lock: waiting for it can take up to drainTimeout, and
+	// holding c.mu that long would stall a concurrent Health().
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.closed = true
-	if c.conn != nil && !c.conn.IsClosed() {
-		if err := c.conn.Drain(); err != nil {
-			c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
-		}
-	}
+	nc := c.conn
 	c.conn = nil
+	c.closed = true
+	c.mu.Unlock()
+
+	if nc == nil || nc.IsClosed() {
+		return
+	}
+
+	// Drain closes the connection on a background goroutine; wait for it below.
+	if err := nc.Drain(); err != nil {
+		c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
+		nc.Close()
+		return
+	}
+
+	// A broker that has gone away never closes, so force it at the deadline.
+	deadline := time.Now().Add(drainTimeout + time.Second)
+	for !nc.IsClosed() {
+		if time.Now().After(deadline) {
+			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
+			nc.Close()
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }

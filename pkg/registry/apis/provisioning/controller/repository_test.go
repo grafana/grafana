@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync/atomic"
 	"testing"
@@ -1303,6 +1304,112 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
 }
 
+// TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound verifies that when the
+// repository token references a secret that can no longer be decrypted (e.g. it was deleted),
+// the controller regenerates it from the connection and rebuilds instead of failing forever.
+func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			// Spec change (Generation != ObservedGeneration) triggers reconcile and reaches Build.
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			// Token exists and is far from expiry, so shouldGenerateTokenFromConnection is false.
+			Token: provisioning.TokenStatus{
+				LastUpdated: time.Now().Add(-1 * time.Hour).UnixMilli(),
+				Expiration:  time.Now().Add(2 * time.Hour).UnixMilli(),
+			},
+		},
+		// Orphaned reference: name is set but the secret is gone.
+		Secure: provisioning.SecureValues{
+			Token: common.InlineSecureValue{Name: "orphaned-token"},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// Plenty of quota so the repository is not blocked.
+	quotaStatus := provisioning.QuotaStatus{MaxRepositories: 100}
+
+	freshToken := &connection.ExpirableSecureValue{
+		Token:     "fresh-token",
+		ExpiresAt: time.Now().Add(2 * time.Hour),
+	}
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(repo).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+
+	// First build fails because the token secret is missing; the rebuild after regeneration succeeds.
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Once()
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	patcher := &capturePatcher{}
+	healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:             repoGetter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+		statusPatcher:     patcher,
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		repoFactory:       repoFactory,
+		healthChecker:     healthChecker,
+		resyncInterval:    5 * time.Minute,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+	}
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	// Regeneration happened: a fresh token status was written and Build was retried.
+	_, found := patcher.findPatchOp("/status/token")
+	assert.True(t, found, "expected /status/token to be written after regenerating the missing token")
+	repoFactory.AssertExpectations(t)
+	mockConn.AssertExpectations(t)
+}
+
 func TestShouldRotateWebhookSecret(t *testing.T) {
 	t.Run("returns false when rotation interval is zero (disabled)", func(t *testing.T) {
 		rc := &RepositoryController{webhookSecretRotationInterval: 0}
@@ -1395,10 +1502,11 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 	})
 }
 
-// hookRepoStub implements repository.Repository and repository.Hooks so we can
-// observe whether the reconcile path attempts to run webhook hooks.
+// hookRepoStub implements repository.WebhookRepository so we can observe whether
+// the reconcile path attempts to run the webhook lifecycle. It doubles as its own
+// repository.WebhookClient, recording create/edit calls.
 //
-// hookErr controls what OnCreate / OnUpdate return — when nil the hook is
+// hookErr controls what the webhook client returns — when nil the call is
 // considered successful. The default zero-value preserves the historical
 // behaviour of always failing with assert.AnError.
 type hookRepoStub struct {
@@ -1410,12 +1518,28 @@ type hookRepoStub struct {
 	hookErrSet    bool
 }
 
+var _ repository.WebhookRepository = (*hookRepoStub)(nil)
+
 func (s *hookRepoStub) Config() *provisioning.Repository { return s.cfg }
 
 func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	s.testCalls.Add(1)
 	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
 }
+
+func (s *hookRepoStub) Slug() string { return "" }
+
+func (s *hookRepoStub) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {
+	return nil, nil
+}
+
+func (s *hookRepoStub) ProcessRequest(context.Context, *repository.VerifiedWebhookRequest) (repository.WebhookEvent, error) {
+	return repository.WebhookEvent{}, nil
+}
+
+func (s *hookRepoStub) WebhookClient() repository.WebhookClient { return s }
+func (s *hookRepoStub) WebhookURL() string                      { return "http://example.com/webhook" }
+func (s *hookRepoStub) SubscribedEvents() []string              { return []string{"push"} }
 
 func (s *hookRepoStub) hookResult() error {
 	if s.hookErrSet {
@@ -1424,17 +1548,23 @@ func (s *hookRepoStub) hookResult() error {
 	return assert.AnError
 }
 
-func (s *hookRepoStub) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+func (s *hookRepoStub) CreateWebhook(context.Context, string, []string, string) (repository.WebhookConfig, error) {
 	s.onCreateCalls.Add(1)
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	s.onUpdateCalls.Add(1)
+func (s *hookRepoStub) GetWebhook(context.Context, int64) (repository.WebhookConfig, error) {
 	return nil, s.hookResult()
 }
 
-func (s *hookRepoStub) OnDelete(ctx context.Context) error { return nil }
+func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) error {
+	s.onUpdateCalls.Add(1)
+	return s.hookResult()
+}
+
+func (s *hookRepoStub) DeleteWebhook(context.Context, int64) error {
+	return s.hookResult()
+}
 
 // TestRepositoryController_process_HookFailureCooldownSuppressesRetry verifies
 // that while the hook-failure cooldown is still active, the reconcile loop does

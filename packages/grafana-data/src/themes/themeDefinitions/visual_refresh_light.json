@@ -20,7 +20,7 @@
       "contrastText": "palette.neutral800"
     },
     "tertiary": {
-      "main": "palette.violet400"
+      "main": "palette.violet700"
     },
     "accent": {
       "main": "palette.orange600",
@@ -57,7 +57,12 @@
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
     },
-    "contrastThreshold": 4.5
+    "contrastThreshold": 4.5,
+    "action": {
+      "selected": "palette.neutral200",
+      "hover": "palette.neutral300",
+      "focus": "palette.neutral300"
+    }
   },
   "components": {
     "tag": {
@@ -88,7 +93,7 @@
     }
   },
   "shape": {
-    "borderRadiusSm": 6,
+    "borderRadiusSm": 4,
     "borderRadius": 8,
     "borderRadiusLg": 12
   }

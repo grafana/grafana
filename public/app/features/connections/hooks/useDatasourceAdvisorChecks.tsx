@@ -125,7 +125,7 @@ function AdvisorCheckBridge({
   const retryCheckResult = retryCheckFn();
   const createChecksResult = createChecksFn?.();
 
-  const check = completedChecks?.data?.items?.[0]; // Given a type, the list of items will contain only the last one for that type
+  const check = getLatestCheck(completedChecks?.data?.items);
   const isLoading = completedChecks == null || completedChecks.isLoading || !completedChecks.isCompleted;
   const retryCheck = retryCheckResult?.retryCheck;
   const createChecks = createChecksResult?.createChecks;
@@ -192,6 +192,22 @@ export function useDatasourceFailureByUID(): DatasourceFailuresResult {
   }, [check, checkType]);
 
   return { datasourceFailureByUID, isLoading: isLoading || isCheckTypeLoading };
+}
+
+/**
+ * Returns the most recently created check. The advisor API returns every check for
+ * the type ordered by name (not by date), so the latest report must be selected by
+ * creationTimestamp rather than by list position.
+ */
+function getLatestCheck(checks: Check[] | undefined): Check | undefined {
+  if (!checks?.length) {
+    return undefined;
+  }
+  return checks.reduce((latest, current) => {
+    const latestTime = new Date(latest.metadata.creationTimestamp ?? 0).getTime();
+    const currentTime = new Date(current.metadata.creationTimestamp ?? 0).getTime();
+    return currentTime > latestTime ? current : latest;
+  });
 }
 
 function getStepMap(checkType: CheckType | undefined): Map<string, CheckType['spec']['steps'][number]> {

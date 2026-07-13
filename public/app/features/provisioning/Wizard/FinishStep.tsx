@@ -11,7 +11,7 @@ import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfig
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { WebhookSection } from '../Config/WebhookSection';
 import { useConnectionList } from '../hooks/useConnectionList';
-import { isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
+import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
@@ -36,7 +36,7 @@ export const FinishStep = memo(function FinishStep() {
 
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(isGitHubBased(type) && githubAuthType === 'github-app' ? {} : skipToken);
+  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
     if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
       return false;
@@ -154,6 +154,7 @@ export const FinishStep = memo(function FinishStep() {
             smimeCertificateName="repository.smimeCertificate"
             signerNameName="repository.commit.signerName"
             signerEmailName="repository.commit.signerEmail"
+            signerIsAuthorName="repository.commit.signerIsAuthor"
           />
           {/* Pull requests are not supported by the pure git type. */}
           {type !== 'git' && (
@@ -168,7 +169,7 @@ export const FinishStep = memo(function FinishStep() {
         </>
       )}
 
-      {isGitHubBased(type) && (
+      {supportsWebhooks(type) && (
         <WebhookSection<WizardFormData>
           register={register}
           control={control}

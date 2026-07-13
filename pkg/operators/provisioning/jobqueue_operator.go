@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -18,6 +17,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
+
+// jobClaimExpiry is how long a job claim is considered valid before the cleanup
+// controller treats it as abandoned. The lease renewal interval must stay well
+// below this so a worker renews several times before its claim goes stale;
+// otherwise a single delayed renewal can let a running job be reaped and
+// re-run by another worker.
+const jobClaimExpiry = 60 * time.Second
 
 func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -52,7 +58,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	}
 
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -68,7 +74,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			folderAPIVersion:     controllerCfg.folderAPIVersion,
 		},
 		jobStore,
 		jobHistoryWriter,
@@ -128,7 +133,6 @@ type jobQueueControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
-	folderAPIVersion     string
 }
 
 func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
@@ -138,7 +142,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
 
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
@@ -146,7 +149,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
-		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(30 * time.Second),
-		folderAPIVersion:     folderAPIVersion,
+		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }
