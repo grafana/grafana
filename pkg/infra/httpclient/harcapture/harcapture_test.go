@@ -252,6 +252,13 @@ func TestRedactErrorText(t *testing.T) {
 	// A malformed percent-escape in a sensitive param must not fail open (url.Query drops it).
 	assert.NotContains(t, RedactErrorText(`Get "https://host/p?sig=abc%ZZ": bad`), "abc%ZZ")
 
+	// A secret after a ";" separator must be redacted (";" is a valid query separator)...
+	assert.NotContains(t, RedactErrorText(`Get "https://host/p?foo=bar;token=SECRET": bad`), "SECRET")
+	// ...but "," is an ordinary value char and must NOT be treated as a separator.
+	out2 := RedactErrorText(`Get "https://host/p?region=us,eu&token=SECRET": bad`)
+	assert.NotContains(t, out2, "SECRET")
+	assert.Contains(t, out2, "region=us,eu", "comma-containing values are preserved, not split")
+
 	// Non-URL text is returned unchanged.
 	assert.Equal(t, "context deadline exceeded", RedactErrorText("context deadline exceeded"))
 }

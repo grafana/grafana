@@ -143,20 +143,30 @@ func redactedURLString(u *url.URL) string {
 		// sensitive value in RawQuery unredacted -- a fail-open. Splitting the raw string never drops
 		// a pair, and preserves parameter order/encoding for the untouched ones.
 		changed := false
-		parts := strings.Split(redacted.RawQuery, "&")
-		for i, p := range parts {
-			key, _, hasValue := strings.Cut(p, "=")
-			name := key
-			if unescaped, err := url.QueryUnescape(key); err == nil {
-				name = unescaped
+		// Split on both "&" and ";": ";" is a historically-valid query separator, so a secret after
+		// one (?foo=bar;token=SECRET) would otherwise ride along inside a non-sensitive segment
+		// unredacted. Both separators round-trip through Split/Join, so untouched params keep their
+		// exact bytes (and the changed gate leaves the query verbatim when nothing was redacted). We
+		// deliberately do NOT split on "," or "|" — those are ordinary characters in real query
+		// values (e.g. region=us,eu), not separators.
+		amp := strings.Split(redacted.RawQuery, "&")
+		for i, seg := range amp {
+			subs := strings.Split(seg, ";")
+			for j, sub := range subs {
+				key, _, hasValue := strings.Cut(sub, "=")
+				name := key
+				if unescaped, err := url.QueryUnescape(key); err == nil {
+					name = unescaped
+				}
+				if _, sensitive := sensitiveQueryParams[strings.ToLower(name)]; sensitive && hasValue {
+					subs[j] = key + "=" + redactedValue
+					changed = true
+				}
 			}
-			if _, sensitive := sensitiveQueryParams[strings.ToLower(name)]; sensitive && hasValue {
-				parts[i] = key + "=" + redactedValue
-				changed = true
-			}
+			amp[i] = strings.Join(subs, ";")
 		}
 		if changed {
-			redacted.RawQuery = strings.Join(parts, "&")
+			redacted.RawQuery = strings.Join(amp, "&")
 		}
 	}
 	return redacted.String()
