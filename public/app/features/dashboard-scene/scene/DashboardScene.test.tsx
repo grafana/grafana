@@ -21,6 +21,7 @@ import {
   behaviors,
   SceneDataTransformer,
   LocalValueVariable,
+  MultiValueVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -2628,7 +2629,8 @@ describe('DashboardScene', () => {
       ] as VariableKind[]);
 
       const existing = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
-      existing?.setState({ value: 'b', text: 'b' });
+      expect(existing).toBeInstanceOf(MultiValueVariable);
+      (existing as MultiValueVariable).setState({ value: 'b', text: 'b' });
 
       scene.setPredefinedVariables([
         {
