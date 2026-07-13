@@ -8,7 +8,6 @@ import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
-import { ReadOnlyVariablesSection } from '../../../dashboard-scene/settings/variables/ReadOnlyVariablesSection';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import {
@@ -17,7 +16,6 @@ import {
   isVariableEditable,
 } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DraggableList } from './DraggableList';
@@ -50,19 +48,12 @@ export function DashboardVariablesList({
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
-  const { editable, readOnly } = useMemo(() => {
-    const { editable, nonEditable } = partitionVariablesByEditability(listVariables);
-    const readOnly = nonEditable.filter(
-      // Predefined (global/folder) variables render in the toolbar only, not in this list.
-      (v) => isEditableVariableType(v.state.type) && !isPredefinedOrigin(v.state.origin)
-    );
-    let editableVariables = editable;
+  const editable = useMemo(() => {
+    const { editable } = partitionVariablesByEditability(listVariables);
     if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
-      editableVariables = editable;
-    } else {
-      editableVariables = editable.filter((v) => !sceneUtils.isAdHocVariable(v));
+      return editable;
     }
-    return { editable: editableVariables, readOnly };
+    return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
   }, [includeAdHoc, listVariables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
@@ -124,7 +115,6 @@ export function DashboardVariablesList({
         onClickItem={onClickVariable}
         renderItemLabel={renderItemLabel}
       />
-      {readOnly.length > 0 && <ReadOnlyVariablesSection variables={readOnly} />}
     </DragDropContext>
   );
 }

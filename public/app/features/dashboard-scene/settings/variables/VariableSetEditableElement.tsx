@@ -20,13 +20,11 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
-import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
-import { ReadOnlyVariablesSection } from './ReadOnlyVariablesSection';
 import { openAddVariablePane } from './VariableTypeSelectionPane';
-import { isEditableVariableType, isVariableEditable } from './utils';
+import { isVariableEditable } from './utils';
 
 function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
@@ -113,16 +111,6 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       }
       return true;
     });
-  }, [variables, set]);
-
-  const readOnlyVariables = useMemo(() => {
-    return filterSectionRepeatLocalVariables(variables, set).filter(
-      (variable) =>
-        !isVariableEditable(variable) &&
-        isEditableVariableType(variable.state.type) &&
-        // Predefined (global/folder) variables render in the dashboard controls only, not in this list.
-        !isPredefinedOrigin(variable.state.origin)
-    );
   }, [variables, set]);
 
   const { visible, controlsMenu, hidden } = partitionVariablesByDisplay(editableVariables);
@@ -245,7 +233,6 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       {hidden.length > 0 && (
         <DragDropContext onDragEnd={onHiddenDragEnd}>{renderList(hidden, 'variables-outline-hidden')}</DragDropContext>
       )}
-      {readOnlyVariables.length > 0 && <ReadOnlyVariablesSection variables={readOnlyVariables} />}
       {canAdd && (
         <Box paddingBottom={1} paddingTop={1} display={'flex'}>
           <Button

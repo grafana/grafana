@@ -46,20 +46,6 @@ export function ProvisionedControlsSection({ columns, children, label }: Props) 
   );
 }
 
-/** Section label for predefined (global and folder-scoped) variables. */
-export function PredefinedControlsSectionLabel() {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Stack direction="row" gap={1} alignItems="center">
-      <Icon name="globe" className={styles.iconMuted} />
-      <Text variant="h5">
-        <Trans i18nKey="dashboard-scene.provisioned-controls-section.label-predefined">Predefined variables</Trans>
-      </Text>
-    </Stack>
-  );
-}
-
 function ProvisionedControlsSectionLabel() {
   const styles = useStyles2(getStyles);
 
