@@ -2,7 +2,12 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getTemplateSrv,
+  type TemplateSrv,
+  type VariableInterpolation,
+} from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
@@ -135,11 +140,22 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     const dimensionFilters = (migratedQuery.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
-        const filters = f.filters?.map((filter) => this.templateSrv.replace(filter ?? '', scopedVars));
+        const filters = (f.filters ?? []).flatMap((filter) => {
+          const interpolated: VariableInterpolation[] = [];
+          const replaced = this.templateSrv.replace(filter ?? '', scopedVars, 'raw', interpolated);
+          // A multi-value template variable interpolates to a
+          // comma-separated list. Spread it into separate filter values so
+          // each becomes its own clause in the metrics API $filter, rather
+          // than a single literal that matches no dimension value.
+          if (interpolated.some((v) => v.found !== false && v.value?.includes(','))) {
+            return replaced.split(',');
+          }
+          return [replaced];
+        });
         return {
           dimension: this.templateSrv.replace(f.dimension, scopedVars),
           operator: f.operator || 'eq',
-          filters: filters || [],
+          filters,
         };
       });
 
