@@ -42,11 +42,12 @@ export const VersionInstallButton = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
-  // The actual operation (install vs update vs downgrade), its tracking event, cache invalidation
-  // and downgrade confirmation must reflect the real installed version — even for managed plugins.
+  // The dispatched operation (install vs update vs downgrade), its tracking event and cache
+  // invalidation must reflect the real installed version — even for managed plugins.
   const installState = getInstallState(installedVersion, version.version);
   // Managed plugins present a neutral "Install" action instead of Upgrade/Downgrade, since their
-  // installedVersion isn't a trustworthy baseline. This only affects the label/icon, not behavior.
+  // installedVersion isn't a trustworthy baseline. This governs the presented action — the label,
+  // the icon, and whether the downgrade confirmation is shown — but never the dispatched operation.
   const displayInstallState = hideInstallState ? PluginStatus.INSTALL : installState;
 
   useEffect(() => {
@@ -92,7 +93,10 @@ export const VersionInstallButton = ({
   };
 
   const onInstallClick = () => {
-    if (installState === PluginStatus.DOWNGRADE) {
+    // Gate on displayInstallState so the confirmation matches what's shown: a button labeled
+    // "Install" (managed plugins) must not pop the downgrade confirmation modal. The dispatched
+    // operation in performInstallation still uses the real installState.
+    if (displayInstallState === PluginStatus.DOWNGRADE) {
       setIsModalOpen(true);
     } else {
       performInstallation();

@@ -281,6 +281,34 @@ describe('VersionInstallButton', () => {
     expect(mockInstall).toHaveBeenCalledWith('test', '2.0.0', PluginStatus.UPDATE);
   });
 
+  it('should not show the downgrade confirmation modal for a managed plugin, even for a lower version', () => {
+    // Regression test: because the button is presented as a neutral "Install" for managed plugins,
+    // clicking it must not pop the "Downgrade plugin version" confirmation — that would contradict
+    // the label. The dispatched operation is still correctly typed as a downgrade.
+    const version: Version = {
+      version: '1.0.0',
+      createdAt: '',
+      isCompatible: true,
+      grafanaDependency: null,
+    };
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion="2.0.0"
+        hideInstallState
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+
+    expect(screen.queryByText('Downgrade')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Install'));
+
+    expect(screen.queryByText('Downgrade plugin version')).not.toBeInTheDocument();
+    expect(mockInstall).toHaveBeenCalledWith('test', '1.0.0', PluginStatus.DOWNGRADE);
+  });
+
   it('should show the installation button if invalid semver installed version is provided', () => {
     const version: Version = {
       version: '1.0.0',

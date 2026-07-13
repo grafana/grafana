@@ -1,5 +1,5 @@
 import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { JSX } from 'react';
 import { Provider } from 'react-redux';
 
@@ -10,6 +10,12 @@ import { getCatalogPluginMock } from '../mocks/mockHelpers';
 import { PluginUpdateStrategy } from '../types';
 
 import { VersionList } from './VersionList';
+
+const mockInstall = jest.fn();
+jest.mock('../state/hooks', () => ({
+  ...jest.requireActual('../state/hooks'),
+  useInstall: () => mockInstall,
+}));
 
 describe('VersionList', () => {
   it('should only show installs when no version is installed', () => {
@@ -298,6 +304,40 @@ describe('VersionList', () => {
     expect(screen.queryByText('Downgrade')).not.toBeInTheDocument();
     expect(screen.getByText('4.17.0')).toBeInTheDocument();
     expect(screen.getByText(/^4\.19\.0/)).toBeInTheDocument();
+  });
+
+  it('should not open the downgrade modal from a managed plugin row that is labeled "Install"', () => {
+    // Reachability check for the label/modal mismatch: with external manage disabled (the default),
+    // an older still-listed version of a managed plugin renders an *enabled* button. Since managed
+    // rows are labeled "Install" (not "Downgrade"), clicking must not pop the downgrade modal.
+    const versions = [
+      { version: '2.0.0', createdAt: '', isCompatible: true, grafanaDependency: '>=9.0.0' },
+      { version: '1.0.0', createdAt: '', isCompatible: true, grafanaDependency: '>=8.0.0' },
+    ];
+
+    const plugin = getCatalogPluginMock({
+      details: {
+        grafanaDependency: '>=8.0.0',
+        pluginDependencies: [],
+        links: [{ name: 'GitHub', url: 'https://example.com' }],
+        versions,
+      },
+      managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
+      installedVersion: '2.0.0',
+    });
+
+    renderWithStore(<VersionList plugin={plugin} />);
+
+    // No row advertises a downgrade, and the older row's button is a plain enabled "Install".
+    expect(screen.queryByText('Downgrade')).not.toBeInTheDocument();
+    const installButtons = screen.getAllByText('Install');
+    const olderVersionButton = installButtons[installButtons.length - 1];
+    expect(olderVersionButton.closest('button')).toBeEnabled();
+
+    fireEvent.click(olderVersionButton);
+
+    // Clicking it must not surface the downgrade confirmation modal.
+    expect(screen.queryByText('Downgrade plugin version')).not.toBeInTheDocument();
   });
 
   it('should disable all versions when plugin is managed and update strategy is "assigned"', () => {
