@@ -146,8 +146,10 @@ export const DataSourcesSelector = ({ fetchDataSources, onChange, ...props }: Da
       return;
     }
 
-    // Clicking the bulk selector while it is checked or indeterminate clears current selections.
-    setDraftSelectedDataSources([]);
+    const listedKeys = new Set(selectableDataSources.map(toDataSourceKey));
+    setDraftSelectedDataSources(
+      draftSelectedDataSources.filter((dataSource) => !listedKeys.has(toDataSourceKey(dataSource)))
+    );
     setSelectionError(undefined);
   };
 

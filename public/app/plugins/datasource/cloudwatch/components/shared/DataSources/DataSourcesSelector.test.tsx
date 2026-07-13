@@ -109,10 +109,12 @@ describe('DataSourcesSelector', () => {
     expect(screen.getByText('0 data sources selected')).toBeInTheDocument();
   });
 
-  it('clears all selected data sources when bulk checkbox is unchecked', async () => {
+  it('preserves unlisted data sources when the listed selections are cleared', async () => {
+    const onChange = jest.fn();
     render(
       <DataSourcesSelector
         {...defaultProps}
+        onChange={onChange}
         selectedDataSources={[
           { name: 'amazon_vpc', type: 'flow' },
           { name: 'amazon_eks', type: 'audit' },
@@ -130,7 +132,10 @@ describe('DataSourcesSelector', () => {
 
     await userEvent.click(selectListedCheckbox);
     expect(selectListedCheckbox).not.toBeChecked();
-    expect(screen.getByText('0 data sources selected')).toBeInTheDocument();
+    expect(screen.getByText('1 data source selected')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Add data sources'));
+    expect(onChange).toHaveBeenCalledWith([{ name: 'hidden_ds', type: 'logs' }]);
   });
 
   it('caps bulk selection at 10 and shows an error', async () => {
@@ -216,7 +221,7 @@ describe('DataSourcesSelector', () => {
     expect(
       screen.queryByText('Only 1 listed data source was added. You can select up to 10 data sources.')
     ).not.toBeInTheDocument();
-    expect(screen.getByText('0 data sources selected')).toBeInTheDocument();
+    expect(screen.getByText('9 data sources selected')).toBeInTheDocument();
   });
 
   it('shows indeterminate select-listed state when some listed data sources are selected', async () => {
