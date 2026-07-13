@@ -7,7 +7,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspaceShell';
 
 interface PluginWorkspaceProps {
-  registerPlatformHost?: RefCallback<HTMLDivElement>;
+  workspaceHostRef?: RefCallback<HTMLDivElement>;
   onExitFullscreenWorkspace?: () => void;
 }
 
@@ -36,7 +36,7 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: true,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<FullscreenWorkspaceShell outletRef={jest.fn()} />);
+    const { container } = render(<FullscreenWorkspaceShell workspaceHostRef={jest.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -47,16 +47,16 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<FullscreenWorkspaceShell outletRef={jest.fn()} />);
+    const { container } = render(<FullscreenWorkspaceShell workspaceHostRef={jest.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders the plugin workspace and wires the platform host and exit callback', () => {
-    const outletRef = jest.fn();
-    const PluginWorkspace = jest.fn(({ registerPlatformHost, onExitFullscreenWorkspace }: PluginWorkspaceProps) => {
+    const workspaceHostRef = jest.fn();
+    const PluginWorkspace = jest.fn(({ workspaceHostRef, onExitFullscreenWorkspace }: PluginWorkspaceProps) => {
       // Surface the props so the test can assert they were passed through.
-      registerPlatformHost?.(null);
+      workspaceHostRef?.(null);
       return (
         <button type="button" data-testid="plugin-workspace" onClick={onExitFullscreenWorkspace}>
           workspace
@@ -68,10 +68,10 @@ describe('FullscreenWorkspaceShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    render(<FullscreenWorkspaceShell outletRef={outletRef} />);
+    render(<FullscreenWorkspaceShell workspaceHostRef={workspaceHostRef} />);
 
     expect(screen.getByTestId('plugin-workspace')).toBeInTheDocument();
-    expect(outletRef).toHaveBeenCalledWith(null);
+    expect(workspaceHostRef).toHaveBeenCalledWith(null);
 
     screen.getByTestId('plugin-workspace').click();
     expect(setFullscreenWorkspace).toHaveBeenCalledWith(false);

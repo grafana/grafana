@@ -9,16 +9,16 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 const FULLSCREEN_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/fullscreen-workspace/v1';
 
 interface FullscreenWorkspaceComponentProps {
-  registerPlatformHost?: RefCallback<HTMLDivElement>;
+  workspaceHostRef?: RefCallback<HTMLDivElement>;
   onExitFullscreenWorkspace?: () => void;
 }
 
 interface Props {
   // The live page outlet is portaled into this node by AppChrome. The Platform tab
   // body just exposes it; the page itself stays mounted in AppChrome's React tree.
-  outletRef: RefCallback<HTMLDivElement>;
+  workspaceHostRef: RefCallback<HTMLDivElement>;
 }
-export function FullscreenWorkspaceShell({ outletRef }: Props) {
+export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
   const { component: PluginWorkspace, isLoading } = usePluginComponent<FullscreenWorkspaceComponentProps>(
@@ -32,7 +32,7 @@ export function FullscreenWorkspaceShell({ outletRef }: Props) {
   return (
     <div className={styles.root}>
       <PluginWorkspace
-        registerPlatformHost={outletRef}
+        workspaceHostRef={workspaceHostRef}
         onExitFullscreenWorkspace={() => chrome.setFullscreenWorkspace(false)}
       />
     </div>

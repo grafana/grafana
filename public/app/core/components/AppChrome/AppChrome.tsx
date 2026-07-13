@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
-import { Fragment, type PropsWithChildren, useEffect, useState } from 'react';
+import { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
@@ -50,11 +50,21 @@ export function AppChrome({ children }: Props) {
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
 
-  // The single DOM node the live page (`children`) is portaled into. It is swapped
-  // between the normal <main> and the fullscreen-workspace Platform tab. Because `children`
-  // keeps a stable position in the React tree, only its DOM target moves on toggle
-  // -> no remount, no reload, live state preserved.
-  const [outletHost, setOutletHost] = useState<HTMLElement | null>(null);
+  // The DOM node exposed by the fullscreen workspace Platform tab; the shell registers it.
+  const [workspaceHost, setWorkspaceHost] = useState<HTMLElement | null>(null);
+
+  // The live page (`children`) is portaled into this one stable, detached node, so it mounts once
+  // and is never unmounted. `portalHostRef` reparents that node into whichever host is active (the
+  // default <main> or the workspace host), moving DOM without a remount/refetch.
+  const portalTargetRef = useRef<HTMLDivElement | null>(null);
+  if (!portalTargetRef.current) {
+    portalTargetRef.current = document.createElement('div');
+  }
+  const portalHostRef = useCallback((host: HTMLElement | null) => {
+    if (host && portalTargetRef.current) {
+      host.appendChild(portalTargetRef.current);
+    }
+  }, []);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -99,31 +109,34 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const { fullscreenWorkspaceFeatureFlagEnabled, fullscreenWorkspaceActive } = useFullscreenWorkspace();
+  const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
+
+  const fullscreenWorkspaceChrome = (
+    <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
+      <FullscreenWorkspaceShell workspaceHostRef={setWorkspaceHost} />
+      {workspaceHost &&
+        createPortal(
+          <>
+            {/* A slim bar (hamburger + breadcrumbs) sits above the live page inside the Platform tab */}
+            <FullscreenWorkspacePlatformBar />
+            <div ref={portalHostRef} />
+          </>,
+          workspaceHost
+        )}
+    </div>
+  );
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
-  return (
+  const defaultChrome = (
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless || fullscreenWorkspaceActive,
+        'main-view--chrome-hidden': state.chromeless,
       })}
     >
-      {fullscreenWorkspaceFeatureFlagEnabled &&
-        outletHost &&
-        createPortal(
-          [
-            // In fullscreen workspace, a slim bar (hamburger + breadcrumbs) sits above the live
-            // page inside the Platform tab
-            fullscreenWorkspaceActive ? <FullscreenWorkspacePlatformBar key="agent-platform-bar" /> : null,
-            <Fragment key="outlet">{children}</Fragment>,
-          ],
-          outletHost
-        )}
-
-      {!state.chromeless && !fullscreenWorkspaceActive && (
+      {!state.chromeless && (
         <>
           <LinkButton
             className={styles.skipLink}
@@ -152,65 +165,68 @@ export function AppChrome({ children }: Props) {
           </header>
         </>
       )}
-      {fullscreenWorkspaceActive ? (
-        <FullscreenWorkspaceShell outletRef={setOutletHost} />
-      ) : (
-        <div className={contentClass}>
-          <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
-            {!state.chromeless && (
-              <div
-                className={cx(styles.scopesDashboardsContainer, {
-                  [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-                })}
-              >
-                <ErrorBoundaryAlert boundaryName="scopes-dashboards">
-                  <ScopesDashboards />
-                </ErrorBoundaryAlert>
-              </div>
-            )}
-            <main
-              className={cx(styles.pageContainer, {
-                [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-                [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-                [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-                [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
+      <div className={contentClass}>
+        <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
+          {!state.chromeless && (
+            <div
+              className={cx(styles.scopesDashboardsContainer, {
+                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
               })}
-              id="pageContent"
-              tabIndex={-1}
-              ref={fullscreenWorkspaceFeatureFlagEnabled ? setOutletHost : undefined}
             >
-              {fullscreenWorkspaceFeatureFlagEnabled ? null : children}
-            </main>
-            {!state.chromeless &&
-              isExtensionSidebarOpen &&
-              (isSmallScreen ? (
-                <div className={styles.sidebarContainerFloating} data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}>
-                  <ExtensionSidebar />
-                </div>
-              ) : (
-                <Resizable
-                  className={styles.sidebarContainer}
-                  defaultSize={{ width: extensionSidebarWidth }}
-                  enable={{ left: true }}
-                  onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-                  handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-                  minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
-                  maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
-                >
-                  <ExtensionSidebar />
-                </Resizable>
-              ))}
-          </div>
+              <ErrorBoundaryAlert boundaryName="scopes-dashboards">
+                <ScopesDashboards />
+              </ErrorBoundaryAlert>
+            </div>
+          )}
+          <main
+            className={cx(styles.pageContainer, {
+              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
+              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
+            })}
+            id="pageContent"
+            tabIndex={-1}
+            ref={portalHostRef}
+          />
+          {!state.chromeless &&
+            isExtensionSidebarOpen &&
+            (isSmallScreen ? (
+              <div className={styles.sidebarContainerFloating} data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}>
+                <ExtensionSidebar />
+              </div>
+            ) : (
+              <Resizable
+                className={styles.sidebarContainer}
+                defaultSize={{ width: extensionSidebarWidth }}
+                enable={{ left: true }}
+                onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
+                handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+                minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+                maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+              >
+                <ExtensionSidebar />
+              </Resizable>
+            ))}
         </div>
-      )}
-      {!state.chromeless && !fullscreenWorkspaceActive && !state.megaMenuDocked && <AppChromeMenu />}
-      {(!state.chromeless || fullscreenWorkspaceActive) && <CommandPalette />}
-      {!state.chromeless && !fullscreenWorkspaceActive && isSplashScreenEnabled && <SplashScreenModal />}
-      {!state.chromeless && !fullscreenWorkspaceActive && <FeatureControlFloating />}
+      </div>
+      {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
+      {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
+      {!state.chromeless && <FeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
     </div>
+  );
+
+  // The page is portaled once, at a stable position, regardless of which chrome is shown — so
+  // switching between the fullscreen workspace and the default chrome never remounts it.
+  return (
+    <>
+      {fullscreenWorkspaceActive ? fullscreenWorkspaceChrome : defaultChrome}
+      {createPortal(children, portalTargetRef.current)}
+    </>
   );
 }
 
