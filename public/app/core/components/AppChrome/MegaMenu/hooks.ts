@@ -1,6 +1,6 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
+import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
   findByUrl,
@@ -172,7 +173,10 @@ const usePinning = ({
     if (!canCustomise) {
       const isSaved = isPinned(url);
       const newItems = isSaved ? pinnedUrls.filter((i) => url !== i) : [...pinnedUrls, url];
-      reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', { path: url });
+      reportInteraction(isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned', {
+        path: url,
+        ...getNavExperimentPayload(),
+      });
       persistBookmarkUrls(newItems, () => {
         setPinnedUrls(newItems);
         dispatch(setBookmark({ item, isSaved: !isSaved }));
@@ -183,7 +187,10 @@ const usePinning = ({
     // Customisation on: a plain toggle of the single url, staged as a draft (pins stay in the nav and
     // are duplicated into the box). The pin controls only render in edit mode, so this always stages.
     const willPin = !effectivePinnedUrls.includes(url);
-    reportInteraction(willPin ? 'grafana_nav_item_pinned' : 'grafana_nav_item_unpinned', { path: url });
+    reportInteraction(willPin ? 'grafana_nav_item_pinned' : 'grafana_nav_item_unpinned', {
+      path: url,
+      ...getNavExperimentPayload(),
+    });
     setDraftPinnedUrls((current) => (current.includes(url) ? current.filter((u) => u !== url) : [...current, url]));
   };
 
@@ -298,7 +305,20 @@ export const useNavCustomization = () => {
   const state = chrome.useState();
   const docked = state.megaMenuDocked;
 
-  const canCustomise = useBooleanFlagValue('grafana.customizableMegaMenu', false) && contextSrv.isSignedIn;
+  const customizableMegaMenu = useBooleanFlagValue('grafana.customizableMegaMenu', false);
+  const canCustomise = customizableMegaMenu && contextSrv.isSignedIn;
+
+  // A/B experiment instrumentation: with a boolean flag, "treatment" = flag on, "control" = flag
+  // off. Cache the variant so the KPI interactions can be stamped with it, and fire the exposure
+  // (denominator) event once per page load for the experiment population (signed-in users).
+  const variant = customizableMegaMenu ? 'treatment' : 'control';
+  useEffect(() => {
+    if (!contextSrv.isSignedIn) {
+      return;
+    }
+    setNavExperimentVariant(variant);
+    reportNavExperimentViewOnce(variant);
+  }, [variant]);
 
   const [editMode, setEditMode] = useState(false);
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.

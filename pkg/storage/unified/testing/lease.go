@@ -628,6 +628,18 @@ func requireSingleLeaseKey(t *testing.T, store kv.KV, name string) string {
 	return keys[0]
 }
 
+// saveKVHelper is a helper function to save data to KV store using the WriteCloser interface.
+func saveKVHelper(t *testing.T, store kv.KV, ctx context.Context, section, key string, value io.Reader) {
+	t.Helper()
+
+	writer, err := store.Save(ctx, section, key)
+	require.NoError(t, err)
+	_, err = io.Copy(writer, value)
+	require.NoError(t, err)
+	err = writer.Close()
+	require.NoError(t, err)
+}
+
 func leaseKeys(t *testing.T, store kv.KV, name string) []string {
 	t.Helper()
 	prefix := name + "~"

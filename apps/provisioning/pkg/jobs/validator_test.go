@@ -1219,7 +1219,6 @@ func TestValidateAuthor(t *testing.T) {
 	annotations := map[string]string{
 		AnnoAuthor:      requester.GetName(),
 		AnnoAuthorEmail: requester.GetEmail(),
-		AnnoAuthorID:    requester.GetUID(),
 	}
 
 	tests := []struct {
@@ -1263,13 +1262,6 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " must match",
 		},
 		{
-			name:            "create with mismatched author ID",
-			ctx:             userCtx,
-			operation:       admission.Create,
-			annotations:     map[string]string{AnnoAuthorID: "user:other"},
-			wantErrContains: AnnoAuthorID + " must match",
-		},
-		{
 			name:            "create without requester",
 			ctx:             t.Context(),
 			operation:       admission.Create,
@@ -1300,12 +1292,12 @@ func TestValidateAuthor(t *testing.T) {
 			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
 		{
-			name:            "update removing author ID",
+			name:            "update removing email",
 			ctx:             userCtx,
 			operation:       admission.Update,
-			annotations:     map[string]string{AnnoAuthor: requester.GetName(), AnnoAuthorEmail: requester.GetEmail()},
+			annotations:     map[string]string{AnnoAuthor: requester.GetName()},
 			oldAnnotations:  annotations,
-			wantErrContains: AnnoAuthorID + " is immutable",
+			wantErrContains: AnnoAuthorEmail + " is immutable",
 		},
 		{
 			name:        "delete is ignored",

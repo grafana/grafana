@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -535,33 +534,18 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	annotations := map[string]string{}
-	if author, ok := UserAttribution(ctx); ok {
-		if author.Name != "" {
-			annotations[appjobs.AnnoAuthor] = author.Name
-		}
-		if author.Email != "" {
-			annotations[appjobs.AnnoAuthorEmail] = author.Email
-		}
-		if author.ID != "" {
-			annotations[appjobs.AnnoAuthorID] = author.ID
-		}
-	}
-
-	// Set up the provisioning identity for this namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
-	}
-
+	// The job is created with the caller's identity so that the admission
+	// mutator can attribute it to the acting user (see AdmissionMutator).
+	// Unlike the other store operations, Insert does not switch to the
+	// provisioning identity: user-triggered flows keep the requesting user in
+	// context, while background callers (repository controller, webhooks)
+	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
-			Annotations: annotations,
 		},
 		Spec: spec,
 	}

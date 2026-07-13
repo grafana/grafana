@@ -86,6 +86,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
+	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
