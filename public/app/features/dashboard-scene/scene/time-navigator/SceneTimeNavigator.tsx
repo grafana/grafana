@@ -43,8 +43,9 @@ export interface SceneTimeNavigatorState extends SceneObjectState {
   annotationNames?: string[];
   /** Annotation frames (re-run over the context window) rendered as markers on the bar. */
   annotations?: DataFrame[];
-  /** Fresh annotation layers scoped to the context window; kept in state so they're parented into the
-   * scene graph — their queries enrich the request with the dashboard by walking up to it. */
+  /** The annotation layers scoped to the context window. Kept in state (created once in the constructor) so
+   * its $timeRange is parented into the scene graph and its layers can be swapped in place; its results
+   * stream drives `annotations`. */
   annotationSet?: SceneDataLayerSet;
   /** Our own query runner for the sparklines, scoped to the context window (see _contextRange). */
   $data?: SceneDataProvider;
@@ -59,21 +60,30 @@ export interface SceneTimeNavigatorState extends SceneObjectState {
 export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState> {
   public static Component = SceneTimeNavigatorRenderer;
 
-  /** The range the sparkline query runs against — the context window, independent of the dashboard time. */
+  /** The range the sparkline query runs against — the context window, independent of the dashboard time.
+   *  Lives in the graph as $data's $timeRange; this member is just a handle to that in-state object. */
   private _contextRange: SceneTimeRange;
-  /** The same context window for the annotation layers (a separate instance to avoid a shared parent). */
+  /** The same context window for the annotation layers. A SEPARATE instance from _contextRange: one
+   *  SceneTimeRange can't be the $timeRange of two parents without re-parenting warnings. Lives in the
+   *  graph as annotationSet's $timeRange; this member is just a handle to it. */
   private _annoRange: SceneTimeRange;
-  /** Teardown for the current annotation layer set's activation + subscription. */
-  private _annoCleanup?: () => void;
 
   public constructor(state: Partial<SceneTimeNavigatorState> = {}) {
     const contextRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+    const annoRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+    // Keep the annotation layer set in state from the start, with annoRange as its $timeRange, so annoRange
+    // is parented into the graph once. _applyAnnotations then swaps this set's `layers` in place instead of
+    // recreating the set (which would re-parent annoRange every time -> "already has a parent" warnings).
+    // SceneDataLayerSet's constructor drops a $timeRange, so set it afterwards.
+    const annotationSet = new SceneDataLayerSet({ layers: [] });
+    annotationSet.setState({ $timeRange: annoRange });
     super({
       ...state,
       $data: new SceneQueryRunner({ queries: [], maxDataPoints: SPARKLINE_MAX_DATA_POINTS, $timeRange: contextRange }),
+      annotationSet,
     });
     this._contextRange = contextRange;
-    this._annoRange = new SceneTimeRange({ from: 'now-6h', to: 'now' });
+    this._annoRange = annoRange;
     this.addActivationHandler(() => this._activationHandler());
   }
 
@@ -111,25 +121,33 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
       computeContextWindow({ from: dashRange.from.valueOf(), to: dashRange.to.valueOf() }, Date.now(), factor)
     );
     this._applySources();
+
+    // Activate the (stable) annotation set once and stream its results into `annotations`; which layers it
+    // holds is (re)populated by _applyAnnotations (an empty set emits empty data -> annotations = []).
+    const set = this.state.annotationSet!;
+    const deactivate = set.activate();
+    const sub = set.getResultsStream().subscribe((res) => {
+      this.setState({ annotations: res.data.series ?? [] });
+    });
     this._applyAnnotations();
     return () => {
-      this._annoCleanup?.();
-      this._annoCleanup = undefined;
+      sub.unsubscribe();
+      deactivate();
     };
   }
 
   /**
-   * Re-run the selected dashboard annotation queries over the context window and expose the resulting
-   * frames for the bar. We build FRESH layers from the chosen query defs (reusing the live dashboard
-   * layers would repoint the range the dashboard panels resolve) nested under a SceneDataLayerSet that
-   * carries our own context SceneTimeRange, so markers span the whole bar. The set is kept in state so
-   * it is parented into the scene graph — annotation queries enrich their request with the dashboard by
-   * walking up to it.
+   * Re-run the selected dashboard annotation queries over the context window by swapping FRESH layers onto
+   * the stable `annotationSet` (kept in state, scoped to our context SceneTimeRange). The set's results are
+   * streamed to `annotations` by the activation handler. Building our own layers (rather than reusing the
+   * live dashboard ones) avoids repointing the range the dashboard panels resolve; their queries still
+   * enrich the request with the dashboard by walking up the graph.
    */
   private _applyAnnotations() {
-    this._annoCleanup?.();
-    this._annoCleanup = undefined;
-
+    const set = this.state.annotationSet;
+    if (!set) {
+      return;
+    }
     const names = new Set(this.state.annotationNames ?? []);
     let queries: AnnotationQuery[] = [];
     if (names.size) {
@@ -139,41 +157,20 @@ export class SceneTimeNavigator extends SceneObjectBase<SceneTimeNavigatorState>
           .state.annotationLayers.filter(
             (l): l is dataLayers.AnnotationsDataLayer => l instanceof dataLayers.AnnotationsDataLayer
           )
-          .map((l) => l.state.query)
-          .filter((q) => names.has(q.name));
+          // Match on the layer's state.name — that's what the picker stores as its value; a layer's
+          // query.name can differ (or be empty), so filtering on query.name would silently drop selections.
+          .filter((l) => names.has(l.state.name ?? ''))
+          .map((l) => l.state.query);
       } catch {
         queries = [];
       }
     }
-    if (!queries.length) {
-      this.setState({ annotations: [], annotationSet: undefined });
-      return;
-    }
-
+    // Swap the stable set's layers (fresh instances, each parented exactly once — no re-parent churn). An
+    // empty `layers` makes the set emit empty data, driving `annotations` to [] via the results stream.
     const layers = queries.map(
       (query) => new DashboardAnnotationsDataLayer({ query, name: query.name, isEnabled: true })
     );
-    // NB: SceneDataLayerSet's constructor only forwards { name, layers } to super, so a $timeRange passed
-    // to the constructor is dropped. Set it afterwards so the layers resolve OUR context window (not the
-    // dashboard range) when they walk up the graph for their time range.
-    const set = new SceneDataLayerSet({ layers });
-    set.setState({ $timeRange: this._annoRange });
-    this.setState({ annotationSet: set });
-    const deactivate = set.activate();
-    const sub = set.getResultsStream().subscribe((res) => {
-      this.setState({ annotations: res.data.series ?? [] });
-    });
-    // Idempotent: Scenes throws if a deactivate() handler runs twice, and this can be invoked from both
-    // _applyAnnotations and the activation-handler teardown across a deactivate/re-activate (panel edit).
-    let torn = false;
-    this._annoCleanup = () => {
-      if (torn) {
-        return;
-      }
-      torn = true;
-      sub.unsubscribe();
-      deactivate();
-    };
+    set.setState({ layers });
   }
 
   /** Choose which dashboard annotation queries to show on the bar. */
