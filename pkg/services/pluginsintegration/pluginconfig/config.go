@@ -24,6 +24,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 
 	pluginSettings := extractPluginSettings(settingProvider)
 	var activeOverrides []config.ExternalOverride
+	var disabledExternalPlugins []string
 	for _, o := range externaloverrides.Overrides {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		active := o.Stage == externaloverrides.OverrideStagePermanent ||
@@ -40,7 +41,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 				ExternalPluginID: o.ExternalPluginID,
 			})
 		} else {
-			cfg.DisablePlugins = append(cfg.DisablePlugins, o.ExternalPluginID)
+			disabledExternalPlugins = append(disabledExternalPlugins, o.ExternalPluginID)
 		}
 	}
 
@@ -57,7 +58,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			TempoAlertingEnabled: features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
-		cfg.DisablePlugins,
+		append(cfg.DisablePlugins, disabledExternalPlugins...),
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComProxyAPIToken,
 		activeOverrides,
