@@ -141,6 +141,7 @@ export interface ValueLinkConfig {
   valueRowIndex?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface Field<T = any, C = any> {
   /**
    * Name of the field (column)
@@ -258,6 +259,7 @@ export interface NumericRange {
   delta: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DataFrame<V = any, C = any> extends QueryResultBase {
   name?: string;
   fields: Array<Field<V, C>>; // All fields of equal length
