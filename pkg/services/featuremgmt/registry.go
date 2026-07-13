@@ -2618,13 +2618,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-		}, {
-			Name:        "yAxisTickControl",
-			Description: "Enables fine-grained Y-axis tick options beyond the auto-ticks",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
 		},
 		{
 			Name:         "logsTablePanelNG",
