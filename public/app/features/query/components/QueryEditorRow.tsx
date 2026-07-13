@@ -540,7 +540,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id} data-testid={`${datasource.type}-query-editor-row-${this.id}`}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>

@@ -16,6 +16,7 @@ import {
   type PluginMeta,
   urlUtil,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { getPluginSettings } from '@grafana/runtime/unstable';
@@ -94,7 +95,11 @@ export const wrapWithPluginContext = <T,>({
     <PluginContextProvider meta={meta}>
       <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
         <RestrictedGrafanaApisProvider pluginId={pluginId}>
-          <div data-testid={`${pluginId}-extension-component`} style={{ display: 'contents' }}>
+          <div
+            data-testid={selectors.components.Plugins.extensionComponent(pluginId)}
+            data-plugin-id={pluginId}
+            style={{ display: 'contents' }}
+          >
             <Component
               {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
             />

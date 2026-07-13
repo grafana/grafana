@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, type AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
@@ -899,6 +900,21 @@ describe('Plugin Extensions / Utils', () => {
       // and it must use the provided meta (version 2.0.0) instead of fetching it (1.0.0)
       expect(screen.getByText('Hello Grafana!')).toBeVisible();
       expect(screen.getByText('Version: 2.0.0')).toBeVisible();
+    });
+
+    it('should mark the plugin boundary on the wrapper element', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
+
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
+
+      const wrapper = await screen.findByTestId(selectors.components.Plugins.extensionComponent(pluginId));
+      expect(wrapper).toHaveAttribute('data-plugin-id', pluginId);
     });
 
     it('should not be possible to mutate the props in development mode, but it logs an error', async () => {

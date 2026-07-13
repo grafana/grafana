@@ -14,6 +14,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
@@ -192,11 +193,18 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   return (
     <>
       {navModel ? (
-        <Page data-testid={`${pluginId}-page`} navModel={navModel} pageNav={pluginNav?.node}>
+        <Page
+          data-testid={selectors.components.Plugins.appPage(pluginId)}
+          data-plugin-id={pluginId}
+          navModel={navModel}
+          pageNav={pluginNav?.node}
+        >
           <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
         </Page>
       ) : (
-        <Page data-testid={`${pluginId}-page`}>{pluginRoot}</Page>
+        <Page data-testid={selectors.components.Plugins.appPage(pluginId)} data-plugin-id={pluginId}>
+          {pluginRoot}
+        </Page>
       )}
     </>
   );
