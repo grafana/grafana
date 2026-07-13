@@ -65,7 +65,15 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// context, so mutating it here takes effect for this request.
 	c.SkipQueryCache = true
 
-	resp, queryErr := hs.queryDataService.QueryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
+	// Mirror QueryMetricsV2's dispatch (see ds_query.go) so diagnostics run the queries exactly as
+	// the panel did: with per-query time ranges when the client asks for Query V2 semantics, else
+	// the top-level from/to. Otherwise captured traffic wouldn't match a panel that uses per-query
+	// ranges, defeating the "reproduce offline" goal.
+	queryData := hs.queryDataService.QueryData
+	if c.Req.Header.Get("X-Query-V2") == "true" {
+		queryData = hs.queryDataService.QueryDataNew
+	}
+	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
