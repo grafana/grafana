@@ -58,40 +58,7 @@ func NormalizeGrantTuples(tuples []*authzextv1.TupleKey, types []*authzextv1.Res
 			}
 			merge(grant, tuple.GetRelation())
 		case TypeFolder:
-			if strings.HasPrefix(tuple.GetRelation(), "resource_") {
-				targets := protoConditionResources(tuple)
-				if len(targets) == 0 {
-					key := objectName + "\x00*"
-					grant := folderResources[key]
-					if grant == nil {
-						grant = &authzextv1.FolderResourceGrant{FolderUid: objectName, AllResourceTypes: true}
-						folderResources[key] = grant
-					}
-					merge(grant, tuple.GetRelation())
-					continue
-				}
-				for _, target := range targets {
-					if !matchesType(target, types) {
-						continue
-					}
-					key := objectName + "\x00" + resourceTypeKey(target)
-					grant := folderResources[key]
-					if grant == nil {
-						grant = &authzextv1.FolderResourceGrant{FolderUid: objectName, Type: target}
-						folderResources[key] = grant
-					}
-					merge(grant, tuple.GetRelation())
-				}
-				continue
-			}
-
-			key := objectName
-			grant := folders[key]
-			if grant == nil {
-				grant = &authzextv1.FolderGrant{FolderUid: objectName}
-				folders[key] = grant
-			}
-			merge(grant, tuple.GetRelation())
+			normalizeFolderTuple(tuple, objectName, types, folders, folderResources, merge)
 		case TypeResource:
 			resource, name := parseResourceObjectGR(tuple.GetObject())
 			targets := protoConditionResources(tuple)
@@ -152,6 +119,50 @@ func NormalizeGrantTuples(tuples []*authzextv1.TupleKey, types []*authzextv1.Res
 	return result
 }
 
+func normalizeFolderTuple(
+	tuple *authzextv1.TupleKey,
+	folderUID string,
+	types []*authzextv1.ResourceType,
+	folders map[string]*authzextv1.FolderGrant,
+	folderResources map[string]*authzextv1.FolderResourceGrant,
+	merge func(any, string),
+) {
+	if !strings.HasPrefix(tuple.GetRelation(), "resource_") {
+		grant := folders[folderUID]
+		if grant == nil {
+			grant = &authzextv1.FolderGrant{FolderUid: folderUID}
+			folders[folderUID] = grant
+		}
+		merge(grant, tuple.GetRelation())
+		return
+	}
+
+	targets := protoConditionResources(tuple)
+	if len(targets) == 0 {
+		key := folderUID + "\x00*"
+		grant := folderResources[key]
+		if grant == nil {
+			grant = &authzextv1.FolderResourceGrant{FolderUid: folderUID, AllResourceTypes: true}
+			folderResources[key] = grant
+		}
+		merge(grant, tuple.GetRelation())
+		return
+	}
+
+	for _, target := range targets {
+		if !matchesType(target, types) {
+			continue
+		}
+		key := folderUID + "\x00" + resourceTypeKey(target)
+		grant := folderResources[key]
+		if grant == nil {
+			grant = &authzextv1.FolderResourceGrant{FolderUid: folderUID, Type: target}
+			folderResources[key] = grant
+		}
+		merge(grant, tuple.GetRelation())
+	}
+}
+
 // GrantTuplesFromResult converts normalized grants back to tuple shapes so the
 // legacy RBAC adapter can retain its established translation behavior.
 func GrantTuplesFromResult(result *authzextv1.GetGrantsResult) []*authzextv1.TupleKey {
@@ -205,8 +216,9 @@ func GrantTuplesFromResult(result *authzextv1.GetGrantsResult) []*authzextv1.Tup
 // TranslateGrants maps the normalized grants contract to legacy RBAC actions and
 // scopes. Tuple reconstruction remains an internal compatibility detail.
 func TranslateGrants(result *authzextv1.GetGrantsResult) []GrantPermission {
-	var permissions []GrantPermission
-	for _, tuple := range GrantTuplesFromResult(result) {
+	tuples := GrantTuplesFromResult(result)
+	permissions := make([]GrantPermission, 0, len(tuples))
+	for _, tuple := range tuples {
 		permissions = append(permissions, TranslateGrantTuple(tuple)...)
 	}
 	return permissions
