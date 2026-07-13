@@ -100,37 +100,49 @@ async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid
 
 // One shared resolution per TTL window; the TTL lets a later home visit re-resolve after datasource changes.
 const RESOLUTION_TTL_MS = 60_000;
-let resolution: Promise<DataSourceInstanceListItem | null> | undefined;
-let resolvedAt = 0;
 
-// Reset the cached datasource resolution (test seam).
-export function resetKubernetesPrometheusResolution(): void {
-  resolution = undefined;
-  resolvedAt = 0;
+// Owns the cached promise + timestamp in a closure so no module-level binding is mutated.
+function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): { get(): Promise<T>; reset(): void } {
+  let cached: Promise<T> | undefined;
+  let cachedAt = 0;
+  return {
+    get() {
+      if (!cached || Date.now() - cachedAt > ttlMs) {
+        cachedAt = Date.now();
+        cached = fn();
+      }
+      return cached;
+    },
+    reset() {
+      cached = undefined;
+      cachedAt = 0;
+    },
+  };
 }
 
 // Probe all candidates in parallel, settle on the highest-priority one with data; null = "not enabled".
-function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  if (!resolution || Date.now() - resolvedAt > RESOLUTION_TTL_MS) {
-    resolvedAt = Date.now();
-    resolution = (async () => {
-      const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
-      const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
-      for (let i = 0; i < candidates.length; i++) {
-        // Await in priority order: a slow high-priority probe delays — never changes — the outcome.
-        if (await probes[i]) {
-          return candidates[i];
-        }
-      }
-      return null;
-    })();
+async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
+  const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
+  const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
+  for (let i = 0; i < candidates.length; i++) {
+    // Await in priority order: a slow high-priority probe delays — never changes — the outcome.
+    if (await probes[i]) {
+      return candidates[i];
+    }
   }
-  return resolution;
+  return null;
+}
+
+const kubernetesPrometheusResolution = createTtlCachedPromise(resolveKubernetesPrometheus, RESOLUTION_TTL_MS);
+
+// Reset the cached datasource resolution (test seam).
+export function resetKubernetesPrometheusResolution(): void {
+  kubernetesPrometheusResolution.reset();
 }
 
 /** Overview counts via kube-state-metrics queries against the resolved datasource; throws when none has data. */
 export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
-  const ds = await resolveKubernetesPrometheus();
+  const ds = await kubernetesPrometheusResolution.get();
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
@@ -147,7 +159,7 @@ export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
 
 /** Cluster CPU over 24h (cAdvisor); throws when no datasource has Kubernetes data, null when the metric is absent. */
 export async function fetchClusterCpuSeries(): Promise<FieldSparkline | null> {
-  const ds = await resolveKubernetesPrometheus();
+  const ds = await kubernetesPrometheusResolution.get();
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
