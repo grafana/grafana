@@ -60,7 +60,8 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockLegacyClient)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -203,7 +204,8 @@ func TestSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
+			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), mockClient, mockClient)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)

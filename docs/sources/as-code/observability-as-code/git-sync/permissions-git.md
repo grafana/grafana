@@ -20,14 +20,6 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 
 # Configure Git repository protection
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 When you use Git Sync, your dashboard configurations are stored as code in a Git repository. Git repository protection controls who can access this source code and who can modify it. This guide explains how to configure repository access at your Git provider to protect your dashboard source code.
 
 {{< admonition type="note" >}}

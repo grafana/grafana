@@ -23,9 +23,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -159,6 +157,16 @@ Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **API Token** text box.
 1. Paste the **Repository URL** for your Bitbucket repository into the text box.
+
+   Use the Git clone URL for the repository, not the URL that appears in your browser's address bar when you view the repository. To find it, select **Clone** in Bitbucket and copy the HTTPS URL. The clone URL ends in `.git`, and its format depends on your Bitbucket deployment:
+   - Bitbucket Cloud: `https://bitbucket.org/<workspace>/<repository>.git`
+   - Bitbucket Data Center and Server: `https://<bitbucket-host>/scm/<PROJECT>/<repository>.git`
+
+   {{< admonition type="tip" >}}
+
+   If Grafana returns an `ls-refs` error when it connects to the repository, check that you entered the clone URL and not the browser URL.
+
+   {{< /admonition >}}
 
 Select **Configure repository** to set up your provisioning folder.
 
