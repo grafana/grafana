@@ -156,7 +156,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
-    this.outlineHiddenFromUrl = urlUtil.getUrlSearchParams().contentOutline === 'false';
+    const { contentOutline } = urlUtil.getUrlSearchParams();
+    this.outlineHiddenFromUrl = (Array.isArray(contentOutline) ? contentOutline[0] : contentOutline) === 'false';
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
