@@ -24,7 +24,7 @@ weight: 45
 
 # User management: authenticate, manage user identity, and grant permissions
 
-Grafana's user management covers the full lifecycle of access: how users prove who they are, how their accounts exist in the system, and what they're allowed to do.
+Grafana user management covers the full lifecycle of access: how users prove who they are, how their accounts exist in the system, and what they're allowed to do.
 
 This section is organized around five topics:
 
