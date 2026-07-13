@@ -132,12 +132,6 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
         panelCount: targets.length,
         pluginIds: targets.map((t) => t.panel.state.pluginId),
       });
-
-      return () => {
-        if (!closedExplicitlyRef.current) {
-          reportInteraction('dashboards_assistant_popover_closed', { action: 'click_outside' });
-        }
-      };
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -145,7 +139,6 @@ export function ViewModePanelPromptCard({ targets, onClose }: ViewModePanelPromp
 
   const handleClose = useCallback(() => {
     closedExplicitlyRef.current = true;
-    reportInteraction('dashboards_assistant_popover_closed', { action: 'escape' });
     onClose();
   }, [onClose]);
 
