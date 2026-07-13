@@ -88,5 +88,4 @@ export const trackInfluxDBConfigV2AuthSettingsToggleClicked = () => {
 };
 
 export const trackInfluxDBConfigV2AuthSettingsAuthMethodSelected = (props: { authMethod: string }) => {
-  reportInteraction('influxdb-config-v2-advanced-http-settings-timeout-field', props);
 };

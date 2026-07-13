@@ -6,7 +6,7 @@ import { useEffectOnce } from 'react-use';
 
 import { LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -288,11 +288,6 @@ const ResourcePicker = ({
         break;
     }
     setFilters(updatedFilters);
-    reportInteraction('grafana_ds_azuremonitor_resource_picker_filters', {
-      subscriptionsFilters: updatedFilters.subscriptions.length,
-      typesFilters: updatedFilters.types.length,
-      locationsFilters: updatedFilters.locations.length,
-    });
     if (
       updatedFilters.subscriptions.length === 0 &&
       updatedFilters.types.length === 0 &&
@@ -545,9 +540,6 @@ const ResourcePicker = ({
                   label={t('components.resource-picker.recent-tab', 'Recent')}
                   active={view === 'recent'}
                   onChangeTab={() => {
-                    reportInteraction('grafana_ds_azuremonitor_resource_picker_recent_used', {
-                      recentResourcesCount: recentResources.length,
-                    });
                     setView('recent');
                   }}
                 />
