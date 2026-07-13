@@ -51,6 +51,24 @@ describe('DownloadDiagnostics', () => {
     expect(typeof to).toBe('string');
   });
 
+  it('fills the runner-level datasource onto queries that lack one', async () => {
+    const runner = new SceneQueryRunner({
+      datasource: { uid: 'runner-ds', type: 'prometheus' },
+      queries: [{ refId: 'A' }, { refId: 'B', datasource: { uid: 'own-ds', type: 'loki' } }],
+    });
+    const { tab } = setupScenario(undefined, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [queries] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    expect(queries).toEqual([
+      // A had no datasource -> filled from the runner; B keeps its own.
+      { refId: 'A', datasource: { uid: 'runner-ds', type: 'prometheus' } },
+      { refId: 'B', datasource: { uid: 'own-ds', type: 'loki' } },
+    ]);
+  });
+
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
     const { tab } = setupScenario(onDismiss);
@@ -62,14 +80,12 @@ describe('DownloadDiagnostics', () => {
   });
 });
 
-function setupScenario(onDismiss?: () => void) {
+function setupScenario(onDismiss?: () => void, runner?: SceneQueryRunner) {
   const vizPanel = new VizPanel({
     key: 'panel-1',
     pluginId: 'table',
     title: 'Panel',
-    $data: new SceneQueryRunner({
-      queries: [{ refId: 'A' }, { refId: 'B', hide: true }],
-    }),
+    $data: runner ?? new SceneQueryRunner({ queries: [{ refId: 'A' }, { refId: 'B', hide: true }] }),
   });
 
   const gridItem = new DashboardGridItem({ key: 'grid-item-1', body: vizPanel });

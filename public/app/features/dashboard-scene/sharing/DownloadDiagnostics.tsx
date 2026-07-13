@@ -64,7 +64,16 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     if (!panel) {
       return;
     }
-    const queries: DataQuery[] = getQueryRunnerFor(panel)?.state.queries ?? [];
+    const runner = getQueryRunnerFor(panel);
+    // Classic panels keep the datasource on the query runner rather than on each target, and unlike
+    // the normal /api/ds/query path nothing fills that in here. Copy the runner-level datasource
+    // onto any query that lacks one so the diagnostics endpoint can still route them.
+    const runnerDatasource = runner?.state.datasource;
+    const queries: DataQuery[] = (runner?.state.queries ?? []).map((query) =>
+      query.datasource ? query : { ...query, datasource: runnerDatasource }
+    );
+    // Known limitation (follow-up): template variables are sent un-interpolated, so captured
+    // traffic won't match a panel that uses $vars until per-datasource interpolation is applied.
     const timeRange = sceneGraph.getTimeRange(panel).state.value;
 
     await downloadDiagnosticsForQueries(queries, String(timeRange.from.valueOf()), String(timeRange.to.valueOf()));
