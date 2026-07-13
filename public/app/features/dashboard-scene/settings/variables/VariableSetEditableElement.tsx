@@ -120,6 +120,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
       (variable) =>
         !isVariableEditable(variable) &&
         isEditableVariableType(variable.state.type) &&
+        // Predefined (global/folder) variables render in the dashboard controls only, not in this list.
         !isPredefinedOrigin(variable.state.origin)
     );
   }, [variables, set]);

@@ -146,7 +146,6 @@ export async function recreateVariable(
     });
   } catch (error) {
     notifyDeleteAfterCreateFailed(error);
-    invalidateVariablesList();
     return { deletedOriginal: false };
   }
   invalidateAfterVariableMutation();

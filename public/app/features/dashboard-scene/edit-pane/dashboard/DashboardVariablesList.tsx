@@ -53,6 +53,7 @@ export function DashboardVariablesList({
   const { editable, readOnly } = useMemo(() => {
     const { editable, nonEditable } = partitionVariablesByEditability(listVariables);
     const readOnly = nonEditable.filter(
+      // Predefined (global/folder) variables render in the toolbar only, not in this list.
       (v) => isEditableVariableType(v.state.type) && !isPredefinedOrigin(v.state.origin)
     );
     let editableVariables = editable;

@@ -22,7 +22,6 @@ import { AnnotationEditableElement } from '../settings/annotations/AnnotationEdi
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
 import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
-import { ProvisionedVariableEditableElement } from '../settings/variables/ProvisionedVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable, isVariableEditable } from '../settings/variables/utils';
@@ -104,7 +103,7 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
 
   if (isSceneVariable(sceneObj)) {
     if (!isVariableEditable(sceneObj)) {
-      return new ProvisionedVariableEditableElement(sceneObj);
+      return undefined;
     }
     return new VariableEditableElement(sceneObj);
   }
