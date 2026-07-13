@@ -253,14 +253,18 @@ export function moveItem<T>(arr: T[], from: number, to: number): T[] {
 
 // ----- Hiding -----
 
-// Top-level items that can never be hidden, so users can't customise their way out of the home
-// page or the bookmarks section (itself a customisation surface). Starred is pinnable instead of
-// hideable, so it's protected here too.
+/**
+ * Top-level items that can never be hidden, so users can't customise their way out of the home
+ * page or the bookmarks section (itself a customisation surface). Starred is pinnable instead of
+ * hideable, so it's protected here too.
+ */
 const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
 
-// Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
-// the logo, so it isn't repeated as a menu item.
-export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
+/**
+ * Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
+ * the logo, so it isn't repeated as a menu item.
+ */
+export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 
 /**
  * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav

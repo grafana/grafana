@@ -306,7 +306,7 @@ export const useNavCustomization = () => {
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
   // dedicated Bookmarks section is also dropped — pinned items are re-presented in the pinned box.
   const baseItems = navTree.filter(
-    (item) => !NON_MENU_NAV_IDS[item.id ?? ''] && !(canCustomise && item.id === 'bookmarks')
+    (item) => !NON_MENU_NAV_IDS.has(item.id ?? '') && !(canCustomise && item.id === 'bookmarks')
   );
 
   const {
