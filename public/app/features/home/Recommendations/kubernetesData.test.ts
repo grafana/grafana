@@ -3,23 +3,29 @@ import { of } from 'rxjs';
 import {
   createDataFrame,
   type DataFrame,
+  type DataSourceInstanceListItem,
   FieldType,
   LoadingState,
   type PanelData,
   type QueryRunner,
 } from '@grafana/data';
-import { createQueryRunner, type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { createQueryRunner } from '@grafana/runtime';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { fetchClusterCpuSeries, fetchKubernetesOverview, resetKubernetesPrometheusResolution } from './kubernetesData';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   createQueryRunner: jest.fn(),
 }));
 
-const mockGetDataSourceSrv = jest.mocked(getDataSourceSrv);
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceList: jest.fn(),
+}));
+
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
+const mockGetDataSourceInstanceList = jest.mocked(getDataSourceInstanceList);
 
 const run = jest.fn();
 const destroy = jest.fn();
@@ -28,14 +34,18 @@ const destroy = jest.fn();
 const K8S_APP_STORAGE_KEY = 'grafana.k8s-app.navigation.storage';
 
 function setDataSources(list: Array<{ uid: string; name: string; isDefault?: boolean }>) {
-  const srv = { getList: () => list.map((ds) => ({ ...ds, type: 'prometheus' })) } as unknown as DataSourceSrv;
-  mockGetDataSourceSrv.mockReturnValue(srv);
+  mockGetDataSourceInstanceList.mockResolvedValue(
+    list.map((ds) => ({ ...ds, type: 'prometheus' }) as DataSourceInstanceListItem)
+  );
 }
 
 // uid -> namespace/cluster count the datasource reports; absent uid = no Kubernetes data there.
 let dataByUid: Record<string, number>;
 // Probe queries against these uids emit LoadingState.Error (unreachable/erroring datasource).
 let probeErrorUids: Set<string>;
+// Probe queries against these uids emit LoadingState.Error on the FIRST attempt only.
+let probeErrorOnceUids: Set<string>;
+let probeAttempts: Record<string, number>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
 
@@ -47,10 +57,13 @@ beforeEach(() => {
   run.mockReset();
   destroy.mockReset();
   mockCreateQueryRunner.mockReset();
+  mockGetDataSourceInstanceList.mockReset();
   window.localStorage.clear();
   resetKubernetesPrometheusResolution();
   dataByUid = {};
   probeErrorUids = new Set();
+  probeErrorOnceUids = new Set();
+  probeAttempts = {};
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
     let captured: CapturedRun | undefined;
@@ -62,10 +75,13 @@ beforeEach(() => {
       get: () => {
         const uid = captured?.datasource.uid ?? '';
         const isProbe = captured?.queries.some((q) => q.refId === 'namespaces') ?? false;
-        const count = dataByUid[uid] ?? 0;
-        if (isProbe && probeErrorUids.has(uid)) {
-          return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
+        if (isProbe) {
+          probeAttempts[uid] = (probeAttempts[uid] ?? 0) + 1;
+          if (probeErrorUids.has(uid) || (probeErrorOnceUids.has(uid) && probeAttempts[uid] === 1)) {
+            return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
+          }
         }
+        const count = dataByUid[uid] ?? 0;
         let series: DataFrame[] = [];
         if (isProbe && count > 0) {
           series = [numberFrame('namespaces', [count])];
@@ -139,6 +155,20 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(overviewCalls()[0][0].datasource.uid).toBe('team-uid');
     const probedUids = probeCalls().map(([o]) => o.datasource.uid);
     expect(probedUids).toEqual(expect.arrayContaining(['default-uid', 'team-uid']));
+  });
+
+  it('falls through to the first sibling in list order when several have data', async () => {
+    setDataSources([
+      { uid: 'alpha-uid', name: 'alpha-prom' },
+      { uid: 'beta-uid', name: 'beta-prom' },
+      { uid: 'default-uid', name: 'default-prom', isDefault: true },
+    ]);
+    dataByUid = { 'alpha-uid': 2, 'beta-uid': 7 };
+
+    const overview = await fetchKubernetesOverview();
+
+    expect(overviewCalls()[0][0].datasource.uid).toBe('alpha-uid');
+    expect(overview.clusters).toBe(2);
   });
 
   it('falls through from a stored choice without data to the default that has it', async () => {
@@ -241,6 +271,25 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(cpu).toBeNull();
   });
 
+  it('re-resolves after the cache TTL so datasource changes are picked up', async () => {
+    const nowSpy = jest.spyOn(Date, 'now');
+    try {
+      nowSpy.mockReturnValue(0);
+      setDataSources([{ uid: 'only-uid', name: 'only-prom' }]);
+      dataByUid = { 'only-uid': 1 };
+
+      await fetchKubernetesOverview();
+      expect(probeCalls()).toHaveLength(1);
+
+      nowSpy.mockReturnValue(61_000); // past RESOLUTION_TTL_MS
+      await fetchKubernetesOverview();
+
+      expect(probeCalls()).toHaveLength(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
   it('probes only the first ten candidates, truncating lower-priority ones', async () => {
     setDataSources(Array.from({ length: 11 }, (_, i) => ({ uid: `p${i + 1}-uid`, name: `p${i + 1}` })));
     dataByUid = { 'p11-uid': 1 };
@@ -284,6 +333,20 @@ describe('Kubernetes Prometheus resolution', () => {
 
     expect(overviewCalls()[0][0].datasource.uid).toBe('team-uid');
     expect(overview.clusters).toBe(1);
+  });
+
+  it('retries an errored probe once so a transient failure keeps the default', async () => {
+    setDataSources([
+      { uid: 'default-uid', name: 'default-prom', isDefault: true },
+      { uid: 'team-uid', name: 'team-prom' },
+    ]);
+    dataByUid = { 'default-uid': 5, 'team-uid': 1 };
+    probeErrorOnceUids = new Set(['default-uid']);
+
+    const overview = await fetchKubernetesOverview();
+
+    expect(overviewCalls()[0][0].datasource.uid).toBe('default-uid');
+    expect(overview.clusters).toBe(5);
   });
 
   it('rejects when every probe errors', async () => {

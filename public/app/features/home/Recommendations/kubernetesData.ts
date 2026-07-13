@@ -1,5 +1,10 @@
-import { type DataSourceInstanceSettings, type FieldSparkline, store } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import {
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type FieldSparkline,
+  store,
+} from '@grafana/data';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
@@ -84,8 +89,8 @@ const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
 // Order Prometheus datasources by how likely they are to hold this org's kube-state-metrics:
 // the k8s app's stored choice first, then — skipping the cloud utility datasources unless nothing
 // else exists — the default, then list order.
-function orderedCandidates(): DataSourceInstanceSettings[] {
-  const list = getDataSourceSrv().getList({ type: 'prometheus' });
+async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
+  const list = await getDataSourceInstanceList({ type: 'prometheus' });
   let promName: string | undefined;
   try {
     // store.getObject absorbs a missing key and corrupt JSON (returns the default); the try guards
@@ -104,43 +109,54 @@ function orderedCandidates(): DataSourceInstanceSettings[] {
 }
 
 // A datasource "has Kubernetes data" when it detects namespaces — the same signal the k8s app's
-// empty state keys on. A query error (unreachable, auth) counts as no data: an unusable
-// datasource must not win the probe.
+// empty state keys on. An errored probe retries once so a transient failure (timeout, gateway
+// hiccup) cannot flip the winning datasource across reloads; a second failure counts as no data.
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  try {
-    const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds);
-    return (readScalar(frames, 'namespaces') ?? 0) > 0;
-  } catch {
-    return false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds);
+      return (readScalar(frames, 'namespaces') ?? 0) > 0;
+    } catch {
+      // Retry once, then give up: an unusable datasource must not win the probe.
+    }
   }
+  return false;
 }
 
-// One resolution per page load: both fetchers await the same promise, so the probe fan-out runs
-// once and the overview + sparkline always query the same datasource.
-let resolution: Promise<DataSourceInstanceSettings | null> | undefined;
+// One resolution per TTL window: both fetchers await the same promise, so the probe fan-out runs
+// once and the overview + sparkline always query the same datasource. The TTL lets a later home
+// visit in the same SPA session re-resolve after datasource or connectivity changes — without it,
+// a cached null from a transient outage would hide the entry until a full page reload.
+const RESOLUTION_TTL_MS = 60_000;
+let resolution: Promise<DataSourceInstanceListItem | null> | undefined;
+let resolvedAt = 0;
 
 // Reset the cached datasource resolution (test seam).
 export function resetKubernetesPrometheusResolution(): void {
   resolution = undefined;
+  resolvedAt = 0;
 }
 
 // Resolve the Prometheus datasource to show Kubernetes stats from: fire a namespace probe at every
 // candidate (in parallel), then settle on the highest-priority candidate whose probe found data.
 // null when none has Kubernetes data — callers treat that as "not enabled".
-function resolveKubernetesPrometheus(): Promise<DataSourceInstanceSettings | null> {
-  resolution ??= (async () => {
-    const candidates = orderedCandidates().slice(0, MAX_PROBED_DATASOURCES);
-    const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
-    for (let i = 0; i < candidates.length; i++) {
-      // Await in priority order: a candidate wins only once every higher-priority probe came back
-      // empty, so a slow high-priority probe (worst case the 30s query timeout) delays — never
-      // changes — the outcome. Priority is deliberately favored over fastest-success latency.
-      if (await probes[i]) {
-        return candidates[i];
+function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
+  if (!resolution || Date.now() - resolvedAt > RESOLUTION_TTL_MS) {
+    resolvedAt = Date.now();
+    resolution = (async () => {
+      const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
+      const probes = candidates.map((ds) => hasKubernetesNamespaces(ds));
+      for (let i = 0; i < candidates.length; i++) {
+        // Await in priority order: a candidate wins only once every higher-priority probe came back
+        // empty, so a slow high-priority probe (worst case the 30s query timeout) delays — never
+        // changes — the outcome. Priority is deliberately favored over fastest-success latency.
+        if (await probes[i]) {
+          return candidates[i];
+        }
       }
-    }
-    return null;
-  })();
+      return null;
+    })();
+  }
   return resolution;
 }
 
