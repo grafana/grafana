@@ -69,6 +69,20 @@ describe('DownloadDiagnostics', () => {
     ]);
   });
 
+  it('shows the request status in the alert when the download fails', async () => {
+    // getBackendSrv fetch (responseType blob) rejects with a FetchError whose detail is in
+    // status/statusText, not message — the alert must still show something useful.
+    jest
+      .mocked(downloadDiagnosticsForQueries)
+      .mockRejectedValueOnce({ status: 404, statusText: 'Not Found', data: new Blob() });
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(await screen.findByText('404 Not Found')).toBeInTheDocument();
+  });
+
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
     const { tab } = setupScenario(onDismiss);

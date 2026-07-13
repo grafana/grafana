@@ -3,6 +3,7 @@ import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneComponentProps,
@@ -55,6 +56,17 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
   return undefined;
 }
 
+// The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
+// (its data is a Blob and message is unset), so build a message from those rather than error.message
+// which would leave the alert body empty.
+function diagnosticsErrorMessage(error: Error): string {
+  if (isFetchError(error)) {
+    const parts = [error.status, error.statusText].filter(Boolean);
+    return parts.length ? parts.join(' ') : 'Request failed';
+  }
+  return error.message || 'Failed to generate diagnostics';
+}
+
 function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
   const { onDismiss, panelRef } = model.useState();
   const styles = useStyles2(getStyles);
@@ -103,7 +115,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
-          {error.message}
+          {diagnosticsErrorMessage(error)}
         </Alert>
       )}
 
