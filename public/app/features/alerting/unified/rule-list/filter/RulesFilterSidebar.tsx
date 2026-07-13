@@ -8,8 +8,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
@@ -18,6 +16,9 @@ import {
   useLabelOptions,
   useNamespaceAndGroupOptions,
 } from '../../components/rules/Filter/useRuleFilterAutocomplete';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
@@ -59,7 +60,7 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+  const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const defaults = searchQueryToDefaultValues(filterState);
 
