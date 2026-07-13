@@ -104,9 +104,7 @@ describe('AzureMonitor: fetchAllArmPages', () => {
     expect(results).toEqual([]);
     expect(fetchPage).toHaveBeenCalledTimes(1);
     expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith(
-      '[azuremonitor] ARM page request returned no result; stopping pagination.'
-    );
+    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
   });
 
   it('does not emit the page-cap warning when a later page returns no result', async () => {
@@ -122,9 +120,7 @@ describe('AzureMonitor: fetchAllArmPages', () => {
 
     expect(results).toEqual([{ id: 1 }]);
     expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith(
-      '[azuremonitor] ARM page request returned no result; stopping pagination.'
-    );
+    expect(logWarning).toHaveBeenCalledWith('[azuremonitor] ARM page request returned no result; stopping pagination.');
     expect(logWarning).not.toHaveBeenCalledWith(expect.stringContaining('ARM listing stopped after'));
   });
 
